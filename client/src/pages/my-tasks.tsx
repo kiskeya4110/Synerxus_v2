@@ -773,10 +773,12 @@ export default function MyTasks({ embedded = false }: MyTasksProps) {
               <Button
                 variant="destructive"
                 onClick={() => {
-                  deleteTaskMutation.mutate(editingTask!.id);
-                  setEditDialogOpen(false);
+                  if (editingTask?.id) {
+                    deleteTaskMutation.mutate(editingTask.id);
+                    setEditDialogOpen(false);
+                  }
                 }}
-                disabled={deleteTaskMutation.isPending}
+                disabled={deleteTaskMutation.isPending || !editingTask?.id}
                 data-testid="button-delete-task"
               >
                 <Trash2 className="h-3 w-3 mr-1" />

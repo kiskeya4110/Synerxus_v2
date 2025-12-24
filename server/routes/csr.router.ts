@@ -305,20 +305,27 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Get ALL volunteer activities by employees (regardless of which project - tracks full employee engagement)
+    // Only count VERIFIED activities (verificationStatus = 'approved' or 'verified')
     const allEmployeeActivities = volunteerActivities.filter((a: any) =>
       employeeUserIds.has(a.userId)
     );
 
-    // Apply date filtering to employee activities (only if dates provided)
+    // Filter for verified activities only - CSR dashboard should only show organization-verified hours
+    const verifiedEmployeeActivities = allEmployeeActivities.filter((a: any) => {
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
+
+    // Apply date filtering to verified employee activities (only if dates provided)
     // Use the 'date' field (when activity occurred) instead of 'createdAt' (when record was logged)
     const filteredEmployeeActivities = shouldFilterByDate
-      ? allEmployeeActivities.filter((a: any) => {
+      ? verifiedEmployeeActivities.filter((a: any) => {
           const activityDate = a.date ? new Date(a.date) : (a.createdAt ? new Date(a.createdAt) : new Date(0));
           return activityDate >= startDate && activityDate <= endDate;
         })
-      : allEmployeeActivities;
+      : verifiedEmployeeActivities;
 
-    // Calculate metrics
+    // Calculate metrics - only verified hours are counted
     const totalHours = filteredEmployeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
     const uniqueEmployees = new Set(filteredEmployeeActivities.map((a: any) => a.userId));
     const activeEmployees = uniqueEmployees.size;
@@ -763,6 +770,10 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       }
     };
 
+    // Get the CSR partner's user for logo fallback (try logoUrl, then user avatar)
+    const partnerUser = users.find((u: any) => u.id === userPartner.userId);
+    const companyLogo = userPartner.logoUrl || partnerUser?.avatar || null;
+
     res.json({
       totalPartners: 1,
       activeEmployees,
@@ -772,6 +783,8 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       sdgScoreDelta: kpiBreakdown.sdg.scoreDelta,
       primarySdgs: userPartner.primarySdgs || [],
       companyName: userPartner.companyName || '',
+      logo: companyLogo,
+      logoUrl: companyLogo,
       sdgProgress: Object.fromEntries(Object.entries(sdgProgress).map(([k, v]) => [k, v])),
       sdgMetrics,
       topSdgs,
@@ -819,13 +832,18 @@ csrRouter.get("/csr/engagement-funnel", async (req: Request, res: Response) => {
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Apply time period filtering - use 'date' field (when activity occurred) instead of 'createdAt'
+    // Only count verified activities (approved or verified status)
     const { startDate, endDate, shouldFilter } = getDateRangeFromTimePeriod(timePeriod);
+    const verifiedActivities = volunteerActivities.filter((a: any) => {
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
     const filteredActivities = shouldFilter
-      ? volunteerActivities.filter((a: any) => {
+      ? verifiedActivities.filter((a: any) => {
           const activityDate = a.date ? new Date(a.date) : (a.createdAt ? new Date(a.createdAt) : new Date(0));
           return activityDate >= startDate && activityDate <= endDate;
         })
-      : volunteerActivities;
+      : verifiedActivities;
 
     const totalEmployees = employeeUserIds.size;
     const employeesWithActivity = new Set();
@@ -884,13 +902,18 @@ csrRouter.get("/csr/engagement-funnel-stage", async (req: Request, res: Response
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Apply time period filtering - use 'date' field (when activity occurred) instead of 'createdAt'
+    // Only count verified activities (approved or verified status)
     const { startDate, endDate, shouldFilter } = getDateRangeFromTimePeriod(timePeriod);
+    const verifiedActivities = volunteerActivities.filter((a: any) => {
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
     const filteredActivities = shouldFilter
-      ? volunteerActivities.filter((a: any) => {
+      ? verifiedActivities.filter((a: any) => {
           const activityDate = a.date ? new Date(a.date) : (a.createdAt ? new Date(a.createdAt) : new Date(0));
           return activityDate >= startDate && activityDate <= endDate;
         })
-      : volunteerActivities;
+      : verifiedActivities;
 
     const employeesActiveHours: Record<number, number> = {};
     filteredActivities.forEach((activity: any) => {
@@ -966,13 +989,18 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Apply time period filtering to activities - use 'date' field (when activity occurred) instead of 'createdAt'
+    // Only count verified activities (approved or verified status)
     const { startDate, endDate, shouldFilter } = getDateRangeFromTimePeriod(timePeriod);
+    const verifiedActivities = volunteerActivities.filter((a: any) => {
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
     const filteredActivities = shouldFilter
-      ? volunteerActivities.filter((a: any) => {
+      ? verifiedActivities.filter((a: any) => {
           const activityDate = a.date ? new Date(a.date) : (a.createdAt ? new Date(a.createdAt) : new Date(0));
           return activityDate >= startDate && activityDate <= endDate;
         })
-      : volunteerActivities;
+      : verifiedActivities;
 
     // Reviews: Name mismatches and incomplete profiles
     const reviews: any[] = [];
@@ -1088,6 +1116,180 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
   }
 });
 
+// ==================== CSR NOTIFICATIONS ROUTES ====================
+
+/**
+ * GET /csr/notifications
+ * Get real notifications for CSR dashboard
+ * Generates notifications based on actual database events:
+ * - New volunteer signups from employees
+ * - Project completions
+ * - Milestone achievements
+ * - SDG goal updates
+ * - Top contributor recognition
+ */
+csrRouter.get("/csr/notifications", async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    if (!userId) return res.status(400).json({ error: "User ID required" });
+
+    const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+    if (!userPartner) return res.json({ notifications: [] });
+
+    const notifications: any[] = [];
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get linked employee user IDs
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
+    const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+    const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+    const projects = await storage.listProjects?.() || [];
+    const users = await storage.listUsers?.() || [];
+
+    // Filter for employee activities (verified only)
+    const employeeActivities = volunteerActivities.filter((a: any) =>
+      employeeUserIds.has(a.userId) &&
+      (a.verificationStatus === 'approved' || a.verificationStatus === 'verified')
+    );
+
+    // 1. New volunteer signups (employees who recently joined)
+    const recentProfiles = volunteerProfiles.filter((p: any) => {
+      if (!employeeUserIds.has(p.userId)) return false;
+      const createdAt = p.createdAt ? new Date(p.createdAt) : null;
+      return createdAt && createdAt >= thirtyDaysAgo;
+    });
+
+    recentProfiles.slice(0, 3).forEach((profile: any, idx: number) => {
+      const user = users.find((u: any) => u.id === profile.userId);
+      notifications.push({
+        id: `signup-${profile.id}`,
+        type: 'info',
+        title: 'New Employee Volunteer',
+        message: `${profile.volunteerName || user?.displayName || 'An employee'} has joined as a volunteer and is ready to contribute.`,
+        createdAt: profile.createdAt || now.toISOString(),
+        isRead: false,
+        link: '/csr-dashboard?tab=engagement',
+        actionLabel: 'View Engagement',
+      });
+    });
+
+    // 2. Recent project activity milestones
+    const activityHoursTotal = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+    const milestoneHours = [100, 250, 500, 1000, 2500, 5000];
+    const achievedMilestone = milestoneHours.filter(h => activityHoursTotal >= h).pop();
+
+    if (achievedMilestone && achievedMilestone >= 100) {
+      notifications.push({
+        id: `milestone-${achievedMilestone}`,
+        type: 'milestone',
+        title: 'Hours Milestone Achieved!',
+        message: `Your team has reached ${achievedMilestone.toLocaleString()}+ total volunteer hours! Keep up the amazing work.`,
+        createdAt: now.toISOString(),
+        isRead: false,
+        link: '/csr-impact-reporting',
+        actionLabel: 'View Impact Report',
+      });
+    }
+
+    // 3. Top contributor recognition
+    const employeeHours: Record<number, number> = {};
+    employeeActivities.forEach((a: any) => {
+      employeeHours[a.userId] = (employeeHours[a.userId] || 0) + (a.hours || 0);
+    });
+
+    const topContributor = Object.entries(employeeHours)
+      .sort(([, a], [, b]) => b - a)[0];
+
+    if (topContributor && topContributor[1] >= 10) {
+      const [topUserId, hours] = topContributor;
+      const profile = volunteerProfiles.find((p: any) => p.userId === parseInt(topUserId));
+      const user = users.find((u: any) => u.id === parseInt(topUserId));
+      notifications.push({
+        id: `top-contributor-${topUserId}`,
+        type: 'achievement',
+        title: 'Top Contributor Recognition',
+        message: `${profile?.volunteerName || user?.displayName || 'An employee'} leads with ${hours} volunteer hours this period.`,
+        createdAt: now.toISOString(),
+        isRead: false,
+        link: '/csr-dashboard?tab=engagement',
+        actionLabel: 'View Leaderboard',
+      });
+    }
+
+    // 4. SDG Progress update
+    const sdgHours: Record<number, number> = {};
+    employeeActivities.forEach((a: any) => {
+      const project = projects.find((p: any) => p.id === a.projectId);
+      if (project?.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((sdg: number) => {
+          sdgHours[sdg] = (sdgHours[sdg] || 0) + (a.hours || 0);
+        });
+      }
+    });
+
+    const topSDG = Object.entries(sdgHours).sort(([, a], [, b]) => b - a)[0];
+    if (topSDG && topSDG[1] >= 10) {
+      const sdgNumber = parseInt(topSDG[0]);
+      const sdgNames: Record<number, string> = {
+        1: 'No Poverty', 2: 'Zero Hunger', 3: 'Good Health', 4: 'Quality Education',
+        5: 'Gender Equality', 6: 'Clean Water', 7: 'Clean Energy', 8: 'Decent Work',
+        9: 'Industry & Innovation', 10: 'Reduced Inequalities', 11: 'Sustainable Cities',
+        12: 'Responsible Consumption', 13: 'Climate Action', 14: 'Life Below Water',
+        15: 'Life on Land', 16: 'Peace & Justice', 17: 'Partnerships'
+      };
+      notifications.push({
+        id: `sdg-progress-${sdgNumber}`,
+        type: 'info',
+        title: 'SDG Impact Update',
+        message: `SDG ${sdgNumber} (${sdgNames[sdgNumber] || 'Goal'}) is your top impact area with ${topSDG[1]} hours contributed.`,
+        createdAt: now.toISOString(),
+        isRead: false,
+        link: '/sdg-mapping',
+        actionLabel: 'View SDG Map',
+      });
+    }
+
+    // 5. Recent project contributions
+    const recentActivities = employeeActivities
+      .filter((a: any) => {
+        const date = a.date ? new Date(a.date) : (a.createdAt ? new Date(a.createdAt) : null);
+        return date && date >= thirtyDaysAgo;
+      })
+      .slice(0, 5);
+
+    const projectContributions = new Map<number, number>();
+    recentActivities.forEach((a: any) => {
+      projectContributions.set(a.projectId, (projectContributions.get(a.projectId) || 0) + (a.hours || 0));
+    });
+
+    const topProject = Array.from(projectContributions.entries()).sort(([, a], [, b]) => b - a)[0];
+    if (topProject) {
+      const project = projects.find((p: any) => p.id === topProject[0]);
+      if (project) {
+        notifications.push({
+          id: `project-${project.id}`,
+          type: 'project_complete',
+          title: 'Active Project Update',
+          message: `${project.name} has received ${topProject[1]} volunteer hours recently from your team.`,
+          createdAt: now.toISOString(),
+          isRead: false,
+          link: '/project-portfolio',
+          actionLabel: 'View Projects',
+        });
+      }
+    }
+
+    // Sort by created date and limit
+    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    res.json({ notifications: notifications.slice(0, 10) });
+  } catch (err) {
+    console.error("Error fetching CSR notifications:", err);
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
 // ==================== CSR IMPACT REPORTING ROUTES ====================
 
 /**
@@ -1111,8 +1313,12 @@ csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
     // Get employee user IDs - use helper function to get ALL linked employees
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
-    // Get employee activities only
-    const employeeActivities = volunteerActivities.filter((a: any) => employeeUserIds.has(a.userId));
+    // Get employee activities only - filter for verified status
+    const employeeActivities = volunteerActivities.filter((a: any) => {
+      if (!employeeUserIds.has(a.userId)) return false;
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
     const totalEmployeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
     const uniqueEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
 
@@ -1271,42 +1477,56 @@ csrRouter.get("/csr/impact-reporting/export/csv", async (req: Request, res: Resp
       console.error(`Impact reporting API returned ${impactResponse.status}`);
       return res.status(502).json({ error: "Failed to fetch impact data" });
     }
-    const impactData = await impactResponse.json();
+
+    let impactData: any;
+    try {
+      impactData = await impactResponse.json();
+    } catch (jsonErr) {
+      console.error("Failed to parse impact data JSON:", jsonErr);
+      return res.status(502).json({ error: "Invalid impact data format" });
+    }
+
+    // Safely extract metrics with defaults
+    const engagement = impactData?.engagementMetrics || {};
+    const impact = impactData?.impactMetrics || {};
+    const financial = impactData?.financialMetrics || {};
+    const compliance = impactData?.complianceStatus || {};
+    const sdgMetrics = Array.isArray(impactData?.sdgMetrics) ? impactData.sdgMetrics : [];
 
     // Generate CSV
     const rows = [
       ["CSR Impact Report - " + userPartner.companyName],
-      ["Report Period:", impactData.reportPeriod],
+      ["Report Period:", impactData?.reportPeriod || "N/A"],
       [""],
       ["ENGAGEMENT METRICS"],
-      ["Total Hours", impactData.engagementMetrics.totalHours],
-      ["Active Employees", impactData.engagementMetrics.activeEmployees],
-      ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
-      ["Participation Rate", impactData.engagementMetrics.participationRate + "%"],
+      ["Total Hours", engagement.totalHours ?? "N/A"],
+      ["Active Employees", engagement.activeEmployees ?? "N/A"],
+      ["Avg Hours/Employee", engagement.avgHoursPerEmployee ?? "N/A"],
+      ["Participation Rate", (engagement.participationRate ?? 0) + "%"],
       [""],
       ["IMPACT METRICS"],
-      ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
-      ["Indirect Beneficiaries", impactData.impactMetrics.indirectBeneficiaries],
-      ["Total Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
-      ["Impact per Hour", impactData.impactMetrics.impactPerHour],
+      ["Direct Beneficiaries", impact.directBeneficiaries ?? "N/A"],
+      ["Indirect Beneficiaries", impact.indirectBeneficiaries ?? "N/A"],
+      ["Total Lives Touched", impact.estimatedLivesTouched ?? "N/A"],
+      ["Impact per Hour", impact.impactPerHour ?? "N/A"],
       [""],
       ["FINANCIAL METRICS"],
-      ["Volunteer Hour Value", "$" + impactData.financialMetrics.volunteerHourValue],
-      ["ROI", impactData.financialMetrics.roi + "%"],
-      ["Cost per Beneficiary", "$" + impactData.financialMetrics.costPerBeneficiary],
-      ["Program Cost", "$" + impactData.financialMetrics.programCost],
+      ["Volunteer Hour Value", "$" + (financial.volunteerHourValue ?? 0)],
+      ["ROI", (financial.roi ?? 0) + "%"],
+      ["Cost per Beneficiary", "$" + (financial.costPerBeneficiary ?? 0)],
+      ["Program Cost", "$" + (financial.programCost ?? 0)],
       [""],
       ["SDG ALIGNMENT"],
-      ...impactData.sdgMetrics.map((sdg: any) => ["SDG " + sdg.goal, sdg.hours + " hrs", sdg.percentage + "%"]),
+      ...sdgMetrics.map((sdg: any) => ["SDG " + (sdg?.goal ?? "N/A"), (sdg?.hours ?? 0) + " hrs", (sdg?.percentage ?? 0) + "%"]),
       [""],
       ["COMPLIANCE STATUS"],
-      ["B-Corp Ready", impactData.complianceStatus.bCorpReady ? "Yes" : "No"],
-      ["GRI Aligned", impactData.complianceStatus.griAligned ? "Yes" : "No"],
-      ["ESG Rating", impactData.complianceStatus.esGRating + "/100"],
-      ["B-Corp Compliance Score", impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"],
-      ["GRI Compliance Score", impactData.complianceStatus.complianceScores?.griScore || "N/A"],
-      ["ISO 26000 Score", impactData.complianceStatus.complianceScores?.isoScore || "N/A"],
-      ["SASB Score", impactData.complianceStatus.complianceScores?.sasbScore || "N/A"]
+      ["B-Corp Ready", compliance.bCorpReady ? "Yes" : "No"],
+      ["GRI Aligned", compliance.griAligned ? "Yes" : "No"],
+      ["ESG Rating", (compliance.esGRating ?? 0) + "/100"],
+      ["B-Corp Compliance Score", compliance.complianceScores?.bCorpScore || "N/A"],
+      ["GRI Compliance Score", compliance.complianceScores?.griScore || "N/A"],
+      ["ISO 26000 Score", compliance.complianceScores?.isoScore || "N/A"],
+      ["SASB Score", compliance.complianceScores?.sasbScore || "N/A"]
     ];
 
     const csv = rows.map(r => r.map((cell: any) => `"${cell}"`).join(",")).join("\n");
@@ -1344,14 +1564,28 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
       console.error(`Impact reporting API returned ${impactResponse.status}`);
       return res.status(502).json({ error: "Failed to fetch impact data" });
     }
-    const impactData = await impactResponse.json();
+
+    let impactData: any;
+    try {
+      impactData = await impactResponse.json();
+    } catch (jsonErr) {
+      console.error("Failed to parse impact data JSON:", jsonErr);
+      return res.status(502).json({ error: "Invalid impact data format" });
+    }
+
+    // Safely extract metrics with defaults to prevent crashes
+    const safeEngagement = impactData?.engagementMetrics || { participationRate: 0, totalHours: 0, activeEmployees: 0, avgHoursPerEmployee: 0 };
+    const safeImpact = impactData?.impactMetrics || { directBeneficiaries: 0, indirectBeneficiaries: 0, estimatedLivesTouched: 0, impactPerHour: 0 };
+    const safeFinancial = impactData?.financialMetrics || { volunteerHourValue: 0, roi: 0, costPerBeneficiary: 0, programCost: 0 };
+    const safeCompliance = impactData?.complianceStatus || { bCorpReady: false, griAligned: false, esGRating: 0, complianceScores: {} };
+    const safeSdgMetrics = Array.isArray(impactData?.sdgMetrics) ? impactData.sdgMetrics : [];
 
     // Calculate Synerxus Impact Rating (0-100)
     const calculateImpactRating = () => {
-      const participationScore = Math.min((impactData.engagementMetrics.participationRate / 50) * 25, 25);
-      const hoursScore = Math.min((impactData.engagementMetrics.totalHours / 1000) * 25, 25);
-      const beneficiaryScore = Math.min((impactData.impactMetrics.directBeneficiaries / 500) * 25, 25);
-      const roiScore = Math.min((impactData.financialMetrics.roi / 300) * 25, 25);
+      const participationScore = Math.min((safeEngagement.participationRate / 50) * 25, 25);
+      const hoursScore = Math.min((safeEngagement.totalHours / 1000) * 25, 25);
+      const beneficiaryScore = Math.min((safeImpact.directBeneficiaries / 500) * 25, 25);
+      const roiScore = Math.min((safeFinancial.roi / 300) * 25, 25);
       return Math.round(participationScore + hoursScore + beneficiaryScore + roiScore);
     };
 
@@ -1412,7 +1646,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
       ${(userPartner as any).logo ? `<img src="${(userPartner as any).logo}" alt="${userPartner.companyName}" class="company-logo" />` : `<div style="font-size:24px;font-weight:700;">${userPartner.companyName}</div>`}
       <div class="report-title">
         <h1>${reportTitle}</h1>
-        <p>${reportTimeline} Report | ${impactData.reportPeriod}</p>
+        <p>${reportTimeline} Report | ${impactData?.reportPeriod || 'Current Period'}</p>
       </div>
     </div>
   </div>
@@ -1435,30 +1669,30 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
     <h2><span class="section-icon">📊</span> Executive Summary</h2>
     <div class="metrics-grid">
       <div class="metric-card highlight">
-        <div class="metric-value">${impactData.engagementMetrics.totalHours.toLocaleString()}</div>
+        <div class="metric-value">${(safeEngagement.totalHours || 0).toLocaleString()}</div>
         <div class="metric-label">Total Volunteer Hours</div>
       </div>
       <div class="metric-card highlight">
-        <div class="metric-value">${impactData.engagementMetrics.activeEmployees}</div>
+        <div class="metric-value">${safeEngagement.activeEmployees || 0}</div>
         <div class="metric-label">Active Employees</div>
       </div>
       <div class="metric-card highlight">
-        <div class="metric-value">${impactData.impactMetrics.estimatedLivesTouched.toLocaleString()}</div>
+        <div class="metric-value">${(safeImpact.estimatedLivesTouched || 0).toLocaleString()}</div>
         <div class="metric-label">Lives Touched</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">$${(impactData.financialMetrics.volunteerHourValue || 0).toLocaleString()}</div>
+        <div class="metric-value">$${(safeFinancial.volunteerHourValue || 0).toLocaleString()}</div>
         <div class="metric-label">Economic Value Generated</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${impactData.financialMetrics.roi}%</div>
+        <div class="metric-value">${safeFinancial.roi || 0}%</div>
         <div class="metric-label">Return on Investment</div>
         <div class="metric-benchmark">Industry Avg: 250%</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${impactData.engagementMetrics.participationRate}%</div>
+        <div class="metric-value">${safeEngagement.participationRate || 0}%</div>
         <div class="metric-label">Participation Rate</div>
-        <div class="metric-benchmark">Benchmark: ${impactData.benchmarks.participationRateBenchmark}%</div>
+        <div class="metric-benchmark">Benchmark: ${impactData?.benchmarks?.participationRateBenchmark || 50}%</div>
       </div>
     </div>
 
@@ -1466,17 +1700,17 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
     <h2><span class="section-icon">🎯</span> Impact Analysis</h2>
     <div class="metrics-grid">
       <div class="metric-card">
-        <div class="metric-value">${impactData.impactMetrics.directBeneficiaries.toLocaleString()}</div>
+        <div class="metric-value">${(safeImpact.directBeneficiaries || 0).toLocaleString()}</div>
         <div class="metric-label">Direct Beneficiaries</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${impactData.impactMetrics.indirectBeneficiaries.toLocaleString()}</div>
+        <div class="metric-value">${(safeImpact.indirectBeneficiaries || 0).toLocaleString()}</div>
         <div class="metric-label">Indirect Beneficiaries</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">$${impactData.financialMetrics.costPerBeneficiary}</div>
+        <div class="metric-value">$${safeFinancial.costPerBeneficiary || 0}</div>
         <div class="metric-label">Cost Per Beneficiary</div>
-        <div class="metric-benchmark">Benchmark: $${impactData.benchmarks.costPerBeneficiaryBenchmark}</div>
+        <div class="metric-benchmark">Benchmark: $${impactData?.benchmarks?.costPerBeneficiaryBenchmark || 25}</div>
       </div>
     </div>
 
@@ -1484,7 +1718,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
     <h2><span class="section-icon">🌍</span> UN SDG Alignment</h2>
     <table class="sdg-table">
       <tr><th>SDG Goal</th><th>Hours Contributed</th><th>% of Total</th><th>Status</th></tr>
-      ${impactData.sdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg.goal}</strong></td><td>${sdg.hours} hrs</td><td>${sdg.percentage}%</td><td>${sdg.percentage > 15 ? '✅ Strong' : sdg.percentage > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}
+      ${safeSdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg?.goal || 'N/A'}</strong></td><td>${sdg?.hours || 0} hrs</td><td>${sdg?.percentage || 0}%</td><td>${(sdg?.percentage || 0) > 15 ? '✅ Strong' : (sdg?.percentage || 0) > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}
     </table>
 
     <!-- Compliance & Certification -->
@@ -1492,19 +1726,19 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
     <div class="compliance-grid">
       <div class="compliance-card">
         <span class="compliance-name">B-Corp Alignment</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.bCorpScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.bCorpScore || 0}/100</span>
+        <span class="compliance-score" style="color: ${(safeCompliance.complianceScores?.bCorpScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${safeCompliance.complianceScores?.bCorpScore || 0}/100</span>
       </div>
       <div class="compliance-card">
         <span class="compliance-name">GRI Standards</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.griScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.griScore || 0}/100</span>
+        <span class="compliance-score" style="color: ${(safeCompliance.complianceScores?.griScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${safeCompliance.complianceScores?.griScore || 0}/100</span>
       </div>
       <div class="compliance-card">
         <span class="compliance-name">ISO 26000</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.isoScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.isoScore || 0}/100</span>
+        <span class="compliance-score" style="color: ${(safeCompliance.complianceScores?.isoScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${safeCompliance.complianceScores?.isoScore || 0}/100</span>
       </div>
       <div class="compliance-card">
         <span class="compliance-name">ESG Rating</span>
-        <span class="compliance-score" style="color: ${impactData.complianceStatus.esGRating >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.esGRating}/100</span>
+        <span class="compliance-score" style="color: ${(safeCompliance.esGRating || 0) >= 80 ? '#059669' : '#f59e0b'}">${safeCompliance.esGRating || 0}/100</span>
       </div>
     </div>
   </div>
@@ -1574,8 +1808,23 @@ csrRouter.get("/csr/partners", async (req: Request, res: Response) => {
     }
     const allPartners = await storage.listCSRPartners?.() || [];
     const userPartners = allPartners.filter((p: any) => p.userId === userId);
-    // Return the first partner (corporate admin typically has one) or empty array
-    res.json(userPartners.length > 0 ? userPartners[0] : null);
+
+    if (userPartners.length === 0) {
+      return res.json(null);
+    }
+
+    const partner = userPartners[0];
+
+    // Add user avatar fallback if partner doesn't have logoUrl
+    if (!partner.logoUrl) {
+      const users = await storage.listUsers?.() || [];
+      const partnerUser = users.find((u: any) => u.id === partner.userId);
+      if (partnerUser?.avatar) {
+        partner.logoUrl = partnerUser.avatar;
+      }
+    }
+
+    res.json(partner);
   } catch (err) {
     console.error("Error fetching CSR partners:", err);
     res.status(500).json({ error: "Failed to fetch partners" });
@@ -1954,9 +2203,14 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
 
     // Get volunteer activities for employees linked to this partner
     // Use the same helper function as the main dashboard to ensure consistency
+    // Only count verified activities (approved or verified status)
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
-    const partnerActivities = volunteerActivities.filter((act: any) => employeeUserIds.has(act.userId));
+    const partnerActivities = volunteerActivities.filter((act: any) => {
+      if (!employeeUserIds.has(act.userId)) return false;
+      const status = act.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
 
     // Count unique engaged employees from volunteer activities
     const engagedEmployees = new Set(partnerActivities.map((act: any) => act.userId)).size;

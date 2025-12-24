@@ -81,7 +81,7 @@ export default function OrganizationPWAHeader({
       items: [
         { icon: BarChart3, label: "Impact Report", desc: "Visualize your impact", action: () => navigate('/impact-visualization') },
         { icon: Target, label: "SDG Mapping", desc: "UN Goals alignment", action: () => navigate('/sdg-mapping') },
-        { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/organization-leaderboard/pwa'), hot: true },
+        { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/volunteer-leaderboard/pwa'), hot: true },
         { icon: TrendingUp, label: "Analytics", desc: "Performance metrics", action: () => navigate('/csr-reports-exports') },
       ]
     },
@@ -90,7 +90,7 @@ export default function OrganizationPWAHeader({
       items: [
         { icon: Users, label: "Volunteers", desc: "Your team members", action: () => navigate('/volunteers') },
         { icon: Lightbulb, label: "Stories", desc: "Impact storytelling", action: () => navigate('/impact-storytelling') },
-        { icon: Award, label: "Recognition", desc: "Celebrate achievements", action: () => navigate('/volunteer-recognition') },
+        { icon: Award, label: "Recognition", desc: "Celebrate achievements", action: () => navigate('/volunteer-leaderboard/pwa') },
       ]
     },
     {

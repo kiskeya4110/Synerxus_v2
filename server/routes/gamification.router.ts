@@ -209,9 +209,9 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
         a.volunteerId === volunteerId && orgProjectIds.has(a.projectId)
       );
 
-      // Get impacts logged by this volunteer on org projects
+      // Get impacts logged by this volunteer on org projects (using userId field from schema)
       const userImpacts = allImpacts.filter((i: any) =>
-        i.volunteerId === volunteerId && orgProjectIds.has(i.projectId)
+        i.userId === volunteerId && orgProjectIds.has(i.projectId)
       );
 
       const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');

@@ -216,7 +216,7 @@ function projectToOpportunity(project: Project): Opportunity {
     id: project.id,
     title: project.name,
     description: project.description || "",
-    organizationId: project.organizationId!,
+    organizationId: project.organizationId || 0,
     projectId: project.id,
     status: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in-progress' || project.status?.toLowerCase() === 'in progress' ? 'open' : 'closed',
     requiredSkills: project.requiredSkills || [],
@@ -368,12 +368,18 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     const projectIdArray = Array.from(organizationProjectIds);
 
     // Step 2: Fetch only data related to these projects using batch queries
-    const [organizationTasks, organizationActivities, organizationImpacts, organizationAssignments] = await Promise.all([
+    const [organizationTasks, allOrganizationActivities, organizationImpacts, organizationAssignments] = await Promise.all([
       storage.listTasksByProjectIds(projectIdArray),
       storage.listVolunteerActivitiesByProjectIds(projectIdArray),
       storage.listProjectImpactsByProjectIds(projectIdArray),
       storage.listProjectAssignmentsByProjectIds(projectIdArray),
     ]);
+
+    // Filter to only count verified activities (approved or verified status) for accurate metrics
+    const organizationActivities = allOrganizationActivities.filter((a: any) => {
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
 
     // Step 3: Fetch users and metrics (these are needed for reference lookups)
     const allUsers = await storage.listUsers();
@@ -1088,7 +1094,12 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const matchedOpportunities = await getProjectsForVolunteer(userId, matchThreshold);
 
     // Calculate summary metrics - handle null/undefined hours safely
-    const totalHours = volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
+    // Only count verified activities (approved or verified status) for accurate reporting
+    const verifiedActivities = volunteerActivities.filter(activity => {
+      const status = (activity as any).verificationStatus?.toLowerCase();
+      return status === 'approved' || status === 'verified';
+    });
+    const totalHours = verifiedActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
     const activeProjects = assignedProjects.filter(
       project => {
         const status = project.status?.toLowerCase() || '';

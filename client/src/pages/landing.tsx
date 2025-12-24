@@ -159,9 +159,10 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
     }
 
     // Clear existing markers and polylines
-    map.current.eachLayer((layer: any) => {
+    const currentMap = map.current;
+    currentMap.eachLayer((layer: any) => {
       if (layer instanceof L.Marker || layer instanceof L.Polyline) {
-        map.current!.removeLayer(layer);
+        currentMap.removeLayer(layer);
       }
     });
 

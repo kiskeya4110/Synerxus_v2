@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, ChevronRight, AlertTriangle, CheckSquare, TrendingUp,
-  Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical,
+  Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical, Menu as MenuIcon,
   Bell, Settings, User as UserIcon, LogOut, FileText, Award, Zap,
   Activity, Shield, ShieldCheck, Eye, ThumbsUp, Info,
   Sparkles, CircleDot
@@ -599,13 +599,17 @@ export default function OrganizationDashboard() {
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
-      {/* Welcome Banner - Desktop Only */}
-      <div className="hidden md:block" style={{
-        background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
-        padding: '16px 0',
-        borderBottom: '1px solid rgba(245, 158, 11, 0.2)'
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Welcome Banner - Desktop Only - Contained within margins */}
+      <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }}>
+        <div style={{
+          background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          border: '1px solid rgba(245, 158, 11, 0.2)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#78350f', margin: 0 }}>
             Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
           </h1>
@@ -631,189 +635,6 @@ export default function OrganizationDashboard() {
             <Lightbulb size={18} />
             Unlock Your Team's Potential
           </button>
-        </div>
-      </div>
-
-      {/* Mobile Dashboard Header with Three-Dot Menu */}
-      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
-            Organization Dashboard
-          </h1>
-          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-            Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'}
-          </p>
-        </div>
-        {/* Three-Dot Menu Button */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            data-testid="mobile-menu-trigger"
-            style={{
-              padding: '8px',
-              backgroundColor: showMobileMenu ? '#f3f4f6' : 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <MoreVertical size={20} color="#374151" />
-          </button>
-
-          {/* Mobile Dropdown Menu */}
-          {showMobileMenu && (
-            <>
-              {/* Backdrop */}
-              <div
-                onClick={() => setShowMobileMenu(false)}
-                style={{
-                  position: 'fixed',
-                  inset: 0,
-                  zIndex: 40,
-                }}
-              />
-              {/* Menu */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '4px',
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                  border: '1px solid #e5e7eb',
-                  minWidth: '200px',
-                  zIndex: 50,
-                  overflow: 'hidden',
-                }}
-              >
-                <button
-                  onClick={() => { setShowMobileMenu(false); }}
-                  data-testid="mobile-menu-notifications"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    textAlign: 'left',
-                  }}
-                >
-                  <Bell size={18} color="#6b7280" />
-                  Notifications
-                </button>
-                <button
-                  onClick={() => { navigate('/applications'); setShowMobileMenu(false); }}
-                  data-testid="mobile-menu-applications"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    textAlign: 'left',
-                  }}
-                >
-                  <FileText size={18} color="#6b7280" />
-                  Applications
-                </button>
-                <button
-                  onClick={() => { navigate('/organization-profile-settings'); setShowMobileMenu(false); }}
-                  data-testid="mobile-menu-settings"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    textAlign: 'left',
-                  }}
-                >
-                  <Settings size={18} color="#6b7280" />
-                  Settings
-                </button>
-                <button
-                  onClick={() => { navigate('/profile'); setShowMobileMenu(false); }}
-                  data-testid="mobile-menu-profile"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    textAlign: 'left',
-                  }}
-                >
-                  <UserIcon size={18} color="#6b7280" />
-                  Profile
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await signOut();
-                      toast({
-                        title: "Signed out successfully",
-                        description: "You have been signed out of your account.",
-                      });
-                      setShowMobileMenu(false);
-                      navigate('/landing');
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to sign out. Please try again.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  data-testid="mobile-menu-logout"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    fontSize: '14px',
-                    color: '#dc2626',
-                    textAlign: 'left',
-                  }}
-                >
-                  <LogOut size={18} color="#dc2626" />
-                  Logout
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
 

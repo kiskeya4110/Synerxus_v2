@@ -37,69 +37,22 @@ interface Notification {
   actionLabel?: string;
 }
 
-// Notifications data - connected to real dashboard sections
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "achievement",
-    title: "Quarterly Impact Milestone",
-    message: "Your company has achieved 1,000+ volunteer hours this quarter! View the detailed impact metrics and SDG contributions in your Impact Analytics dashboard.",
-    time: "2 hours ago",
-    read: false,
-    link: "/csr-impact-reporting",
-    actionLabel: "Open Impact Analytics",
-  },
-  {
-    id: "2",
-    type: "success",
-    title: "New Volunteer Projects Available",
-    message: "3 new volunteer opportunities have been added to your Project Portfolio. Browse and assign employees to these initiatives.",
-    time: "5 hours ago",
-    read: false,
-    link: "/project-portfolio",
-    actionLabel: "Browse Projects",
-  },
-  {
-    id: "3",
-    type: "info",
-    title: "ESG Report Ready for Export",
-    message: "Your monthly ESG impact report is ready. Export as PDF, Excel, or share directly with stakeholders from the Reports dashboard.",
-    time: "1 day ago",
-    read: true,
-    link: "/csr-reports-exports",
-    actionLabel: "Export Reports",
-  },
-  {
-    id: "4",
-    type: "warning",
-    title: "Employee Engagement Review",
-    message: "Some team members haven't logged volunteer hours recently. Review participation metrics and send engagement reminders.",
-    time: "2 days ago",
-    read: true,
-    link: "/csr-dashboard?tab=engagement",
-    actionLabel: "Review Engagement",
-  },
-  {
-    id: "5",
-    type: "info",
-    title: "SDG Alignment Update",
-    message: "Your volunteer activities are now mapped to 12 UN Sustainable Development Goals. Review your SDG alignment and impact distribution.",
-    time: "3 days ago",
-    read: true,
-    link: "/sdg-mapping",
-    actionLabel: "View SDG Map",
-  },
-  {
-    id: "6",
-    type: "success",
-    title: "New Partner Organizations",
-    message: "Discover nonprofit partners aligned with your ESG goals. Browse organizations and explore collaboration opportunities.",
-    time: "4 days ago",
-    read: true,
-    link: "/organizations",
-    actionLabel: "Find Partners",
-  },
-];
+// Helper function to format relative time
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+  return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+}
 
 interface CSRLayoutProps {
   children: ReactNode;
@@ -108,6 +61,7 @@ interface CSRLayoutProps {
   activeNav?: "dashboard" | "impact" | "engagement" | "portfolio" | "reports" | "settings";
 }
 
+// Sidebar navigation items (for sidebar and mobile menu)
 const navItems = [
   { id: "dashboard", label: "Command Center", icon: Home, href: "/csr-dashboard?tab=overview" },
   { id: "engagement", label: "Employee Engagement", icon: UserCheck, href: "/csr-dashboard?tab=engagement" },
@@ -117,12 +71,21 @@ const navItems = [
   { id: "settings", label: "Settings", icon: Settings, href: "/corporate-partner-profile-settings" },
 ];
 
+// Main header navigation - 4 tabs only
+const headerNavItems = [
+  { label: "Home", href: "/landing" },
+  { label: "Dashboard", href: "/csr-dashboard" },
+  { label: "Organizations", href: "/organizations" },
+  { label: "Help", href: "/help" },
+];
+
 export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }: CSRLayoutProps) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
   const notificationRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -143,10 +106,21 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id: string) => {
+    setReadNotificationIds(prev => {
+      const newSet = new Set(Array.from(prev));
+      newSet.add(id);
+      return newSet;
+    });
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    setReadNotificationIds(prev => {
+      const newSet = new Set(Array.from(prev));
+      allIds.forEach(id => newSet.add(id));
+      return newSet;
+    });
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
@@ -185,20 +159,46 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
 
   const companyName = csrPartner?.companyName || (user as any)?.companyName || (user as any)?.displayName || "Corporate Partner";
   const companyLogo = csrPartner?.logoUrl || (user as any)?.profilePhotoUrl || (user as any)?.avatar || null;
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+
+  // Fetch real notifications from database
+  const { data: notificationsData } = useQuery({
+    queryKey: ["/api/csr/notifications", userId],
+    queryFn: async () => {
+      if (!userId) return { notifications: [] };
+      try {
+        const res = await fetch(`/api/csr/notifications?userId=${userId}`);
+        if (!res.ok) return { notifications: [] };
+        return res.json();
+      } catch {
+        return { notifications: [] };
+      }
+    },
+    enabled: !!userId,
+    staleTime: 30000, // Refresh every 30 seconds
+    refetchInterval: 60000, // Auto-refetch every minute
   });
 
-  // Top-level site navigation menus
-  const topMenuItems = [
-    { label: "Home", href: "/landing" },
-    { label: "Projects", href: "/projects" },
-    { label: "Organizations", href: "/organizations" },
-    { label: "Help", href: "/help" },
-  ];
+  // Transform database notifications to UI format
+  useEffect(() => {
+    if (notificationsData?.notifications && Array.isArray(notificationsData.notifications)) {
+      const transformed: Notification[] = notificationsData.notifications.map((n: any) => ({
+        id: String(n.id),
+        type: n.type === 'milestone' ? 'achievement' :
+              n.type === 'project_complete' ? 'success' :
+              n.type === 'warning' ? 'warning' : 'info',
+        title: n.title,
+        message: n.message,
+        time: n.createdAt ? getRelativeTime(new Date(n.createdAt)) : 'Recently',
+        read: readNotificationIds.has(String(n.id)) || n.isRead,
+        link: n.link || '/csr-dashboard',
+        actionLabel: n.actionLabel || 'View Details',
+      }));
+      setNotifications(transformed);
+    } else {
+      // If no real notifications, show empty state
+      setNotifications([]);
+    }
+  }, [notificationsData, readNotificationIds]);
 
   return (
     <div
@@ -238,21 +238,25 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           <img src={logoUrl} alt="Synerxus" style={{ height: "40px", width: "auto", filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
         </button>
 
-        {/* Center: Site Navigation - Hidden on smaller screens, collapses responsively */}
-        <nav className="hidden lg:flex" style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
-          {topMenuItems.map((item) => {
-            const isActive = location === item.href || location.startsWith(item.href + "/") || (item.href === "/landing" && location === "/");
+        {/* Center: Site Navigation - 4 Main Tabs */}
+        <nav className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
+          {headerNavItems.map((item) => {
+            const isActive = location === item.href ||
+              location.startsWith(item.href + "/") ||
+              location.startsWith(item.href + "?") ||
+              (item.href === "/landing" && location === "/") ||
+              (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
             return (
               <button
                 key={item.label}
                 onClick={() => navigate(item.href)}
                 style={{
-                  padding: "8px 14px",
+                  padding: "10px 18px",
                   borderRadius: "8px",
                   background: isActive ? "rgba(16, 185, 129, 0.25)" : "transparent",
-                  border: isActive ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid transparent",
+                  border: isActive ? "2px solid rgba(16, 185, 129, 0.5)" : "2px solid transparent",
                   color: isActive ? "#047857" : "#065f46",
-                  fontSize: "13px",
+                  fontSize: "14px",
                   fontWeight: isActive ? "700" : "600",
                   cursor: "pointer",
                   transition: "all 0.2s",
@@ -278,37 +282,41 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           })}
         </nav>
 
-        {/* Right: Hamburger Menu (mobile), Corporate Logo, Company Name, KPI Menu, Notifications */}
+        {/* Right: Notification Bell, Profile, Hamburger Menu */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Hamburger Menu Button - Visible only when sidebar is hidden (< lg screens) */}
+          {/* Corporate Logo - clickable, routes to Dashboard */}
           <button
-            className="hidden max-lg:flex items-center justify-center"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            onClick={() => navigate("/csr-dashboard")}
+            className="hidden md:flex"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: showMobileMenu ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.8)",
-              border: showMobileMenu ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "none",
+              border: "none",
               cursor: "pointer",
-              color: "#065f46",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              padding: "4px",
+              borderRadius: "10px",
               transition: "all 0.2s ease",
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.8";
+              e.currentTarget.style.transform = "scale(1.02)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+            title={companyName}
           >
-            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
-          </button>
-
-          {/* Corporate Company Badge */}
-          <div className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {companyLogo ? (
               <img
                 src={companyLogo}
                 alt={companyName}
                 style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "8px",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
                   objectFit: "cover",
                   border: "2px solid rgba(16, 185, 129, 0.3)",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
@@ -317,9 +325,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             ) : (
               <div
                 style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "8px",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
                   background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                   display: "flex",
                   alignItems: "center",
@@ -327,13 +335,10 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   boxShadow: "0 2px 6px rgba(16, 185, 129, 0.3)",
                 }}
               >
-                <Building2 size={16} color="white" />
+                <Building2 size={18} color="white" />
               </div>
             )}
-            <span className="hidden lg:block" style={{ fontSize: "14px", fontWeight: "600", color: "#065f46", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {companyName}
-            </span>
-          </div>
+          </button>
 
           {/* Notifications */}
           <div ref={notificationRef} style={{ position: "relative" }}>
@@ -651,96 +656,30 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             )}
           </div>
           <UserProfileDropdown />
+
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: showMobileMenu ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.8)",
+              border: showMobileMenu ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#065f46",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
         </div>
       </header>
-
-      {/* Secondary Header - Dynamic Company Context Bar */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #ede9fe 75%, #fce7f3 100%)",
-          borderBottom: "1px solid rgba(59, 130, 246, 0.15)",
-          padding: "16px 4%",
-          boxShadow: "0 2px 12px rgba(59, 130, 246, 0.08)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
-        {/* Left: Company Badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            {/* Company Logo */}
-            {companyLogo ? (
-              <img
-                src={companyLogo}
-                alt={companyName}
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "14px",
-                  objectFit: "cover",
-                  border: "3px solid rgba(59, 130, 246, 0.25)",
-                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.15)",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "14px",
-                  background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
-                }}
-              >
-                <Building2 size={24} color="white" />
-              </div>
-            )}
-            <div>
-              <div style={{ fontSize: "20px", fontWeight: "700", color: "#1e40af", letterSpacing: "-0.02em" }}>
-                {companyName}
-              </div>
-              <div style={{ fontSize: "13px", color: "#6366f1", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.5)",
-                  animation: "pulse 2s infinite"
-                }} />
-                Corporate ESG & Impact Hub
-              </div>
-            </div>
-        </div>
-
-        {/* Center: Quick Stats */}
-        <div className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <div style={{ textAlign: "center", padding: "8px 16px", background: "rgba(255, 255, 255, 0.7)", borderRadius: "10px", border: "1px solid rgba(59, 130, 246, 0.15)" }}>
-            <div style={{ fontSize: "18px", fontWeight: "700", color: "#1e40af" }}>Live</div>
-            <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.5px" }}>Dashboard</div>
-          </div>
-          <div style={{ textAlign: "center", padding: "8px 16px", background: "rgba(255, 255, 255, 0.7)", borderRadius: "10px", border: "1px solid rgba(16, 185, 129, 0.15)" }}>
-            <div style={{ fontSize: "18px", fontWeight: "700", color: "#059669" }}>Active</div>
-            <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.5px" }}>Tracking</div>
-          </div>
-        </div>
-
-        {/* Right: Date & Status */}
-        <div className="hidden sm:flex" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{
-            padding: "10px 16px",
-            background: "rgba(255, 255, 255, 0.8)",
-            borderRadius: "10px",
-            border: "1px solid rgba(0, 0, 0, 0.06)",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
-          }}>
-            <div style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a" }}>{currentDate}</div>
-          </div>
-        </div>
-        </div>
-      </div>
 
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
@@ -906,41 +845,48 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             })}
           </div>
 
-          {/* Top Menu Items in Mobile */}
+          {/* Main Navigation in Mobile */}
           <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}>
             <div style={{ marginBottom: "12px" }}>
               <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Quick Links
+                Main Navigation
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              {topMenuItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => {
-                    navigate(item.href);
-                    setShowMobileMenu(false);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "12px 16px",
-                    borderRadius: "10px",
-                    background: "transparent",
-                    color: "#475569",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "500",
-                    fontSize: "13px",
-                    textAlign: "left",
-                    width: "100%",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
+              {headerNavItems.map((item) => {
+                const isActive = location === item.href ||
+                  location.startsWith(item.href + "/") ||
+                  location.startsWith(item.href + "?") ||
+                  (item.href === "/landing" && location === "/") ||
+                  (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      navigate(item.href);
+                      setShowMobileMenu(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "12px 16px",
+                      borderRadius: "10px",
+                      background: isActive ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                      color: isActive ? "#047857" : "#475569",
+                      border: isActive ? "1px solid rgba(16, 185, 129, 0.3)" : "none",
+                      cursor: "pointer",
+                      fontWeight: isActive ? "600" : "500",
+                      fontSize: "14px",
+                      textAlign: "left",
+                      width: "100%",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </nav>

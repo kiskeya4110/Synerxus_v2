@@ -48,7 +48,7 @@ export default function VolunteerLeaderboardPWA() {
   // Redirect to desktop view when not on mobile (after viewport detection completes)
   useEffect(() => {
     if (!isViewportLoading && !isMobile) {
-      navigate("/volunteer-recognition");
+      navigate("/organization-leaderboard");
     }
   }, [isViewportLoading, isMobile, navigate]);
 

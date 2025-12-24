@@ -136,6 +136,65 @@ CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_user_id
 ON volunteer_profiles(user_id);
 
 -- =============================================================================
+-- ADDITIONAL FOREIGN KEY INDEXES
+-- Critical for preventing full table scans on joins
+-- =============================================================================
+
+-- Index for filtering impacts by user (used in volunteer impact reports)
+CREATE INDEX IF NOT EXISTS idx_project_impacts_user_id
+ON project_impacts(user_id);
+
+-- Index for filtering impacts by task (used in task-level impact tracking)
+CREATE INDEX IF NOT EXISTS idx_project_impacts_task_id
+ON project_impacts(task_id);
+
+-- Index for filtering activities by task (used in task progress tracking)
+CREATE INDEX IF NOT EXISTS idx_volunteer_activities_task_id
+ON volunteer_activities(task_id);
+
+-- Index for filtering applications by organization (used in org dashboard)
+CREATE INDEX IF NOT EXISTS idx_applications_organization_id
+ON applications(organization_id);
+
+-- Index for filtering applications by project (used in project tracking)
+CREATE INDEX IF NOT EXISTS idx_applications_project_id
+ON applications(project_id);
+
+-- =============================================================================
+-- CSR PARTNER INDEXES
+-- Used for corporate employer-employee relationships
+-- =============================================================================
+
+-- Index for looking up CSR partner by user ID
+CREATE INDEX IF NOT EXISTS idx_csr_partners_user_id
+ON csr_partners(user_id);
+
+-- Index for looking up employee engagement by CSR partner
+CREATE INDEX IF NOT EXISTS idx_employee_engagement_csr_partner_id
+ON employee_engagement(csr_partner_id);
+
+-- Index for looking up employee engagement by volunteer
+CREATE INDEX IF NOT EXISTS idx_employee_engagement_volunteer_id
+ON employee_engagement(volunteer_id);
+
+-- Index for looking up employee engagement by project
+CREATE INDEX IF NOT EXISTS idx_employee_engagement_project_id
+ON employee_engagement(project_id);
+
+-- =============================================================================
+-- VOLUNTEER EMPLOYER LINK INDEXES
+-- Used for tracking volunteer employment relationships
+-- =============================================================================
+
+-- Index for looking up employer links by volunteer profile
+CREATE INDEX IF NOT EXISTS idx_volunteer_employer_links_volunteer_profile_id
+ON volunteer_employer_links(volunteer_profile_id);
+
+-- Index for looking up employer links by CSR partner
+CREATE INDEX IF NOT EXISTS idx_volunteer_employer_links_csr_partner_id
+ON volunteer_employer_links(csr_partner_id);
+
+-- =============================================================================
 -- VERIFY INDEXES CREATED
 -- =============================================================================
 

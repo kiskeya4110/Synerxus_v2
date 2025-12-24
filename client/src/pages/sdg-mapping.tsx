@@ -125,7 +125,20 @@ export default function SDGMapping() {
     },
     enabled: !!currentUser && !!userId
   });
-  
+
+  // Fetch organization dashboard data for accurate volunteer/hours metrics
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/organization/dashboard", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/organization/dashboard?userId=${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser && currentUser.userType === 'organization'
+  });
+
   // Fetch project impacts
   const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery({
     queryKey: ["/api/project-impacts"],
@@ -213,7 +226,10 @@ export default function SDGMapping() {
             if (!sdgCompletions.has(sdg)) {
               sdgCompletions.set(sdg, []);
             }
-            sdgCompletions.get(sdg)!.push(project.completionPercentage || 0);
+            const completionsArr = sdgCompletions.get(sdg);
+            if (completionsArr) {
+              completionsArr.push(project.completionPercentage || 0);
+            }
           }
         });
       }
@@ -542,22 +558,204 @@ export default function SDGMapping() {
     const avgCompletion = filteredProjects.length > 0
       ? Math.round(filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / filteredProjects.length)
       : 0;
-    const totalVolunteers = filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0);
-    const totalHours = filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0);
+
+    // Use dashboard data for accurate totals, fall back to project-level data
+    const totalVolunteers = dashboardData?.keyMetrics?.activeVolunteers ||
+      filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0);
+    const totalHours = dashboardData?.keyMetrics?.totalHours ||
+      filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0);
 
     // Calculate additional impact metrics
     const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
     const orgImpacts = (projectImpacts as any[]).filter((pi: any) => orgProjectIds.has(pi.projectId));
-    const totalBeneficiaries = orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0);
-    const sdgsAddressed = organizationSDGs.length;
+    const totalBeneficiaries = dashboardData?.keyMetrics?.peopleImpacted ||
+      orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0);
+    const sdgsAddressed = dashboardData?.keyMetrics?.sdgsAddressed || organizationSDGs.length;
 
-    // Calculate total AIU from projects
-    const totalAIU = filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0);
+    // Calculate total AIU from dashboard or projects
+    const totalAIU = dashboardData?.keyMetrics?.aiuEarned ||
+      filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0);
 
     // Get projects for selected SDG
     const selectedSDGProjects = selectedSDG
       ? filteredProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG))
       : [];
+
+    // Mobile stats dialog handler
+    const handleMobileStatsClick = (type: string) => {
+      let title = '';
+      let items: any[] = [];
+
+      switch (type) {
+        case 'projects':
+          title = 'All Projects';
+          items = filteredProjects.map((p: any) => ({
+            label: p.name,
+            value: p.status || 'No Status',
+            subValue: `${p.completionPercentage || 0}% complete`,
+            id: p.id
+          }));
+          break;
+        case 'active':
+          title = 'Active Projects';
+          items = filteredProjects
+            .filter((p: any) => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress')
+            .map((p: any) => ({
+              label: p.name,
+              value: `${p.completionPercentage || 0}% complete`,
+              subValue: p.location || 'No location',
+              id: p.id
+            }));
+          break;
+        case 'completed':
+          title = 'Completed Projects';
+          items = filteredProjects
+            .filter((p: any) => p.status?.toLowerCase() === 'completed')
+            .map((p: any) => ({
+              label: p.name,
+              value: '100% complete',
+              subValue: p.location || 'No location',
+              id: p.id
+            }));
+          break;
+        case 'progress':
+          title = 'Project Progress';
+          items = filteredProjects
+            .sort((a: any, b: any) => (b.completionPercentage || 0) - (a.completionPercentage || 0))
+            .map((p: any) => ({
+              label: p.name,
+              value: `${p.completionPercentage || 0}%`,
+              subValue: p.status || 'No Status',
+              id: p.id
+            }));
+          break;
+        case 'volunteers':
+          title = 'Active Volunteers';
+          // Use volunteer summaries from dashboard if available
+          if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+            items = dashboardData.volunteerSummaries
+              .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
+              .map((v: any) => ({
+                label: v.name || `Volunteer ${v.id}`,
+                value: `${v.hours || 0} hours`,
+                subValue: `${v.projects || 0} projects`,
+                id: v.id
+              }));
+          } else {
+            // Fallback to project-based data
+            items = filteredProjects
+              .filter((p: any) => (p.volunteerCount || 0) > 0)
+              .sort((a: any, b: any) => (b.volunteerCount || 0) - (a.volunteerCount || 0))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${p.volunteerCount || 0} volunteers`,
+                subValue: `${p.totalHours || 0} hours`,
+                id: p.id
+              }));
+          }
+          break;
+        case 'hours':
+          title = 'Hours Breakdown';
+          // Use volunteer summaries for hours breakdown if available
+          if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+            items = dashboardData.volunteerSummaries
+              .filter((v: any) => (v.hours || 0) > 0)
+              .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
+              .map((v: any) => ({
+                label: v.name || `Volunteer ${v.id}`,
+                value: `${(v.hours || 0).toLocaleString()} hours`,
+                subValue: `${v.projects || 0} projects completed`,
+                id: v.id
+              }));
+          } else {
+            // Fallback to project-based data
+            items = filteredProjects
+              .filter((p: any) => (p.totalHours || 0) > 0)
+              .sort((a: any, b: any) => (b.totalHours || 0) - (a.totalHours || 0))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${(p.totalHours || 0).toLocaleString()} hours`,
+                subValue: `${p.volunteerCount || 0} volunteers`,
+                id: p.id
+              }));
+          }
+          break;
+        case 'beneficiaries':
+          title = 'People Reached by Project';
+          const projectImpactMap = new Map<number, number>();
+          orgImpacts.forEach((impact: any) => {
+            const current = projectImpactMap.get(impact.projectId) || 0;
+            projectImpactMap.set(impact.projectId, current + (impact.value || 0));
+          });
+          items = filteredProjects
+            .map((p: any) => ({
+              label: p.name,
+              value: `${(projectImpactMap.get(p.id) || 0).toLocaleString()} people`,
+              subValue: p.sdgGoals?.map((s: number) => `SDG ${s}`).join(', ') || 'No SDGs',
+              id: p.id
+            }))
+            .filter((item: any) => parseInt(item.value) > 0)
+            .sort((a: any, b: any) => parseInt(b.value.replace(/,/g, '')) - parseInt(a.value.replace(/,/g, '')));
+          break;
+        case 'sdgs':
+          title = 'SDG Coverage';
+          items = organizationSDGs.map((sdgNum: number) => {
+            const projectCount = filteredProjects.filter((p: any) => p.sdgGoals?.includes(sdgNum)).length;
+            return {
+              label: `SDG ${sdgNum}: ${SDG_METADATA[sdgNum]?.title || 'Unknown'}`,
+              value: `${projectCount} project${projectCount !== 1 ? 's' : ''}`,
+              subValue: SDG_METADATA[sdgNum]?.description || '',
+              sdgNum
+            };
+          });
+          break;
+        case 'aiu':
+          title = 'AIU Breakdown';
+          // Use dashboard projects data which has AIU calculated
+          if (dashboardData?.projects && dashboardData.projects.length > 0) {
+            items = dashboardData.projects
+              .filter((p: any) => (p.aiuEarned || 0) > 0)
+              .sort((a: any, b: any) => (b.aiuEarned || 0) - (a.aiuEarned || 0))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${(p.aiuEarned || 0).toLocaleString()} AIU`,
+                subValue: `${p.totalHours || 0} hours • ${p.sdgGoals?.length || 0} SDGs`,
+                id: p.id
+              }));
+            // If no projects have AIU, show a summary breakdown
+            if (items.length === 0 && totalAIU > 0) {
+              items = [
+                { label: 'Hours Contribution', value: `${Math.round(totalHours * 0.02)} AIU`, subValue: `Based on ${totalHours.toLocaleString()} volunteer hours` },
+                { label: 'SDG Alignment Bonus', value: `${Math.round(sdgsAddressed * 5)} AIU`, subValue: `${sdgsAddressed} SDGs addressed` },
+                { label: 'Impact Multiplier', value: `${Math.round(totalBeneficiaries * 0.01)} AIU`, subValue: `${totalBeneficiaries.toLocaleString()} people reached` },
+                { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Combined impact score' },
+              ];
+            }
+          } else {
+            // Fallback: Show AIU calculation breakdown
+            items = [
+              { label: 'Hours Contribution', value: `${Math.round(totalHours * 0.02)} AIU`, subValue: `Based on ${totalHours.toLocaleString()} volunteer hours` },
+              { label: 'SDG Alignment Bonus', value: `${Math.round(sdgsAddressed * 5)} AIU`, subValue: `${sdgsAddressed} SDGs addressed` },
+              { label: 'Impact Multiplier', value: `${Math.round(totalBeneficiaries * 0.01)} AIU`, subValue: `${totalBeneficiaries.toLocaleString()} people reached` },
+              { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Combined impact score' },
+            ];
+          }
+          break;
+        case 'impact':
+          title = 'Overall Impact Summary';
+          items = [
+            { label: 'Total Volunteers', value: totalVolunteers.toLocaleString(), subValue: 'Across all projects' },
+            { label: 'Total Hours', value: totalHours.toLocaleString(), subValue: 'Hours contributed' },
+            { label: 'People Reached', value: totalBeneficiaries.toLocaleString(), subValue: 'Direct beneficiaries' },
+            { label: 'SDGs Addressed', value: `${sdgsAddressed}/17`, subValue: 'UN Goals aligned' },
+            { label: 'Total AIU', value: totalAIU.toLocaleString(), subValue: 'Impact units earned' },
+          ];
+          break;
+      }
+
+      setStatsDialogData({ title, items });
+      setStatsDialogOpen(true);
+    };
 
     return (
       <OrganizationPWALayout activeTab="sdgs">
@@ -585,9 +783,12 @@ export default function SDGMapping() {
             )}
           </div>
 
-          {/* KPI Cards Grid - Enhanced 3x2 with more metrics */}
+          {/* KPI Cards Grid - Enhanced 3x2 with more metrics - All Interactive */}
           <div className="grid grid-cols-3 gap-2 mb-3">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <Card
+              className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('projects')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-blue-500 rounded-lg mb-1">
@@ -599,7 +800,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <Card
+              className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('active')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-orange-500 rounded-lg mb-1">
@@ -611,7 +815,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card
+              className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('completed')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-green-500 rounded-lg mb-1">
@@ -623,7 +830,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <Card
+              className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('progress')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-purple-500 rounded-lg mb-1">
@@ -635,7 +845,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-emerald-50 to-teal-100 border-emerald-200">
+            <Card
+              className="bg-gradient-to-br from-emerald-50 to-teal-100 border-emerald-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('volunteers')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-emerald-500 rounded-lg mb-1">
@@ -647,7 +860,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-cyan-50 to-sky-100 border-cyan-200">
+            <Card
+              className="bg-gradient-to-br from-cyan-50 to-sky-100 border-cyan-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('hours')}
+            >
               <CardContent className="p-2.5">
                 <div className="flex flex-col items-center text-center">
                   <div className="p-1.5 bg-cyan-500 rounded-lg mb-1">
@@ -660,9 +876,12 @@ export default function SDGMapping() {
             </Card>
           </div>
 
-          {/* Secondary KPIs Row - Beneficiaries, SDGs, AIU */}
+          {/* Secondary KPIs Row - Beneficiaries, SDGs, AIU - All Interactive */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-            <Card className="flex-shrink-0 bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200">
+            <Card
+              className="flex-shrink-0 bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('beneficiaries')}
+            >
               <CardContent className="p-2.5 flex items-center gap-2">
                 <div className="p-1.5 bg-rose-500 rounded-lg">
                   <Users className="h-3.5 w-3.5 text-white" />
@@ -674,7 +893,10 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            <Card className="flex-shrink-0 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
+            <Card
+              className="flex-shrink-0 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('sdgs')}
+            >
               <CardContent className="p-2.5 flex items-center gap-2">
                 <div className="p-1.5 bg-indigo-500 rounded-lg">
                   <Globe className="h-3.5 w-3.5 text-white" />
@@ -686,19 +908,20 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
 
-            {totalAIU > 0 && (
-              <Card className="flex-shrink-0 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
-                <CardContent className="p-2.5 flex items-center gap-2">
-                  <div className="p-1.5 bg-amber-500 rounded-lg">
-                    <Award className="h-3.5 w-3.5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-amber-700">{totalAIU.toLocaleString()}</p>
-                    <p className="text-[9px] text-amber-600 font-medium">Total AIU</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <Card
+              className="flex-shrink-0 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+              onClick={() => handleMobileStatsClick('aiu')}
+            >
+              <CardContent className="p-2.5 flex items-center gap-2">
+                <div className="p-1.5 bg-amber-500 rounded-lg">
+                  <Award className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-700">{totalAIU.toLocaleString()}</p>
+                  <p className="text-[9px] text-amber-600 font-medium">Total AIU</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* SDG Focus Summary - Horizontal scroll */}
@@ -871,11 +1094,17 @@ export default function SDGMapping() {
             </Card>
           )}
 
-          {/* Impact Summary Card */}
+          {/* Impact Summary Card - Interactive */}
           {totalVolunteers > 0 || totalHours > 0 ? (
-            <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+            <Card
+              className="bg-gradient-to-br from-slate-800 to-slate-900 text-white cursor-pointer hover:shadow-lg active:scale-[0.99] transition-all"
+              onClick={() => handleMobileStatsClick('impact')}
+            >
               <CardContent className="p-4">
-                <p className="text-xs font-semibold text-slate-300 mb-3">Overall Impact</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-slate-300">Overall Impact</p>
+                  <span className="text-[9px] text-slate-400">Tap for details</span>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-2xl font-bold">{totalVolunteers.toLocaleString()}</p>
@@ -890,6 +1119,51 @@ export default function SDGMapping() {
             </Card>
           ) : null}
         </div>
+
+        {/* Mobile Stats Dialog */}
+        <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
+          <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg">{statsDialogData?.title}</DialogTitle>
+              <DialogDescription className="text-xs">
+                {statsDialogData?.items.length || 0} item{(statsDialogData?.items.length || 0) !== 1 ? 's' : ''}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 mt-2">
+              {statsDialogData?.items.map((item: any, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    if (item.id) {
+                      setStatsDialogOpen(false);
+                      navigate(`/projects/${item.id}`);
+                    } else if (item.sdgNum) {
+                      setStatsDialogOpen(false);
+                      setSelectedSDG(item.sdgNum);
+                    }
+                  }}
+                  className={`p-3 bg-slate-50 rounded-lg border border-slate-100 ${
+                    item.id || item.sdgNum ? 'cursor-pointer hover:bg-slate-100 active:scale-[0.99] transition-all' : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="font-medium text-sm text-slate-800 flex-1 pr-2">{item.label}</span>
+                    <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{item.value}</span>
+                  </div>
+                  {item.subValue && (
+                    <p className="text-xs text-slate-500 mt-1">{item.subValue}</p>
+                  )}
+                </div>
+              ))}
+              {(!statsDialogData?.items || statsDialogData.items.length === 0) && (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No data available</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </OrganizationPWALayout>
     );
   }

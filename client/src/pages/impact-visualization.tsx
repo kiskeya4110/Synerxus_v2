@@ -202,14 +202,16 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
             const afterValue = impact.value || 0;
             
             // Combine similar metrics by name
-            if (beforeMetricMap.has(metricName)) {
-              beforeMetricMap.get(metricName)!.value += beforeValue;
+            const existingBefore = beforeMetricMap.get(metricName);
+            if (existingBefore) {
+              existingBefore.value += beforeValue;
             } else {
               beforeMetricMap.set(metricName, { value: beforeValue, unit });
             }
-            
-            if (afterMetricMap.has(metricName)) {
-              afterMetricMap.get(metricName)!.value += afterValue;
+
+            const existingAfter = afterMetricMap.get(metricName);
+            if (existingAfter) {
+              existingAfter.value += afterValue;
             } else {
               afterMetricMap.set(metricName, { value: afterValue, unit });
             }

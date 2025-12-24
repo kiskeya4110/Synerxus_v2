@@ -576,8 +576,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orgProjectIds = new Set(orgProjects.map((p) => p.id));
         
         // Volunteers assigned to this org's projects
-        const orgAssignments = allProjectAssignments.filter((pa) => orgProjectIds.has(pa.projectId!));
-        const uniqueVolunteerIds = new Set(orgAssignments.map((pa) => pa.volunteerId));
+        const orgAssignments = allProjectAssignments.filter((pa) => pa.projectId && orgProjectIds.has(pa.projectId));
+        const uniqueVolunteerIds = new Set(orgAssignments.map((pa) => pa.volunteerId).filter(Boolean));
         
         // Opportunities for this organization
         const orgOpportunities = allOpportunities.filter((o) => o.organizationId === org.id);
@@ -749,8 +749,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(400).json({ message: "Missing required parameters" });
       }
-      
-      res.json(projects);
+
+      // Enrich projects with volunteer counts and hours
+      const allActivities = await storage.listVolunteerActivities();
+      const allAssignments = await storage.listProjectAssignments();
+
+      const enrichedProjects = projects.map((project: any) => {
+        // Count volunteers assigned to this project
+        const projectAssignments = allAssignments.filter((a: any) => a.projectId === project.id);
+        const uniqueVolunteers = new Set(projectAssignments.map((a: any) => a.volunteerId));
+
+        // Also count volunteers who logged activities on this project
+        const projectActivities = allActivities.filter((a: any) => a.projectId === project.id);
+        projectActivities.forEach((a: any) => uniqueVolunteers.add(a.userId));
+
+        // Calculate total hours from activities
+        const totalHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+        return {
+          ...project,
+          volunteerCount: uniqueVolunteers.size,
+          totalHours: Math.round(totalHours)
+        };
+      });
+
+      res.json(enrichedProjects);
     } catch (err) {
       console.error("Error fetching projects:", err);
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -7063,21 +7086,37 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Get the CSR partner for this user - handles both corporate admin and employee users
       const allPartners = await storage.listCSRPartners?.() || [];
       let userPartner = allPartners.find((p: any) => p.userId === parseInt(userId));
+
+      // Ensure logoUrl is fetched directly from database if missing
+      if (userPartner && !userPartner.logoUrl) {
+        const logoResult = await db.execute(`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
+        if (logoResult.rows?.[0]?.logo_url) {
+          userPartner = { ...userPartner, logoUrl: logoResult.rows[0].logo_url as string };
+        }
+      }
       
       // If not a corporate admin, check if user is an employee linked to a CSR partner
       if (!userPartner) {
         const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
         const employeeProfile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId));
-        
+
         if (employeeProfile?.employerId) {
           // User is an employee linked to a CSR partner
-          const employerIdNum = typeof employeeProfile.employerId === 'string' 
-            ? parseInt(employeeProfile.employerId) 
+          const employerIdNum = typeof employeeProfile.employerId === 'string'
+            ? parseInt(employeeProfile.employerId)
             : employeeProfile.employerId;
           userPartner = allPartners.find((p: any) => p.id === employerIdNum);
+
+          // Ensure logoUrl is fetched directly from database if missing
+          if (userPartner && !userPartner.logoUrl) {
+            const logoResult = await db.execute(`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
+            if (logoResult.rows?.[0]?.logo_url) {
+              userPartner = { ...userPartner, logoUrl: logoResult.rows[0].logo_url as string };
+            }
+          }
         }
       }
-      
+
       if (!userPartner) {
         return res.json({
           totalPartners: 0,
@@ -7566,11 +7605,15 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         sdgScoreDelta,
         primarySdgs: userPartner.primarySdgs || [],
         companyName: userPartner.companyName,
+        logo: userPartner.logoUrl,
+        logoUrl: userPartner.logoUrl,
         sdgProgress,
         projectLocations,
         partners: [{
           id: userPartner.id,
           companyName: userPartner.companyName,
+          logo: userPartner.logoUrl,
+          logoUrl: userPartner.logoUrl,
           employees: activeEmployees,
           hours: totalHours,
           roi: totalRoi

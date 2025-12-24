@@ -16,10 +16,7 @@ import {
   Map,
   ChevronRight,
   X,
-  MoreVertical,
   Bell,
-  Settings,
-  LogOut,
   BarChart3,
   Activity,
   Zap,
@@ -122,10 +119,12 @@ interface CSRDashboardData {
   projectsCompleted: number;
   sdgScoreDelta: number;
   companyName?: string;
+  logo?: string;
+  logoUrl?: string;
   primarySdgs?: number[];
   sdgProgress: Record<number, { goal: number; name: string; color: string; progress: number; status?: string }>;
   sdgMetrics: SDGMetric[];
-  partners: Array<{ id: number; companyName: string; employees: number; hours: number; roi: number }>;
+  partners: Array<{ id: number; companyName: string; employees: number; hours: number; roi: number; logo?: string; logoUrl?: string }>;
   challenges: Array<{ id: number; title: string; sdgGoal: number; progress: number; target: number; status: string }>;
   leaderboard: Array<{ rank: number; employeeName: string; hours: number; points: number }>;
   projectLocations: Array<{ id: number; name: string; lat: number; lng: number; region: string; employees: number; hours: number; status: string }>;
@@ -166,34 +165,21 @@ const SDG_NAMES: Record<number, string> = {
 };
 
 export default function CSRDashboardPWA() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const userId = localStorage.getItem("currentUserId");
-  const menuRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
 
   // State
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [showMenu, setShowMenu] = useState(false);
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapFilter, setMapFilter] = useState<{ region: string; sdg: number | null; status: string }>({ region: 'all', sdg: null, status: 'all' });
   const [refreshing, setRefreshing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Offline detection
   useEffect(() => {
@@ -233,7 +219,7 @@ export default function CSRDashboardPWA() {
     }
   }, []);
 
-  // Fetch CSR Dashboard Data - optimized for faster initial load
+  // Fetch CSR Dashboard Data - always fresh to ensure logo and company data is current
   const { data: csrData, isLoading, error, refetch } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
     queryFn: async () => {
@@ -243,9 +229,22 @@ export default function CSRDashboardPWA() {
       return response.json();
     },
     enabled: !!userId,
-    staleTime: 120000, // Increased from 30s to reduce refetches
-    refetchInterval: 300000, // Increased from 60s to 5min
-    gcTime: 600000, // Increased cache retention to 10min
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache stale data
+    refetchOnMount: 'always', // Refetch when component mounts
+  });
+
+  // Fetch CSR partner data directly for reliable company logo access
+  const { data: csrPartnerData } = useQuery({
+    queryKey: ["/api/csr/partners", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/csr/partners?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 60000, // Cache for 1 minute
   });
 
   // Fetch AI Insights
@@ -414,7 +413,9 @@ export default function CSRDashboardPWA() {
     );
   }
 
-  const companyName = csrData?.companyName || "CSR Dashboard";
+  const companyName = csrPartnerData?.companyName || csrData?.companyName || "CSR Dashboard";
+  const companyLogo = csrPartnerData?.logoUrl || csrPartnerData?.logo || csrData?.logo || csrData?.logoUrl || csrData?.partners?.[0]?.logo || csrData?.partners?.[0]?.logoUrl || null;
+  const userAvatar = user?.photoURL;
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
@@ -437,53 +438,39 @@ export default function CSRDashboardPWA() {
             <img src={logoUrl} alt="Synerxus" className="h-8 w-auto" style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
           </button>
 
-          {/* Company Name & Menu */}
+          {/* Company Logo & Name */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-right hidden xs:block">
-              <p className="text-xs font-semibold truncate max-w-[90px]" style={{ color: "#065f46" }}>{companyName}</p>
+            {companyLogo ? (
+              <img
+                src={companyLogo}
+                alt={companyName}
+                className="h-8 w-8 rounded-lg object-contain bg-white shadow-sm border border-emerald-100 flex-shrink-0 p-0.5"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            ) : userAvatar ? (
+              <img
+                src={userAvatar}
+                alt={companyName}
+                className="h-8 w-8 rounded-lg object-cover bg-white shadow-sm border border-emerald-100 flex-shrink-0"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                <span className="text-white text-sm font-bold">{companyName.charAt(0)}</span>
+              </div>
+            )}
+            <div className="text-right">
+              <p className="text-xs font-semibold truncate max-w-[100px]" style={{ color: "#065f46" }}>{companyName}</p>
               <p className="text-[9px]" style={{ color: "#047857" }}>ESG Command Center</p>
             </div>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
-              style={{ background: "rgba(255, 255, 255, 0.8)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#065f46" }}
-            >
-              {showMenu ? <X className="w-4 h-4" /> : <MoreVertical className="w-4 h-4" />}
-            </button>
           </div>
         </div>
-
-        {/* Dropdown Menu - Matching web view styling */}
-        {showMenu && (
-          <div ref={menuRef} className="absolute right-3 top-full mt-1 w-52 bg-white rounded-xl shadow-xl overflow-hidden z-50" style={{ border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-            <div className="p-3 border-b" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)", borderColor: "rgba(16, 185, 129, 0.15)" }}>
-              <p className="text-sm font-semibold" style={{ color: "#065f46" }}>{companyName}</p>
-              <p className="text-xs" style={{ color: "#047857" }}>{user?.email}</p>
-            </div>
-            <nav className="p-2">
-              <button onClick={() => { navigate('/csr-dashboard'); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors" style={{ color: "#065f46" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                <Home className="w-4 h-4" /> Dashboard
-              </button>
-              <button onClick={() => { navigate('/csr-impact-reporting'); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors" style={{ color: "#065f46" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                <BarChart3 className="w-4 h-4" /> Impact Reports
-              </button>
-              <button onClick={() => { navigate('/project-portfolio'); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors" style={{ color: "#065f46" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                <Briefcase className="w-4 h-4" /> Projects
-              </button>
-              <button onClick={() => { navigate('/csr-reports-exports'); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors" style={{ color: "#065f46" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                <FileText className="w-4 h-4" /> Export Data
-              </button>
-              <button onClick={() => { navigate('/corporate-partner-profile-settings'); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors" style={{ color: "#065f46" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                <Settings className="w-4 h-4" /> Settings
-              </button>
-            </nav>
-            <div className="p-2 border-t" style={{ borderColor: "rgba(16, 185, 129, 0.15)" }}>
-              <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <LogOut className="w-4 h-4" /> Sign Out
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Main Content */}
@@ -968,38 +955,48 @@ export default function CSRDashboardPWA() {
                       {/* SDG Commitment vs Actual Radar Chart */}
                       {committedSDGs.length > 0 && (
                         <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-indigo-100">
-                          <h4 className="text-xs font-semibold text-slate-700 mb-2 text-center">Commitment vs Actual Hours</h4>
-                          <div className="h-36">
+                          <h4 className="text-xs font-semibold text-slate-700 mb-1 text-center">Committed vs Actual SDGs</h4>
+                          <p className="text-[9px] text-slate-500 text-center mb-2">
+                            {committedSDGs.length} committed • {alignedSDGs.length} with activity • {(csrData.sdgMetrics || []).reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0).toLocaleString()}h total
+                          </p>
+                          <div className="h-40">
                             <ResponsiveContainer width="100%" height="100%">
                               <RadarChart
-                                data={committedSDGs.slice(0, 6).map((sdg: number) => {
+                                data={committedSDGs.slice(0, 8).map((sdg: number) => {
                                   const metric = (csrData.sdgMetrics || []).find((m: any) => m.sdg === sdg);
-                                  const targetHours = 100; // Target hours per SDG
+                                  const hasActivity = metric && metric.totalHours > 0;
                                   return {
                                     sdg: `SDG ${sdg}`,
-                                    target: targetHours,
-                                    actual: metric?.totalHours || 0,
-                                    fullMark: Math.max(targetHours, metric?.totalHours || 0) * 1.2
+                                    committed: 100, // Full commitment level
+                                    actual: hasActivity ? Math.min(100, metric.totalHours) : 0,
+                                    hours: metric?.totalHours || 0
                                   };
                                 })}
-                                margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
+                                margin={{ top: 15, right: 25, bottom: 15, left: 25 }}
                               >
                                 <PolarGrid stroke="#e2e8f0" />
                                 <PolarAngleAxis dataKey="sdg" tick={{ fill: '#475569', fontSize: 8 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#94a3b8', fontSize: 7 }} />
-                                <Radar name="Target" dataKey="target" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} strokeWidth={2} />
-                                <Radar name="Actual" dataKey="actual" stroke="#10b981" fill="#10b981" fillOpacity={0.5} strokeWidth={2} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 7 }} tickCount={4} />
+                                <Radar name="Committed" dataKey="committed" stroke="#6366f1" fill="#6366f1" fillOpacity={0.15} strokeWidth={2} strokeDasharray="4 2" />
+                                <Radar name="Actual Activity" dataKey="actual" stroke="#10b981" fill="#10b981" fillOpacity={0.5} strokeWidth={2} />
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '10px' }}
+                                  formatter={(value: any, name: string, props: any) => {
+                                    if (name === 'Committed') return ['Committed', ''];
+                                    return [`${props.payload.hours}h logged`, 'Activity'];
+                                  }}
+                                />
                               </RadarChart>
                             </ResponsiveContainer>
                           </div>
                           <div className="flex justify-center gap-4 mt-1 text-[9px]">
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                              <span className="text-slate-600">Target</span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-0.5 bg-indigo-500" style={{ borderStyle: 'dashed' }} />
+                              <span className="text-slate-600">Committed SDGs</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                              <span className="text-slate-600">Actual</span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-3 rounded-sm bg-emerald-500/50 border border-emerald-500" />
+                              <span className="text-slate-600">Actual Activity</span>
                             </div>
                           </div>
                         </div>
@@ -1057,6 +1054,65 @@ export default function CSRDashboardPWA() {
                     </div>
                   );
                 })()}
+              </div>
+            )}
+
+            {/* Project Location Map - Home Tab */}
+            {csrData?.projectLocations && csrData.projectLocations.length > 0 && (
+              <div className="bg-white rounded-xl border border-emerald-200/60 shadow-sm overflow-hidden">
+                <div className="p-3 border-b border-emerald-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-sm font-semibold text-slate-800">Global Impact Map</h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {csrData.projectLocations.length} locations
+                  </span>
+                </div>
+                <div className="h-48">
+                  <MapContainer
+                    key="home-tab-map"
+                    center={[20, 0]}
+                    zoom={1}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={false}
+                    dragging={true}
+                    zoomControl={false}
+                  >
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                      attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                    />
+                    {csrData.projectLocations.map((p: any, idx: number) => (
+                      <CircleMarker
+                        key={idx}
+                        center={[p.lat || 0, p.lng || 0]}
+                        radius={Math.max(5, Math.min(12, (p.hours || 0) / 20))}
+                        fillColor={p.status === 'Completed' ? '#3B82F6' : '#10B981'}
+                        fillOpacity={0.7}
+                        stroke={true}
+                        color="#fff"
+                        weight={1.5}
+                      >
+                        <Popup>
+                          <div className="text-xs">
+                            <p className="font-bold text-slate-800">{p.name}</p>
+                            <p className="text-slate-500">{p.region}</p>
+                            <p className="text-emerald-600 font-medium">{p.hours}h • {p.employees} employees</p>
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+                    ))}
+                  </MapContainer>
+                </div>
+                <div className="p-2 bg-slate-50 flex justify-center gap-4 border-t border-slate-100">
+                  <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Active
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full" /> Completed
+                  </span>
+                </div>
               </div>
             )}
 
@@ -1401,6 +1457,29 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
   const sdgMetrics = csrData?.sdgMetrics || [];
   const activeSdgs = sdgMetrics.filter(m => m.totalHours > 0);
   const totalHours = sdgMetrics.reduce((sum, m) => sum + (m.totalHours || 0), 0);
+  const committedSDGs = csrData?.primarySdgs || [];
+  const projectLocations = csrData?.projectLocations || [];
+
+  // Radar data for committed vs actual SDGs
+  const radarData = committedSDGs.length > 0
+    ? committedSDGs.slice(0, 8).map((sdg: number) => {
+        const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
+        const hasActivity = metric && metric.totalHours > 0;
+        return {
+          sdg: `SDG ${sdg}`,
+          sdgNum: sdg,
+          committed: 100, // Full commitment
+          actual: hasActivity ? Math.min(100, (metric?.totalHours || 0)) : 0,
+          hours: metric?.totalHours || 0,
+        };
+      })
+    : activeSdgs.slice(0, 8).map((m: any) => ({
+        sdg: `SDG ${m.sdg}`,
+        sdgNum: m.sdg,
+        committed: 0,
+        actual: Math.min(100, m.totalHours),
+        hours: m.totalHours,
+      }));
 
   return (
     <div className="p-4 space-y-4">
@@ -1418,27 +1497,80 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-3 text-center border border-teal-200 shadow-sm">
-          <p className="text-2xl font-bold text-teal-700">{activeSdgs.length}</p>
-          <p className="text-[10px] text-teal-600 font-medium">Active SDGs</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-3 text-center border border-indigo-200 shadow-sm">
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-2xl font-bold text-indigo-700">{committedSDGs.length}</p>
+            <span className="text-indigo-400">/</span>
+            <p className="text-2xl font-bold text-emerald-600">{activeSdgs.length}</p>
+          </div>
+          <p className="text-[10px] text-indigo-600 font-medium">Committed / Active SDGs</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
           <p className="text-2xl font-bold text-emerald-700">{totalHours.toLocaleString()}</p>
           <p className="text-[10px] text-emerald-600 font-medium">Total Hours</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
-          <div className="flex items-center justify-center gap-1">
-            <p className="text-2xl font-bold text-amber-700">{csrData?.sdgScoreDelta || 0}%</p>
-            {(csrData?.sdgScoreDelta || 0) >= 0 ? (
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-            ) : (
-              <ArrowDownRight className="w-4 h-4 text-red-500" />
-            )}
-          </div>
-          <p className="text-[10px] text-amber-600 font-medium">vs Quarter</p>
-        </div>
       </div>
+
+      {/* Committed vs Actual SDG Radar */}
+      {(committedSDGs.length > 0 || activeSdgs.length > 0) && (
+        <div className="bg-white rounded-xl p-4 border border-indigo-200/60 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-800 mb-2 text-center">Committed vs Actual SDG Progress</h3>
+          <p className="text-[10px] text-slate-500 text-center mb-3">
+            {committedSDGs.length} SDGs committed • {activeSdgs.filter(s => committedSDGs.includes(s.sdg)).length} with activity
+          </p>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis
+                  dataKey="sdg"
+                  tick={{ fill: '#475569', fontSize: 9 }}
+                />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 8 }} />
+                <Radar
+                  name="Committed"
+                  dataKey="committed"
+                  stroke="#6366f1"
+                  fill="#6366f1"
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                />
+                <Radar
+                  name="Actual Activity"
+                  dataKey="actual"
+                  stroke="#10b981"
+                  fill="#10b981"
+                  fillOpacity={0.5}
+                  strokeWidth={2}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                  }}
+                  formatter={(value: any, name: string, props: any) => {
+                    if (name === 'Committed') return ['Committed', ''];
+                    return [`${props.payload.hours}h logged`, 'Activity'];
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-6 mt-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-indigo-500" />
+              <span className="text-[10px] text-slate-600">Committed SDGs</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              <span className="text-[10px] text-slate-600">Actual Activity</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SDG Grid with UN Icons */}
       <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
@@ -1559,6 +1691,65 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
           )}
         </div>
       </div>
+
+      {/* Project Location Map */}
+      {projectLocations.length > 0 && (
+        <div className="bg-white rounded-xl border border-emerald-200/60 shadow-sm overflow-hidden">
+          <div className="p-3 border-b border-emerald-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-sm font-semibold text-slate-800">Global Impact Map</h3>
+            </div>
+            <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+              {projectLocations.length} locations
+            </span>
+          </div>
+          <div className="h-56">
+            <MapContainer
+              key="sdg-section-map"
+              center={[20, 0]}
+              zoom={1}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom={false}
+              dragging={true}
+              zoomControl={false}
+            >
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              />
+              {projectLocations.map((p: any, idx: number) => (
+                <CircleMarker
+                  key={idx}
+                  center={[p.lat || 0, p.lng || 0]}
+                  radius={Math.max(5, Math.min(12, (p.hours || 0) / 20))}
+                  fillColor={p.status === 'Completed' ? '#3B82F6' : '#10B981'}
+                  fillOpacity={0.7}
+                  stroke={true}
+                  color="#fff"
+                  weight={1.5}
+                >
+                  <Popup>
+                    <div className="text-xs">
+                      <p className="font-bold text-slate-800">{p.name}</p>
+                      <p className="text-slate-500">{p.region}</p>
+                      <p className="text-emerald-600 font-medium">{p.hours}h • {p.employees} employees</p>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </MapContainer>
+          </div>
+          <div className="p-2 bg-slate-50 flex justify-center gap-4 border-t border-slate-100">
+            <span className="flex items-center gap-1 text-[10px] text-slate-500">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Active
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-slate-500">
+              <span className="w-2 h-2 bg-blue-500 rounded-full" /> Completed
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

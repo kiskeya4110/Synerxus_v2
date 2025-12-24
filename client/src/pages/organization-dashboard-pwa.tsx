@@ -424,7 +424,7 @@ export default function OrganizationDashboardPWA() {
       items: [
         { icon: BarChart3, label: "Impact Report", desc: "Visualize your impact", action: () => navigate('/impact-visualization'), color: "purple" },
         { icon: Target, label: "SDG Mapping", desc: "UN Goals alignment", action: () => navigate('/sdg-mapping'), color: "teal" },
-        { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/organization-leaderboard'), color: "amber", hot: true },
+        { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/volunteer-leaderboard/pwa'), color: "amber", hot: true },
         { icon: TrendingUp, label: "Analytics", desc: "Performance metrics", action: () => navigate('/csr-reports-exports'), color: "indigo" },
       ]
     },
@@ -433,7 +433,7 @@ export default function OrganizationDashboardPWA() {
       items: [
         { icon: Users, label: "Volunteers", desc: "Your team members", action: () => navigate('/volunteers'), badge: metrics.activeVolunteers, color: "sky" },
         { icon: Lightbulb, label: "Stories", desc: "Impact storytelling", action: () => navigate('/impact-storytelling'), color: "orange", isNew: true },
-        { icon: Award, label: "Recognition", desc: "Celebrate achievements", action: () => navigate('/volunteer-recognition'), color: "rose" },
+        { icon: Award, label: "Recognition", desc: "Celebrate achievements", action: () => navigate('/volunteer-leaderboard/pwa'), color: "rose" },
       ]
     },
     {
@@ -534,18 +534,27 @@ export default function OrganizationDashboardPWA() {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                <button
+                  onClick={() => setShowVolunteerHoursModal(true)}
+                  className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
+                >
                   <p className="text-xl font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
                   <p className="text-[9px] text-emerald-700 font-medium">Hours</p>
-                </div>
-                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                </button>
+                <button
+                  onClick={() => navigate('/projects')}
+                  className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
+                >
                   <p className="text-xl font-bold text-slate-800">{metrics.activeProjects}</p>
                   <p className="text-[9px] text-emerald-700 font-medium">Projects</p>
-                </div>
-                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                </button>
+                <button
+                  onClick={() => setShowLivesPerHourModal(true)}
+                  className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
+                >
                   <p className="text-xl font-bold text-slate-800">{totalPeopleImpacted.toLocaleString()}</p>
                   <p className="text-[9px] text-emerald-700 font-medium">Lives</p>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -632,80 +641,6 @@ export default function OrganizationDashboardPWA() {
               <p className="text-lg font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
               <p className="text-[9px] text-slate-500">Total Hours</p>
             </button>
-          </div>
-
-          {/* Team Performance Card - Fully Interactive */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-sm">
-                  <Users className="w-3.5 h-3.5 text-white" />
-                </div>
-                Team Performance
-              </h3>
-              <button
-                onClick={() => navigate('/volunteers')}
-                className="text-[11px] text-blue-600 font-semibold hover:text-blue-700"
-              >
-                View Team →
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {/* Active Volunteers - Clickable */}
-              <button
-                onClick={() => navigate('/volunteers')}
-                className="p-3 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-sky-100"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Users className="w-4 h-4 text-sky-600" />
-                  <ChevronRight className="w-3 h-3 text-sky-400" />
-                </div>
-                <p className="text-xl font-bold text-sky-700">{metrics.activeVolunteers || 0}</p>
-                <p className="text-[10px] text-sky-600">Active Volunteers</p>
-              </button>
-              {/* Avg Hours/Volunteer - Clickable */}
-              <button
-                onClick={() => navigate('/projects')}
-                className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-emerald-100"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Clock className="w-4 h-4 text-emerald-600" />
-                  <ChevronRight className="w-3 h-3 text-emerald-400" />
-                </div>
-                <p className="text-xl font-bold text-emerald-700">
-                  {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}
-                </p>
-                <p className="text-[10px] text-emerald-600">Avg Hours/Person</p>
-              </button>
-              {/* Lives Impacted - Clickable */}
-              <button
-                onClick={() => navigate('/impact-visualization')}
-                className="p-3 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-rose-100"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Heart className="w-4 h-4 text-rose-600" />
-                  <ChevronRight className="w-3 h-3 text-rose-400" />
-                </div>
-                <p className="text-xl font-bold text-rose-700">
-                  {(metrics.livesTouched || metrics.peopleImpacted || totalPeopleImpacted || 0).toLocaleString()}
-                </p>
-                <p className="text-[10px] text-rose-600">Lives Impacted</p>
-              </button>
-              {/* Completion Rate - Clickable */}
-              <button
-                onClick={() => navigate('/projects')}
-                className="p-3 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-violet-100"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <CheckCircle className="w-4 h-4 text-violet-600" />
-                  <ChevronRight className="w-3 h-3 text-violet-400" />
-                </div>
-                <p className="text-xl font-bold text-violet-700">
-                  {metrics.totalProjects > 0 ? Math.round((metrics.completedProjects / metrics.totalProjects) * 100) : 0}%
-                </p>
-                <p className="text-[10px] text-violet-600">Completion Rate</p>
-              </button>
-            </div>
           </div>
 
           {/* Cumulative Impact Over Time - Interactive Chart */}
@@ -819,6 +754,80 @@ export default function OrganizationDashboardPWA() {
               </div>
             </div>
           )}
+
+          {/* Team Performance Card - Fully Interactive */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-sm">
+                  <Users className="w-3.5 h-3.5 text-white" />
+                </div>
+                Team Performance
+              </h3>
+              <button
+                onClick={() => navigate('/volunteers')}
+                className="text-[11px] text-blue-600 font-semibold hover:text-blue-700"
+              >
+                View Team →
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Active Volunteers - Clickable */}
+              <button
+                onClick={() => navigate('/volunteers')}
+                className="p-3 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-sky-100"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Users className="w-4 h-4 text-sky-600" />
+                  <ChevronRight className="w-3 h-3 text-sky-400" />
+                </div>
+                <p className="text-xl font-bold text-sky-700">{metrics.activeVolunteers || 0}</p>
+                <p className="text-[10px] text-sky-600">Active Volunteers</p>
+              </button>
+              {/* Avg Hours/Volunteer - Clickable */}
+              <button
+                onClick={() => navigate('/projects')}
+                className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-emerald-100"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Clock className="w-4 h-4 text-emerald-600" />
+                  <ChevronRight className="w-3 h-3 text-emerald-400" />
+                </div>
+                <p className="text-xl font-bold text-emerald-700">
+                  {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}
+                </p>
+                <p className="text-[10px] text-emerald-600">Avg Hours/Person</p>
+              </button>
+              {/* Lives Impacted - Clickable */}
+              <button
+                onClick={() => navigate('/impact-visualization')}
+                className="p-3 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-rose-100"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Heart className="w-4 h-4 text-rose-600" />
+                  <ChevronRight className="w-3 h-3 text-rose-400" />
+                </div>
+                <p className="text-xl font-bold text-rose-700">
+                  {(metrics.livesTouched || metrics.peopleImpacted || totalPeopleImpacted || 0).toLocaleString()}
+                </p>
+                <p className="text-[10px] text-rose-600">Lives Impacted</p>
+              </button>
+              {/* Completion Rate - Clickable */}
+              <button
+                onClick={() => navigate('/projects')}
+                className="p-3 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-violet-100"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <CheckCircle className="w-4 h-4 text-violet-600" />
+                  <ChevronRight className="w-3 h-3 text-violet-400" />
+                </div>
+                <p className="text-xl font-bold text-violet-700">
+                  {metrics.totalProjects > 0 ? Math.round((metrics.completedProjects / metrics.totalProjects) * 100) : 0}%
+                </p>
+                <p className="text-[10px] text-violet-600">Completion Rate</p>
+              </button>
+            </div>
+          </div>
 
           {/* SDG Impact Distribution */}
           {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
@@ -1128,76 +1137,52 @@ export default function OrganizationDashboardPWA() {
             </p>
           </div>
 
-          {/* Project Completion Overview */}
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-              Project Completion Overview
-            </h3>
-            <div className="space-y-3">
-              {dashboardData?.projects?.slice(0, 5).map((project) => (
-                <div key={project.id} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-700 truncate">{project.name}</p>
-                    <div className="mt-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${project.completionPercentage || 0}%`,
-                          backgroundColor: project.completionPercentage >= 75 ? '#10b981' :
-                                          project.completionPercentage >= 50 ? '#f59e0b' :
-                                          project.completionPercentage >= 25 ? '#3b82f6' : '#94a3b8'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-600 w-10 text-right">
-                    {project.completionPercentage || 0}%
-                  </span>
-                </div>
-              ))}
-              {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
-                <div className="text-center py-4 text-slate-500 text-sm">
-                  No projects to display
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Active Projects */}
+          {/* Active Projects with Completion Progress */}
           <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-800">Active Projects</h3>
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                Active Projects
+              </h3>
               <button onClick={() => navigate('/projects')} className="text-xs text-emerald-600 font-medium">
                 View All →
               </button>
             </div>
             <div className="space-y-2">
-              {dashboardData?.projects?.slice(0, 4).map((project) => (
+              {dashboardData?.projects?.slice(0, 5).map((project) => (
                 <button
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-left"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{project.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-slate-800 truncate pr-2">{project.name}</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${
+                        project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {project.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-emerald-500 rounded-full"
-                          style={{ width: `${project.completionPercentage || 0}%` }}
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${project.completionPercentage || 0}%`,
+                            backgroundColor: project.completionPercentage >= 75 ? '#10b981' :
+                                            project.completionPercentage >= 50 ? '#f59e0b' :
+                                            project.completionPercentage >= 25 ? '#3b82f6' : '#94a3b8'
+                          }}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-500">{project.completionPercentage || 0}%</span>
+                      <span className="text-xs font-semibold text-slate-600 w-9 text-right">
+                        {project.completionPercentage || 0}%
+                      </span>
                     </div>
                   </div>
-                  <span className={`text-[10px] px-2 py-1 rounded-full ${
-                    project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {project.status}
-                  </span>
                 </button>
               ))}
               {(!dashboardData?.projects || dashboardData.projects.length === 0) && (

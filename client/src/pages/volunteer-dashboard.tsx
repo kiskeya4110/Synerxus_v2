@@ -37,6 +37,7 @@ import MobilePWAView from "@/components/volunteer/mobile-pwa-view";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
+import Footer from "@/components/layout/footer";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
@@ -1859,7 +1860,7 @@ export default function Dashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-y-auto overflow-x-hidden space-y-5 md:space-y-6 px-4 md:px-24 pb-8 w-full max-w-full">
+      <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-y-auto overflow-x-hidden space-y-5 md:space-y-6 px-4 md:px-6 lg:px-8 pb-8 w-full max-w-[1400px] mx-auto">
       {/* Header - Enhanced PWA-style */}
       <div className="space-y-4 md:space-y-6 pt-4 md:pt-6">
         <div className="flex items-center justify-between">
@@ -2835,6 +2836,11 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
+
+      {/* Footer - Hidden on mobile */}
+      <div className="hidden md:block mt-8">
+        <Footer />
       </div>
       </div>
     </PageTransition>

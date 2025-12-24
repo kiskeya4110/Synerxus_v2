@@ -21,6 +21,7 @@ import {
   Zap,
   Calendar,
   Award,
+  Menu,
 } from "lucide-react";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
@@ -90,14 +91,19 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Click outside to close notifications
+  // Click outside to close notifications and mobile menu
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setShowMobileMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -242,8 +248,30 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           })}
         </nav>
 
-        {/* Right: Corporate Logo, Company Name, KPI Menu, Notifications */}
+        {/* Right: Hamburger Menu (mobile), Corporate Logo, Company Name, KPI Menu, Notifications */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Hamburger Menu Button - Visible on narrow screens only */}
+          <button
+            className="flex lg:hidden"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: showMobileMenu ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.8)",
+              border: showMobileMenu ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#065f46",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
           {/* Corporate Company Badge */}
           <div className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {companyLogo ? (
@@ -614,6 +642,219 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             <div style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a" }}>{currentDate}</div>
           </div>
         </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.4)",
+            zIndex: 80,
+            transition: "opacity 0.3s ease",
+          }}
+          onClick={() => setShowMobileMenu(false)}
+        />
+      )}
+
+      {/* Mobile Slide-out Menu */}
+      <div
+        ref={mobileMenuRef}
+        className="lg:hidden"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "280px",
+          height: "100dvh",
+          background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+          boxShadow: showMobileMenu ? "4px 0 20px rgba(0, 0, 0, 0.15)" : "none",
+          transform: showMobileMenu ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.3s ease",
+          zIndex: 90,
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+        }}
+      >
+        {/* Mobile Menu Header */}
+        <div style={{
+          padding: "20px",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+          background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #fef3c7 100%)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt={companyName}
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "10px",
+                    objectFit: "cover",
+                    border: "2px solid rgba(16, 185, 129, 0.3)",
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "10px",
+                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <Building2 size={20} color="white" />
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "600", color: "#065f46" }}>{companyName}</div>
+                <div style={{ fontSize: "11px", color: "#059669" }}>ESG Dashboard</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowMobileMenu(false)}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "8px",
+                background: "rgba(0, 0, 0, 0.05)",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#64748b",
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Navigation */}
+        <nav style={{ padding: "16px", flex: 1 }}>
+          <div style={{ marginBottom: "12px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Dashboard Navigation
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    navigate(item.href);
+                    setShowMobileMenu(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    background: isActive
+                      ? "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)"
+                      : "transparent",
+                    color: isActive ? "white" : "#475569",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: isActive ? "600" : "500",
+                    fontSize: "14px",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "all 0.2s ease",
+                    boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
+                  }}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Top Menu Items in Mobile */}
+          <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}>
+            <div style={{ marginBottom: "12px" }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Quick Links
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {topMenuItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    navigate(item.href);
+                    setShowMobileMenu(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    background: "transparent",
+                    color: "#475569",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: "500",
+                    fontSize: "13px",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </nav>
+
+        {/* Mobile Menu Footer Help */}
+        <div style={{
+          padding: "16px",
+          borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+          background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+        }}>
+          <div style={{ fontSize: "13px", fontWeight: "600", color: "#92400e", marginBottom: "4px" }}>
+            Need Help?
+          </div>
+          <div style={{ fontSize: "12px", color: "#a16207", marginBottom: "12px" }}>
+            Access guides and support resources
+          </div>
+          <button
+            onClick={() => {
+              window.open("/help", "_blank");
+              setShowMobileMenu(false);
+            }}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              background: "white",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              color: "#92400e",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+            }}
+          >
+            View Resources
+          </button>
         </div>
       </div>
 

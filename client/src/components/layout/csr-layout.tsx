@@ -37,67 +37,67 @@ interface Notification {
   actionLabel?: string;
 }
 
-// Mock notifications data
+// Notifications data - connected to real dashboard sections
 const mockNotifications: Notification[] = [
   {
     id: "1",
     type: "achievement",
-    title: "Milestone Reached!",
-    message: "Your team has logged 1,000 volunteer hours this quarter. View your team's progress and celebrate this achievement.",
+    title: "Quarterly Impact Milestone",
+    message: "Your company has achieved 1,000+ volunteer hours this quarter! View the detailed impact metrics and SDG contributions in your Impact Analytics dashboard.",
     time: "2 hours ago",
     read: false,
     link: "/csr-impact-reporting",
-    actionLabel: "View Impact Report",
+    actionLabel: "Open Impact Analytics",
   },
   {
     id: "2",
     type: "success",
-    title: "New Project Match",
-    message: "3 employees matched with 'Community Garden Initiative'. Review and approve their assignments.",
+    title: "New Volunteer Projects Available",
+    message: "3 new volunteer opportunities have been added to your Project Portfolio. Browse and assign employees to these initiatives.",
     time: "5 hours ago",
     read: false,
     link: "/project-portfolio",
-    actionLabel: "View Projects",
+    actionLabel: "Browse Projects",
   },
   {
     id: "3",
     type: "info",
-    title: "Monthly Report Ready",
-    message: "Your December ESG impact report is ready for review. Download and share with stakeholders.",
+    title: "ESG Report Ready for Export",
+    message: "Your monthly ESG impact report is ready. Export as PDF, Excel, or share directly with stakeholders from the Reports dashboard.",
     time: "1 day ago",
     read: true,
     link: "/csr-reports-exports",
-    actionLabel: "View Reports",
+    actionLabel: "Export Reports",
   },
   {
     id: "4",
     type: "warning",
-    title: "Engagement Alert",
-    message: "5 volunteers haven't logged hours in 2 weeks. Consider sending reminders or checking in with them.",
+    title: "Employee Engagement Review",
+    message: "Some team members haven't logged volunteer hours recently. Review participation metrics and send engagement reminders.",
     time: "2 days ago",
     read: true,
     link: "/csr-dashboard?tab=engagement",
-    actionLabel: "View Engagement",
+    actionLabel: "Review Engagement",
   },
   {
     id: "5",
     type: "info",
-    title: "New SDG Goal Added",
-    message: "SDG 13 (Climate Action) has been added to your company's ESG commitments. View your SDG mapping.",
+    title: "SDG Alignment Update",
+    message: "Your volunteer activities are now mapped to 12 UN Sustainable Development Goals. Review your SDG alignment and impact distribution.",
     time: "3 days ago",
     read: true,
     link: "/sdg-mapping",
-    actionLabel: "View SDG Mapping",
+    actionLabel: "View SDG Map",
   },
   {
     id: "6",
     type: "success",
-    title: "Partner Organization Joined",
-    message: "Green Earth Foundation has joined as a partner organization. Explore their projects.",
+    title: "New Partner Organizations",
+    message: "Discover nonprofit partners aligned with your ESG goals. Browse organizations and explore collaboration opportunities.",
     time: "4 days ago",
     read: true,
     link: "/organizations",
-    actionLabel: "View Organizations",
+    actionLabel: "Find Partners",
   },
 ];
 
@@ -524,7 +524,10 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                                 {notification.time}
                               </span>
                               <button
-                                onClick={() => {
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   markAsRead(notification.id);
                                   setShowNotifications(false);
                                   navigate(notification.link);
@@ -535,25 +538,39 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                                   color: "#059669",
                                   background: "rgba(16, 185, 129, 0.1)",
                                   border: "1px solid rgba(16, 185, 129, 0.2)",
-                                  padding: "6px 12px",
+                                  padding: "8px 14px",
                                   borderRadius: "6px",
                                   cursor: "pointer",
                                   transition: "all 0.2s ease",
                                   display: "flex",
                                   alignItems: "center",
-                                  gap: "4px",
+                                  gap: "6px",
+                                  position: "relative",
+                                  zIndex: 5,
+                                  pointerEvents: "auto",
+                                  whiteSpace: "nowrap",
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.4)";
+                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
+                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                  e.currentTarget.style.color = "#047857";
+                                  e.currentTarget.style.transform = "translateX(2px)";
                                 }}
                                 onMouseLeave={(e) => {
                                   e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
                                   e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
+                                  e.currentTarget.style.color = "#059669";
+                                  e.currentTarget.style.transform = "translateX(0)";
+                                }}
+                                onMouseDown={(e) => {
+                                  e.currentTarget.style.transform = "scale(0.98)";
+                                }}
+                                onMouseUp={(e) => {
+                                  e.currentTarget.style.transform = "translateX(2px)";
                                 }}
                               >
                                 {notification.actionLabel || "View Details"}
-                                <span style={{ fontSize: "14px" }}>→</span>
+                                <span style={{ fontSize: "14px", transition: "transform 0.2s ease" }}>→</span>
                               </button>
                             </div>
                           </div>

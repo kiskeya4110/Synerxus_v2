@@ -576,9 +576,14 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
                   flexShrink: 0,
                   borderRadius: "0 0 16px 16px",
+                  position: "relative",
+                  zIndex: 10,
                 }}>
                   <button
-                    onClick={() => {
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       setShowNotifications(false);
                       navigate("/csr-dashboard?tab=engagement");
                     }}
@@ -598,14 +603,27 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                       gap: "8px",
                       boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
                       transition: "all 0.2s ease",
+                      position: "relative",
+                      zIndex: 11,
+                      pointerEvents: "auto",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-1px)";
                       e.currentTarget.style.boxShadow = "0 6px 16px rgba(16, 185, 129, 0.4)";
+                      e.currentTarget.style.background = "linear-gradient(135deg, #059669 0%, #047857 100%)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "translateY(0)";
                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+                      e.currentTarget.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.transform = "translateY(1px)";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(16, 185, 129, 0.3)";
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(16, 185, 129, 0.4)";
                     }}
                   >
                     <Zap size={16} />

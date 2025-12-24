@@ -850,8 +850,11 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
               const isActive = activeNav === item.id;
               return (
                 <button
+                  type="button"
                   key={item.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     navigate(item.href);
                     setShowMobileMenu(false);
                   }}
@@ -873,6 +876,27 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                     width: "100%",
                     transition: "all 0.2s ease",
                     boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
+                    pointerEvents: "auto",
+                    position: "relative",
+                    zIndex: 5,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                      e.currentTarget.style.color = "#3b82f6";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#475569";
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.transform = "scale(0.98)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
                   <Icon size={20} />
@@ -983,8 +1007,13 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
               const isActive = activeNav === item.id;
               return (
                 <button
+                  type="button"
                   key={item.id}
-                  onClick={() => navigate(item.href)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate(item.href);
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -1003,6 +1032,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                     width: "100%",
                     transition: "all 0.2s ease",
                     boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
+                    pointerEvents: "auto",
+                    position: "relative",
+                    zIndex: 5,
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -1015,6 +1047,12 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                       e.currentTarget.style.background = "transparent";
                       e.currentTarget.style.color = "#475569";
                     }
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.transform = "scale(0.98)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
                   <Icon size={20} />

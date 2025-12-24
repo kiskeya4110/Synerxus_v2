@@ -33,6 +33,8 @@ interface Notification {
   message: string;
   time: string;
   read: boolean;
+  link: string;
+  actionLabel?: string;
 }
 
 // Mock notifications data
@@ -41,33 +43,61 @@ const mockNotifications: Notification[] = [
     id: "1",
     type: "achievement",
     title: "Milestone Reached!",
-    message: "Your team has logged 1,000 volunteer hours this quarter.",
+    message: "Your team has logged 1,000 volunteer hours this quarter. View your team's progress and celebrate this achievement.",
     time: "2 hours ago",
     read: false,
+    link: "/csr-impact-reporting",
+    actionLabel: "View Impact Report",
   },
   {
     id: "2",
     type: "success",
     title: "New Project Match",
-    message: "3 employees matched with 'Community Garden Initiative'.",
+    message: "3 employees matched with 'Community Garden Initiative'. Review and approve their assignments.",
     time: "5 hours ago",
     read: false,
+    link: "/project-portfolio",
+    actionLabel: "View Projects",
   },
   {
     id: "3",
     type: "info",
     title: "Monthly Report Ready",
-    message: "Your December ESG impact report is ready for review.",
+    message: "Your December ESG impact report is ready for review. Download and share with stakeholders.",
     time: "1 day ago",
     read: true,
+    link: "/csr-reports-exports",
+    actionLabel: "View Reports",
   },
   {
     id: "4",
     type: "warning",
     title: "Engagement Alert",
-    message: "5 volunteers haven't logged hours in 2 weeks.",
+    message: "5 volunteers haven't logged hours in 2 weeks. Consider sending reminders or checking in with them.",
     time: "2 days ago",
     read: true,
+    link: "/csr-dashboard?tab=engagement",
+    actionLabel: "View Engagement",
+  },
+  {
+    id: "5",
+    type: "info",
+    title: "New SDG Goal Added",
+    message: "SDG 13 (Climate Action) has been added to your company's ESG commitments. View your SDG mapping.",
+    time: "3 days ago",
+    read: true,
+    link: "/sdg-mapping",
+    actionLabel: "View SDG Mapping",
+  },
+  {
+    id: "6",
+    type: "success",
+    title: "Partner Organization Joined",
+    message: "Green Earth Foundation has joined as a partner organization. Explore their projects.",
+    time: "4 days ago",
+    read: true,
+    link: "/organizations",
+    actionLabel: "View Organizations",
   },
 ];
 
@@ -250,9 +280,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
 
         {/* Right: Hamburger Menu (mobile), Corporate Logo, Company Name, KPI Menu, Notifications */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Hamburger Menu Button - Visible on narrow screens only */}
+          {/* Hamburger Menu Button - Visible only when sidebar is hidden (< lg screens) */}
           <button
-            className="flex lg:hidden"
+            className="hidden max-lg:flex items-center justify-center"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             style={{
               width: "40px",
@@ -261,9 +291,6 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
               background: showMobileMenu ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.8)",
               border: showMobileMenu ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               color: "#065f46",
               boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
               transition: "all 0.2s ease",
@@ -359,18 +386,19 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  width: "500px",
-                  minWidth: "480px",
-                  maxHeight: "580px",
+                  width: "520px",
+                  minWidth: "500px",
+                  maxHeight: "80vh",
                   background: "white",
                   borderRadius: "16px",
                   boxShadow: "0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.1)",
                   border: "1px solid rgba(16, 185, 129, 0.15)",
-                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
                   zIndex: 100,
                 }}
               >
-                {/* Header */}
+                {/* Header - Fixed */}
                 <div style={{
                   padding: "20px 24px",
                   borderBottom: "1px solid #e5e7eb",
@@ -378,6 +406,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   alignItems: "center",
                   justifyContent: "space-between",
                   background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #fef3c7 100%)",
+                  flexShrink: 0,
+                  borderRadius: "16px 16px 0 0",
                 }}>
                   <div>
                     <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#065f46", margin: 0 }}>
@@ -425,35 +455,30 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   </div>
                 </div>
 
-                {/* Notification List */}
-                <div style={{ maxHeight: "450px", overflowY: "auto" }}>
+                {/* Notification List - Scrollable */}
+                <div style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                }}>
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
-                      <button
+                      <div
                         key={notification.id}
-                        onClick={() => markAsRead(notification.id)}
                         style={{
                           display: "block",
                           width: "100%",
                           textAlign: "left",
-                          padding: "20px 28px",
-                          cursor: "pointer",
+                          padding: "18px 24px",
                           background: notification.read ? "#fafafa" : getNotificationBg(notification.type, notification.read),
-                          border: "none",
                           borderBottom: "1px solid #e5e7eb",
                           transition: "background 0.2s ease",
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = notification.read ? "#f5f5f5" : "#f0fdf4";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = notification.read ? "#fafafa" : getNotificationBg(notification.type, notification.read);
-                        }}
                       >
-                        <div style={{ display: "flex", gap: "18px", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
                           <div style={{
-                            width: "44px",
-                            height: "44px",
+                            width: "42px",
+                            height: "42px",
                             borderRadius: "12px",
                             background: notification.read ? "#f1f5f9" : "white",
                             display: "flex",
@@ -466,9 +491,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                             {getNotificationIcon(notification.type)}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
                               <span style={{
-                                fontSize: "16px",
+                                fontSize: "15px",
                                 fontWeight: notification.read ? "500" : "600",
                                 color: notification.read ? "#64748b" : "#0f172a",
                               }}>
@@ -476,29 +501,64 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                               </span>
                               {!notification.read && (
                                 <span style={{
-                                  width: "10px",
-                                  height: "10px",
+                                  width: "8px",
+                                  height: "8px",
                                   borderRadius: "50%",
                                   background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                                   boxShadow: "0 0 6px rgba(16, 185, 129, 0.5)",
+                                  flexShrink: 0,
                                 }} />
                               )}
                             </div>
                             <p style={{
-                              fontSize: "15px",
+                              fontSize: "14px",
                               color: notification.read ? "#94a3b8" : "#475569",
-                              margin: "0 0 8px 0",
-                              lineHeight: "1.6",
+                              margin: "0 0 10px 0",
+                              lineHeight: "1.5",
                               wordBreak: "break-word",
                             }}>
                               {notification.message}
                             </p>
-                            <span style={{ fontSize: "13px", color: "#94a3b8", fontWeight: "500" }}>
-                              {notification.time}
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                              <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>
+                                {notification.time}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  markAsRead(notification.id);
+                                  setShowNotifications(false);
+                                  navigate(notification.link);
+                                }}
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                  color: "#059669",
+                                  background: "rgba(16, 185, 129, 0.1)",
+                                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.4)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
+                                }}
+                              >
+                                {notification.actionLabel || "View Details"}
+                                <span style={{ fontSize: "14px" }}>→</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     ))
                   ) : (
                     <div style={{ padding: "48px 24px", textAlign: "center" }}>
@@ -509,11 +569,13 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   )}
                 </div>
 
-                {/* Footer */}
+                {/* Footer - Fixed */}
                 <div style={{
                   padding: "16px 24px",
                   borderTop: "1px solid #e5e7eb",
                   background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+                  flexShrink: 0,
+                  borderRadius: "0 0 16px 16px",
                 }}>
                   <button
                     onClick={() => {

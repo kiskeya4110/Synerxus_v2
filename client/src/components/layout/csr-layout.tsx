@@ -331,8 +331,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  width: "420px",
-                  maxHeight: "520px",
+                  width: "500px",
+                  minWidth: "480px",
+                  maxHeight: "580px",
                   background: "white",
                   borderRadius: "16px",
                   boxShadow: "0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.1)",
@@ -397,7 +398,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                 </div>
 
                 {/* Notification List */}
-                <div style={{ maxHeight: "380px", overflowY: "auto" }}>
+                <div style={{ maxHeight: "450px", overflowY: "auto" }}>
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <button
@@ -407,7 +408,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                           display: "block",
                           width: "100%",
                           textAlign: "left",
-                          padding: "18px 24px",
+                          padding: "20px 28px",
                           cursor: "pointer",
                           background: notification.read ? "#fafafa" : getNotificationBg(notification.type, notification.read),
                           border: "none",
@@ -421,11 +422,11 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                           e.currentTarget.style.background = notification.read ? "#fafafa" : getNotificationBg(notification.type, notification.read);
                         }}
                       >
-                        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", gap: "18px", alignItems: "flex-start" }}>
                           <div style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "10px",
+                            width: "44px",
+                            height: "44px",
+                            borderRadius: "12px",
                             background: notification.read ? "#f1f5f9" : "white",
                             display: "flex",
                             alignItems: "center",
@@ -437,9 +438,9 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                             {getNotificationIcon(notification.type)}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                               <span style={{
-                                fontSize: "15px",
+                                fontSize: "16px",
                                 fontWeight: notification.read ? "500" : "600",
                                 color: notification.read ? "#64748b" : "#0f172a",
                               }}>
@@ -447,8 +448,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                               </span>
                               {!notification.read && (
                                 <span style={{
-                                  width: "8px",
-                                  height: "8px",
+                                  width: "10px",
+                                  height: "10px",
                                   borderRadius: "50%",
                                   background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                                   boxShadow: "0 0 6px rgba(16, 185, 129, 0.5)",
@@ -456,14 +457,15 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                               )}
                             </div>
                             <p style={{
-                              fontSize: "14px",
+                              fontSize: "15px",
                               color: notification.read ? "#94a3b8" : "#475569",
-                              margin: "0 0 6px 0",
-                              lineHeight: "1.5",
+                              margin: "0 0 8px 0",
+                              lineHeight: "1.6",
+                              wordBreak: "break-word",
                             }}>
                               {notification.message}
                             </p>
-                            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>
+                            <span style={{ fontSize: "13px", color: "#94a3b8", fontWeight: "500" }}>
                               {notification.time}
                             </span>
                           </div>

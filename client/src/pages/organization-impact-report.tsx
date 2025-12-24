@@ -71,7 +71,6 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Pie } from "react-chartjs-2";
-import { formatDecimal } from "@/lib/format-utils";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#e5243b",

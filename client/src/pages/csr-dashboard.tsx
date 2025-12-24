@@ -4056,7 +4056,8 @@ export default function CSRDashboard() {
                         </div>
                         <div>
                           <div style={{ fontSize: "11px", color: "#065f46", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Environmental</div>
-                          <div style={{ fontSize: "10px", color: "#059669" }}>SDGs 6, 7, 12, 13, 14, 15 • {esgHoursByProject.envProjects} projects</div>
+                          <div style={{ fontSize: "10px", color: "#059669" }}>SDGs 6, 7, 12, 13, 14, 15</div>
+                          <div style={{ fontSize: "10px", color: "#059669", fontWeight: "600", marginTop: "2px" }}>{esgHoursByProject.envProjects} projects</div>
                         </div>
                       </div>
                       <div style={{ fontSize: "28px", fontWeight: "700", color: "#065f46", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -4117,7 +4118,8 @@ export default function CSRDashboard() {
                         </div>
                         <div>
                           <div style={{ fontSize: "11px", color: "#1e3a8a", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Social</div>
-                          <div style={{ fontSize: "10px", color: "#3b82f6" }}>SDGs 1-5, 10, 11, 16 • {esgHoursByProject.socialProjects} projects</div>
+                          <div style={{ fontSize: "10px", color: "#3b82f6" }}>SDGs 1-5, 10, 11, 16</div>
+                          <div style={{ fontSize: "10px", color: "#3b82f6", fontWeight: "600", marginTop: "2px" }}>{esgHoursByProject.socialProjects} projects</div>
                         </div>
                       </div>
                       <div style={{ fontSize: "28px", fontWeight: "700", color: "#1e3a8a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -4178,7 +4180,8 @@ export default function CSRDashboard() {
                         </div>
                         <div>
                           <div style={{ fontSize: "11px", color: "#581c87", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Governance</div>
-                          <div style={{ fontSize: "10px", color: "#9333ea" }}>SDGs 8, 9, 17 • {esgHoursByProject.govProjects} projects</div>
+                          <div style={{ fontSize: "10px", color: "#9333ea" }}>SDGs 8, 9, 17</div>
+                          <div style={{ fontSize: "10px", color: "#9333ea", fontWeight: "600", marginTop: "2px" }}>{esgHoursByProject.govProjects} projects</div>
                         </div>
                       </div>
                       <div style={{ fontSize: "28px", fontWeight: "700", color: "#581c87", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

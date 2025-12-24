@@ -12,6 +12,10 @@ import {
   applyRoleBasedAttribution,
   updateAiuKpiFromImpacts
 } from "./utils";
+import {
+  authMiddleware,
+  optionalAuthMiddleware,
+} from "../middleware/auth";
 
 export const activitiesRouter = Router();
 
@@ -27,27 +31,107 @@ export function setBroadcastFn(fn: BroadcastFn) {
 /**
  * GET /volunteer-activities - List volunteer activities
  * Query params:
- *   - userId: Filter by user ID
- *   - projectId: Filter by project ID
+ *   - userId: Filter by user ID (requires auth - can only access own activities)
+ *   - projectId: Filter by project ID (requires project assignment)
+ *   - organizationId: Filter by org ID (requires org membership)
+ *
+ * Authorization:
+ *   - Volunteers can only access their own activities
+ *   - Organizations can access activities for their projects
+ *   - CSR partners can access activities for their linked employees
  */
-activitiesRouter.get("/volunteer-activities", async (req: Request, res: Response) => {
+activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId, projectId, organizationId } = req.query;
+    const authenticatedUser = req.user;
 
-    let activities;
+    let activities: any[] = [];
+
     if (userId) {
-      activities = await storage.listVolunteerActivitiesByUser(parseInt(userId as string));
+      const requestedUserId = parseInt(userId as string);
+
+      // Authorization check: Users can only access their own activities
+      // unless they are an organization viewing their project's activities
+      if (authenticatedUser) {
+        if (authenticatedUser.id !== requestedUserId &&
+            authenticatedUser.userType !== 'organization' &&
+            authenticatedUser.userType !== 'corporate-partner') {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "You can only access your own activities"
+          });
+        }
+      }
+
+      activities = await storage.listVolunteerActivitiesByUser(requestedUserId);
     } else if (projectId) {
-      activities = await storage.listVolunteerActivitiesByProject(parseInt(projectId as string));
+      const projectIdNum = parseInt(projectId as string);
+
+      // Verify user has access to this project
+      if (authenticatedUser) {
+        const project = await storage.getProject(projectIdNum);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Check authorization: must be volunteer assigned to project or org owner
+        if (authenticatedUser.userType === 'volunteer') {
+          const assignments = await storage.listProjectAssignmentsByVolunteer(authenticatedUser.id);
+          if (!assignments.some(a => a.projectId === projectIdNum)) {
+            return res.status(403).json({
+              error: "FORBIDDEN",
+              message: "You must be assigned to this project to view activities"
+            });
+          }
+        } else if (authenticatedUser.userType === 'organization') {
+          if (project.organizationId !== authenticatedUser.organizationId) {
+            return res.status(403).json({
+              error: "FORBIDDEN",
+              message: "You can only view activities for your organization's projects"
+            });
+          }
+        }
+      }
+
+      activities = await storage.listVolunteerActivitiesByProject(projectIdNum);
     } else if (organizationId) {
-      // Filter activities by organization: get org's projects, then filter activities by those project IDs
       const orgId = parseInt(organizationId as string);
+
+      // Authorization: Only organization members can view org activities
+      if (authenticatedUser && authenticatedUser.userType === 'organization') {
+        if (authenticatedUser.organizationId !== orgId) {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "You can only view activities for your own organization"
+          });
+        }
+      }
+
       const orgProjects = await storage.listProjectsByOrganization(orgId);
       const orgProjectIds = new Set(orgProjects.map(p => p.id));
       const allActivities = await storage.listVolunteerActivities();
       activities = allActivities.filter(a => a.projectId && orgProjectIds.has(a.projectId));
     } else {
-      activities = await storage.listVolunteerActivities();
+      // No filter - require authentication and limit based on user type
+      if (!authenticatedUser) {
+        return res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Authentication required to list all activities"
+        });
+      }
+
+      if (authenticatedUser.userType === 'volunteer') {
+        // Volunteers only see their own activities
+        activities = await storage.listVolunteerActivitiesByUser(authenticatedUser.id);
+      } else if (authenticatedUser.userType === 'organization' && authenticatedUser.organizationId) {
+        // Organizations see activities for their projects
+        const orgProjects = await storage.listProjectsByOrganization(authenticatedUser.organizationId);
+        const orgProjectIds = new Set(orgProjects.map(p => p.id));
+        const allActivities = await storage.listVolunteerActivities();
+        activities = allActivities.filter(a => a.projectId && orgProjectIds.has(a.projectId));
+      } else {
+        activities = [];
+      }
     }
 
     res.json(activities);

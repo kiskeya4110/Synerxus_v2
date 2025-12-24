@@ -10,6 +10,12 @@ import { logger } from "./logger";
 // Track digest send attempts to prevent duplicates
 let lastSendAttempt: Record<number, Date> = {};
 const MIN_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const MAX_SEND_ATTEMPTS = 10000; // Cap lastSendAttempt size
+const SEND_ATTEMPT_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+// Store interval/timeout references for cleanup
+let digestTimeout: NodeJS.Timeout | null = null;
+let digestInterval: NodeJS.Timeout | null = null;
 
 /**
  * Send weekly digests to all subscribed volunteers
@@ -102,17 +108,58 @@ export function initializeDigestScheduler(): void {
 
     logger.info(`Email digest scheduler initialized. Next digest: ${nextDigestDate.toISOString()}`);
 
-    setTimeout(() => {
+    digestTimeout = setTimeout(() => {
       sendWeeklyDigestsToVolunteers();
       sendWeeklyDigestsToOrganizations();
+      cleanupSendAttempts(); // Cleanup old entries
 
-      setInterval(() => {
+      digestInterval = setInterval(() => {
         sendWeeklyDigestsToVolunteers();
         sendWeeklyDigestsToOrganizations();
+        cleanupSendAttempts(); // Cleanup old entries
       }, 7 * 24 * 60 * 60 * 1000);
     }, timeUntilNextDigest);
   } catch (err) {
     logger.error("Error initializing digest scheduler", err);
+  }
+}
+
+/**
+ * Stop the digest scheduler - for graceful shutdown
+ */
+export function stopDigestScheduler(): void {
+  if (digestTimeout) {
+    clearTimeout(digestTimeout);
+    digestTimeout = null;
+  }
+  if (digestInterval) {
+    clearInterval(digestInterval);
+    digestInterval = null;
+  }
+  logger.info("Digest scheduler stopped");
+}
+
+/**
+ * Cleanup old send attempt entries to prevent unbounded memory growth
+ */
+function cleanupSendAttempts(): void {
+  const now = Date.now();
+  const entries = Object.entries(lastSendAttempt);
+
+  // Remove expired entries
+  entries.forEach(([key, date]) => {
+    if (now - date.getTime() > SEND_ATTEMPT_TTL) {
+      delete lastSendAttempt[parseInt(key)];
+    }
+  });
+
+  // If still too many, remove oldest
+  const remainingEntries = Object.entries(lastSendAttempt);
+  if (remainingEntries.length > MAX_SEND_ATTEMPTS) {
+    remainingEntries
+      .sort((a, b) => a[1].getTime() - b[1].getTime())
+      .slice(0, remainingEntries.length - MAX_SEND_ATTEMPTS)
+      .forEach(([key]) => delete lastSendAttempt[parseInt(key)]);
   }
 }
 

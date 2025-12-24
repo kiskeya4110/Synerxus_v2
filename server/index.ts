@@ -1,16 +1,17 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { initializeDigestScheduler } from "./digest-scheduler";
+import { initializeDigestScheduler, stopDigestScheduler } from "./digest-scheduler";
 import { logger } from "./logger";
-import { getPoolStats } from "./db";
+import { getPoolStats, pool } from "./db";
 import { cache } from "./cache";
 import { etagMiddlewareWithStats, getETagStats } from "./etag";
 import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
-import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
+import { startMemoryMonitoring, getMemorySummary, stopMemoryMonitoring } from "./memory-monitor";
 import {
   setupGracefulShutdown,
   getServerState,
@@ -22,6 +23,8 @@ import { updateSystemHealth } from "./circuit-breaker";
 import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
+import { stopBackgroundRefresh } from "./cache-warmer";
+import { securityHeaders, sanitizeInput } from "./middleware/security";
 import { exec } from "child_process";
 
 // Server PID for debugging
@@ -46,7 +49,7 @@ process.on('uncaughtException', (error: Error) => {
   // But for now, log and attempt to continue
 });
 
-// sat1325upgrade: Graceful shutdown handling
+// sat1325upgrade: Graceful shutdown handling with comprehensive cleanup
 let isShuttingDown = false;
 async function gracefulShutdown(signal: string) {
   if (isShuttingDown) return;
@@ -54,11 +57,60 @@ async function gracefulShutdown(signal: string) {
 
   logger.info(`[Shutdown] ${signal} received, starting graceful shutdown...`);
 
-  // Stop accepting new requests
-  // Drain request queues
-  await drainQueues(10000);
+  try {
+    // 1. Stop accepting new requests and drain queues
+    logger.info('[Shutdown] Draining request queues...');
+    await drainQueues(10000);
 
-  logger.info('[Shutdown] Graceful shutdown complete');
+    // 2. Stop all background services
+    logger.info('[Shutdown] Stopping background services...');
+
+    // Stop cache warmer
+    try {
+      stopBackgroundRefresh();
+      logger.info('[Shutdown] Cache warmer stopped');
+    } catch (e) {
+      logger.warn('[Shutdown] Error stopping cache warmer:', e);
+    }
+
+    // Stop memory monitor
+    try {
+      stopMemoryMonitoring();
+      logger.info('[Shutdown] Memory monitor stopped');
+    } catch (e) {
+      logger.warn('[Shutdown] Error stopping memory monitor:', e);
+    }
+
+    // Stop digest scheduler
+    try {
+      stopDigestScheduler();
+      logger.info('[Shutdown] Digest scheduler stopped');
+    } catch (e) {
+      logger.warn('[Shutdown] Error stopping digest scheduler:', e);
+    }
+
+    // Stop cache cleanup interval
+    try {
+      cache.stop();
+      logger.info('[Shutdown] Cache stopped');
+    } catch (e) {
+      logger.warn('[Shutdown] Error stopping cache:', e);
+    }
+
+    // 3. Close database connections
+    logger.info('[Shutdown] Closing database connections...');
+    try {
+      await pool.end();
+      logger.info('[Shutdown] Database pool closed');
+    } catch (e) {
+      logger.warn('[Shutdown] Error closing database pool:', e);
+    }
+
+    logger.info('[Shutdown] Graceful shutdown complete');
+  } catch (error) {
+    logger.error('[Shutdown] Error during graceful shutdown:', error);
+  }
+
   process.exit(0);
 }
 
@@ -231,8 +283,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Security middleware
+app.use(securityHeaders);
+app.use(cookieParser());
+app.use(express.json({ limit: '10mb' })); // Limit body size to prevent DoS
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(sanitizeInput); // Sanitize user inputs
 
 app.use((req, res, next) => {
   const start = Date.now();

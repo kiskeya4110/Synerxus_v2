@@ -113,7 +113,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   };
 
   const handleLogoClick = () => {
-    navigate('/landing');
+    navigate('/organization-dashboard');
   };
 
   const handleSignOut = async () => {
@@ -167,7 +167,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'scale(1.02)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
-            title="Go to landing page"
+            title="Go to Dashboard"
           >
             <img
               src={logoUrl}

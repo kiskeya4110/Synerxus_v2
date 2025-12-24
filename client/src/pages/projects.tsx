@@ -14,6 +14,7 @@ import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import { CSRLayout } from "@/components/layout/csr-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
@@ -28,6 +29,7 @@ export default function Projects() {
   const isMobile = useIsMobile();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
+  const isCSR = userType === 'corporate_partner' || userType === 'csr';
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -357,10 +359,63 @@ export default function Projects() {
     );
   }
 
+  // CSR Layout wrapper for corporate partners
+  if (isCSR) {
+    return (
+      <CSRLayout activeNav="portfolio">
+        <div className="space-y-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">Partner Projects</h1>
+            <p className="text-gray-600">Browse and explore projects from partner organizations</p>
+          </div>
+
+          <div className="mb-6 flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 min-h-[44px]"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {filteredProjects.map((project) => {
+              const projectData = projectMetrics.get(project.id);
+              if (!projectData) return null;
+              const { tasks, progress, metrics } = projectData;
+              const isExpanded = expandedProjects.has(project.id);
+              return (
+                <ProjectListCard
+                  key={project.id}
+                  project={project}
+                  tasks={tasks}
+                  metrics={metrics}
+                  progress={progress}
+                  isExpanded={isExpanded}
+                  onToggle={() => toggleProject(project.id)}
+                  canManageProjects={false}
+                />
+              );
+            })}
+          </div>
+
+          {filteredProjects.length === 0 && (
+            <Card className="p-12 text-center">
+              <p className="text-gray-500">No projects found</p>
+            </Card>
+          )}
+        </div>
+      </CSRLayout>
+    );
+  }
+
   return (
     <>
       {/* Volunteer Desktop Navigation - only for volunteers */}
-      {!isOrganization && <VolunteerNav />}
+      {!isOrganization && !isCSR && <VolunteerNav />}
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24"}>

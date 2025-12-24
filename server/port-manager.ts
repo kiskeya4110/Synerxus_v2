@@ -251,11 +251,20 @@ export async function ensurePortAvailable(port: number = 5000): Promise<boolean>
     await forceKillPortAsync(port);
     // Wait a moment for processes to fully terminate
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Verify processes are gone
+    const remainingPids = getProcessesOnPort(port);
+    if (remainingPids.length > 0) {
+      logger.warn(`[PortManager] Still have ${remainingPids.length} process(es) after cleanup, waiting...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   } else {
     logger.info(`[PortManager] No processes found on port ${port}`);
   }
 
-  // Return true - we've done what we can, the actual server start will handle TIME_WAIT with retries
+  // If no processes are using the port, it should be safe to bind directly
+  // Skip the test bind which can create its own TIME_WAIT issues
+  logger.info(`[PortManager] Port ${port} cleanup complete, ready to bind`);
   return true;
 }
 

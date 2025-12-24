@@ -130,7 +130,15 @@ export default function Header() {
 
   const handleLogoClick = () => {
     if (user) {
-      setLocation('/dashboard');
+      // Navigate to correct dashboard based on userType
+      const userType = localStorage.getItem('userType') || currentUser?.userType;
+      if (userType === 'corporate-partner') {
+        setLocation('/csr-dashboard');
+      } else if (userType === 'organization') {
+        setLocation('/organization-dashboard');
+      } else {
+        setLocation('/volunteer-dashboard');
+      }
     } else {
       setLocation('/landing');
     }

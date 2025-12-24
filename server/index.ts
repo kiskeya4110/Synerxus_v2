@@ -17,6 +17,7 @@ import {
   trackConnection,
   getActiveConnectionCount
 } from "./port-management";
+import { ensurePortAvailable, forceKillPortAsync } from "./port-manager";
 import { updateSystemHealth } from "./circuit-breaker";
 import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
@@ -350,39 +351,33 @@ app.use((req, res, next) => {
   // Port 5000 is the only port that is not firewalled on Replit.
   const port = parseInt(process.env.PORT || '5000', 10);
 
-  // Helper to kill process using a port (Unix only)
-  const killPortProcess = (targetPort: number): Promise<boolean> => {
-    return new Promise((resolve) => {
-      exec(`fuser -k ${targetPort}/tcp 2>/dev/null`, (error) => {
-        // Give the OS time to release the port
-        setTimeout(() => resolve(!error), 500);
-      });
-    });
-  };
+  // PRE-STARTUP CLEANUP: Ensure port is available before attempting to bind
+  // This kills any stale processes and handles TIME_WAIT states
+  logger.info(`[Server] Pre-startup cleanup for port ${port}...`);
+  await ensurePortAvailable(port);
+  logger.info(`[Server] Port ${port} cleanup complete`);
 
-  // Function to start listening with retry
-  const startListening = async (attempt: number = 1) => {
-    logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/5)`);
+  // Function to start listening with retry (fallback for edge cases)
+  const startListening = async (attempt: number = 1, maxAttempts: number = 5) => {
+    logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/${maxAttempts})`);
 
     const onError = async (err: any) => {
       server.removeListener('error', onError);
       server.removeListener('listening', onListening);
 
       if (err.code === 'EADDRINUSE') {
-        if (attempt < 5) {
-          logger.warn(`[Server] Port ${port} busy, attempting to clear and retry ${attempt}/5...`);
+        if (attempt < maxAttempts) {
+          logger.warn(`[Server] Port ${port} busy, force killing and retry ${attempt}/${maxAttempts}...`);
 
-          // Try to kill the process using the port
-          const killed = await killPortProcess(port);
-          if (killed) {
-            logger.info(`[Server] Cleared port ${port}, retrying...`);
-          }
+          // Use robust force kill from port-manager
+          await forceKillPortAsync(port);
 
-          // Wait a bit and retry
-          const delay = 1000 * attempt;
-          setTimeout(() => startListening(attempt + 1), delay);
+          // Exponential backoff with jitter
+          const delay = Math.min(1000 * Math.pow(1.5, attempt) + Math.random() * 500, 10000);
+          logger.info(`[Server] Waiting ${Math.round(delay)}ms before retry...`);
+          setTimeout(() => startListening(attempt + 1, maxAttempts), delay);
         } else {
-          logger.error(`[Server] Port ${port} unavailable after 5 attempts. Exiting...`);
+          logger.error(`[Server] Port ${port} unavailable after ${maxAttempts} attempts. Exiting...`);
           process.exit(1);
         }
       } else {
@@ -394,7 +389,7 @@ app.use((req, res, next) => {
     const onListening = () => {
       server.removeListener('error', onError);
       log(`serving on port ${port}`);
-      logger.info(`[Server] Server started - PID: ${process.pid}`);
+      logger.info(`[Server] Server started successfully - PID: ${process.pid}, Port: ${port}`);
 
       // Track connections for graceful shutdown
       server.on('connection', (conn) => {
@@ -409,8 +404,8 @@ app.use((req, res, next) => {
     server.listen(port, "0.0.0.0");
   };
 
-  // Start listening immediately (no delay needed)
-  startListening(1);
+  // Start listening (port should be clean now)
+  startListening(1, 5);
 
   // Setup comprehensive graceful shutdown handlers
   // Handles SIGTERM, SIGINT, SIGHUP, uncaught exceptions, and exit

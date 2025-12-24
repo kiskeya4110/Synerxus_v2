@@ -71,10 +71,15 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       });
     }
 
+    // Fetch opportunity to get organizationId and projectId for direct linking
+    const opportunity = await storage.getOpportunity(opportunityId);
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
     let matchScore = null;
     try {
       const volunteer = await storage.getUser(volunteerId);
-      const opportunity = await storage.getOpportunity(opportunityId);
 
       if (volunteer && opportunity) {
         let volunteerProfile = null;
@@ -94,16 +99,33 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       // Continue with application creation even if match score calculation fails
     }
 
+    // Create application with direct organization and project links
     const application = await storage.createApplication({
       ...validatedData,
+      organizationId: opportunity.organizationId, // Direct link to organization
+      projectId: opportunity.projectId || null, // Direct link to project if applicable
       matchScore
     });
+
+    // Create or update volunteer-organization relationship
+    try {
+      await storage.upsertVolunteerOrganizationRelationship(
+        volunteerId,
+        opportunity.organizationId,
+        {
+          relationshipType: 'applied',
+          isActive: true
+        }
+      );
+    } catch (relationshipError) {
+      // Log but don't fail the application if relationship creation fails
+      console.warn("Failed to create volunteer-organization relationship:", relationshipError);
+    }
 
     // Auto-assign volunteer to project immediately upon application
     // This creates a pending assignment that links them to the project
     try {
-      const opportunity = await storage.getOpportunity(opportunityId);
-      if (opportunity?.projectId) {
+      if (opportunity.projectId) {
         const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
         const alreadyAssigned = existingAssignments.some(
           (assignment: any) => assignment.volunteerId === volunteerId
@@ -196,61 +218,93 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
       return res.status(500).json({ message: "Failed to update application" });
     }
 
-    if (status === "accepted" && opportunity.projectId) {
-      const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
-      const existingAssignment = existingAssignments.find(
-        (assignment: any) => assignment.volunteerId === application.volunteerId
-      );
-
-      if (existingAssignment) {
-        // Update existing pending assignment to active
-        await storage.updateProjectAssignment(existingAssignment.id, {
-          status: "active",
-          role: "Volunteer",
-          assignedAt: new Date(),
-          respondedAt: new Date(),
-          hoursCommitted: opportunity.ongoingHoursPerWeek || 0
-        });
-      } else {
-        // Create new assignment if none exists
-        await storage.createProjectAssignment({
-          projectId: opportunity.projectId,
-          volunteerId: application.volunteerId,
-          role: "Volunteer",
-          status: "active",
-          assignedAt: new Date(),
-          respondedAt: new Date(),
-          hoursCommitted: opportunity.ongoingHoursPerWeek || 0
-        });
-      }
-
-      const project = await storage.getProject(opportunity.projectId);
-      if (project && project.organizationId) {
-        await notifyNewAssignment(
+    if (status === "accepted") {
+      // Update volunteer-organization relationship to accepted/active status
+      try {
+        await storage.upsertVolunteerOrganizationRelationship(
           application.volunteerId,
-          opportunity.projectId,
-          project.organizationId
+          opportunity.organizationId,
+          {
+            relationshipType: 'accepted',
+            isActive: true
+          }
         );
+      } catch (relationshipError) {
+        console.warn("Failed to update volunteer-organization relationship:", relationshipError);
       }
 
-      await storage.createVolunteerActivity({
-        userId: application.volunteerId,
-        projectId: opportunity.projectId,
-        description: `Accepted application for ${opportunity.title}`,
-        date: new Date(),
-        hours: 0
-      });
+      if (opportunity.projectId) {
+        const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
+        const existingAssignment = existingAssignments.find(
+          (assignment: any) => assignment.volunteerId === application.volunteerId
+        );
+
+        if (existingAssignment) {
+          // Update existing pending assignment to active
+          await storage.updateProjectAssignment(existingAssignment.id, {
+            status: "active",
+            role: "Volunteer",
+            assignedAt: new Date(),
+            respondedAt: new Date(),
+            hoursCommitted: opportunity.ongoingHoursPerWeek || 0
+          });
+        } else {
+          // Create new assignment if none exists
+          await storage.createProjectAssignment({
+            projectId: opportunity.projectId,
+            volunteerId: application.volunteerId,
+            role: "Volunteer",
+            status: "active",
+            assignedAt: new Date(),
+            respondedAt: new Date(),
+            hoursCommitted: opportunity.ongoingHoursPerWeek || 0
+          });
+        }
+
+        const project = await storage.getProject(opportunity.projectId);
+        if (project && project.organizationId) {
+          await notifyNewAssignment(
+            application.volunteerId,
+            opportunity.projectId,
+            project.organizationId
+          );
+        }
+
+        await storage.createVolunteerActivity({
+          userId: application.volunteerId,
+          projectId: opportunity.projectId,
+          description: `Accepted application for ${opportunity.title}`,
+          date: new Date(),
+          hours: 0
+        });
+      }
     }
 
-    // Handle rejection - remove pending assignment if exists
-    if (status === "rejected" && opportunity.projectId) {
-      const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
-      const pendingAssignment = existingAssignments.find(
-        (assignment: any) => assignment.volunteerId === application.volunteerId && assignment.status === "pending"
-      );
+    // Handle rejection - update relationship and remove pending assignment if exists
+    if (status === "rejected") {
+      // Update volunteer-organization relationship to rejected status
+      try {
+        await storage.upsertVolunteerOrganizationRelationship(
+          application.volunteerId,
+          opportunity.organizationId,
+          {
+            relationshipType: 'rejected',
+            isActive: false
+          }
+        );
+      } catch (relationshipError) {
+        console.warn("Failed to update volunteer-organization relationship:", relationshipError);
+      }
 
-      if (pendingAssignment) {
-        await storage.deleteProjectAssignment(pendingAssignment.id);
+      if (opportunity.projectId) {
+        const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
+        const pendingAssignment = existingAssignments.find(
+          (assignment: any) => assignment.volunteerId === application.volunteerId && assignment.status === "pending"
+        );
+
+        if (pendingAssignment) {
+          await storage.deleteProjectAssignment(pendingAssignment.id);
+        }
       }
     }
 

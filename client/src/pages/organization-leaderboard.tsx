@@ -545,8 +545,8 @@ export default function OrganizationLeaderboard() {
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      {/* Mobile Bottom Navigation - Only for organizations */}
+      {currentUser?.userType === 'organization' && <MobileBottomNav />}
     </div>
   );
 }

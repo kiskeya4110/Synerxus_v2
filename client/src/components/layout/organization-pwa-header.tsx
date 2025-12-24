@@ -96,7 +96,7 @@ export default function OrganizationPWAHeader({
     {
       title: "ACCOUNT",
       items: [
-        { icon: Settings, label: "Settings", desc: "Organization settings", action: () => navigate('/organization-profile-settings') },
+        { icon: Settings, label: "Profile & Settings", desc: "Update organization profile", action: () => navigate('/organization-profile-settings') },
       ]
     },
   ];

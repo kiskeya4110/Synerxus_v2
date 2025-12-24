@@ -51,6 +51,11 @@ import {
 } from "@/components/ui/select";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { DataDiscrepancyAlert } from "@/components/ui/data-discrepancy-alert";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -154,6 +159,7 @@ type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
 export default function VolunteerIntake() {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");
@@ -552,10 +558,19 @@ export default function VolunteerIntake() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
+    <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#f8f7f4] pt-14' : 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'}`}>
+      {/* PWA Header for mobile volunteer users */}
+      {isMobile && <PWAHeader />}
+
+      {/* Volunteer Desktop Navigation */}
+      {!isMobile && <VolunteerNav />}
+
+      <div className={`${isMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
+        <div className={`${isMobile ? 'mb-4' : 'mb-8'}`}>
+          <div className="flex items-center justify-between">
+            <h1 className={`font-bold mb-2 ${isMobile ? 'text-xl text-slate-800' : 'text-3xl'}`}>
+              {isMobile ? 'Profile Settings' : 'Volunteer Profile Settings'}
+            </h1>
           {/* Auto-save status indicator */}
           <div className="flex items-center gap-2 text-sm">
             {autoSaveStatus === 'saving' && (
@@ -1122,6 +1137,14 @@ export default function VolunteerIntake() {
           </Form>
         </CardContent>
       </Card>
+      </div>
+
+      {/* Bottom Navigation */}
+      {isMobile ? (
+        <VolunteerPWANav userId={userId || undefined} activeTab="more" />
+      ) : (
+        <WebBottomNav activeTab="profile" />
+      )}
     </div>
   );
 }

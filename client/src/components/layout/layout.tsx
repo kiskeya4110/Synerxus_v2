@@ -62,20 +62,30 @@ export default function Layout({ children }: LayoutProps) {
   // Routes that are completely standalone (public/login pages, or pages that handle their own layout entirely)
   const fullyStandaloneRoutes = [
     "/", "/login", "/landing",
+    // CSR/Corporate Partner routes
     "/csr-dashboard", "/csr-dashboard-pwa", "/team-overview",
-    "/organization-dashboard", "/overview",
-    "/organization-my-work", "/csr-impact-reporting", "/project-portfolio",
-    "/csr-reports-exports", "/volunteers", "/sdg-mapping",
-    "/impact-visualization", "/organization-messages",
-    "/employee-engagement-tab", "/organization-profile-settings",
-    "/organization-impact-report", "/applications",
-    "/volunteer-dashboard", "/pwa",
-    // PWA mobile pages - these have their own complete layouts
-    "/discover-opportunities/pwa",
-    "/discover-opportunities",
+    "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports",
+    "/corporate-partner-profile-settings",
+    // Organization routes
+    "/organization-dashboard", "/overview", "/organization-my-work",
+    "/organization-messages", "/organization-profile-settings",
+    "/organization-impact-report", "/organization-leaderboard",
+    "/volunteers", "/applications",
+    "/employee-engagement-tab",
+    // Volunteer routes - all have their own VolunteerNav
+    "/volunteer-dashboard", "/volunteer-profile-settings", "/volunteer-messages",
+    "/my-work", "/log-activity", "/tasks", "/assignments",
+    "/leaderboard", "/profile", "/impact-report", "/stories",
+    "/calendar", "/achievements", "/my-applications",
+    // Shared pages with own navigation
+    "/sdg-mapping", "/impact-visualization",
+    "/discover-opportunities", "/matched-volunteers",
     // Project and opportunity detail pages
-    "/projects",
-    "/opportunities"
+    "/projects", "/opportunities",
+    // Public pages with own layout
+    "/organizations", "/help",
+    // PWA routes
+    "/pwa"
   ];
 
   // Check if route matches standalone patterns (including PWA pages like /opportunities/123/pwa)

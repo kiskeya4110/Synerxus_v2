@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Pie } from "react-chartjs-2";
+import { formatDecimal } from "@/lib/format-utils";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#e5243b",
@@ -359,8 +361,8 @@ export default function OrganizationImpactReport() {
       : projects.reduce((sum: number, p: any) => sum + (p.livesImpacted || p.livesTouched || 0), 0);
 
   // Calculate real funding estimate based on industry standard volunteer value
-  // Industry standard: $31.80/hour volunteer time value (Independent Sector 2024)
-  const volunteerTimeValue = 31.80;
+  // Industry standard: $34.75/hour volunteer time value
+  const volunteerTimeValue = 34.75;
   const estimatedVolunteerValue = Math.round(totalHours * volunteerTimeValue);
 
   // Calculate Organization Impact Score using dashboard impactScore if available
@@ -1113,7 +1115,7 @@ export default function OrganizationImpactReport() {
                           <div className="flex justify-between items-center text-[10px] md:text-xs">
                             <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-blue-600 dark:text-blue-400">
-                              {(totalHours / activeVolunteers).toFixed(1)}h
+                              {formatDecimal(totalHours / activeVolunteers)}h
                             </span>
                           </div>
                         )}
@@ -1138,7 +1140,7 @@ export default function OrganizationImpactReport() {
                           <div className="flex justify-between items-center text-[10px] md:text-xs">
                             <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-green-600 dark:text-green-400">
-                              {(totalHours / filteredActivities.length).toFixed(1)}h
+                              {formatDecimal(totalHours / filteredActivities.length)}h
                             </span>
                           </div>
                         )}
@@ -1233,7 +1235,7 @@ export default function OrganizationImpactReport() {
                         AIUs Earned
                       </p>
                       <p className="text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-1 md:mb-2">
-                        {(organizationImpactScore * 0.0035).toFixed(4)}
+                        {formatDecimal(organizationImpactScore * 0.0035)}
                       </p>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
@@ -1589,7 +1591,7 @@ export default function OrganizationImpactReport() {
                         Total Revenue
                       </p>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        ${(totalRevenue / 1000).toFixed(0)}K
+                        ${Math.round(totalRevenue / 1000)}K
                       </p>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
@@ -1597,7 +1599,7 @@ export default function OrganizationImpactReport() {
                         Total Expenses
                       </p>
                       <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        ${(totalExpenses / 1000).toFixed(0)}K
+                        ${Math.round(totalExpenses / 1000)}K
                       </p>
                     </div>
                     <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
@@ -1886,7 +1888,7 @@ export default function OrganizationImpactReport() {
                           <div className="flex justify-between items-center text-[10px] md:text-xs">
                             <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-blue-600 dark:text-blue-400">
-                              {(totalHours / activeVolunteers).toFixed(1)}h
+                              {formatDecimal(totalHours / activeVolunteers)}h
                             </span>
                           </div>
                         )}
@@ -1911,7 +1913,7 @@ export default function OrganizationImpactReport() {
                           <div className="flex justify-between items-center text-[10px] md:text-xs">
                             <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-green-600 dark:text-green-400">
-                              {(totalHours / filteredActivities.length).toFixed(1)}h
+                              {formatDecimal(totalHours / filteredActivities.length)}h
                             </span>
                           </div>
                         )}
@@ -2358,7 +2360,7 @@ export default function OrganizationImpactReport() {
                         Total Revenue
                       </p>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        ${(totalRevenue / 1000).toFixed(0)}K
+                        ${Math.round(totalRevenue / 1000)}K
                       </p>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
@@ -2366,7 +2368,7 @@ export default function OrganizationImpactReport() {
                         Total Expenses
                       </p>
                       <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        ${(totalExpenses / 1000).toFixed(0)}K
+                        ${Math.round(totalExpenses / 1000)}K
                       </p>
                     </div>
                     <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
@@ -2698,8 +2700,8 @@ export default function OrganizationImpactReport() {
         `}</style>
       </div>
       
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      {/* Mobile Bottom Navigation - Only for organization managers */}
+      {currentUser?.userType === 'organization' && <MobileBottomNav />}
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect, useCallback } from "react";
 import Logo from "@/components/ui/logo";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import { CSRLayout } from "@/components/layout/csr-layout";
 import {
   Home,
   BarChart3,
@@ -438,7 +440,7 @@ export default function CSRReportsExports() {
               <div class="metric-label">Direct Beneficiaries</div>
             </div>
             <div class="metric-card">
-              <div class="metric-value">$${((data?.financialMetrics?.volunteerHourValue || 0) / 1000).toFixed(0)}K</div>
+              <div class="metric-value">$${Math.round((data?.financialMetrics?.volunteerHourValue || 0) / 1000)}K</div>
               <div class="metric-label">Economic Value</div>
             </div>
             <div class="metric-card">
@@ -783,90 +785,9 @@ export default function CSRReportsExports() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#ffffff", overflow: "hidden" }}>
-      {/* Top Header Bar */}
-      <div style={{ borderTop: "8px solid #0f172a", width: "100%" }} />
-      <header style={{ backgroundColor: "#111827", color: "white", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, height: "64px" }}>
-        <div style={{ display: "flex", alignItems: "center", minWidth: "fit-content" }}>
-          <Logo size="sm" showIcon={true} className="invert" />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, justifyContent: "center" }}>
-          <span style={{ fontSize: "16px", fontWeight: "600", color: "#ffffff" }}>Reports & Exports</span>
-          <span style={{ fontSize: "16px", color: "#ffffff" }}>•</span>
-          <FileText style={{ width: "18px", height: "18px", color: "#ffffff" }} />
-          <span style={{ fontSize: "16px", fontWeight: "500", color: "#ffffff" }}>{companyName}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px", minWidth: "fit-content" }}>
-          <span style={{ fontSize: "14px", color: "#ffffff" }}>{currentDate}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "28px", height: "28px", backgroundColor: "#1f2937", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>👤</div>
-            <span style={{ fontSize: "14px", color: "#ffffff" }}>Admin {adminName}</span>
-          </div>
-        </div>
-      </header>
-
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Left Sidebar */}
-        <aside style={{ width: "20%", backgroundColor: "#111827", color: "white", padding: "24px", flexShrink: 0 }}>
-          <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <button onClick={() => navigate("/csr-dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "transparent", color: "#d1d5db", border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1f2937"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#d1d5db"; }}>
-              <Home style={{ width: "20px", height: "20px" }} />
-              <span>Dashboard</span>
-            </button>
-            <button onClick={() => navigate("/csr-impact-reporting")} style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "transparent", color: "#d1d5db", border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1f2937"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#d1d5db"; }}>
-              <BarChart3 style={{ width: "20px", height: "20px" }} />
-              <span>Impact Reporting</span>
-            </button>
-            <button onClick={() => navigate("/project-portfolio")} style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "transparent", color: "#d1d5db", border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1f2937"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#d1d5db"; }}>
-              <Briefcase style={{ width: "20px", height: "20px" }} />
-              <span>Project Portfolio</span>
-            </button>
-            <button style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "#1f2937", color: "#f97316", border: "1px solid #374151", fontWeight: "500", cursor: "pointer", textAlign: "left" }}>
-              <FileText style={{ width: "20px", height: "20px" }} />
-              <span>Reports & Exports</span>
-            </button>
-            <button onClick={() => navigate("/corporate-partner-profile-settings")} style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "transparent", color: "#d1d5db", border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1f2937"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#d1d5db"; }}>
-              <Settings style={{ width: "20px", height: "20px" }} />
-              <span>Settings</span>
-            </button>
-          </nav>
-
-          {/* Quick Stats Sidebar */}
-          <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "#1f2937", borderRadius: "8px" }}>
-            <h4 style={{ fontSize: "12px", fontWeight: "600", color: "#9ca3af", marginBottom: "12px", textTransform: "uppercase" }}>Quick Stats</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div>
-                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#f97316" }}>{reportData?.engagementMetrics?.totalHours || 0}</div>
-                <div style={{ fontSize: "11px", color: "#9ca3af" }}>Total Hours</div>
-              </div>
-              <div>
-                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#10b981" }}>{reportData?.engagementMetrics?.activeEmployees || 0}</div>
-                <div style={{ fontSize: "11px", color: "#9ca3af" }}>Active Employees</div>
-              </div>
-              <div>
-                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#3b82f6" }}>{reportData?.sdgMetrics?.length || 0}</div>
-                <div style={{ fontSize: "11px", color: "#9ca3af" }}>SDGs Tracked</div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main style={{ width: "80%", padding: "32px", backgroundColor: "#f9fafb", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px", flex: 1 }}>
-          {/* Page Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#111827", margin: 0 }}>Reports & Financial Tracking</h1>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}>Generate reports, track expenses, and manage CSR program budget.</p>
-            </div>
+    <CSRLayout activeNav="reports" title="Reports & Financial Tracking" subtitle="Generate reports, track expenses, and manage CSR program budget.">
+          {/* Action Buttons */}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
             <div style={{ display: "flex", gap: "12px" }}>
               {activeTab === "expenses" && (
                 <button onClick={() => setShowExpenseModal(true)} style={{ padding: "10px 20px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -920,7 +841,7 @@ export default function CSRReportsExports() {
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>Total Budget</div>
                   <DollarSign style={{ width: "20px", height: "20px", color: "#3b82f6" }} />
                 </div>
-                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#3b82f6", marginTop: "8px" }}>${(totalBudget / 1000).toFixed(0)}K</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#3b82f6", marginTop: "8px" }}>${Math.round(totalBudget / 1000)}K</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>Annual allocation</div>
               </div>
               <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #10b981" }}>
@@ -928,7 +849,7 @@ export default function CSRReportsExports() {
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>Total Spent</div>
                   <CreditCard style={{ width: "20px", height: "20px", color: "#10b981" }} />
                 </div>
-                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#10b981", marginTop: "8px" }}>${(totalSpent / 1000).toFixed(0)}K</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#10b981", marginTop: "8px" }}>${Math.round(totalSpent / 1000)}K</div>
                 <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
                   <ArrowUpRight style={{ width: "12px", height: "12px", color: "#10b981" }} />
                   <span style={{ fontSize: "11px", color: "#10b981" }}>{budgetUtilization}% utilized</span>
@@ -939,7 +860,7 @@ export default function CSRReportsExports() {
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>Remaining</div>
                   <Wallet style={{ width: "20px", height: "20px", color: "#f59e0b" }} />
                 </div>
-                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b", marginTop: "8px" }}>${(remainingBudget / 1000).toFixed(1)}K</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b", marginTop: "8px" }}>${formatDecimal(remainingBudget / 1000)}K</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>{100 - budgetUtilization}% available</div>
               </div>
               <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
@@ -947,7 +868,7 @@ export default function CSRReportsExports() {
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>Pending Approval</div>
                   <Clock style={{ width: "20px", height: "20px", color: "#8b5cf6" }} />
                 </div>
-                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#8b5cf6", marginTop: "8px" }}>${(pendingExpenses / 1000).toFixed(1)}K</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#8b5cf6", marginTop: "8px" }}>${formatDecimal(pendingExpenses / 1000)}K</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>{expenses.filter(e => e.status === "pending").length} expenses</div>
               </div>
               <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #059669" }}>
@@ -1104,7 +1025,7 @@ export default function CSRReportsExports() {
                       <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <div style={{ width: "10px", height: "10px", backgroundColor: cat.color, borderRadius: "2px" }} />
                         <span style={{ flex: 1, fontSize: "12px", color: "#374151" }}>{cat.name}</span>
-                        <span style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>${(cat.value / 1000).toFixed(0)}K</span>
+                        <span style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>${Math.round(cat.value / 1000)}K</span>
                       </div>
                     ))}
                   </div>
@@ -1238,8 +1159,6 @@ export default function CSRReportsExports() {
           )}
 
           <Footer />
-        </main>
-      </div>
 
       {/* Schedule Modal */}
       {showScheduleModal && (
@@ -1293,7 +1212,8 @@ export default function CSRReportsExports() {
         </div>
       )}
 
-      <MobileBottomNav />
+      {/* Only show MobileBottomNav for organization users */}
+      {isOrganization && <MobileBottomNav />}
 
       <style>{`
         @keyframes spin {
@@ -1301,6 +1221,6 @@ export default function CSRReportsExports() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+    </CSRLayout>
   );
 }

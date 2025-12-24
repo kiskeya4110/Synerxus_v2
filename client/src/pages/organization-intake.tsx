@@ -18,6 +18,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building, Globe, Users, Target, FileCheck } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const organizationProfileSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
@@ -116,6 +121,7 @@ export default function OrganizationIntake() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState(1);
   const [customFocusArea, setCustomFocusArea] = useState("");
   const [customVolunteerNeed, setCustomVolunteerNeed] = useState("");
@@ -335,12 +341,18 @@ export default function OrganizationIntake() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:from-gray-900 dark:to-gray-800 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Synerxus!</h1>
-          <p className="text-gray-600 dark:text-gray-300">Let's set up your organization profile</p>
-        </div>
+    <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#faf9f7] dark:from-gray-900 dark:to-gray-800'}`}>
+      {/* Header - Mobile PWA or Desktop */}
+      {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="dashboard" />}
+
+      <div className={`${isMobile ? 'px-4 py-4' : 'py-8 px-4'}`}>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className={`font-bold text-gray-900 dark:text-white mb-2 ${isMobile ? 'text-2xl' : 'text-4xl'}`}>
+              Welcome to Synerxus!
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">Let's set up your organization profile</p>
+          </div>
 
         <div className="mb-8">
           <div className="flex justify-between items-center">
@@ -758,7 +770,11 @@ export default function OrganizationIntake() {
             </div>
           </form>
         </Form>
+        </div>
       </div>
+
+      {/* Bottom Navigation for mobile */}
+      {isMobile && <OrganizationPWANav activeTab="home" />}
     </div>
   );
 }

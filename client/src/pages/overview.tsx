@@ -9,6 +9,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AIInsightsModal from "@/components/organization/AIInsightsModal";
 import type { User } from "@shared/schema";
 
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -40,6 +41,7 @@ export default function Overview() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
   const isMobile = useIsMobile();
+  const [showAIInsightsModal, setShowAIInsightsModal] = useState(false);
 
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
@@ -163,7 +165,7 @@ export default function Overview() {
               
               <Button
                 size="sm"
-                onClick={() => navigate('/sdg-mapping')}
+                onClick={() => setShowAIInsightsModal(true)}
                 style={{
                   width: '100%',
                   backgroundColor: 'white',
@@ -726,6 +728,15 @@ export default function Overview() {
           </div>
         </div>
         </div>
+
+        {/* AI Insights Modal */}
+        <AIInsightsModal
+          isOpen={showAIInsightsModal}
+          onClose={() => setShowAIInsightsModal(false)}
+          organizationId={currentUser?.organizationId || 0}
+          dashboardData={dashboardData}
+          orgProfile={orgProfile}
+        />
       </OrganizationPWALayout>
     );
   }
@@ -913,6 +924,15 @@ export default function Overview() {
       </div>
 
       <Footer />
+
+      {/* AI Insights Modal */}
+      <AIInsightsModal
+        isOpen={showAIInsightsModal}
+        onClose={() => setShowAIInsightsModal(false)}
+        organizationId={currentUser?.organizationId || 0}
+        dashboardData={dashboardData}
+        orgProfile={orgProfile}
+      />
     </div>
   );
 }

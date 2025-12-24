@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -792,7 +793,7 @@ export default function PostCoreOpportunity() {
                             <div className="mt-1 space-y-1">
                               {field.value?.map((role, idx) => {
                                 const totalVolunteer = form.watch("totalVolunteerContribution") || 0;
-                                const effectivePercent = (totalVolunteer * role.contributionPercent / 100).toFixed(1);
+                                const effectivePercent = formatDecimal(totalVolunteer * role.contributionPercent / 100);
                                 return (
                                   <div key={idx} className="flex justify-between text-xs">
                                     <span className="text-gray-600">{role.role} ({role.count} volunteer{role.count > 1 ? 's' : ''}):</span>

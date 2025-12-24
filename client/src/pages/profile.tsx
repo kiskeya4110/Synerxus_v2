@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationHeader from "@/components/layout/organization-header";
@@ -278,7 +279,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold">{(calculateSkillScore() || 0).toFixed(1)}</div>
+                      <div className="text-2xl font-bold">{formatDecimal(calculateSkillScore() || 0)}</div>
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
@@ -788,8 +789,8 @@ export default function Profile() {
         )}
       </div>
       
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      {/* Mobile Bottom Navigation - Only for organizations */}
+      {isOrganization && <MobileBottomNav />}
     </div>
     </>
   );

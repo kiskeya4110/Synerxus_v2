@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,7 @@ import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle, Users, Clock, Globe, Award } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
 import { getSDGName, getSDGColor, suggestSDGsFromText, SDG_GOALS } from "@shared/sdg-goals";
@@ -529,53 +530,224 @@ export default function SDGMapping() {
   
   const isOrganization = currentUser?.userType === 'organization';
 
-  // Mobile organization PWA view
+  // Mobile organization PWA view - Enhanced with better KPIs
   if (isOrganization && isMobile) {
+    // Calculate mobile-specific metrics
+    const activeProjectsCount = filteredProjects.filter((p: any) =>
+      p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
+    ).length;
+    const completedProjectsCount = filteredProjects.filter((p: any) =>
+      p.status?.toLowerCase() === 'completed'
+    ).length;
+    const avgCompletion = filteredProjects.length > 0
+      ? Math.round(filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / filteredProjects.length)
+      : 0;
+    const totalVolunteers = filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0);
+    const totalHours = filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0);
+
+    // Calculate additional impact metrics
+    const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
+    const orgImpacts = (projectImpacts as any[]).filter((pi: any) => orgProjectIds.has(pi.projectId));
+    const totalBeneficiaries = orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0);
+    const sdgsAddressed = organizationSDGs.length;
+
+    // Calculate total AIU from projects
+    const totalAIU = filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0);
+
+    // Get projects for selected SDG
+    const selectedSDGProjects = selectedSDG
+      ? filteredProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG))
+      : [];
+
     return (
       <OrganizationPWALayout activeTab="sdgs">
-        <div className="p-4">
-          <div className="mb-4">
-            <h1 className="text-xl font-bold mb-1">SDG Mapping</h1>
-            <p className="text-sm text-gray-600">Track SDG alignment and impact</p>
-          </div>
-
-          {/* Project Filter - Mobile */}
-          {organizationProjects.length > 1 && (
-            <div className="mb-4">
+        <div className="p-4 pb-24">
+          {/* Header with filter */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl font-bold">SDG Mapping</h1>
+              <p className="text-xs text-gray-500">Track UN Goals alignment</p>
+            </div>
+            {organizationProjects.length > 1 && (
               <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
-                <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Filter project" />
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                  <SelectItem value="all">All ({organizationProjects.length})</SelectItem>
                   {organizationProjects.map((project: any) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
+                    <SelectItem key={project.id} value={project.id.toString()} className="text-xs">
+                      {project.name.length > 20 ? project.name.substring(0, 20) + '...' : project.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Stats Cards - Mobile */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <Card className="p-3 text-center">
-              <Target className="h-5 w-5 text-green-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{organizationSDGs.length}</p>
-              <p className="text-[10px] text-gray-500">SDG Focus Areas</p>
+          {/* KPI Cards Grid - Enhanced 3x2 with more metrics */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-blue-500 rounded-lg mb-1">
+                    <FolderOpen className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-blue-700">{filteredProjects.length}</p>
+                  <p className="text-[9px] text-blue-600 font-medium">Projects</p>
+                </div>
+              </CardContent>
             </Card>
-            <Card className="p-3 text-center">
-              <FolderOpen className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{filteredProjects.length}</p>
-              <p className="text-[10px] text-gray-500">Projects</p>
+
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-orange-500 rounded-lg mb-1">
+                    <Target className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-orange-700">{activeProjectsCount}</p>
+                  <p className="text-[9px] text-orange-600 font-medium">Active</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-green-500 rounded-lg mb-1">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-green-700">{completedProjectsCount}</p>
+                  <p className="text-[9px] text-green-600 font-medium">Completed</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-purple-500 rounded-lg mb-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-purple-700">{avgCompletion}%</p>
+                  <p className="text-[9px] text-purple-600 font-medium">Avg Progress</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-teal-100 border-emerald-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-emerald-500 rounded-lg mb-1">
+                    <Users className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-emerald-700">{totalVolunteers.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-600 font-medium">Volunteers</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-cyan-50 to-sky-100 border-cyan-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-cyan-500 rounded-lg mb-1">
+                    <Clock className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-cyan-700">{totalHours.toLocaleString()}</p>
+                  <p className="text-[9px] text-cyan-600 font-medium">Hours</p>
+                </div>
+              </CardContent>
             </Card>
           </div>
 
-          {/* SDG Grid - Mobile */}
+          {/* Secondary KPIs Row - Beneficiaries, SDGs, AIU */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            <Card className="flex-shrink-0 bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200">
+              <CardContent className="p-2.5 flex items-center gap-2">
+                <div className="p-1.5 bg-rose-500 rounded-lg">
+                  <Users className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-rose-700">{totalBeneficiaries.toLocaleString()}</p>
+                  <p className="text-[9px] text-rose-600 font-medium">People Reached</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex-shrink-0 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
+              <CardContent className="p-2.5 flex items-center gap-2">
+                <div className="p-1.5 bg-indigo-500 rounded-lg">
+                  <Globe className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-indigo-700">{sdgsAddressed}/17</p>
+                  <p className="text-[9px] text-indigo-600 font-medium">SDGs Addressed</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {totalAIU > 0 && (
+              <Card className="flex-shrink-0 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                <CardContent className="p-2.5 flex items-center gap-2">
+                  <div className="p-1.5 bg-amber-500 rounded-lg">
+                    <Award className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-amber-700">{totalAIU.toLocaleString()}</p>
+                    <p className="text-[9px] text-amber-600 font-medium">Total AIU</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* SDG Focus Summary - Horizontal scroll */}
+          <Card className="mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-emerald-800">Your SDG Focus Areas</p>
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-[10px]">
+                  {organizationSDGs.length} of 17
+                </Badge>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {organizationSDGs.length > 0 ? (
+                  organizationSDGs.map((sdgNum: number) => {
+                    const projectCount = filteredProjects.filter((p: any) => p.sdgGoals?.includes(sdgNum)).length;
+                    return (
+                      <button
+                        key={sdgNum}
+                        onClick={() => setSelectedSDG(sdgNum === selectedSDG ? null : sdgNum)}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all ${
+                          selectedSDG === sdgNum
+                            ? 'bg-white border-emerald-400 shadow-md'
+                            : 'bg-white/50 border-transparent hover:bg-white'
+                        }`}
+                      >
+                        <img src={UN_SDG_ICONS[sdgNum]} alt={`SDG ${sdgNum}`} className="w-6 h-6 rounded" />
+                        <div className="text-left">
+                          <p className="text-[10px] font-semibold text-slate-700">SDG {sdgNum}</p>
+                          <p className="text-[9px] text-slate-500">{projectCount} project{projectCount !== 1 ? 's' : ''}</p>
+                        </div>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-emerald-600 py-2">
+                    No SDGs selected yet. Configure in Settings.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* All 17 SDGs Grid - Compact */}
           <Card className="mb-4">
             <CardHeader className="pb-2 px-3 pt-3">
-              <CardTitle className="text-sm font-semibold">UN Sustainable Development Goals</CardTitle>
+              <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                <span>UN Sustainable Development Goals</span>
+                <span className="text-[10px] font-normal text-gray-500">Tap to explore</span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="px-3 pb-3">
               <div className="grid grid-cols-6 gap-1.5">
@@ -589,9 +761,9 @@ export default function SDGMapping() {
                     <button
                       key={sdgNum}
                       onClick={() => setSelectedSDG(sdgNum === selectedSDG ? null : sdgNum)}
-                      className={`relative rounded-lg overflow-hidden transition-all ${
-                        isActive ? 'ring-2 ring-green-500' : 'opacity-40'
-                      } ${selectedSDG === sdgNum ? 'scale-110 z-10' : ''}`}
+                      className={`relative rounded-lg overflow-hidden transition-all aspect-square ${
+                        isActive ? 'ring-2 ring-emerald-500 shadow-sm' : 'opacity-30 grayscale'
+                      } ${selectedSDG === sdgNum ? 'scale-110 z-10 ring-2 ring-blue-500' : ''}`}
                     >
                       <img
                         src={UN_SDG_ICONS[sdgNum]}
@@ -599,7 +771,320 @@ export default function SDGMapping() {
                         className="w-full h-full object-cover"
                       />
                       {projectCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[7px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5">
+                          {projectCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Selected SDG Details - Enhanced */}
+          {selectedSDG && (
+            <Card className="mb-4 border-2" style={{ borderColor: getSDGColor(selectedSDG) }}>
+              <CardHeader className="pb-2 px-3 pt-3">
+                <div className="flex items-start gap-3">
+                  <img
+                    src={UN_SDG_ICONS[selectedSDG]}
+                    alt={`SDG ${selectedSDG}`}
+                    className="w-14 h-14 rounded-lg shadow-md flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm font-bold" style={{ color: getSDGColor(selectedSDG) }}>
+                      SDG {selectedSDG}: {SDG_METADATA[selectedSDG]?.title}
+                    </CardTitle>
+                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                      {SDG_METADATA[selectedSDG]?.description}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                {/* SDG Stats */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="text-center p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">{selectedSDGProjects.length}</p>
+                    <p className="text-[9px] text-slate-500">Projects</p>
+                  </div>
+                  <div className="text-center p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">
+                      {selectedSDGProjects.length > 0
+                        ? Math.round(selectedSDGProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / selectedSDGProjects.length)
+                        : 0}%
+                    </p>
+                    <p className="text-[9px] text-slate-500">Avg Progress</p>
+                  </div>
+                  <div className="text-center p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">
+                      {selectedSDGProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
+                    </p>
+                    <p className="text-[9px] text-slate-500">Completed</p>
+                  </div>
+                </div>
+
+                {/* Projects List */}
+                {selectedSDGProjects.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Aligned Projects</p>
+                    {selectedSDGProjects.slice(0, 5).map((project: any) => (
+                      <Link key={project.id} href={`/projects/${project.id}`}>
+                        <div className="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-800 truncate">{project.name}</p>
+                            <p className="text-[10px] text-slate-500">{project.location || 'No location'}</p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-2">
+                            <div className="w-16">
+                              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${project.completionPercentage || 0}%`,
+                                    backgroundColor: getSDGColor(selectedSDG)
+                                  }}
+                                />
+                              </div>
+                              <p className="text-[9px] text-slate-500 text-right mt-0.5">
+                                {project.completionPercentage || 0}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    {selectedSDGProjects.length > 5 && (
+                      <p className="text-[10px] text-center text-slate-500">
+                        +{selectedSDGProjects.length - 5} more projects
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <AlertCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">No projects aligned with this SDG yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Impact Summary Card */}
+          {totalVolunteers > 0 || totalHours > 0 ? (
+            <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+              <CardContent className="p-4">
+                <p className="text-xs font-semibold text-slate-300 mb-3">Overall Impact</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-2xl font-bold">{totalVolunteers.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">Total Volunteers</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalHours.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">Hours Contributed</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Volunteer Mobile PWA View - Enhanced SDG tracking
+  const isVolunteer = currentUser?.userType === 'volunteer';
+  if (isVolunteer && isMobile) {
+    // Calculate volunteer-specific metrics
+    const volunteerProjects = filteredProjects;
+    const activeProjectsCount = volunteerProjects.filter((p: any) =>
+      p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
+    ).length;
+    const completedProjectsCount = volunteerProjects.filter((p: any) =>
+      p.status?.toLowerCase() === 'completed'
+    ).length;
+    const totalHours = volunteerProjects.reduce((sum: number, p: any) => sum + (p.totalHours || p.volunteerHours || 0), 0);
+
+    // Get unique SDGs from all projects volunteer has worked on
+    const volunteerSdgs = new Set<number>();
+    volunteerProjects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((sdg: number) => volunteerSdgs.add(sdg));
+      }
+    });
+    const sdgsContributed = Array.from(volunteerSdgs).sort((a, b) => a - b);
+
+    // Calculate total AIU for volunteer
+    const totalAIU = volunteerProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.volunteerAiu || 0), 0);
+
+    // Get projects for selected SDG
+    const selectedSDGProjects = selectedSDG
+      ? volunteerProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG))
+      : [];
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-24">
+        {/* Volunteer Header */}
+        <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-4 shadow-lg">
+          <h1 className="text-lg font-bold">My SDG Impact</h1>
+          <p className="text-xs text-blue-100">Track your UN Goals contributions</p>
+        </div>
+
+        <div className="p-4">
+          {/* KPI Cards - 3 column grid */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-blue-500 rounded-lg mb-1">
+                    <FolderOpen className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-blue-700">{volunteerProjects.length}</p>
+                  <p className="text-[9px] text-blue-600 font-medium">Projects</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-teal-100 border-emerald-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-emerald-500 rounded-lg mb-1">
+                    <Globe className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-emerald-700">{sdgsContributed.length}</p>
+                  <p className="text-[9px] text-emerald-600 font-medium">SDGs</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-cyan-50 to-sky-100 border-cyan-200">
+              <CardContent className="p-2.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-1.5 bg-cyan-500 rounded-lg mb-1">
+                    <Clock className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <p className="text-xl font-bold text-cyan-700">{totalHours}</p>
+                  <p className="text-[9px] text-cyan-600 font-medium">Hours</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Secondary row - Active, Completed, AIU */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            <Card className="flex-shrink-0 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
+              <CardContent className="p-2.5 flex items-center gap-2">
+                <div className="p-1.5 bg-orange-500 rounded-lg">
+                  <Target className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-orange-700">{activeProjectsCount}</p>
+                  <p className="text-[9px] text-orange-600 font-medium">Active</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex-shrink-0 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+              <CardContent className="p-2.5 flex items-center gap-2">
+                <div className="p-1.5 bg-green-500 rounded-lg">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-green-700">{completedProjectsCount}</p>
+                  <p className="text-[9px] text-green-600 font-medium">Completed</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {totalAIU > 0 && (
+              <Card className="flex-shrink-0 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                <CardContent className="p-2.5 flex items-center gap-2">
+                  <div className="p-1.5 bg-amber-500 rounded-lg">
+                    <Award className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-amber-700">{formatDecimal(totalAIU)}</p>
+                    <p className="text-[9px] text-amber-600 font-medium">AIU Earned</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* SDGs You've Contributed To */}
+          <Card className="mb-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-indigo-800">SDGs You've Supported</p>
+                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-[10px]">
+                  {sdgsContributed.length} of 17
+                </Badge>
+              </div>
+              {sdgsContributed.length > 0 ? (
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {sdgsContributed.map((sdgNum: number) => {
+                    const projectCount = volunteerProjects.filter((p: any) => p.sdgGoals?.includes(sdgNum)).length;
+                    return (
+                      <button
+                        key={sdgNum}
+                        onClick={() => setSelectedSDG(sdgNum === selectedSDG ? null : sdgNum)}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all ${
+                          selectedSDG === sdgNum
+                            ? 'bg-white border-indigo-400 shadow-md'
+                            : 'bg-white/50 border-transparent hover:bg-white'
+                        }`}
+                      >
+                        <img src={UN_SDG_ICONS[sdgNum]} alt={`SDG ${sdgNum}`} className="w-6 h-6 rounded" />
+                        <div className="text-left">
+                          <p className="text-[10px] font-semibold text-slate-700">SDG {sdgNum}</p>
+                          <p className="text-[9px] text-slate-500">{projectCount} project{projectCount !== 1 ? 's' : ''}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Globe className="h-8 w-8 text-indigo-200 mx-auto mb-2" />
+                  <p className="text-xs text-indigo-600">Join projects to contribute to SDGs</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* All 17 SDGs Grid */}
+          <Card className="mb-4">
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                <span>UN Sustainable Development Goals</span>
+                <span className="text-[10px] font-normal text-gray-500">Tap to explore</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="grid grid-cols-6 gap-1.5">
+                {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
+                  const hasContributed = sdgsContributed.includes(sdgNum);
+                  const projectCount = volunteerProjects.filter((p: any) =>
+                    p.sdgGoals?.includes(sdgNum)
+                  ).length;
+
+                  return (
+                    <button
+                      key={sdgNum}
+                      onClick={() => setSelectedSDG(sdgNum === selectedSDG ? null : sdgNum)}
+                      className={`relative rounded-lg overflow-hidden transition-all aspect-square ${
+                        hasContributed ? 'ring-2 ring-indigo-500 shadow-sm' : 'opacity-30 grayscale'
+                      } ${selectedSDG === sdgNum ? 'scale-110 z-10 ring-2 ring-blue-500' : ''}`}
+                    >
+                      <img
+                        src={UN_SDG_ICONS[sdgNum]}
+                        alt={`SDG ${sdgNum}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {projectCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 bg-indigo-500 text-white text-[7px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5">
                           {projectCount}
                         </span>
                       )}
@@ -612,25 +1097,96 @@ export default function SDGMapping() {
 
           {/* Selected SDG Details */}
           {selectedSDG && (
-            <Card className="mb-4">
+            <Card className="mb-4 border-2" style={{ borderColor: getSDGColor(selectedSDG) }}>
               <CardHeader className="pb-2 px-3 pt-3">
-                <div className="flex items-center gap-2">
-                  <img src={UN_SDG_ICONS[selectedSDG]} alt={`SDG ${selectedSDG}`} className="w-10 h-10 rounded" />
-                  <div>
-                    <CardTitle className="text-sm">{SDG_METADATA[selectedSDG]?.title}</CardTitle>
-                    <p className="text-xs text-gray-500">{SDG_METADATA[selectedSDG]?.description}</p>
+                <div className="flex items-start gap-3">
+                  <img
+                    src={UN_SDG_ICONS[selectedSDG]}
+                    alt={`SDG ${selectedSDG}`}
+                    className="w-14 h-14 rounded-lg shadow-md flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm font-bold" style={{ color: getSDGColor(selectedSDG) }}>
+                      SDG {selectedSDG}: {SDG_METADATA[selectedSDG]?.title}
+                    </CardTitle>
+                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                      {SDG_METADATA[selectedSDG]?.description}
+                    </p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="px-3 pb-3">
-                <p className="text-xs text-gray-600">
-                  {filteredProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG)).length} projects aligned
-                </p>
+                {/* Your contribution stats */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="text-center p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">{selectedSDGProjects.length}</p>
+                    <p className="text-[9px] text-slate-500">Projects</p>
+                  </div>
+                  <div className="text-center p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">
+                      {selectedSDGProjects.reduce((sum: number, p: any) => sum + (p.totalHours || p.volunteerHours || 0), 0)}
+                    </p>
+                    <p className="text-[9px] text-slate-500">Hours</p>
+                  </div>
+                </div>
+
+                {/* Projects List */}
+                {selectedSDGProjects.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Your Projects</p>
+                    {selectedSDGProjects.slice(0, 5).map((project: any) => (
+                      <Link key={project.id} href={`/projects/${project.id}`}>
+                        <div className="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-800 truncate">{project.name}</p>
+                            <p className="text-[10px] text-slate-500">{project.organizationName || 'Project'}</p>
+                          </div>
+                          <Badge variant="outline" className="text-[9px] ml-2">
+                            {project.status || 'Active'}
+                          </Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <AlertCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">You haven't contributed to this SDG yet</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Find projects aligned with SDG {selectedSDG}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
+
+          {/* Call to Action */}
+          {volunteerProjects.length === 0 && (
+            <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <CardContent className="p-4 text-center">
+                <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                <p className="font-semibold mb-1">Start Your Impact Journey</p>
+                <p className="text-xs text-indigo-100 mb-3">
+                  Join projects aligned with UN Sustainable Development Goals
+                </p>
+                <Link href="/discover-opportunities/pwa">
+                  <Button variant="secondary" size="sm" className="w-full">
+                    Discover Opportunities
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Back to Dashboard */}
+          <div className="mt-4">
+            <Link href="/volunteer-dashboard/pwa">
+              <Button variant="outline" className="w-full">
+                ← Back to Dashboard
+              </Button>
+            </Link>
+          </div>
         </div>
-      </OrganizationPWALayout>
+      </div>
     );
   }
 

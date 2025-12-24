@@ -913,10 +913,20 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     organizationProjects.forEach(project => {
       if (!project.sdgGoals || !Array.isArray(project.sdgGoals) || project.sdgGoals.length === 0) return;
 
+      // FIX: Calculate totals once per project, then distribute across SDGs
+      const sdgCount = project.sdgGoals.length;
+      const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+      const totalProjectHours = projectActivities.reduce((sum, a) => sum + a.hours, 0);
+      const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
+      const totalPeopleImpactedForProject = calculatePeopleImpacted(projectImpacts, peopleMetricIds);
+
+      // Distribute evenly across SDGs
+      const hoursPerSDG = totalProjectHours / sdgCount;
+      const projectsPerSDG = 1 / sdgCount; // Fractional project count
+      const peoplePerSDG = totalPeopleImpactedForProject / sdgCount;
+
       project.sdgGoals.forEach(sdgGoal => {
         if (typeof sdgGoal === 'number' && sdgGoal >= 1 && sdgGoal <= 17) {
-          const sdgIndex = sdgGoal - 1;
-
           if (!impactBySDGMap.has(sdgGoal)) {
             impactBySDGMap.set(sdgGoal, {
               sdgGoal,
@@ -927,20 +937,23 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
           }
 
           const sdgData = impactBySDGMap.get(sdgGoal)!;
-          sdgData.projects += 1;
-
-          // Add hours from activities on this project
-          const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
-          sdgData.hours += projectActivities.reduce((sum, a) => sum + a.hours, 0);
-
-          // Add people impacted from impacts on this project using helper
-          const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
-          sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts, peopleMetricIds);
+          // Use distributed values instead of full amounts
+          sdgData.projects += projectsPerSDG;
+          sdgData.hours += hoursPerSDG;
+          sdgData.peopleImpacted += peoplePerSDG;
         }
       });
     });
 
-    const impactBySDG = Array.from(impactBySDGMap.values()).sort((a, b) => b.hours - a.hours);
+    // Round fractional values for clean display
+    const impactBySDG = Array.from(impactBySDGMap.values())
+      .map(sdg => ({
+        ...sdg,
+        projects: Math.round(sdg.projects),
+        hours: Math.round(sdg.hours * 10) / 10, // 1 decimal place
+        peopleImpacted: Math.round(sdg.peopleImpacted),
+      }))
+      .sort((a, b) => b.hours - a.hours);
 
     const result = {
       summary: {
@@ -1268,11 +1281,36 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     });
 
     // Calculate monthly impact scores (algorithm-evaluated data)
+    // Generate months covering ALL activity dates, not just last 7 months
     const now = new Date();
     const months: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+
+    // Find earliest activity date to determine start of range
+    let earliestDate = now;
+    for (const activity of volunteerActivities) {
+      const activityDate = new Date(activity.date);
+      if (activityDate < earliestDate) {
+        earliestDate = activityDate;
+      }
+    }
+
+    // Generate months from earliest activity to now
+    const startMonth = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
+    const endMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // If no activities, default to last 7 months
+    if (volunteerActivities.length === 0) {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      }
+    } else {
+      // Generate all months from start to end
+      const currentMonth = new Date(startMonth);
+      while (currentMonth <= endMonth) {
+        months.push(`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`);
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+      }
     }
 
     const monthlyImpactTrend = months.map(monthKey => {

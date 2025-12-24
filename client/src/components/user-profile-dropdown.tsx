@@ -64,30 +64,33 @@ export function UserProfileDropdown({ className = "" }: UserProfileDropdownProps
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-white/10"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-emerald-50"
         style={{
           cursor: 'pointer',
           outline: 'none',
+          background: 'rgba(255, 255, 255, 0.85)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
         }}
       >
-        <Avatar className="h-8 w-8 border-2 border-white/20">
+        <Avatar className="h-8 w-8 border-2 border-emerald-200">
           <AvatarImage src={(user as any)?.avatar} />
-          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
+          <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white text-xs font-semibold">
             {initials}
           </AvatarFallback>
         </Avatar>
 
         <div className="hidden md:flex flex-col items-start">
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-semibold text-gray-800">
             {displayName}
           </span>
-          <span className="text-xs text-white/70">
+          <span className="text-xs text-gray-600">
             {userRole}
           </span>
         </div>
 
         <ChevronDown
-          className={`h-4 w-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 

@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreHorizontal } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
+import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
+import { formatDecimal } from "@/lib/format-utils";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 import { isValidSdg, filterValidSdgs, extractSdgsFromProjects, compareSdgArrays } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -102,6 +104,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
   const [showReadinessModal, setShowReadinessModal] = useState(false);
+  const [showAIUDetailsModal, setShowAIUDetailsModal] = useState(false);
 
   // Log Activity form state
   const [logActivityProjectId, setLogActivityProjectId] = useState<string>("");
@@ -1107,10 +1110,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </button>
               {/* AIU Score - Attributable Impact Units */}
               <button
-                onClick={() => setShowKpiModal('aiu')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                onClick={() => setShowAIUDetailsModal(true)}
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm group"
                 data-testid="kpi-aiu-score"
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="w-8 h-8 mx-auto mb-1.5 bg-amber-100 rounded-xl flex items-center justify-center">
                   <Award className="w-4 h-4 text-amber-600" />
                 </div>
@@ -1118,6 +1122,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   {formatNumber(aiuSummary?.totalAiu || 0)}
                 </div>
                 <div className="text-[10px] font-medium text-slate-500">AIU Score</div>
+                <div className="text-[8px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
               </button>
               {/* Total Hours - Time contributed */}
               <button
@@ -1194,8 +1199,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     </button>
                     {/* Impact Score (AIU) - Clickable, using aiuSummary as single source of truth */}
                     <button
-                      onClick={() => setShowKpiModal('aiu')}
-                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
+                      onClick={() => setShowAIUDetailsModal(true)}
+                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer group"
                     >
                       <div className="text-2xl font-bold text-amber-600">
                         {formatNumber(aiuSummary?.totalAiu)}
@@ -2250,7 +2255,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 </button>
                 {/* AIU Score - Clickable */}
                 <button
-                  onClick={() => setShowKpiModal('aiu')}
+                  onClick={() => setShowAIUDetailsModal(true)}
                   className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all active:scale-[0.98] text-left"
                 >
                   <Target className="w-6 h-6 opacity-90" />
@@ -2510,7 +2515,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                             labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             formatter={(value: number, name: string) => [
-                              name === 'aiu' ? value.toFixed(2) : value,
+                              name === 'aiu' ? formatDecimal(value) : value,
                               name === 'hours' ? 'Hours' : name === 'peopleReached' ? 'People Reached' : 'AIUs'
                             ]}
                           />
@@ -3251,7 +3256,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
-                onClick={() => setShowKpiModal('aiu')}
+                onClick={() => setShowAIUDetailsModal(true)}
                 className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
                 data-testid="button-aiu-score"
               >
@@ -3348,7 +3353,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
                 {showKpiModal === 'sdgs' && 'SDG Contributions'}
-                {showKpiModal === 'aiu' && 'Attributable Impact Units'}
                 {showKpiModal === 'impact-score' && 'Your Impact Score'}
                 {showKpiModal === 'tasks' && 'Task Progress'}
                 {showKpiModal === 'people' && 'People Reached'}
@@ -3601,66 +3605,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="text-center text-slate-400 py-8">
                       <p>No SDG activity yet.</p>
                       <p className="text-xs mt-2">Update your profile to set SDG goals, then find projects!</p>
-                    </div>
-                  )}
-                </>
-              )}
-              {showKpiModal === 'aiu' && (
-                <>
-                  <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-amber-500 mb-2">{formatNumber(aiuSummary?.totalAiu)}</div>
-                    <div className="text-slate-500">Total Attributable Impact Units</div>
-                  </div>
-
-                  {/* AIU Description */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 mb-4">
-                    <h4 className="font-semibold text-blue-800 text-sm mb-2">What is an AIU?</h4>
-                    <p className="text-xs text-blue-700 leading-relaxed">
-                      <strong>Attributable Impact Units (AIU)</strong> are auditable, SDG-mapped metrics that measure your real contribution to social impact. Unlike simple "hours logged", AIUs calculate your proportional share of project outcomes based on your role, hours, and the verified change in beneficiaries' lives.
-                    </p>
-                  </div>
-
-                  <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mb-4">
-                    <div className="text-sm text-slate-700 space-y-2">
-                      <div className="flex justify-between">
-                        <span>Unique AIU:</span>
-                        <span className="text-amber-600 font-semibold">{formatNumber(aiuSummary?.aiuUnique)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Session AIU:</span>
-                        <span className="text-amber-600 font-semibold">{formatNumber(aiuSummary?.aiuSessions)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Verification Rate:</span>
-                        <span className="text-emerald-600 font-semibold">{Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Total Hours:</span>
-                        <span className="text-blue-600 font-semibold">{aiuSummary?.totalHours || kpis.totalHours}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {aiuSummary?.projects && aiuSummary.projects.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-slate-800 font-semibold text-sm">AIU by Project:</h3>
-                      {aiuSummary.projects.slice(0, 5).map((project: any) => (
-                        <div key={project.projectId} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="text-slate-800 font-medium text-sm truncate flex-1">{project.projectName}</div>
-                            <span className="text-amber-600 font-bold text-sm ml-2">{formatNumber(project.aiu)} AIU</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span>{project.hours || 0} hours</span>
-                            <span className="text-slate-300">•</span>
-                            <span>{project.role || 'Volunteer'}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {(!aiuSummary?.projects || aiuSummary.projects.length === 0) && (
-                    <div className="text-center py-4 text-slate-500 text-sm">
-                      No project AIU data available yet. Keep volunteering to earn impact units!
                     </div>
                   )}
                 </>
@@ -4671,6 +4615,17 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           </div>
         </div>
       )}
+
+      {/* Enhanced AIU Details Modal - Opens when AIU KPI is clicked */}
+      <AIUDetailsModal
+        isOpen={showAIUDetailsModal}
+        onClose={() => setShowAIUDetailsModal(false)}
+        totalAIU={aiuSummary?.totalAiu ?? 0}
+        projects={aiuSummary?.projects ?? []}
+        totalHours={aiuSummary?.totalHours ?? kpis.totalHours ?? 0}
+        volunteerName={user?.displayName}
+        sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+      />
 
       {/*
         IMPORTANT: PWA Bottom Tray Navigation - DO NOT REPLACE

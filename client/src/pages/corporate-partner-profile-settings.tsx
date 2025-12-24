@@ -18,6 +18,7 @@ import { Building2, Check, ChevronRight, Save, Bell, Target, Settings as Setting
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { Label } from "@/components/ui/label";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
+import { CSRLayout } from "@/components/layout/csr-layout";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 
 const corporatePartnerSchema = z.object({
@@ -35,16 +36,35 @@ type CorporatePartnerForm = z.infer<typeof corporatePartnerSchema>;
 
 const industryOptions = [
   "Technology",
-  "Finance",
+  "Finance & Banking",
   "Healthcare",
   "Manufacturing",
   "Retail",
   "Telecommunications",
-  "Energy",
+  "Energy & Utilities",
   "Transportation",
   "Media & Entertainment",
   "Education",
   "Professional Services",
+  "Construction",
+  "Infrastructure",
+  "Real Estate",
+  "Agriculture & Farming",
+  "Mining & Resources",
+  "Hospitality & Tourism",
+  "Logistics & Supply Chain",
+  "Automotive",
+  "Aerospace & Defense",
+  "Pharmaceuticals",
+  "Consumer Goods",
+  "Legal Services",
+  "Consulting",
+  "Insurance",
+  "Food & Beverage",
+  "Textiles & Apparel",
+  "Environmental Services",
+  "Non-Profit/NGO",
+  "Government & Public Sector",
   "Other"
 ];
 
@@ -177,8 +197,9 @@ export default function CorporatePartnerProfileSettings() {
         vtoTrackingEnabled: partnerProfile.vtoTrackingEnabled ?? true,
       });
       setSelectedSdgs(partnerProfile.primarySdgs || []);
-      if (partnerProfile.logo) {
-        setLogoUrl(partnerProfile.logo);
+      // Support both logo and logoUrl field names (logoUrl is the database field)
+      if (partnerProfile.logoUrl || partnerProfile.logo) {
+        setLogoUrl(partnerProfile.logoUrl || partnerProfile.logo);
       }
     }
   }, [partnerProfile, form]);
@@ -189,7 +210,7 @@ export default function CorporatePartnerProfileSettings() {
       const payload = {
         ...data,
         primarySdgs: sdgsToSave,
-        logo: logoUrl
+        logoUrl: logoUrl // Use logoUrl to match database field name
       };
 
       // If profile exists, update it; otherwise create new one
@@ -468,18 +489,18 @@ export default function CorporatePartnerProfileSettings() {
   }
 
   return (
-    <div className="h-screen overflow-auto bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900 py-12 px-4">
+    <CSRLayout activeNav="settings" title="Corporate Partner Settings" subtitle="Update your company profile and CSR program details">
       <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader className="bg-blue-600 dark:bg-blue-900 text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Corporate Partner Settings
-            </CardTitle>
-            <CardDescription className="text-blue-100">
-              Update your company profile and CSR program details
-            </CardDescription>
-          </CardHeader>
+          <Card>
+            <CardHeader className="bg-blue-600 dark:bg-blue-900 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Corporate Partner Settings
+              </CardTitle>
+              <CardDescription className="text-blue-100">
+                Update your company profile and CSR program details
+              </CardDescription>
+            </CardHeader>
           
           <CardContent className="pt-6">
             <Form {...form}>
@@ -821,6 +842,6 @@ export default function CorporatePartnerProfileSettings() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </CSRLayout>
   );
 }

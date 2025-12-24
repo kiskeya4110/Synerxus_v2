@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
+import { formatDecimal } from "@/lib/format-utils";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
@@ -35,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import MobilePWAView from "@/components/volunteer/mobile-pwa-view";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
+import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
@@ -57,6 +59,7 @@ export default function Dashboard() {
   }
   const [selectedKPI, setSelectedKPI] = useState<KPIState | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showAIUModal, setShowAIUModal] = useState(false);
 
   // Detect if on mobile device for PWA vs desktop navigation
   const isMobile = useIsMobile();
@@ -783,7 +786,7 @@ export default function Dashboard() {
             items: dashboardData.projectHours.map((ph: any) => ({
               id: ph.projectId,
               label: ph.projectName,
-              value: `${parseFloat(ph.hours.toFixed(2))} hours`,
+              value: `${formatDecimal(ph.hours)} hours`,
               organizationName: ph.organizationName,
               isProjectItem: true,
             })),
@@ -830,11 +833,11 @@ export default function Dashboard() {
             title: "Volunteer Hours Breakdown",
             items: Array.from(hoursByProject.values()).map((data) => ({
               label: data.projectName,
-              value: `${parseFloat(data.totalHours.toFixed(2))} hours total`,
+              value: `${formatDecimal(data.totalHours)} hours total`,
               isProjectGroup: true,
               activities: data.activities.map((act: any) => ({
                 date: formatDate(new Date(act.date)),
-                hours: `${parseFloat(act.hours.toFixed(2))} hours`,
+                hours: `${formatDecimal(act.hours)} hours`,
                 description: act.description
               }))
             })),
@@ -1025,7 +1028,7 @@ export default function Dashboard() {
             value: `${beneficiariesPerHour.toLocaleString()} people/hour`,
             icon: "⚡",
             isHighlight: true,
-            description: `Based on ${totalHoursForImpact.toFixed(1)} total hours`
+            description: `Based on ${formatDecimal(totalHoursForImpact)} total hours`
           }
         ];
         
@@ -1050,6 +1053,11 @@ export default function Dashboard() {
         }
         
         
+        // For volunteers, show the dedicated AIU details modal
+        if (dashboardType === "volunteer") {
+          setShowAIUModal(true);
+          return; // Don't show the generic dialog
+        }
         detailData = {
           title: "AIU Breakdown - Impact Details",
           items: items,
@@ -1344,11 +1352,12 @@ export default function Dashboard() {
               </Select>
             </div>
 
-            {/* Stats Cards - Enhanced Grid */}
+            {/* Stats Cards - Enhanced Interactive Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-blue-100 text-xs md:text-sm font-medium">Hours Logged</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.hours)}</p>
@@ -1357,80 +1366,94 @@ export default function Dashboard() {
                           <ArrowUp className="h-3 w-3" /> {dashboardData.hoursTrend}
                         </p>
                       )}
+                      <p className="text-blue-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <Clock className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-emerald-100 text-xs md:text-sm font-medium">Active Projects</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.activeProjects}</p>
+                      <p className="text-emerald-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <Briefcase className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-violet-600 border-0 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-purple-500 to-violet-600 border-0 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-purple-100 text-xs md:text-sm font-medium">Tasks</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.completedTasks}/{kpis.tasks}</p>
                       <p className="text-purple-200 text-xs mt-1">{formatNumber(tasksProgress)}% complete</p>
+                      <p className="text-purple-200/70 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <CheckSquare className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Skills", kpis.skills)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Skills", kpis.skills)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-amber-100 text-xs md:text-sm font-medium">Skills</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.skills}</p>
+                      <p className="text-amber-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <Award className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-cyan-500 to-blue-600 border-0 shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:shadow-cyan-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-cyan-500 to-blue-600 border-0 shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:shadow-cyan-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98] ring-2 ring-transparent hover:ring-white/30" onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/20 rounded text-[8px] text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Learn More
+                  </div>
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-cyan-100 text-xs md:text-sm font-medium">AIUs Earned</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
+                      <p className="text-cyan-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to learn about AIU</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <TrendingUp className="h-6 w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center justify-between">
+              <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
+                <CardContent className="p-4 md:p-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
+                  <div className="flex items-center justify-between relative">
                     <div>
                       <p className="text-orange-100 text-xs md:text-sm font-medium">Impact Streak</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{impactStreakData.currentStreak} days</p>
                       <p className="text-orange-200 text-xs mt-1">{impactStreakData.streakMessage}</p>
+                      <p className="text-orange-200/70 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
                       <Flame className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -1469,7 +1492,13 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ImpactChart monthlyImpactData={filteredMonthlyImpactData} narrative={impactNarrative} userType="volunteer" />
+                  <ImpactChart
+                    monthlyImpactData={filteredMonthlyImpactData}
+                    monthlyImpactTrend={filteredMonthlyImpactTrend}
+                    impactGrowthSeries={dashboardData?.impactGrowthSeries || []}
+                    narrative={impactNarrative}
+                    userType="volunteer"
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -1813,6 +1842,17 @@ export default function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* AIU Details Modal for desktop volunteers */}
+        <AIUDetailsModal
+          isOpen={showAIUModal}
+          onClose={() => setShowAIUModal(false)}
+          totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
+          projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
+          totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
+          volunteerName={currentUser?.displayName}
+          sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+        />
       </PageTransition>
     );
   }
@@ -2013,34 +2053,34 @@ export default function Dashboard() {
       <div className="md:hidden mt-4">
         <div className="grid grid-cols-4 gap-1">
           <Link href="/log-activity" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Clock className="h-4 w-4" />
               <span>Log</span>
             </Button>
           </Link>
           {dashboardType === "volunteer" ? (
             <Link href="/discover-opportunities" className="w-full aspect-square">
-              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
                 <Target className="h-4 w-4" />
                 <span>Find</span>
               </Button>
             </Link>
           ) : (
             <Link href="/projects" className="w-full aspect-square">
-              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
                 <Building2 className="h-4 w-4" />
                 <span>Projects</span>
               </Button>
             </Link>
           )}
           <Link href="/my-work" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <CheckSquare className="h-4 w-4" />
               <span>Work</span>
             </Button>
           </Link>
           <Link href="/calendar" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Zap className="h-4 w-4" />
               <span>Cal</span>
             </Button>
@@ -2059,7 +2099,7 @@ export default function Dashboard() {
               icon={<Clock className="h-6 w-6" />}
               onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
               compact={true}
-              gradient="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700"
+              gradient="bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-800"
               data-testid="kpi-hours"
               />
             </StaggerItem>
@@ -2070,7 +2110,7 @@ export default function Dashboard() {
               icon={<CheckSquare className="h-6 w-6" />}
               onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
               compact={true}
-              gradient="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700"
+              gradient="bg-gradient-to-br from-slate-500 to-slate-600 dark:from-slate-600 dark:to-slate-700"
               data-testid="kpi-tasks"
               />
             </StaggerItem>
@@ -2081,7 +2121,7 @@ export default function Dashboard() {
               icon={<Target className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               compact={true}
-              gradient="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
+              gradient="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800"
               data-testid="kpi-projects"
               />
             </StaggerItem>
@@ -2092,18 +2132,18 @@ export default function Dashboard() {
               icon={<Briefcase className="h-6 w-6" />}
               onClick={() => handleKPIClick("Skills", kpis.skills)}
               compact={true}
-              gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
+              gradient="bg-gradient-to-br from-slate-500 to-slate-600 dark:from-slate-600 dark:to-slate-700"
               data-testid="kpi-skills"
               />
             </StaggerItem>
             <StaggerItem>
               <StatsCard
               title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(2) : kpis.aiuEarned || 0}
+              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
               onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
-              gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
+              gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
               data-testid="kpi-aiu-earned"
               />
             </StaggerItem>
@@ -2157,7 +2197,7 @@ export default function Dashboard() {
             <StaggerItem>
               <StatsCard
               title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(2) : kpis.aiuEarned || 0}
+              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
               onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
@@ -2191,10 +2231,10 @@ export default function Dashboard() {
               <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {aiuSummary.totalAiu >= 10
-                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(2)} Attributable Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
+                    ? `🌟 Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} Attributable Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${Math.round(aiuSummary.totalHours || 0)} hours are creating measurable change.`
                     : aiuSummary.totalAiu >= 5
-                    ? `✨ Great progress! You've accumulated ${aiuSummary.totalAiu?.toFixed(2)} AIUs. With ${aiuSummary.totalHours?.toFixed(0) || 0} hours invested, your impact is growing steadily.`
-                    : `🚀 You're building momentum with ${aiuSummary.totalAiu?.toFixed(2)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
+                    ? `✨ Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} AIUs. With ${Math.round(aiuSummary.totalHours || 0)} hours invested, your impact is growing steadily.`
+                    : `🚀 You're building momentum with ${formatDecimal(aiuSummary.totalAiu)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
                 </p>
               </div>
 
@@ -2206,7 +2246,7 @@ export default function Dashboard() {
                       <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(2) || '0.00'}</span>
+                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary.totalAiu) || '0.00'}</span>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs Earned</p>
                     </div>
                   </div>
@@ -2257,7 +2297,7 @@ export default function Dashboard() {
                 </h4>
                 {aiuSummary.projects.map((project: any, idx: number) => {
                   const projectShare = aiuSummary.totalAiu > 0 ? ((project.aiu || 0) / aiuSummary.totalAiu) * 100 : 0;
-                  const hoursPerAiu = project.aiu > 0 ? (project.hours / project.aiu).toFixed(1) : '0';
+                  const hoursPerAiu = project.aiu > 0 ? formatDecimal(project.hours / project.aiu) : '0';
                   return (
                     <Link key={idx} href={`/projects/${project.projectId}`}>
                       <div className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm hover:shadow-md">
@@ -2272,15 +2312,15 @@ export default function Dashboard() {
                             </div>
                           </div>
                           <div className="text-right ml-3">
-                            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{project.aiu?.toFixed(2) || '0.00'}</span>
+                            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(project.aiu) || '0.00'}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400 block">AIU</span>
                           </div>
                         </div>
                         {/* Progress bar showing project's share of total AIU */}
                         <div className="mt-3">
                           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span>{project.hours?.toFixed(1) || 0}h invested</span>
-                            <span>{projectShare.toFixed(0)}% of your impact</span>
+                            <span>{formatDecimal(project.hours) || 0}h invested</span>
+                            <span>{Math.round(projectShare)}% of your impact</span>
                           </div>
                           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
@@ -2308,12 +2348,23 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ImpactChart 
-          monthlyImpactData={filteredMonthlyImpactData}
-          monthlyImpactTrend={filteredMonthlyImpactTrend}
-          userType={currentUser?.userType}
-          narrative={impactNarrative}
-        />
+        <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Your Impact Over Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ImpactChart
+              monthlyImpactData={filteredMonthlyImpactData}
+              monthlyImpactTrend={filteredMonthlyImpactTrend}
+              impactGrowthSeries={dashboardData?.impactGrowthSeries || []}
+              userType={currentUser?.userType}
+              narrative={impactNarrative}
+            />
+          </CardContent>
+        </Card>
         <SDGChart 
           projects={filteredData.projects}
           organizationSdgs={
@@ -2468,6 +2519,17 @@ export default function Dashboard() {
           organizationUserId={currentUser.id}
         />
       )}
+
+      {/* AIU Details Modal - Enhanced view for volunteers */}
+      <AIUDetailsModal
+        isOpen={showAIUModal}
+        onClose={() => setShowAIUModal(false)}
+        totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
+        projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
+        totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
+        volunteerName={currentUser?.displayName}
+        sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+      />
 
       {/* KPI Detail Dialog */}
       <Dialog open={!!selectedKPI} onOpenChange={(open) => !open && setSelectedKPI(null)}>

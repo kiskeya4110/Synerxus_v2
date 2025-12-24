@@ -27,7 +27,7 @@ export default function CSRPWANav({ activeTab }: CSRPWANavProps) {
     if (location.includes('/projects') || location === '/csr-projects') return 'projects';
     if (location.includes('/impacts') || location === '/csr-impacts') return 'impacts';
     if (location.includes('/reports') || location === '/csr-reports') return 'reports';
-    if (location.includes('/profile') || location === '/csr-profile-settings') return 'profile';
+    if (location.includes('/profile') || location === '/corporate-partner-profile-settings') return 'profile';
     return 'home';
   })();
 
@@ -60,12 +60,18 @@ export default function CSRPWANav({ activeTab }: CSRPWANavProps) {
       id: 'profile' as const,
       label: 'Profile',
       icon: User,
-      path: '/csr-profile-settings'
+      path: '/corporate-partner-profile-settings'
     },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-1 py-2 max-w-[428px] mx-auto z-50">
+    <nav
+      className="fixed bottom-0 left-0 right-0 px-1 py-2 max-w-[428px] mx-auto z-50 border-t shadow-lg"
+      style={{
+        background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
+        borderColor: "rgba(16, 185, 129, 0.2)"
+      }}
+    >
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
@@ -73,15 +79,16 @@ export default function CSRPWANav({ activeTab }: CSRPWANavProps) {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center py-1 px-1.5 rounded-lg transition-all ${
-                isActive
-                  ? 'text-emerald-400'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
+              className="flex flex-col items-center py-1 px-1.5 rounded-lg transition-all"
+              style={{
+                color: isActive ? '#047857' : '#065f46',
+                background: isActive ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                fontWeight: isActive ? 600 : 500
+              }}
               data-testid={`nav-csr-${item.id}`}
             >
               <item.icon className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-medium">{item.label}</span>
+              <span className="text-[9px]" style={{ fontWeight: 'inherit' }}>{item.label}</span>
             </button>
           );
         })}

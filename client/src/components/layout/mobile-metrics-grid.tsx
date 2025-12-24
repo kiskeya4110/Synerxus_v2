@@ -1,4 +1,5 @@
 import { FolderOpen, Clock, Target, Users, TrendingUp, Award, CheckCircle, Zap } from "lucide-react";
+import { formatDecimal } from "@/lib/format-utils";
 
 interface MobileMetricsGridProps {
   activeProjects?: number;
@@ -68,7 +69,7 @@ export default function MobileMetricsGrid({
     },
     {
       label: "AIU Score",
-      value: typeof aiuEarned === 'number' ? aiuEarned.toFixed(1) : aiuEarned,
+      value: typeof aiuEarned === 'number' ? formatDecimal(aiuEarned) : aiuEarned,
       subValue: `${totalHours.toLocaleString()}h total`,
       icon: Award,
       color: "#0ea5e9",

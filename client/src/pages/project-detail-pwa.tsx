@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
@@ -411,7 +412,7 @@ export default function ProjectDetailPWA() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-emerald-600">{projectAiu.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{formatDecimal(projectAiu)}</p>
                     <p className="text-[10px] text-slate-500">{projectHoursFromAiu > 0 ? `${projectHoursFromAiu} hrs logged` : 'Start contributing!'}</p>
                   </div>
                 </div>

@@ -93,6 +93,13 @@ aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
 /**
  * GET /api/aiu/organization/:organizationId
  * Get AIU summary for a specific organization
+ *
+ * Query params:
+ * - projectId: Filter to specific project
+ * - startDate: Filter activities/impacts from this date (ISO string)
+ * - endDate: Filter activities/impacts until this date (ISO string)
+ * - timePeriod: Convenience filter (7d, 30d, 90d, 1y)
+ * - sdgGoal: Filter to projects with specific SDG
  */
 aiuRouter.get("/organization/:organizationId", async (req: Request, res: Response) => {
   try {
@@ -101,7 +108,53 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
       return res.status(400).json({ error: "Invalid organization ID" });
     }
 
-    const summary = await calculateOrganizationAIU(organizationId);
+    // Parse filter parameters
+    const projectIdParam = req.query.projectId as string | undefined;
+    const startDateParam = req.query.startDate as string | undefined;
+    const endDateParam = req.query.endDate as string | undefined;
+    const timePeriodParam = req.query.timePeriod as string | undefined;
+    const sdgGoalParam = req.query.sdgGoal as string | undefined;
+
+    // Build filters
+    const filters: {
+      projectId?: number;
+      startDate?: Date;
+      endDate?: Date;
+      sdgGoal?: number;
+    } = {};
+
+    if (projectIdParam && projectIdParam !== 'all') {
+      filters.projectId = parseInt(projectIdParam);
+    }
+
+    if (sdgGoalParam) {
+      filters.sdgGoal = parseInt(sdgGoalParam);
+    }
+
+    // Handle time period convenience filter
+    if (timePeriodParam && timePeriodParam !== 'all') {
+      const now = new Date();
+      filters.endDate = now;
+      if (timePeriodParam === '7d') {
+        filters.startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else if (timePeriodParam === '30d') {
+        filters.startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      } else if (timePeriodParam === '90d') {
+        filters.startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      } else if (timePeriodParam === '1y') {
+        filters.startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      }
+    } else if (startDateParam || endDateParam) {
+      // Use explicit date range if provided
+      if (startDateParam) {
+        filters.startDate = new Date(startDateParam);
+      }
+      if (endDateParam) {
+        filters.endDate = new Date(endDateParam);
+      }
+    }
+
+    const summary = await calculateOrganizationAIU(organizationId, Object.keys(filters).length > 0 ? filters : undefined);
     if (!summary) {
       return res.status(404).json({ error: "Organization not found" });
     }

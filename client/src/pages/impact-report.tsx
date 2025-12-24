@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -127,6 +128,7 @@ export default function ImpactReport() {
   const isMobile = useIsMobile();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
+  const isOrganization = userType === 'organization';
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
@@ -406,7 +408,7 @@ export default function ImpactReport() {
 
   const monthlyHours = generateMonthlyHours();
   const bestMonth = monthlyHours.reduce((max, curr) => curr.hours > max.hours ? curr : max, monthlyHours[0]);
-  const avgMonthlyHours = monthlyHours.length > 0 ? (monthlyHours.reduce((sum, m) => sum + m.hours, 0) / monthlyHours.length).toFixed(1) : 0;
+  const avgMonthlyHours = monthlyHours.length > 0 ? formatDecimal(monthlyHours.reduce((sum, m) => sum + m.hours, 0) / monthlyHours.length) : 0;
 
   // Generate insights based on time filter and trends
   const generateTrendInsight = () => {
@@ -438,7 +440,7 @@ export default function ImpactReport() {
         
       case 'quarter':
         if (avgSecondHalf > avgFirstHalf * 1.1) {
-          trendInsight = `📈 Your engagement is accelerating this quarter! Average hours increased from ${avgFirstHalf.toFixed(1)}h to ${avgSecondHalf.toFixed(1)}h per month.`;
+          trendInsight = `📈 Your engagement is accelerating this quarter! Average hours increased from ${formatDecimal(avgFirstHalf)}h to ${formatDecimal(avgSecondHalf)}h per month.`;
         } else if (avgSecondHalf < avgFirstHalf * 0.9) {
           trendInsight = `📉 Your engagement is declining this quarter. Consider planning ahead to maintain consistent contribution levels.`;
         } else {
@@ -463,7 +465,7 @@ export default function ImpactReport() {
         const totalAllTime = monthlyHours.reduce((sum, m) => sum + m.hours, 0);
         const monthsActive = monthlyHours.filter(m => m.hours > 0).length;
         if (monthsActive > 0) {
-          trendInsight = `✨ Your impact journey: ${totalAllTime}h across ${monthsActive} active months. Average ${(totalAllTime / monthsActive).toFixed(1)}h per active month.`;
+          trendInsight = `✨ Your impact journey: ${totalAllTime}h across ${monthsActive} active months. Average ${formatDecimal(totalAllTime / monthsActive)}h per active month.`;
         } else {
           trendInsight = "Start your volunteer journey by logging your first hours!";
         }
@@ -916,7 +918,7 @@ export default function ImpactReport() {
                       {filteredActivities.length > 0 && (
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Avg:</span>
-                          <span className="font-bold text-blue-600 dark:text-blue-400">{(filteredTotalHours / filteredActivities.length).toFixed(1)}h</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{formatDecimal(filteredTotalHours / filteredActivities.length)}h</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center text-[10px] md:text-xs">
@@ -1010,7 +1012,7 @@ export default function ImpactReport() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</p>
+                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary?.totalAiu) || '0.00'}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{aiuSummary?.verificationRate || 0}% verified</p>
                     </div>
                   </div>
@@ -1543,7 +1545,7 @@ export default function ImpactReport() {
                       {filteredActivities.length > 0 && (
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
-                          <span className="font-bold text-blue-600 dark:text-blue-400">{(filteredTotalHours / filteredActivities.length).toFixed(1)}h</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{formatDecimal(filteredTotalHours / filteredActivities.length)}h</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center text-xs">
@@ -2519,9 +2521,9 @@ export default function ImpactReport() {
       {/* Mobile Bottom Navigation - Different for volunteers vs organizations */}
       {isVolunteer && isMobile ? (
         <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impacts" />
-      ) : (
+      ) : isOrganization ? (
         <MobileBottomNav />
-      )}
+      ) : null}
     </div>
   );
 }

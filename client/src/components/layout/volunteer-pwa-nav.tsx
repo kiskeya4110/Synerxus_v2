@@ -73,8 +73,7 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
     { icon: ClipboardList, label: 'Log Activity', path: '/volunteer-dashboard?tab=log-activity' },
     { icon: BookOpen, label: 'Stories', path: '/stories' },
     { icon: Award, label: 'Achievements', path: '/achievements' },
-    { icon: User, label: 'Profile', path: '/volunteer-dashboard?tab=profile' },
-    { icon: Settings, label: 'Settings', path: '/volunteer-profile-settings' },
+    { icon: User, label: 'Profile & Settings', path: '/volunteer-profile-settings' },
   ];
 
   return (

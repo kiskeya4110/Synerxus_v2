@@ -8,11 +8,12 @@ import {
   FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, ChevronRight, AlertTriangle, CheckSquare, TrendingUp,
   Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical,
-  Bell, Settings, User, LogOut, FileText, Award, Zap,
+  Bell, Settings, User as UserIcon, LogOut, FileText, Award, Zap,
   Activity, Shield, ShieldCheck, Eye, ThumbsUp, Info,
   Sparkles, CircleDot
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { formatDecimal, formatMetric } from "@/lib/format-utils";
 
 // Error Boundary for lazy-loaded components
 interface ErrorBoundaryProps {
@@ -171,6 +172,7 @@ export default function OrganizationDashboard() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showVolunteerManagement, setShowVolunteerManagement] = useState(false);
   const [showEngagementDetails, setShowEngagementDetails] = useState(false);
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
 
   // Check if user is an organization user (used for query enabled flags)
   const isOrganizationUser = userType === 'organization';
@@ -282,12 +284,79 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
+  // Fetch detailed volunteer profile data when a volunteer is selected
+  const { data: selectedVolunteerData, isLoading: isLoadingVolunteer } = useQuery({
+    queryKey: ['/api/volunteer/profile-insights', selectedVolunteerId, currentUser?.organizationId],
+    queryFn: async () => {
+      if (!selectedVolunteerId || !currentUser?.organizationId) return null;
+
+      // Fetch volunteer's basic info
+      const userResponse = await fetch(`/api/users?id=${selectedVolunteerId}`);
+      const users = await userResponse.json();
+      const volunteerUser = Array.isArray(users) ? users.find((u: any) => u.id === selectedVolunteerId) : users;
+
+      // Fetch volunteer's profile
+      const profileResponse = await fetch(`/api/intake/volunteer-profile?userId=${selectedVolunteerId}`);
+      const profileData = profileResponse.ok ? await profileResponse.json() : null;
+
+      // Fetch volunteer's activities for this organization
+      const activitiesResponse = await fetch(`/api/volunteer-activities?userId=${selectedVolunteerId}`);
+      const activities = activitiesResponse.ok ? await activitiesResponse.json() : [];
+
+      // Filter activities to only include ones for this organization's projects
+      const orgProjectIds = new Set((dashboardData?.projects || []).map((p: any) => p.id));
+      const orgActivities = activities.filter((a: any) => orgProjectIds.has(a.projectId));
+
+      // Fetch volunteer's project assignments
+      const assignmentsResponse = await fetch(`/api/project-assignments?volunteerId=${selectedVolunteerId}`);
+      const assignments = assignmentsResponse.ok ? await assignmentsResponse.json() : [];
+      const orgAssignments = assignments.filter((a: any) => orgProjectIds.has(a.projectId));
+
+      // Fetch AIU data for this volunteer
+      const aiuResponse = await fetch(`/api/aiu/volunteer/${selectedVolunteerId}`);
+      const aiuData = aiuResponse.ok ? await aiuResponse.json() : null;
+
+      // Calculate stats
+      const totalHours = orgActivities.reduce((sum: number, a: any) => sum + (parseFloat(a.hours) || 0), 0);
+      const projectsWorkedOn = new Set(orgActivities.map((a: any) => a.projectId)).size;
+      const activitiesLast30Days = orgActivities.filter((a: any) => {
+        const activityDate = new Date(a.date);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return activityDate >= thirtyDaysAgo;
+      });
+      const hoursLast30Days = activitiesLast30Days.reduce((sum: number, a: any) => sum + (parseFloat(a.hours) || 0), 0);
+
+      // Group activities by month for chart
+      const activityByMonth: Record<string, number> = {};
+      orgActivities.forEach((a: any) => {
+        const month = new Date(a.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        activityByMonth[month] = (activityByMonth[month] || 0) + (parseFloat(a.hours) || 0);
+      });
+
+      return {
+        user: volunteerUser,
+        profile: profileData?.volunteerProfile || null,
+        totalHours,
+        hoursLast30Days,
+        projectsWorkedOn,
+        activitiesCount: orgActivities.length,
+        recentActivities: orgActivities.slice(0, 5),
+        assignments: orgAssignments,
+        aiuData,
+        activityByMonth: Object.entries(activityByMonth).map(([month, hours]) => ({ month, hours })),
+        sdgsContributed: aiuData?.sdgsContributed || [],
+      };
+    },
+    enabled: !!selectedVolunteerId && !!currentUser?.organizationId && isOrganizationUser,
+  });
+
   // Fetch accurate AIU data from dedicated AIU endpoint (single source of truth)
   interface OrganizationAIUSummary {
     organizationId: number;
     organizationName: string;
     totalAiu: number;
-    aiuUnique: number;
+    aiuUnique: number; // Organization's direct share
     aiuSessions: number;
     projectCount: number;
     volunteerCount: number;
@@ -299,16 +368,25 @@ export default function OrganizationDashboard() {
       projectId: number;
       projectName: string;
       aiu: number;
+      orgDirectShare: number;
+      volunteerAiuSum: number;
       sdgIndicator: string;
       verificationStatus: string;
     }>;
   }
 
   const { data: organizationAIU } = useQuery<OrganizationAIUSummary | null>({
-    queryKey: ['/api/aiu/organization', currentUser?.organizationId],
+    queryKey: ['/api/aiu/organization', currentUser?.organizationId, projectFilter, timePeriod, sdgFilter],
     queryFn: async () => {
       if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/aiu/organization/${currentUser.organizationId}`);
+      // Build query params to match dashboard filters
+      const params = new URLSearchParams();
+      if (projectFilter && projectFilter !== 'all') params.append('projectId', projectFilter);
+      if (timePeriod && timePeriod !== 'all') params.append('timePeriod', timePeriod);
+      if (sdgFilter) params.append('sdgGoal', sdgFilter);
+      const queryString = params.toString();
+      const url = `/api/aiu/organization/${currentUser.organizationId}${queryString ? '?' + queryString : ''}`;
+      const response = await fetch(url);
       if (!response.ok) return null;
       return response.json();
     },
@@ -694,7 +772,7 @@ export default function OrganizationDashboard() {
                     textAlign: 'left',
                   }}
                 >
-                  <User size={18} color="#6b7280" />
+                  <UserIcon size={18} color="#6b7280" />
                   Profile
                 </button>
                 <button
@@ -1294,7 +1372,7 @@ export default function OrganizationDashboard() {
           <MetricCard
             icon={<Zap size={24} />}
             label="AIUs Earned"
-            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}
+            value={typeof metrics.aiuEarned === 'number' ? formatDecimal(metrics.aiuEarned) : metrics.aiuEarned}
             color="#10b981"
             testId="metric-aiu"
             onClick={() => setActiveModal('aiu')}
@@ -1396,49 +1474,84 @@ export default function OrganizationDashboard() {
             </div>
           </button>
 
-          {/* Impact Metrics Card - Interactive */}
-          <button
-            onClick={() => setActiveModal('impact')}
+          {/* Impact Metrics Card - Interactive - AIU Focused */}
+          <div
             style={{
               backgroundColor: 'white',
               borderRadius: '12px',
               padding: '20px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: '2px solid transparent',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.2s'
+              border: '1px solid #e5e7eb',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }}
             data-testid="card-impact-metrics"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <Award size={18} style={{ color: '#7c3aed' }} />
-                Impact Metrics
+                Impact Metrics (AIU)
               </h3>
-              <span style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600' }}>Details →</span>
+              <button
+                onClick={() => setActiveModal('impact')}
+                style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                View All →
+              </button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-              <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '8px' }}>
-                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>SDGs Addressed</p>
-                <p style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
-              </div>
-              <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Completion</p>
-                <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
-              </div>
-              <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
-                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Projects</p>
-                <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
-              </div>
-              <div style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px' }}>
+              {/* Total AIUs - Combined organization + volunteer */}
+              <button
+                onClick={() => setActiveModal('aiu')}
+                style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Total AIUs</p>
-                <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
-              </div>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.totalAiu || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#92400e', margin: '4px 0 0 0' }}>Click to view breakdown</p>
+              </button>
+              {/* Volunteer AIUs - Sum from all volunteers */}
+              <button
+                onClick={() => navigate('/volunteers')}
+                style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Volunteer AIUs</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#166534', margin: '4px 0 0 0' }}>View volunteers</p>
+              </button>
+              {/* Organization Direct Share */}
+              <button
+                onClick={() => navigate('/overview')}
+                style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1e40af'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Org Direct Share</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.aiuUnique || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#1e40af', margin: '4px 0 0 0' }}>View org impact</p>
+              </button>
+              {/* Verification Rate */}
+              <button
+                onClick={() => setActiveModal('verification')}
+                style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Verification Rate</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
+                  {organizationAIU?.verificationRate || 0}%
+                </p>
+                <p style={{ fontSize: '9px', color: '#7c3aed', margin: '4px 0 0 0' }}>Verify impacts</p>
+              </button>
             </div>
-          </button>
+          </div>
 
           {/* Pending AIU Verification Card - Interactive */}
           <button
@@ -1628,7 +1741,7 @@ export default function OrganizationDashboard() {
                               const data = payload[0].payload;
                               const sdgInfo = SDG_GOALS[data.goal];
                               const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                              const percent = ((data.hours / total) * 100).toFixed(1);
+                              const percent = formatDecimal((data.hours / total) * 100);
                               return (
                                 <div style={{ 
                                   backgroundColor: 'white', 
@@ -1767,47 +1880,50 @@ export default function OrganizationDashboard() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '450px', overflowY: 'auto' }}>
               {dashboardData?.projects?.slice(0, 6).map((project) => (
-                <button
+                <div
                   key={project.id}
-                  onClick={() => navigate(`/projects/${project.id}`)}
                   style={{
                     padding: '14px',
                     backgroundColor: '#f9fafb',
                     borderRadius: '10px',
                     border: '1px solid #e5e7eb',
-                    cursor: 'pointer',
-                    textAlign: 'left',
                     transition: 'all 0.2s',
                     width: '100%'
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.borderColor = '#166534'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; e.currentTarget.style.borderColor = '#e5e7eb'; }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{project.name}</p>
-                    <span style={{
-                      fontSize: '10px', padding: '3px 8px', borderRadius: '12px',
-                      backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#fef3c7',
-                      color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#d97706'
-                    }}>{project.status}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Completion</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ flex: 1, height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', backgroundColor: '#166534', width: `${project.completionPercentage || 0}%` }} />
+                  {/* Project Header - Clickable */}
+                  <button
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', padding: 0 }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0, textDecoration: 'underline', textUnderlineOffset: '2px' }}>{project.name}</p>
+                      <span style={{
+                        fontSize: '10px', padding: '3px 8px', borderRadius: '12px',
+                        backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#fef3c7',
+                        color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#d97706'
+                      }}>{project.status}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+                      <div>
+                        <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Completion</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ flex: 1, height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', backgroundColor: '#166534', width: `${project.completionPercentage || 0}%` }} />
+                          </div>
+                          <span style={{ fontSize: '12px', fontWeight: '600', color: '#166534' }}>{project.completionPercentage || 0}%</span>
                         </div>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#166534' }}>{project.completionPercentage || 0}%</span>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Volunteers</p>
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                          {(project as any).volunteerCount || (project as any).volunteers?.length || 0}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Volunteers</p>
-                      <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>
-                        {(project as any).volunteerCount || (project as any).volunteers?.length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </button>
                   {project.sdgGoals?.length > 0 && (
                     <div style={{ display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap' }}>
                       {project.sdgGoals.slice(0, 3).map((g: number) => (
@@ -1816,7 +1932,110 @@ export default function OrganizationDashboard() {
                       {project.sdgGoals.length > 3 && <span style={{ fontSize: '10px', color: '#6b7280' }}>+{project.sdgGoals.length - 3}</span>}
                     </div>
                   )}
-                </button>
+                  {/* Quick Actions Row */}
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}`); }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        backgroundColor: '#166534',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14532d'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#166534'}
+                      title="View project details"
+                    >
+                      <Eye size={12} />
+                      View
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}/edit`); }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        backgroundColor: '#1e40af',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e40af'}
+                      title="Edit project settings"
+                    >
+                      <Settings size={12} />
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}?tab=team`); }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        backgroundColor: '#7c3aed',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#6d28d9'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
+                      title="View team members"
+                    >
+                      <Users size={12} />
+                      Team
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/tasks?projectId=${project.id}&create=true`); }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        backgroundColor: '#d97706',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b45309'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                      title="Add new task"
+                    >
+                      <Plus size={12} />
+                      Task
+                    </button>
+                  </div>
+                </div>
               ))}
               {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
                 <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
@@ -2171,7 +2390,7 @@ export default function OrganizationDashboard() {
               <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Impact Score</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? formatDecimal(metrics.aiuEarned) : metrics.aiuEarned}</p>
                   <span style={{ fontSize: '11px', color: '#6b7280' }}>AIUs</span>
                 </div>
               </div>
@@ -2408,21 +2627,42 @@ export default function OrganizationDashboard() {
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Pending</p>
                 </div>
               </div>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Top Contributors</h4>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Top Contributors <span style={{ fontSize: '12px', fontWeight: '400', color: '#6b7280' }}>(click to view profile)</span></h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
                 {(dashboardData?.volunteerSummaries || []).map((vol: any) => (
-                  <div key={vol.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                  <button
+                    key={vol.id}
+                    onClick={() => setSelectedVolunteerId(vol.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px',
+                      backgroundColor: '#f9fafb',
+                      borderRadius: '8px',
+                      border: '2px solid transparent',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.backgroundColor = '#f0fdf4'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '600' }}>
                         {vol.name?.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{vol.name}</p>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#166534', margin: 0, textDecoration: 'underline', textUnderlineOffset: '2px' }}>{vol.name}</p>
                         <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{vol.projects || 0} projects</p>
                       </div>
                     </div>
-                    <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534' }}>{vol.hours}h</p>
-                  </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{vol.hours}h</p>
+                      <ChevronRight size={16} style={{ color: '#9ca3af' }} />
+                    </div>
+                  </button>
                 ))}
               </div>
               <button
@@ -2436,37 +2676,91 @@ export default function OrganizationDashboard() {
         </div>
       )}
 
-      {/* Impact Metrics Modal */}
+      {/* Impact Metrics Modal - AIU Focused */}
       {activeModal === 'impact' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Impact Metrics</h2>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Award size={20} style={{ color: '#7c3aed' }} />
+                Impact Metrics (AIU Breakdown)
+              </h2>
               <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
                 <X size={24} />
               </button>
             </div>
             <div style={{ padding: '24px' }}>
+              {/* AIU Summary Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ padding: '20px', backgroundColor: '#faf5ff', borderRadius: '10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>SDGs Addressed</p>
+                <div style={{ padding: '20px', backgroundColor: '#fef3c7', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#d97706', margin: 0 }}>
+                    {formatDecimal(organizationAIU?.totalAiu || 0)}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total AIUs</p>
+                  <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>Org + Volunteer Combined</p>
                 </div>
                 <div style={{ padding: '20px', backgroundColor: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg Completion</p>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#166534', margin: 0 }}>
+                    {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Volunteer AIUs</p>
+                  <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>From {organizationAIU?.volunteerCount || 0} volunteers</p>
                 </div>
                 <div style={{ padding: '20px', backgroundColor: '#eff6ff', borderRadius: '10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Active Projects</p>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
+                    {formatDecimal(organizationAIU?.aiuUnique || 0)}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Org Direct Share</p>
+                  <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>Management & Resources</p>
                 </div>
-                <div style={{ padding: '20px', backgroundColor: '#fef3c7', borderRadius: '10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total AIUs</p>
+                <div style={{ padding: '20px', backgroundColor: '#faf5ff', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
+                    {organizationAIU?.verificationRate || 0}%
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Verification Rate</p>
+                  <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>Third-party verified</p>
                 </div>
               </div>
+
+              {/* Project AIU Breakdown */}
+              {organizationAIU?.projects && organizationAIU.projects.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>AIU by Project</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                    {organizationAIU.projects.map((project) => (
+                      <div key={project.projectId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div>
+                          <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{project.projectName}</p>
+                          <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0 0 0' }}>{project.sdgIndicator}</p>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontSize: '16px', fontWeight: '700', color: '#d97706', margin: 0 }}>{formatDecimal(project.aiu)} AIU</p>
+                          <p style={{ fontSize: '10px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                            Org: {formatDecimal(project.orgDirectShare || 0)} | Vol: {formatDecimal(project.volunteerAiuSum || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Context */}
+              <div style={{ padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '10px', marginBottom: '24px', border: '1px solid #bae6fd' }}>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
+                  <Info size={18} style={{ color: '#0284c7', flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#0c4a6e', margin: '0 0 4px 0' }}>How AIU is Calculated</p>
+                    <p style={{ fontSize: '11px', color: '#0369a1', margin: 0, lineHeight: '1.5' }}>
+                      <strong>Total AIU = Org Direct Share + Volunteer AIUs</strong><br />
+                      Org Direct Share reflects your management contribution. Volunteer AIUs represent the impact enabled through your volunteers' work.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <button
-                onClick={() => { setActiveModal(null); navigate('/impact-visualization'); }}
+                onClick={() => { setActiveModal(null); navigate('/organization-impact-report'); }}
                 style={{ width: '100%', padding: '12px', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
               >
                 View Full Impact Report →
@@ -2565,6 +2859,249 @@ export default function OrganizationDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Volunteer Profile Insights Modal */}
+      {selectedVolunteerId && (
+        <div className="modal-overlay" onClick={() => setSelectedVolunteerId(null)} style={{ zIndex: 1001 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserIcon size={20} style={{ color: '#166534' }} />
+                Volunteer Profile
+              </h2>
+              <button onClick={() => setSelectedVolunteerId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              {isLoadingVolunteer ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px' }}>
+                  <div style={{ width: '40px', height: '40px', border: '4px solid #e5e7eb', borderTopColor: '#166534', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                </div>
+              ) : selectedVolunteerData ? (
+                <>
+                  {/* Profile Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', padding: '20px', backgroundColor: '#f0fdf4', borderRadius: '12px' }}>
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      backgroundColor: '#166534',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: '32px',
+                      fontWeight: '700',
+                      flexShrink: 0
+                    }}>
+                      {selectedVolunteerData.user?.name?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: '0 0 4px 0' }}>
+                        {selectedVolunteerData.user?.name || 'Unknown Volunteer'}
+                      </h3>
+                      <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
+                        {selectedVolunteerData.user?.email}
+                      </p>
+                      {selectedVolunteerData.profile?.skills && selectedVolunteerData.profile.skills.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {selectedVolunteerData.profile.skills.slice(0, 5).map((skill: string, i: number) => (
+                            <span key={i} style={{ padding: '4px 10px', backgroundColor: 'white', borderRadius: '12px', fontSize: '11px', color: '#166534', fontWeight: '500' }}>
+                              {skill}
+                            </span>
+                          ))}
+                          {selectedVolunteerData.profile.skills.length > 5 && (
+                            <span style={{ padding: '4px 10px', backgroundColor: '#e5e7eb', borderRadius: '12px', fontSize: '11px', color: '#6b7280' }}>
+                              +{selectedVolunteerData.profile.skills.length - 5} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Key Metrics */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+                    <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '28px', fontWeight: '700', color: '#166534', margin: 0 }}>{formatDecimal(selectedVolunteerData.totalHours || 0)}</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>Total Hours</p>
+                    </div>
+                    <div style={{ padding: '16px', backgroundColor: '#eff6ff', borderRadius: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '28px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{selectedVolunteerData.projectsWorkedOn || 0}</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>Projects</p>
+                    </div>
+                    <div style={{ padding: '16px', backgroundColor: '#faf5ff', borderRadius: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '28px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{formatDecimal(selectedVolunteerData.aiuData?.totalAiu || 0)}</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>AIU Earned</p>
+                    </div>
+                    <div style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '28px', fontWeight: '700', color: '#d97706', margin: 0 }}>{formatDecimal(selectedVolunteerData.hoursLast30Days || 0)}</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>Last 30 Days</p>
+                    </div>
+                  </div>
+
+                  {/* Activity Chart & SDGs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                    {/* Activity Over Time */}
+                    <div style={{ backgroundColor: '#f9fafb', borderRadius: '10px', padding: '16px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Activity size={16} style={{ color: '#166534' }} />
+                        Activity Over Time
+                      </h4>
+                      {selectedVolunteerData.activityByMonth && selectedVolunteerData.activityByMonth.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={120}>
+                          <AreaChart data={selectedVolunteerData.activityByMonth}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                            <YAxis tick={{ fontSize: 10 }} />
+                            <Tooltip />
+                            <Area type="monotone" dataKey="hours" stroke="#166534" fill="#dcfce7" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '13px' }}>
+                          No activity data yet
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SDGs Contributed */}
+                    <div style={{ backgroundColor: '#f9fafb', borderRadius: '10px', padding: '16px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Target size={16} style={{ color: '#7c3aed' }} />
+                        SDGs Contributed
+                      </h4>
+                      {selectedVolunteerData.sdgsContributed && selectedVolunteerData.sdgsContributed.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {selectedVolunteerData.sdgsContributed.map((sdg: number) => (
+                            <div
+                              key={sdg}
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '6px',
+                                backgroundColor: getSDGColor(sdg),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '12px',
+                                fontWeight: '700'
+                              }}
+                              title={getSDGName(sdg)}
+                            >
+                              {sdg}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60px', color: '#9ca3af', fontSize: '13px' }}>
+                          No SDGs yet
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recent Activities */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={16} style={{ color: '#1e40af' }} />
+                      Recent Activities
+                    </h4>
+                    {selectedVolunteerData.recentActivities && selectedVolunteerData.recentActivities.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {selectedVolunteerData.recentActivities.map((activity: any) => {
+                          const project = dashboardData?.projects?.find((p: any) => p.id === activity.projectId);
+                          return (
+                            <div key={activity.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                              <div>
+                                <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>
+                                  {project?.name || 'Unknown Project'}
+                                </p>
+                                <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                                  {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  {activity.description && ` • ${activity.description.slice(0, 50)}${activity.description.length > 50 ? '...' : ''}`}
+                                </p>
+                              </div>
+                              <span style={{ fontSize: '14px', fontWeight: '700', color: '#166534' }}>{formatDecimal(parseFloat(activity.hours))}h</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ padding: '24px', backgroundColor: '#f9fafb', borderRadius: '8px', textAlign: 'center', color: '#9ca3af', fontSize: '13px' }}>
+                        No recent activities
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Project Assignments */}
+                  {selectedVolunteerData.assignments && selectedVolunteerData.assignments.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FolderOpen size={16} style={{ color: '#d97706' }} />
+                        Project Assignments
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {selectedVolunteerData.assignments.map((assignment: any) => {
+                          const project = dashboardData?.projects?.find((p: any) => p.id === assignment.projectId);
+                          return (
+                            <div key={assignment.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px' }}>
+                              <div>
+                                <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{project?.name || 'Unknown Project'}</p>
+                                <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0 0 0' }}>Role: {assignment.role || 'Volunteer'}</p>
+                              </div>
+                              <span style={{
+                                padding: '4px 10px',
+                                backgroundColor: assignment.status === 'active' ? '#dcfce7' : '#e5e7eb',
+                                color: assignment.status === 'active' ? '#166534' : '#6b7280',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                              }}>
+                                {assignment.status || 'Active'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
+                  <UserIcon size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                  <p>Unable to load volunteer data</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '12px', flexShrink: 0 }}>
+              <button
+                onClick={() => setSelectedVolunteerId(null)}
+                style={{ flex: 1, padding: '12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { setSelectedVolunteerId(null); navigate('/volunteers'); }}
+                style={{ flex: 1, padding: '12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Manage Volunteers
+              </button>
             </div>
           </div>
         </div>
@@ -3033,7 +3570,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                         <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Status: {project.status}</p>
                       </div>
                       <span style={{ padding: '4px 12px', backgroundColor: '#10b981', color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                        {(project.aiuEarned || 0).toFixed(1)} AIUs
+                        {formatDecimal(project.aiuEarned || 0)} AIUs
                       </span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '12px' }}>
@@ -3103,7 +3640,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                   <div>
                     <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total AIUs Earned</p>
                     <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
-                      {displayedTotal.toFixed(1)}
+                      {formatDecimal(displayedTotal)}
                     </p>
                   </div>
                   <div>
@@ -3196,11 +3733,11 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                         </div>
                         <div style={{ marginLeft: '16px', textAlign: 'right' }}>
                           <p style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', margin: 0 }}>
-                            {projectAiu.toFixed(1)}
+                            {formatDecimal(projectAiu)}
                           </p>
                           <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>AIUs</p>
                           {aiuPercentage > 0 && (
-                            <p style={{ fontSize: '10px', color: '#9ca3af', margin: 0 }}>{aiuPercentage.toFixed(0)}%</p>
+                            <p style={{ fontSize: '10px', color: '#9ca3af', margin: 0 }}>{formatDecimal(aiuPercentage)}%</p>
                           )}
                         </div>
                       </button>

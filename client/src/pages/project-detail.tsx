@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -220,6 +221,54 @@ export default function ProjectDetail() {
   );
 
   const { toast } = useToast();
+
+  // Share project handler
+  const handleShareProject = async () => {
+    const projectUrl = `${window.location.origin}/projects/${projectId}`;
+    const shareData = {
+      title: project?.name || 'Check out this volunteer project',
+      text: project?.description || 'Join us in making a difference!',
+      url: projectUrl
+    };
+
+    // Try native Web Share API first (works on mobile and some desktop browsers)
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        toast({
+          title: "Shared successfully!",
+          description: "Project has been shared.",
+        });
+        return;
+      } catch (err: any) {
+        // User cancelled or share failed - fall through to clipboard
+        if (err.name !== 'AbortError') {
+          console.log('Share failed, falling back to clipboard');
+        }
+      }
+    }
+
+    // Fallback: Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(projectUrl);
+      toast({
+        title: "Link copied!",
+        description: "Project link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      // Final fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = projectUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast({
+        title: "Link copied!",
+        description: "Project link has been copied to your clipboard.",
+      });
+    }
+  };
 
   // Delete task dialog state - moved to top for React Hooks rules
   const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
@@ -625,7 +674,7 @@ export default function ProjectDetail() {
                   <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatDecimal(aiuEarned)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-emerald-400" />
@@ -845,7 +894,7 @@ export default function ProjectDetail() {
                                     {assignment?.role || vol.role}
                                   </span>
                                 )}
-                                <span className="text-xs text-muted-foreground">{vol.hours.toFixed(1)}h • {vol.aiu.toFixed(2)} AIU</span>
+                                <span className="text-xs text-muted-foreground">{formatDecimal(vol.hours)}h • {formatDecimal(vol.aiu)} AIU</span>
                               </div>
                             </div>
                           </div>
@@ -1033,7 +1082,7 @@ export default function ProjectDetail() {
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
                     <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
                   </div>
-                  <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
+                  <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{formatDecimal(aiuEarned)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
                     {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Attributable Impact Units'}
                   </div>
@@ -1093,7 +1142,7 @@ export default function ProjectDetail() {
                       {projectAIU.volunteers.slice(0, 3).map((vol, idx) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{vol.volunteerName}</span>
-                          <span className="font-semibold text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
+                          <span className="font-semibold text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
                         </div>
                       ))}
                     </div>
@@ -1117,7 +1166,12 @@ export default function ProjectDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-share-project">
+              <Button
+                className="w-full justify-start gap-2 hover:bg-green-50 hover:text-green-700 hover:border-green-300 transition-colors"
+                variant="outline"
+                onClick={handleShareProject}
+                data-testid="button-share-project"
+              >
                 <Share2 className="h-4 w-4" />
                 Share Project
               </Button>
@@ -1152,7 +1206,11 @@ export default function ProjectDetail() {
               )}
               {canEditProject && (
                 <Link href={`/projects/${projectId}/edit`} className="block">
-                  <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-edit-project-sidebar">
+                  <Button
+                    className="w-full justify-start gap-2 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors"
+                    variant="outline"
+                    data-testid="button-edit-project-sidebar"
+                  >
                     <Edit className="h-4 w-4" />
                     Edit Project
                   </Button>
@@ -1160,7 +1218,7 @@ export default function ProjectDetail() {
               )}
               {canEditProject && projectAIU?.verificationStatus === 'pending' && (
                 <Button
-                  className="w-full justify-start gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                  className="w-full justify-start gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow-md transition-all"
                   onClick={() => setActiveKpiModal('aiu')}
                   data-testid="button-verify-aiu"
                 >
@@ -1259,7 +1317,7 @@ export default function ProjectDetail() {
                           <div className="text-xs text-muted-foreground">{vol.role} • {vol.hours}h logged</div>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-emerald-600">{vol.aiu.toFixed(2)}</div>
+                          <div className="font-bold text-emerald-600">{formatDecimal(vol.aiu)}</div>
                           <div className="text-xs text-muted-foreground">AIU</div>
                         </div>
                       </div>
@@ -1335,7 +1393,7 @@ export default function ProjectDetail() {
               {activeKpiModal === 'aiu' && (
                 <>
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
-                    <div className="text-4xl font-bold text-emerald-600">{aiuEarned.toFixed(2)}</div>
+                    <div className="text-4xl font-bold text-emerald-600">{formatDecimal(aiuEarned)}</div>
                     <div className="text-sm text-emerald-600/80">Total AIUs Earned</div>
                     {projectAIU?.verificationStatus && (
                       <Badge className={`mt-2 ${projectAIU.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
@@ -1361,7 +1419,7 @@ export default function ProjectDetail() {
                       {projectAIU.volunteers.map((vol, idx) => (
                         <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
                           <span>{vol.volunteerName}</span>
-                          <span className="font-bold text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
+                          <span className="font-bold text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
                         </div>
                       ))}
                     </div>
@@ -1444,7 +1502,7 @@ export default function ProjectDetail() {
                             </div>
                             <div className="flex justify-between text-sm">
                               <span className="text-slate-600 dark:text-slate-400">AIU Calculated:</span>
-                              <span className="font-medium text-emerald-600">{aiuEarned.toFixed(2)}</span>
+                              <span className="font-medium text-emerald-600">{formatDecimal(aiuEarned)}</span>
                             </div>
                           </div>
 
@@ -1603,7 +1661,7 @@ export default function ProjectDetail() {
                             <div className="text-sm text-muted-foreground">{vol.role}</div>
                             <div className="flex gap-3 mt-1 text-xs">
                               <span className="text-green-600">{vol.hours}h logged</span>
-                              <span className="text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
+                              <span className="text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
                             </div>
                           </div>
                         </div>
@@ -1635,7 +1693,7 @@ export default function ProjectDetail() {
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
-                      <div className="text-3xl font-bold text-emerald-600">{aiuEarned.toFixed(2)}</div>
+                      <div className="text-3xl font-bold text-emerald-600">{formatDecimal(aiuEarned)}</div>
                       <div className="text-xs text-emerald-600/80">AIUs Earned</div>
                     </div>
                     <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">

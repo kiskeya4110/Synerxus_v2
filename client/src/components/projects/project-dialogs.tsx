@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserPlus, Upload, X, Image, UserCheck } from "lucide-react";
+import { Plus, Edit, Trash2, UserPlus, Upload, X, Image, UserCheck, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { uploadFile, deleteFile, extractStoragePath } from "@/lib/upload";
 import type { Project } from "@shared/schema";
+import { formatDecimal } from "@/lib/format-utils";
 import { FormDescription } from "@/components/ui/form";
 
 // Volunteer role schema for AIU contribution tracking
@@ -53,6 +55,10 @@ const projectFormSchema = z.object({
   // Legacy fields
   volunteersNeeded: z.string().optional(),
   impactGoals: z.string().optional(),
+  // Total volunteer contribution percentage for AIU calculation
+  // This is the percentage of the project's total impact attributed to volunteers
+  // The remaining percentage goes to the organization's paid staff
+  totalVolunteerContribution: z.number().min(1).max(100).default(30),
   // Volunteer roles with AIU contribution percentages
   volunteerRoles: z.array(volunteerRoleSchema).optional(),
 });
@@ -157,6 +163,7 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       totalHoursLogged: "",
       volunteersNeeded: "",
       impactGoals: "",
+      totalVolunteerContribution: 30, // Default 30% of project impact attributed to volunteers
       volunteerRoles: [
         { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
         { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
@@ -198,6 +205,9 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         requiredSkills: requiredSkillsArray,
         optionalSkills: optionalSkillsArray,
         coverImage: coverImageUrl || null, // Add cover image for marketing purposes
+        // Volunteer participation percentage for AIU calculation
+        // This determines what portion of the project's impact is attributed to volunteers
+        totalVolunteerContribution: data.totalVolunteerContribution || 30,
         // Volunteer roles with AIU contribution percentages
         volunteerRoles: data.volunteerRoles || [],
         volunteersNeeded: totalVolunteersNeeded,
@@ -603,6 +613,54 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
                 Define volunteer roles and their contribution percentages for AIU (Attributed Impact Unit) calculations.
               </p>
 
+              {/* Total Volunteer Participation Percentage - Critical for AIU */}
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <FormField
+                  control={form.control}
+                  name="totalVolunteerContribution"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        Total Volunteer Participation (% of Project Impact)
+                      </FormLabel>
+                      <FormDescription className="text-blue-700 dark:text-blue-300">
+                        What percentage of the project's total impact is attributed to volunteers?
+                        The remaining {100 - (field.value || 0)}% goes to your organization's paid staff.
+                      </FormDescription>
+                      <div className="flex items-center gap-4 mt-3">
+                        <FormControl>
+                          <Slider
+                            min={1}
+                            max={100}
+                            step={5}
+                            value={[field.value || 30]}
+                            onValueChange={(value) => field.onChange(value[0])}
+                            className="flex-1"
+                          />
+                        </FormControl>
+                        <div className="w-20 text-center">
+                          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            {field.value || 30}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        <span>1% (Minimal volunteer role)</span>
+                        <span>100% (Fully volunteer-driven)</span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="mt-3 p-2 bg-white dark:bg-slate-800 rounded border border-blue-100 dark:border-blue-700">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <strong>Why this matters for AIU:</strong> This percentage determines how much of the project's measurable impact
+                    (lives touched, outcomes achieved) is credited to volunteer contributions vs. your organization's internal resources.
+                  </p>
+                </div>
+              </div>
+
               {/* Total Volunteers Display */}
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center justify-between">
@@ -749,6 +807,30 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
                 <Plus className="h-4 w-4 mr-2" />
                 Add Role
               </Button>
+
+              {/* Effective Project Impact Breakdown Summary */}
+              <div className="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <div className="text-xs font-medium text-emerald-800 dark:text-emerald-200 mb-2">
+                  <strong>Effective Project Impact Breakdown:</strong>
+                </div>
+                <div className="space-y-1">
+                  {roleFields.map((_, idx) => {
+                    const role = form.watch(`volunteerRoles.${idx}`);
+                    const totalVolunteer = form.watch("totalVolunteerContribution") || 30;
+                    const effectivePercent = formatDecimal(totalVolunteer * (role?.contributionPercent || 0) / 100);
+                    return (
+                      <div key={idx} className="flex justify-between text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">{role?.role || 'Role'} ({role?.count || 0} volunteer{(role?.count || 0) > 1 ? 's' : ''}):</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{effectivePercent}% of project impact</span>
+                      </div>
+                    );
+                  })}
+                  <div className="flex justify-between text-xs pt-1 border-t border-emerald-200 dark:border-emerald-700 mt-1">
+                    <span className="text-gray-600 dark:text-gray-400">Organization Staff:</span>
+                    <span className="font-medium text-blue-600 dark:text-blue-400">{100 - (form.watch("totalVolunteerContribution") || 30)}% of project impact</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Section 4: The Purpose & Impact */}

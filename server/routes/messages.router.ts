@@ -410,3 +410,419 @@ messagesRouter.patch("/conversation-threads/:threadId", async (req: Request, res
     res.status(500).json({ message: "Failed to update thread" });
   }
 });
+
+// GET /api/organization/:organizationId/contactable-volunteers - Get all volunteers connected to organization
+// Returns volunteers who are assigned to projects OR have applied to opportunities
+messagesRouter.get("/organization/:organizationId/contactable-volunteers", async (req: Request, res: Response) => {
+  try {
+    const organizationId = parseInt(req.params.organizationId);
+    if (isNaN(organizationId)) {
+      return res.status(400).json({ message: "organizationId must be a valid number" });
+    }
+
+    // Get all projects for this organization
+    const projects = await storage.listProjectsByOrganization(organizationId);
+    const projectIds = projects.map(p => p.id);
+
+    // Get all opportunities for this organization
+    const opportunities = await storage.listOpportunitiesByOrganization(organizationId);
+    const opportunityIds = opportunities.map(o => o.id);
+
+    // Get volunteers assigned to projects
+    const assignments = projectIds.length > 0
+      ? await storage.listProjectAssignmentsByProjectIds(projectIds)
+      : [];
+
+    // Get volunteers who have applied to opportunities
+    const applications = opportunityIds.length > 0
+      ? await storage.listApplicationsByOpportunityIds(opportunityIds)
+      : [];
+
+    // Combine unique volunteer IDs
+    const volunteerIdSet = new Set<number>();
+    const volunteerProjectMap = new Map<number, { projects: number[], applications: number[], status: string }>();
+
+    // Add assigned volunteers
+    for (const assignment of assignments) {
+      if (assignment.volunteerId) {
+        volunteerIdSet.add(assignment.volunteerId);
+        if (!volunteerProjectMap.has(assignment.volunteerId)) {
+          volunteerProjectMap.set(assignment.volunteerId, { projects: [], applications: [], status: 'assigned' });
+        }
+        volunteerProjectMap.get(assignment.volunteerId)!.projects.push(assignment.projectId);
+      }
+    }
+
+    // Add applicant volunteers
+    for (const application of applications) {
+      if (application.volunteerId) {
+        volunteerIdSet.add(application.volunteerId);
+        if (!volunteerProjectMap.has(application.volunteerId)) {
+          volunteerProjectMap.set(application.volunteerId, { projects: [], applications: [], status: 'applicant' });
+        }
+        volunteerProjectMap.get(application.volunteerId)!.applications.push(application.opportunityId);
+      }
+    }
+
+    // Fetch volunteer details
+    const volunteerIds = Array.from(volunteerIdSet);
+    const volunteers = await Promise.all(
+      volunteerIds.map(async (id) => {
+        const user = await storage.getUser(id);
+        const connection = volunteerProjectMap.get(id);
+        return user ? {
+          id: user.id,
+          displayName: user.displayName || user.username,
+          email: user.email,
+          avatar: user.avatar,
+          skills: user.skills,
+          connectionType: connection?.projects.length ? 'assigned' : 'applicant',
+          projectIds: connection?.projects || [],
+          applicationIds: connection?.applications || []
+        } : null;
+      })
+    );
+
+    res.json(volunteers.filter(v => v !== null));
+  } catch (err) {
+    console.error("Error fetching contactable volunteers:", err);
+    res.status(500).json({ message: "Failed to fetch contactable volunteers" });
+  }
+});
+
+// POST /api/organization/:organizationId/bulk-message - Send message to multiple volunteers
+messagesRouter.post("/organization/:organizationId/bulk-message", async (req: Request, res: Response) => {
+  try {
+    const organizationId = parseInt(req.params.organizationId);
+    const { senderId, volunteerIds, subject, content, messageType = 'announcement', projectId } = req.body;
+
+    if (isNaN(organizationId)) {
+      return res.status(400).json({ message: "organizationId must be a valid number" });
+    }
+
+    if (!senderId || !volunteerIds || !Array.isArray(volunteerIds) || volunteerIds.length === 0) {
+      return res.status(400).json({ message: "senderId and volunteerIds array are required" });
+    }
+
+    if (!content) {
+      return res.status(400).json({ message: "content is required" });
+    }
+
+    // Verify sender belongs to organization
+    const sender = await storage.getUser(parseInt(senderId));
+    if (!sender || sender.organizationId !== organizationId) {
+      return res.status(403).json({ message: "Sender is not authorized for this organization" });
+    }
+
+    const organization = await storage.getOrganization(organizationId);
+    const senderName = sender.displayName || sender.username || organization?.name || 'Organization';
+
+    const results = {
+      sent: 0,
+      failed: 0,
+      messages: [] as any[]
+    };
+
+    // Send message to each volunteer
+    for (const volunteerId of volunteerIds) {
+      try {
+        // Create or get conversation thread
+        let thread = await storage.getConversationThreadBetween(
+          organizationId,
+          parseInt(volunteerId),
+          subject || 'Organization Message'
+        );
+
+        if (!thread) {
+          thread = await storage.createConversationThread({
+            organizationId,
+            volunteerId: parseInt(volunteerId),
+            topic: subject || 'Organization Message',
+            projectId: projectId ? parseInt(projectId) : null,
+            status: 'active',
+            lastMessageAt: new Date()
+          });
+        }
+
+        // Create the message
+        const message = await storage.createMessage({
+          senderId: parseInt(senderId),
+          receiverId: parseInt(volunteerId),
+          subject,
+          content,
+          messageType,
+          threadId: thread.id,
+          projectId: projectId ? parseInt(projectId) : undefined
+        });
+
+        // Update thread's last message time
+        await storage.updateConversationThread(thread.id, {
+          lastMessageAt: new Date()
+        });
+
+        // Create notification for the volunteer
+        await storage.createNotification({
+          userId: parseInt(volunteerId),
+          type: 'new_message',
+          title: 'New Message from Organization',
+          message: subject
+            ? `${senderName} sent you a message: "${subject}"`
+            : `${senderName} sent you a message`,
+          relatedEntityType: 'thread',
+          relatedEntityId: thread.id,
+          relatedUserId: parseInt(senderId),
+          read: false
+        });
+
+        results.sent++;
+        results.messages.push(message);
+        broadcastUpdate("message_created", message);
+      } catch (err) {
+        console.error(`Failed to send message to volunteer ${volunteerId}:`, err);
+        results.failed++;
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      summary: `Sent ${results.sent} messages, ${results.failed} failed`,
+      ...results
+    });
+  } catch (err) {
+    console.error("Error sending bulk messages:", err);
+    res.status(500).json({ message: "Failed to send bulk messages" });
+  }
+});
+
+// POST /api/organization/:organizationId/project/:projectId/message-volunteers - Message all volunteers on a project
+messagesRouter.post("/organization/:organizationId/project/:projectId/message-volunteers", async (req: Request, res: Response) => {
+  try {
+    const organizationId = parseInt(req.params.organizationId);
+    const projectId = parseInt(req.params.projectId);
+    const { senderId, subject, content, messageType = 'project_update' } = req.body;
+
+    if (isNaN(organizationId) || isNaN(projectId)) {
+      return res.status(400).json({ message: "organizationId and projectId must be valid numbers" });
+    }
+
+    if (!senderId || !content) {
+      return res.status(400).json({ message: "senderId and content are required" });
+    }
+
+    // Verify project belongs to organization
+    const project = await storage.getProject(projectId);
+    if (!project || project.organizationId !== organizationId) {
+      return res.status(403).json({ message: "Project does not belong to this organization" });
+    }
+
+    // Get all volunteers assigned to this project
+    const assignments = await storage.listProjectAssignmentsByProject(projectId);
+    const activeAssignments = assignments.filter(a =>
+      a.status === 'active' || a.status === 'accepted' || a.status === 'completed'
+    );
+
+    if (activeAssignments.length === 0) {
+      return res.status(400).json({ message: "No volunteers assigned to this project" });
+    }
+
+    const volunteerIds = activeAssignments
+      .map(a => a.volunteerId)
+      .filter((id): id is number => id !== null);
+
+    // Use bulk send
+    req.body.volunteerIds = volunteerIds;
+    req.body.projectId = projectId;
+    req.body.subject = subject || `Update: ${project.name}`;
+
+    // Forward to bulk endpoint logic
+    const sender = await storage.getUser(parseInt(senderId));
+    if (!sender || sender.organizationId !== organizationId) {
+      return res.status(403).json({ message: "Sender is not authorized for this organization" });
+    }
+
+    const organization = await storage.getOrganization(organizationId);
+    const senderName = sender.displayName || sender.username || organization?.name || 'Organization';
+
+    const results = { sent: 0, failed: 0, messages: [] as any[] };
+
+    for (const volunteerId of volunteerIds) {
+      try {
+        let thread = await storage.getConversationThreadBetween(
+          organizationId,
+          volunteerId,
+          `Project: ${project.name}`
+        );
+
+        if (!thread) {
+          thread = await storage.createConversationThread({
+            organizationId,
+            volunteerId,
+            topic: `Project: ${project.name}`,
+            projectId,
+            status: 'active',
+            lastMessageAt: new Date()
+          });
+        }
+
+        const message = await storage.createMessage({
+          senderId: parseInt(senderId),
+          receiverId: volunteerId,
+          subject: subject || `Update: ${project.name}`,
+          content,
+          messageType,
+          threadId: thread.id,
+          projectId
+        });
+
+        await storage.updateConversationThread(thread.id, { lastMessageAt: new Date() });
+
+        await storage.createNotification({
+          userId: volunteerId,
+          type: 'project_update',
+          title: `Project Update: ${project.name}`,
+          message: `${senderName} sent a message about "${project.name}"`,
+          relatedEntityType: 'project',
+          relatedEntityId: projectId,
+          relatedUserId: parseInt(senderId),
+          read: false
+        });
+
+        results.sent++;
+        results.messages.push(message);
+        broadcastUpdate("message_created", message);
+      } catch (err) {
+        console.error(`Failed to send project message to volunteer ${volunteerId}:`, err);
+        results.failed++;
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      project: project.name,
+      volunteersContacted: results.sent,
+      summary: `Sent ${results.sent} messages, ${results.failed} failed`,
+      ...results
+    });
+  } catch (err) {
+    console.error("Error sending project messages:", err);
+    res.status(500).json({ message: "Failed to send project messages" });
+  }
+});
+
+// POST /api/organization/:organizationId/message-applicants - Message all applicants for organization's opportunities
+messagesRouter.post("/organization/:organizationId/message-applicants", async (req: Request, res: Response) => {
+  try {
+    const organizationId = parseInt(req.params.organizationId);
+    const { senderId, subject, content, opportunityId, status: filterStatus, messageType = 'outreach' } = req.body;
+
+    if (isNaN(organizationId)) {
+      return res.status(400).json({ message: "organizationId must be a valid number" });
+    }
+
+    if (!senderId || !content) {
+      return res.status(400).json({ message: "senderId and content are required" });
+    }
+
+    // Get opportunities for this organization
+    let opportunities = await storage.listOpportunitiesByOrganization(organizationId);
+
+    // Filter by specific opportunity if provided
+    if (opportunityId) {
+      opportunities = opportunities.filter(o => o.id === parseInt(opportunityId));
+    }
+
+    if (opportunities.length === 0) {
+      return res.status(400).json({ message: "No opportunities found for this organization" });
+    }
+
+    // Get all applications for these opportunities
+    const opportunityIds = opportunities.map(o => o.id);
+    let applications = await storage.listApplicationsByOpportunityIds(opportunityIds);
+
+    // Filter by status if provided
+    if (filterStatus) {
+      applications = applications.filter(app => app.status === filterStatus);
+    }
+
+    if (applications.length === 0) {
+      return res.status(400).json({ message: "No applications found matching criteria" });
+    }
+
+    // Get unique volunteer IDs
+    const volunteerIdSet = new Set<number>();
+    applications.forEach(app => {
+      if (app.volunteerId) volunteerIdSet.add(app.volunteerId);
+    });
+    const volunteerIds = Array.from(volunteerIdSet);
+
+    // Verify sender
+    const sender = await storage.getUser(parseInt(senderId));
+    if (!sender || sender.organizationId !== organizationId) {
+      return res.status(403).json({ message: "Sender is not authorized for this organization" });
+    }
+
+    const organization = await storage.getOrganization(organizationId);
+    const senderName = sender.displayName || sender.username || organization?.name || 'Organization';
+
+    const results = { sent: 0, failed: 0, messages: [] as any[] };
+
+    for (const volunteerId of volunteerIds) {
+      try {
+        let thread = await storage.getConversationThreadBetween(
+          organizationId,
+          volunteerId,
+          subject || 'Opportunity Update'
+        );
+
+        if (!thread) {
+          thread = await storage.createConversationThread({
+            organizationId,
+            volunteerId,
+            topic: subject || 'Opportunity Update',
+            status: 'active',
+            lastMessageAt: new Date()
+          });
+        }
+
+        const message = await storage.createMessage({
+          senderId: parseInt(senderId),
+          receiverId: volunteerId,
+          subject,
+          content,
+          messageType,
+          threadId: thread.id
+        });
+
+        await storage.updateConversationThread(thread.id, { lastMessageAt: new Date() });
+
+        await storage.createNotification({
+          userId: volunteerId,
+          type: 'new_message',
+          title: 'Message from Organization',
+          message: `${senderName} sent you a message${subject ? `: "${subject}"` : ''}`,
+          relatedEntityType: 'thread',
+          relatedEntityId: thread.id,
+          relatedUserId: parseInt(senderId),
+          read: false
+        });
+
+        results.sent++;
+        results.messages.push(message);
+        broadcastUpdate("message_created", message);
+      } catch (err) {
+        console.error(`Failed to send message to applicant ${volunteerId}:`, err);
+        results.failed++;
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      applicantsContacted: results.sent,
+      summary: `Sent ${results.sent} messages, ${results.failed} failed`,
+      ...results
+    });
+  } catch (err) {
+    console.error("Error sending applicant messages:", err);
+    res.status(500).json({ message: "Failed to send messages to applicants" });
+  }
+});

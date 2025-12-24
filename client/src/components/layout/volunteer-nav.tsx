@@ -27,8 +27,7 @@ const MENU_ITEMS = [
   { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-4 h-4" /> },
   { href: "/volunteer-messages", label: "Messages", icon: <MessageCircle className="w-4 h-4" /> },
   { href: "/stories", label: "Stories", icon: <BookOpen className="w-4 h-4" /> },
-  { href: "/profile", label: "Profile", icon: <User className="w-4 h-4" /> },
-  { href: "/volunteer-profile-settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
+  { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <User className="w-4 h-4" /> },
 ];
 
 export default function VolunteerNav() {
@@ -68,28 +67,32 @@ export default function VolunteerNav() {
     location === route || location.startsWith(route + '/')
   );
 
+  // Use localStorage userType as fallback while query is loading (for refresh/login)
+  const storedUserType = localStorage.getItem('userType');
+  const effectiveUserType = currentUser?.userType || storedUserType;
+
   // Only show for volunteers on desktop (hide on mobile for PWA)
-  if (currentUser?.userType !== 'volunteer' || isPwaRoute || isStandaloneRoute) {
+  if (effectiveUserType !== 'volunteer' || isPwaRoute || isStandaloneRoute) {
     return null;
   }
 
   const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
 
-  // Navigate to landing page when logo is clicked
+  // Navigate to volunteer dashboard when logo is clicked (dashboard home button)
   const handleLogoClick = () => {
-    navigate('/');
+    navigate('/volunteer-dashboard');
   };
 
   return (
-    <nav className="hidden md:block sticky top-0 z-[100] border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative pointer-events-auto">
-      <div className="container mx-auto px-4 sm:px-6 pointer-events-auto">
-        <div className="flex items-center justify-between h-16 pointer-events-auto">
+    <nav className="hidden md:block sticky top-0 z-[9999] border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16">
           {/* Logo and Brand - Never shrink, always visible */}
           <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
             <button
               onClick={handleLogoClick}
               className="flex items-center hover:opacity-90 transition-opacity cursor-pointer flex-shrink-0"
-              title="Go to Home"
+              title="Go to Dashboard"
             >
               {!imageError ? (
                 <img
@@ -106,7 +109,7 @@ export default function VolunteerNav() {
             </button>
 
             {/* Hamburger Menu for Nav Items - Shows on md-lg screens when nav items are hidden */}
-            <div className="lg:hidden relative z-[100]">
+            <div className="lg:hidden relative">
               <button
                 onClick={() => setNavMenuOpen(!navMenuOpen)}
                 className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
@@ -119,14 +122,19 @@ export default function VolunteerNav() {
               {/* Nav Dropdown Menu */}
               {navMenuOpen && (
                 <>
-                  {/* Backdrop */}
+                  {/* Backdrop - outside stacking context */}
                   <div
-                    className="fixed inset-0 z-[110]"
+                    className="fixed inset-0 bg-black/20 backdrop-blur-[1px]"
+                    style={{ zIndex: 9998 }}
                     onClick={() => setNavMenuOpen(false)}
+                    aria-hidden="true"
                   />
 
-                  {/* Menu Panel */}
-                  <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[120] overflow-hidden">
+                  {/* Menu Panel - positioned fixed to avoid sticky issues */}
+                  <div
+                    className="fixed left-4 top-16 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden"
+                    style={{ zIndex: 10000 }}
+                  >
                     <div className="py-1">
                       {VOLUNTEER_NAV_ITEMS.map((item) => {
                         const isActive = location === item.href ||
@@ -203,21 +211,17 @@ export default function VolunteerNav() {
             </Link>
 
             {/* User Profile Menu */}
-            <div className="relative z-[100] pointer-events-auto">
+            <div className="relative">
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMenuOpen(!menuOpen);
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer active:scale-95 pointer-events-auto select-none"
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer active:scale-95"
                 aria-label="User menu"
                 aria-expanded={menuOpen}
                 aria-haspopup="true"
                 data-testid="volunteer-nav-profile-menu"
                 type="button"
               >
-                <Avatar className="h-8 w-8 border-2 border-blue-500 pointer-events-none">
+                <Avatar className="h-8 w-8 border-2 border-blue-500">
                   <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
                     {userInitial}
@@ -232,14 +236,19 @@ export default function VolunteerNav() {
               {/* Dropdown Menu */}
               {menuOpen && (
                 <>
-                  {/* Backdrop */}
+                  {/* Backdrop - outside stacking context */}
                   <div
-                    className="fixed inset-0 z-[110]"
+                    className="fixed inset-0 bg-black/20 backdrop-blur-[1px]"
+                    style={{ zIndex: 9998 }}
                     onClick={() => setMenuOpen(false)}
+                    aria-hidden="true"
                   />
 
-                  {/* Menu Panel */}
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[120] overflow-hidden max-h-[80vh] flex flex-col">
+                  {/* Menu Panel - positioned fixed to avoid sticky issues */}
+                  <div
+                    className="fixed right-4 top-16 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
+                    style={{ zIndex: 10000 }}
+                  >
                     {/* User Info Header */}
                     <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
                       <div className="flex items-center gap-3">

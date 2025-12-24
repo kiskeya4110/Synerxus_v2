@@ -68,6 +68,20 @@ export default function TeamOverview() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem("currentUserId");
 
+  // Get current user to check user type
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId
+  });
+  const isOrganization = currentUser?.userType === 'organization';
+
   // SDG Filter State - support multiple selection
   const [selectedSDGs, setSelectedSDGs] = useState<number[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -409,7 +423,8 @@ export default function TeamOverview() {
         <Footer />
       </main>
 
-      <MobileBottomNav />
+      {/* Only show MobileBottomNav for organizations */}
+      {isOrganization && <MobileBottomNav />}
     </div>
   );
 }

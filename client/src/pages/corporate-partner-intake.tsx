@@ -17,6 +17,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building2 } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
@@ -34,16 +36,35 @@ type CorporatePartnerForm = z.infer<typeof corporatePartnerSchema>;
 
 const industryOptions = [
   "Technology",
-  "Finance",
+  "Finance & Banking",
   "Healthcare",
   "Manufacturing",
   "Retail",
   "Telecommunications",
-  "Energy",
+  "Energy & Utilities",
   "Transportation",
   "Media & Entertainment",
   "Education",
   "Professional Services",
+  "Construction",
+  "Infrastructure",
+  "Real Estate",
+  "Agriculture & Farming",
+  "Mining & Resources",
+  "Hospitality & Tourism",
+  "Logistics & Supply Chain",
+  "Automotive",
+  "Aerospace & Defense",
+  "Pharmaceuticals",
+  "Consumer Goods",
+  "Legal Services",
+  "Consulting",
+  "Insurance",
+  "Food & Beverage",
+  "Textiles & Apparel",
+  "Environmental Services",
+  "Non-Profit/NGO",
+  "Government & Public Sector",
   "Other"
 ];
 
@@ -93,6 +114,7 @@ function SDGSelection({ selectedSdgs, onToggle, error }: {
 export default function CorporatePartnerIntake() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState(1);
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
@@ -222,18 +244,22 @@ export default function CorporatePartnerIntake() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:from-blue-900/20 dark:to-gray-900 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader className="bg-blue-600 dark:bg-blue-900 text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Corporate Partner Onboarding
-            </CardTitle>
-            <CardDescription className="text-blue-100">
-              Complete your company profile to launch employee volunteer programs
-            </CardDescription>
-          </CardHeader>
+    <div className="min-h-screen bg-[#faf9f7] dark:from-blue-900/20 dark:to-gray-900">
+      {/* CSR Header */}
+      <CSRMobileHeader title="Corporate Partner Onboarding" showBackButton onBack={() => navigate('/csr-dashboard')} />
+
+      <div className="py-8 px-4 pb-24">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader className="bg-blue-600 dark:bg-blue-900 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Corporate Partner Onboarding
+              </CardTitle>
+              <CardDescription className="text-blue-100">
+                Complete your company profile to launch employee volunteer programs
+              </CardDescription>
+            </CardHeader>
           
           <CardContent className="pt-6">
             {/* Step Indicator */}
@@ -452,7 +478,11 @@ export default function CorporatePartnerIntake() {
             </Form>
           </CardContent>
         </Card>
+        </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <CSRMobileNav activeTab="settings" />
     </div>
   );
 }

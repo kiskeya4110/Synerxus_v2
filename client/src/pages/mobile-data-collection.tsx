@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDecimal } from "@/lib/format-utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -309,7 +310,7 @@ export default function MobileDataCollection() {
             <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             <span className="text-sm font-semibold text-gray-900 dark:text-white">Recent Entries</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{(totalHours).toFixed(1)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatDecimal(totalHours)}</p>
           <p className="text-xs text-gray-600 dark:text-gray-400">total hours</p>
         </button>
 

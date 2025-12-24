@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
+import { db } from "./db";
 import { WebSocketServer } from "ws";
 import { cache, CACHE_TTL, cacheKeys, invalidateCache } from "./cache";
 import {
@@ -7121,11 +7122,24 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
 
       // Get employee user IDs (users with employer_id matching this partner)
-      const employeeUserIds = new Set(
-        volunteerProfiles
-          .filter((vp: any) => vp.employerId === userPartner.id)
-          .map((vp: any) => vp.userId)
+      // Use raw SQL to get employer_id since the column was added after schema generation
+      const employeesFromUsersResult = await db.execute(
+        `SELECT id, display_name, department_name, job_title_at_company FROM users WHERE employer_id = ${userPartner.id}`
       );
+      console.log('[CSR DEBUG] userPartner.id:', userPartner.id);
+      console.log('[CSR DEBUG] employeesFromUsersResult:', JSON.stringify(employeesFromUsersResult));
+      const employeesFromUsers = employeesFromUsersResult.rows || [];
+      console.log('[CSR DEBUG] employeesFromUsers:', JSON.stringify(employeesFromUsers));
+      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => vp.employerId === userPartner.id);
+
+      // Combine both sources of employee user IDs
+      const employeeUserIds = new Set([
+        ...employeesFromUsers.map((u: any) => u.id),
+        ...employeesFromProfiles.map((vp: any) => vp.userId)
+      ]);
+
+      // Create a map for employee details from raw SQL
+      const employeeDetailsMap = new Map(employeesFromUsers.map((u: any) => [u.id, u]));
       
       // Get ALL volunteer activities by employees (regardless of which project - tracks full employee engagement)
       const allEmployeeActivities = volunteerActivities.filter((a: any) => 
@@ -7165,19 +7179,29 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       }
 
       // Top employees leaderboard from ALL volunteer activities (not just sponsored)
+      // Use allUsers from storage for fallback, but prefer employeeDetailsMap for linked employees
+      const allUsers = (await storage.listUsers?.()) || [];
+      const usersMap = new Map(allUsers.map((u: any) => [u.id, u]));
+
       const employeeHoursByUser = Array.from(employeeUserIds).map((userId: any) => {
         const userActivities = filteredEmployeeActivities.filter((a: any) => a.userId === userId);
         const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+        const user = usersMap.get(userId);
+        const employeeDetails = employeeDetailsMap.get(userId);
         const totalUserHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
         // Get unique projects the employee worked on
         const projectsWorked = Array.from(new Set(userActivities.map((a: any) => a.projectId)));
+        // Get employee name from profile, employeeDetails (raw SQL), user, or fallback
+        const employeeName = profile?.volunteerName || employeeDetails?.display_name || user?.displayName || user?.username || `Employee ${userId}`;
         return {
           userId,
-          employeeName: profile?.volunteerName || `Employee ${userId}`,
+          employeeName,
           hours: totalUserHours,
           points: Math.round(totalUserHours * 10), // 10 points per hour
           projectId: userActivities[0]?.projectId || null,
-          projectsCount: projectsWorked.length
+          projectsCount: projectsWorked.length,
+          department: employeeDetails?.department_name || user?.departmentName || null,
+          jobTitle: employeeDetails?.job_title_at_company || user?.jobTitleAtCompany || null
         };
       }).filter(e => e.hours > 0);
       
@@ -7575,22 +7599,25 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           const projectsWorkedOn = Array.from(new Set(employeeActivities.map((a: any) => a.projectId)));
           const projectsWithEmployeeEngagement = projectsWorkedOn.map(pid => ({ projectId: pid }));
           
-          // Calculate economic value at $35/hour standard rate (EMPLOYEE HOURS ONLY)
-          const economicValue = employeeHours * 35;
+          // Calculate economic value at $34.75/hour standard rate (EMPLOYEE HOURS ONLY)
+          const economicValue = employeeHours * 34.75;
           
           // Build employee leaderboard from real activities
           const employeeLeaderboard = Array.from(employeeUserIds).map((userId: any) => {
             const userActivities = employeeActivities.filter((a: any) => a.userId === userId);
             const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+            const user = usersMap.get(userId);
+            const employeeDetails = employeeDetailsMap.get(userId);
             return {
               userId,
-              name: profile?.volunteerName || `Employee ${userId}`,
+              name: profile?.volunteerName || employeeDetails?.display_name || user?.displayName || user?.username || `Employee ${userId}`,
               hours: userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
             };
           }).filter(e => e.hours > 0).sort((a, b) => b.hours - a.hours);
-          
-          // REAL employee count from CSR partner record
-          const realEmployeeCount = userPartner.employeeCount || 50;
+
+          // REAL employee count - count from linked employees or use CSR partner record
+          const linkedEmployeeCount = employeeUserIds.size;
+          const realEmployeeCount = linkedEmployeeCount > 0 ? linkedEmployeeCount : (userPartner.employeeCount || 50);
           const realEngagementRate = realEmployeeCount > 0 ? parseFloat(((activeEmployees / realEmployeeCount) * 100).toFixed(2)) : 0;
           
           return {
@@ -7655,13 +7682,18 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
       const volunteerActivities = await storage.listVolunteerActivities?.() || [];
 
-      const employeeUserIds = new Set(
-        volunteerProfiles
-          .filter((vp: any) => vp.employerId === userPartner.id)
-          .map((vp: any) => vp.userId)
+      // Get employee user IDs from users table using raw SQL (employer_id column)
+      const employeesFromUsersResult = await db.execute(
+        `SELECT id, display_name FROM users WHERE employer_id = ${userPartner.id}`
       );
+      const employeesFromUsers = employeesFromUsersResult.rows || [];
+      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => vp.employerId === userPartner.id);
+      const employeeUserIds = new Set([
+        ...employeesFromUsers.map((u: any) => u.id),
+        ...employeesFromProfiles.map((vp: any) => vp.userId)
+      ]);
 
-      const totalEmployees = employeeUserIds.size;
+      const totalEmployees = employeeUserIds.size || (userPartner.employeeCount || 50);
       const employeesWithActivity = new Set();
       const employeesActiveHours: Record<number, number> = {};
 
@@ -7952,7 +7984,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       };
 
       // 3. Financial Impact
-      const economicValue = totalEmployeeHours * 35; // $35/hr standard
+      const economicValue = totalEmployeeHours * 34.75; // $34.75/hr standard
       const programCost = (userPartner.annualCSRBudget || 50000) * 0.3; // Assume 30% for volunteer programs
       const roi = programCost > 0 ? ((economicValue - programCost) / programCost * 100) : 0;
 
@@ -8376,8 +8408,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.patch("/api/csr/partners/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs, vtoTrackingEnabled } = req.body;
-      
+      const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs, vtoTrackingEnabled, logo, logoUrl } = req.body;
+
       const updated = await storage.updateCSRPartner?.(parseInt(id), {
         companyName,
         contactEmail,
@@ -8386,7 +8418,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         employeeCount,
         annualCSRBudget,
         primarySdgs,
-        vtoTrackingEnabled
+        vtoTrackingEnabled,
+        logoUrl: logo || logoUrl
       });
       
       if (!updated) {
@@ -8870,7 +8903,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const userMilestones = milestones.filter((m: any) => m.userId === uid);
 
       const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
-      const economicValue = totalHours * 35; // $35/hour standard rate
+      const economicValue = totalHours * 34.75; // $34.75/hour standard rate
       const allSkills = userActivities.flatMap((a: any) => a.skillsApplied || []);
       const uniqueSkills = Array.from(new Set(allSkills));
 

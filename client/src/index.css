@@ -39,6 +39,36 @@
   --transition-fast: all 0.15s ease;
   --transition-default: all 0.2s ease;
   --transition-slow: all 0.3s ease;
+
+  /* Premium Dark Theme - Enterprise Dashboard */
+  --navy-900: #0A0E27;
+  --navy-800: #151B3B;
+  --navy-700: #1E2A4A;
+  --navy-600: #2A3A5F;
+  --navy-500: #374B73;
+
+  /* Accent Colors - Impact */
+  --cyan-500: #00D9FF;
+  --cyan-400: #22E5FF;
+  --purple-500: #B84FFF;
+  --purple-400: #C974FF;
+  --pink-500: #FF3D8F;
+  --emerald-glow: #00FFA3;
+  --gold-500: #FFD700;
+  --orange-glow: #FF6B35;
+
+  /* Glass Morphism - Dark */
+  --glass-dark: rgba(10, 14, 39, 0.75);
+  --glass-dark-solid: rgba(21, 27, 59, 0.95);
+  --glass-border-dark: rgba(255, 255, 255, 0.08);
+  --glass-border-light: rgba(255, 255, 255, 0.12);
+  --glass-hover-dark: rgba(255, 255, 255, 0.05);
+
+  /* Glow Effects */
+  --glow-cyan: 0 0 30px rgba(0, 217, 255, 0.4);
+  --glow-purple: 0 0 30px rgba(184, 79, 255, 0.4);
+  --glow-emerald: 0 0 30px rgba(0, 255, 163, 0.4);
+  --glow-gold: 0 0 30px rgba(255, 215, 0, 0.4);
 }
 
 /* Prevent outer scrollbar - only inner page scrollbars */
@@ -901,4 +931,352 @@ html, body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ========================================
+   ENTERPRISE DASHBOARD - Premium Styling
+   ======================================== */
+
+/* Premium dark theme container */
+.enterprise-dashboard {
+  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 50%, var(--navy-700) 100%);
+  min-height: 100vh;
+}
+
+/* Glass card styling */
+.glass-card {
+  background: var(--glass-dark);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(0, 217, 255, 0.3);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+/* Hero impact score animations */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3), 0 0 40px rgba(0, 217, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.5), 0 0 80px rgba(0, 217, 255, 0.2);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-up {
+  animation: countUp 1s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Metric card sparkline animation */
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Gradient text for impact scores */
+.impact-score-gradient {
+  background: linear-gradient(135deg, var(--cyan-500) 0%, var(--purple-500) 50%, var(--pink-500) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Premium header styling */
+.enterprise-header {
+  background: var(--glass-dark-solid);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border-dark);
+}
+
+/* Sidebar navigation */
+.enterprise-nav-item {
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.enterprise-nav-item:hover {
+  background: var(--glass-hover-dark);
+  color: #ffffff;
+}
+
+.enterprise-nav-item.active {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(184, 79, 255, 0.15) 100%);
+  color: var(--cyan-500);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+/* Activity feed animations */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.activity-item {
+  animation: slideInRight 0.4s ease-out forwards;
+}
+
+/* Leaderboard row hover */
+.leaderboard-row {
+  transition: all 0.2s ease;
+}
+
+.leaderboard-row:hover {
+  background: rgba(0, 217, 255, 0.05);
+  transform: scale(1.01);
+}
+
+/* SDG badge styling */
+.sdg-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.sdg-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Premium button styling */
+.btn-premium {
+  background: linear-gradient(135deg, var(--cyan-500) 0%, var(--purple-500) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+}
+
+/* Stats increase/decrease indicators */
+.trend-up {
+  color: var(--emerald-glow);
+}
+
+.trend-down {
+  color: #FF4757;
+}
+
+/* Dark theme scrollbar for enterprise dashboard */
+.enterprise-dashboard::-webkit-scrollbar-track {
+  background: var(--navy-800);
+}
+
+.enterprise-dashboard::-webkit-scrollbar-thumb {
+  background: var(--navy-500);
+  border-radius: 4px;
+}
+
+.enterprise-dashboard::-webkit-scrollbar-thumb:hover {
+  background: var(--navy-600);
+}
+
+/* ===== KPI Detail Modal Animations ===== */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+/* Modal overlay animation */
+.modal-overlay-animated {
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Modal content animation */
+.modal-content-animated {
+  animation: modalSlideUp 0.3s ease-out;
+}
+
+/* KPI card hover enhancement */
+.kpi-card-interactive {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kpi-card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-card-interactive:active {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Loading skeleton animation */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-loading {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+}
+
+/* Smooth tab transitions */
+.tab-content-animated {
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Chart hover interactions */
+.chart-interactive .recharts-bar-rectangle:hover {
+  filter: brightness(1.1);
+  transition: filter 0.2s ease;
+}
+
+/* Progress bar smooth fill */
+.progress-animated {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* SDG icon hover in modals */
+.sdg-icon-modal {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sdg-icon-modal:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Button ripple effect */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.btn-ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
 }

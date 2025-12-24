@@ -596,28 +596,55 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#faf9f7] flex flex-col overflow-x-hidden w-full max-w-full">
-      {/* Navigation - PWA optimized with glass effect */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
-        <div className="container mx-auto px-[8%] sm:px-[15%] py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
-          <Link href="/">
+      {/* Navigation - Consistent site-wide header with menu tabs */}
+      <nav className="sticky top-0 z-50 bg-gradient-to-r from-emerald-50 via-green-50 to-amber-50 border-b border-emerald-200/50 shadow-sm safe-area-top">
+        <div className="container mx-auto px-[5%] sm:px-[8%] py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
+          {/* Logo */}
+          <Link href="/landing">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 touch-feedback">
               <Logo size="sm" showMotto={true} />
             </div>
           </Link>
+
+          {/* Center: Navigation Menu - Hidden on mobile */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link href="/landing">
+              <Button variant="ghost" size="sm" className="text-emerald-800 font-semibold hover:bg-emerald-100 rounded-lg bg-emerald-100/60">
+                Home
+              </Button>
+            </Link>
+            <Link href="/projects">
+              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+                Projects
+              </Button>
+            </Link>
+            <Link href="/organizations">
+              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+                Organizations
+              </Button>
+            </Link>
+            <Link href="/help">
+              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+                Help
+              </Button>
+            </Link>
+          </div>
+
+          {/* Right: Auth Buttons */}
           <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
+                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
                   My Dashboard
                 </Button>
               </Link>
             ) : (
               <>
                 <Link href="/login" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-login-nav">Log In</Button>
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-login-nav">Log In</Button>
                 </Link>
                 <Link href="/login?tab=register" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
                     Sign Up
                   </Button>
                 </Link>

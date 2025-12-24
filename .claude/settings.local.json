@@ -64,7 +64,21 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(then echo \"DATABASE_URL is set, running indexes migration...\" psql \"$DATABASE_URL\" -f /home/runner/workspace/migrations/0001_add_performance_indexes.sql)",
+      "Bash(time curl:*)",
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(__NEW_LINE__ echo \"Test 1: /api/users \\(first request - cache miss\\)\")",
+      "Bash(1 echo echo '4. ETag Stats:' curl -s http://localhost:5000/health)",
+      "Bash(/dev/null echo echo '5. Image Storage \\(optimized\\):' du -sh uploads/)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git remote:*)",
+      "Bash(NODE_ENV=development npx tsx:*)",
+      "Bash(then psql \"$DATABASE_URL\" -c \"SELECT id, display_name, username, email, user_type FROM users WHERE display_name ILIKE ''%Fatima%'' OR username ILIKE ''%Fatima%''\")",
+      "Bash(timeout 30 npm run dev:*)",
+      "Bash(1 sleep 1 grep 'CSR DEBUG' /tmp/server2.log)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

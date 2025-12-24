@@ -50,8 +50,7 @@ export default function WebHeader({ showSearch = false, transparent = false, act
     { icon: ClipboardList, label: "Log Activity", path: "/log-activity", highlight: true },
     { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts", active: activeTab === 'impacts' },
     { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
-    { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile", active: activeTab === 'profile' },
-    { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
+    { icon: User, label: "Profile & Settings", path: "/volunteer-profile-settings", active: activeTab === 'profile' },
   ];
 
   return (

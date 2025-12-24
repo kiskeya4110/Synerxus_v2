@@ -18,6 +18,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -99,7 +103,8 @@ export default function OrganizationProfileSettings() {
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
-  
+  const isMobile = useIsMobile();
+
   // Guard against repeated operations
   const redirectAttemptedRef = useRef(false);
   const formResetAttemptedRef = useRef(false);
@@ -482,9 +487,11 @@ export default function OrganizationProfileSettings() {
 
   return (
     <OrganizationProfileErrorBoundary>
-      <>
-        <OrganizationHeader activeTab="settings" />
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : ''}`}>
+        {/* Header - Mobile PWA or Desktop */}
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="settings" />}
+
+        <div className={`${isMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
           <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
           <p className="text-muted-foreground">
@@ -768,7 +775,10 @@ export default function OrganizationProfileSettings() {
             </CardContent>
           </Card>
         </div>
-      </>
+
+        {/* Bottom Navigation for mobile */}
+        {isMobile && <OrganizationPWANav activeTab="home" />}
+      </div>
     </OrganizationProfileErrorBoundary>
   );
 }

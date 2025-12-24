@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { ArrowLeft, Save, TrendingUp, Calendar, MapPin, Target, Users, Clock, Briefcase, BarChart3, Heart, Plus, Trash2, UserCheck, Zap, Info } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1179,7 +1180,7 @@ export default function ProjectEdit() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-amber-800 dark:text-amber-200">× Attribution Factor:</span>
-                              <span className="font-medium">{(attributionFactor * 100).toFixed(0)}%</span>
+                              <span className="font-medium">{Math.round(attributionFactor * 100)}%</span>
                             </div>
                             <div className="border-t border-amber-300 dark:border-amber-700 pt-2 mt-2">
                               <div className="flex justify-between text-base">
@@ -1481,7 +1482,7 @@ export default function ProjectEdit() {
                       {roleFields.map((_, idx) => {
                         const role = form.watch(`volunteerRoles.${idx}`);
                         const totalVolunteer = form.watch("totalVolunteerContribution") || 0;
-                        const effectivePercent = (totalVolunteer * (role?.contributionPercent || 0) / 100).toFixed(1);
+                        const effectivePercent = formatDecimal(totalVolunteer * (role?.contributionPercent || 0) / 100);
                         return (
                           <div key={idx} className="flex justify-between text-xs">
                             <span className="text-muted-foreground">{role?.role} ({role?.count || 0} volunteer{(role?.count || 0) > 1 ? 's' : ''}):</span>

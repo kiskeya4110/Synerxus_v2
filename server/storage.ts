@@ -104,7 +104,10 @@ import {
   type VolunteerStory,
   type InsertVolunteerStory,
   type StoryLike,
-  type InsertStoryLike
+  type InsertStoryLike,
+  volunteerOrganizationRelationships,
+  type VolunteerOrganizationRelationship,
+  type InsertVolunteerOrganizationRelationship
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -192,7 +195,15 @@ export interface IStorage {
   listApplicationsByOpportunity(opportunityId: number): Promise<any[]>;
   listApplicationsByVolunteer(volunteerId: number): Promise<any[]>;
   findApplicationByVolunteerAndOpportunity(volunteerId: number, opportunityId: number): Promise<any | undefined>;
-  
+
+  // Volunteer-Organization Relationship operations
+  getVolunteerOrganizationRelationship(volunteerId: number, organizationId: number): Promise<VolunteerOrganizationRelationship | undefined>;
+  createVolunteerOrganizationRelationship(relationship: InsertVolunteerOrganizationRelationship): Promise<VolunteerOrganizationRelationship>;
+  updateVolunteerOrganizationRelationship(id: number, relationship: Partial<InsertVolunteerOrganizationRelationship>): Promise<VolunteerOrganizationRelationship | undefined>;
+  listVolunteerRelationshipsByOrganization(organizationId: number): Promise<VolunteerOrganizationRelationship[]>;
+  listOrganizationRelationshipsByVolunteer(volunteerId: number): Promise<VolunteerOrganizationRelationship[]>;
+  upsertVolunteerOrganizationRelationship(volunteerId: number, organizationId: number, updates: Partial<InsertVolunteerOrganizationRelationship>): Promise<VolunteerOrganizationRelationship>;
+
   // Saved Opportunity operations
   saveOpportunity(savedOpp: any): Promise<any>;
   unsaveOpportunity(volunteerId: number, opportunityId: number): Promise<void>;
@@ -750,6 +761,70 @@ export class DatabaseStorage implements IStorage {
       .where(eq(opportunities.organizationId, organizationId));
     
     return results.map(r => r.application);
+  }
+
+  // Volunteer-Organization Relationship operations
+  async getVolunteerOrganizationRelationship(volunteerId: number, organizationId: number): Promise<VolunteerOrganizationRelationship | undefined> {
+    const [result] = await db.select().from(volunteerOrganizationRelationships).where(
+      and(
+        eq(volunteerOrganizationRelationships.volunteerId, volunteerId),
+        eq(volunteerOrganizationRelationships.organizationId, organizationId)
+      )
+    );
+    return result || undefined;
+  }
+
+  async createVolunteerOrganizationRelationship(relationship: InsertVolunteerOrganizationRelationship): Promise<VolunteerOrganizationRelationship> {
+    const [newRelationship] = await db.insert(volunteerOrganizationRelationships).values(relationship).returning();
+    return newRelationship;
+  }
+
+  async updateVolunteerOrganizationRelationship(id: number, relationship: Partial<InsertVolunteerOrganizationRelationship>): Promise<VolunteerOrganizationRelationship | undefined> {
+    const [result] = await db.update(volunteerOrganizationRelationships)
+      .set({ ...relationship, updatedAt: new Date() })
+      .where(eq(volunteerOrganizationRelationships.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async listVolunteerRelationshipsByOrganization(organizationId: number): Promise<VolunteerOrganizationRelationship[]> {
+    return await db.select().from(volunteerOrganizationRelationships)
+      .where(eq(volunteerOrganizationRelationships.organizationId, organizationId));
+  }
+
+  async listOrganizationRelationshipsByVolunteer(volunteerId: number): Promise<VolunteerOrganizationRelationship[]> {
+    return await db.select().from(volunteerOrganizationRelationships)
+      .where(eq(volunteerOrganizationRelationships.volunteerId, volunteerId));
+  }
+
+  async upsertVolunteerOrganizationRelationship(volunteerId: number, organizationId: number, updates: Partial<InsertVolunteerOrganizationRelationship>): Promise<VolunteerOrganizationRelationship> {
+    // Try to find existing relationship
+    const existing = await this.getVolunteerOrganizationRelationship(volunteerId, organizationId);
+
+    if (existing) {
+      // Update existing relationship
+      const updated = await this.updateVolunteerOrganizationRelationship(existing.id, {
+        ...updates,
+        lastActivityAt: new Date(),
+        totalApplications: (existing.totalApplications || 0) + (updates.totalApplications ? 1 : 0)
+      });
+      return updated!;
+    } else {
+      // Create new relationship
+      return await this.createVolunteerOrganizationRelationship({
+        volunteerId,
+        organizationId,
+        relationshipType: updates.relationshipType || 'applied',
+        firstContactAt: new Date(),
+        lastActivityAt: new Date(),
+        totalApplications: 1,
+        totalProjectsCompleted: 0,
+        totalHoursContributed: 0,
+        totalAiuEarned: 0,
+        isActive: true,
+        ...updates
+      });
+    }
   }
 
   // Saved Opportunity operations

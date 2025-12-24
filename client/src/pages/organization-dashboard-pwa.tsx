@@ -38,6 +38,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
+import { formatDecimal } from "@/lib/format-utils";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import PWAPageGuard, { PWALoadingSkeleton } from "@/components/layout/pwa-page-guard";
@@ -562,10 +563,10 @@ export default function OrganizationDashboardPWA() {
                   SROI
                 </span>
               </div>
-              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
+              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 29.95 / 1000) : 0}K</p>
               <p className="text-[10px] text-slate-600">Economic Value</p>
               <div className="mt-2 pt-2 border-t border-emerald-400/30 text-[9px] text-slate-600">
-                {totalPeopleImpacted > 0 ? ((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)).toFixed(1) : '0.0'}:1 social return
+                {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)) : '0.0'}:1 social return
               </div>
             </button>
 
@@ -597,7 +598,7 @@ export default function OrganizationDashboardPWA() {
             >
               <Heart className="w-4 h-4 text-rose-500 mb-1" />
               <p className="text-lg font-bold text-slate-800">
-                {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(1) : 0}
+                {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0}
               </p>
               <p className="text-[9px] text-slate-500">Impact ROI</p>
             </button>
@@ -608,7 +609,7 @@ export default function OrganizationDashboardPWA() {
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-teal-300 transition-all active:scale-[0.98]"
             >
               <Award className="w-4 h-4 text-teal-500 mb-1" />
-              <p className="text-lg font-bold text-slate-800">{totalAiu.toFixed(2)}</p>
+              <p className="text-lg font-bold text-slate-800">{formatDecimal(totalAiu)}</p>
               <p className="text-[9px] text-slate-500">AIU Score</p>
             </button>
 
@@ -1632,13 +1633,13 @@ export default function OrganizationDashboardPWA() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-100 text-center">
                   <p className="text-xl font-bold text-emerald-700">
-                    {totalPeopleImpacted > 0 ? ((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)).toFixed(1) : '0.0'}:1
+                    {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)) : '0.0'}:1
                   </p>
                   <p className="text-[9px] text-emerald-600 font-medium">SROI Ratio</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
                   <p className="text-xl font-bold text-blue-700">
-                    ${totalPeopleImpacted > 0 ? ((metrics.totalHours * 29.95) / totalPeopleImpacted).toFixed(0) : 0}
+                    ${totalPeopleImpacted > 0 ? Math.round((metrics.totalHours * 29.95) / totalPeopleImpacted) : 0}
                   </p>
                   <p className="text-[9px] text-blue-600 font-medium">Cost/Beneficiary</p>
                 </div>
@@ -1654,7 +1655,7 @@ export default function OrganizationDashboardPWA() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
                   <TrendingUp className="w-5 h-5 text-emerald-600 mb-2" />
-                  <p className="text-2xl font-bold text-emerald-700">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
+                  <p className="text-2xl font-bold text-emerald-700">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 29.95 / 1000) : 0}K</p>
                   <p className="text-[10px] text-emerald-600 font-medium">Total Economic Value</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
@@ -1718,7 +1719,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Impact per Dollar</span>
                     <span className="text-sm font-bold text-rose-600">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / (metrics.totalHours * 29.95) * 100).toFixed(1) : 0}
+                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / (metrics.totalHours * 29.95) * 100) : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -1750,7 +1751,7 @@ export default function OrganizationDashboardPWA() {
                   </div>
                   <div className="bg-white/60 rounded-lg p-2 text-center">
                     <p className="text-lg font-bold text-emerald-700">
-                      {totalPeopleImpacted > 0 ? (metrics.totalHours / totalPeopleImpacted).toFixed(1) : 0}h
+                      {totalPeopleImpacted > 0 ? formatDecimal(metrics.totalHours / totalPeopleImpacted) : 0}h
                     </p>
                     <p className="text-[9px] text-emerald-600">Hours/Beneficiary</p>
                   </div>
@@ -1805,7 +1806,7 @@ export default function OrganizationDashboardPWA() {
                       Attributable Impact Units
                     </p>
                     <h3 className="font-bold text-xl leading-tight mt-0.5">
-                      {totalAiu.toFixed(2)} AIU
+                      {formatDecimal(totalAiu)} AIU
                     </h3>
                   </div>
                 </div>
@@ -1823,18 +1824,18 @@ export default function OrganizationDashboardPWA() {
               {/* AIU Summary Stats */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-3 border border-teal-100 text-center">
-                  <p className="text-xl font-bold text-teal-700">{totalAiu.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-teal-700">{formatDecimal(totalAiu)}</p>
                   <p className="text-[10px] text-teal-600 font-medium">Total AIU</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
                   <p className="text-xl font-bold text-blue-700">
-                    {metrics.activeProjects > 0 ? (totalAiu / metrics.activeProjects).toFixed(2) : '0.00'}
+                    {metrics.activeProjects > 0 ? formatDecimal(totalAiu / metrics.activeProjects) : '0.00'}
                   </p>
                   <p className="text-[10px] text-blue-600 font-medium">AIU/Project</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100 text-center">
                   <p className="text-xl font-bold text-purple-700">
-                    {metrics.activeVolunteers > 0 ? (totalAiu / metrics.activeVolunteers).toFixed(2) : '0.00'}
+                    {metrics.activeVolunteers > 0 ? formatDecimal(totalAiu / metrics.activeVolunteers) : '0.00'}
                   </p>
                   <p className="text-[10px] text-purple-600 font-medium">AIU/Volunteer</p>
                 </div>
@@ -1859,7 +1860,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((metrics.totalHours / 1000) * 35, 35)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {(totalAiu * 0.35).toFixed(2)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.35)} AIU</p>
                 </div>
 
                 {/* SDG Alignment (25%) */}
@@ -1874,7 +1875,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(metrics.sdgsAddressed / 17) * 25}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {(totalAiu * 0.25).toFixed(2)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} AIU</p>
                 </div>
 
                 {/* Lives Touched (25%) */}
@@ -1889,7 +1890,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min((totalPeopleImpacted / 1000) * 25, 25)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {(totalAiu * 0.25).toFixed(2)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} AIU</p>
                 </div>
 
                 {/* Verification (15%) */}
@@ -1904,7 +1905,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(((metrics.completedProjects || 0) / Math.max(metrics.totalProjects, 1)) * 15, 15)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {(totalAiu * 0.15).toFixed(2)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.15)} AIU</p>
                 </div>
               </div>
 
@@ -1928,7 +1929,7 @@ export default function OrganizationDashboardPWA() {
                       <p className="text-[11px] font-medium text-slate-700">Impact Efficiency</p>
                       <p className="text-[10px] text-slate-500">
                         {metrics.totalHours > 0
-                          ? `${((totalAiu / metrics.totalHours) * 100).toFixed(2)} AIU per 100 hours`
+                          ? `${formatDecimal((totalAiu / metrics.totalHours) * 100)} AIU per 100 hours`
                           : 'Log hours to track efficiency'}
                       </p>
                     </div>
@@ -1942,7 +1943,7 @@ export default function OrganizationDashboardPWA() {
                     <div className="flex-1">
                       <p className="text-[11px] font-medium text-slate-700">SDG Multiplier Active</p>
                       <p className="text-[10px] text-slate-500">
-                        {Math.min(1 + (metrics.sdgsAddressed * 0.1), 2.0).toFixed(1)}x bonus from {metrics.sdgsAddressed} SDGs
+                        {formatDecimal(Math.min(1 + (metrics.sdgsAddressed * 0.1), 2.0))}x bonus from {metrics.sdgsAddressed} SDGs
                       </p>
                     </div>
                   </div>
@@ -1987,7 +1988,7 @@ export default function OrganizationDashboardPWA() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] text-slate-600 truncate">{getSDGName(sdg.goal)}</span>
-                              <span className="text-xs font-bold text-teal-600">{sdgAiu.toFixed(2)}</span>
+                              <span className="text-xs font-bold text-teal-600">{formatDecimal(sdgAiu)}</span>
                             </div>
                             <div className="h-1.5 bg-white rounded-full overflow-hidden mt-0.5">
                               <div
@@ -2247,7 +2248,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Lives Impacted per Hour</span>
                     <span className="text-sm font-bold text-emerald-600">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(2) : 0}
+                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -2263,7 +2264,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">AIU per 100 Hours</span>
                     <span className="text-sm font-bold text-teal-600">
-                      {metrics.totalHours > 0 ? ((totalAiu / metrics.totalHours) * 100).toFixed(2) : 0}
+                      {metrics.totalHours > 0 ? formatDecimal((totalAiu / metrics.totalHours) * 100) : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -2488,7 +2489,7 @@ export default function OrganizationDashboardPWA() {
                       Impact ROI
                     </p>
                     <h3 className="font-bold text-xl leading-tight mt-0.5">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(1) : 0} Lives/Hour
+                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0} Lives/Hour
                     </h3>
                   </div>
                 </div>
@@ -2522,7 +2523,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="text-2xl text-slate-400">=</div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-emerald-600">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(1) : 0}
+                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0}
                     </div>
                     <div className="text-xs text-slate-500">Impact ROI</div>
                   </div>
@@ -2548,7 +2549,7 @@ export default function OrganizationDashboardPWA() {
                 <h4 className="font-semibold text-slate-700 text-sm mb-3">Performance Context</h4>
                 <p className="text-sm text-slate-600 mb-3">
                   Your organization impacts <span className="font-bold text-rose-600">
-                    {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(1) : 0} lives
+                    {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0} lives
                   </span> for every hour volunteered.
                 </p>
                 <div className="space-y-2">
@@ -2614,7 +2615,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Hours per Life Impacted</span>
                     <span className="text-sm font-bold text-emerald-600">
-                      {totalPeopleImpacted > 0 ? (metrics.totalHours / totalPeopleImpacted).toFixed(2) : 0}h
+                      {totalPeopleImpacted > 0 ? formatDecimal(metrics.totalHours / totalPeopleImpacted) : 0}h
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">

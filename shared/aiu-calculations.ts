@@ -131,16 +131,435 @@ export function getRoleDisplayName(role: string): string {
   return displayNames[role] || role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ');
 }
 
-// Reliability multipliers based on verification status
-export const RELIABILITY_MULTIPLIERS: Record<string, number> = {
-  verified: 1.0,      // NGO/org verified
-  self_reported: 0.8, // Self-reported, not yet verified
-  pending: 0.7,       // Pending verification
-  disputed: 0.5,      // Under dispute
+/**
+ * Verification multipliers based on ORGANIZATION verification status
+ *
+ * Key principle: Verification must come from the organization/NGO,
+ * not from the volunteer uploading photos or self-reporting.
+ *
+ * Industry basis:
+ * - Independent Sector: Third-party verification standards
+ * - SROI Network: Stakeholder verification requirements
+ * - GRI Standards: External assurance for impact claims
+ */
+export const VERIFICATION_MULTIPLIERS: Record<string, number> = {
+  // Organization has verified this impact occurred
+  verified: 1.0,
+  approved: 1.0,      // Alias for verified
+
+  // Organization is reviewing the claim
+  pending: 0.7,
+  under_review: 0.7,  // Alias for pending
+
+  // Volunteer submitted, no org review yet
+  submitted: 0.6,
+  self_reported: 0.6, // Alias for submitted (legacy)
+
+  // Impact claim is disputed or rejected
+  disputed: 0.3,
+  rejected: 0.0,      // No AIU for rejected claims
 };
+
+// Legacy alias for backwards compatibility
+export const RELIABILITY_MULTIPLIERS = VERIFICATION_MULTIPLIERS;
 
 // Verification status options
 export type VerificationStatus = 'pending' | 'verified' | 'self_reported' | 'disputed' | 'rejected';
+
+// =====================================================
+// Logarithmic AIU Calculation System (V2)
+// =====================================================
+
+/**
+ * AIU Ceiling Configuration
+ *
+ * Industry basis:
+ * - Future of Humanity Institute: Law of Logarithmic Returns
+ * - B Corp Assessment: Ceiling-based scoring methodology
+ * - SROI Methodology: Duration decay and drop-off principles
+ */
+export const AIU_CEILING_CONFIG = {
+  maxAiuPerProject: 100,      // Max AIU per volunteer per project
+  maxProjectHours: 500,       // Reference max for hours factor calculation
+  globalMaxAiu: 1000,         // Lifetime cap (sum across all projects)
+  // NOTE: baselineMultiplier (k) is derived per-project, not hardcoded!
+};
+
+/**
+ * REMOVED: Evidence upload bonus (v2.1)
+ * Reason: Uploading a photo is a menial task, not real impact.
+ * Verification should come from organization approval, not self-uploads.
+ */
+
+/**
+ * REMOVED: Time decay (v2.1)
+ * Reason: A life impacted 2 years ago is still a life impacted.
+ * Real impact doesn't expire.
+ */
+
+/**
+ * REMOVED: Consistency streak bonus (v2.1)
+ * Reason: Showing up every month doesn't mean more lives were changed.
+ * Focus on outcomes, not attendance.
+ */
+
+/**
+ * Depth multipliers based on outcomeType field
+ *
+ * Based on IRIS+ Catalog and SROI "multiplier effect" standards:
+ * - individual: Direct service delivery (baseline)
+ * - shared: Training/capacity building has multiplier effect
+ * - system: Systems change affects many beneficiaries
+ */
+export const DEPTH_MULTIPLIERS: Record<string, number> = {
+  individual: 1.0,  // Direct service delivery
+  shared: 1.5,      // Capacity building / training
+  system: 2.0,      // Systems-level change
+};
+
+/**
+ * Derive baseline multiplier (k) from project's expected maximum impact
+ * Formula: k = MaxAIU / ln(1 + MaxExpectedEffectiveScore)
+ *
+ * This ensures AIU grows logarithmically toward the ceiling based on
+ * the project's realistic expected impact scale.
+ *
+ * @param projectParams - Project parameters for deriving k
+ * @returns The derived baseline multiplier k
+ */
+export function deriveBaselineMultiplier(projectParams: {
+  expectedBeneficiaries: number;  // From projectAiuSettings.kpiAfter
+}): number {
+  const { maxAiuPerProject } = AIU_CEILING_CONFIG;
+
+  // Calculate MaxExpectedEffectiveScore based on project scale
+  // Uses maximum possible multipliers for ceiling calculation
+  const maxDepth = Math.max(...Object.values(DEPTH_MULTIPLIERS));  // 2.0
+  const maxRoleWeight = Math.max(...Object.values(ROLE_WEIGHTS));  // 4.0
+  const maxReliability = 1.0;  // verified status
+  const maxHoursFactor = 1.0;  // 500+ hours
+
+  // Project's expected maximum effective score
+  const maxExpectedEffectiveScore =
+    projectParams.expectedBeneficiaries *
+    maxDepth *
+    maxRoleWeight *
+    maxReliability *
+    maxHoursFactor;
+
+  // Derive k so that maxExpectedEffectiveScore approaches (but never reaches) ceiling
+  const k = maxAiuPerProject / Math.log(1 + maxExpectedEffectiveScore);
+
+  return Math.round(k * 100) / 100;  // Round to 2 decimals
+}
+
+/**
+ * Logarithmic AIU calculation result
+ */
+export interface LogarithmicAIUResult {
+  baseScore: number;
+  hoursFactor: number;
+  effectiveScore: number;
+  aiu: number;
+  percentOfCeiling: number;
+  k: number;  // The derived baseline multiplier for transparency
+}
+
+/**
+ * Calculate hours-scaled logarithmic AIU for a volunteer impact
+ * Uses formula: AIU = min(MaxAIU, k × ln(1 + EffectiveScore))
+ *
+ * Industry basis:
+ * - Future of Humanity Institute: Law of Logarithmic Returns
+ * - B Corp Assessment: Ceiling-based scoring methodology
+ * - SROI: Duration decay and drop-off principles
+ *
+ * @param input - Volunteer impact data including hours and project scale
+ * @returns Calculation breakdown with AIU value
+ */
+export function calculateLogarithmicAIU(input: {
+  livesImpacted: number;
+  outcomeType: string;
+  role: string;
+  verificationStatus: string;
+  hours: number;
+  projectExpectedBeneficiaries: number;  // From projectAiuSettings.kpiAfter
+}): LogarithmicAIUResult {
+  const { maxAiuPerProject, maxProjectHours } = AIU_CEILING_CONFIG;
+
+  // Derive k from project's expected scale (formula-based, not hardcoded!)
+  const k = deriveBaselineMultiplier({
+    expectedBeneficiaries: input.projectExpectedBeneficiaries
+  });
+
+  // Step 1: Calculate base impact score
+  const depthMultiplier = DEPTH_MULTIPLIERS[input.outcomeType] || DEPTH_MULTIPLIERS.individual;
+  const roleWeight = ROLE_WEIGHTS[input.role?.toLowerCase()] || ROLE_WEIGHTS.support;
+  const reliabilityMultiplier = RELIABILITY_MULTIPLIERS[input.verificationStatus] || RELIABILITY_MULTIPLIERS.pending;
+  const baseScore = input.livesImpacted * depthMultiplier * roleWeight * reliabilityMultiplier;
+
+  // Step 2: Calculate hours factor (logarithmic scaling)
+  const hoursFactor = input.hours > 0
+    ? Math.log(1 + input.hours) / Math.log(1 + maxProjectHours)
+    : 0;
+
+  // Step 3: Calculate effective score
+  const effectiveScore = baseScore * hoursFactor;
+
+  // Step 4: Apply logarithmic formula with ceiling
+  // k is derived from project parameters (not hardcoded!)
+  const rawAiu = effectiveScore > 0 ? k * Math.log(1 + effectiveScore) : 0;
+  const aiu = Math.min(maxAiuPerProject, rawAiu);
+
+  // Step 5: Calculate percentage of ceiling
+  const percentOfCeiling = (aiu / maxAiuPerProject) * 100;
+
+  return {
+    baseScore: Math.round(baseScore * 100) / 100,
+    hoursFactor: Math.round(hoursFactor * 1000) / 1000,
+    effectiveScore: Math.round(effectiveScore * 100) / 100,
+    aiu: Math.round(aiu * 100) / 100,
+    percentOfCeiling: Math.round(percentOfCeiling * 10) / 10,
+    k,  // Include derived k for transparency
+  };
+}
+
+/**
+ * Pure Impact AIU Calculation (V3)
+ *
+ * DESIGN PRINCIPLES:
+ * 1. Only real outcomes matter - lives impacted, depth of change
+ * 2. No gameable factors - no bonus for uploading photos or showing up
+ * 3. Verification comes from organizations, not self-reporting
+ * 4. Past impact is still impact - no time decay
+ *
+ * FORMULA:
+ * AIU = min(MaxAIU, k × ln(1 + EffectiveScore))
+ *
+ * Where:
+ * - EffectiveScore = ImpactScore × EngagementFactor
+ * - ImpactScore = LivesImpacted × DepthMultiplier × VerificationMultiplier
+ * - EngagementFactor = RoleWeight × HoursFactor
+ */
+
+/**
+ * Pure Impact AIU Result
+ * Clean, transparent breakdown of how AIU was calculated
+ */
+export interface PureImpactAIUResult {
+  // Impact Score Components (WHAT was achieved)
+  livesImpacted: number;
+  depthMultiplier: number;
+  verificationMultiplier: number;
+  impactScore: number;
+
+  // Engagement Factor Components (HOW they contributed)
+  roleWeight: number;
+  hoursFactor: number;
+  engagementFactor: number;
+
+  // Consistency Bonus (small reward for sustained engagement)
+  streakMonths: number;
+  consistencyBonus: number;  // 0-10% bonus for long-term commitment
+
+  // Final Calculation
+  effectiveScore: number;
+  k: number;
+  aiu: number;
+  percentOfCeiling: number;
+}
+
+/**
+ * Calculate Pure Impact AIU (V3)
+ *
+ * This is the definitive AIU calculation focused entirely on real-world outcomes.
+ * No gameable factors. No menial task bonuses. Just impact.
+ *
+ * Industry basis:
+ * - SROI Methodology: Outcome-focused impact measurement
+ * - IRIS+ Catalog: Standardized impact metrics
+ * - GRI Standards: Verified impact reporting
+ * - Future of Humanity Institute: Law of Logarithmic Returns
+ *
+ * @param input - Volunteer impact data
+ * @returns Pure impact calculation breakdown
+ */
+export function calculatePureImpactAIU(input: {
+  // IMPACT: What was achieved
+  livesImpacted: number;
+  outcomeType: string;           // individual, shared, system
+  verificationStatus: string;    // verified, pending, submitted, rejected
+
+  // ENGAGEMENT: How they contributed
+  role: string;
+  hours: number;
+
+  // PROJECT CONTEXT: For deriving k
+  projectExpectedBeneficiaries: number;
+
+  // OPTIONAL: Activity dates for streak calculation
+  activityDates?: Date[];
+}): PureImpactAIUResult {
+  const { maxAiuPerProject, maxProjectHours } = AIU_CEILING_CONFIG;
+
+  // ========================================
+  // STEP 1: Calculate IMPACT SCORE
+  // What real-world change was created?
+  // ========================================
+
+  // Lives Impacted: The core metric - how many people were helped
+  const livesImpacted = Math.max(0, input.livesImpacted);
+
+  // Depth Multiplier: How deep/lasting is the change?
+  // - individual (1.0): Direct service (fed one person)
+  // - shared (1.5): Capacity building (trained a teacher who teaches 30)
+  // - system (2.0): Systems change (changed a policy affecting thousands)
+  const depthMultiplier = DEPTH_MULTIPLIERS[input.outcomeType] || DEPTH_MULTIPLIERS.individual;
+
+  // Verification Multiplier: Did the organization confirm this happened?
+  // This is NOT about uploading photos - it's about org-level approval
+  const verificationMultiplier = VERIFICATION_MULTIPLIERS[input.verificationStatus] || VERIFICATION_MULTIPLIERS.pending;
+
+  // Impact Score = Lives × Depth × Verification
+  const impactScore = livesImpacted * depthMultiplier * verificationMultiplier;
+
+  // ========================================
+  // STEP 2: Calculate ENGAGEMENT FACTOR
+  // How did the volunteer contribute?
+  // ========================================
+
+  // Role Weight: What level of expertise/responsibility?
+  // Higher weights for skilled roles (pro bono lawyer vs. general volunteer)
+  const roleWeight = ROLE_WEIGHTS[input.role?.toLowerCase()] || ROLE_WEIGHTS.support;
+
+  // Hours Factor: Time invested (logarithmic to prevent gaming)
+  // First 10 hours matter a lot, next 100 hours matter less
+  const hoursFactor = input.hours > 0
+    ? Math.log(1 + input.hours) / Math.log(1 + maxProjectHours)
+    : 0;
+
+  // Engagement Factor = Role × Hours
+  const engagementFactor = roleWeight * hoursFactor;
+
+  // ========================================
+  // STEP 3: Calculate EFFECTIVE SCORE
+  // Impact × Engagement
+  // ========================================
+
+  const effectiveScore = impactScore * engagementFactor;
+
+  // ========================================
+  // STEP 4: Derive k from project scale
+  // Smaller projects = faster AIU growth
+  // Larger projects = more room for growth
+  // ========================================
+
+  const k = deriveBaselineMultiplier({
+    expectedBeneficiaries: input.projectExpectedBeneficiaries
+  });
+
+  // ========================================
+  // STEP 5: Calculate CONSISTENCY BONUS
+  // Small reward (max 10%) for sustained long-term engagement
+  // This rewards commitment without being gameable
+  // ========================================
+
+  let streakMonths = 0;
+  let consistencyBonus = 0;
+
+  if (input.activityDates && input.activityDates.length > 0) {
+    // Count consecutive months with activity
+    const sortedDates = input.activityDates
+      .map(d => new Date(d))
+      .sort((a, b) => b.getTime() - a.getTime());
+
+    const monthsWithActivity = new Set<string>();
+    sortedDates.forEach(date => {
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthsWithActivity.add(monthKey);
+    });
+
+    // Check for consecutive months from most recent
+    const now = new Date();
+    let currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    let consecutiveMonths = 0;
+
+    for (let i = 0; i < 24; i++) { // Check up to 24 months back
+      const monthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+      if (monthsWithActivity.has(monthKey)) {
+        consecutiveMonths++;
+        currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+      } else {
+        break;
+      }
+    }
+
+    streakMonths = consecutiveMonths;
+
+    // Consistency bonus: 1% per month, max 10%
+    // 3 months = 3%, 6 months = 6%, 12+ months = 10% (capped)
+    consistencyBonus = Math.min(0.10, streakMonths * 0.01);
+  }
+
+  // ========================================
+  // STEP 6: Apply logarithmic formula with consistency bonus
+  // AIU = k × ln(1 + EffectiveScore) × (1 + consistencyBonus)
+  // ========================================
+
+  const rawAiu = effectiveScore > 0 ? k * Math.log(1 + effectiveScore) : 0;
+  const aiuWithBonus = rawAiu * (1 + consistencyBonus);
+  const aiu = Math.min(maxAiuPerProject, aiuWithBonus);
+  const percentOfCeiling = (aiu / maxAiuPerProject) * 100;
+
+  return {
+    // Impact components
+    livesImpacted,
+    depthMultiplier: Math.round(depthMultiplier * 100) / 100,
+    verificationMultiplier: Math.round(verificationMultiplier * 100) / 100,
+    impactScore: Math.round(impactScore * 100) / 100,
+
+    // Engagement components
+    roleWeight: Math.round(roleWeight * 100) / 100,
+    hoursFactor: Math.round(hoursFactor * 1000) / 1000,
+    engagementFactor: Math.round(engagementFactor * 1000) / 1000,
+
+    // Consistency bonus
+    streakMonths,
+    consistencyBonus: Math.round(consistencyBonus * 100) / 100, // as decimal (0.05 = 5%)
+
+    // Final calculation
+    effectiveScore: Math.round(effectiveScore * 100) / 100,
+    k,
+    aiu: Math.round(aiu * 100) / 100,
+    percentOfCeiling: Math.round(percentOfCeiling * 10) / 10,
+  };
+}
+
+// Legacy alias for backwards compatibility
+export function calculateEnhancedLogarithmicAIU(input: {
+  livesImpacted: number;
+  outcomeType: string;
+  role: string;
+  verificationStatus: string;
+  hours: number;
+  projectExpectedBeneficiaries: number;
+  hasEvidence?: boolean;
+  evidenceCount?: number;
+  impactDate?: Date;
+  activityDates?: Date[];
+}): PureImpactAIUResult & { evidenceBoost: number; timeDecayMultiplier: number; consistencyBonus: number; streakMonths: number; rawAiuBeforeEnhancements: number; baseScore: number } {
+  const result = calculatePureImpactAIU(input);
+  // Return with legacy fields set to neutral values (no effect)
+  return {
+    ...result,
+    baseScore: result.impactScore,
+    evidenceBoost: 0,
+    timeDecayMultiplier: 1.0,
+    consistencyBonus: 0,
+    streakMonths: 0,
+    rawAiuBeforeEnhancements: result.aiu,
+  };
+}
 
 // AIU Types
 export interface AIUCalculationInput {
@@ -733,6 +1152,7 @@ export function generateAIUExportFilename(
 }
 
 export default {
+  // Original functions
   calculateProjectAIUs,
   generateSampleAIUCalculation,
   formatAIUDisplay,
@@ -745,9 +1165,20 @@ export default {
   createAIUCsvBlob,
   createAIUJsonBlob,
   generateAIUExportFilename,
+  // Original constants
   ROLE_WEIGHTS,
   RELIABILITY_MULTIPLIERS,
+  VERIFICATION_MULTIPLIERS,
   AIU_TOOLTIP_TEXT,
   AIU_CSV_HEADERS,
   CSR_VERIFICATION_CHECKLIST,
+  // V2: Logarithmic AIU calculation
+  AIU_CEILING_CONFIG,
+  DEPTH_MULTIPLIERS,
+  deriveBaselineMultiplier,
+  calculateLogarithmicAIU,
+  // V3: Pure Impact AIU calculation (no gameable factors)
+  calculatePureImpactAIU,
+  // Legacy compatibility
+  calculateEnhancedLogarithmicAIU,
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X } from "lucide-react";
-import { format } from "date-fns";
+import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
@@ -139,6 +139,150 @@ export default function LogActivity() {
         return assignmentWithData?.project || project;
       })
     : [];
+
+  // Get the selected project for activity form to compute date restrictions
+  const selectedProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return availableProjects.find((p: any) => p.id === parseInt(selectedProjectId));
+  }, [selectedProjectId, availableProjects]);
+
+  // Get the selected project for impact form to compute date restrictions
+  const selectedImpactProject = useMemo(() => {
+    if (!impactProjectId) return null;
+    return availableProjects.find((p: any) => p.id === parseInt(impactProjectId));
+  }, [impactProjectId, availableProjects]);
+
+  // Compute date restrictions for activity form calendar
+  const activityDateRestrictions = useMemo(() => {
+    const today = startOfDay(new Date());
+
+    if (!selectedProject) {
+      // No project selected - only restrict to today or earlier (can't log future hours)
+      return {
+        fromDate: undefined,
+        toDate: today,
+        disabled: (date: Date) => isAfter(startOfDay(date), today)
+      };
+    }
+
+    const projectStartDate = selectedProject.startDate
+      ? startOfDay(new Date(selectedProject.startDate))
+      : undefined;
+    const projectEndDate = selectedProject.endDate
+      ? startOfDay(new Date(selectedProject.endDate))
+      : undefined;
+
+    // Can't log hours for future dates - use the earlier of today or project end date
+    const maxDate = projectEndDate && isBefore(projectEndDate, today)
+      ? projectEndDate
+      : today;
+
+    return {
+      fromDate: projectStartDate,
+      toDate: maxDate,
+      disabled: (date: Date) => {
+        const checkDate = startOfDay(date);
+        // Disable dates before project start
+        if (projectStartDate && isBefore(checkDate, projectStartDate)) {
+          return true;
+        }
+        // Disable dates after max date (today or project end, whichever is earlier)
+        if (isAfter(checkDate, maxDate)) {
+          return true;
+        }
+        return false;
+      }
+    };
+  }, [selectedProject]);
+
+  // Compute date restrictions for impact form calendar
+  const impactDateRestrictions = useMemo(() => {
+    const today = startOfDay(new Date());
+
+    if (!selectedImpactProject) {
+      // No project selected - only restrict to today or earlier
+      return {
+        fromDate: undefined,
+        toDate: today,
+        disabled: (date: Date) => isAfter(startOfDay(date), today)
+      };
+    }
+
+    const projectStartDate = selectedImpactProject.startDate
+      ? startOfDay(new Date(selectedImpactProject.startDate))
+      : undefined;
+    const projectEndDate = selectedImpactProject.endDate
+      ? startOfDay(new Date(selectedImpactProject.endDate))
+      : undefined;
+
+    // Can't log impact for future dates - use the earlier of today or project end date
+    const maxDate = projectEndDate && isBefore(projectEndDate, today)
+      ? projectEndDate
+      : today;
+
+    return {
+      fromDate: projectStartDate,
+      toDate: maxDate,
+      disabled: (date: Date) => {
+        const checkDate = startOfDay(date);
+        // Disable dates before project start
+        if (projectStartDate && isBefore(checkDate, projectStartDate)) {
+          return true;
+        }
+        // Disable dates after max date
+        if (isAfter(checkDate, maxDate)) {
+          return true;
+        }
+        return false;
+      }
+    };
+  }, [selectedImpactProject]);
+
+  // Reset date to valid range when project changes (for activity form)
+  useEffect(() => {
+    if (selectedProject && date) {
+      const today = startOfDay(new Date());
+      const projectStartDate = selectedProject.startDate
+        ? startOfDay(new Date(selectedProject.startDate))
+        : null;
+      const projectEndDate = selectedProject.endDate
+        ? startOfDay(new Date(selectedProject.endDate))
+        : null;
+
+      const currentDate = startOfDay(date);
+      const maxDate = projectEndDate && isBefore(projectEndDate, today) ? projectEndDate : today;
+
+      // If current date is outside valid range, reset to a valid date
+      if (projectStartDate && isBefore(currentDate, projectStartDate)) {
+        setDate(projectStartDate);
+      } else if (isAfter(currentDate, maxDate)) {
+        setDate(maxDate);
+      }
+    }
+  }, [selectedProject, date]);
+
+  // Reset date to valid range when project changes (for impact form)
+  useEffect(() => {
+    if (selectedImpactProject && impactDate) {
+      const today = startOfDay(new Date());
+      const projectStartDate = selectedImpactProject.startDate
+        ? startOfDay(new Date(selectedImpactProject.startDate))
+        : null;
+      const projectEndDate = selectedImpactProject.endDate
+        ? startOfDay(new Date(selectedImpactProject.endDate))
+        : null;
+
+      const currentDate = startOfDay(impactDate);
+      const maxDate = projectEndDate && isBefore(projectEndDate, today) ? projectEndDate : today;
+
+      // If current date is outside valid range, reset to a valid date
+      if (projectStartDate && isBefore(currentDate, projectStartDate)) {
+        setImpactDate(projectStartDate);
+      } else if (isAfter(currentDate, maxDate)) {
+        setImpactDate(maxDate);
+      }
+    }
+  }, [selectedImpactProject, impactDate]);
 
   // Log activity mutation
   const logActivityMutation = useMutation({
@@ -425,6 +569,11 @@ export default function LogActivity() {
                 <Label htmlFor="date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Date <span className="text-red-500">*</span>
                 </Label>
+                {selectedProject && (selectedProject.startDate || selectedProject.endDate) && (
+                  <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
+                    Project active: {selectedProject.startDate ? format(new Date(selectedProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedProject.endDate ? format(new Date(selectedProject.endDate), "MMM d, yyyy") : 'Ongoing'}
+                  </p>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -442,6 +591,9 @@ export default function LogActivity() {
                       mode="single"
                       selected={date}
                       onSelect={(newDate) => newDate && setDate(newDate)}
+                      disabled={activityDateRestrictions.disabled}
+                      fromDate={activityDateRestrictions.fromDate}
+                      toDate={activityDateRestrictions.toDate}
                       initialFocus
                     />
                   </PopoverContent>
@@ -646,6 +798,11 @@ export default function LogActivity() {
                 <Label htmlFor="impact-date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Date <span className="text-red-500">*</span>
                 </Label>
+                {selectedImpactProject && (selectedImpactProject.startDate || selectedImpactProject.endDate) && (
+                  <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
+                    Project active: {selectedImpactProject.startDate ? format(new Date(selectedImpactProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedImpactProject.endDate ? format(new Date(selectedImpactProject.endDate), "MMM d, yyyy") : 'Ongoing'}
+                  </p>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -663,6 +820,9 @@ export default function LogActivity() {
                       mode="single"
                       selected={impactDate}
                       onSelect={(newDate) => newDate && setImpactDate(newDate)}
+                      disabled={impactDateRestrictions.disabled}
+                      fromDate={impactDateRestrictions.fromDate}
+                      toDate={impactDateRestrictions.toDate}
                       initialFocus
                     />
                   </PopoverContent>
@@ -675,12 +835,34 @@ export default function LogActivity() {
                   <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                     Lives Impacted <span className="text-red-500">*</span>
                   </Label>
-                  <div className="relative group">
-                    <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`} />
-                    <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg z-50">
-                      This number feeds into Attributable Impact Units (AIUs) calculation. AIU Unique counts each beneficiary once per reporting window and maps to SDG indicators.
-                    </div>
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="inline-flex items-center justify-center">
+                        <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'} hover:text-blue-500 transition-colors`} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-80 p-4 text-sm bg-slate-800 text-white border-slate-700 shadow-xl z-50"
+                      side="top"
+                      align="start"
+                      sideOffset={8}
+                    >
+                      <div className="space-y-2">
+                        <p className="font-semibold text-blue-300">What is Lives Impacted?</p>
+                        <p className="leading-relaxed">
+                          This number feeds into <span className="font-medium text-emerald-300">Attributable Impact Units (AIUs)</span> calculation.
+                        </p>
+                        <p className="leading-relaxed">
+                          AIU Unique counts each beneficiary once per reporting window and maps to SDG indicators for verified, auditable impact measurement.
+                        </p>
+                        <div className="pt-2 border-t border-slate-600 mt-2">
+                          <p className="text-xs text-slate-300">
+                            Example: If you tutored 10 students today, enter 10.
+                          </p>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <Input
                   id="peopleReached"

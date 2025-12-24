@@ -7,8 +7,10 @@ import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
 import Logo from "@/components/ui/logo";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
+import { CSRLayout } from "@/components/layout/csr-layout";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell, PieChart as RechartsPie, Pie } from "recharts";
+import { formatDecimal } from "@/lib/format-utils";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -138,7 +140,7 @@ function calculateSROI(data: ImpactData): { ratio: number; interpretation: strin
   const investment = data.financialMetrics.programCost || 1;
   const socialValue = (data.impactMetrics.directBeneficiaries * 150) +
                       (data.impactMetrics.indirectBeneficiaries * 50) +
-                      (data.engagementMetrics.totalHours * 35);
+                      (data.engagementMetrics.totalHours * 34.75);
   const ratio = Math.round((socialValue / investment) * 100) / 100;
 
   let interpretation = "Developing";
@@ -152,7 +154,7 @@ function calculateSROI(data: ImpactData): { ratio: number; interpretation: strin
 
 // Calculate LBG (London Benchmarking Group) metrics
 function calculateLBGMetrics(data: ImpactData): { input: number; output: number; impact: number; category: string } {
-  const input = data.financialMetrics.programCost + (data.engagementMetrics.totalHours * 35);
+  const input = data.financialMetrics.programCost + (data.engagementMetrics.totalHours * 34.75);
   const output = data.impactMetrics.directBeneficiaries + data.impactMetrics.indirectBeneficiaries;
   const impact = Math.round((output / input) * 1000);
 
@@ -536,7 +538,7 @@ export function CSRImpactReporting() {
       },
       aiu: {
         title: "AIUs Earned (Attributable Impact Units)",
-        value: (impactData?.impactMetrics.estimatedLivesTouched || 0).toFixed(4),
+        value: formatDecimal(impactData?.impactMetrics.estimatedLivesTouched || 0),
         description: "Auditable units of attributable SDG progress - your verified share of real-world change backed by NGO evidence",
         breakdown: [
           { label: "SDG-Verified", value: Math.round((impactData?.impactMetrics.estimatedLivesTouched || 0) * 0.40), color: "#059669" },
@@ -573,7 +575,7 @@ export function CSRImpactReporting() {
         description: "For every $1 invested, this is the social value generated",
         breakdown: [
           { label: "Beneficiary Value", value: `$${Math.round((impactData?.impactMetrics.directBeneficiaries || 0) * 150 / 1000)}K`, color: "#059669" },
-          { label: "Volunteer Value", value: `$${Math.round((impactData?.engagementMetrics.totalHours || 0) * 35 / 1000)}K`, color: "#3b82f6" },
+          { label: "Volunteer Value", value: `$${Math.round((impactData?.engagementMetrics.totalHours || 0) * 34.75 / 1000)}K`, color: "#3b82f6" },
           { label: "Community Value", value: `$${Math.round((impactData?.impactMetrics.indirectBeneficiaries || 0) * 50 / 1000)}K`, color: "#8b5cf6" },
         ],
         benchmark: { industry: 2.5, yours: sroiData.ratio },
@@ -796,29 +798,19 @@ export function CSRImpactReporting() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#faf9f7", overflow: "hidden" }}>
-      {/* Header */}
-      <header style={{ backgroundColor: "#1e3a8a", color: "white", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <button onClick={() => navigate("/csr-dashboard")} style={{ background: "none", border: "none", cursor: "pointer", color: "white", padding: "4px" }}>
-            <ArrowLeft style={{ width: "20px", height: "20px" }} />
-          </button>
-          <Logo size="sm" showIcon={true} className="invert" />
-          <span style={{ fontSize: "18px", fontWeight: "600" }}>CSR Impact Reporting</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ fontSize: "13px", color: "#d1d5db" }}>{currentDate}</span>
-          <button onClick={exportToPDF} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#059669", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-pdf-button">
-            PDF
-          </button>
-          <button onClick={exportToCSV} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#1e3a8a", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-csv-button">
-            CSV
-          </button>
-        </div>
-      </header>
+    <CSRLayout activeNav="impact" title="Impact Analytics" subtitle="Comprehensive impact reporting and compliance tracking">
+      {/* Export Buttons */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginBottom: "16px" }}>
+        <button onClick={exportToPDF} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#059669", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-pdf-button">
+          Export PDF
+        </button>
+        <button onClick={exportToCSV} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#3b82f6", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-csv-button">
+          Export CSV
+        </button>
+      </div>
 
       {/* Horizontal Tabs Navigation */}
-      <nav style={{ backgroundColor: "white", borderBottom: "2px solid #e5e7eb", display: "flex", gap: "0", paddingLeft: "32px" }}>
+      <nav style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex", gap: "0", marginBottom: "24px", overflow: "hidden" }}>
         {[
           { id: "executive", label: "Executive Summary", icon: "📊" },
           { id: "impact", label: "Impact & Financials", icon: "💰" },
@@ -835,7 +827,7 @@ export function CSRImpactReporting() {
       <KPIDetailModal />
 
       {/* Content Area */}
-      <main style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
+      <div style={{ flex: 1 }}>
         {/* Timeframe Selector */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -1301,10 +1293,7 @@ export function CSRImpactReporting() {
             </div>
           </div>
         )}
-      </main>
-      
-      {/* Footer */}
-      <Footer />
-    </div>
+      </div>
+    </CSRLayout>
   );
 }

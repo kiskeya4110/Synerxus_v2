@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDecimal } from "@/lib/format-utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2, Plus, Edit2, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -370,7 +371,7 @@ export default function MyTasks({ embedded = false }: MyTasksProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Hours Logged</p>
-                <p className="text-2xl font-bold">{totalHoursLogged.toFixed(1)}/{totalHoursCommitted}</p>
+                <p className="text-2xl font-bold">{formatDecimal(totalHoursLogged)}/{totalHoursCommitted}</p>
                 <p className="text-xs text-gray-500 mt-1">{progressPercentage}% of target</p>
               </div>
               <Clock className="h-8 w-8 text-purple-500" />

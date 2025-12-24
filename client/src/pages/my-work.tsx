@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { formatDecimal } from "@/lib/format-utils";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -658,8 +659,8 @@ export default function MyWork() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Weekly Capacity</p>
-                  <p className="text-2xl font-bold">{weeklyHoursLogged.toFixed(1)}/{weeklyCapacity}h</p>
-                  <p className="text-xs text-gray-500 mt-1">this week • {weeklyHoursRemaining.toFixed(1)}h remaining</p>
+                  <p className="text-2xl font-bold">{formatDecimal(weeklyHoursLogged)}/{weeklyCapacity}h</p>
+                  <p className="text-xs text-gray-500 mt-1">this week • {formatDecimal(weeklyHoursRemaining)}h remaining</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
@@ -685,7 +686,7 @@ export default function MyWork() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Hours Logged</p>
-                  <p className="text-2xl font-bold">{totalHoursLogged.toFixed(1)}/{totalHoursCommitted}</p>
+                  <p className="text-2xl font-bold">{formatDecimal(totalHoursLogged)}/{totalHoursCommitted}</p>
                   <p className="text-xs text-gray-500 mt-1">{hoursProgressPercentage}% of target</p>
                 </div>
                 <Clock className="h-8 w-8 text-purple-500" />

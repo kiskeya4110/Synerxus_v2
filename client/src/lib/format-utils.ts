@@ -13,6 +13,70 @@ export function formatNumber(value: number | undefined | null): string {
 }
 
 /**
+ * Format decimal number with smart precision:
+ * - Numbers >= 1000: Use compact notation with 3 significant digits (1.23K, 12.3K, 123K)
+ * - Numbers < 1000: Use 2 decimal places (3.14, 99.99)
+ * - Whole numbers: No decimal places (100, 50)
+ * @example formatDecimal(1234.5678) => "1.23K"
+ * @example formatDecimal(99.9876) => "99.99"
+ * @example formatDecimal(100) => "100"
+ */
+export function formatDecimal(value: number | undefined | null): string {
+  if (value === undefined || value === null || isNaN(value)) return "0";
+
+  const absValue = Math.abs(value);
+
+  // For large numbers (1000+), use compact notation with 3 significant digits
+  if (absValue >= 1_000_000_000) {
+    const compact = value / 1_000_000_000;
+    return formatWithSignificantDigits(compact, 3) + "B";
+  }
+  if (absValue >= 1_000_000) {
+    const compact = value / 1_000_000;
+    return formatWithSignificantDigits(compact, 3) + "M";
+  }
+  if (absValue >= 1_000) {
+    const compact = value / 1_000;
+    return formatWithSignificantDigits(compact, 3) + "K";
+  }
+
+  // For numbers < 1000, use 2 decimal places
+  // If it's a whole number, don't show decimals
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+
+  return value.toFixed(2);
+}
+
+/**
+ * Format number with specified significant digits
+ * @example formatWithSignificantDigits(1.2345, 3) => "1.23"
+ * @example formatWithSignificantDigits(12.345, 3) => "12.3"
+ * @example formatWithSignificantDigits(123.45, 3) => "123"
+ */
+function formatWithSignificantDigits(value: number, significantDigits: number): string {
+  if (value === 0) return "0";
+
+  const absValue = Math.abs(value);
+  const magnitude = Math.floor(Math.log10(absValue));
+  const decimals = Math.max(0, significantDigits - magnitude - 1);
+
+  return value.toFixed(decimals);
+}
+
+/**
+ * Format metric value for dashboard display
+ * Smart formatting: 2 decimals for small numbers, 3 significant digits for large (K/M/B)
+ * @example formatMetric(1234.567) => "1.23K"
+ * @example formatMetric(99.876) => "99.88"
+ * @example formatMetric(5) => "5"
+ */
+export function formatMetric(value: number | undefined | null): string {
+  return formatDecimal(value);
+}
+
+/**
  * Format number as currency
  * @example formatCurrency(1234.56) => "$1,234.56"
  */
@@ -40,22 +104,28 @@ export function formatPercentage(
 }
 
 /**
- * Format number with suffix (K, M, B)
- * @example formatCompact(1234567) => "1.2M"
+ * Format number with suffix (K, M, B) using 3 significant digits
+ * @example formatCompact(1234567) => "1.23M"
+ * @example formatCompact(12345) => "12.3K"
+ * @example formatCompact(123456) => "123K"
  */
 export function formatCompact(value: number | undefined | null): string {
   if (value === undefined || value === null || isNaN(value)) return "0";
 
   if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)}B`;
+    return formatWithSignificantDigits(value / 1_000_000_000, 3) + "B";
   }
   if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`;
+    return formatWithSignificantDigits(value / 1_000_000, 3) + "M";
   }
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`;
+    return formatWithSignificantDigits(value / 1_000, 3) + "K";
   }
-  return value.toString();
+  // For numbers < 1000, show 2 decimal places if not a whole number
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+  return value.toFixed(2);
 }
 
 /**

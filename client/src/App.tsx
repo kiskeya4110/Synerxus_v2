@@ -22,8 +22,9 @@ const Projects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
 const ProjectDetailPWA = lazy(() => import("@/pages/project-detail-pwa"));
 const ProjectEdit = lazy(() => import("@/pages/project-edit"));
-const VolunteerIntake = lazy(() => import("@/pages/volunteer-intake"));
-const OrganizationIntake = lazy(() => import("@/pages/organization-intake"));
+// Intake forms now redirect to consolidated settings pages
+// const VolunteerIntake = lazy(() => import("@/pages/volunteer-intake"));
+// const OrganizationIntake = lazy(() => import("@/pages/organization-intake"));
 const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
 const VolunteerProfileSettings = lazy(() => import("@/pages/volunteer-profile-settings"));
 const Opportunities = lazy(() => import("@/pages/opportunities"));
@@ -54,7 +55,7 @@ const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
 const CSRImpactReporting = lazy(() => import("@/pages/csr-impact-reporting").then(m => ({ default: m.CSRImpactReporting })));
 const ProjectPortfolio = lazy(() => import("@/pages/project-portfolio"));
 const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
-const CorporatePartnerIntake = lazy(() => import("@/pages/corporate-partner-intake"));
+// const CorporatePartnerIntake = lazy(() => import("@/pages/corporate-partner-intake"));
 const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
 const TeamOverview = lazy(() => import("@/pages/team-overview"));
 const Overview = lazy(() => import("@/pages/overview"));
@@ -69,6 +70,7 @@ const EmployeeEngagementTabPage = lazy(() => import("@/pages/employee-engagement
 const Stories = lazy(() => import("@/pages/stories"));
 const CreateStory = lazy(() => import("@/pages/create-story"));
 const StoryDetail = lazy(() => import("@/pages/story-detail"));
+const Help = lazy(() => import("@/pages/help"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -129,34 +131,38 @@ function RootRedirectRoute() {
           }
           
           const response = await fetch(endpoint);
-          
+
           if (!response.ok) {
-            // If no profile exists, go to intake
-            let intakePath = '/volunteer-intake';
-            if (userType === 'organization') intakePath = '/organization-intake';
-            else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
-            setLocation(intakePath);
+            // If no profile exists, go to settings page (consolidated form)
+            let settingsPath = '/volunteer-profile-settings';
+            if (userType === 'organization') settingsPath = '/organization-profile-settings';
+            else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
+            setLocation(settingsPath);
             return;
           }
 
-          const data = Array.isArray(response) ? response[0] : await response.json();
-          
+          const jsonData = await response.json();
+          // For organization endpoint, response is an array of organizations
+          const data = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+
           // Check if intake is complete
           let isIntakeComplete = false;
           if (userType === 'volunteer') {
             isIntakeComplete = data?.volunteerProfile?.onboardingCompleted === true;
           } else if (userType === 'organization') {
-            isIntakeComplete = data?.onboardingCompleted === true;
+            // For organizations, check if organization exists with a name
+            // If organization record exists, they've completed basic setup - go to dashboard
+            isIntakeComplete = !!data?.id && !!data?.name;
           } else if (userType === 'corporate-partner') {
             isIntakeComplete = data?.onboardingCompleted === true;
           }
           
           if (!isIntakeComplete) {
-            // Redirect to intake if not complete
-            let intakePath = '/volunteer-intake';
-            if (userType === 'organization') intakePath = '/organization-intake';
-            else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
-            setLocation(intakePath);
+            // Redirect to settings page if profile not complete (consolidated form)
+            let settingsPath = '/volunteer-profile-settings';
+            if (userType === 'organization') settingsPath = '/organization-profile-settings';
+            else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
+            setLocation(settingsPath);
           } else {
             // Intake complete, go to appropriate dashboard based on user type
             if (userType === 'corporate-partner') {
@@ -254,10 +260,10 @@ function LayoutRoute() {
       <Route path="/my-work" component={MyWork} />
       <Route path="/log-activity" component={LogActivity} />
       <Route path="/tasks" component={Tasks} />
-      {/* Intake Forms */}
-      <Route path="/volunteer-intake" component={VolunteerIntake} />
-      <Route path="/organization-intake" component={OrganizationIntake} />
-      <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />
+      {/* Intake Forms - Redirect to consolidated settings pages */}
+      <Route path="/volunteer-intake" component={VolunteerProfileSettings} />
+      <Route path="/organization-intake" component={OrganizationProfileSettings} />
+      <Route path="/corporate-partner-intake" component={CorporatePartnerProfileSettings} />
       {/* Opportunities */}
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
@@ -266,6 +272,7 @@ function LayoutRoute() {
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/organizations" component={Organizations} />
+      <Route path="/help" component={Help} />
       {/* Calendar & Impact */}
       <Route path="/calendar" component={Calendar} />
       <Route path="/impact-report/:volunteerId?" component={ImpactReport} />

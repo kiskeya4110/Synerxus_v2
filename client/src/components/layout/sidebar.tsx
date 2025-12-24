@@ -102,8 +102,7 @@ export default function Sidebar() {
   // Volunteer-specific navigation
   const volunteerNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/volunteer-profile-settings", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
@@ -118,8 +117,7 @@ export default function Sidebar() {
   const organizationNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organization-profile-settings", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/organization-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/applications", label: "Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

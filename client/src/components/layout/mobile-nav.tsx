@@ -45,8 +45,7 @@ export default function MobileNav() {
     { href: "/dashboard", icon: Home, label: "Home", testId: "nav-dashboard" },
     { href: "/discover-opportunities", icon: Search, label: "Discover", testId: "nav-opportunities" },
     { href: "/my-work", icon: ClipboardList, label: "My Work", testId: "nav-my-work" },
-    { href: "/profile", icon: User, label: "Profile", testId: "nav-profile" },
-    { href: "/volunteer-profile-settings", icon: Settings, label: "Settings", testId: "nav-settings" },
+    { href: "/volunteer-profile-settings", icon: User, label: "Profile", testId: "nav-profile" },
   ];
 
   const organizationNavItems = [
@@ -54,8 +53,7 @@ export default function MobileNav() {
     { href: "/applications", icon: FileText, label: "Applications", testId: "nav-applications" },
     { href: "/my-work", icon: Briefcase, label: "Projects", testId: "nav-projects" },
     { href: "/volunteers", icon: Users, label: "Volunteers", testId: "nav-volunteers" },
-    { href: "/organization-messages", icon: MessageSquare, label: "Messages", testId: "nav-messages" },
-    { href: "/organization-profile-settings", icon: Settings, label: "Settings", testId: "nav-settings" },
+    { href: "/organization-profile-settings", icon: User, label: "Profile", testId: "nav-profile" },
   ];
 
   const navItems = isOrganization ? organizationNavItems : volunteerNavItems;

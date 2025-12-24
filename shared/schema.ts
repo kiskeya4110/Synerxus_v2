@@ -224,6 +224,8 @@ export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
   opportunityId: integer("opportunity_id").references(() => opportunities.id).notNull(),
   volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id), // Direct link to organization for faster queries
+  projectId: integer("project_id").references(() => projects.id), // Direct link to project if applicable
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, withdrawn
   coverLetter: text("cover_letter"),
   resumeUrl: text("resume_url"), // URL or path to uploaded resume
@@ -232,6 +234,24 @@ export const applications = pgTable("applications", {
   reviewedAt: timestamp("reviewed_at"),
   reviewedBy: integer("reviewed_by").references(() => users.id),
   notes: text("notes"), // Organization's notes about the application
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Volunteer-Organization Relationships - tracks all volunteer-organization interactions
+export const volunteerOrganizationRelationships = pgTable("volunteer_organization_relationships", {
+  id: serial("id").primaryKey(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  relationshipType: text("relationship_type").notNull(), // applied, accepted, active, completed, rejected
+  firstContactAt: timestamp("first_contact_at").defaultNow().notNull(), // When volunteer first applied
+  lastActivityAt: timestamp("last_activity_at").defaultNow().notNull(), // Most recent interaction
+  totalApplications: integer("total_applications").default(1), // Number of applications to this org
+  totalProjectsCompleted: integer("total_projects_completed").default(0),
+  totalHoursContributed: integer("total_hours_contributed").default(0),
+  totalAiuEarned: doublePrecision("total_aiu_earned").default(0),
+  isActive: boolean("is_active").default(true), // Currently engaged with organization
+  notes: text("notes"), // Organization notes about volunteer relationship
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -853,6 +873,12 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   updatedAt: true
 });
 
+export const insertVolunteerOrganizationRelationshipSchema = createInsertSchema(volunteerOrganizationRelationships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertSavedOpportunitySchema = createInsertSchema(savedOpportunities).omit({
   id: true,
   createdAt: true
@@ -1132,6 +1158,9 @@ export type InsertOpportunity = z.infer<typeof insertOpportunitySchema>;
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+
+export type VolunteerOrganizationRelationship = typeof volunteerOrganizationRelationships.$inferSelect;
+export type InsertVolunteerOrganizationRelationship = z.infer<typeof insertVolunteerOrganizationRelationshipSchema>;
 
 export type SavedOpportunity = typeof savedOpportunities.$inferSelect;
 export type InsertSavedOpportunity = z.infer<typeof insertSavedOpportunitySchema>;

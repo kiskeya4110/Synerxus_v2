@@ -174,9 +174,16 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
 
     // Calculate total AIU using the proper AIU service with 100% organization credit
     // Organizations get full credit for all volunteer + staff contributions to their projects
+    // Apply filters to AIU calculation for consistent dashboard metrics
     let totalAiuEarned = 0;
     try {
-      const orgAiuSummary = await calculateOrganizationAIU(organizationId);
+      const aiuFilters = {
+        projectId: projectFilter && projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
+        startDate: timePeriod !== 'all' ? startDate : undefined,
+        endDate: timePeriod !== 'all' ? endDate : undefined,
+        sdgGoal: req.query.sdgGoal ? parseInt(req.query.sdgGoal as string) : undefined,
+      };
+      const orgAiuSummary = await calculateOrganizationAIU(organizationId, aiuFilters);
       if (orgAiuSummary && orgAiuSummary.totalAiu > 0) {
         totalAiuEarned = orgAiuSummary.totalAiu;
       }

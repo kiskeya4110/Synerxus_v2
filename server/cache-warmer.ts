@@ -121,9 +121,9 @@ async function warmProjects(): Promise<void> {
     }
 
     // Cache each organization's projects
-    for (const [orgId, orgProjects] of projectsByOrg) {
+    projectsByOrg.forEach((orgProjects, orgId) => {
       cache.set(cacheKeys.projectsList(orgId), orgProjects, CACHE_TTL.PROJECTS_LIST);
-    }
+    });
 
     logger.info(`[CacheWarmer] Warmed ${projects.length} projects across ${projectsByOrg.size} organizations`);
   } catch (error) {

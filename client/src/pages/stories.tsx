@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
+import Footer from "@/components/layout/footer";
 import type { User as UserType } from "@shared/schema";
 
 interface StoryWithDetails {
@@ -158,8 +159,8 @@ export default function Stories() {
   );
 
   const content = (
-    <div className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 ${isVolunteerMobile ? 'pt-16 pb-20' : ''}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className={`min-h-screen ${isVolunteerMobile ? 'pt-16 pb-20' : ''}`}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             {!isVolunteerMobile && (
@@ -273,10 +274,12 @@ export default function Stories() {
   // Return with VolunteerNav for desktop volunteers
   if (userType === 'volunteer') {
     return (
-      <>
+      <div className="bg-[#f8f9fa] min-h-screen">
         <VolunteerNav />
         {content}
-      </>
+        {/* Footer - Hidden on mobile */}
+        {!isMobile && <Footer />}
+      </div>
     );
   }
 

@@ -1,0 +1,21 @@
+[
+  {
+    "success": false,
+    "timestamp": "2025-12-25T01:43:35.035Z",
+    "tables": 0,
+    "rows": 0,
+    "size": "0 B",
+    "path": "",
+    "duration": 41,
+    "error": "All attempts to open a WebSocket to connect to the database failed. Please refer to https://github.com/neondatabase/serverless/blob/main/CONFIG.md#websocketconstructor-typeof-websocket--undefined. Details: fetch failed"
+  },
+  {
+    "success": true,
+    "timestamp": "2025-12-25T01:43:49.323Z",
+    "tables": 14,
+    "rows": 7197,
+    "size": "6.1 MB",
+    "path": "backups/backup-2025-12-25T01-43-47-505Z.json",
+    "duration": 2043
+  }
+]

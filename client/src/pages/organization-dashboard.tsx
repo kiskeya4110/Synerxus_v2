@@ -2990,8 +2990,8 @@ export default function OrganizationDashboard() {
       `}</style>
 
 
-      {/* Footer - Hidden on mobile */}
-      <div className="hidden md:block">
+      {/* Footer - Hidden on mobile, aligned with page content */}
+      <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
         <Footer />
       </div>
 

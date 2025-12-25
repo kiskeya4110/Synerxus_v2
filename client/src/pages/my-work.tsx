@@ -24,6 +24,7 @@ import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
@@ -458,7 +459,7 @@ export default function MyWork() {
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
   return (
-    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto'}`}>
+    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
       {/* Volunteer Desktop Navigation - only for volunteers, not organization managers */}
       {!isOrganizationManager && <VolunteerNav />}
 
@@ -639,7 +640,7 @@ export default function MyWork() {
           </Card>
         </div>
       ) : (
-        <div className="mx-4 sm:mx-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('tasks')} data-testid="card-tasks">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -699,7 +700,7 @@ export default function MyWork() {
 
       {/* Personalized Recommendations Section */}
       {personalizedRecommendations.length > 0 && (
-        <div className="mx-4 sm:mx-6 pb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-semibold">Personalized Opportunities for You</h2>
@@ -885,6 +886,9 @@ export default function MyWork() {
       {!isOrganizationManager && isMobile && (
         <WebBottomNav activeTab="projects" />
       )}
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
     </div>
   );
 }

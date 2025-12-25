@@ -1499,14 +1499,14 @@ export default function VolunteerProfileSettings() {
   const isSubmitting = profileMutation.isPending;
 
   return (
-    <div className={`min-h-screen pb-24 ${isVolunteerMobile ? 'bg-[#f8f7f4] pt-14' : 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'}`}>
+    <div className={`min-h-screen pb-24 ${isVolunteerMobile ? 'bg-[#f8f7f4] pt-14' : 'bg-[#f8f9fa]'}`}>
       {/* PWA Header for mobile volunteer users - consistent with dashboard */}
       {isVolunteerMobile && <PWAHeader />}
 
       {/* Volunteer Desktop Navigation */}
       {!isVolunteerMobile && <VolunteerNav />}
 
-      <div className={`${isVolunteerMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
+      <div className={isVolunteerMobile ? 'px-4 py-4 max-w-4xl' : ''} style={!isVolunteerMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
         {/* Page Header - Mobile optimized */}
         <div className={`${isVolunteerMobile ? 'mb-4' : 'mb-8'}`}>
           <div className={`flex items-center justify-between ${isVolunteerMobile ? '' : 'flex-col text-center'}`}>

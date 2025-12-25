@@ -20,6 +20,8 @@ import { calculateProficiencyStats, getFormattedAverageProficiency, getProficien
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationHeader from "@/components/layout/organization-header";
 import VolunteerNav from "@/components/layout/volunteer-nav";
+import Footer from "@/components/layout/footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -63,6 +65,7 @@ const SDG_DESCRIPTIONS = {
 
 export default function Profile() {
   const [selectedSdg, setSelectedSdg] = useState<number | null>(null);
+  const isMobile = useIsMobile();
   const userId = localStorage.getItem('currentUserId');
   
   // First, fetch basic user info to determine userType
@@ -221,10 +224,10 @@ export default function Profile() {
     : currentUser?.email?.[0].toUpperCase();
 
   return (
-    <>
+    <div className={isVolunteer ? "bg-[#f8f9fa] min-h-screen" : ""}>
       {isOrganization && <OrganizationHeader activeTab="profile" />}
       {isVolunteer && <VolunteerNav />}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="space-y-6">
         {/* Header Section */}
         <Card>
@@ -788,10 +791,13 @@ export default function Profile() {
           </Card>
         )}
       </div>
-      
+
       {/* Mobile Bottom Navigation - Only for organizations */}
       {isOrganization && <MobileBottomNav />}
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
     </div>
-    </>
+    </div>
   );
 }

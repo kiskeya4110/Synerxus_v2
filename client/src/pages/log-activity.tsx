@@ -18,6 +18,7 @@ import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 
 export default function LogActivity() {
   const [, setLocation] = useLocation();
@@ -416,13 +417,13 @@ export default function LogActivity() {
   const isVolunteer = currentUser?.userType === 'volunteer';
 
   return (
-    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-background'}`}>
+    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-[#f8f9fa]'}`}>
       {/* Volunteer Desktop Navigation - only for volunteers */}
       {isVolunteer && <VolunteerNav />}
 
       {/* Back Button for Non-PWA */}
       {(!isMobile || !isVolunteer) && (
-        <div className="max-w-2xl mx-auto px-4 pt-6">
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 24px 0 24px' }}>
           <Button
             variant="ghost"
             onClick={() => setLocation('/my-work')}
@@ -435,7 +436,7 @@ export default function LogActivity() {
       )}
 
       {/* Main Content */}
-      <div className={`${isMobile && isVolunteer ? 'px-4 py-6' : 'max-w-2xl mx-auto px-4 py-6'}`}>
+      <div className={isMobile && isVolunteer ? 'px-4 py-6' : ''} style={!(isMobile && isVolunteer) ? { maxWidth: '800px', margin: '0 auto', padding: '0 24px 24px 24px' } : undefined}>
         <Card className={isMobile && isVolunteer ? 'bg-white border-amber-200/60 shadow-sm' : ''}>
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
@@ -1033,6 +1034,9 @@ export default function LogActivity() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
     </div>
   );
 }

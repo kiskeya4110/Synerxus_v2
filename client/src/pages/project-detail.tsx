@@ -506,7 +506,7 @@ export default function ProjectDetail() {
   const isVolunteer = currentUser?.userType === 'volunteer';
 
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 overflow-y-auto overflow-x-hidden">
+    <div className="fixed inset-0 bg-[#f8f9fa] dark:bg-slate-900 overflow-y-auto overflow-x-hidden">
       {/* Volunteer Desktop Navigation */}
       <VolunteerNav />
 

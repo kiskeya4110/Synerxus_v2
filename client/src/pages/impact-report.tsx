@@ -620,15 +620,15 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''}`}>
+    <div className={`min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''}`}>
       {/* Desktop Volunteer Navigation */}
       {isVolunteer && !isMobile && <VolunteerNav />}
       {/* PWA Header for mobile volunteer users */}
       {isVolunteer && isMobile && <PWAHeader />}
 
-      <div className="p-2 md:p-8">
+      <div className={isMobile ? "p-2" : ""} style={!isMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
 
-      <div className="max-w-6xl mx-auto">
+      <div className={isMobile ? "max-w-6xl mx-auto" : ""}>
         {/* Header with Back Button - hidden on mobile PWA since we have the PWAHeader */}
         <div className={`mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 ${isVolunteer && isMobile ? 'hidden' : ''}`}>
           <Button

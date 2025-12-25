@@ -38,6 +38,32 @@ export const organizations = pgTable("organizations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Organization Members schema - supports multiple users per organization with roles
+export const organizationMembers = pgTable("organization_members", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: text("role").notNull().default("member"), // admin, hr, manager, member
+  title: text("title"), // Job title (e.g., "HR Manager", "CSR Director")
+  department: text("department"), // Department within org
+  // Permissions - what this member can do
+  canApproveHours: boolean("can_approve_hours").default(false), // Approve volunteer hours
+  canApproveApplications: boolean("can_approve_applications").default(false), // Approve volunteer applications
+  canManageProjects: boolean("can_manage_projects").default(false), // Create/edit projects
+  canManageMembers: boolean("can_manage_members").default(false), // Add/remove org members
+  canViewReports: boolean("can_view_reports").default(true), // View analytics/reports
+  canEditOrganization: boolean("can_edit_organization").default(false), // Edit org profile
+  // Status
+  status: text("status").default("active"), // active, invited, inactive
+  invitedBy: integer("invited_by").references(() => users.id),
+  invitedAt: timestamp("invited_at"),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueMember: uniqueIndex("unique_org_member").on(table.organizationId, table.userId),
+}));
+
 // Project schema
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
@@ -740,6 +766,17 @@ export const insertOrganizationSchema = createInsertSchema(organizations).omit({
   updatedAt: true
 });
 
+// Organization member role enum
+export const orgMemberRoleEnum = z.enum(["admin", "hr", "manager", "member"]);
+
+export const insertOrganizationMemberSchema = createInsertSchema(organizationMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+}).extend({
+  role: orgMemberRoleEnum.default("member"),
+});
+
 // Valid enum values for project fields
 export const experienceLevelEnum = z.enum(["entry-level", "intermediate", "expert"]);
 export const engagementTypeEnum = z.enum(["remote", "in-person", "hybrid"]);
@@ -1121,6 +1158,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Organization = typeof organizations.$inferSelect;
 export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+export type InsertOrganizationMember = z.infer<typeof insertOrganizationMemberSchema>;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;

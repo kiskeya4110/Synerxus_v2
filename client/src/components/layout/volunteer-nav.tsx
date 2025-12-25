@@ -84,9 +84,10 @@ export default function VolunteerNav() {
   };
 
   return (
-    <nav className="hidden md:block sticky top-0 z-[9999] border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
+    <div className="hidden md:block sticky top-0 z-[9999] bg-[#f8f9fa] dark:bg-gray-950" style={{ padding: '16px 24px 0 24px' }}>
+      {/* Constrained container matching page content width */}
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <nav className="flex items-center justify-between h-14 px-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
           {/* Logo and Brand - Never shrink, always visible */}
           <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
             <button
@@ -307,8 +308,8 @@ export default function VolunteerNav() {
               )}
             </div>
           </div>
-        </div>
+        </nav>
       </div>
-    </nav>
+    </div>
   );
 }

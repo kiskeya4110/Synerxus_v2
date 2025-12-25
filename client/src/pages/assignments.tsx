@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AssignmentsProps {
@@ -188,10 +189,10 @@ export default function Assignments(props: AssignmentsProps = {}) {
   }
 
   return (
-    <div className={embedded ? "" : "min-h-screen overflow-y-auto pb-24"}>
+    <div className={embedded ? "" : "min-h-screen overflow-y-auto pb-24 bg-[#f8f9fa]"}>
       {!embedded && <VolunteerNav />}
       {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={embedded ? "space-y-6" : isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
+      <div className={embedded ? "space-y-6" : "space-y-6"} style={!embedded ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
         {!embedded && (
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Assignments</h1>
@@ -385,6 +386,9 @@ export default function Assignments(props: AssignmentsProps = {}) {
 
       {/* Mobile Bottom Navigation for Volunteers */}
       {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+
+      {/* Footer - Hidden on mobile and when embedded */}
+      {!embedded && !isMobile && <Footer />}
     </div>
   );
 }

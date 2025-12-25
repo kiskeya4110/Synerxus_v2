@@ -13,6 +13,7 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -413,12 +414,12 @@ export default function Projects() {
   }
 
   return (
-    <>
+    <div className="bg-[#f8f9fa] min-h-screen">
       {/* Volunteer Desktop Navigation - only for volunteers */}
       {!isOrganization && !isCSR && <VolunteerNav />}
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24"}>
+      <div className="h-screen overflow-y-auto pb-24" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
@@ -591,6 +592,9 @@ export default function Projects() {
 
       {/* Mobile Bottom Navigation for Organizations */}
       {isOrganization && <MobileBottomNav />}
-    </>
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
+    </div>
   );
 }

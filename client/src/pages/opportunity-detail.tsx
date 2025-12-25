@@ -222,19 +222,19 @@ export default function OpportunityDetail() {
   const compatibilityInsights = getCompatibilityInsight(opportunity.matchBreakdown);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 pb-24 md:pb-8">
+    <div className="w-full min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-950 pb-24 md:pb-8">
       {/* Volunteer Desktop Navigation */}
       <VolunteerNav />
 
       {/* Desktop Back Button */}
-      <div className="hidden md:block px-6 pt-6 pb-2 max-w-5xl mx-auto">
+      <div className="hidden md:block pt-6 pb-2" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 24px 8px 24px' }}>
         <Button variant="ghost" onClick={handleBack} className="gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
           Back to Opportunities
         </Button>
       </div>
 
-      <div className="px-4 md:px-6 max-w-5xl mx-auto space-y-6">
+      <div className="space-y-6" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px 24px 24px' }}>
         {/* Hero Card with Match Score */}
         <Card className="overflow-hidden border-0 shadow-xl">
           {/* Match Score Hero Banner */}

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import OrganizationHeader from "@/components/layout/organization-header";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ITask {
@@ -73,11 +74,11 @@ export default function Tasks() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen overflow-y-auto pb-24" style={{ paddingBottom: isOrganizationUser ? '180px' : '96px' }}>
+    <div className="min-h-screen overflow-y-auto pb-24 bg-[#f8f9fa]" style={{ paddingBottom: isOrganizationUser ? '180px' : '96px' }}>
       {/* Volunteer Desktop Navigation */}
       <VolunteerNav />
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganizationUser ? "p-6" : "p-4"}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
         {/* Page Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold mb-2">Tasks</h1>
@@ -192,6 +193,9 @@ export default function Tasks() {
 
       {/* Mobile Bottom Navigation for Volunteers */}
       {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
     </div>
   );
 }

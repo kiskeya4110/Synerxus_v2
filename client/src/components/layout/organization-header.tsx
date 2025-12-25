@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X
+  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ const NAV_TABS = [
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
+  { id: 'team', label: 'Team', icon: UsersRound, path: '/organization-team' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
   { id: 'create', label: 'Create', icon: Plus, path: null },
 ];
@@ -140,15 +141,24 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
   return (
     <div style={{
-      background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
-      padding: '0',
+      background: '#f9fafb',
+      padding: '16px 24px 0 24px',
       position: 'sticky',
       top: 0,
       zIndex: 50,
-      boxShadow: '0 4px 20px rgba(245, 158, 11, 0.25)',
-      borderBottom: '1px solid rgba(245, 158, 11, 0.2)'
     }}>
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
+      {/* Constrained container matching body width */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <nav style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 24px',
+          background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px rgba(245, 158, 11, 0.25)',
+          border: '1px solid rgba(245, 158, 11, 0.2)'
+        }}>
         {/* Left: Logo + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Logo */}
@@ -458,7 +468,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
         </div>
       </nav>
-
+      </div>
     </div>
   );
 }

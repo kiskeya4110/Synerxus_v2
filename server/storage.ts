@@ -1,10 +1,11 @@
-import { 
-  users, 
-  organizations, 
-  projects, 
-  tasks, 
-  volunteerActivities, 
-  impactMetrics, 
+import {
+  users,
+  organizations,
+  organizationMembers,
+  projects,
+  tasks,
+  volunteerActivities,
+  impactMetrics,
   projectImpacts,
   projectAssignments,
   volunteers,
@@ -35,10 +36,12 @@ import {
   csrCommitmentGoals,
   volunteerStories,
   storyLikes,
-  type User, 
+  type User,
   type InsertUser,
   type Organization,
   type InsertOrganization,
+  type OrganizationMember,
+  type InsertOrganizationMember,
   type Project,
   type InsertProject,
   type Task,
@@ -140,6 +143,15 @@ export interface IStorage {
   createOrganization(organization: InsertOrganization): Promise<Organization>;
   updateOrganization(id: number, organization: Partial<InsertOrganization>): Promise<Organization | undefined>;
   listOrganizations(): Promise<Organization[]>;
+
+  // Organization Member operations
+  getOrganizationMember(id: number): Promise<OrganizationMember | undefined>;
+  getOrganizationMemberByUserAndOrg(userId: number, organizationId: number): Promise<OrganizationMember | undefined>;
+  createOrganizationMember(member: InsertOrganizationMember): Promise<OrganizationMember>;
+  updateOrganizationMember(id: number, member: Partial<InsertOrganizationMember>): Promise<OrganizationMember | undefined>;
+  deleteOrganizationMember(id: number): Promise<boolean>;
+  listOrganizationMembers(organizationId: number): Promise<OrganizationMember[]>;
+  listOrganizationsByMember(userId: number): Promise<Organization[]>;
 
   // Project operations
   getProject(id: number): Promise<Project | undefined>;
@@ -527,6 +539,55 @@ export class DatabaseStorage implements IStorage {
 
   async listOrganizations(): Promise<Organization[]> {
     return await db.select().from(organizations);
+  }
+
+  // Organization Member operations
+  async getOrganizationMember(id: number): Promise<OrganizationMember | undefined> {
+    const [result] = await db.select().from(organizationMembers).where(eq(organizationMembers.id, id));
+    return result || undefined;
+  }
+
+  async getOrganizationMemberByUserAndOrg(userId: number, organizationId: number): Promise<OrganizationMember | undefined> {
+    const [result] = await db.select().from(organizationMembers)
+      .where(and(
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.organizationId, organizationId)
+      ));
+    return result || undefined;
+  }
+
+  async createOrganizationMember(member: InsertOrganizationMember): Promise<OrganizationMember> {
+    const [result] = await db.insert(organizationMembers).values(member).returning();
+    return result;
+  }
+
+  async updateOrganizationMember(id: number, member: Partial<InsertOrganizationMember>): Promise<OrganizationMember | undefined> {
+    const [result] = await db.update(organizationMembers)
+      .set({ ...member, updatedAt: new Date() })
+      .where(eq(organizationMembers.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async deleteOrganizationMember(id: number): Promise<boolean> {
+    const result = await db.delete(organizationMembers).where(eq(organizationMembers.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async listOrganizationMembers(organizationId: number): Promise<OrganizationMember[]> {
+    return await db.select().from(organizationMembers)
+      .where(eq(organizationMembers.organizationId, organizationId));
+  }
+
+  async listOrganizationsByMember(userId: number): Promise<Organization[]> {
+    const memberRecords = await db.select().from(organizationMembers)
+      .where(eq(organizationMembers.userId, userId));
+
+    if (memberRecords.length === 0) return [];
+
+    const orgIds = memberRecords.map(m => m.organizationId);
+    return await db.select().from(organizations)
+      .where(inArray(organizations.id, orgIds));
   }
 
   // Project operations

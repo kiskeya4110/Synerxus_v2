@@ -592,10 +592,10 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   }
 
   return (
-    <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
+    <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
       {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
       {!embedded && isOrganization && <OrganizationHeader activeTab="reports" />}
-      <div className={`${!embedded ? 'p-6 max-w-7xl mx-auto space-y-6' : 'space-y-6'}`}>
+      <div className={`${!embedded ? 'space-y-6' : 'space-y-6'}`} style={!embedded ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
       {/* Page Header with Action Buttons */}
       <div className={`mb-6 ${!embedded ? '' : 'px-6'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin } from "lucide-react";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
@@ -171,6 +173,36 @@ export default function Dashboard() {
       if (!id) return null;
       const response = await fetch(`/api/aiu/volunteer/${id}`);
       if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Fetch matched opportunities for volunteer users
+  interface MatchedOpportunity {
+    id: number;
+    title: string;
+    description: string;
+    organizationId: number;
+    organizationName?: string;
+    location: string;
+    status: string;
+    skillsRequired: string[];
+    sdgGoals: number[];
+    matchScore: number;
+    matchPercentage: number;
+    matchReasons: string[];
+    hoursPerWeek?: number;
+    startDate?: string;
+  }
+  const { data: matchedOpportunities = [], isLoading: loadingOpportunities } = useQuery<MatchedOpportunity[]>({
+    queryKey: ["/api/opportunities/matches", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/opportunities/matches?userId=${id}&threshold=30`);
+      if (!response.ok) return [];
       return response.json();
     },
     enabled: !!userId && currentUser?.userType === 'volunteer',
@@ -1167,73 +1199,66 @@ export default function Dashboard() {
         {/* Top Navigation for Desktop Volunteers */}
         <VolunteerNav />
 
-        <div className="min-h-screen bg-[#f3f2ef] dark:bg-gray-950 overflow-y-auto pb-8 relative z-0">
+        <div className="min-h-screen bg-[#f8f9fa] dark:bg-gray-950 overflow-y-auto pb-8 relative z-0">
 
-          {/* Hero Section - LinkedIn-inspired Professional Design */}
-          <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-            {/* Cover gradient - subtle and professional */}
-            <div className="h-24 md:h-32 bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700" />
+          {/* Main Content Container - same max-width for header and body */}
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-6 space-y-6">
 
-            <div className="container mx-auto px-4 sm:px-6">
-              <div className="relative -mt-12 md:-mt-16 pb-6">
-                <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-6">
-                  {/* Profile Avatar */}
-                  <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white dark:border-gray-900 shadow-lg bg-white">
-                    <AvatarImage
-                      src={dashboardData?.volunteerProfile?.profilePhotoUrl || currentUser?.profilePicture}
-                      alt={currentUser?.displayName || 'Volunteer'}
-                    />
-                    <AvatarFallback className="bg-slate-100 text-slate-700 text-2xl md:text-3xl font-semibold">
-                      {(currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+            {/* Hero Section - Clean Professional Design */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
+                {/* Profile Avatar */}
+                <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-blue-100 dark:border-gray-800 shadow-lg bg-white ring-4 ring-blue-50">
+                  <AvatarImage
+                    src={dashboardData?.volunteerProfile?.profilePhotoUrl || currentUser?.profilePicture}
+                    alt={currentUser?.displayName || 'Volunteer'}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl md:text-3xl font-semibold">
+                    {(currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-                  {/* Profile Info */}
-                  <div className="flex-1 pt-2 md:pt-4">
-                    <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
-                      {currentUser?.displayName || currentUser?.name || "Volunteer"}
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base mt-0.5">
-                      Volunteer • Making an impact since {new Date(currentUser?.createdAt || Date.now()).getFullYear()}
-                    </p>
+                {/* Profile Info */}
+                <div className="flex-1">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                    {currentUser?.displayName || currentUser?.name || "Volunteer"}
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base mt-1">
+                    Volunteer • Making an impact since {new Date(currentUser?.createdAt || Date.now()).getFullYear()}
+                  </p>
 
-                    {/* Skills Tags - LinkedIn style */}
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {dashboardData?.volunteerProfile?.skills?.slice(0, 4).map((skill: string, idx: number) => (
-                        <span key={idx} className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-                          {skill}
-                        </span>
-                      ))}
-                      {(dashboardData?.volunteerProfile?.skills?.length ?? 0) > 4 && (
-                        <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs">
-                          +{(dashboardData?.volunteerProfile?.skills?.length ?? 0) - 4} more
-                        </span>
-                      )}
-                    </div>
+                  {/* Skills Tags */}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {dashboardData?.volunteerProfile?.skills?.slice(0, 4).map((skill: string, idx: number) => (
+                      <span key={idx} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium border border-blue-100">
+                        {skill}
+                      </span>
+                    ))}
+                    {(dashboardData?.volunteerProfile?.skills?.length ?? 0) > 4 && (
+                      <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                        +{(dashboardData?.volunteerProfile?.skills?.length ?? 0) - 4} more
+                      </span>
+                    )}
                   </div>
+                </div>
 
-                  {/* Quick Stats - Professional badges */}
-                  <div className="flex gap-6 md:gap-8 pt-4 md:pt-0">
-                    <div className="text-center">
-                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(dashboardData?.totalHours)}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Hours</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{kpis.activeProjects}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Projects</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{dashboardData?.totalPeopleImpacted || 0}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Impacted</p>
-                    </div>
+                {/* Quick Stats - Professional badges */}
+                <div className="flex gap-6 md:gap-10 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 md:pl-10">
+                  <div className="text-center">
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(dashboardData?.totalHours)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Hours</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{kpis.activeProjects}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Projects</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{dashboardData?.totalPeopleImpacted || 0}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Impacted</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Main Dashboard Content */}
-          <div className="container mx-auto px-4 sm:px-6 mt-6 space-y-6">
 
             {/* Filters Bar - Compact */}
             <div className="flex items-center justify-end gap-3">
@@ -1398,6 +1423,295 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Two-Column Layout: Project Location Map + AI Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left Column: Project Location Map - Interactive Geographic View */}
+              {filteredData.projects && filteredData.projects.length > 0 && (
+                <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
+                  <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-blue-500" />
+                        Project Locations
+                      </CardTitle>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Active
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Completed
+                        </span>
+                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full font-medium">
+                          {filteredData.projects.filter((p: any) => p.location).length} locations
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="h-64 relative">
+                      {typeof window !== 'undefined' && (
+                        <MapContainer
+                          key="volunteer-project-map"
+                          center={[20, 0]}
+                          zoom={2}
+                          style={{ height: '100%', width: '100%' }}
+                          scrollWheelZoom={false}
+                          dragging={true}
+                          zoomControl={true}
+                        >
+                          <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                          />
+                          {filteredData.projects.filter((p: any) => p.location).map((project: any, idx: number) => {
+                            // Parse location to get coordinates (simplified - uses default coords if not available)
+                            const lat = project.latitude || (10 + idx * 5);
+                            const lng = project.longitude || (-20 + idx * 15);
+                            const isCompleted = project.status?.toLowerCase() === 'completed';
+                            return (
+                              <CircleMarker
+                                key={project.id || idx}
+                                center={[lat, lng]}
+                                radius={Math.max(6, Math.min(14, (project.hours || 10) / 5))}
+                                fillColor={isCompleted ? '#3B82F6' : '#10B981'}
+                                fillOpacity={0.7}
+                                stroke={true}
+                                color="#fff"
+                                weight={2}
+                              >
+                                <Popup>
+                                  <div className="text-sm min-w-[180px]">
+                                    <p className="font-bold text-gray-900 mb-1">{project.name}</p>
+                                    <p className="text-gray-500 text-xs mb-2">{project.location || 'Unknown Location'}</p>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className={`px-2 py-0.5 rounded-full ${isCompleted ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                        {project.status || 'Active'}
+                                      </span>
+                                      {project.hours && (
+                                        <span className="text-gray-600">{project.hours}h logged</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Popup>
+                              </CircleMarker>
+                            );
+                          })}
+                        </MapContainer>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Right Column: AI Insights Card - Your Impact Portfolio */}
+              <Card className="bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/20 border border-emerald-200 dark:border-emerald-800 overflow-hidden">
+                <CardHeader className="pb-2 border-b border-emerald-100 dark:border-emerald-800">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                        <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      Your Impact Portfolio
+                    </CardTitle>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">AI-powered insights</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  {aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* Impact Summary */}
+                      <div className="p-3 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {aiuSummary.totalAiu >= 10
+                            ? `Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} AIUs across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}.`
+                            : aiuSummary.totalAiu >= 5
+                            ? `Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} AIUs.`
+                            : `Building momentum with ${formatDecimal(aiuSummary.totalAiu)} AIUs earned!`}
+                        </p>
+                      </div>
+
+                      {/* Quick Stats */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                          <div className="flex items-center gap-2">
+                            <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <div>
+                              <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary.totalAiu)}</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-2">
+                            <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div>
+                              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{aiuSummary.verificationRate || 0}%</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Verified</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Top Projects */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Top Contributing Projects</h4>
+                        {aiuSummary.projects.slice(0, 3).map((project: any, idx: number) => (
+                          <Link key={idx} href={`/projects/${project.projectId}`}>
+                            <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1">{project.projectName}</span>
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-2">{formatDecimal(project.aiu)} AIU</span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-full inline-block mb-3">
+                        <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Start contributing to projects to see your impact insights!</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Opportunity Insights Section - Matched opportunities for the volunteer */}
+            {matchedOpportunities.length > 0 && (
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 border border-blue-200 dark:border-gray-700 shadow-sm">
+                <CardHeader className="pb-3 border-b border-blue-100 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <Zap className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
+                          Opportunities For You
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Matched based on your skills and interests
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/discover-opportunities">
+                      <Button variant="outline" size="sm" className="text-blue-600 border-blue-300 hover:bg-blue-100">
+                        View All
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {matchedOpportunities.slice(0, 6).map((opp) => (
+                      <Link key={opp.id} href={`/opportunities/${opp.id}`}>
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer group">
+                          {/* Match Score Badge */}
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                              opp.matchPercentage >= 80 ? 'bg-green-100 text-green-700 border border-green-200' :
+                              opp.matchPercentage >= 60 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                              'bg-amber-100 text-amber-700 border border-amber-200'
+                            }`}>
+                              {opp.matchPercentage}% Match
+                            </span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              opp.status === 'open' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {opp.status === 'open' ? 'Open' : opp.status}
+                            </span>
+                          </div>
+
+                          {/* Opportunity Title */}
+                          <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
+                            {opp.title}
+                          </h4>
+
+                          {/* Organization */}
+                          {opp.organizationName && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mb-2">
+                              <Building2 className="h-3.5 w-3.5" />
+                              {opp.organizationName}
+                            </p>
+                          )}
+
+                          {/* Location & Hours */}
+                          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            {opp.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {opp.location}
+                              </span>
+                            )}
+                            {opp.hoursPerWeek && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {opp.hoursPerWeek}h/week
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Match Reasons */}
+                          {opp.matchReasons && opp.matchReasons.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {opp.matchReasons.slice(0, 2).map((reason, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded text-xs">
+                                  {reason}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Skills Required */}
+                          {opp.skillsRequired && opp.skillsRequired.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                              <div className="flex flex-wrap gap-1">
+                                {opp.skillsRequired.slice(0, 3).map((skill, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs">
+                                    {skill}
+                                  </span>
+                                ))}
+                                {opp.skillsRequired.length > 3 && (
+                                  <span className="px-2 py-0.5 text-gray-400 text-xs">
+                                    +{opp.skillsRequired.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Quick Action to Browse More */}
+                  {matchedOpportunities.length > 6 && (
+                    <div className="mt-4 pt-4 border-t border-blue-100 dark:border-gray-700 text-center">
+                      <Link href="/discover-opportunities">
+                        <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                          Explore {matchedOpportunities.length - 6} more opportunities
+                          <ChevronDown className="h-4 w-4 ml-1 rotate-[-90deg]" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Loading state for opportunities */}
+            {loadingOpportunities && (
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <span className="text-gray-600 dark:text-gray-400">Finding opportunities matched to your profile...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* My Projects, Recent Tasks, Recent Activity - 3 Column Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -817,9 +817,15 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
               {/* Section Items */}
               {section.items.map((item: any) => {
                 const Icon = item.icon;
+                // Precise active check - only highlight exact matches
+                const itemPath = item.href.split("?")[0];
+                const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
+                const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
+
                 const isActive = activeNav === item.id ||
-                  (item.id === "overview" && activeNav === "dashboard") ||
-                  location.includes(item.href.split("?")[0]);
+                  (item.id === "overview" && activeNav === "dashboard" && !locationTab) ||
+                  (itemTab && locationTab === itemTab) ||
+                  (itemPath !== "/csr-dashboard" && location.startsWith(itemPath) && !location.includes("?"));
                 return (
                   <button
                     type="button"
@@ -999,9 +1005,15 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
                 {/* Section Items */}
                 {section.items.map((item: any) => {
                   const Icon = item.icon;
+                  // Precise active check - only highlight exact matches
+                  const itemPath = item.href.split("?")[0];
+                  const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
+                  const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
+
                   const isActive = activeNav === item.id ||
-                    (item.id === "overview" && activeNav === "dashboard") ||
-                    location.includes(item.href.split("?")[0]);
+                    (item.id === "overview" && activeNav === "dashboard" && !locationTab) ||
+                    (itemTab && locationTab === itemTab) ||
+                    (itemPath !== "/csr-dashboard" && location.startsWith(itemPath) && !location.includes("?"));
                   return (
                     <button
                       type="button"

@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface EnrichedOpportunity {
@@ -285,13 +286,13 @@ export default function DiscoverOpportunities() {
   }
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col w-full overflow-hidden">
+    <div className="min-h-screen h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 flex flex-col w-full overflow-hidden">
       {/* Volunteer Desktop Navigation - only for volunteers */}
       {isVolunteer && <VolunteerNav />}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-7xl mx-auto">
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 md:px-6 pt-4 pb-6 md:mx-6 md:mt-6 md:rounded-xl">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
@@ -642,6 +643,9 @@ export default function DiscoverOpportunities() {
 
       {/* Mobile Bottom Navigation */}
       {isMobile && <WebBottomNav activeTab="discover" />}
+
+      {/* Footer - Hidden on mobile */}
+      {!isMobile && <Footer />}
     </div>
   );
 }

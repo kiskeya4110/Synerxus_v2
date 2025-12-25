@@ -7,6 +7,7 @@ import { Trophy, TrendingUp, Zap } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
+import Footer from "@/components/layout/footer";
 
 export default function Leaderboard() {
   const { user } = useAuth();
@@ -62,7 +63,7 @@ export default function Leaderboard() {
 
   // PWA wrapper for mobile volunteer users
   const content = (
-    <div className={`${isVolunteerMobile ? 'pt-20 pb-24 px-4' : 'container mx-auto max-w-6xl py-8 px-4 md:px-6'}`}>
+    <div className={isVolunteerMobile ? 'pt-20 pb-24 px-4' : ''} style={!isVolunteerMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Trophy className={`${isVolunteerMobile ? 'h-6 w-6' : 'h-8 w-8'} text-yellow-600`} />
@@ -227,9 +228,11 @@ export default function Leaderboard() {
   // Return with VolunteerNav for desktop volunteers
   if (userType === 'volunteer') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-gray-900">
         <VolunteerNav />
         {content}
+        {/* Footer - Hidden on mobile */}
+        {!isMobile && <Footer />}
       </div>
     );
   }

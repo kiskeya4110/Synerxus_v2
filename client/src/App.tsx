@@ -62,6 +62,7 @@ const Overview = lazy(() => import("@/pages/overview"));
 const OrganizationMessages = lazy(() => import("@/pages/organization-messages"));
 const OrganizationMessagesPWA = lazy(() => import("@/pages/organization-messages-pwa"));
 const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa"));
+const OrganizationTeam = lazy(() => import("@/pages/organization-team"));
 const VolunteerMessages = lazy(() => import("@/pages/volunteer-messages"));
 const VolunteerMessagesPWA = lazy(() => import("@/pages/volunteer-messages-pwa"));
 const CSRMessagesPWA = lazy(() => import("@/pages/csr-messages-pwa"));
@@ -219,6 +220,7 @@ export default function App() {
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/organization-my-work" component={MyWork} />
           <Route path="/organization-messages" component={OrganizationMessages} />
+          <Route path="/organization-team" component={OrganizationTeam} />
           <Route path="/overview" component={Overview} />
           <Route path="/volunteers" component={Volunteers} />
           {/* Standalone utility routes */}

@@ -986,8 +986,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             width: "200px",
             minWidth: "200px",
             flexDirection: "column",
-            background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-            borderRight: "1px solid rgba(0, 0, 0, 0.06)",
+            background: "linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 50%, #fef9f3 100%)",
+            borderRight: "1px solid rgba(16, 185, 129, 0.1)",
             padding: "16px 10px",
             overflowY: "auto",
           }}

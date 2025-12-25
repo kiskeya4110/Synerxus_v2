@@ -3903,10 +3903,10 @@ export default function CSRDashboard() {
           alignItems: "center",
           gap: "16px",
           padding: "16px 20px",
-          background: "linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #ecfdf5 100%)",
+          background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 30%, #a7f3d0 60%, #fef3c7 100%)",
           borderRadius: "16px",
           border: "1px solid rgba(16, 185, 129, 0.2)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.1)"
         }}>
           {companyLogo ? (
             <img

@@ -342,18 +342,46 @@ export default function OrganizationMessagesPWA() {
           </div>
         )}
 
-        {/* Page Title - shows in list view */}
+        {/* Page Banner - shows in list view */}
         {!selectedThread && (
-          <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
-            <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-800 hover:bg-slate-100"
-              onClick={() => setShowNewConversation(true)}
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
+          <div className="p-4">
+            <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-emerald-400/30" />
+                <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-teal-400/20" />
+              </div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 text-emerald-700" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Team Communication</p>
+                    <h2 className="text-xl font-bold text-slate-800">Messages</h2>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-white/40 hover:bg-white/60 text-emerald-700 rounded-xl"
+                  onClick={() => setShowNewConversation(true)}
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </div>
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{threads.length}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Conversations</p>
+                </div>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{threads.filter(t => t.status === 'active').length}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Active</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

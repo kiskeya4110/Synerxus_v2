@@ -860,18 +860,23 @@ export default function CSRDashboardPWA() {
               </div>
             </div>
 
-            {/* Project Locations Preview - Key Geographic Metrics */}
+            {/* Project Locations Map - Interactive Geographic View */}
             <div className="bg-white rounded-xl p-4 border border-teal-200/60 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-teal-600" />
-                  <h3 className="text-sm font-semibold text-slate-800">Project Locations</h3>
+                  <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center shadow">
+                    <Globe className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800">Project Locations</h3>
+                    <p className="text-[9px] text-teal-600">Global impact footprint</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowMapModal(true)}
-                  className="text-[10px] text-teal-700 hover:underline font-medium flex items-center gap-1"
+                  className="text-[10px] text-teal-700 hover:underline font-medium flex items-center gap-1 bg-teal-50 px-2 py-1 rounded-full border border-teal-200"
                 >
-                  View Map <ChevronRight className="w-3 h-3" />
+                  <Maximize2 className="w-3 h-3" /> Expand
                 </button>
               </div>
 
@@ -893,9 +898,68 @@ export default function CSRDashboardPWA() {
                 </div>
               </div>
 
+              {/* Inline Interactive Map */}
+              <div className="rounded-xl overflow-hidden border border-teal-200 shadow-inner mb-3" style={{ height: '200px' }}>
+                {csrData?.projectLocations && csrData.projectLocations.length > 0 ? (
+                  <MapContainer
+                    key="home-map-preview"
+                    center={[20, 0]}
+                    zoom={2}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={false}
+                    dragging={true}
+                    zoomControl={false}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {csrData.projectLocations.map((loc: any, idx: number) => (
+                      <CircleMarker
+                        key={`home-loc-${idx}`}
+                        center={[loc.lat || 0, loc.lng || 0]}
+                        radius={Math.min(12, 6 + Math.sqrt(loc.hours || 0) / 2)}
+                        pathOptions={{
+                          fillColor: loc.status === 'Active' || loc.status === 'In Progress' ? '#10b981' :
+                                     loc.status === 'Completed' ? '#3b82f6' : '#94a3b8',
+                          color: '#fff',
+                          weight: 2,
+                          opacity: 1,
+                          fillOpacity: 0.8
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-xs">
+                            <p className="font-semibold text-slate-800">{loc.name}</p>
+                            <p className="text-slate-600">{loc.region}</p>
+                            <div className="flex gap-2 mt-1 text-[10px]">
+                              <span className="text-emerald-600 font-medium">{loc.hours}h</span>
+                              <span className="text-blue-600">{loc.employees} volunteers</span>
+                            </div>
+                            <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                              loc.status === 'Active' || loc.status === 'In Progress' ? 'bg-emerald-100 text-emerald-700' :
+                              loc.status === 'Completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {loc.status}
+                            </span>
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+                    ))}
+                  </MapContainer>
+                ) : (
+                  <div className="h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                    <div className="text-center">
+                      <MapPin className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                      <p className="text-xs text-slate-500">No project locations yet</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Top Project Locations List */}
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                {(csrData?.projectLocations || []).slice(0, 4).map((loc: any, idx: number) => (
+              <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                {(csrData?.projectLocations || []).slice(0, 3).map((loc: any, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setShowMapModal(true)}
@@ -909,16 +973,13 @@ export default function CSRDashboardPWA() {
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <p className="text-xs text-slate-800 font-medium truncate">{loc.name}</p>
-                      <p className="text-[9px] text-slate-500">{loc.region} • {loc.employees} employees</p>
+                      <p className="text-[9px] text-slate-500">{loc.region} • {loc.employees} volunteers</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-semibold text-emerald-600">{loc.hours}h</p>
                     </div>
                   </button>
                 ))}
-                {(!csrData?.projectLocations || csrData.projectLocations.length === 0) && (
-                  <p className="text-center text-xs text-slate-400 py-3">No project locations yet</p>
-                )}
               </div>
             </div>
 

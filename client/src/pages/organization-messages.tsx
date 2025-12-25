@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import Footer from "@/components/layout/footer";
 import {
   MessageSquare,
@@ -26,6 +27,8 @@ import {
   ChevronLeft,
   MoreVertical,
   FolderOpen,
+  Users,
+  AlertCircle,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -111,15 +114,28 @@ export default function OrganizationMessages() {
     refetchInterval: selectedThread ? 3000 : false // Poll every 3 seconds when a thread is selected
   });
 
-  const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError } = useQuery({
+  // Fetch volunteers assigned to organization projects - uses apiRequest for proper auth
+  const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError, refetch: refetchVolunteers } = useQuery({
     queryKey: ["/api/organizations", organizationId, "volunteers", userId],
     queryFn: async () => {
       if (!organizationId || !userId) return [];
-      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch volunteers");
-      return response.json();
+      // Use fetch with userId header for proper authentication
+      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`, {
+        headers: {
+          'x-user-id': userId,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to fetch volunteers:", response.status, await response.text());
+        return [];
+      }
+      const data = await response.json();
+      console.log("Fetched volunteers for messaging:", data);
+      return data;
     },
-    enabled: showNewConversation && !!organizationId && !!userId,
+    enabled: !!organizationId && !!userId,
+    staleTime: 30000,
   });
 
   const sendMessageMutation = useMutation({
@@ -195,6 +211,7 @@ export default function OrganizationMessages() {
   return (
     <>
       <OrganizationHeader activeTab="messages" />
+      <OrganizationWelcomeBanner />
 
       <div className="bg-gray-50 min-h-[calc(100vh-200px)]">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -218,28 +235,59 @@ export default function OrganizationMessages() {
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div>
-                    <label className="text-sm font-medium">Select Volunteer</label>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Select Volunteer
+                    </label>
                     {loadingVolunteers ? (
-                      <div className="w-full mt-1 px-3 py-2 border rounded-md bg-gray-50 text-gray-500 text-sm">Loading volunteers...</div>
+                      <div className="w-full mt-1 px-3 py-2 border rounded-md bg-gray-50 text-gray-500 text-sm flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        Loading volunteers from your projects...
+                      </div>
                     ) : volunteersError ? (
-                      <div className="w-full mt-1 px-3 py-2 border rounded-md bg-red-50 text-red-600 text-sm">Error loading volunteers.</div>
+                      <div className="w-full mt-1 px-3 py-2 border rounded-md bg-red-50 text-red-600 text-sm flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Error loading volunteers. Please try again.
+                      </div>
                     ) : (volunteers as any[]).length === 0 ? (
-                      <div className="w-full mt-1 px-3 py-2 border rounded-md bg-yellow-50 text-yellow-700 text-sm">
-                        <p className="font-medium">No volunteers assigned to projects</p>
-                        <p className="text-xs mt-1">Volunteers need to be assigned to your projects before you can message them.</p>
+                      <div className="w-full mt-1 px-3 py-3 border rounded-md bg-amber-50 text-amber-800 text-sm">
+                        <div className="flex items-center gap-2 font-medium">
+                          <Users className="h-4 w-4" />
+                          No volunteers assigned yet
+                        </div>
+                        <p className="text-xs mt-2 text-amber-700">
+                          Volunteers need to apply and be accepted to your projects before you can message them.
+                          Create projects and approve volunteer applications to start messaging.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 text-xs"
+                          onClick={() => { setShowNewConversation(false); navigate('/applications'); }}
+                        >
+                          View Applications
+                        </Button>
                       </div>
                     ) : (
-                      <select
-                        value={newVolunteerId}
-                        onChange={(e) => setNewVolunteerId(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                        data-testid="select-volunteer"
-                      >
-                        <option value="">Choose a volunteer...</option>
-                        {(volunteers as any[]).map((v: any) => (
-                          <option key={v.id} value={v.id}>{v.displayName || v.volunteerName || v.username || `Volunteer ${v.id}`}</option>
-                        ))}
-                      </select>
+                      <div className="mt-1">
+                        <select
+                          value={newVolunteerId}
+                          onChange={(e) => setNewVolunteerId(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                          data-testid="select-volunteer"
+                        >
+                          <option value="">Choose a volunteer...</option>
+                          {(volunteers as any[]).map((v: any) => (
+                            <option key={v.id} value={v.id}>
+                              {v.displayName || v.volunteerName || v.username || v.email || `Volunteer ${v.id}`}
+                              {v.totalHours ? ` (${v.totalHours}h logged)` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {(volunteers as any[]).length} volunteer{(volunteers as any[]).length !== 1 ? 's' : ''} assigned to your projects
+                        </p>
+                      </div>
                     )}
                   </div>
                   <div>

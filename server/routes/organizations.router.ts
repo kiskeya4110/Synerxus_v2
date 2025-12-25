@@ -454,6 +454,34 @@ organizationsRouter.get("/:id/my-permissions", async (req: Request, res: Respons
       return res.status(400).json({ message: "userId is required" });
     }
 
+    // First check if this user IS the organization (organization account owner)
+    const user = await storage.getUser(userId);
+    const organization = await storage.getOrganization(orgId);
+
+    // Organization owners (user type = organization and their organizationId matches)
+    // have full admin permissions
+    const isOrganizationOwner = user && organization &&
+      user.userType === 'organization' && user.organizationId === orgId;
+
+    if (isOrganizationOwner) {
+      return res.json({
+        role: "admin",
+        title: "Organization Owner",
+        department: "Administration",
+        permissions: {
+          canApproveHours: true,
+          canApproveApplications: true,
+          canManageProjects: true,
+          canManageMembers: true,
+          canViewReports: true,
+          canEditOrganization: true
+        },
+        status: "active",
+        isOwner: true
+      });
+    }
+
+    // Check organization_members table for team members
     const member = await storage.getOrganizationMemberByUserAndOrg(userId, orgId);
 
     if (!member) {

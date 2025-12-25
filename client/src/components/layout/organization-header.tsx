@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound
+  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound, MoreVertical, Home, ClipboardList, Trophy
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,7 +53,6 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
   // Fetch notifications for organization user
@@ -187,52 +186,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             />
           </button>
 
-          {/* Hamburger Menu - Shows on smaller screens when tabs are hidden */}
-          <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="lg:hidden"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(180, 83, 9, 0.3)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#78350f',
-                  transition: 'all 0.2s',
-                }}
-                data-testid="mobile-menu-button"
-              >
-                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {NAV_TABS.map((tab) => (
-                <DropdownMenuItem
-                  key={tab.id}
-                  className={`cursor-pointer ${currentTab === tab.id ? 'bg-amber-50' : ''}`}
-                  onClick={() => {
-                    if (tab.id === 'create') {
-                      onCreateClick?.();
-                    } else if (tab.path) {
-                      navigate(tab.path);
-                    }
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <tab.icon className="mr-2 h-4 w-4" />
-                  <span>{tab.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Navigation Tabs - Hidden on mobile, visible on large screens */}
-          <div className="hidden lg:flex" style={{ alignItems: 'center', gap: '4px' }}>
+          {/* Navigation Tabs - Always visible, responsive sizing */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -370,96 +325,166 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Settings Button */}
+          {/* Profile Avatar */}
           <button
-            onClick={() => navigate('/organization-profile-settings')}
-            data-testid="settings-button"
+            data-testid="profile-avatar"
+            onClick={() => navigate('/profile')}
             style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.6)',
-              border: '1px solid rgba(180, 83, 9, 0.3)',
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              border: '2px solid rgba(180, 83, 9, 0.4)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#78350f',
+              overflow: 'hidden',
               transition: 'all 0.2s',
-              boxShadow: '0 2px 8px rgba(180, 83, 9, 0.1)',
+              boxShadow: '0 2px 10px rgba(180, 83, 9, 0.15)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
+              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.5)';
               e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
-              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.3)';
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.7)';
+              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <Settings size={18} style={{ color: '#78350f' }} />
+            {(user as any)?.avatar ? (
+              <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              <Users size={18} style={{ color: '#78350f' }} />
+            )}
           </button>
 
-          {/* Profile Dropdown Menu */}
+          {/* 3-dot Menu Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger asChild>
               <button
-                data-testid="profile-button"
+                data-testid="more-menu-button"
                 style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  border: '2px solid rgba(180, 83, 9, 0.4)',
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  border: '1px solid rgba(180, 83, 9, 0.3)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#78350f',
-                  overflow: 'hidden',
                   transition: 'all 0.2s',
-                  boxShadow: '0 2px 10px rgba(180, 83, 9, 0.15)',
+                  boxShadow: '0 2px 8px rgba(180, 83, 9, 0.1)',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.5)';
+                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
                   e.currentTarget.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.7)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
+                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.3)';
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                {(user as any)?.avatar ? (
-                  <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  <Users size={18} style={{ color: '#78350f' }} />
-                )}
+                <MoreVertical size={18} style={{ color: '#78350f' }} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="flex flex-col space-y-1 p-2">
-                <p className="text-sm font-medium leading-none" data-testid="text-user-display-name">
-                  {user?.displayName || user?.email?.split('@')[0]}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground" data-testid="text-user-email">
-                  {user?.email}
-                </p>
+            <DropdownMenuContent align="end" className="w-64">
+              {/* User Info Header */}
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(180, 83, 9, 0.1)',
+                    border: '2px solid rgba(180, 83, 9, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {(user as any)?.avatar ? (
+                    <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <Users size={18} style={{ color: '#78350f' }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate" data-testid="text-user-display-name">
+                    {user?.displayName || user?.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate" data-testid="text-user-email">
+                    {user?.email}
+                  </p>
+                </div>
               </div>
+
+              {/* Navigation Items */}
+              <div className="py-1">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-dashboard'); setIsProfileOpen(false); }} data-testid="menu-dashboard">
+                  <Home className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/my-work'); setIsProfileOpen(false); }} data-testid="menu-projects">
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  <span>Projects</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/volunteers'); setIsProfileOpen(false); }} data-testid="menu-volunteers">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Volunteers</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-team'); setIsProfileOpen(false); }} data-testid="menu-team">
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  <span>Team</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/applications'); setIsProfileOpen(false); }} data-testid="menu-applications">
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Applications</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-messages'); setIsProfileOpen(false); }} data-testid="menu-messages">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Messages</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/sdg-mapping'); setIsProfileOpen(false); }} data-testid="menu-sdgs">
+                  <Target className="mr-2 h-4 w-4" />
+                  <span>SDG Mapping</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/impact-visualization'); setIsProfileOpen(false); }} data-testid="menu-impact">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <span>Impact Reports</span>
+                </DropdownMenuItem>
+              </div>
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/profile')} data-testid="menu-profile">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/organization-profile-settings')} data-testid="menu-settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+
+              {/* Settings & Account */}
+              <div className="py-1">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/profile'); setIsProfileOpen(false); }} data-testid="menu-profile">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-profile-settings'); setIsProfileOpen(false); }} data-testid="menu-settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-team'); setIsProfileOpen(false); }} data-testid="menu-team-management">
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  <span>Team Management</span>
+                </DropdownMenuItem>
+              </div>
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut} data-testid="menu-logout">
+
+              {/* Logout */}
+              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleSignOut} data-testid="menu-logout">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

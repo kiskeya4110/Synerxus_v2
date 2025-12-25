@@ -81,7 +81,7 @@ export default function MobileMetricsGrid({
 
   return (
     <div className="md:hidden" style={{ padding: '10px', backgroundColor: '#f9fafb' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+      <div className="max-w-7xl mx-auto" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (

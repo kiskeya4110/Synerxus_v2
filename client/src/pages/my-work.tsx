@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -467,9 +468,10 @@ export default function MyWork() {
       <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
+      {isOrganizationManager && <OrganizationWelcomeBanner />}
       {/* Top Navigation Buttons for Organization Managers */}
       {isOrganizationManager && (
-        <div className="mx-4 sm:mx-6 p-4 px-0 flex gap-2 items-center justify-start border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex gap-2 items-center justify-start border-b">
           <button
             onClick={() => setLocation('/overview')}
             className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
@@ -753,7 +755,7 @@ export default function MyWork() {
       )}
 
       {isOrganizationManager ? (
-        <div className="mx-4 sm:mx-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           {/* Projects List Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">

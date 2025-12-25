@@ -18,6 +18,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -487,11 +488,14 @@ export default function OrganizationProfileSettings() {
 
   return (
     <OrganizationProfileErrorBoundary>
-      <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : ''}`}>
+      <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
         {/* Header - Mobile PWA or Desktop */}
         {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="settings" />}
+        {!isMobile && <OrganizationWelcomeBanner />}
 
-        <div className={`${isMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
+        {/* Content container matching header width */}
+        <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>
+          <div className={`${isMobile ? 'px-4 py-4 mx-auto' : 'py-8'} max-w-4xl ${!isMobile ? 'mx-auto' : ''}`}>
           <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
           <p className="text-muted-foreground">
@@ -774,6 +778,7 @@ export default function OrganizationProfileSettings() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Bottom Navigation for mobile */}

@@ -565,7 +565,7 @@ export default function VolunteerIntake() {
       {/* Volunteer Desktop Navigation */}
       {!isMobile && <VolunteerNav />}
 
-      <div className={`${isMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
+      <div className={`${isMobile ? 'px-4 py-4 mx-auto' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
         <div className={`${isMobile ? 'mb-4' : 'mb-8'}`}>
           <div className="flex items-center justify-between">
             <h1 className={`font-bold mb-2 ${isMobile ? 'text-xl text-slate-800' : 'text-3xl'}`}>

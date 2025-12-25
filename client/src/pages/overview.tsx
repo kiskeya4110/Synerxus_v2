@@ -5,6 +5,7 @@ import { Trophy, Target, TrendingUp, Users, Clock, FolderOpen, Award, ChevronRig
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
@@ -745,6 +746,7 @@ export default function Overview() {
   return (
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
+      <OrganizationWelcomeBanner />
 
       <div className="max-w-7xl mx-auto p-6 pb-24">
         {/* Top Navigation Button */}

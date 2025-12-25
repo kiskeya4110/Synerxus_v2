@@ -10,7 +10,7 @@ import {
   Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical, Menu as MenuIcon,
   Bell, Settings, User as UserIcon, LogOut, FileText, Award, Zap,
   Activity, Shield, ShieldCheck, Eye, ThumbsUp, Info,
-  Sparkles, CircleDot
+  Sparkles, CircleDot, MessageSquare, Mail, ExternalLink, Building2
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { formatDecimal, formatMetric } from "@/lib/format-utils";
@@ -600,19 +600,55 @@ export default function OrganizationDashboard() {
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Welcome Banner - Desktop Only - Contained within margins */}
-      <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }}>
+      <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px 0 24px' }}>
         <div style={{
-          background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
-          padding: '16px 24px',
-          borderRadius: '12px',
-          border: '1px solid rgba(245, 158, 11, 0.2)',
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #f0fdf4 75%, #fafafa 100%)',
+          padding: '20px 28px',
+          borderRadius: '16px',
+          border: '1px solid rgba(34, 197, 94, 0.2)',
+          boxShadow: '0 4px 12px rgba(34, 197, 94, 0.1)',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: '20px',
         }}>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#78350f', margin: 0 }}>
-            Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
-          </h1>
+          {/* Organization Logo */}
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '12px',
+            backgroundColor: (organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar) ? 'transparent' : 'rgba(22, 101, 52, 0.1)',
+            border: '2px solid rgba(22, 101, 52, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            flexShrink: 0,
+          }}>
+            {(organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar) ? (
+              <img
+                src={organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar}
+                alt={organization?.name || organizationProfile?.organizationName || 'Organization'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <Building2 size={28} style={{ color: '#166534' }} />
+            )}
+          </div>
+
+          {/* Welcome Text */}
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '14px', fontWeight: '500', color: '#166534', margin: 0, letterSpacing: '0.5px' }}>
+              Welcome Back,
+            </p>
+            <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#14532d', margin: '2px 0 0 0' }}>
+              {organization?.name || organizationProfile?.organizationName || 'Organization'}
+            </h1>
+            <p style={{ fontSize: '13px', fontWeight: '500', color: '#15803d', margin: '2px 0 0 0', opacity: 0.85 }}>
+              Organization Dashboard
+            </p>
+          </div>
+
+          {/* CTA Button */}
           <button
             onClick={() => navigate('/overview')}
             style={{
@@ -1435,50 +1471,136 @@ export default function OrganizationDashboard() {
               </button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
-              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+              <button
+                onClick={() => navigate('/volunteers?filter=active')}
+                style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(22,101,52,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                data-testid="metric-active-volunteers"
+              >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Active Volunteers</p>
-              </div>
-              <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '10px', color: '#166534', margin: '4px 0 0 0', opacity: 0.7 }}>Click to view →</p>
+              </button>
+              <button
+                onClick={() => navigate('/volunteers')}
+                style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1e40af'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(30,64,175,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                data-testid="metric-total-volunteers"
+              >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
                   {dashboardData?.volunteerSummaries?.length || 0}
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total Volunteers</p>
-              </div>
-              <div style={{ backgroundColor: '#fef3c7', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '10px', color: '#1e40af', margin: '4px 0 0 0', opacity: 0.7 }}>Click to manage →</p>
+              </button>
+              <button
+                onClick={() => navigate('/my-work')}
+                style={{ backgroundColor: '#fef3c7', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(217,119,6,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                data-testid="metric-avg-per-project"
+              >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#d97706', margin: 0 }}>
                   {Math.round((dashboardData?.volunteerSummaries?.length || 0) / Math.max(1, metrics.activeProjects))}
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg per Project</p>
-              </div>
-              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '10px', color: '#d97706', margin: '4px 0 0 0', opacity: 0.7 }}>View projects →</p>
+              </button>
+              <button
+                onClick={() => navigate('/applications')}
+                style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(5,150,105,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                data-testid="metric-pending-applications"
+              >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#059669', margin: 0 }}>
                   {pendingApplications?.length || 0}
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Pending Applications</p>
-              </div>
-              <div style={{ backgroundColor: '#faf5ff', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '10px', color: '#059669', margin: '4px 0 0 0', opacity: 0.7 }}>Review now →</p>
+              </button>
+              <button
+                onClick={() => navigate('/impact-visualization')}
+                style={{ backgroundColor: '#faf5ff', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                data-testid="metric-avg-hours"
+              >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
                   {metrics.totalHours > 0 && dashboardData?.volunteerSummaries?.length
                     ? Math.round(metrics.totalHours / dashboardData.volunteerSummaries.length)
                     : 0}h
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg Hours/Vol</p>
-              </div>
+                <p style={{ fontSize: '10px', color: '#7c3aed', margin: '4px 0 0 0', opacity: 0.7 }}>View impact →</p>
+              </button>
             </div>
             {/* Top Contributors */}
             <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>Top Contributors</h4>
-              <div style={{ display: 'flex', gap: '12px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', margin: 0 }}>Top Contributors</h4>
+                <button
+                  onClick={() => navigate('/volunteers')}
+                  style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                >
+                  View all volunteers <ExternalLink size={12} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
                 {(dashboardData?.volunteerSummaries || []).slice(0, 5).map((vol: any) => (
-                  <div key={vol.id} style={{ flex: '0 0 auto', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', minWidth: '140px', textAlign: 'center' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#16653420', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: '16px', fontWeight: '600', color: '#166534' }}>
-                      {vol.name?.charAt(0).toUpperCase()}
+                  <div
+                    key={vol.id}
+                    style={{ flex: '0 0 auto', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', minWidth: '160px', textAlign: 'center', border: '2px solid transparent', transition: 'all 0.2s', cursor: 'pointer' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.backgroundColor = '#f0fdf4'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                  >
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#16653420', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: '18px', fontWeight: '600', color: '#166534' }}>
+                      {vol.avatar ? (
+                        <img src={vol.avatar} alt={vol.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        vol.name?.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{vol.name}</p>
-                    <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: '4px 0 0 0' }}>{vol.hours}h</p>
+                    <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: '4px 0 8px 0' }}>{vol.hours}h</p>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/volunteers/${vol.id}`); }}
+                        style={{ flex: 1, padding: '6px 8px', fontSize: '11px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14532d'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#166534'}
+                        data-testid={`view-volunteer-${vol.id}`}
+                      >
+                        <Eye size={12} /> View
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/organization-messages?volunteer=${vol.id}`); }}
+                        style={{ flex: 1, padding: '6px 8px', fontSize: '11px', backgroundColor: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e40af'}
+                        data-testid={`contact-volunteer-${vol.id}`}
+                      >
+                        <MessageSquare size={12} /> Contact
+                      </button>
+                    </div>
                   </div>
                 ))}
+                {(!dashboardData?.volunteerSummaries || dashboardData.volunteerSummaries.length === 0) && (
+                  <div style={{ flex: 1, textAlign: 'center', padding: '24px', color: '#6b7280' }}>
+                    <Users size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                    <p style={{ fontSize: '13px', margin: 0 }}>No volunteers yet</p>
+                    <button
+                      onClick={() => navigate('/my-work')}
+                      style={{ marginTop: '8px', fontSize: '12px', color: '#166534', background: 'none', border: '1px solid #166534', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' }}
+                    >
+                      Create a project to attract volunteers
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

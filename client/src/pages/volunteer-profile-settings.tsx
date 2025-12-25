@@ -1506,7 +1506,7 @@ export default function VolunteerProfileSettings() {
       {/* Volunteer Desktop Navigation */}
       {!isVolunteerMobile && <VolunteerNav />}
 
-      <div className={isVolunteerMobile ? 'px-4 py-4 max-w-4xl' : ''} style={!isVolunteerMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
+      <div className={isVolunteerMobile ? 'px-4 py-4 max-w-4xl mx-auto' : ''} style={!isVolunteerMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
         {/* Page Header - Mobile optimized */}
         <div className={`${isVolunteerMobile ? 'mb-4' : 'mb-8'}`}>
           <div className={`flex items-center justify-between ${isVolunteerMobile ? '' : 'flex-col text-center'}`}>

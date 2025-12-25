@@ -14,6 +14,7 @@ import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Targ
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import Footer from "@/components/layout/footer";
 import VolunteerInsightsPanel from "@/components/applications/volunteer-insights-panel";
 
@@ -308,6 +309,7 @@ export default function ApplicationsPage() {
   return (
     <div className={isOrganizationUser ? "min-h-screen flex flex-col" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="applications" />}
+      {isOrganizationUser && <OrganizationWelcomeBanner />}
       <div className={isOrganizationUser ? "p-6 flex-1" : "p-6"}>
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Applications</h1>

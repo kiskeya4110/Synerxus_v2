@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import Footer from "@/components/layout/footer";
 import {
   UsersRound, UserPlus, Shield, ShieldCheck, Settings, Trash2,
-  Mail, Check, X, ChevronDown, Edit2, Building2, Briefcase
+  Mail, Check, X, ChevronDown, Edit2, Building2, Briefcase, MessageSquare,
+  Phone, MoreVertical, Clock, Calendar, Eye, Send, Copy, RefreshCw
 } from "lucide-react";
 
 interface OrganizationMember {
@@ -48,14 +51,55 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   member: ["View dashboard", "View reports"],
 };
 
+const DEPARTMENTS = [
+  "Human Resources",
+  "CSR & Sustainability",
+  "Marketing",
+  "Operations",
+  "Finance",
+  "Legal",
+  "IT & Technology",
+  "Sales",
+  "Customer Service",
+  "Executive Leadership",
+  "Product",
+  "Engineering",
+  "Communications",
+  "Administration",
+  "Other",
+];
+
+const JOB_TITLES = [
+  "HR Manager",
+  "HR Director",
+  "CSR Manager",
+  "CSR Director",
+  "Sustainability Manager",
+  "Volunteer Coordinator",
+  "Project Manager",
+  "Department Head",
+  "Team Lead",
+  "Coordinator",
+  "Analyst",
+  "Specialist",
+  "Administrator",
+  "Assistant",
+  "Other",
+];
+
 export default function OrganizationTeamPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingMember, setEditingMember] = useState<OrganizationMember | null>(null);
+  const [viewingMember, setViewingMember] = useState<OrganizationMember | null>(null);
+  const [memberActionsOpen, setMemberActionsOpen] = useState<number | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [inviteTitle, setInviteTitle] = useState("");
   const [inviteDepartment, setInviteDepartment] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [customDepartment, setCustomDepartment] = useState("");
 
   // Get current user's organization
   const userId = localStorage.getItem("currentUserId");
@@ -85,18 +129,28 @@ export default function OrganizationTeamPage() {
   });
 
   // Fetch current user's permissions
-  const { data: myPermissions } = useQuery({
+  const { data: myPermissions, isLoading: loadingPermissions } = useQuery({
     queryKey: ["/api/organizations", organizationId, "my-permissions", userId],
     queryFn: async () => {
       if (!organizationId || !userId) return null;
-      const res = await fetch(`/api/organizations/${organizationId}/my-permissions?userId=${userId}`);
-      if (!res.ok) return null;
+      const res = await fetch(`/api/organizations/${organizationId}/my-permissions?userId=${userId}`, {
+        headers: { 'x-user-id': userId }
+      });
+      if (!res.ok) {
+        // If 404, check if user is organization type - they are the owner
+        if (res.status === 404 && currentUser?.userType === 'organization') {
+          return { role: 'admin', isOwner: true, permissions: { canManageMembers: true } };
+        }
+        return null;
+      }
       return res.json();
     },
     enabled: !!organizationId && !!userId,
   });
 
-  const canManageMembers = myPermissions?.permissions?.canManageMembers || myPermissions?.role === "admin";
+  // Organization owners (userType = organization) always have full permissions
+  const isOrganizationOwner = currentUser?.userType === 'organization';
+  const canManageMembers = isOrganizationOwner || myPermissions?.permissions?.canManageMembers || myPermissions?.role === "admin" || myPermissions?.isOwner;
 
   // Invite member mutation
   const inviteMutation = useMutation({
@@ -184,6 +238,7 @@ export default function OrganizationTeamPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
       <OrganizationHeader activeTab="team" />
+      <OrganizationWelcomeBanner />
 
       <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
         {/* Header */}
@@ -247,17 +302,38 @@ export default function OrganizationTeamPage() {
             <div className="p-8 text-center text-slate-500">
               <UsersRound className="h-12 w-12 mx-auto mb-3 text-slate-300" />
               <p>No team members yet. Invite your first team member to get started.</p>
+              {canManageMembers && (
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Invite First Member
+                </button>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {activeMembers.map((member) => {
                 const badge = ROLE_BADGES[member.role] || ROLE_BADGES.member;
                 const Icon = badge.icon;
+                const isCurrentUser = member.userId === parseInt(userId || "0");
                 return (
-                  <div key={member.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div
+                    key={member.id}
+                    className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => setViewingMember(member)}
+                  >
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium">
-                        {member.user?.displayName?.charAt(0)?.toUpperCase() || member.user?.email?.charAt(0)?.toUpperCase() || "?"}
+                      <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-lg relative">
+                        {member.user?.avatar ? (
+                          <img src={member.user.avatar} alt={member.user.displayName || ''} className="h-12 w-12 rounded-full object-cover" />
+                        ) : (
+                          member.user?.displayName?.charAt(0)?.toUpperCase() || member.user?.email?.charAt(0)?.toUpperCase() || "?"
+                        )}
+                        {isCurrentUser && (
+                          <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">You</div>
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -269,7 +345,7 @@ export default function OrganizationTeamPage() {
                             {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-slate-500">
+                        <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
                           <span className="flex items-center gap-1">
                             <Mail className="h-3 w-3" />
                             {member.user?.email}
@@ -289,26 +365,89 @@ export default function OrganizationTeamPage() {
                         </div>
                       </div>
                     </div>
-                    {canManageMembers && member.userId !== parseInt(userId || "0") && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setEditingMember(member)}
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Are you sure you want to remove this team member?")) {
-                              removeMutation.mutate(member.id);
-                            }
-                          }}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {/* Quick action buttons */}
+                      <button
+                        onClick={() => setViewingMember(member)}
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate(`/organization-messages?member=${member.userId}`);
+                        }}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Send message"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (member.user?.email) {
+                            window.location.href = `mailto:${member.user.email}`;
+                          }
+                        }}
+                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Send email"
+                      >
+                        <Mail className="h-4 w-4" />
+                      </button>
+
+                      {/* Actions dropdown */}
+                      {canManageMembers && !isCurrentUser && (
+                        <div className="relative">
+                          <button
+                            onClick={() => setMemberActionsOpen(memberActionsOpen === member.id ? null : member.id)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {memberActionsOpen === member.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setMemberActionsOpen(null)}
+                              />
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-20 py-1">
+                                <button
+                                  onClick={() => { setEditingMember(member); setMemberActionsOpen(null); }}
+                                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                  Edit Member
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(member.user?.email || '');
+                                    toast({ title: "Email copied", description: "Email address copied to clipboard" });
+                                    setMemberActionsOpen(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                  Copy Email
+                                </button>
+                                <div className="border-t border-slate-100 my-1" />
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to remove ${member.user?.displayName || member.user?.email} from the team?`)) {
+                                      removeMutation.mutate(member.id);
+                                    }
+                                    setMemberActionsOpen(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Remove from Team
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -327,7 +466,7 @@ export default function OrganizationTeamPage() {
                 const badge = ROLE_BADGES[member.role] || ROLE_BADGES.member;
                 const Icon = badge.icon;
                 return (
-                  <div key={member.id} className="px-6 py-4 flex items-center justify-between bg-amber-50/30">
+                  <div key={member.id} className="px-6 py-4 flex items-center justify-between bg-amber-50/30 hover:bg-amber-50/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-medium">
                         <Mail className="h-5 w-5" />
@@ -339,26 +478,209 @@ export default function OrganizationTeamPage() {
                             <Icon className="h-3 w-3" />
                             {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
                             Pending
                           </span>
                         </div>
-                        <p className="text-sm text-slate-500">
-                          Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
-                        </p>
+                        <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
+                          </span>
+                          {member.title && (
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" />
+                              {member.title}
+                            </span>
+                          )}
+                          {member.department && (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {member.department}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {canManageMembers && (
-                      <button
-                        onClick={() => removeMutation.mutate(member.id)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            inviteMutation.mutate({
+                              email: member.user?.email || '',
+                              role: member.role,
+                              title: member.title || undefined,
+                              department: member.department || undefined,
+                            });
+                            toast({ title: "Invitation resent", description: `Invitation resent to ${member.user?.email}` });
+                          }}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Resend invitation"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(member.user?.email || '');
+                            toast({ title: "Email copied", description: "Email address copied to clipboard" });
+                          }}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Copy email"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Cancel this invitation?")) {
+                              removeMutation.mutate(member.id);
+                            }
+                          }}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Cancel invitation"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* View Member Modal */}
+        {viewingMember && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-lg w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-slate-900">Team Member Details</h3>
+                <button
+                  onClick={() => setViewingMember(null)}
+                  className="p-1 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Member Profile */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-2xl">
+                  {viewingMember.user?.avatar ? (
+                    <img src={viewingMember.user.avatar} alt={viewingMember.user.displayName || ''} className="h-16 w-16 rounded-full object-cover" />
+                  ) : (
+                    viewingMember.user?.displayName?.charAt(0)?.toUpperCase() || "?"
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-slate-900">
+                    {viewingMember.user?.displayName || viewingMember.user?.email}
+                  </h4>
+                  <p className="text-slate-500">{viewingMember.user?.email}</p>
+                </div>
+              </div>
+
+              {/* Member Info */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-500">Role</span>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_BADGES[viewingMember.role]?.color || ''}`}>
+                    {viewingMember.role.charAt(0).toUpperCase() + viewingMember.role.slice(1)}
+                  </span>
+                </div>
+                {viewingMember.title && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Title</span>
+                    <span className="font-medium text-slate-900">{viewingMember.title}</span>
+                  </div>
+                )}
+                {viewingMember.department && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Department</span>
+                    <span className="font-medium text-slate-900">{viewingMember.department}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-500">Status</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${viewingMember.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {viewingMember.status === 'active' ? 'Active' : 'Pending'}
+                  </span>
+                </div>
+                {viewingMember.acceptedAt && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Joined</span>
+                    <span className="text-slate-900">{new Date(viewingMember.acceptedAt).toLocaleDateString()}</span>
+                  </div>
+                )}
+
+                {/* Permissions */}
+                <div className="pt-2">
+                  <h5 className="text-sm font-medium text-slate-700 mb-2">Permissions</h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canApproveHours ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canApproveHours ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      Approve Hours
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canApproveApplications ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canApproveApplications ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      Approve Applications
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canManageProjects ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canManageProjects ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      Manage Projects
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canManageMembers ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canManageMembers ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      Manage Members
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canViewReports ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canViewReports ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      View Reports
+                    </div>
+                    <div className={`flex items-center gap-2 text-sm ${viewingMember.canEditOrganization ? 'text-green-600' : 'text-slate-400'}`}>
+                      {viewingMember.canEditOrganization ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      Edit Organization
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    navigate(`/organization-messages?member=${viewingMember.userId}`);
+                    setViewingMember(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Send Message
+                </button>
+                <button
+                  onClick={() => {
+                    if (viewingMember.user?.email) {
+                      window.location.href = `mailto:${viewingMember.user.email}`;
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Mail className="h-4 w-4" />
+                  Send Email
+                </button>
+                {canManageMembers && viewingMember.userId !== parseInt(userId || "0") && (
+                  <button
+                    onClick={() => {
+                      setEditingMember(viewingMember);
+                      setViewingMember(null);
+                    }}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -404,41 +726,111 @@ export default function OrganizationTeamPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Job Title (Optional)</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
+                  <select
                     value={inviteTitle}
-                    onChange={(e) => setInviteTitle(e.target.value)}
-                    placeholder="e.g., HR Manager, CSR Director"
+                    onChange={(e) => {
+                      setInviteTitle(e.target.value);
+                      if (e.target.value === "Other") setCustomTitle("");
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  >
+                    <option value="">Select a title...</option>
+                    {JOB_TITLES.map((title) => (
+                      <option key={title} value={title}>{title}</option>
+                    ))}
+                  </select>
+                  {inviteTitle === "Other" && (
+                    <input
+                      type="text"
+                      value={customTitle}
+                      onChange={(e) => setCustomTitle(e.target.value)}
+                      placeholder="Enter custom title"
+                      className="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department (Optional)</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                  <select
                     value={inviteDepartment}
-                    onChange={(e) => setInviteDepartment(e.target.value)}
-                    placeholder="e.g., Human Resources, CSR"
+                    onChange={(e) => {
+                      setInviteDepartment(e.target.value);
+                      if (e.target.value === "Other") setCustomDepartment("");
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  >
+                    <option value="">Select a department...</option>
+                    {DEPARTMENTS.map((dept) => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                  {inviteDepartment === "Other" && (
+                    <input
+                      type="text"
+                      value={customDepartment}
+                      onChange={(e) => setCustomDepartment(e.target.value)}
+                      placeholder="Enter custom department"
+                      className="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
+                </div>
+
+                {/* Role-based permissions preview */}
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs font-medium text-slate-600 mb-2">Permissions for {inviteRole.charAt(0).toUpperCase() + inviteRole.slice(1)}:</p>
+                  <ul className="space-y-1">
+                    {ROLE_PERMISSIONS[inviteRole]?.map((perm, i) => (
+                      <li key={i} className="text-xs text-slate-500 flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-500" />
+                        {perm}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
 
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setShowInviteModal(false)}
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setInviteEmail("");
+                    setInviteRole("member");
+                    setInviteTitle("");
+                    setInviteDepartment("");
+                    setCustomTitle("");
+                    setCustomDepartment("");
+                  }}
                   className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleInvite}
+                  onClick={() => {
+                    const finalTitle = inviteTitle === "Other" ? customTitle : inviteTitle;
+                    const finalDepartment = inviteDepartment === "Other" ? customDepartment : inviteDepartment;
+                    inviteMutation.mutate({
+                      email: inviteEmail,
+                      role: inviteRole,
+                      title: finalTitle || undefined,
+                      department: finalDepartment || undefined,
+                    });
+                  }}
                   disabled={!inviteEmail || inviteMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
+                  {inviteMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Invitation
+                    </>
+                  )}
                 </button>
               </div>
             </div>

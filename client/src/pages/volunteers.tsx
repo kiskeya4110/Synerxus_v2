@@ -18,6 +18,7 @@ import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-moda
 import { AddVolunteerModal } from "@/components/add-volunteer-modal";
 import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -394,6 +395,7 @@ export default function Volunteers() {
     <>
       {isOrganization && <OfflineBanner />}
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
+      {isOrganization && <OrganizationWelcomeBanner />}
       <div className={isOrganization ? "h-screen overflow-y-auto pb-24 max-w-[1400px] mx-auto p-6" : "h-screen overflow-y-auto pb-24"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">

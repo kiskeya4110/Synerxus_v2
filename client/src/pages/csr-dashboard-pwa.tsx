@@ -146,7 +146,7 @@ interface SDGMetric {
   projects?: Array<{ id: number; name: string; hours: number }>;
 }
 
-type NavTab = 'home' | 'sdgs' | 'projects' | 'reports' | 'insights';
+type NavTab = 'home' | 'overview' | 'sdgs' | 'projects' | 'reports' | 'insights' | 'engagement' | 'geographic' | 'leaderboard' | 'recognition' | 'challenges';
 
 const SDG_COLORS: Record<number, string> = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -180,6 +180,19 @@ export default function CSRDashboardPWA() {
   const [mapFilter, setMapFilter] = useState<{ region: string; sdg: number | null; status: string }>({ region: 'all', sdg: null, status: 'all' });
   const [refreshing, setRefreshing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Read tab from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      const validTabs: NavTab[] = ['home', 'overview', 'sdgs', 'projects', 'reports', 'insights', 'engagement', 'geographic', 'leaderboard', 'recognition', 'challenges'];
+      if (validTabs.includes(tabParam as NavTab)) {
+        // Map 'overview' to 'home' since they're the same view
+        setActiveTab(tabParam === 'overview' ? 'home' : tabParam as NavTab);
+      }
+    }
+  }, []);
 
   // Offline detection
   useEffect(() => {
@@ -1354,6 +1367,31 @@ export default function CSRDashboardPWA() {
         {activeTab === 'insights' && (
           <InsightsSection aiInsights={aiInsights} csrData={csrData} />
         )}
+
+        {/* Employee Engagement Tab */}
+        {activeTab === 'engagement' && (
+          <EngagementSection csrData={csrData} navigate={navigate} />
+        )}
+
+        {/* Geographic Impact Tab */}
+        {activeTab === 'geographic' && (
+          <GeographicSection csrData={csrData} />
+        )}
+
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <LeaderboardSection csrData={csrData} />
+        )}
+
+        {/* Recognition Tab */}
+        {activeTab === 'recognition' && (
+          <RecognitionSection csrData={csrData} />
+        )}
+
+        {/* Challenges Tab */}
+        {activeTab === 'challenges' && (
+          <ChallengesSection csrData={csrData} navigate={navigate} />
+        )}
       </main>
 
       {/* Bottom Navigation */}
@@ -2319,6 +2357,459 @@ function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filte
 
       {/* Bottom Navigation */}
       <CSRPWANav activeTab="home" />
+    </div>
+  );
+}
+
+// Employee Engagement Section
+function EngagementSection({ csrData, navigate }: { csrData: CSRDashboardData | undefined; navigate: any }) {
+  const employees = csrData?.leaderboard || [];
+  const totalHours = csrData?.totalHours || 0;
+  const activeEmployees = csrData?.activeEmployees || 0;
+  const kpi = csrData?.kpiBreakdown?.employees;
+
+  return (
+    <div className="space-y-4">
+      {/* Header Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
+          <Users className="w-5 h-5 text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-slate-900">{activeEmployees.toLocaleString()}</p>
+          <p className="text-xs text-slate-600">Active Employees</p>
+          {kpi?.engagementRate && (
+            <p className="text-xs text-emerald-600 mt-1">{kpi.engagementRate}% engagement rate</p>
+          )}
+        </div>
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+          <Clock className="w-5 h-5 text-blue-600 mb-2" />
+          <p className="text-2xl font-bold text-slate-900">{totalHours.toLocaleString()}</p>
+          <p className="text-xs text-slate-600">Total Hours Logged</p>
+          {kpi?.averageHoursPerEmployee && (
+            <p className="text-xs text-blue-600 mt-1">{kpi.averageHoursPerEmployee.toFixed(1)}h avg/employee</p>
+          )}
+        </div>
+      </div>
+
+      {/* Top Performers Preview */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 border-b border-amber-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-600" />
+              <span className="font-semibold text-slate-800 text-sm">Top Performers</span>
+            </div>
+            <button
+              onClick={() => navigate('/csr-dashboard?tab=leaderboard')}
+              className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+            >
+              View All →
+            </button>
+          </div>
+        </div>
+        <div className="p-3 space-y-2">
+          {employees.slice(0, 5).map((emp, idx) => (
+            <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                idx === 0 ? 'bg-amber-100 text-amber-700' :
+                idx === 1 ? 'bg-slate-200 text-slate-600' :
+                idx === 2 ? 'bg-orange-100 text-orange-700' :
+                'bg-slate-100 text-slate-500'
+              }`}>
+                {idx + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate">{emp.employeeName}</p>
+                <p className="text-xs text-slate-500">{emp.hours}h • {emp.points} pts</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => navigate('/csr-dashboard?tab=challenges')}
+          className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 text-left shadow-lg"
+        >
+          <Calendar className="w-5 h-5 text-white mb-2" />
+          <p className="text-white font-semibold text-sm">Active Challenges</p>
+          <p className="text-purple-100 text-xs">{csrData?.challenges?.length || 0} running</p>
+        </button>
+        <button
+          onClick={() => navigate('/csr-dashboard?tab=recognition')}
+          className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 text-left shadow-lg"
+        >
+          <Award className="w-5 h-5 text-white mb-2" />
+          <p className="text-white font-semibold text-sm">Recognition</p>
+          <p className="text-pink-100 text-xs">Celebrate teams</p>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Geographic Impact Section
+function GeographicSection({ csrData }: { csrData: CSRDashboardData | undefined }) {
+  const locations = csrData?.projectLocations || [];
+  const mapRef = useRef<any>(null);
+
+  const regions = useMemo(() => {
+    const unique = Array.from(new Set(locations.map(l => l.region)));
+    return ['all', ...unique];
+  }, [locations]);
+
+  const [filter, setFilter] = useState({ region: 'all', status: 'all' });
+
+  const filtered = useMemo(() => {
+    return locations.filter(p => {
+      if (filter.region !== 'all' && p.region !== filter.region) return false;
+      if (filter.status !== 'all' && p.status !== filter.status) return false;
+      return true;
+    });
+  }, [locations, filter]);
+
+  return (
+    <div className="space-y-4">
+      {/* Stats Header */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 text-center">
+          <Globe className="w-4 h-4 mx-auto text-emerald-600 mb-1" />
+          <p className="text-lg font-bold text-slate-900">{regions.length - 1}</p>
+          <p className="text-[10px] text-slate-500 uppercase">Regions</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 text-center">
+          <Map className="w-4 h-4 mx-auto text-blue-600 mb-1" />
+          <p className="text-lg font-bold text-slate-900">{locations.length}</p>
+          <p className="text-[10px] text-slate-500 uppercase">Locations</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 text-center">
+          <Users className="w-4 h-4 mx-auto text-purple-600 mb-1" />
+          <p className="text-lg font-bold text-slate-900">
+            {locations.reduce((sum, l) => sum + l.employees, 0)}
+          </p>
+          <p className="text-[10px] text-slate-500 uppercase">Volunteers</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2">
+        <select
+          value={filter.region}
+          onChange={e => setFilter({ ...filter, region: e.target.value })}
+          className="flex-1 bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2"
+        >
+          {regions.map(r => <option key={r} value={r}>{r === 'all' ? 'All Regions' : r}</option>)}
+        </select>
+        <select
+          value={filter.status}
+          onChange={e => setFilter({ ...filter, status: e.target.value })}
+          className="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2"
+        >
+          <option value="all">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+
+      {/* Map */}
+      <div className="bg-slate-900 rounded-xl overflow-hidden" style={{ height: '300px' }}>
+        <MapContainer ref={mapRef} center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          {filtered.map((p, idx) => (
+            <CircleMarker
+              key={idx}
+              center={[p.lat, p.lng]}
+              radius={Math.max(6, Math.min(16, p.hours / 15))}
+              fillColor={p.status === 'Completed' ? '#3B82F6' : '#10B981'}
+              fillOpacity={0.7}
+              stroke={true}
+              color="#fff"
+              weight={1.5}
+            >
+              <Popup>
+                <div className="text-xs">
+                  <p className="font-bold">{p.name}</p>
+                  <p className="text-gray-600">{p.region}</p>
+                  <p className="text-emerald-600">{p.hours}h • {p.employees} volunteers</p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+        </MapContainer>
+      </div>
+
+      {/* Legend */}
+      <div className="flex justify-center gap-4">
+        <span className="flex items-center gap-1 text-xs text-slate-500">
+          <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Active
+        </span>
+        <span className="flex items-center gap-1 text-xs text-slate-500">
+          <span className="w-2 h-2 bg-blue-500 rounded-full" /> Completed
+        </span>
+      </div>
+
+      {/* Location List */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+          <span className="font-semibold text-slate-700 text-sm">Project Locations ({filtered.length})</span>
+        </div>
+        <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+          {filtered.slice(0, 10).map((loc, idx) => (
+            <div key={idx} className="px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-800">{loc.name}</p>
+                <p className="text-xs text-slate-500">{loc.region}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-emerald-600">{loc.hours}h</p>
+                <p className="text-xs text-slate-500">{loc.employees} people</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Leaderboard Section
+function LeaderboardSection({ csrData }: { csrData: CSRDashboardData | undefined }) {
+  const leaderboard = csrData?.leaderboard || [];
+
+  return (
+    <div className="space-y-4">
+      {/* Top 3 Podium */}
+      <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+        <div className="flex items-center gap-2 mb-4">
+          <Award className="w-5 h-5 text-amber-600" />
+          <span className="font-bold text-slate-800">Top Performers</span>
+        </div>
+        <div className="flex justify-center items-end gap-4">
+          {/* 2nd Place */}
+          {leaderboard[1] && (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center mb-2 mx-auto border-4 border-slate-300">
+                <span className="text-2xl font-bold text-slate-600">2</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-800 truncate max-w-20">{leaderboard[1].employeeName}</p>
+              <p className="text-[10px] text-slate-500">{leaderboard[1].hours}h</p>
+            </div>
+          )}
+          {/* 1st Place */}
+          {leaderboard[0] && (
+            <div className="text-center -mt-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-300 to-yellow-400 flex items-center justify-center mb-2 mx-auto border-4 border-amber-400 shadow-lg">
+                <span className="text-3xl font-bold text-amber-700">1</span>
+              </div>
+              <p className="text-sm font-bold text-slate-800 truncate max-w-24">{leaderboard[0].employeeName}</p>
+              <p className="text-xs text-amber-600 font-semibold">{leaderboard[0].hours}h • {leaderboard[0].points} pts</p>
+            </div>
+          )}
+          {/* 3rd Place */}
+          {leaderboard[2] && (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center mb-2 mx-auto border-4 border-orange-300">
+                <span className="text-2xl font-bold text-orange-600">3</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-800 truncate max-w-20">{leaderboard[2].employeeName}</p>
+              <p className="text-[10px] text-slate-500">{leaderboard[2].hours}h</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Full Leaderboard */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <span className="font-semibold text-slate-700 text-sm">Full Rankings</span>
+          <span className="text-xs text-slate-500">{leaderboard.length} employees</span>
+        </div>
+        <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+          {leaderboard.map((emp, idx) => (
+            <div key={idx} className="px-4 py-3 flex items-center gap-3">
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                idx === 0 ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-300' :
+                idx === 1 ? 'bg-slate-200 text-slate-600' :
+                idx === 2 ? 'bg-orange-100 text-orange-600' :
+                'bg-slate-100 text-slate-500'
+              }`}>
+                {idx + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate">{emp.employeeName}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold text-emerald-600">{emp.hours}h</p>
+                <p className="text-xs text-slate-500">{emp.points} points</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Recognition Section
+function RecognitionSection({ csrData }: { csrData: CSRDashboardData | undefined }) {
+  const leaderboard = csrData?.leaderboard || [];
+  const topPerformers = leaderboard.slice(0, 3);
+
+  return (
+    <div className="space-y-4">
+      {/* Recognition Header */}
+      <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-red-500 rounded-xl p-6 text-white">
+        <Award className="w-8 h-8 mb-3" />
+        <h2 className="text-xl font-bold mb-1">Employee Recognition</h2>
+        <p className="text-pink-100 text-sm">Celebrate your team's achievements</p>
+      </div>
+
+      {/* Monthly Stars */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span className="font-semibold text-slate-800 text-sm">This Month's Stars</span>
+          </div>
+        </div>
+        <div className="p-4 space-y-3">
+          {topPerformers.map((emp, idx) => (
+            <div key={idx} className="flex items-center gap-4 p-3 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                idx === 0 ? 'bg-gradient-to-br from-amber-300 to-yellow-400' :
+                idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
+                'bg-gradient-to-br from-orange-300 to-orange-400'
+              }`}>
+                <Award className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-slate-800">{emp.employeeName}</p>
+                <p className="text-xs text-slate-500">{emp.hours} hours volunteered</p>
+              </div>
+              <div className="text-right">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                  <Zap className="w-3 h-3" />
+                  {emp.points} pts
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Achievement Badges */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <h3 className="font-semibold text-slate-800 mb-3 text-sm">Achievement Badges</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="w-10 h-10 mx-auto mb-2 bg-amber-100 rounded-full flex items-center justify-center">
+              <Clock className="w-5 h-5 text-amber-600" />
+            </div>
+            <p className="text-xs font-semibold text-slate-700">Time Champion</p>
+            <p className="text-[10px] text-slate-500">100+ hours</p>
+          </div>
+          <div className="text-center p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+            <div className="w-10 h-10 mx-auto mb-2 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Target className="w-5 h-5 text-emerald-600" />
+            </div>
+            <p className="text-xs font-semibold text-slate-700">Goal Getter</p>
+            <p className="text-[10px] text-slate-500">5 SDGs</p>
+          </div>
+          <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-200">
+            <div className="w-10 h-10 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+              <Users className="w-5 h-5 text-purple-600" />
+            </div>
+            <p className="text-xs font-semibold text-slate-700">Team Player</p>
+            <p className="text-[10px] text-slate-500">10 projects</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recognition CTA */}
+      <button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl p-4 flex items-center justify-center gap-2 font-semibold shadow-lg">
+        <MessageCircle className="w-5 h-5" />
+        Send Recognition
+      </button>
+    </div>
+  );
+}
+
+// Challenges Section
+function ChallengesSection({ csrData, navigate }: { csrData: CSRDashboardData | undefined; navigate: any }) {
+  const challenges = csrData?.challenges || [];
+
+  return (
+    <div className="space-y-4">
+      {/* Active Challenges Header */}
+      <div className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 rounded-xl p-6 text-white">
+        <Calendar className="w-8 h-8 mb-3" />
+        <h2 className="text-xl font-bold mb-1">Active Challenges</h2>
+        <p className="text-purple-100 text-sm">{challenges.length} challenges in progress</p>
+      </div>
+
+      {/* Challenge Cards */}
+      <div className="space-y-3">
+        {challenges.length > 0 ? challenges.map((challenge, idx) => {
+          const progress = challenge.target > 0 ? (challenge.progress / challenge.target) * 100 : 0;
+          const sdgColor = SDG_COLORS[challenge.sdgGoal] || '#6366f1';
+
+          return (
+            <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                    style={{ backgroundColor: sdgColor }}
+                  >
+                    {challenge.sdgGoal}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-800 text-sm">{challenge.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">SDG {challenge.sdgGoal}: {SDG_NAMES[challenge.sdgGoal]}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
+                    challenge.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                    challenge.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                    'bg-slate-100 text-slate-600'
+                  }`}>
+                    {challenge.status}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-600">Progress</span>
+                    <span className="font-semibold text-slate-800">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(progress, 100)}%`, backgroundColor: sdgColor }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {challenge.progress.toLocaleString()} / {challenge.target.toLocaleString()} goal
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+            <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+            <p className="text-slate-600 font-medium">No active challenges</p>
+            <p className="text-slate-400 text-sm mt-1">Create a challenge to engage your team</p>
+          </div>
+        )}
+      </div>
+
+      {/* Create Challenge CTA */}
+      <button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl p-4 flex items-center justify-center gap-2 font-semibold shadow-lg">
+        <Zap className="w-5 h-5" />
+        Create New Challenge
+      </button>
     </div>
   );
 }

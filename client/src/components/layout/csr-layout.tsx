@@ -61,15 +61,43 @@ interface CSRLayoutProps {
   activeNav?: "dashboard" | "impact" | "engagement" | "portfolio" | "reports" | "settings";
 }
 
-// Sidebar navigation items (for sidebar and mobile menu)
-const navItems = [
-  { id: "dashboard", label: "Command Center", icon: Home, href: "/csr-dashboard?tab=overview" },
-  { id: "engagement", label: "Employee Engagement", icon: UserCheck, href: "/csr-dashboard?tab=engagement" },
-  { id: "impact", label: "Impact Analytics", icon: TrendingUp, href: "/csr-impact-reporting" },
-  { id: "portfolio", label: "Project Portfolio", icon: Briefcase, href: "/project-portfolio" },
-  { id: "reports", label: "Reports & Exports", icon: FileText, href: "/csr-reports-exports" },
-  { id: "settings", label: "Settings", icon: Settings, href: "/corporate-partner-profile-settings" },
+// Sidebar navigation items organized by sections
+const navSections = [
+  {
+    title: "DASHBOARD",
+    items: [
+      { id: "overview", label: "Overview", icon: Home, href: "/csr-dashboard?tab=overview", description: "ESG Dashboard home" },
+      { id: "engagement", label: "Employee Engagement", icon: UserCheck, href: "/csr-dashboard?tab=engagement", description: "Team activity & stats" },
+      { id: "sdg", label: "SDG Alignment", icon: TrendingUp, href: "/csr-dashboard?tab=sdgs", description: "UN Goals tracking" },
+    ]
+  },
+  {
+    title: "ANALYTICS & REPORTS",
+    items: [
+      { id: "impact", label: "Impact Reports", icon: BarChart3, href: "/csr-impact-reporting", description: "View detailed reports" },
+      { id: "exports", label: "Export Data", icon: FileText, href: "/csr-reports-exports", description: "Download CSV/PDF reports" },
+      { id: "geographic", label: "Geographic Impact", icon: Building2, href: "/csr-dashboard?tab=geographic", description: "Map view of activities" },
+    ]
+  },
+  {
+    title: "ENGAGEMENT TOOLS",
+    items: [
+      { id: "leaderboard", label: "Leaderboard", icon: Award, href: "/csr-dashboard?tab=leaderboard", description: "Top performers", hot: true },
+      { id: "recognition", label: "Recognition", icon: Zap, href: "/csr-dashboard?tab=recognition", description: "Celebrate employees" },
+      { id: "challenges", label: "Challenges", icon: Calendar, href: "/csr-dashboard?tab=challenges", description: "Active initiatives" },
+    ]
+  },
+  {
+    title: "ACCOUNT",
+    items: [
+      { id: "settings", label: "Settings", icon: Settings, href: "/corporate-partner-profile-settings", description: "Dashboard preferences" },
+      { id: "profile", label: "Company Profile", icon: Briefcase, href: "/corporate-partner-profile-settings?section=company", description: "Update company info" },
+    ]
+  }
 ];
+
+// Flat list for backward compatibility
+const navItems = navSections.flatMap(section => section.items);
 
 // Main header navigation - 4 tabs only
 const headerNavItems = [
@@ -776,74 +804,93 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           </div>
         </div>
 
-        {/* Mobile Menu Navigation */}
-        <nav style={{ padding: "16px", flex: 1 }}>
-          <div style={{ marginBottom: "12px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Dashboard Navigation
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeNav === item.id;
-              return (
-                <button
-                  type="button"
-                  key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigate(item.href);
-                    setShowMobileMenu(false);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "14px 16px",
-                    borderRadius: "12px",
-                    background: isActive
-                      ? "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)"
-                      : "transparent",
-                    color: isActive ? "white" : "#475569",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: isActive ? "600" : "500",
-                    fontSize: "14px",
-                    textAlign: "left",
-                    width: "100%",
-                    transition: "all 0.2s ease",
-                    boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
-                    pointerEvents: "auto",
-                    position: "relative",
-                    zIndex: 5,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                      e.currentTarget.style.color = "#3b82f6";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#475569";
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.transform = "scale(0.98)";
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Mobile Menu Navigation - Sectioned */}
+        <nav style={{ padding: "12px", flex: 1, overflowY: "auto" }}>
+          {navSections.map((section, sectionIndex) => (
+            <div key={section.title} style={{ marginBottom: sectionIndex < navSections.length - 1 ? "16px" : "0" }}>
+              {/* Section Title */}
+              <div style={{ padding: "6px 12px 4px", marginBottom: "4px" }}>
+                <span style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                  {section.title}
+                </span>
+              </div>
+              {/* Section Items */}
+              {section.items.map((item: any) => {
+                const Icon = item.icon;
+                const isActive = activeNav === item.id ||
+                  (item.id === "overview" && activeNav === "dashboard") ||
+                  location.includes(item.href.split("?")[0]);
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate(item.href);
+                      setShowMobileMenu(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "12px 14px",
+                      borderRadius: "10px",
+                      background: isActive
+                        ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                        : "transparent",
+                      color: isActive ? "white" : "#475569",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: isActive ? "600" : "500",
+                      fontSize: "13px",
+                      textAlign: "left",
+                      width: "100%",
+                      transition: "all 0.2s ease",
+                      boxShadow: isActive ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none",
+                      pointerEvents: "auto",
+                      position: "relative",
+                      zIndex: 5,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                        e.currentTarget.style.color = "#059669";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "#475569";
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.transform = "scale(0.98)";
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  >
+                    <Icon size={18} />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.hot && (
+                      <span style={{
+                        fontSize: "9px",
+                        fontWeight: "700",
+                        color: "#dc2626",
+                        background: "rgba(220, 38, 38, 0.1)",
+                        padding: "2px 5px",
+                        borderRadius: "4px",
+                        border: "1px solid rgba(220, 38, 38, 0.2)",
+                      }}>
+                        HOT
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
 
           {/* Main Navigation in Mobile */}
           <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}>
@@ -939,73 +986,93 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             overflowY: "auto",
           }}
         >
-          {/* Navigation Section Title */}
-          <div style={{ marginBottom: "12px", paddingLeft: "16px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Dashboard Navigation
-            </span>
-          </div>
-
-          {/* Navigation */}
-          <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeNav === item.id;
-              return (
-                <button
-                  type="button"
-                  key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigate(item.href);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "12px 16px",
-                    borderRadius: "12px",
-                    background: isActive
-                      ? "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)"
-                      : "transparent",
-                    color: isActive ? "white" : "#475569",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: isActive ? "600" : "500",
-                    fontSize: "14px",
-                    textAlign: "left",
-                    width: "100%",
-                    transition: "all 0.2s ease",
-                    boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
-                    pointerEvents: "auto",
-                    position: "relative",
-                    zIndex: 5,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "rgba(59, 130, 246, 0.08)";
-                      e.currentTarget.style.color = "#3b82f6";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#475569";
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.transform = "scale(0.98)";
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+          {/* Sectioned Navigation */}
+          <nav style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, overflowY: "auto" }}>
+            {navSections.map((section, sectionIndex) => (
+              <div key={section.title} style={{ marginBottom: sectionIndex < navSections.length - 1 ? "12px" : "0" }}>
+                {/* Section Title */}
+                <div style={{ padding: "8px 16px 6px", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                    {section.title}
+                  </span>
+                </div>
+                {/* Section Items */}
+                {section.items.map((item: any) => {
+                  const Icon = item.icon;
+                  const isActive = activeNav === item.id ||
+                    (item.id === "overview" && activeNav === "dashboard") ||
+                    location.includes(item.href.split("?")[0]);
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(item.href);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        background: isActive
+                          ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                          : "transparent",
+                        color: isActive ? "white" : "#475569",
+                        border: "none",
+                        cursor: "pointer",
+                        fontWeight: isActive ? "600" : "500",
+                        fontSize: "13px",
+                        textAlign: "left",
+                        width: "100%",
+                        transition: "all 0.2s ease",
+                        boxShadow: isActive ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none",
+                        pointerEvents: "auto",
+                        position: "relative",
+                        zIndex: 5,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = "rgba(16, 185, 129, 0.08)";
+                          e.currentTarget.style.color = "#059669";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "#475569";
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.transform = "scale(0.98)";
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      title={item.description}
+                    >
+                      <Icon size={18} />
+                      <span style={{ flex: 1 }}>{item.label}</span>
+                      {item.hot && (
+                        <span style={{
+                          fontSize: "9px",
+                          fontWeight: "700",
+                          color: "#dc2626",
+                          background: "rgba(220, 38, 38, 0.1)",
+                          padding: "2px 5px",
+                          borderRadius: "4px",
+                          border: "1px solid rgba(220, 38, 38, 0.2)",
+                        }}>
+                          HOT
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
           {/* Bottom Help Section */}

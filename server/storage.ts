@@ -110,7 +110,7 @@ import {
   type InsertVolunteerOrganizationRelationship
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
-import { db } from "./db";
+import { db, withTransaction, type Transaction } from "./db";
 import { eq, and, or, asc, desc, inArray, isNull, isNotNull } from "drizzle-orm";
 
 // Custom error for duplicate project assignments
@@ -797,33 +797,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertVolunteerOrganizationRelationship(volunteerId: number, organizationId: number, updates: Partial<InsertVolunteerOrganizationRelationship>): Promise<VolunteerOrganizationRelationship> {
-    // Try to find existing relationship
-    const existing = await this.getVolunteerOrganizationRelationship(volunteerId, organizationId);
+    // Use transaction for atomicity - prevents race conditions between check and write
+    return await withTransaction(async (tx) => {
+      // Try to find existing relationship within transaction
+      const [existing] = await tx.select().from(volunteerOrganizationRelationships).where(
+        and(
+          eq(volunteerOrganizationRelationships.volunteerId, volunteerId),
+          eq(volunteerOrganizationRelationships.organizationId, organizationId)
+        )
+      );
 
-    if (existing) {
-      // Update existing relationship
-      const updated = await this.updateVolunteerOrganizationRelationship(existing.id, {
-        ...updates,
-        lastActivityAt: new Date(),
-        totalApplications: (existing.totalApplications || 0) + (updates.totalApplications ? 1 : 0)
-      });
-      return updated!;
-    } else {
-      // Create new relationship
-      return await this.createVolunteerOrganizationRelationship({
-        volunteerId,
-        organizationId,
-        relationshipType: updates.relationshipType || 'applied',
-        firstContactAt: new Date(),
-        lastActivityAt: new Date(),
-        totalApplications: 1,
-        totalProjectsCompleted: 0,
-        totalHoursContributed: 0,
-        totalAiuEarned: 0,
-        isActive: true,
-        ...updates
-      });
-    }
+      if (existing) {
+        // Update existing relationship
+        const [updated] = await tx.update(volunteerOrganizationRelationships)
+          .set({
+            ...updates,
+            lastActivityAt: new Date(),
+            totalApplications: (existing.totalApplications || 0) + (updates.totalApplications ? 1 : 0)
+          })
+          .where(eq(volunteerOrganizationRelationships.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        // Create new relationship
+        const [newRelationship] = await tx.insert(volunteerOrganizationRelationships).values({
+          volunteerId,
+          organizationId,
+          relationshipType: updates.relationshipType || 'applied',
+          firstContactAt: new Date(),
+          lastActivityAt: new Date(),
+          totalApplications: 1,
+          totalProjectsCompleted: 0,
+          totalHoursContributed: 0,
+          totalAiuEarned: 0,
+          isActive: true,
+          ...updates
+        }).returning();
+        return newRelationship;
+      }
+    });
   }
 
   // Saved Opportunity operations
@@ -939,21 +951,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment> {
-    // Check for duplicate pending or active assignments
-    const existing = await this.findProjectAssignmentByVolunteerProject(
-      assignment.volunteerId,
-      assignment.projectId,
-      ['pending', 'active']
-    );
-    
-    if (existing) {
-      throw new DuplicateAssignmentError(
-        `Volunteer is already assigned to this project with status: ${existing.status}`
+    // Use transaction for atomicity - prevents race condition where duplicate check passes
+    // but another concurrent request creates an assignment before this one completes
+    return await withTransaction(async (tx) => {
+      // Check for duplicate pending or active assignments within transaction
+      const statuses = ['pending', 'active'];
+      const [existing] = await tx.select().from(projectAssignments).where(
+        and(
+          eq(projectAssignments.volunteerId, assignment.volunteerId),
+          eq(projectAssignments.projectId, assignment.projectId),
+          inArray(projectAssignments.status, statuses)
+        )
       );
-    }
 
-    const [newAssignment] = await db.insert(projectAssignments).values(assignment).returning();
-    return newAssignment;
+      if (existing) {
+        throw new DuplicateAssignmentError(
+          `Volunteer is already assigned to this project with status: ${existing.status}`
+        );
+      }
+
+      const [newAssignment] = await tx.insert(projectAssignments).values(assignment).returning();
+      return newAssignment;
+    });
   }
 
   async updateProjectAssignment(id: number, assignment: Partial<InsertProjectAssignment>): Promise<ProjectAssignment | undefined> {
@@ -1075,18 +1094,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
-    const volunteer = await this.getVolunteer(insertMatch.volunteerId);
-    if (!volunteer) {
-      throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
-    }
+    // Use transaction for atomicity - ensures entity validation and insert are atomic
+    return await withTransaction(async (tx) => {
+      const [volunteer] = await tx.select().from(volunteers).where(eq(volunteers.id, insertMatch.volunteerId));
+      if (!volunteer) {
+        throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
+      }
 
-    const organization = await this.getMatchableOrganization(insertMatch.organizationId);
-    if (!organization) {
-      throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
-    }
+      const [organization] = await tx.select().from(matchableOrganizations).where(eq(matchableOrganizations.id, insertMatch.organizationId));
+      if (!organization) {
+        throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
+      }
 
-    const [match] = await db.insert(matches).values(insertMatch).returning();
-    return match;
+      const [match] = await tx.insert(matches).values(insertMatch).returning();
+      return match;
+    });
   }
 
   async updateMatch(id: number, matchData: Partial<InsertMatch>): Promise<Match | undefined> {
@@ -1109,33 +1131,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertMatch(insertMatch: InsertMatch): Promise<Match> {
-    const volunteer = await this.getVolunteer(insertMatch.volunteerId);
-    if (!volunteer) {
-      throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
-    }
+    // Use transaction for atomicity - prevents race conditions in check-then-write
+    return await withTransaction(async (tx) => {
+      // Verify entities exist within transaction
+      const [volunteer] = await tx.select().from(volunteers).where(eq(volunteers.id, insertMatch.volunteerId));
+      if (!volunteer) {
+        throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
+      }
 
-    const organization = await this.getMatchableOrganization(insertMatch.organizationId);
-    if (!organization) {
-      throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
-    }
+      const [organization] = await tx.select().from(matchableOrganizations).where(eq(matchableOrganizations.id, insertMatch.organizationId));
+      if (!organization) {
+        throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
+      }
 
-    const existingMatches = await db.select().from(matches).where(
-      and(
-        eq(matches.volunteerId, insertMatch.volunteerId),
-        eq(matches.organizationId, insertMatch.organizationId)
-      )
-    );
+      const [existingMatch] = await tx.select().from(matches).where(
+        and(
+          eq(matches.volunteerId, insertMatch.volunteerId),
+          eq(matches.organizationId, insertMatch.organizationId)
+        )
+      );
 
-    if (existingMatches.length > 0) {
-      const [updated] = await db.update(matches)
-        .set({ score: insertMatch.score, matchedOn: new Date() })
-        .where(eq(matches.id, existingMatches[0].id))
-        .returning();
-      return updated;
-    } else {
-      const [match] = await db.insert(matches).values(insertMatch).returning();
-      return match;
-    }
+      if (existingMatch) {
+        const [updated] = await tx.update(matches)
+          .set({ score: insertMatch.score, matchedOn: new Date() })
+          .where(eq(matches.id, existingMatch.id))
+          .returning();
+        return updated;
+      } else {
+        const [match] = await tx.insert(matches).values(insertMatch).returning();
+        return match;
+      }
+    });
   }
 
   async deleteMatch(id: number): Promise<boolean> {

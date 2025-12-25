@@ -138,3 +138,81 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     return false;
   }
 }
+
+// Transaction types for Drizzle
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Execute operations within a database transaction
+ * Automatically rolls back on error
+ *
+ * @param callback - Function containing database operations
+ * @returns Result of the callback
+ * @throws Rolls back transaction and re-throws on error
+ *
+ * @example
+ * const result = await withTransaction(async (tx) => {
+ *   const user = await tx.insert(users).values({...}).returning();
+ *   const profile = await tx.insert(profiles).values({userId: user[0].id}).returning();
+ *   return { user: user[0], profile: profile[0] };
+ * });
+ */
+export async function withTransaction<T>(
+  callback: (tx: Transaction) => Promise<T>
+): Promise<T> {
+  return await db.transaction(async (tx) => {
+    try {
+      return await callback(tx);
+    } catch (error) {
+      // Transaction will be automatically rolled back by Drizzle
+      console.error('[DB Transaction] Error, rolling back:', error);
+      throw error;
+    }
+  });
+}
+
+/**
+ * Execute operations within a transaction with retry logic
+ * Useful for handling transient failures (deadlocks, connection issues)
+ *
+ * @param callback - Function containing database operations
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @returns Result of the callback
+ */
+export async function withTransactionRetry<T>(
+  callback: (tx: Transaction) => Promise<T>,
+  maxRetries: number = 3
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await withTransaction(callback);
+    } catch (error: any) {
+      lastError = error;
+
+      // Don't retry on validation errors
+      if (error.code === '23505' || // Unique violation
+          error.code === '23503' || // Foreign key violation
+          error.code === '22P02') { // Invalid text representation
+        throw error;
+      }
+
+      // Retry on deadlock or serialization failure
+      if (error.code === '40001' || // Serialization failure
+          error.code === '40P01') { // Deadlock detected
+        if (attempt < maxRetries) {
+          const delay = 100 * Math.pow(2, attempt - 1);
+          console.warn(`[DB Transaction] Retrying after ${error.code} (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      // For other errors, don't retry
+      throw error;
+    }
+  }
+
+  throw lastError;
+}

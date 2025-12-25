@@ -435,7 +435,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto z-40 pb-16" style={{ background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)" }}>
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto pb-16" style={{ background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)", zIndex: 1 }}>
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">

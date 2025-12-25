@@ -1476,10 +1476,10 @@ export default function CSRDashboard() {
         </header>
 
         {/* Spacer for fixed header */}
-        <div className="h-[52px]" />
+        <div className="h-14" />
 
         {/* Company Name Banner with Large Logo */}
-        <div className="bg-white/90 backdrop-blur-sm border-b border-emerald-200/50 px-4 py-3">
+        <div className="bg-gradient-to-r from-emerald-50/95 via-teal-50/95 to-amber-50/95 backdrop-blur-sm border-b border-emerald-200/50 px-4 py-3">
           <div className="flex items-center gap-3">
             {companyLogo ? (
               <img

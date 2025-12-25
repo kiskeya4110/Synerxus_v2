@@ -209,12 +209,12 @@ export default function OrganizationMessages() {
   );
 
   return (
-    <>
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       <OrganizationHeader activeTab="messages" />
       <OrganizationWelcomeBanner />
 
-      <div className="bg-gray-50 min-h-[calc(100vh-200px)]">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="flex-1">
+        <div className="max-w-[1400px] mx-auto px-6 py-6">
           {/* Page Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -448,6 +448,6 @@ export default function OrganizationMessages() {
       </div>
 
       <Footer />
-    </>
+    </div>
   );
 }

@@ -236,11 +236,11 @@ export default function OrganizationTeamPage() {
   const pendingMembers = members.filter(m => m.status === "invited");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       <OrganizationHeader activeTab="team" />
       <OrganizationWelcomeBanner />
 
-      <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
+      <main className="flex-1 max-w-[1400px] mx-auto px-6 py-8 w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

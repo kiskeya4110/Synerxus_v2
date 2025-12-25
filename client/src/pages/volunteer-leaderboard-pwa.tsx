@@ -160,7 +160,7 @@ export default function VolunteerLeaderboardPWA() {
   const totalPoints = leaderboardData.reduce((sum, v) => sum + v.totalPoints, 0);
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden">
       {/* Centered App Container */}
       <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
         {/* Shared Header with Refresh Button */}

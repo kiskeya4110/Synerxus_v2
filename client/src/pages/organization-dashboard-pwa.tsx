@@ -506,7 +506,7 @@ export default function OrganizationDashboardPWA() {
   }
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto z-40">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
       {/* Centered App Container */}
       <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
         {/* Offline Banner */}

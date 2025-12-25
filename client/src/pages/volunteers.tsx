@@ -392,11 +392,11 @@ export default function Volunteers() {
   }
 
   return (
-    <>
+    <div className={isOrganization ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
       {isOrganization && <OfflineBanner />}
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
       {isOrganization && <OrganizationWelcomeBanner />}
-      <div className={isOrganization ? "h-screen overflow-y-auto pb-24 max-w-[1400px] mx-auto p-6" : "h-screen overflow-y-auto pb-24"}>
+      <div className={isOrganization ? "flex-1 overflow-y-auto pb-24 max-w-[1400px] mx-auto px-6 pt-6 w-full" : "h-screen overflow-y-auto pb-24"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Volunteers</h1>
@@ -1226,6 +1226,6 @@ export default function Volunteers() {
           // queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
         }}
       />
-    </>
+    </div>
   );
 }

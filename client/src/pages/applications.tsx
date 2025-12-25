@@ -307,10 +307,10 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className={isOrganizationUser ? "min-h-screen flex flex-col" : ""}>
+    <div className={isOrganizationUser ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="applications" />}
       {isOrganizationUser && <OrganizationWelcomeBanner />}
-      <div className={isOrganizationUser ? "p-6 flex-1" : "p-6"}>
+      <div className={isOrganizationUser ? "flex-1 px-6 pb-6" : "p-6"} style={isOrganizationUser ? { maxWidth: '1400px', margin: '0 auto', width: '100%', paddingTop: '24px' } : undefined}>
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Applications</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">

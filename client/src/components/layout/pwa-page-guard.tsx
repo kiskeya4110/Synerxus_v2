@@ -103,7 +103,7 @@ export default function PWAPageGuard({
  */
 export function PWALoadingSkeleton() {
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] flex flex-col overflow-hidden z-40 max-w-[428px] mx-auto">
+    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] flex flex-col overflow-hidden max-w-[428px] mx-auto">
       {/* Header skeleton */}
       <div
         className="px-4 py-3 flex items-center justify-between"

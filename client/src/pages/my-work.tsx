@@ -471,7 +471,7 @@ export default function MyWork() {
       {isOrganizationManager && <OrganizationWelcomeBanner />}
       {/* Top Navigation Buttons for Organization Managers */}
       {isOrganizationManager && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex gap-2 items-center justify-start border-b">
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 items-center justify-start border-b">
           <button
             onClick={() => setLocation('/overview')}
             className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
@@ -513,7 +513,7 @@ export default function MyWork() {
         </div>
       )}
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4 flex items-start justify-between">
+      <div className="max-w-[1400px] mx-auto px-6 pt-6 pb-4 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -549,7 +549,7 @@ export default function MyWork() {
 
       {/* Organization Impact KPIs - Interactive Cards */}
       {isOrganizationManager ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pb-4">
+        <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pb-4">
           {/* Impact Score - Primary Metric */}
           <Card
             className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:scale-[1.02]"
@@ -642,7 +642,7 @@ export default function MyWork() {
           </Card>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
+        <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('tasks')} data-testid="card-tasks">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -702,7 +702,7 @@ export default function MyWork() {
 
       {/* Personalized Recommendations Section */}
       {personalizedRecommendations.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
+        <div className="max-w-[1400px] mx-auto px-6 pb-6">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-semibold">Personalized Opportunities for You</h2>
@@ -755,7 +755,7 @@ export default function MyWork() {
       )}
 
       {isOrganizationManager ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="max-w-[1400px] mx-auto px-6 py-4">
           {/* Projects List Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -831,7 +831,7 @@ export default function MyWork() {
           </div>
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-7xl mx-auto px-4 sm:px-6 pb-20 md:pb-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-[1400px] mx-auto px-6 pb-20 md:pb-4">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 md:grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />

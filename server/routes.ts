@@ -7644,8 +7644,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           const projectsWorkedOn = Array.from(new Set(employeeActivities.map((a: any) => a.projectId)));
           const projectsWithEmployeeEngagement = projectsWorkedOn.map(pid => ({ projectId: pid }));
           
-          // Calculate economic value at $34.75/hour standard rate (EMPLOYEE HOURS ONLY)
-          const economicValue = employeeHours * 34.75;
+          // Calculate economic value at $34.79/hour standard rate (EMPLOYEE HOURS ONLY)
+          const economicValue = employeeHours * 34.79;
           
           // Build employee leaderboard from real activities
           const employeeLeaderboard = Array.from(employeeUserIds).map((userId: any) => {
@@ -8029,7 +8029,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       };
 
       // 3. Financial Impact
-      const economicValue = totalEmployeeHours * 34.75; // $34.75/hr standard
+      const economicValue = totalEmployeeHours * 34.79; // $34.79/hr standard
       const programCost = (userPartner.annualCSRBudget || 50000) * 0.3; // Assume 30% for volunteer programs
       const roi = programCost > 0 ? ((economicValue - programCost) / programCost * 100) : 0;
 
@@ -8948,7 +8948,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const userMilestones = milestones.filter((m: any) => m.userId === uid);
 
       const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
-      const economicValue = totalHours * 34.75; // $34.75/hour standard rate
+      const economicValue = totalHours * 34.79; // $34.79/hour standard rate
       const allSkills = userActivities.flatMap((a: any) => a.skillsApplied || []);
       const uniqueSkills = Array.from(new Set(allSkills));
 

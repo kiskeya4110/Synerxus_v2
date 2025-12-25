@@ -712,7 +712,7 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       region: p.region,
       employees: p.employees.size,
       hours: p.hours,
-      economicValue: Math.round(p.hours * 34.75), // $34.75/hr standard rate
+      economicValue: Math.round(p.hours * 34.79), // $34.79/hr standard rate
       status: p.status,
       isSponsored: p.isSponsored,
       isActive: p.isActive,
@@ -1349,7 +1349,7 @@ csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
     };
 
     // 3. Financial Impact
-    const economicValue = totalEmployeeHours * 34.75; // $34.75/hr standard
+    const economicValue = totalEmployeeHours * 34.79; // $34.79/hr standard
     const programCost = (userPartner.annualCSRBudget || 50000) * 0.3; // Assume 30% for volunteer programs
     const roi = programCost > 0 ? ((economicValue - programCost) / programCost * 100) : 0;
 
@@ -2488,7 +2488,7 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
 
     // Calculate KPIs and advanced metrics
     const avgHoursPerEmployee = engagedEmployees > 0 ? Math.round((totalHours / engagedEmployees) * 100) / 100 : 0;
-    const economicValue = totalHours * 34.75; // $34.75/hour volunteer value
+    const economicValue = totalHours * 34.79; // $34.79/hour volunteer value
     const retentionRate = leaderboard.filter(v => v.projects > 1).length > 0 
       ? Math.round((leaderboard.filter(v => v.projects > 1).length / engagedEmployees) * 100)
       : 0;
@@ -2602,7 +2602,7 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
           repeatVolunteerRate: 45, // Industry repeat rate
           skillsMatchRate: 55, // Average skills matching
           volunteerHours: 8000, // Median for mid-size company
-          economicValue: 278000 // Based on $34.75/hour
+          economicValue: 278000 // Based on $34.79/hour
         },
         topPerformers: {
           participationRate: 70, // Top quartile with VTO + matching programs (Culture Amp 2025)
@@ -2899,7 +2899,7 @@ csrRouter.get("/employee-engagement/impact-dashboard/:userId", async (req: Reque
     const userMilestones = milestones.filter((m: any) => m.userId === uid);
 
     const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
-    const economicValue = totalHours * 34.75; // $34.75/hour standard rate
+    const economicValue = totalHours * 34.79; // $34.79/hour standard rate
     const allSkills = userActivities.flatMap((a: any) => a.skillsApplied || []);
     const uniqueSkills = Array.from(new Set(allSkills));
 

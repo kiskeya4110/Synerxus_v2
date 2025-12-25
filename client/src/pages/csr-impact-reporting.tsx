@@ -140,7 +140,7 @@ function calculateSROI(data: ImpactData): { ratio: number; interpretation: strin
   const investment = data.financialMetrics.programCost || 1;
   const socialValue = (data.impactMetrics.directBeneficiaries * 150) +
                       (data.impactMetrics.indirectBeneficiaries * 50) +
-                      (data.engagementMetrics.totalHours * 34.75);
+                      (data.engagementMetrics.totalHours * 34.79);
   const ratio = Math.round((socialValue / investment) * 100) / 100;
 
   let interpretation = "Developing";
@@ -154,7 +154,7 @@ function calculateSROI(data: ImpactData): { ratio: number; interpretation: strin
 
 // Calculate LBG (London Benchmarking Group) metrics
 function calculateLBGMetrics(data: ImpactData): { input: number; output: number; impact: number; category: string } {
-  const input = data.financialMetrics.programCost + (data.engagementMetrics.totalHours * 34.75);
+  const input = data.financialMetrics.programCost + (data.engagementMetrics.totalHours * 34.79);
   const output = data.impactMetrics.directBeneficiaries + data.impactMetrics.indirectBeneficiaries;
   const impact = Math.round((output / input) * 1000);
 
@@ -575,7 +575,7 @@ export function CSRImpactReporting() {
         description: "For every $1 invested, this is the social value generated",
         breakdown: [
           { label: "Beneficiary Value", value: `$${Math.round((impactData?.impactMetrics.directBeneficiaries || 0) * 150 / 1000)}K`, color: "#059669" },
-          { label: "Volunteer Value", value: `$${Math.round((impactData?.engagementMetrics.totalHours || 0) * 34.75 / 1000)}K`, color: "#3b82f6" },
+          { label: "Volunteer Value", value: `$${Math.round((impactData?.engagementMetrics.totalHours || 0) * 34.79 / 1000)}K`, color: "#3b82f6" },
           { label: "Community Value", value: `$${Math.round((impactData?.impactMetrics.indirectBeneficiaries || 0) * 50 / 1000)}K`, color: "#8b5cf6" },
         ],
         benchmark: { industry: 2.5, yours: sroiData.ratio },

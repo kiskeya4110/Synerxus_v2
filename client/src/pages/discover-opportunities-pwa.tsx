@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import CSRPWANav from "@/components/layout/csr-pwa-nav";
+import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -85,6 +89,31 @@ export default function DiscoverOpportunitiesPWA() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType') || 'volunteer';
+
+  // Render appropriate header based on user type
+  const renderHeader = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWAHeader />;
+      case 'corporate_partner':
+        return <CSRPWAHeader companyName="CSR Partner" />;
+      default:
+        return <PWAHeader />;
+    }
+  };
+
+  // Render appropriate navigation based on user type
+  const renderNav = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWANav activeTab="projects" />;
+      case 'corporate_partner':
+        return <CSRPWANav activeTab="projects" />;
+      default:
+        return <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />;
+    }
+  };
 
   // Update filters when URL params change
   useEffect(() => {
@@ -247,8 +276,8 @@ export default function DiscoverOpportunitiesPWA() {
 
   return (
     <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col w-full max-w-full overflow-hidden">
-      {/* PWA Header */}
-      <PWAHeader />
+      {/* PWA Header - User Type Aware */}
+      {renderHeader()}
 
       {/* Spacer for fixed header */}
       <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
@@ -617,8 +646,8 @@ export default function DiscoverOpportunitiesPWA() {
         />
       )}
 
-      {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />
+      {/* Bottom Navigation - User Type Aware */}
+      {renderNav()}
     </div>
   );
 }

@@ -4,6 +4,10 @@ import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import CSRPWANav from "@/components/layout/csr-pwa-nav";
+import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -67,9 +71,34 @@ export default function OpportunityDetailPWA() {
 
   // Check if user has applied for this opportunity
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType') || 'volunteer';
   const hasApplied = applications.some((app: any) =>
     app.opportunityId === opportunityId && app.volunteerId === parseInt(userId || '0')
   );
+
+  // Render appropriate header based on user type
+  const renderHeader = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWAHeader />;
+      case 'corporate_partner':
+        return <CSRPWAHeader companyName="CSR Partner" />;
+      default:
+        return <PWAHeader />;
+    }
+  };
+
+  // Render appropriate navigation based on user type
+  const renderNav = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWANav activeTab="projects" />;
+      case 'corporate_partner':
+        return <CSRPWANav activeTab="projects" />;
+      default:
+        return <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />;
+    }
+  };
 
   const { toast } = useToast();
 
@@ -125,8 +154,8 @@ export default function OpportunityDetailPWA() {
 
   return (
     <div className="w-full min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-full overflow-hidden">
-      {/* PWA Header */}
-      <PWAHeader />
+      {/* PWA Header - User Type Aware */}
+      {renderHeader()}
 
       {/* Spacer for fixed header */}
       <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
@@ -280,8 +309,8 @@ export default function OpportunityDetailPWA() {
         projectName={opportunity.title}
       />
 
-      {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />
+      {/* Bottom Navigation - User Type Aware */}
+      {renderNav()}
     </div>
   );
 }

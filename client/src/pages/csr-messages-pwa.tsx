@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import CSRPWANav from "@/components/layout/csr-pwa-nav";
+import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { formatDistanceToNow } from "date-fns";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 

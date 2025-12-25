@@ -21,7 +21,7 @@
  *
  * Based on industry best practices:
  * - Taproot Foundation Pro Bono Valuation 2024: $220/hr for skilled pro bono vs $34.79 general (~6.3x)
- * - Independent Sector 2024: $34.79/hr national average for general volunteer time
+ * - Independent Sector 2025: $34.79/hr national average for general volunteer time
  * - Bureau of Labor Statistics: Recommends role-based wage rates + 15.7% overhead
  * - SROI methodology: Skilled professional time valued 3-7x general volunteer time
  *

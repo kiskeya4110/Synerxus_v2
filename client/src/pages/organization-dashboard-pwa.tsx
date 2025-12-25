@@ -99,6 +99,18 @@ interface ProjectLocation {
   sdgGoals: number[];
 }
 
+interface OrganizationVolunteer {
+  id: number;
+  displayName: string;
+  email: string;
+  avatar: string | null;
+  skills: string[];
+  hours: number;
+  tasksCompleted: number;
+  projectCount: number;
+  projects: Array<{ id: number; name: string }>;
+}
+
 // Geocoding function
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } | null {
   const locationCoords: Record<string, { lat: number; lng: number }> = {
@@ -171,6 +183,8 @@ export default function OrganizationDashboardPWA() {
   const [showSdgCoverageModal, setShowSdgCoverageModal] = useState(false);
   const [selectedSdgGoal, setSelectedSdgGoal] = useState<number | null>(null);
   const [sdgViewMode, setSdgViewMode] = useState<'chart' | 'cards'>('cards');
+  const [showVolunteerProfileModal, setShowVolunteerProfileModal] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<OrganizationVolunteer | null>(null);
   const aiuModalRef = useRef<HTMLDivElement>(null);
   const sdgModalRef = useRef<HTMLDivElement>(null);
 
@@ -281,6 +295,43 @@ export default function OrganizationDashboardPWA() {
       return response.json();
     },
     enabled: !!currentUser?.organizationId,
+  });
+
+  // Fetch organization volunteers
+  const { data: organizationVolunteers = [], isLoading: volunteersLoading } = useQuery<OrganizationVolunteer[]>({
+    queryKey: ['/api/organizations/volunteers', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const response = await fetch(`/api/organizations/${userId}/volunteers?userId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 30000,
+  });
+
+  // Fetch volunteer activities for selected volunteer
+  const { data: volunteerActivities = [] } = useQuery({
+    queryKey: ['/api/volunteer-activities', selectedVolunteer?.id],
+    queryFn: async () => {
+      if (!selectedVolunteer?.id) return [];
+      const response = await fetch(`/api/volunteer-activities?userId=${selectedVolunteer.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedVolunteer?.id,
+  });
+
+  // Fetch volunteer AIU data
+  const { data: volunteerAiuData } = useQuery({
+    queryKey: ['/api/aiu/volunteer', selectedVolunteer?.id],
+    queryFn: async () => {
+      if (!selectedVolunteer?.id) return null;
+      const response = await fetch(`/api/aiu/volunteer/${selectedVolunteer.id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!selectedVolunteer?.id,
   });
 
   // Derived metrics with real data from API
@@ -572,10 +623,10 @@ export default function OrganizationDashboardPWA() {
                   SROI
                 </span>
               </div>
-              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 29.95 / 1000) : 0}K</p>
+              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 34.79 / 1000) : 0}K</p>
               <p className="text-[10px] text-slate-600">Economic Value</p>
               <div className="mt-2 pt-2 border-t border-emerald-400/30 text-[9px] text-slate-600">
-                {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)) : '0.0'}:1 social return
+                {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 34.79, 1)) : '0.0'}:1 social return
               </div>
             </button>
 
@@ -1218,6 +1269,91 @@ export default function OrganizationDashboardPWA() {
             <ChevronRight className="w-5 h-5 text-white" />
           </button>
 
+          {/* Your Team - Volunteer List Section */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-600" />
+                <h3 className="font-semibold text-slate-800 text-sm">Your Team</h3>
+                <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                  {organizationVolunteers.length} volunteers
+                </span>
+              </div>
+              <button onClick={() => navigate('/volunteers')} className="text-xs text-purple-600 font-medium">
+                View All
+              </button>
+            </div>
+
+            {volunteersLoading ? (
+              <div className="p-4 text-center">
+                <div className="animate-pulse flex flex-col gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 bg-slate-100 rounded-lg" />
+                  ))}
+                </div>
+              </div>
+            ) : organizationVolunteers.length === 0 ? (
+              <div className="p-6 text-center">
+                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-500 text-sm">No volunteers yet</p>
+                <p className="text-slate-400 text-xs mt-1">Volunteers will appear here when they join your projects</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {organizationVolunteers.slice(0, 5).map((volunteer) => (
+                  <button
+                    key={volunteer.id}
+                    onClick={() => {
+                      setSelectedVolunteer(volunteer);
+                      setShowVolunteerProfileModal(true);
+                    }}
+                    className="w-full p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+                  >
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                      {volunteer.avatar ? (
+                        <img src={volunteer.avatar} alt={volunteer.displayName} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        volunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
+                      )}
+                    </div>
+
+                    {/* Volunteer Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-800 text-sm truncate">{volunteer.displayName || 'Volunteer'}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {volunteer.hours}h
+                        </span>
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          {volunteer.projectCount} projects
+                        </span>
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          {volunteer.tasksCompleted} tasks
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  </button>
+                ))}
+
+                {organizationVolunteers.length > 5 && (
+                  <button
+                    onClick={() => navigate('/volunteers')}
+                    className="w-full p-3 text-center text-purple-600 text-sm font-medium hover:bg-purple-50 transition-colors"
+                  >
+                    View all {organizationVolunteers.length} volunteers →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Quick Actions */}
           <div className="grid grid-cols-4 gap-2">
             <button
@@ -1599,7 +1735,7 @@ export default function OrganizationDashboardPWA() {
                       Economic Value Generated
                     </p>
                     <h3 className="font-bold text-xl leading-tight mt-0.5">
-                      ${metrics.totalHours > 0 ? Math.round(metrics.totalHours * 29.95).toLocaleString() : 0}
+                      ${metrics.totalHours > 0 ? Math.round(metrics.totalHours * 34.79).toLocaleString() : 0}
                     </h3>
                   </div>
                 </div>
@@ -1618,13 +1754,13 @@ export default function OrganizationDashboardPWA() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-100 text-center">
                   <p className="text-xl font-bold text-emerald-700">
-                    {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)) : '0.0'}:1
+                    {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 34.79, 1)) : '0.0'}:1
                   </p>
                   <p className="text-[9px] text-emerald-600 font-medium">SROI Ratio</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
                   <p className="text-xl font-bold text-blue-700">
-                    ${totalPeopleImpacted > 0 ? Math.round((metrics.totalHours * 29.95) / totalPeopleImpacted) : 0}
+                    ${totalPeopleImpacted > 0 ? Math.round((metrics.totalHours * 34.79) / totalPeopleImpacted) : 0}
                   </p>
                   <p className="text-[9px] text-blue-600 font-medium">Cost/Beneficiary</p>
                 </div>
@@ -1640,7 +1776,7 @@ export default function OrganizationDashboardPWA() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
                   <TrendingUp className="w-5 h-5 text-emerald-600 mb-2" />
-                  <p className="text-2xl font-bold text-emerald-700">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 29.95 / 1000) : 0}K</p>
+                  <p className="text-2xl font-bold text-emerald-700">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 34.79 / 1000) : 0}K</p>
                   <p className="text-[10px] text-emerald-600 font-medium">Total Economic Value</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
@@ -1660,25 +1796,25 @@ export default function OrganizationDashboardPWA() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Value per Volunteer Hour</span>
-                    <span className="text-sm font-bold text-emerald-600">$29.95</span>
+                    <span className="text-sm font-bold text-emerald-600">$34.79</span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: '100%' }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Based on Independent Sector 2024 valuation</p>
+                  <p className="text-[10px] text-slate-500">Based on Independent Sector 2025 valuation</p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Value per Volunteer</span>
                     <span className="text-sm font-bold text-purple-600">
-                      ${metrics.activeVolunteers > 0 ? Math.round((metrics.totalHours * 29.95) / metrics.activeVolunteers).toLocaleString() : 0}
+                      ${metrics.activeVolunteers > 0 ? Math.round((metrics.totalHours * 34.79) / metrics.activeVolunteers).toLocaleString() : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${Math.min(((metrics.totalHours * 29.95) / Math.max(metrics.activeVolunteers, 1)) / 5000 * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((metrics.totalHours * 34.79) / Math.max(metrics.activeVolunteers, 1)) / 5000 * 100, 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">Average economic contribution per volunteer</p>
@@ -1688,13 +1824,13 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Value per Project</span>
                     <span className="text-sm font-bold text-teal-600">
-                      ${metrics.activeProjects > 0 ? Math.round((metrics.totalHours * 29.95) / metrics.activeProjects).toLocaleString() : 0}
+                      ${metrics.activeProjects > 0 ? Math.round((metrics.totalHours * 34.79) / metrics.activeProjects).toLocaleString() : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-teal-500 rounded-full"
-                      style={{ width: `${Math.min(((metrics.totalHours * 29.95) / Math.max(metrics.activeProjects, 1)) / 10000 * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((metrics.totalHours * 34.79) / Math.max(metrics.activeProjects, 1)) / 10000 * 100, 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">Average value generated per project</p>
@@ -1704,13 +1840,13 @@ export default function OrganizationDashboardPWA() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">Impact per Dollar</span>
                     <span className="text-sm font-bold text-rose-600">
-                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / (metrics.totalHours * 29.95) * 100) : 0}
+                      {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / (metrics.totalHours * 34.79) * 100) : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-rose-500 rounded-full"
-                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.totalHours * 29.95, 1)) * 1000, 100)}%` }}
+                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.totalHours * 34.79, 1)) * 1000, 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">Beneficiaries reached per $100 value</p>
@@ -2637,6 +2773,228 @@ export default function OrganizationDashboardPWA() {
               >
                 View Full Impact Report
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Volunteer Profile Modal */}
+      {showVolunteerProfileModal && selectedVolunteer && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowVolunteerProfileModal(false)}>
+          <div
+            className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-4 z-10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-semibold text-lg">Volunteer Profile</h3>
+                <button
+                  onClick={() => setShowVolunteerProfileModal(false)}
+                  className="text-white/80 hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Volunteer Header Card */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                  {selectedVolunteer.avatar ? (
+                    <img src={selectedVolunteer.avatar} alt={selectedVolunteer.displayName} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    selectedVolunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-white font-semibold text-lg truncate">{selectedVolunteer.displayName || 'Volunteer'}</h4>
+                  <p className="text-purple-100 text-sm truncate">{selectedVolunteer.email}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-purple-200 text-xs flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {selectedVolunteer.hours}h total
+                    </span>
+                    <span className="text-purple-200 text-xs flex items-center gap-1">
+                      <Briefcase className="w-3 h-3" />
+                      {selectedVolunteer.projectCount} projects
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 text-center border border-emerald-100">
+                  <Clock className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
+                  <p className="text-xl font-bold text-emerald-700">{selectedVolunteer.hours}</p>
+                  <p className="text-[10px] text-emerald-600">Hours</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 text-center border border-blue-100">
+                  <CheckCircle className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                  <p className="text-xl font-bold text-blue-700">{selectedVolunteer.tasksCompleted}</p>
+                  <p className="text-[10px] text-blue-600">Tasks Done</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 text-center border border-purple-100">
+                  <Award className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+                  <p className="text-xl font-bold text-purple-700">{formatDecimal(volunteerAiuData?.totalAiu || selectedVolunteer.hours * 0.1)}</p>
+                  <p className="text-[10px] text-purple-600">AIU Earned</p>
+                </div>
+              </div>
+
+              {/* Economic Value */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
+                <h4 className="text-sm font-semibold text-amber-800 flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Economic Contribution
+                </h4>
+                <p className="text-2xl font-bold text-amber-700">${(selectedVolunteer.hours * 34.79).toLocaleString()}</p>
+                <p className="text-[10px] text-amber-600 mt-1">Based on {selectedVolunteer.hours} hours × $34.79/hr (Independent Sector 2025)</p>
+              </div>
+
+              {/* Skills */}
+              {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    Skills
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedVolunteer.skills.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 bg-gradient-to-r from-blue-100 to-purple-100 text-slate-700 rounded-full text-xs font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Projects */}
+              {selectedVolunteer.projects && selectedVolunteer.projects.length > 0 && (
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
+                    <Briefcase className="w-4 h-4 text-emerald-500" />
+                    Assigned Projects ({selectedVolunteer.projects.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedVolunteer.projects.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          setShowVolunteerProfileModal(false);
+                          navigate(`/projects/${project.id}`);
+                        }}
+                        className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
+                      >
+                        <span className="text-sm text-slate-700 font-medium truncate">{project.name}</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Activity History */}
+              <div className="bg-white rounded-xl p-4 border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
+                  <Activity className="w-4 h-4 text-blue-500" />
+                  Recent Activity
+                </h4>
+                {volunteerActivities.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">No activity records yet</p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {volunteerActivities.slice(0, 10).map((activity: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-slate-700 font-medium truncate">{activity.description || 'Activity logged'}</p>
+                          <p className="text-[10px] text-slate-500">
+                            {activity.activityDate ? new Date(activity.activityDate).toLocaleDateString() : 'Date unknown'}
+                          </p>
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-600 flex-shrink-0">{activity.hours || 0}h</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Performance Summary */}
+              <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
+                  <BarChart3 className="w-4 h-4 text-indigo-500" />
+                  Performance Summary
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-600">Hours Contributed</span>
+                      <span className="font-medium text-slate-800">{selectedVolunteer.hours}h</span>
+                    </div>
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                        style={{ width: `${Math.min((selectedVolunteer.hours / 100) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-600">Task Completion Rate</span>
+                      <span className="font-medium text-slate-800">
+                        {selectedVolunteer.tasksCompleted > 0 ? '100%' : '0%'}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"
+                        style={{ width: selectedVolunteer.tasksCompleted > 0 ? '100%' : '0%' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-600">Project Engagement</span>
+                      <span className="font-medium text-slate-800">{selectedVolunteer.projectCount} projects</span>
+                    </div>
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-400 to-pink-500 rounded-full"
+                        style={{ width: `${Math.min((selectedVolunteer.projectCount / 5) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowVolunteerProfileModal(false);
+                    navigate('/organization-messages/pwa');
+                  }}
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium text-sm hover:from-blue-600 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Send Message
+                </button>
+                <button
+                  onClick={() => {
+                    setShowVolunteerProfileModal(false);
+                    navigate(`/volunteers/${selectedVolunteer.id}`);
+                  }}
+                  className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-medium text-sm hover:from-purple-600 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  Full Profile
+                </button>
+              </div>
             </div>
           </div>
         </div>

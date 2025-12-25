@@ -110,7 +110,7 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
     const skillsMatchScore = skillsBreakdown.length > 0 ? Math.min(100, skillsBreakdown.length * 15) : 0;
 
     // Satisfaction and NPS from real API data
-    const volunteerSatisfaction = engagementData?.volunteerSatisfaction || (activeEmployees > 0 ? Math.min(95, 60 + Math.round((avgHoursPerVolunteer / 20) * 34.75)) : 0);
+    const volunteerSatisfaction = engagementData?.volunteerSatisfaction || (activeEmployees > 0 ? Math.min(95, 60 + Math.round((avgHoursPerVolunteer / 20) * 34.79)) : 0);
     const npsScore = engagementData?.npsScore || Math.round(volunteerSatisfaction * 0.5);
 
     // Growth rate from monthly trends
@@ -119,11 +119,11 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
       ? Math.round(((monthlyTrends[monthlyTrends.length - 1]?.volunteers || 0) - (monthlyTrends[0]?.volunteers || 0)) / Math.max(1, monthlyTrends[0]?.volunteers || 1) * 100)
       : 0;
 
-    const economicValue = totalHours * 34.75;
+    const economicValue = totalHours * 34.79;
 
     // Get VMS benchmarks from API or use defaults
     const vmsBenchmarks = engagementData?.vmsBenchmarks || {
-      yourCompany: { participationRate: engagementRate, avgHoursPerVolunteer, retentionRate, satisfactionScore: volunteerSatisfaction, repeatVolunteerRate, skillsMatchRate: skillsMatchScore, volunteerHours: totalHours, economicValue: totalHours * 34.75 },
+      yourCompany: { participationRate: engagementRate, avgHoursPerVolunteer, retentionRate, satisfactionScore: volunteerSatisfaction, repeatVolunteerRate, skillsMatchRate: skillsMatchScore, volunteerHours: totalHours, economicValue: totalHours * 34.79 },
       industryAverage: { participationRate: 31, avgHoursPerVolunteer: 16, retentionRate: 60, satisfactionScore: 72, repeatVolunteerRate: 45, skillsMatchRate: 55, volunteerHours: 8000, economicValue: 280000 },
       topPerformers: { participationRate: 70, avgHoursPerVolunteer: 24, retentionRate: 85, satisfactionScore: 92, repeatVolunteerRate: 75, skillsMatchRate: 82, volunteerHours: 15000, economicValue: 525000 },
       insights: [],
@@ -174,7 +174,7 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
       volunteerSatisfaction: volunteerSatisfaction || 0,
       npsScore: npsScore || 0,
       growthRate: growthRate || 0,
-      economicValue: engagementData?.economicValue || (totalHours * 34.75),
+      economicValue: engagementData?.economicValue || (totalHours * 34.79),
       inProgressProjects: engagementData?.inProgressCommitments || 0,
       newThisMonth: engagementData?.newEmployeesThisMonth || 0,
       hoursThisMonth: engagementData?.hoursThisMonth || 0,

@@ -92,7 +92,7 @@ const IMPACT_FACTS = {
     "🙋🏽‍♂️ 70% of volunteer work is informal, happening outside of organizations—especially in lower-income regions.",
     "🙋🏽‍♂️ Women perform 57% of global volunteer work, often in community-based, care-driven roles.",
     "🙋🏽‍♂️ Volunteers are 66% more likely to donate financially to the causes they support.",
-    "🙋🏽‍♂️ The average value of volunteer time is $28.54/hour, with over $184 billion contributed annually in the U.S. alone.",
+    "🙋🏽‍♂️ The average value of volunteer time is $34.79/hour (Independent Sector 2025), with over $200 billion contributed annually in the U.S. alone.",
   ],
   ngos: [
     "🌍 India has over 3.1 million NGOs, the U.S. over 1.5 million, and the EU employs 11.9 million people in the nonprofit sector.",

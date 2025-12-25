@@ -94,8 +94,8 @@ export const IMPACT_CONFIG = {
   // Time window for deduplication (6 hours in ms)
   DEDUP_TIME_WINDOW_MS: 6 * 60 * 60 * 1000,
 
-  // Volunteer value per hour (USD) - Industry standard rate
-  VOLUNTEER_HOUR_VALUE: 34.75,
+  // Volunteer value per hour (USD) - Independent Sector 2025 rate
+  VOLUNTEER_HOUR_VALUE: 34.79,
 
   // Monthly volunteer hours target
   MONTHLY_HOURS_TARGET: 20,

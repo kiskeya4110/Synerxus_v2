@@ -360,8 +360,8 @@ export default function OrganizationImpactReport() {
       : projects.reduce((sum: number, p: any) => sum + (p.livesImpacted || p.livesTouched || 0), 0);
 
   // Calculate real funding estimate based on industry standard volunteer value
-  // Industry standard: $34.75/hour volunteer time value
-  const volunteerTimeValue = 34.75;
+  // Industry standard: $34.79/hour volunteer time value (Independent Sector 2025)
+  const volunteerTimeValue = 34.79;
   const estimatedVolunteerValue = Math.round(totalHours * volunteerTimeValue);
 
   // Calculate Organization Impact Score using dashboard impactScore if available

@@ -5,6 +5,10 @@ import { formatDecimal } from "@/lib/format-utils";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import CSRPWANav from "@/components/layout/csr-pwa-nav";
+import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +66,7 @@ export default function ProjectDetailPWA() {
   };
 
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType') || 'volunteer';
 
   const { data: project, isLoading } = useQuery<any>({
     queryKey: ["/api/projects", projectId],
@@ -268,10 +273,34 @@ export default function ProjectDetailPWA() {
   const primarySdg = project.primarySdg || project.sdgGoals?.[0];
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
+  // Render appropriate header based on user type
+  const renderHeader = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWAHeader />;
+      case 'corporate_partner':
+        return <CSRPWAHeader companyName="CSR Partner" />;
+      default:
+        return <PWAHeader />;
+    }
+  };
+
+  // Render appropriate navigation based on user type
+  const renderNav = () => {
+    switch (userType) {
+      case 'organization':
+        return <OrganizationPWANav activeTab="projects" />;
+      case 'corporate_partner':
+        return <CSRPWANav activeTab="projects" />;
+      default:
+        return <VolunteerPWANav userId={userId || undefined} activeTab="projects" />;
+    }
+  };
+
   return (
     <div className="w-full min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-full overflow-hidden">
-      {/* PWA Header */}
-      <PWAHeader />
+      {/* PWA Header - User Type Aware */}
+      {renderHeader()}
 
       {/* Spacer for fixed header */}
       <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
@@ -638,8 +667,8 @@ export default function ProjectDetailPWA() {
 
       </div>
 
-      {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
+      {/* Bottom Navigation - User Type Aware */}
+      {renderNav()}
     </div>
   );
 }

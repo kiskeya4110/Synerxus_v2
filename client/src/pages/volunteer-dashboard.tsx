@@ -1167,155 +1167,65 @@ export default function Dashboard() {
         {/* Top Navigation for Desktop Volunteers */}
         <VolunteerNav />
 
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 overflow-y-auto pb-8 relative z-0">
+        <div className="min-h-screen bg-[#f3f2ef] dark:bg-gray-950 overflow-y-auto pb-8 relative z-0">
 
-          {/* Hero Section - Benevity-inspired Impact Summary */}
-          <div className="relative overflow-hidden z-0">
-            {/* Background gradient with subtle pattern */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 opacity-95 z-0" />
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{
-                backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.2) 2px, transparent 2px)',
-                backgroundSize: '60px 60px'
-              }} />
-            </div>
+          {/* Hero Section - LinkedIn-inspired Professional Design */}
+          <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+            {/* Cover gradient - subtle and professional */}
+            <div className="h-24 md:h-32 bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700" />
 
-            <div className="relative container mx-auto px-4 sm:px-6 py-8 md:py-12">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                {/* Left: Welcome & Profile */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-white/30 shadow-2xl ring-4 ring-white/20">
-                      <AvatarImage
-                        src={dashboardData?.volunteerProfile?.profilePhotoUrl || currentUser?.profilePicture}
-                        alt={currentUser?.displayName || 'Volunteer'}
-                      />
-                      <AvatarFallback className="bg-white/20 text-white text-xl md:text-2xl font-bold backdrop-blur-sm">
-                        {(currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-white/70 text-sm font-medium">Welcome back,</p>
-                      <h1 className="text-2xl md:text-3xl font-bold text-white">
-                        {(currentUser?.displayName || currentUser?.name || "Volunteer")?.split(' ')[0]}!
-                      </h1>
+            <div className="container mx-auto px-4 sm:px-6">
+              <div className="relative -mt-12 md:-mt-16 pb-6">
+                <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-6">
+                  {/* Profile Avatar */}
+                  <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white dark:border-gray-900 shadow-lg bg-white">
+                    <AvatarImage
+                      src={dashboardData?.volunteerProfile?.profilePhotoUrl || currentUser?.profilePicture}
+                      alt={currentUser?.displayName || 'Volunteer'}
+                    />
+                    <AvatarFallback className="bg-slate-100 text-slate-700 text-2xl md:text-3xl font-semibold">
+                      {(currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Profile Info */}
+                  <div className="flex-1 pt-2 md:pt-4">
+                    <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
+                      {currentUser?.displayName || currentUser?.name || "Volunteer"}
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base mt-0.5">
+                      Volunteer • Making an impact since {new Date(currentUser?.createdAt || Date.now()).getFullYear()}
+                    </p>
+
+                    {/* Skills Tags - LinkedIn style */}
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {dashboardData?.volunteerProfile?.skills?.slice(0, 4).map((skill: string, idx: number) => (
+                        <span key={idx} className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                          {skill}
+                        </span>
+                      ))}
+                      {(dashboardData?.volunteerProfile?.skills?.length ?? 0) > 4 && (
+                        <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                          +{(dashboardData?.volunteerProfile?.skills?.length ?? 0) - 4} more
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <p className="text-white/80 text-base md:text-lg max-w-lg">
-                    You're making a difference. Here's your impact journey at a glance.
-                  </p>
 
-                  {/* Quick Stats Pills */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {dashboardData?.volunteerProfile?.skills?.slice(0, 3).map((skill: string, idx: number) => (
-                      <span key={idx} className="px-3 py-1.5 bg-white/15 backdrop-blur-sm text-white rounded-full text-sm font-medium border border-white/20">
-                        {skill}
-                      </span>
-                    ))}
-                    {(dashboardData?.volunteerProfile?.skills?.length ?? 0) > 3 && (
-                      <span className="px-3 py-1.5 bg-white/10 text-white/70 rounded-full text-sm">
-                        +{(dashboardData?.volunteerProfile?.skills?.length ?? 0) - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right: Impact Rings */}
-                <div className="flex gap-6 md:gap-8">
-                  {/* Hours Ring */}
-                  <div className="relative flex flex-col items-center">
-                    <div className="relative w-24 h-24 md:w-28 md:h-28">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="rgba(255,255,255,0.2)"
-                          strokeWidth="8"
-                          fill="none"
-                        />
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="white"
-                          strokeWidth="8"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeDasharray={`${hoursProgress * 2.83} 283`}
-                          className="transition-all duration-1000 ease-out"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl md:text-2xl font-bold text-white">{formatNumber(dashboardData?.totalHours)}</span>
-                        <span className="text-xs text-white/70">hours</span>
-                      </div>
+                  {/* Quick Stats - Professional badges */}
+                  <div className="flex gap-6 md:gap-8 pt-4 md:pt-0">
+                    <div className="text-center">
+                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(dashboardData?.totalHours)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Hours</p>
                     </div>
-                    <p className="text-white/80 text-xs mt-2 font-medium">Contributed</p>
-                  </div>
-
-                  {/* People Impacted Ring */}
-                  <div className="relative flex flex-col items-center">
-                    <div className="relative w-24 h-24 md:w-28 md:h-28">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="rgba(255,255,255,0.2)"
-                          strokeWidth="8"
-                          fill="none"
-                        />
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="#34d399"
-                          strokeWidth="8"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeDasharray={`${Math.min((dashboardData?.totalPeopleImpacted || 0) / 10, 100) * 2.83} 283`}
-                          className="transition-all duration-1000 ease-out"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl md:text-2xl font-bold text-white">{dashboardData?.totalPeopleImpacted || 0}</span>
-                        <span className="text-xs text-white/70">people</span>
-                      </div>
+                    <div className="text-center">
+                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{kpis.activeProjects}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Projects</p>
                     </div>
-                    <p className="text-white/80 text-xs mt-2 font-medium">Impacted</p>
-                  </div>
-
-                  {/* Impact Score Ring */}
-                  <div className="relative flex flex-col items-center">
-                    <div className="relative w-24 h-24 md:w-28 md:h-28">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="rgba(255,255,255,0.2)"
-                          strokeWidth="8"
-                          fill="none"
-                        />
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="45%"
-                          stroke="#fbbf24"
-                          strokeWidth="8"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeDasharray={`${Math.min(dashboardData?.impactScore || 0, 100) * 2.83} 283`}
-                          className="transition-all duration-1000 ease-out"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl md:text-2xl font-bold text-white">{dashboardData?.impactScore || 0}</span>
-                        <span className="text-xs text-white/70">score</span>
-                      </div>
+                    <div className="text-center">
+                      <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{dashboardData?.totalPeopleImpacted || 0}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Impacted</p>
                     </div>
-                    <p className="text-white/80 text-xs mt-2 font-medium">Impact Score</p>
                   </div>
                 </div>
               </div>
@@ -1353,109 +1263,94 @@ export default function Dashboard() {
               </Select>
             </div>
 
-            {/* Stats Cards - Enhanced Interactive Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="flex items-center justify-between relative">
+            {/* Stats Cards - LinkedIn-style Professional Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-blue-100 text-xs md:text-sm font-medium">Hours Logged</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.hours)}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Hours</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.hours)}</p>
                       {dashboardData?.hoursTrend && (
-                        <p className="text-blue-200 text-xs mt-1 flex items-center gap-1">
+                        <p className="text-green-600 dark:text-green-400 text-xs mt-1.5 flex items-center gap-1 font-medium">
                           <ArrowUp className="h-3 w-3" /> {dashboardData.hoursTrend}
                         </p>
                       )}
-                      <p className="text-blue-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <Clock className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="flex items-center justify-between relative">
-                    <div>
-                      <p className="text-emerald-100 text-xs md:text-sm font-medium">Active Projects</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.activeProjects}</p>
-                      <p className="text-emerald-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
-                    </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <Briefcase className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                      <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-violet-600 border-0 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="flex items-center justify-between relative">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-purple-100 text-xs md:text-sm font-medium">Tasks</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.completedTasks}/{kpis.tasks}</p>
-                      <p className="text-purple-200 text-xs mt-1">{formatNumber(tasksProgress)}% complete</p>
-                      <p className="text-purple-200/70 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Projects</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{kpis.activeProjects}</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <CheckSquare className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                      <Briefcase className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Skills", kpis.skills)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="flex items-center justify-between relative">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-amber-100 text-xs md:text-sm font-medium">Skills</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.skills}</p>
-                      <p className="text-amber-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Tasks</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{kpis.completedTasks}/{kpis.tasks}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{formatNumber(tasksProgress)}% done</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <Award className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                      <CheckSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-cyan-500 to-blue-600 border-0 shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:shadow-cyan-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98] ring-2 ring-transparent hover:ring-white/30" onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/20 rounded text-[8px] text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    Learn More
-                  </div>
-                  <div className="flex items-center justify-between relative">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Skills", kpis.skills)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-cyan-100 text-xs md:text-sm font-medium">AIUs Earned</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
-                      <p className="text-cyan-200/70 text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to learn about AIU</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Skills</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{kpis.skills}</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <TrendingUp className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+                      <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer group active:scale-[0.98]" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
-                <CardContent className="p-4 md:p-5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors pointer-events-none" />
-                  <div className="flex items-center justify-between relative">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-orange-100 text-xs md:text-sm font-medium">Impact Streak</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{impactStreakData.currentStreak} days</p>
-                      <p className="text-orange-200 text-xs mt-1">{impactStreakData.streakMessage}</p>
-                      <p className="text-orange-200/70 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Click for details</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">AIUs Earned</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
                     </div>
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 group-hover:bg-white/30 transition-all">
-                      <Flame className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Streak</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{impactStreakData.currentStreak} <span className="text-sm font-normal text-gray-500">days</span></p>
+                      <p className="text-orange-600 dark:text-orange-400 text-xs mt-1 font-medium">{impactStreakData.streakMessage}</p>
+                    </div>
+                    <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+                      <Flame className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -1463,36 +1358,36 @@ export default function Dashboard() {
             </div>
 
             {/* SDG Contributions (1/3) + Impact Over Time (2/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* SDG Contributions - 1/3 width */}
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0 lg:col-span-1">
-                <CardHeader className="pb-2">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 lg:col-span-1">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <Globe className="h-5 w-5 text-emerald-600" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-gray-500" />
                       SDG Contributions
                     </CardTitle>
                     <Link href="/sdg-mapping">
-                      <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700">
-                        View All
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        See all
                       </Button>
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <SDGChart projects={filteredData.projects || []} />
                 </CardContent>
               </Card>
 
               {/* Impact Over Time - 2/3 width */}
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0 lg:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                    Your Impact Over Time
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 lg:col-span-2">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-gray-500" />
+                    Impact Over Time
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <ImpactChart
                     monthlyImpactData={filteredMonthlyImpactData}
                     monthlyImpactTrend={filteredMonthlyImpactTrend}
@@ -1505,32 +1400,32 @@ export default function Dashboard() {
             </div>
 
             {/* My Projects, Recent Tasks, Recent Activity - 3 Column Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* My Projects */}
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
-                <CardHeader className="pb-2">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-purple-600" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-gray-500" />
                       My Projects
                     </CardTitle>
                     <Link href="/projects">
-                      <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700">
-                        View All
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        See all
                       </Button>
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                <CardContent className="pt-3">
+                  <div className="space-y-2">
                     {filteredData.projects?.slice(0, 4).map((project: any) => (
                       <Link key={project.id} href={`/projects/${project.id}`}>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer group">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="h-5 w-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                          <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors text-sm">
+                            <p className="font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
                               {project.name}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1538,7 +1433,7 @@ export default function Dashboard() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               {project.completionPercentage || 0}%
                             </p>
                           </div>
@@ -1561,24 +1456,24 @@ export default function Dashboard() {
               </Card>
 
               {/* Recent Tasks */}
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
-                <CardHeader className="pb-2">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <CheckSquare className="h-5 w-5 text-amber-600" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <CheckSquare className="h-4 w-4 text-gray-500" />
                       Recent Tasks
                     </CardTitle>
                     <Link href="/my-work">
-                      <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700">
-                        View All
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        See all
                       </Button>
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                <CardContent className="pt-3">
+                  <div className="space-y-2">
                     {filteredData.tasks?.slice(0, 4).map((task: any) => (
-                      <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                      <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           task.status?.toLowerCase() === 'completed' ? 'bg-green-500' :
                           task.status?.toLowerCase() === 'in progress' || task.status?.toLowerCase() === 'in_progress' ? 'bg-blue-500' :
@@ -1605,23 +1500,23 @@ export default function Dashboard() {
               </Card>
 
               {/* Recent Activity */}
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
-                <CardHeader className="pb-2">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-blue-600" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-gray-500" />
                       Recent Activity
                     </CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                <CardContent className="pt-3">
+                  <div className="space-y-2">
                     {filteredData.activities?.slice(0, 4).map((activity: any) => {
                       const project = filteredData.projects?.find((p: any) => p.id === activity.projectId);
                       return (
-                        <div key={activity.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                            <Clock className="h-4 w-4 text-white" />
+                        <div key={activity.id} className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white text-sm">
@@ -1652,21 +1547,21 @@ export default function Dashboard() {
 
             {/* Upcoming Events */}
             {formattedEvents.length > 0 && (
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
-                <CardHeader className="pb-2">
+              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-indigo-600" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
                       Upcoming Events
                     </CardTitle>
                     <Link href="/calendar">
-                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
-                        View Calendar
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        See all
                       </Button>
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-3">
                   <UpcomingEvents events={formattedEvents} />
                 </CardContent>
               </Card>

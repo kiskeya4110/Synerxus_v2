@@ -26,9 +26,13 @@ import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
 import { securityHeaders, sanitizeInput } from "./middleware/security";
 import { exec } from "child_process";
+import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
 
 // Server PID for debugging
 const serverPid = process.pid;
+
+// Initialize error tracking (Sentry) early
+initErrorTracking();
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
@@ -36,6 +40,10 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
     reason: reason?.message || reason,
     stack: reason?.stack
   });
+  // Capture in Sentry
+  if (reason instanceof Error) {
+    captureException(reason, { type: 'unhandledRejection' });
+  }
   // Don't exit - log and continue
 });
 
@@ -45,6 +53,8 @@ process.on('uncaughtException', (error: Error) => {
     stack: error.stack,
     name: error.name
   });
+  // Capture in Sentry
+  captureException(error, { type: 'uncaughtException' });
   // For uncaught exceptions in critical paths, we may need to exit gracefully
   // But for now, log and attempt to continue
 });
@@ -97,7 +107,16 @@ async function gracefulShutdown(signal: string) {
       logger.warn('[Shutdown] Error stopping cache:', e);
     }
 
-    // 3. Close database connections
+    // 3. Flush error tracking before closing connections
+    logger.info('[Shutdown] Flushing error tracking...');
+    try {
+      await flushErrors(2000);
+      logger.info('[Shutdown] Error tracking flushed');
+    } catch (e) {
+      logger.warn('[Shutdown] Error flushing error tracking:', e);
+    }
+
+    // 4. Close database connections
     logger.info('[Shutdown] Closing database connections...');
     try {
       await pool.end();

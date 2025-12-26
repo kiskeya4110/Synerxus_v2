@@ -346,10 +346,8 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
   const cacheKey = cacheKeys.dashboardOrg(userId);
   const cached = cache.get<any>(cacheKey);
   if (cached) {
-    console.log(`[Dashboard] Cache HIT for organization ${userId}`);
     return cached;
   }
-  console.log(`[Dashboard] Cache MISS for organization ${userId}, fetching data...`);
 
   try {
     // Get the organization user
@@ -996,7 +994,6 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
 
     // Cache the result for 30 seconds
     cache.set(cacheKey, result, CACHE_TTL.DASHBOARD);
-    console.log(`[Dashboard] Cached organization ${userId} dashboard data`);
 
     return result;
   } catch (error) {
@@ -1016,10 +1013,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
   const cacheKey = cacheKeys.dashboardVolunteer(userId);
   const cached = cache.get<any>(cacheKey);
   if (cached) {
-    console.log(`[Dashboard] Cache HIT for volunteer ${userId}`);
     return cached;
   }
-  console.log(`[Dashboard] Cache MISS for volunteer ${userId}, fetching data...`);
 
   try {
     // Get the volunteer user
@@ -1030,13 +1025,6 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Get volunteer profile data
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
-    console.log(`[Dashboard] Retrieved volunteer profile for user ${userId}:`, JSON.stringify({
-      id: volunteerProfile?.id,
-      userId: volunteerProfile?.userId,
-      weeklyAvailability: volunteerProfile?.weeklyAvailability,
-      skills: volunteerProfile?.skills?.slice(0, 2),
-      interests: volunteerProfile?.interests?.slice(0, 2),
-    }, null, 2));
 
     // OPTIMIZATION: Get visible project IDs first (this determines what data we need)
     const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
@@ -1368,19 +1356,6 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         ? (monthAcceptedApps / monthApplications.length) * 100
         : 0;
 
-      // Debug logging for people impacted calculation
-      if (monthPeopleImpacted > 0) {
-        console.log(`[Dashboard] Monthly impact for ${monthKey}:`, {
-          monthKey,
-          monthHours,
-          monthPeopleImpacted,
-          monthCompletedTasks,
-          monthHoursScore: Math.round(monthHoursScore),
-          monthPeopleScore: Math.round(monthPeopleScore),
-          monthTasksScore: Math.round(monthTasksScore),
-        });
-      }
-
       // Monthly impact score using NEW FORMULA with people impacted as major driver
       // Hours: 35%, People: 30%, Tasks: 20%, SDG: 10%, Match: 5%
       const monthImpactScore = Math.round(
@@ -1399,14 +1374,6 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Now calculate people impacted and recalculate impact score with people as a major driver
     const totalPeopleImpacted = calculatePeopleImpacted(volunteerImpacts, peopleMetricIds);
-
-    // Debug logging for people impacted calculation
-    console.log(`[Dashboard Impact Score] Volunteer ${userId}:`, {
-      peopleMetricIds: Array.from(peopleMetricIds),
-      totalPeopleImpacted,
-      impactCount: volunteerImpacts.length,
-      allMetricsCount: allImpactMetrics.length,
-    });
 
     const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
 
@@ -1502,7 +1469,6 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Cache the result for 30 seconds
     cache.set(cacheKey, result, CACHE_TTL.DASHBOARD);
-    console.log(`[Dashboard] Cached volunteer ${userId} dashboard data`);
 
     return result;
   } catch (error) {

@@ -51,8 +51,9 @@ export default function OrganizationWelcomeBanner({ className = "", pageTitle = 
   const logoUrl = organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar;
 
   return (
-    <div className={`hidden md:block ${className}`} style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px 0 24px' }}>
-      <div style={{
+    <div className={`hidden md:block ${className}`} style={{ padding: '16px 24px 0 24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{
         background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #f0fdf4 75%, #fafafa 100%)',
         padding: '20px 28px',
         borderRadius: '16px',
@@ -97,6 +98,7 @@ export default function OrganizationWelcomeBanner({ className = "", pageTitle = 
           <p style={{ fontSize: '13px', fontWeight: '500', color: '#15803d', margin: '2px 0 0 0', opacity: 0.85 }}>
             {pageTitle}
           </p>
+        </div>
         </div>
       </div>
     </div>

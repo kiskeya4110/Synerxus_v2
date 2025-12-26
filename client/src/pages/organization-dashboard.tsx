@@ -592,7 +592,7 @@ export default function OrganizationDashboard() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden', backgroundColor: '#f9fafb', paddingBottom: '180px', maxWidth: '100vw', width: '100%' }} data-testid="organization-dashboard">
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', overflowX: 'hidden', backgroundColor: '#f9fafb', zIndex: 100 }} data-testid="organization-dashboard">
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -1991,6 +1991,57 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
+        {/* Map & Impact Over Time - Desktop Only */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* Project Locations Map */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={18} style={{ color: '#166534' }} />
+              Project Locations
+            </h3>
+            <div style={{ height: '300px', borderRadius: '10px', overflow: 'hidden' }}>
+              <ProjectMapComponent projectLocations={dashboardData?.projectLocations || []} />
+            </div>
+          </div>
+
+          {/* Impact Over Time */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
+              Impact Over Time
+            </h3>
+            <div style={{ height: '300px' }}>
+              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dashboardData.impactOverTime}>
+                    <defs>
+                      <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
+                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#peopleGradient)" strokeWidth={2} name="People Impacted" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
+                  No impact data available
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* AI Insights & Alerts Section - Full Width - Desktop Only */}
         <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
           {/* AI Insights */}
@@ -2135,57 +2186,6 @@ export default function OrganizationDashboard() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Map & Impact Over Time - Desktop Only */}
-        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-          {/* Project Locations Map */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={18} style={{ color: '#166534' }} />
-              Project Locations
-            </h3>
-            <div style={{ height: '300px', borderRadius: '10px', overflow: 'hidden' }}>
-              <ProjectMapComponent projectLocations={dashboardData?.projectLocations || []} />
-            </div>
-          </div>
-
-          {/* Impact Over Time */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
-              Impact Over Time
-            </h3>
-            <div style={{ height: '300px' }}>
-              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dashboardData.impactOverTime}>
-                    <defs>
-                      <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
-                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#peopleGradient)" strokeWidth={2} name="People Impacted" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                  No impact data available
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

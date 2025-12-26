@@ -97,9 +97,10 @@ export default function CSRMessagesPWA() {
 
   // Fetch current user
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const response = await fetch("/api/users/me");
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },

@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import {
   MessageSquare,
@@ -74,9 +75,10 @@ export default function OrganizationMessages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const response = await fetch("/api/users/me");
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },
@@ -210,11 +212,11 @@ export default function OrganizationMessages() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">
+      <OfflineBanner />
       <OrganizationHeader activeTab="messages" />
       <OrganizationWelcomeBanner pageTitle="Messages" />
 
-      <div className="flex-1">
-        <div className="max-w-[1400px] mx-auto px-6 py-6">
+      <div className="flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full">
           {/* Page Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -444,9 +446,7 @@ export default function OrganizationMessages() {
               )}
             </Card>
           </div>
-        </div>
       </div>
-
       <Footer />
     </div>
   );

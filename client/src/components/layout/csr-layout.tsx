@@ -58,7 +58,7 @@ interface CSRLayoutProps {
   children: ReactNode;
   title?: string;
   subtitle?: string;
-  activeNav?: "dashboard" | "impact" | "engagement" | "portfolio" | "reports" | "settings";
+  activeNav?: "dashboard" | "overview" | "engagement" | "sdgs" | "leaderboard" | "recognition" | "challenges" | "geographic" | "impact" | "portfolio" | "reports" | "settings";
   hideHeader?: boolean;
 }
 
@@ -232,13 +232,26 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
   return (
     <div
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: "flex",
         flexDirection: "column",
-        minHeight: "100dvh",
         background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)",
         overflowX: "hidden",
+        overflowY: "auto",
+        zIndex: 100,
       }}
     >
+      {/* CSS animations for smooth tab transitions */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* Top Site Header Bar - Light Green with Golden Gradient */}
       {!hideHeader && (
       <header
@@ -250,6 +263,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
           zIndex: 70,
           boxShadow: "0 2px 20px rgba(16, 185, 129, 0.15)",
           borderBottom: "1px solid rgba(16, 185, 129, 0.2)",
+          flexShrink: 0,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -686,27 +700,6 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
             )}
           </div>
           <UserProfileDropdown />
-
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: showMobileMenu ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.8)",
-              border: showMobileMenu ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#065f46",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              transition: "all 0.2s ease",
-            }}
-          >
-            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
         </div>
       </header>
@@ -826,10 +819,19 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                 const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
                 const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
 
-                const isActive = activeNav === item.id ||
-                  (item.id === "overview" && activeNav === "dashboard" && !locationTab) ||
-                  (itemTab && locationTab === itemTab) ||
-                  (itemPath !== "/csr-dashboard" && location.startsWith(itemPath) && !location.includes("?"));
+                // Check if this item is active
+                let isActive = false;
+                if (itemTab) {
+                  // For tabs within csr-dashboard, match by tab parameter
+                  isActive = locationTab === itemTab || activeNav === itemTab;
+                } else if (item.id === "overview") {
+                  // Overview is active when no tab param and activeNav is overview or dashboard
+                  isActive = (!locationTab && (activeNav === "overview" || activeNav === "dashboard")) ||
+                             (location === "/csr-dashboard" && !locationTab);
+                } else if (itemPath !== "/csr-dashboard") {
+                  // For other pages (settings, reports, etc.), match by path
+                  isActive = location.startsWith(itemPath);
+                }
                 return (
                   <button
                     type="button"
@@ -1016,10 +1018,19 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                   const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
                   const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
 
-                  const isActive = activeNav === item.id ||
-                    (item.id === "overview" && activeNav === "dashboard" && !locationTab) ||
-                    (itemTab && locationTab === itemTab) ||
-                    (itemPath !== "/csr-dashboard" && location.startsWith(itemPath) && !location.includes("?"));
+                  // Check if this item is active
+                  let isActive = false;
+                  if (itemTab) {
+                    // For tabs within csr-dashboard, match by tab parameter
+                    isActive = locationTab === itemTab || activeNav === itemTab;
+                  } else if (item.id === "overview") {
+                    // Overview is active when no tab param and activeNav is overview or dashboard
+                    isActive = (!locationTab && (activeNav === "overview" || activeNav === "dashboard")) ||
+                               (location === "/csr-dashboard" && !locationTab);
+                  } else if (itemPath !== "/csr-dashboard") {
+                    // For other pages (settings, reports, etc.), match by path
+                    isActive = location.startsWith(itemPath);
+                  }
                   return (
                     <button
                       type="button"
@@ -1159,20 +1170,16 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
             {children}
           </div>
 
-          {/* Footer Spacer */}
-          {!hideHeader && <div style={{ height: "40px" }} />}
-        </main>
-      </div>
-
-      {/* Footer - Light themed with full content */}
-      {!hideHeader && (
-      <footer
-        style={{
-          background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)",
-          padding: "20px 4%",
-          borderTop: "1px solid rgba(16, 185, 129, 0.2)",
-        }}
-      >
+          {/* Footer - Inside main content so it scrolls with content */}
+          {!hideHeader && (
+          <footer
+            style={{
+              background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)",
+              padding: "20px 4%",
+              marginTop: "40px",
+              borderTop: "1px solid rgba(16, 185, 129, 0.2)",
+            }}
+          >
         <div>
           {/* Main Footer Content */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "32px", marginBottom: "24px" }}>
@@ -1271,8 +1278,10 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
             </div>
           </div>
         </div>
-      </footer>
-      )}
+          </footer>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

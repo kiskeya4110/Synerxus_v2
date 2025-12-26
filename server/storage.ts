@@ -110,7 +110,13 @@ import {
   type InsertStoryLike,
   volunteerOrganizationRelationships,
   type VolunteerOrganizationRelationship,
-  type InsertVolunteerOrganizationRelationship
+  type InsertVolunteerOrganizationRelationship,
+  teamInvitations,
+  invitationTemplates,
+  type TeamInvitation,
+  type InsertTeamInvitation,
+  type InvitationTemplate,
+  type InsertInvitationTemplate
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -397,6 +403,21 @@ export interface IStorage {
   getStoryLike(storyId: number, userId: number): Promise<StoryLike | undefined>;
   createStoryLike(like: InsertStoryLike): Promise<StoryLike>;
   deleteStoryLike(storyId: number, userId: number): Promise<boolean>;
+
+  // Team Invitation operations
+  listTeamInvitations(organizationId: number): Promise<TeamInvitation[]>;
+  getTeamInvitation(id: number): Promise<TeamInvitation | undefined>;
+  getTeamInvitationByToken(token: string): Promise<TeamInvitation | undefined>;
+  createTeamInvitation(invitation: InsertTeamInvitation): Promise<TeamInvitation>;
+  updateTeamInvitation(id: number, invitation: Partial<InsertTeamInvitation>): Promise<TeamInvitation | undefined>;
+  deleteTeamInvitation(id: number): Promise<boolean>;
+
+  // Invitation Template operations
+  listInvitationTemplates(organizationId?: number): Promise<InvitationTemplate[]>;
+  getInvitationTemplate(id: number): Promise<InvitationTemplate | undefined>;
+  createInvitationTemplate(template: InsertInvitationTemplate): Promise<InvitationTemplate>;
+  updateInvitationTemplate(id: number, template: Partial<InsertInvitationTemplate>): Promise<InvitationTemplate | undefined>;
+  deleteInvitationTemplate(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1796,6 +1817,66 @@ export class DatabaseStorage implements IStorage {
     await db.delete(storyLikes).where(
       and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId))
     );
+    return true;
+  }
+
+  // Team Invitation operations
+  async listTeamInvitations(organizationId: number): Promise<TeamInvitation[]> {
+    return db.select().from(teamInvitations).where(eq(teamInvitations.organizationId, organizationId)).orderBy(desc(teamInvitations.createdAt));
+  }
+
+  async getTeamInvitation(id: number): Promise<TeamInvitation | undefined> {
+    const [result] = await db.select().from(teamInvitations).where(eq(teamInvitations.id, id));
+    return result;
+  }
+
+  async getTeamInvitationByToken(token: string): Promise<TeamInvitation | undefined> {
+    const [result] = await db.select().from(teamInvitations).where(eq(teamInvitations.invitationToken, token));
+    return result;
+  }
+
+  async createTeamInvitation(invitation: InsertTeamInvitation): Promise<TeamInvitation> {
+    const [result] = await db.insert(teamInvitations).values(invitation).returning();
+    return result;
+  }
+
+  async updateTeamInvitation(id: number, invitation: Partial<InsertTeamInvitation>): Promise<TeamInvitation | undefined> {
+    const [result] = await db.update(teamInvitations).set({ ...invitation, updatedAt: new Date() }).where(eq(teamInvitations.id, id)).returning();
+    return result;
+  }
+
+  async deleteTeamInvitation(id: number): Promise<boolean> {
+    await db.delete(teamInvitations).where(eq(teamInvitations.id, id));
+    return true;
+  }
+
+  // Invitation Template operations
+  async listInvitationTemplates(organizationId?: number): Promise<InvitationTemplate[]> {
+    if (organizationId) {
+      return db.select().from(invitationTemplates).where(
+        or(eq(invitationTemplates.organizationId, organizationId), isNull(invitationTemplates.organizationId))
+      ).orderBy(desc(invitationTemplates.createdAt));
+    }
+    return db.select().from(invitationTemplates).where(isNull(invitationTemplates.organizationId)).orderBy(desc(invitationTemplates.createdAt));
+  }
+
+  async getInvitationTemplate(id: number): Promise<InvitationTemplate | undefined> {
+    const [result] = await db.select().from(invitationTemplates).where(eq(invitationTemplates.id, id));
+    return result;
+  }
+
+  async createInvitationTemplate(template: InsertInvitationTemplate): Promise<InvitationTemplate> {
+    const [result] = await db.insert(invitationTemplates).values(template).returning();
+    return result;
+  }
+
+  async updateInvitationTemplate(id: number, template: Partial<InsertInvitationTemplate>): Promise<InvitationTemplate | undefined> {
+    const [result] = await db.update(invitationTemplates).set({ ...template, updatedAt: new Date() }).where(eq(invitationTemplates.id, id)).returning();
+    return result;
+  }
+
+  async deleteInvitationTemplate(id: number): Promise<boolean> {
+    await db.delete(invitationTemplates).where(eq(invitationTemplates.id, id));
     return true;
   }
 }

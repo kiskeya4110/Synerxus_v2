@@ -96,6 +96,7 @@ export default function DiscoverOpportunitiesPWA() {
     switch (userType) {
       case 'organization':
         return <OrganizationPWAHeader />;
+      case 'corporate-partner':
       case 'corporate_partner':
         return <CSRPWAHeader companyName="CSR Partner" />;
       default:
@@ -108,6 +109,7 @@ export default function DiscoverOpportunitiesPWA() {
     switch (userType) {
       case 'organization':
         return <OrganizationPWANav activeTab="projects" />;
+      case 'corporate-partner':
       case 'corporate_partner':
         return <CSRPWANav activeTab="projects" />;
       default:

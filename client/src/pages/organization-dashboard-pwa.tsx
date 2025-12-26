@@ -1270,18 +1270,27 @@ export default function OrganizationDashboardPWA() {
           </button>
 
           {/* Your Team - Volunteer List Section */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-600" />
-                <h3 className="font-semibold text-slate-800 text-sm">Your Team</h3>
-                <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                  {organizationVolunteers.length} volunteers
-                </span>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-3 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800 text-sm">Your Team</h3>
+                    <p className="text-[10px] text-slate-500">Tap a volunteer to view profile</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                    {organizationVolunteers.length}
+                  </span>
+                  <button onClick={() => navigate('/volunteers')} className="text-xs text-purple-600 font-semibold hover:text-purple-700">
+                    View All →
+                  </button>
+                </div>
               </div>
-              <button onClick={() => navigate('/volunteers')} className="text-xs text-purple-600 font-medium">
-                View All
-              </button>
             </div>
 
             {volunteersLoading ? (
@@ -1307,38 +1316,50 @@ export default function OrganizationDashboardPWA() {
                       setSelectedVolunteer(volunteer);
                       setShowVolunteerProfileModal(true);
                     }}
-                    className="w-full p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+                    className="w-full p-3 flex items-center gap-3 hover:bg-purple-50 active:bg-purple-100 active:scale-[0.98] transition-all duration-150 text-left group"
                   >
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {volunteer.avatar ? (
-                        <img src={volunteer.avatar} alt={volunteer.displayName} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        volunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
-                      )}
+                    {/* Avatar with online indicator */}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm ring-2 ring-white shadow-md group-hover:shadow-lg group-hover:ring-purple-200 transition-all">
+                        {volunteer.avatar ? (
+                          <img src={volunteer.avatar} alt={volunteer.displayName} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          volunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
+                        )}
+                      </div>
+                      {/* Active indicator */}
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white" />
                     </div>
 
                     {/* Volunteer Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-800 text-sm truncate">{volunteer.displayName || 'Volunteer'}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-slate-800 text-sm truncate group-hover:text-purple-700 transition-colors">{volunteer.displayName || 'Volunteer'}</p>
+                        {volunteer.hours >= 50 && (
+                          <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full">TOP</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                          <Clock className="w-3 h-3 text-emerald-500" />
                           {volunteer.hours}h
                         </span>
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                          <Briefcase className="w-3 h-3" />
-                          {volunteer.projectCount} projects
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                          <Briefcase className="w-3 h-3 text-blue-500" />
+                          {volunteer.projectCount}
                         </span>
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          {volunteer.tasksCompleted} tasks
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                          <CheckCircle className="w-3 h-3 text-purple-500" />
+                          {volunteer.tasksCompleted}
                         </span>
                       </div>
                     </div>
 
-                    {/* Arrow */}
-                    <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    {/* Tap indicator */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className="text-[9px] text-purple-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">View</span>
+                      <ChevronRight className="w-5 h-5 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </button>
                 ))}
 

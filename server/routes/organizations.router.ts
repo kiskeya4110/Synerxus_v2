@@ -269,7 +269,7 @@ organizationsRouter.post("/:id/members", async (req: Request, res: Response) => 
 organizationsRouter.post("/:id/members/invite", async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
-    const { email, role, title, department, permissions, invitedBy } = req.body;
+    const { email, role, title, department, permissions, invitedBy, invitationMethod, customMessage } = req.body;
 
     const organization = await storage.getOrganization(orgId);
     if (!organization) {
@@ -346,18 +346,94 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
 
     const member = await storage.createOrganizationMember(memberData);
 
+    // Get inviter info
+    const inviter = invitedBy ? await storage.getUser(invitedBy) : null;
+    const inviterName = inviter?.displayName || organization.name;
+
+    // Generate invitation token for email links
+    const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
+    // Build invitation message content
+    const roleDisplay = (role || "member").charAt(0).toUpperCase() + (role || "member").slice(1);
+    const defaultMessageContent = `You've been invited to join ${organization.name} as a ${roleDisplay}.${title ? ` Your role will be ${title}.` : ''}${department ? ` You'll be part of the ${department} team.` : ''}`;
+    const messageContent = customMessage
+      ? `${defaultMessageContent}\n\nPersonal message from ${inviterName}:\n${customMessage}`
+      : defaultMessageContent;
+
+    // Determine the actual invitation method to use
+    const method = invitationMethod || 'email';
+    const shouldSendEmail = method === 'email' || method === 'both';
+    const shouldSendDM = method === 'direct_message' || method === 'both';
+
+    let dmMessageId: number | undefined;
+
+    // Send direct message if requested
+    if (shouldSendDM && invitedBy) {
+      const dmMessage = await storage.createMessage({
+        senderId: invitedBy,
+        receiverId: user.id,
+        subject: `Team Invitation: Join ${organization.name}`,
+        content: messageContent,
+        messageType: "team_invite",
+        read: false
+      });
+      dmMessageId = dmMessage.id;
+    }
+
+    // Create team invitation record for tracking
+    await storage.createTeamInvitation({
+      organizationMemberId: member.id,
+      organizationId: orgId,
+      inviterId: invitedBy,
+      inviteeId: user.id,
+      inviteeEmail: email,
+      invitationMethod: method,
+      messageSubject: `Team Invitation: Join ${organization.name}`,
+      messageContent,
+      customMessage: customMessage || undefined,
+      role: role || "member",
+      title: title || undefined,
+      department: department || undefined,
+      emailStatus: shouldSendEmail ? "sent" : "pending",
+      emailSentAt: shouldSendEmail ? new Date() : undefined,
+      dmStatus: shouldSendDM ? "sent" : "pending",
+      dmSentAt: shouldSendDM ? new Date() : undefined,
+      dmMessageId: dmMessageId,
+      status: "sent",
+      invitationToken,
+      tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+
     // Create notification for invited user
+    const notificationMessage = method === 'both'
+      ? `${inviterName} has invited you to join ${organization.name} as ${roleDisplay}. Check your messages for details.`
+      : method === 'direct_message'
+      ? `${inviterName} has sent you a team invitation via direct message.`
+      : `${inviterName} has invited you to join ${organization.name} as ${roleDisplay}.`;
+
     await storage.createNotification({
       userId: user.id,
       type: "organization_invite",
-      title: "Organization Invitation",
-      message: `You've been invited to join ${organization.name} as ${role || "a member"}`,
+      title: "Team Invitation",
+      message: notificationMessage,
       relatedEntityType: "organization_member",
       relatedEntityId: member.id
     });
 
-    broadcastUpdate("organization_member_invited", { organizationId: orgId, member, user });
-    res.status(201).json({ member, user: { id: user.id, email: user.email, displayName: user.displayName } });
+    broadcastUpdate("organization_member_invited", {
+      organizationId: orgId,
+      member,
+      user,
+      invitationMethod: method
+    });
+
+    res.status(201).json({
+      member,
+      user: { id: user.id, email: user.email, displayName: user.displayName },
+      invitationMethod: method,
+      dmSent: shouldSendDM,
+      emailSent: shouldSendEmail
+    });
   } catch (err) {
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
@@ -504,5 +580,165 @@ organizationsRouter.get("/:id/my-permissions", async (req: Request, res: Respons
     });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch permissions" });
+  }
+});
+
+// ============================================
+// Invitation Template Routes
+// ============================================
+
+// Default invitation templates
+const DEFAULT_TEMPLATES = [
+  {
+    name: "Standard Team Invitation",
+    description: "A professional invitation for new team members",
+    subject: "You're Invited to Join {{organization_name}}",
+    content: `Hello{{invitee_name ? ', ' + invitee_name : ''}},
+
+You've been invited to join {{organization_name}} as a {{role}}{{title ? ' (' + title + ')' : ''}}.
+
+{{#department}}You'll be part of the {{department}} team.{{/department}}
+
+{{#custom_message}}
+Personal message from {{inviter_name}}:
+{{custom_message}}
+{{/custom_message}}
+
+Please click the link below to accept your invitation and get started:
+{{accept_link}}
+
+We're excited to have you on the team!
+
+Best regards,
+{{inviter_name}}
+{{organization_name}}`,
+    templateType: "general",
+    isDefault: true,
+    isActive: true
+  },
+  {
+    name: "Admin Role Invitation",
+    description: "Invitation template for admin-level positions",
+    subject: "Admin Access Invitation - {{organization_name}}",
+    content: `Hello{{invitee_name ? ', ' + invitee_name : ''}},
+
+You've been invited to join {{organization_name}} as an Administrator.
+
+As an admin, you'll have full access to manage team members, projects, and organization settings.
+
+{{#custom_message}}
+Note from {{inviter_name}}:
+{{custom_message}}
+{{/custom_message}}
+
+Click here to accept your invitation: {{accept_link}}
+
+Welcome to the leadership team!
+
+{{inviter_name}}
+{{organization_name}}`,
+    templateType: "role_specific",
+    forRole: "admin",
+    isDefault: false,
+    isActive: true
+  },
+  {
+    name: "HR Team Invitation",
+    description: "Invitation for HR team members",
+    subject: "Join the HR Team at {{organization_name}}",
+    content: `Hello{{invitee_name ? ', ' + invitee_name : ''}},
+
+Welcome to the Human Resources team at {{organization_name}}!
+
+You've been invited to join us as {{role}}{{title ? ' - ' + title : ''}}.
+
+As part of HR, you'll be able to:
+- Approve volunteer hours
+- Review and approve applications
+- Access reports and analytics
+
+{{#custom_message}}
+{{inviter_name}} says:
+{{custom_message}}
+{{/custom_message}}
+
+Accept your invitation here: {{accept_link}}
+
+Looking forward to working with you!
+
+{{inviter_name}}`,
+    templateType: "role_specific",
+    forRole: "hr",
+    isDefault: false,
+    isActive: true
+  }
+];
+
+// GET /api/organizations/:id/invitation-templates - List invitation templates
+organizationsRouter.get("/:id/invitation-templates", async (req: Request, res: Response) => {
+  try {
+    const orgId = parseInt(req.params.id);
+
+    // Get templates for this organization (includes org-specific and system-wide templates)
+    let templates = await storage.listInvitationTemplates(orgId);
+
+    // If no templates exist, create the default ones
+    if (templates.length === 0) {
+      for (const template of DEFAULT_TEMPLATES) {
+        await storage.createInvitationTemplate({
+          ...template,
+          organizationId: null // System-wide templates
+        });
+      }
+      templates = await storage.listInvitationTemplates(orgId);
+    }
+
+    res.json(templates);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch invitation templates" });
+  }
+});
+
+// POST /api/organizations/:id/invitation-templates - Create a custom invitation template
+organizationsRouter.post("/:id/invitation-templates", async (req: Request, res: Response) => {
+  try {
+    const orgId = parseInt(req.params.id);
+    const { name, description, subject, content, templateType, forRole, forDepartment, isDefault, createdBy } = req.body;
+
+    if (!name || !subject || !content) {
+      return res.status(400).json({ message: "Name, subject, and content are required" });
+    }
+
+    const template = await storage.createInvitationTemplate({
+      organizationId: orgId,
+      name,
+      description,
+      subject,
+      content,
+      templateType: templateType || "general",
+      forRole,
+      forDepartment,
+      isDefault: isDefault || false,
+      isActive: true,
+      usageCount: 0,
+      createdBy
+    });
+
+    broadcastUpdate("invitation_template_created", { organizationId: orgId, template });
+    res.status(201).json(template);
+  } catch (err) {
+    const error = handleValidationError(err);
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// GET /api/organizations/:id/team-invitations - List team invitations for an organization
+organizationsRouter.get("/:id/team-invitations", async (req: Request, res: Response) => {
+  try {
+    const orgId = parseInt(req.params.id);
+    const invitations = await storage.listTeamInvitations(orgId);
+    res.json(invitations);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch team invitations" });
   }
 });

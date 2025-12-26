@@ -1,5 +1,5 @@
 {
-  "name": "Synerxus - Connect. Manage. Impact Globally.",
+  "name": "Synerxus - Connect. Collaborate. Impact Globally.",
   "short_name": "Synerxus",
   "description": "Intelligent connections for sustainable development worldwide. AI-powered platform connecting volunteers with impactful opportunities.",
   "start_url": "/",
@@ -9,24 +9,6 @@
   "theme_color": "#2A4B7F",
   "background_color": "#FDF8F3",
   "icons": [
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-16.png",
-      "sizes": "16x16",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-32.png",
-      "sizes": "32x32",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "/favicon-192.png",
       "sizes": "192x192",
@@ -40,16 +22,16 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    },
-    {
       "src": "/synerxus-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "categories": ["productivity", "utilities", "social"]

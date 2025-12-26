@@ -54,7 +54,7 @@ export default function Organizations() {
   
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
-  const isCSR = userType === 'corporate_partner' || userType === 'csr';
+  const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
 
   // Fetch organizations with real stats from the new endpoint
   const { data: organizationsWithStats = [], isLoading } = useQuery<OrganizationWithStats[]>({ 
@@ -268,16 +268,15 @@ export default function Organizations() {
   // CSR Layout wrapper for corporate partners
   if (isCSR) {
     return (
-      <CSRLayout activeNav="dashboard">
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Partner Organizations</h1>
-            <p className="text-sm sm:text-base text-gray-600">
-              Explore partner organizations and their volunteer initiatives
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <CSRLayout activeNav="dashboard" title="Partner Organizations" subtitle="Explore partner organizations and their volunteer initiatives">
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "24px",
+          animation: "fadeIn 0.3s ease-in-out"
+        }}>
+          {/* Stats Cards - 3 columns */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
@@ -313,28 +312,28 @@ export default function Organizations() {
             </Card>
           </div>
 
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search organizations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 min-h-[44px]"
-              />
-            </div>
+          {/* Search */}
+          <div style={{ position: "relative" }}>
+            <Search style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "#9ca3af", zIndex: 1 }} />
+            <Input
+              placeholder="Search organizations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: "36px", minHeight: "44px" }}
+            />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* Organizations Grid - 2 columns, same width as stats grid above */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
             {filteredOrganizations.map((org) => (
               <OrganizationCard key={org.id} org={org} />
             ))}
           </div>
 
           {filteredOrganizations.length === 0 && (
-            <Card className="p-12 text-center">
-              <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">No organizations found</p>
+            <Card style={{ padding: "48px", textAlign: "center" }}>
+              <Building2 style={{ width: "48px", height: "48px", margin: "0 auto 16px", color: "#d1d5db" }} />
+              <p style={{ color: "#6b7280" }}>No organizations found</p>
             </Card>
           )}
 

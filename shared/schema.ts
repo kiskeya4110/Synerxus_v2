@@ -1587,3 +1587,87 @@ export type InsertClaudeMessage = z.infer<typeof insertClaudeMessageSchema>;
 
 export type ClaudeBookmark = typeof claudeBookmarks.$inferSelect;
 export type InsertClaudeBookmark = z.infer<typeof insertClaudeBookmarkSchema>;
+
+// =====================================================
+// Team Invitations Schema
+// =====================================================
+
+// Team Invitation Communications - Track invitations sent via email or direct message
+export const teamInvitations = pgTable("team_invitations", {
+  id: serial("id").primaryKey(),
+  organizationMemberId: integer("organization_member_id").references(() => organizationMembers.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  inviterId: integer("inviter_id").references(() => users.id).notNull(),
+  inviteeId: integer("invitee_id").references(() => users.id), // Null if inviting by email only (user doesn't exist yet)
+  inviteeEmail: text("invitee_email").notNull(), // Email address for the invitation
+  invitationMethod: text("invitation_method").notNull(), // 'email', 'direct_message', 'both'
+  messageSubject: text("message_subject"), // Subject line for email invitations
+  messageContent: text("message_content").notNull(), // The invitation message content
+  customMessage: text("custom_message"), // Optional personalized message from inviter
+  role: text("role").notNull().default("member"), // Role being invited for
+  title: text("title"), // Job title if provided
+  department: text("department"), // Department if provided
+  // Email tracking
+  emailStatus: text("email_status").default("pending"), // pending, sent, delivered, bounced, opened
+  emailSentAt: timestamp("email_sent_at"),
+  emailOpenedAt: timestamp("email_opened_at"),
+  emailProvider: text("email_provider"), // sendgrid, ses, etc.
+  emailMessageId: text("email_message_id"), // External provider message ID
+  // Direct message tracking
+  dmStatus: text("dm_status").default("pending"), // pending, sent, delivered, read
+  dmSentAt: timestamp("dm_sent_at"),
+  dmReadAt: timestamp("dm_read_at"),
+  dmMessageId: integer("dm_message_id").references(() => messages.id), // Link to the DM in messages table
+  // Invitation status
+  status: text("status").notNull().default("pending"), // pending, sent, accepted, declined, expired, cancelled
+  respondedAt: timestamp("responded_at"),
+  expiresAt: timestamp("expires_at"), // Optional expiration date for the invitation
+  reminderCount: integer("reminder_count").default(0), // Number of reminder notifications sent
+  lastReminderAt: timestamp("last_reminder_at"),
+  // Token for email invitation acceptance
+  invitationToken: text("invitation_token").unique(), // Unique token for accepting invitation via email link
+  tokenExpiresAt: timestamp("token_expires_at"),
+  // Metadata
+  metadata: jsonb("metadata"), // Additional data like IP address, user agent, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Team Invitation Templates - Pre-defined invitation message templates
+export const invitationTemplates = pgTable("invitation_templates", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id), // Null for system-wide templates
+  name: text("name").notNull(),
+  description: text("description"),
+  subject: text("subject").notNull(), // Email subject template
+  content: text("content").notNull(), // Message content template with placeholders
+  templateType: text("template_type").notNull().default("general"), // general, role_specific, department_specific
+  forRole: text("for_role"), // If role_specific, which role this is for
+  forDepartment: text("for_department"), // If department_specific, which department
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false), // Default template for the org
+  usageCount: integer("usage_count").default(0), // Track how often this template is used
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas for team invitations
+export const insertTeamInvitationSchema = createInsertSchema(teamInvitations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvitationTemplateSchema = createInsertSchema(invitationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for team invitations
+export type TeamInvitation = typeof teamInvitations.$inferSelect;
+export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
+
+export type InvitationTemplate = typeof invitationTemplates.$inferSelect;
+export type InsertInvitationTemplate = z.infer<typeof insertInvitationTemplateSchema>;

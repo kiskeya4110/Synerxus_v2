@@ -74,7 +74,7 @@ export default function Help() {
 
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
-  const isCSR = userType === 'corporate_partner' || userType === 'csr';
+  const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
 
   const categories = Array.from(new Set(faqData.map(item => item.category)));
 

@@ -89,7 +89,14 @@
       "Bash(git config:*)",
       "Bash(~/.git-credentials)",
       "Bash(export SENTRY_DSN=\"https://11f4d52c3a0724b75499332112224985@o4510592998375424.ingest.us.sentry.io/4510593088552960\")",
-      "Bash(timeout 12 npm run dev:*)"
+      "Bash(timeout 12 npm run dev:*)",
+      "Bash(xxd:*)",
+      "Bash(yes:*)",
+      "Bash(then psql \"$DATABASE_URL\" -c \"\\\\d team_invitations\")",
+      "Bash(for i in 1 2 3 4 5 6)",
+      "Bash(do echo -n \".\")",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(convert:*)"
     ],
     "deny": [],
     "ask": []

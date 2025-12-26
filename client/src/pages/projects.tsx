@@ -31,7 +31,7 @@ export default function Projects() {
   const isMobile = useIsMobile();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
-  const isCSR = userType === 'corporate_partner' || userType === 'csr';
+  const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -364,26 +364,21 @@ export default function Projects() {
   // CSR Layout wrapper for corporate partners
   if (isCSR) {
     return (
-      <CSRLayout activeNav="portfolio">
-        <div className="space-y-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-2">Partner Projects</h1>
-            <p className="text-gray-600">Browse and explore projects from partner organizations</p>
+      <CSRLayout activeNav="portfolio" title="Partner Projects" subtitle="Browse and explore projects from partner organizations">
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out", maxWidth: "1200px" }}>
+          {/* Search */}
+          <div style={{ position: "relative", maxWidth: "400px" }}>
+            <Search style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "#9ca3af", zIndex: 1 }} />
+            <Input
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: "36px", minHeight: "44px" }}
+            />
           </div>
 
-          <div className="mb-6 flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 min-h-[44px]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
+          {/* Projects List */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {filteredProjects.map((project) => {
               const projectData = projectMetrics.get(project.id);
               if (!projectData) return null;
@@ -405,8 +400,8 @@ export default function Projects() {
           </div>
 
           {filteredProjects.length === 0 && (
-            <Card className="p-12 text-center">
-              <p className="text-gray-500">No projects found</p>
+            <Card style={{ padding: "48px", textAlign: "center" }}>
+              <p style={{ color: "#6b7280" }}>No projects found</p>
             </Card>
           )}
         </div>

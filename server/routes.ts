@@ -3719,11 +3719,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Get unique volunteer IDs from assignments
-      const volunteerIds = new Set(organizationAssignments.map(a => a.volunteerId));
-      
-      // Get all users and filter to volunteers with assignments
+      const volunteerIdsFromAssignments = new Set(organizationAssignments.map(a => a.volunteerId));
+
+      // Also get volunteers from organization relationships (applied, accepted, active, etc.)
+      // This includes volunteers who have applied to opportunities but may not have project assignments yet
+      const relationships = await storage.listVolunteerRelationshipsByOrganization(organizationId);
+      const volunteerIdsFromRelationships = new Set(
+        relationships
+          .filter(r => ['applied', 'accepted', 'active', 'completed'].includes(r.relationshipType))
+          .map(r => r.volunteerId)
+      );
+
+      // Merge both sets of volunteer IDs
+      const volunteerIds = new Set([...Array.from(volunteerIdsFromAssignments), ...Array.from(volunteerIdsFromRelationships)]);
+
+      // Get all users and filter to volunteers with assignments or relationships
       const allUsers = await storage.listUsers();
-      const organizationVolunteers = allUsers.filter(u => 
+      const organizationVolunteers = allUsers.filter(u =>
         u.userType === 'volunteer' && volunteerIds.has(u.id)
       );
       
@@ -3777,7 +3789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Validate all volunteers have IDs before sending response
-      console.log(`[Organization Volunteers API] Processing ${volunteersWithStats.length} volunteers for organization ${organizationId}`);
+      console.log(`[Organization Volunteers API] Processing ${volunteersWithStats.length} volunteers for organization ${organizationId} (${volunteerIdsFromAssignments.size} from assignments, ${volunteerIdsFromRelationships.size} from relationships)`);
 
       const validVolunteers = volunteersWithStats.filter((v, index) => {
         if (!v.id) {

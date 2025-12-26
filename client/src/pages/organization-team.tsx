@@ -5,6 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import {
   UsersRound, UserPlus, Shield, ShieldCheck, Settings, Trash2,
@@ -100,6 +101,8 @@ export default function OrganizationTeamPage() {
   const [inviteDepartment, setInviteDepartment] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [customDepartment, setCustomDepartment] = useState("");
+  const [invitationMethod, setInvitationMethod] = useState<"email" | "direct_message" | "both">("email");
+  const [customMessage, setCustomMessage] = useState("");
 
   // Get current user's organization
   const userId = localStorage.getItem("currentUserId");
@@ -154,7 +157,14 @@ export default function OrganizationTeamPage() {
 
   // Invite member mutation
   const inviteMutation = useMutation({
-    mutationFn: async (data: { email: string; role: string; title?: string; department?: string }) => {
+    mutationFn: async (data: {
+      email: string;
+      role: string;
+      title?: string;
+      department?: string;
+      invitationMethod?: "email" | "direct_message" | "both";
+      customMessage?: string;
+    }) => {
       const res = await fetch(`/api/organizations/${organizationId}/members/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,14 +176,22 @@ export default function OrganizationTeamPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
       setShowInviteModal(false);
       setInviteEmail("");
       setInviteRole("member");
       setInviteTitle("");
       setInviteDepartment("");
-      toast({ title: "Invitation sent", description: "Team member has been invited." });
+      setInvitationMethod("email");
+      setCustomMessage("");
+      setCustomTitle("");
+      setCustomDepartment("");
+
+      const methodText = invitationMethod === "both" ? "via email and direct message"
+        : invitationMethod === "direct_message" ? "via direct message"
+        : "via email";
+      toast({ title: "Invitation sent", description: `Team member has been invited ${methodText}.` });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to invite", description: error.message, variant: "destructive" });
@@ -237,10 +255,11 @@ export default function OrganizationTeamPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">
+      <OfflineBanner />
       <OrganizationHeader activeTab="team" />
       <OrganizationWelcomeBanner pageTitle="Team Management" />
 
-      <main className="flex-1 max-w-[1400px] mx-auto px-6 py-8 w-full">
+      <main className="flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -687,8 +706,8 @@ export default function OrganizationTeamPage() {
 
         {/* Invite Modal */}
         {showInviteModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-lg w-full p-6 my-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Invite Team Member</h3>
                 <button
@@ -777,6 +796,68 @@ export default function OrganizationTeamPage() {
                   )}
                 </div>
 
+                {/* Invitation Method */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Invitation Method</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInvitationMethod("email")}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                        invitationMethod === "email"
+                          ? "bg-indigo-50 border-indigo-300 text-indigo-700"
+                          : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvitationMethod("direct_message")}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                        invitationMethod === "direct_message"
+                          ? "bg-indigo-50 border-indigo-300 text-indigo-700"
+                          : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Message
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvitationMethod("both")}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                        invitationMethod === "both"
+                          ? "bg-indigo-50 border-indigo-300 text-indigo-700"
+                          : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Send className="h-4 w-4" />
+                      Both
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {invitationMethod === "email" && "Send invitation via email only"}
+                    {invitationMethod === "direct_message" && "Send invitation via platform direct message"}
+                    {invitationMethod === "both" && "Send invitation via both email and direct message"}
+                  </p>
+                </div>
+
+                {/* Custom Message */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Personal Message <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <textarea
+                    value={customMessage}
+                    onChange={(e) => setCustomMessage(e.target.value)}
+                    placeholder="Add a personal note to your invitation..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  />
+                </div>
+
                 {/* Role-based permissions preview */}
                 <div className="bg-slate-50 rounded-lg p-3">
                   <p className="text-xs font-medium text-slate-600 mb-2">Permissions for {inviteRole.charAt(0).toUpperCase() + inviteRole.slice(1)}:</p>
@@ -801,6 +882,8 @@ export default function OrganizationTeamPage() {
                     setInviteDepartment("");
                     setCustomTitle("");
                     setCustomDepartment("");
+                    setInvitationMethod("email");
+                    setCustomMessage("");
                   }}
                   className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
                 >
@@ -815,6 +898,8 @@ export default function OrganizationTeamPage() {
                       role: inviteRole,
                       title: finalTitle || undefined,
                       department: finalDepartment || undefined,
+                      invitationMethod,
+                      customMessage: customMessage || undefined,
                     });
                   }}
                   disabled={!inviteEmail || inviteMutation.isPending}
@@ -827,7 +912,9 @@ export default function OrganizationTeamPage() {
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4" />
+                      {invitationMethod === "email" && <Mail className="h-4 w-4" />}
+                      {invitationMethod === "direct_message" && <MessageSquare className="h-4 w-4" />}
+                      {invitationMethod === "both" && <Send className="h-4 w-4" />}
                       Send Invitation
                     </>
                   )}

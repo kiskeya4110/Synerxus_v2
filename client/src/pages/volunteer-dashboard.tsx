@@ -1196,10 +1196,11 @@ export default function Dashboard() {
 
     return (
       <PageTransition>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden' }}>
         {/* Top Navigation for Desktop Volunteers */}
         <VolunteerNav />
 
-        <div className="min-h-screen bg-[#f8f9fa] dark:bg-gray-950 overflow-y-auto pb-8 relative z-0">
+        <div className="flex-1 bg-[#f8f9fa] dark:bg-gray-950 overflow-y-auto pb-8 relative z-0">
 
           {/* Main Content Container - same max-width for header and body */}
           <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-6 space-y-6">
@@ -2063,13 +2064,15 @@ export default function Dashboard() {
           volunteerName={currentUser?.displayName}
           sdgsContributed={aiuSummary?.sdgsContributed ?? []}
         />
+        </div>
       </PageTransition>
     );
   }
 
   return (
     <PageTransition>
-      <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-y-auto overflow-x-hidden space-y-5 md:space-y-6 px-4 md:px-6 lg:px-8 pb-8 w-full max-w-[1400px] mx-auto">
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', overflowX: 'hidden', zIndex: 100 }} className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="space-y-5 md:space-y-6 px-4 md:px-6 lg:px-8 pb-8 w-full max-w-[1400px] mx-auto">
       {/* Header - Enhanced PWA-style */}
       <div className="space-y-4 md:space-y-6 pt-4 md:pt-6">
         <div className="flex items-center justify-between">
@@ -3050,6 +3053,7 @@ export default function Dashboard() {
       {/* Footer - Hidden on mobile */}
       <div className="hidden md:block mt-8">
         <Footer />
+      </div>
       </div>
       </div>
     </PageTransition>

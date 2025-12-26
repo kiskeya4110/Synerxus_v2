@@ -481,7 +481,7 @@ export default function CSRDashboard() {
   );
   const [showFunnelModal, setShowFunnelModal] = useState(false);
   const [selectedMainTab, setSelectedMainTab] = useState<
-    "overview" | "engagement"
+    "overview" | "engagement" | "sdgs" | "leaderboard" | "recognition" | "challenges" | "geographic"
   >("overview");
 
   // Handle URL query parameter for tab switching (from sidebar nav)
@@ -489,9 +489,10 @@ export default function CSRDashboard() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    if (tabParam === 'engagement') {
-      setSelectedMainTab('engagement');
-    } else if (tabParam === 'overview') {
+    const validTabs = ['overview', 'engagement', 'sdgs', 'leaderboard', 'recognition', 'challenges', 'geographic'];
+    if (tabParam && validTabs.includes(tabParam)) {
+      setSelectedMainTab(tabParam as typeof selectedMainTab);
+    } else if (!tabParam) {
       setSelectedMainTab('overview');
     }
   }, [location]);
@@ -3894,7 +3895,7 @@ export default function CSRDashboard() {
   }
 
   return (
-    <CSRLayout activeNav={selectedMainTab === "engagement" ? "engagement" : "dashboard"}>
+    <CSRLayout activeNav={selectedMainTab}>
       {/* Main Dashboard Content */}
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Company Name Banner with Logo */}
@@ -4147,7 +4148,7 @@ export default function CSRDashboard() {
         </div>
 
         {selectedMainTab === "engagement" && (
-            <>
+            <div style={{ animation: "fadeIn 0.3s ease-in-out" }}>
               <div
                 style={{
                   display: "flex",
@@ -4174,10 +4175,10 @@ export default function CSRDashboard() {
                   <EmployeeEngagementTab userId={userId} />
                 </Suspense>
               </LazyErrorBoundary>
-            </>
+            </div>
           )}
           {selectedMainTab === "overview" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
               {/* Filters Bar - Light Premium Style - At Top */}
               <div
                 style={{
@@ -6425,7 +6426,421 @@ export default function CSRDashboard() {
               </div>
             </div>
           )}
-          
+
+          {/* SDG Alignment Tab */}
+          {selectedMainTab === "sdgs" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <TrendingUp style={{ width: "28px", height: "28px", color: "#059669" }} />
+                  <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#14532d" }}>
+                    SDG Alignment
+                  </h1>
+                </div>
+                <div style={{ fontSize: "14px", color: "#059669", fontWeight: "600" }}>
+                  {committedSDGsList.length} Committed SDGs
+                </div>
+              </div>
+
+              {/* Summary Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                <div style={{
+                  background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: "32px", fontWeight: "700", color: "#059669" }}>
+                    {displayTotalHours.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#065f46", fontWeight: "500" }}>Total SDG Hours</div>
+                </div>
+                <div style={{
+                  background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: "32px", fontWeight: "700", color: "#2563eb" }}>
+                    {sdgMetrics.filter((m: any) => m.totalHours > 0).length}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#1e40af", fontWeight: "500" }}>Active SDGs</div>
+                </div>
+                <div style={{
+                  background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: "32px", fontWeight: "700", color: "#d97706" }}>
+                    {displayActiveEmployees}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#92400e", fontWeight: "500" }}>Volunteers Contributing</div>
+                </div>
+              </div>
+
+              {/* Committed SDGs Section */}
+              <div style={{
+                background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+                padding: "24px",
+                borderRadius: "16px",
+                border: "1px solid rgba(16, 185, 129, 0.2)",
+              }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#14532d", marginBottom: "16px" }}>
+                  Your Committed SDGs
+                </h3>
+                {committedSDGsList.length > 0 ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+                    {committedSDGsList.map((sdgNum: number) => {
+                      const metric = sdgMetrics.find((m: any) => m.sdg === sdgNum) || { sdg: sdgNum, totalHours: 0, uniqueEmployees: 0, projectsContributed: 0 };
+                      return (
+                        <div key={sdgNum} style={{
+                          background: "white",
+                          padding: "16px",
+                          borderRadius: "12px",
+                          border: `2px solid ${getSDGColor(sdgNum)}`,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                        }}
+                        onClick={() => setSdgDetailModal({ isOpen: true, sdgNumber: sdgNum })}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                            <img
+                              src={getSDGIcon(sdgNum)}
+                              alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
+                              style={{ width: "48px", height: "48px", borderRadius: "8px", objectFit: "cover" }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px" }}>SDG {sdgNum}</div>
+                              <div style={{ fontSize: "12px", color: "#64748b" }}>{getSDGName(sdgNum)}</div>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <div style={{ fontSize: "20px", fontWeight: "700", color: getSDGColor(sdgNum) }}>
+                                {(metric.totalHours || 0).toLocaleString()} hrs
+                              </div>
+                              <div style={{ fontSize: "11px", color: "#64748b" }}>
+                                {metric.uniqueEmployees || 0} volunteers • {metric.projectsContributed || 0} projects
+                              </div>
+                            </div>
+                            <ChevronRight style={{ width: "20px", height: "20px", color: "#94a3b8" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                    <Target style={{ width: "48px", height: "48px", margin: "0 auto 12px", color: "#cbd5e1" }} />
+                    <p style={{ fontSize: "14px", marginBottom: "16px" }}>No SDG commitments configured yet.</p>
+                    <button
+                      onClick={() => navigate("/corporate-partner-profile-settings")}
+                      style={{
+                        padding: "10px 20px",
+                        background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Configure SDG Commitments
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => navigate("/sdg-mapping")}
+                style={{
+                  padding: "12px 24px",
+                  background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  alignSelf: "flex-start",
+                }}
+              >
+                View Full SDG Mapping
+              </button>
+            </div>
+          )}
+
+          {/* Leaderboard Tab */}
+          {selectedMainTab === "leaderboard" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                <Award style={{ width: "28px", height: "28px", color: "#f59e0b" }} />
+                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#92400e" }}>
+                  Volunteer Leaderboard
+                </h1>
+              </div>
+              <div style={{
+                background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                padding: "24px",
+                borderRadius: "16px",
+                border: "1px solid rgba(245, 158, 11, 0.2)",
+              }}>
+                <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px" }}>
+                  Celebrate top volunteers and their contributions to community impact.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {displayLeaderboard.slice(0, 10).map((employee: any, index: number) => (
+                    <div key={employee.id || index} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                      padding: "16px",
+                      background: index === 0 ? "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)" : "white",
+                      borderRadius: "12px",
+                      border: index === 0 ? "2px solid #f59e0b" : "1px solid #e5e7eb",
+                    }}>
+                      <div style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "50%",
+                        background: index === 0 ? "#f59e0b" : index === 1 ? "#94a3b8" : index === 2 ? "#b45309" : "#e5e7eb",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: index < 3 ? "white" : "#64748b",
+                        fontWeight: "700",
+                        fontSize: "14px",
+                      }}>
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: "600", color: "#1e293b" }}>{employee.name || employee.displayName}</div>
+                        <div style={{ fontSize: "12px", color: "#64748b" }}>{employee.department || "Team Member"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontWeight: "700", color: "#059669", fontSize: "18px" }}>{employee.totalHours || 0}h</div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>{employee.projectCount || 0} projects</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigate("/leaderboard")}
+                  style={{
+                    marginTop: "20px",
+                    padding: "12px 24px",
+                    background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  View Full Leaderboard
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Recognition Tab */}
+          {selectedMainTab === "recognition" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                <Zap style={{ width: "28px", height: "28px", color: "#8b5cf6" }} />
+                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#5b21b6" }}>
+                  Employee Recognition
+                </h1>
+              </div>
+              <div style={{
+                background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+                padding: "24px",
+                borderRadius: "16px",
+                border: "1px solid rgba(139, 92, 246, 0.2)",
+              }}>
+                <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px" }}>
+                  Recognize and celebrate employee contributions to social impact initiatives.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(139, 92, 246, 0.2)",
+                  }}>
+                    <Star style={{ width: "32px", height: "32px", color: "#f59e0b", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#5b21b6" }}>{displayActiveEmployees}</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>Active Volunteers</div>
+                  </div>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(139, 92, 246, 0.2)",
+                  }}>
+                    <Trophy style={{ width: "32px", height: "32px", color: "#f59e0b", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#5b21b6" }}>{displayProjectsCompleted}</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>Projects Completed</div>
+                  </div>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(139, 92, 246, 0.2)",
+                  }}>
+                    <Heart style={{ width: "32px", height: "32px", color: "#ef4444", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#5b21b6" }}>{displayTotalHours.toLocaleString()}</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>Total Hours</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRecognitionModal(true)}
+                  style={{
+                    padding: "12px 24px",
+                    background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <Send style={{ width: "16px", height: "16px" }} />
+                  Send Recognition
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Challenges Tab */}
+          {selectedMainTab === "challenges" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                <Target style={{ width: "28px", height: "28px", color: "#0ea5e9" }} />
+                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#0c4a6e" }}>
+                  Active Challenges
+                </h1>
+              </div>
+              <div style={{
+                background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+                padding: "24px",
+                borderRadius: "16px",
+                border: "1px solid rgba(14, 165, 233, 0.2)",
+              }}>
+                <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px" }}>
+                  View and participate in corporate volunteer challenges.
+                </p>
+                <div style={{
+                  background: "white",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(14, 165, 233, 0.2)",
+                  textAlign: "center",
+                }}>
+                  <Flame style={{ width: "48px", height: "48px", color: "#f97316", margin: "0 auto 12px" }} />
+                  <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", marginBottom: "8px" }}>
+                    Q4 Volunteer Challenge
+                  </h3>
+                  <p style={{ fontSize: "14px", color: "#64748b", marginBottom: "16px" }}>
+                    Help us reach 1,000 volunteer hours this quarter!
+                  </p>
+                  <div style={{
+                    background: "#e5e7eb",
+                    borderRadius: "999px",
+                    height: "12px",
+                    marginBottom: "8px",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      width: `${Math.min((displayTotalHours / 1000) * 100, 100)}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%)",
+                      borderRadius: "999px",
+                    }} />
+                  </div>
+                  <div style={{ fontSize: "14px", color: "#475569" }}>
+                    {displayTotalHours.toLocaleString()} / 1,000 hours ({Math.round((displayTotalHours / 1000) * 100)}%)
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Geographic Impact Tab */}
+          {selectedMainTab === "geographic" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                <Globe style={{ width: "28px", height: "28px", color: "#0891b2" }} />
+                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#164e63" }}>
+                  Geographic Impact
+                </h1>
+              </div>
+              <div style={{
+                background: "linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)",
+                padding: "24px",
+                borderRadius: "16px",
+                border: "1px solid rgba(8, 145, 178, 0.2)",
+              }}>
+                <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px" }}>
+                  See where your company's volunteer efforts are making a difference.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(8, 145, 178, 0.2)",
+                  }}>
+                    <MapPin style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Local</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.6).toLocaleString()} hours</div>
+                  </div>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(8, 145, 178, 0.2)",
+                  }}>
+                    <Building2 style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Regional</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.3).toLocaleString()} hours</div>
+                  </div>
+                  <div style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(8, 145, 178, 0.2)",
+                  }}>
+                    <Globe style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Global</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.1).toLocaleString()} hours</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         {/* KPI Detail Modal */}
       {selectedKPI && (
         <div

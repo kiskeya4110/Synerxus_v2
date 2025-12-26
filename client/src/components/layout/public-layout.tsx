@@ -22,7 +22,7 @@ export function PublicLayout({ children, activeTab, showFooter = true }: PublicL
 
   // Determine dashboard path based on user type
   const getDashboardPath = () => {
-    if (userType === 'corporate_partner' || userType === 'csr') return '/csr-dashboard';
+    if (userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr') return '/csr-dashboard';
     if (userType === 'organization') return '/organization-dashboard';
     if (userType === 'volunteer') return '/volunteer-dashboard';
     return '/landing';

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation, Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,13 @@ export default function OpportunityDetail() {
   const opportunityId = parseInt(id!);
   const userId = localStorage.getItem('currentUserId');
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
+
+  // Redirect mobile users to PWA route
+  useEffect(() => {
+    if (isMobile && opportunityId) {
+      navigate(`/opportunities/${opportunityId}/pwa`, { replace: true });
+    }
+  }, [isMobile, opportunityId, navigate]);
 
   const handleBack = () => {
     if (window.history.length > 1) {

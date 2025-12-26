@@ -1203,7 +1203,7 @@ export default function OrganizationDashboardPWA() {
               {dashboardData?.projects?.slice(0, 5).map((project) => (
                 <button
                   key={project.id}
-                  onClick={() => navigate(`/projects/${project.id}`)}
+                  onClick={() => navigate(`/projects/${project.id}/pwa`)}
                   className="w-full flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-left"
                 >
                   <div className="flex-1 min-w-0">
@@ -1673,7 +1673,7 @@ export default function OrganizationDashboardPWA() {
                                 key={project.id}
                                 onClick={() => {
                                   setSelectedSdgGoal(null);
-                                  navigate(`/projects/${project.id}`);
+                                  navigate(`/projects/${project.id}/pwa`);
                                 }}
                                 className="w-full flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 transition-colors text-left"
                               >
@@ -2908,7 +2908,7 @@ export default function OrganizationDashboardPWA() {
                         key={project.id}
                         onClick={() => {
                           setShowVolunteerProfileModal(false);
-                          navigate(`/projects/${project.id}`);
+                          navigate(`/projects/${project.id}/pwa`);
                         }}
                         className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
                       >
@@ -3008,12 +3008,13 @@ export default function OrganizationDashboardPWA() {
                 <button
                   onClick={() => {
                     setShowVolunteerProfileModal(false);
-                    navigate(`/volunteers/${selectedVolunteer.id}`);
+                    // Navigate to volunteers page - the volunteer profile modal can be viewed there
+                    navigate('/volunteers');
                   }}
                   className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-medium text-sm hover:from-purple-600 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
                 >
                   <User className="w-4 h-4" />
-                  Full Profile
+                  All Volunteers
                 </button>
               </div>
             </div>

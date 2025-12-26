@@ -208,7 +208,7 @@ export default function OrganizationMessagesPWA() {
     },
   });
 
-  // Send message mutation
+  // Send message mutation with optimistic update for instant display
   const sendMessageMutation = useMutation({
     mutationFn: async ({ threadId, content }: { threadId: number; content: string }) => {
       if (!parsedUserId) throw new Error("User not authenticated");
@@ -218,11 +218,45 @@ export default function OrganizationMessagesPWA() {
         messageType: "text",
       });
     },
-    onSuccess: async () => {
+    onMutate: async ({ threadId, content }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [`/api/conversation-threads/${threadId}/messages`] });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData([`/api/conversation-threads/${threadId}/messages`]);
+
+      // Optimistically update - add the new message immediately
+      queryClient.setQueryData([`/api/conversation-threads/${threadId}/messages`], (old: any) => {
+        if (!old) return old;
+        const optimisticMessage = {
+          id: Date.now(), // Temporary ID
+          threadId,
+          senderId: parsedUserId,
+          content: content.trim(),
+          messageType: "text",
+          createdAt: new Date().toISOString(),
+          isOptimistic: true, // Flag to identify optimistic messages
+        };
+        return {
+          ...old,
+          messages: [...(old.messages || []), optimisticMessage],
+        };
+      });
+
+      // Clear input immediately for better UX
       setMessageContent("");
+
+      return { previousMessages };
+    },
+    onSuccess: async () => {
+      // Refetch to get the real message with correct ID
       await Promise.all([refetchMessages(), refetchThreads()]);
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Roll back to previous messages on error
+      if (context?.previousMessages && selectedThread) {
+        queryClient.setQueryData([`/api/conversation-threads/${selectedThread.id}/messages`], context.previousMessages);
+      }
       toast({
         title: "Error",
         description: error?.message || "Failed to send message",

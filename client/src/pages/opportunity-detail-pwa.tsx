@@ -2,12 +2,9 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
-import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import CSRPWANav from "@/components/layout/csr-pwa-nav";
-import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,17 +73,25 @@ export default function OpportunityDetailPWA() {
     app.opportunityId === opportunityId && app.volunteerId === parseInt(userId || '0')
   );
 
-  // Render appropriate header based on user type
+  // Simple consistent header for opportunity detail - no slide-out menu
   const renderHeader = () => {
-    switch (userType) {
-      case 'organization':
-        return <OrganizationPWAHeader />;
-      case 'corporate-partner':
-      case 'corporate_partner':
-        return <CSRPWAHeader companyName="CSR Partner" />;
-      default:
-        return <PWAHeader />;
-    }
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
+        <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
+        <div className="px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold truncate">{opportunity?.title || 'Opportunity'}</p>
+            <p className="text-white/60 text-xs truncate">{opportunity?.organizationName || 'View Details'}</p>
+          </div>
+        </div>
+      </header>
+    );
   };
 
   // Render appropriate navigation based on user type

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb } from "lucide-react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -954,6 +954,68 @@ export default function Dashboard() {
           })),
         };
         break;
+      case "People Impacted":
+        // Group people impacted by project
+        const impactByProject = new Map<string, { projectName: string; peopleImpacted: number; activities: number }>();
+
+        filteredData.activities.forEach((a: any) => {
+          if (a.projectId !== undefined && a.projectId !== null) {
+            const projectKey = `project_${a.projectId}`;
+            let projectName = "Unknown Project";
+            const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
+                           projects.find((p: any) => p.id === a.projectId);
+            projectName = project?.name || "Unknown Project";
+
+            if (!impactByProject.has(projectKey)) {
+              impactByProject.set(projectKey, {
+                projectName,
+                peopleImpacted: 0,
+                activities: 0
+              });
+            }
+
+            const projectData = impactByProject.get(projectKey)!;
+            projectData.peopleImpacted += a.peopleImpacted || 0;
+            projectData.activities += 1;
+          }
+        });
+
+        const totalPeopleValue = dashboardData?.totalPeopleImpacted || 0;
+        const totalActivitiesCount = filteredData.activities.length;
+        const avgImpactPerActivity = totalActivitiesCount > 0 ? Math.round(totalPeopleValue / totalActivitiesCount) : 0;
+
+        detailData = {
+          title: "People Impacted Breakdown",
+          items: [
+            {
+              label: "Total People Reached",
+              value: totalPeopleValue.toLocaleString(),
+              icon: "🌍",
+              isHighlight: true,
+              description: `Through ${totalActivitiesCount} volunteer activities`
+            },
+            {
+              label: "Average Impact per Activity",
+              value: `${avgImpactPerActivity} people`,
+              icon: "📊",
+              isHighlight: true,
+              description: "Your efficiency in reaching beneficiaries"
+            },
+            ...(impactByProject.size > 0 ? [{
+              label: "📋 Impact by Project",
+              value: `${impactByProject.size} project${impactByProject.size !== 1 ? 's' : ''}`,
+              isCategory: true,
+              description: "Breakdown of people impacted per project"
+            }] : []),
+            ...Array.from(impactByProject.values()).map((data) => ({
+              label: data.projectName,
+              value: `${data.peopleImpacted.toLocaleString()} people`,
+              description: `${data.activities} activit${data.activities !== 1 ? 'ies' : 'y'}`,
+              isProjectGroup: true,
+            }))
+          ],
+        };
+        break;
       case "Impact Score":
         // Calculate component scores for the breakdown
         const totalHours = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
@@ -1243,20 +1305,32 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Quick Stats - Professional badges */}
-                <div className="flex gap-6 md:gap-10 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 md:pl-10">
-                  <div className="text-center">
+                {/* Quick Stats - Professional badges - Interactive */}
+                <div className="flex gap-4 md:gap-8 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 md:pl-10">
+                  <button
+                    type="button"
+                    onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
+                    className="text-center px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
                     <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(dashboardData?.totalHours)}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Hours</p>
-                  </div>
-                  <div className="text-center">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
+                    className="text-center px-4 py-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200 cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  >
                     <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{kpis.activeProjects}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Projects</p>
-                  </div>
-                  <div className="text-center">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleKPIClick("People Impacted", dashboardData?.totalPeopleImpacted || 0)}
+                    className="text-center px-4 py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  >
                     <p className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{dashboardData?.totalPeopleImpacted || 0}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Impacted</p>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1919,6 +1993,7 @@ export default function Dashboard() {
                 {selectedKPI?.title?.includes("Skills") && <Award className="h-5 w-5 text-amber-600" />}
                 {selectedKPI?.title?.includes("AIU") && <TrendingUp className="h-5 w-5 text-cyan-600" />}
                 {selectedKPI?.title?.includes("Streak") && <Flame className="h-5 w-5 text-orange-600" />}
+                {selectedKPI?.title?.includes("People Impacted") && <Users className="h-5 w-5 text-purple-600" />}
                 {selectedKPI?.title}
               </DialogTitle>
               <DialogDescription className="text-base">
@@ -1936,6 +2011,8 @@ export default function Dashboard() {
                   ? "Anthropic Impact Units - measuring your real-world impact"
                   : selectedKPI?.title?.includes("Streak")
                   ? "Your consistency in making an impact"
+                  : selectedKPI?.title?.includes("People Impacted")
+                  ? "Total beneficiaries reached through your volunteer work"
                   : `Detailed breakdown of ${selectedKPI?.title?.toLowerCase() || 'metric'}`}
               </DialogDescription>
             </DialogHeader>
@@ -1981,6 +2058,12 @@ export default function Dashboard() {
                         {impactStreakData.currentStreak >= 7 ? " Incredible consistency! You're building lasting habits." :
                          impactStreakData.currentStreak >= 3 ? " Good streak going! Try to maintain daily activity." :
                          " Start logging activities daily to build momentum."}</>
+                      )}
+                      {selectedKPI?.title?.includes("People Impacted") && (
+                        <>You've reached <span className="font-bold text-purple-600">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()} people</span> through your volunteer work.
+                        {(dashboardData?.totalPeopleImpacted || 0) >= 100 ? " Remarkable impact! You're making a significant difference in many lives." :
+                         (dashboardData?.totalPeopleImpacted || 0) >= 25 ? " Great progress! Your efforts are creating real change." :
+                         " Every person counts. Keep volunteering to expand your reach."}</>
                       )}
                     </p>
                   </div>

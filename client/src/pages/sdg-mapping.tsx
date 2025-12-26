@@ -723,22 +723,22 @@ export default function SDGMapping() {
                 subValue: `${p.totalHours || 0} hours • ${p.sdgGoals?.length || 0} SDGs`,
                 id: p.id
               }));
-            // If no projects have AIU, show a summary breakdown
+            // If no projects have AIU, show factors that contribute to AIU
             if (items.length === 0 && totalAIU > 0) {
               items = [
-                { label: 'Hours Contribution', value: `${Math.round(totalHours * 0.02)} AIU`, subValue: `Based on ${totalHours.toLocaleString()} volunteer hours` },
-                { label: 'SDG Alignment Bonus', value: `${Math.round(sdgsAddressed * 5)} AIU`, subValue: `${sdgsAddressed} SDGs addressed` },
-                { label: 'Impact Multiplier', value: `${Math.round(totalBeneficiaries * 0.01)} AIU`, subValue: `${totalBeneficiaries.toLocaleString()} people reached` },
-                { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Combined impact score' },
+                { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Calculated using proprietary impact formula', isHighlight: true },
+                { label: 'Volunteer Hours', value: `${totalHours.toLocaleString()} hrs`, subValue: 'Time investment factor' },
+                { label: 'SDGs Addressed', value: `${sdgsAddressed} goals`, subValue: 'UN Sustainable Development Goals alignment' },
+                { label: 'People Reached', value: `${totalBeneficiaries.toLocaleString()}`, subValue: 'Direct beneficiaries impacted' },
               ];
             }
           } else {
-            // Fallback: Show AIU calculation breakdown
+            // Fallback: Show AIU factors (proprietary formula - don't show fake calculations)
             items = [
-              { label: 'Hours Contribution', value: `${Math.round(totalHours * 0.02)} AIU`, subValue: `Based on ${totalHours.toLocaleString()} volunteer hours` },
-              { label: 'SDG Alignment Bonus', value: `${Math.round(sdgsAddressed * 5)} AIU`, subValue: `${sdgsAddressed} SDGs addressed` },
-              { label: 'Impact Multiplier', value: `${Math.round(totalBeneficiaries * 0.01)} AIU`, subValue: `${totalBeneficiaries.toLocaleString()} people reached` },
-              { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Combined impact score' },
+              { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'Calculated using proprietary impact formula', isHighlight: true },
+              { label: 'Volunteer Hours', value: `${totalHours.toLocaleString()} hrs`, subValue: 'Time investment factor' },
+              { label: 'SDGs Addressed', value: `${sdgsAddressed} goals`, subValue: 'UN Sustainable Development Goals alignment' },
+              { label: 'People Reached', value: `${totalBeneficiaries.toLocaleString()}`, subValue: 'Direct beneficiaries impacted' },
             ];
           }
           break;

@@ -387,6 +387,153 @@ export default function Volunteers() {
             toast({ title: "Volunteer Removed", description: `${volunteerToDelete?.name || 'Volunteer'} has been removed` });
           }}
         />
+
+        {/* Mobile Profile Dialog */}
+        <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
+          <DialogContent className="max-w-[95vw] max-h-[85vh] overflow-y-auto p-0 rounded-2xl">
+            {volunteerProfile ? (
+              <div className="flex flex-col">
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white px-4 py-5 rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-14 w-14 border-2 border-white/30">
+                      <AvatarImage src={volunteerProfile.user?.avatar} />
+                      <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
+                        {volunteerProfile.user?.displayName?.[0] || "V"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold truncate">{volunteerProfile.user?.displayName || "Unknown"}</h2>
+                      <p className="text-white/80 text-sm truncate">{volunteerProfile.volunteerProfile?.bio || "Volunteer"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 text-sm">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{selectedVolunteerData?.hours || 0}h</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Award className="w-4 h-4" />
+                      <span>{selectedVolunteerData?.tasksCompleted || 0} tasks</span>
+                    </div>
+                    {volunteerProfile.volunteerProfile?.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span className="truncate max-w-[100px]">{volunteerProfile.volunteerProfile.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-4 bg-white">
+                  {/* Skills */}
+                  {volunteerProfile.volunteerProfile?.skills && volunteerProfile.volunteerProfile.skills.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-slate-700">Skills</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {volunteerProfile.volunteerProfile.skills.slice(0, 6).map((skill: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {skill.replace(/\s*\(\d+%\)$/, '')}
+                          </Badge>
+                        ))}
+                        {volunteerProfile.volunteerProfile.skills.length > 6 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{volunteerProfile.volunteerProfile.skills.length - 6} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interests */}
+                  {volunteerProfile.volunteerProfile?.interests && volunteerProfile.volunteerProfile.interests.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-slate-700">Interests</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {volunteerProfile.volunteerProfile.interests.slice(0, 4).map((interest: string, idx: number) => (
+                          <Badge key={idx} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                            {interest}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Assign to Project */}
+                  {orgProjects.length > 0 && (
+                    <div className="pt-2 border-t">
+                      <Label className="text-sm font-semibold text-slate-700">Assign to Project</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                          <SelectTrigger className="flex-1 h-10 text-sm">
+                            <SelectValue placeholder="Select project..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orgProjects.map((project: any) => (
+                              <SelectItem key={project.id} value={project.id.toString()}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          disabled={!selectedProjectId || assignProjectMutation.isPending}
+                          onClick={() => {
+                            if (selectedVolunteerId && selectedProjectId) {
+                              assignProjectMutation.mutate({
+                                volunteerId: selectedVolunteerId,
+                                projectId: parseInt(selectedProjectId)
+                              });
+                            }
+                          }}
+                          className="h-10 px-4"
+                        >
+                          {assignProjectMutation.isPending ? "..." : "Assign"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        closeProfileDialog();
+                        if (selectedVolunteerData) {
+                          setSelectedVolunteer(selectedVolunteerData);
+                          setShowContactModal(true);
+                        }
+                      }}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Message
+                    </Button>
+                    <Button
+                      variant="default"
+                      className="flex-1"
+                      onClick={() => {
+                        closeProfileDialog();
+                        setPerformanceVolunteer({ id: selectedVolunteerId!, name: volunteerProfile.user?.displayName || 'Volunteer' });
+                        setShowPerformanceModal(true);
+                      }}
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Performance
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-slate-500">Loading volunteer profile...</p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </OrganizationPWALayout>
     );
   }

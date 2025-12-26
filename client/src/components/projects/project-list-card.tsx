@@ -44,6 +44,7 @@ interface ProjectListCardProps {
   isExpanded: boolean;
   onToggle: () => void;
   canManageProjects?: boolean;
+  isPWA?: boolean;
 }
 
 export const ProjectListCard = memo(function ProjectListCard({
@@ -53,8 +54,10 @@ export const ProjectListCard = memo(function ProjectListCard({
   progress,
   isExpanded,
   onToggle,
-  canManageProjects = false
+  canManageProjects = false,
+  isPWA = false
 }: ProjectListCardProps) {
+  const projectUrl = isPWA ? `/projects/${project.id}/pwa` : `/projects/${project.id}`;
   const primarySdg = (project as any).primarySdg || ((project as any).sdgGoals?.[0]);
   const sdgGoals = (project as any).sdgGoals || [];
 
@@ -75,7 +78,7 @@ export const ProjectListCard = memo(function ProjectListCard({
                     )}
                   </Button>
                 </CollapsibleTrigger>
-                <Link href={`/projects/${project.id}`} className="flex-1 min-w-0">
+                <Link href={projectUrl} className="flex-1 min-w-0">
                   <CardTitle className="text-base md:text-lg hover:text-primary cursor-pointer transition-colors line-clamp-2" data-testid={`title-project-${project.id}`}>
                     {project.name}
                   </CardTitle>
@@ -101,7 +104,7 @@ export const ProjectListCard = memo(function ProjectListCard({
             
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              <Link href={`/projects/${project.id}`}>
+              <Link href={projectUrl}>
                 <Button variant="default" size="sm" className="text-xs h-8" data-testid={`button-view-project-${project.id}`}>
                   View
                 </Button>

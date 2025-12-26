@@ -303,31 +303,6 @@ export default function Projects() {
             </Card>
           )}
 
-          {/* Posted Opportunities - Mobile */}
-          {currentUser?.userType === "organization" && opportunities.length > 0 && (
-            <Card className="border-slate-200">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-sm font-semibold">Posted ({opportunities.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3 space-y-2">
-                {opportunities.slice(0, 3).map((opp) => (
-                  <Link key={opp.id} href={`/opportunities/${opp.id}`}>
-                    <div className="p-2.5 border rounded-lg hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center gap-2">
-                        {opp.isUrgent ? (
-                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                        ) : (
-                          <Briefcase className="h-4 w-4 text-primary flex-shrink-0" />
-                        )}
-                        <span className="text-sm font-medium truncate">{opp.title}</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
           {/* Projects List - Mobile */}
           <div className="space-y-3">
             {filteredProjects.map((project) => {
@@ -345,6 +320,7 @@ export default function Projects() {
                   isExpanded={isExpanded}
                   onToggle={() => toggleProject(project.id)}
                   canManageProjects={canManageProjects}
+                  isPWA={true}
                 />
               );
             })}

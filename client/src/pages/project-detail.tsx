@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity, X, Info, ChevronRight, Shield, Star } from "lucide-react";
@@ -108,7 +108,14 @@ export default function ProjectDetail() {
   const isMobile = useIsMobile();
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
-  
+
+  // Redirect mobile users to PWA route
+  useEffect(() => {
+    if (isMobile && projectId) {
+      navigate(`/projects/${projectId}/pwa`, { replace: true });
+    }
+  }, [isMobile, projectId, navigate]);
+
   const handleBack = () => {
     if (window.history.length > 1) {
       window.history.back();

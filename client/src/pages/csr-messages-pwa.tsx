@@ -220,7 +220,7 @@ export default function CSRMessagesPWA() {
     },
   });
 
-  // Send message mutation
+  // Send message mutation with optimistic update for instant display
   const sendMessageMutation = useMutation({
     mutationFn: async ({ threadId, content }: { threadId: number; content: string }) => {
       if (!parsedUserId) throw new Error("User not authenticated");
@@ -230,11 +230,32 @@ export default function CSRMessagesPWA() {
         messageType: "text",
       });
     },
-    onSuccess: async () => {
+    onMutate: async ({ threadId, content }) => {
+      await queryClient.cancelQueries({ queryKey: [`/api/conversation-threads/${threadId}/messages`] });
+      const previousMessages = queryClient.getQueryData([`/api/conversation-threads/${threadId}/messages`]);
+      queryClient.setQueryData([`/api/conversation-threads/${threadId}/messages`], (old: any) => {
+        if (!old) return old;
+        const optimisticMessage = {
+          id: Date.now(),
+          threadId,
+          senderId: parsedUserId,
+          content: content.trim(),
+          messageType: "text",
+          createdAt: new Date().toISOString(),
+          isOptimistic: true,
+        };
+        return { ...old, messages: [...(old.messages || []), optimisticMessage] };
+      });
       setMessageContent("");
+      return { previousMessages };
+    },
+    onSuccess: async () => {
       await Promise.all([refetchMessages(), refetchThreads()]);
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      if (context?.previousMessages && selectedThread) {
+        queryClient.setQueryData([`/api/conversation-threads/${selectedThread.id}/messages`], context.previousMessages);
+      }
       toast({
         title: "Error",
         description: error?.message || "Failed to send message",

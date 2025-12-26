@@ -3,12 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
-import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import CSRPWANav from "@/components/layout/csr-pwa-nav";
-import CSRPWAHeader from "@/components/layout/csr-pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,17 +53,22 @@ export default function ProjectDetailPWA() {
     window.scrollTo(0, 0);
   }, []);
 
+  const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType') || 'volunteer';
+
   const handleBack = () => {
-    // Use history back if available, otherwise navigate to volunteer dashboard
+    // Use history back if available, otherwise navigate to appropriate dashboard
     if (window.history.length > 2) {
       window.history.back();
     } else {
-      navigate("/volunteer-dashboard");
+      const dashboardPath = userType === 'organization'
+        ? '/organization-dashboard/pwa'
+        : userType === 'corporate-partner' || userType === 'corporate_partner'
+        ? '/csr-dashboard-pwa'
+        : '/volunteer-dashboard';
+      navigate(dashboardPath);
     }
   };
-
-  const userId = localStorage.getItem('currentUserId');
-  const userType = localStorage.getItem('userType') || 'volunteer';
 
   const { data: project, isLoading } = useQuery<any>({
     queryKey: ["/api/projects", projectId],
@@ -273,17 +275,35 @@ export default function ProjectDetailPWA() {
   const primarySdg = project.primarySdg || project.sdgGoals?.[0];
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
-  // Render appropriate header based on user type
+  // Simple consistent header for project detail - matches organization dashboard PWA style
   const renderHeader = () => {
-    switch (userType) {
-      case 'organization':
-        return <OrganizationPWAHeader />;
-      case 'corporate-partner':
-      case 'corporate_partner':
-        return <CSRPWAHeader companyName="CSR Partner" />;
-      default:
-        return <PWAHeader />;
-    }
+    // Use organization-style amber gradient for org users, slate for others
+    const isOrg = userType === 'organization';
+    const headerBg = isOrg
+      ? 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)'
+      : 'linear-gradient(to right, #1e293b, #0f172a)';
+    const textColor = isOrg ? 'text-slate-800' : 'text-white';
+    const subTextColor = isOrg ? 'text-slate-600' : 'text-white/60';
+    const buttonBg = isOrg ? 'bg-white/80 hover:bg-white' : 'bg-white/10 hover:bg-white/20';
+    const iconColor = isOrg ? 'text-slate-700' : 'text-white';
+
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ background: headerBg }}>
+        <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
+        <div className="px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            className={`w-10 h-10 rounded-full ${buttonBg} flex items-center justify-center transition-all`}
+          >
+            <ArrowLeft className={`w-5 h-5 ${iconColor}`} />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className={`${textColor} font-semibold truncate`}>{project?.name || 'Project'}</p>
+            <p className={`${subTextColor} text-xs truncate`}>{project?.organizationName || 'View Details'}</p>
+          </div>
+        </div>
+      </header>
+    );
   };
 
   // Render appropriate navigation based on user type

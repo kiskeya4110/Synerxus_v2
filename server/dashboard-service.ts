@@ -1082,12 +1082,15 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const matchedOpportunities = await getProjectsForVolunteer(userId, matchThreshold);
 
     // Calculate summary metrics - handle null/undefined hours safely
-    // Only count verified activities (approved or verified status) for accurate reporting
+    // Count ALL activities for hours (including pending verification) to give volunteers accurate feedback
+    const totalHours = volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
+
+    // Also track verified hours separately for impact calculations
     const verifiedActivities = volunteerActivities.filter(activity => {
       const status = (activity as any).verificationStatus?.toLowerCase();
       return status === 'approved' || status === 'verified';
     });
-    const totalHours = verifiedActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
+    const verifiedHours = verifiedActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
     const activeProjects = assignedProjects.filter(
       project => {
         const status = project.status?.toLowerCase() || '';
@@ -1418,6 +1421,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       summary: {
         activeVolunteers: 1, // Only themselves
         totalHours,
+        verifiedHours, // Hours from verified/approved activities only
         activeProjects,
         totalProjects, // Include total projects count (all assigned, not just active)
         pendingAssignments, // Number of project invitations awaiting volunteer response

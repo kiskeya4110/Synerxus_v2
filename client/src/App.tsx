@@ -1,4 +1,4 @@
-import { Route, Router, useLocation } from "wouter";
+import { Route, Router, Switch, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { volunteerOnboardingSteps, organizationOnboardingSteps, csrOnboardingSteps } from "@shared/onboarding-steps";
@@ -205,6 +205,7 @@ export default function App() {
       <OnboardingGuide />
       <Suspense fallback={<PageLoader />}>
       <Router>
+        <Switch>
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
@@ -238,6 +239,7 @@ export default function App() {
           <Route path="/csr-messages/pwa" component={CSRMessagesPWA} />
           {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
+        </Switch>
         </Router>
         </Suspense>
     </OnboardingProvider>

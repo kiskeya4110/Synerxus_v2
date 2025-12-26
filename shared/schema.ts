@@ -27,34 +27,18 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
-export const chatConversations = pgTable("chat_conversations", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+export type ChatConversation = typeof conversations.$inferSelect;
+export type InsertChatConversation = z.infer<typeof insertConversationSchema>;
+export type ChatMessage = typeof messages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
-export const chatMessages = pgTable("chat_messages", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
-  role: text("role").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
-
-export const insertChatConversationSchema = createInsertSchema(chatConversations).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type ChatConversation = typeof chatConversations.$inferSelect;
-export type InsertChatConversation = z.infer<typeof insertChatConversationSchema>;
-export type ChatMessage = typeof chatMessages.$inferSelect;
-export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+// Aliases for chat integration compatibility
+export const chatConversations = conversations;
+export const chatMessages = messages;
+export const insertChatConversationSchema = insertConversationSchema;
+export const insertChatMessageSchema = insertMessageSchema;
 
 // User schema - unified for both volunteers and organizations
 export const users = pgTable("users", {
@@ -778,9 +762,6 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 // Conversation Threads - Group messages by topic for organized communication
 export const conversationThreads = pgTable("conversation_threads", {

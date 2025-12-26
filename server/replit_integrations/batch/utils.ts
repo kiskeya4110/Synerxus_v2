@@ -1,5 +1,5 @@
 import pLimit from "p-limit";
-import pRetry from "p-retry";
+import pRetry, { AbortError } from "p-retry";
 
 /**
  * Batch Processing Utilities for Anthropic
@@ -94,7 +94,7 @@ export async function batchProcess<T, R>(
             if (isRateLimitError(error)) {
               throw error;
             }
-            throw new pRetry.AbortError(
+            throw new AbortError(
               error instanceof Error ? error : new Error(String(error))
             );
           }
@@ -102,9 +102,7 @@ export async function batchProcess<T, R>(
         { retries, minTimeout, maxTimeout, factor: 2 }
       )
     )
-  ).catch((err: any) => {
-    throw err;
-  });
+  );
 
   return Promise.all(promises);
 }
@@ -137,7 +135,7 @@ export async function batchProcessWithSSE<T, R>(
         factor: 2,
         onFailedAttempt: (error: any) => {
           if (!isRateLimitError(error)) {
-            throw new pRetry.AbortError(
+            throw new AbortError(
               error instanceof Error ? error : new Error(String(error))
             );
           }

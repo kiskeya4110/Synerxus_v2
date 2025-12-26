@@ -27,10 +27,34 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
-export type Conversation = typeof conversations.$inferSelect;
-export type InsertConversation = z.infer<typeof insertConversationSchema>;
-export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export const chatConversations = pgTable("chat_conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertChatConversationSchema = createInsertSchema(chatConversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ChatConversation = typeof chatConversations.$inferSelect;
+export type InsertChatConversation = z.infer<typeof insertChatConversationSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 // User schema - unified for both volunteers and organizations
 export const users = pgTable("users", {
@@ -755,6 +779,9 @@ export const notifications = pgTable("notifications", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
 // Conversation Threads - Group messages by topic for organized communication
 export const conversationThreads = pgTable("conversation_threads", {
   id: serial("id").primaryKey(),
@@ -768,8 +795,8 @@ export const conversationThreads = pgTable("conversation_threads", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Communications - Communication between organizations and volunteers
-export const communications = pgTable("communications", {
+// Messages - Communication between organizations and volunteers
+export const orgMessages = pgTable("org_messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").references(() => users.id).notNull(),
   receiverId: integer("receiver_id").references(() => users.id).notNull(),
@@ -782,6 +809,15 @@ export const communications = pgTable("communications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const insertOrgMessageSchema = createInsertSchema(orgMessages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type OrgMessage = typeof orgMessages.$inferSelect;
+export type InsertOrgMessage = z.infer<typeof insertOrgMessageSchema>;
 
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -1005,12 +1041,6 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 });
 
 export const insertConversationThreadSchema = createInsertSchema(conversationThreads).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
-export const insertCommunicationSchema = createInsertSchema(communications).omit({
   id: true,
   createdAt: true,
   updatedAt: true

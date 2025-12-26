@@ -1,49 +1,42 @@
-import { conversations, communications } from "@shared/schema";
+import { chatConversations, chatMessages } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../db";
 
 export interface IChatStorage {
-  getConversation(id: number): Promise<typeof conversations.$inferSelect | undefined>;
-  getAllConversations(): Promise<(typeof conversations.$inferSelect)[]>;
-  createConversation(title: string): Promise<typeof conversations.$inferSelect>;
+  getConversation(id: number): Promise<typeof chatConversations.$inferSelect | undefined>;
+  getAllConversations(): Promise<(typeof chatConversations.$inferSelect)[]>;
+  createConversation(title: string): Promise<typeof chatConversations.$inferSelect>;
   deleteConversation(id: number): Promise<void>;
-  getMessagesByConversation(conversationId: number): Promise<(typeof communications.$inferSelect)[]>;
-  createMessage(conversationId: number, role: string, content: string): Promise<typeof communications.$inferSelect>;
+  getMessagesByConversation(conversationId: number): Promise<(typeof chatMessages.$inferSelect)[]>;
+  createMessage(conversationId: number, role: string, content: string): Promise<typeof chatMessages.$inferSelect>;
 }
 
 export const chatStorage: IChatStorage = {
   async getConversation(id: number) {
-    const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));
+    const [conversation] = await db.select().from(chatConversations).where(eq(chatConversations.id, id));
     return conversation;
   },
 
   async getAllConversations() {
-    return db.select().from(conversations).orderBy(desc(conversations.createdAt));
+    return db.select().from(chatConversations).orderBy(desc(chatConversations.createdAt));
   },
 
   async createConversation(title: string) {
-    const [conversation] = await db.insert(conversations).values({ title }).returning();
+    const [conversation] = await db.insert(chatConversations).values({ title }).returning();
     return conversation;
   },
 
   async deleteConversation(id: number) {
-    await db.delete(communications).where(eq(communications.threadId, id));
-    await db.delete(conversations).where(eq(conversations.id, id));
+    await db.delete(chatMessages).where(eq(chatMessages.conversationId, id));
+    await db.delete(chatConversations).where(eq(chatConversations.id, id));
   },
 
   async getMessagesByConversation(conversationId: number) {
-    return db.select().from(communications).where(eq(communications.threadId, conversationId)).orderBy(communications.createdAt);
+    return db.select().from(chatMessages).where(eq(chatMessages.conversationId, conversationId)).orderBy(chatMessages.createdAt);
   },
 
   async createMessage(conversationId: number, role: string, content: string) {
-    // In chat context, threadId maps to conversationId
-    const [message] = await db.insert(communications).values({ 
-      threadId: conversationId, 
-      content,
-      senderId: 1, // Default system user
-      receiverId: 1,
-      messageType: 'general'
-    }).returning();
+    const [message] = await db.insert(chatMessages).values({ conversationId, role, content }).returning();
     return message;
   },
 };

@@ -32,7 +32,7 @@ export default function TaskTable({ tasks }: TaskTableProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-gray-200 dark:border-gray-700 p-3">
         <CardTitle className="text-base font-semibold">Recent Tasks</CardTitle>
-        <a href="#" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+        <Link href="/my-work" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">View All</Link>
       </CardHeader>
       <CardContent className="p-2">
         <div className="overflow-x-auto">

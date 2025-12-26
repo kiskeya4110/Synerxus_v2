@@ -72,6 +72,8 @@ const Stories = lazy(() => import("@/pages/stories"));
 const CreateStory = lazy(() => import("@/pages/create-story"));
 const StoryDetail = lazy(() => import("@/pages/story-detail"));
 const Help = lazy(() => import("@/pages/help"));
+const Terms = lazy(() => import("@/pages/terms"));
+const Privacy = lazy(() => import("@/pages/privacy"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -277,6 +279,8 @@ function LayoutRoute() {
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/organizations" component={Organizations} />
       <Route path="/help" component={Help} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       {/* Calendar & Impact */}
       <Route path="/calendar" component={Calendar} />
       <Route path="/impact-report/:volunteerId?" component={ImpactReport} />

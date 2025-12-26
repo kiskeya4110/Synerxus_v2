@@ -88,17 +88,17 @@ export default function Footer() {
               </h4>
               <ul className="space-y-0.5 text-[11px] text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/help" className="hover:text-white transition">
                     Documentation
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/help" className="hover:text-white transition">
                     Help Center
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="mailto:support@synerxus.com" className="hover:text-white transition">
                     Contact Us
                   </a>
                 </li>
@@ -137,10 +137,10 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center text-[11px] text-gray-500 gap-2">
             <p>© {currentYear} Synerxus. All rights reserved.</p>
             <div className="flex gap-4 text-[11px]">
-              <a href="#" className="hover:text-gray-300 transition">
+              <a href="/privacy" className="hover:text-gray-300 transition">
                 Privacy
               </a>
-              <a href="#" className="hover:text-gray-300 transition">
+              <a href="/terms" className="hover:text-gray-300 transition">
                 Terms
               </a>
             </div>

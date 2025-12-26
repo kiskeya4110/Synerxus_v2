@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
 
 export interface Event {
   id: string;
@@ -45,7 +46,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
           ))}
         </div>
         <div className="mt-4 text-center">
-          <a href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View calendar</a>
+          <Link href="/calendar" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View calendar</Link>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useLocation, useSearch } from "wouter";
-import { UserCredential } from "firebase/auth";
+import { useLocation, useSearch, Link } from "wouter";
+import { UserCredential, sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -200,6 +201,35 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!loginEmail) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address to reset your password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await sendPasswordResetEmail(auth, loginEmail);
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for instructions to reset your password.",
+      });
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -335,9 +365,14 @@ export default function Login() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <a href="#" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                          disabled={isLoading}
+                        >
                           Forgot password?
-                        </a>
+                        </button>
                       </div>
                       <div className="relative">
                         <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
@@ -573,13 +608,13 @@ export default function Login() {
           <CardFooter className="flex flex-col text-center text-sm text-gray-600 dark:text-gray-400">
             <p>
               By signing in, you agree to our{" "}
-              <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+              <Link href="/terms" className="text-primary-600 dark:text-primary-400 hover:underline">
                 Terms of Service
-              </a>{" "}
+              </Link>{" "}
               and{" "}
-              <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+              <Link href="/privacy" className="text-primary-600 dark:text-primary-400 hover:underline">
                 Privacy Policy
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </Card>

@@ -59,6 +59,7 @@ interface CSRLayoutProps {
   title?: string;
   subtitle?: string;
   activeNav?: "dashboard" | "impact" | "engagement" | "portfolio" | "reports" | "settings";
+  hideHeader?: boolean;
 }
 
 // Sidebar navigation items organized by sections
@@ -107,7 +108,7 @@ const headerNavItems = [
   { label: "Help", href: "/help" },
 ];
 
-export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }: CSRLayoutProps) {
+export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", hideHeader = false }: CSRLayoutProps) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -239,6 +240,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
       }}
     >
       {/* Top Site Header Bar - Light Green with Golden Gradient */}
+      {!hideHeader && (
       <header
         style={{
           background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
@@ -708,9 +710,10 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
         </div>
         </div>
       </header>
+      )}
 
       {/* Mobile Menu Overlay */}
-      {showMobileMenu && (
+      {!hideHeader && showMobileMenu && (
         <div
           style={{
             position: "fixed",
@@ -727,6 +730,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
       )}
 
       {/* Mobile Slide-out Menu */}
+      {!hideHeader && (
       <div
         ref={mobileMenuRef}
         className="lg:hidden"
@@ -977,9 +981,11 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           </button>
         </div>
       </div>
+      )}
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: "0 4%" }}>
-        {/* Left Sidebar - Desktop Only */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: hideHeader ? "0" : "0 4%" }}>
+        {/* Left Sidebar - Desktop Only (hidden when hideHeader is true) */}
+        {!hideHeader && (
         <aside
           className="hidden lg:flex"
           style={{
@@ -1122,19 +1128,20 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
             </button>
           </div>
         </aside>
+        )}
 
         {/* Main Content */}
         <main
           style={{
             flex: 1,
-            padding: "24px 24px 60px 24px",
+            padding: hideHeader ? "0" : "24px 24px 60px 24px",
             overflowY: "auto",
             overflowX: "hidden",
-            background: "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)",
+            background: hideHeader ? "transparent" : "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)",
           }}
         >
           {/* Content Container - full width */}
-          <div style={{ width: "100%", maxWidth: "1600px" }}>
+          <div style={{ width: "100%", maxWidth: hideHeader ? "100%" : "1600px" }}>
             {/* Page Header */}
             {(title || subtitle) && (
               <div style={{ marginBottom: "28px" }}>
@@ -1153,11 +1160,12 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           </div>
 
           {/* Footer Spacer */}
-          <div style={{ height: "40px" }} />
+          {!hideHeader && <div style={{ height: "40px" }} />}
         </main>
       </div>
 
       {/* Footer - Light themed with full content */}
+      {!hideHeader && (
       <footer
         style={{
           background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)",
@@ -1264,6 +1272,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard" }
           </div>
         </div>
       </footer>
+      )}
     </div>
   );
 }

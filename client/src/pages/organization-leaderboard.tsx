@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Users, Clock, TrendingUp, Target, Award, Zap, Flame, Medal, ChevronRight, BarChart3 } from "lucide-react";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 interface LeaderboardEntry {
@@ -165,6 +166,7 @@ export default function OrganizationLeaderboard() {
     <div className="min-h-screen bg-slate-50" style={{ paddingBottom: '80px' }}>
       {/* Header */}
       <OrganizationHeader activeTab="volunteers" />
+      <OrganizationWelcomeBanner pageTitle="Volunteer Leaderboard" />
 
       {/* Mobile Header Banner */}
       <div className="md:hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-4 py-6 text-white">

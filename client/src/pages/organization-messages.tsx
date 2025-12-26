@@ -211,7 +211,7 @@ export default function OrganizationMessages() {
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       <OrganizationHeader activeTab="messages" />
-      <OrganizationWelcomeBanner />
+      <OrganizationWelcomeBanner pageTitle="Messages" />
 
       <div className="flex-1">
         <div className="max-w-[1400px] mx-auto px-6 py-6">

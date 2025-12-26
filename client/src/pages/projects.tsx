@@ -10,6 +10,7 @@ import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
@@ -419,6 +420,7 @@ export default function Projects() {
       {!isOrganization && !isCSR && <VolunteerNav />}
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
+      {isOrganization && <OrganizationWelcomeBanner pageTitle="Projects & Tasks" />}
       <div className="h-screen overflow-y-auto pb-24" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>

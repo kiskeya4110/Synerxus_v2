@@ -395,7 +395,7 @@ export default function Volunteers() {
     <div className={isOrganization ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
       {isOrganization && <OfflineBanner />}
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
-      {isOrganization && <OrganizationWelcomeBanner />}
+      {isOrganization && <OrganizationWelcomeBanner pageTitle="Volunteer Management" />}
       <div className={isOrganization ? "flex-1 overflow-y-auto pb-24 max-w-[1400px] mx-auto px-6 pt-6 w-full" : "h-screen overflow-y-auto pb-24"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">

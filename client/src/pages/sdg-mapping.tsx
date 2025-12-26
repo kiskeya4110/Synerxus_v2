@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -1468,6 +1469,7 @@ export default function SDGMapping() {
     <div className="h-screen overflow-y-auto pb-24">
       <OfflineBanner />
       <OrganizationHeader activeTab="sdgs" />
+      <OrganizationWelcomeBanner pageTitle="SDG Mapping" />
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 16px' }}>
         {/* Page Header with integrated filter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">

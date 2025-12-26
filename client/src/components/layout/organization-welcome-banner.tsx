@@ -3,9 +3,10 @@ import { Building2 } from "lucide-react";
 
 interface OrganizationWelcomeBannerProps {
   className?: string;
+  pageTitle?: string;
 }
 
-export default function OrganizationWelcomeBanner({ className = "" }: OrganizationWelcomeBannerProps) {
+export default function OrganizationWelcomeBanner({ className = "", pageTitle = "Organization Dashboard" }: OrganizationWelcomeBannerProps) {
   const userId = localStorage.getItem("currentUserId");
 
   // Fetch organization data
@@ -94,7 +95,7 @@ export default function OrganizationWelcomeBanner({ className = "" }: Organizati
             {organizationName}
           </h1>
           <p style={{ fontSize: '13px', fontWeight: '500', color: '#15803d', margin: '2px 0 0 0', opacity: 0.85 }}>
-            Organization Dashboard
+            {pageTitle}
           </p>
         </div>
       </div>

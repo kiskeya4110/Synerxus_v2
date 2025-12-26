@@ -468,7 +468,7 @@ export default function MyWork() {
       <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
-      {isOrganizationManager && <OrganizationWelcomeBanner />}
+      {isOrganizationManager && <OrganizationWelcomeBanner pageTitle="My Work" />}
       {/* Top Navigation Buttons for Organization Managers */}
       {isOrganizationManager && (
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 items-center justify-start border-b">

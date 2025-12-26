@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import {
   Select,
@@ -783,6 +784,7 @@ export default function OrganizationImpactReport() {
   return (
     <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
       <OrganizationHeader activeTab="reports" />
+      <OrganizationWelcomeBanner pageTitle="Impact Report" />
       {/* UN SDG Wheel Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>
         <div className="text-9xl" title="UN Sustainable Development Goals">

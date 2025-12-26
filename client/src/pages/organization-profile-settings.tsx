@@ -491,7 +491,7 @@ export default function OrganizationProfileSettings() {
       <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
         {/* Header - Mobile PWA or Desktop */}
         {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="settings" />}
-        {!isMobile && <OrganizationWelcomeBanner />}
+        {!isMobile && <OrganizationWelcomeBanner pageTitle="Profile & Settings" />}
 
         {/* Content container matching header width */}
         <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>

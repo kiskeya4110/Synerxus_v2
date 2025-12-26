@@ -12,6 +12,7 @@ import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import Footer from "@/components/layout/footer";
@@ -595,6 +596,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
       {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
       {!embedded && isOrganization && <OrganizationHeader activeTab="reports" />}
+      {!embedded && isOrganization && <OrganizationWelcomeBanner pageTitle="Impact Visualization" />}
       <div className={`${!embedded ? 'space-y-6' : 'space-y-6'}`} style={!embedded ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
       {/* Page Header with Action Buttons */}
       <div className={`mb-6 ${!embedded ? '' : 'px-6'}`}>

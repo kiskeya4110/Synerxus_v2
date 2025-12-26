@@ -746,7 +746,7 @@ export default function Overview() {
   return (
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
-      <OrganizationWelcomeBanner />
+      <OrganizationWelcomeBanner pageTitle="Team Potential Overview" />
 
       <div className="max-w-7xl mx-auto p-6 pb-24">
         {/* Top Navigation Button */}

@@ -3894,81 +3894,154 @@ export default function CSRDashboard() {
   }
 
   return (
-    <CSRLayout activeNav={selectedMainTab === "engagement" ? "engagement" : "dashboard"}>
-      {/* Main Dashboard Content - using shared CSRLayout for consistent sidebar */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-        {/* Company Name Banner with Logo - Matching PWA view */}
+    <CSRLayout activeNav={selectedMainTab === "engagement" ? "engagement" : "dashboard"} hideHeader={true}>
+      {/* Full-width Dashboard with integrated header */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)",
+      }}>
+        {/* Dashboard Header - Full width with gradient */}
         <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          padding: "16px 20px",
-          background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 30%, #a7f3d0 60%, #fef3c7 100%)",
-          borderRadius: "16px",
-          border: "1px solid rgba(16, 185, 129, 0.2)",
-          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.1)"
+          background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
+          padding: "16px 24px",
+          borderBottom: "1px solid rgba(16, 185, 129, 0.2)",
+          boxShadow: "0 2px 12px rgba(16, 185, 129, 0.15)",
         }}>
-          {companyLogo ? (
-            <img
-              src={companyLogo}
-              alt={companyName}
-              style={{
-                height: "56px",
-                width: "56px",
-                borderRadius: "12px",
-                objectFit: "contain",
-                backgroundColor: "white",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.15)",
-                padding: "4px",
-                flexShrink: 0
-              }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          ) : userAvatar ? (
-            <img
-              src={userAvatar}
-              alt={companyName}
-              style={{
-                height: "56px",
-                width: "56px",
-                borderRadius: "12px",
-                objectFit: "cover",
-                backgroundColor: "white",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.15)",
-                flexShrink: 0
-              }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          ) : (
-            <div style={{
-              height: "56px",
-              width: "56px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #10b981 0%, #14b8a6 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
-              flexShrink: 0
-            }}>
-              <span style={{ color: "white", fontSize: "24px", fontWeight: "700" }}>{companyName.charAt(0)}</span>
+          <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            {/* Left: Company Logo + Name */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt={companyName}
+                  style={{
+                    height: "48px",
+                    width: "48px",
+                    borderRadius: "10px",
+                    objectFit: "contain",
+                    backgroundColor: "white",
+                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.15)",
+                    padding: "4px",
+                    flexShrink: 0
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              ) : userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt={companyName}
+                  style={{
+                    height: "48px",
+                    width: "48px",
+                    borderRadius: "10px",
+                    objectFit: "cover",
+                    backgroundColor: "white",
+                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.15)",
+                    flexShrink: 0
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div style={{
+                  height: "48px",
+                  width: "48px",
+                  borderRadius: "10px",
+                  background: "linear-gradient(135deg, #10b981 0%, #14b8a6 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(16, 185, 129, 0.3)",
+                  flexShrink: 0
+                }}>
+                  <span style={{ color: "white", fontSize: "20px", fontWeight: "700" }}>{companyName.charAt(0)}</span>
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ color: "#064e3b", fontSize: "18px", fontWeight: "700", lineHeight: "1.2" }}>{companyName}</span>
+                <span style={{ color: "#047857", fontSize: "12px", fontWeight: "500" }}>ESG Command Center</span>
+              </div>
             </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ color: "#064e3b", fontSize: "20px", fontWeight: "700", lineHeight: "1.2" }}>{companyName}</span>
-            <span style={{ color: "#047857", fontSize: "13px", fontWeight: "500" }}>ESG Command Center</span>
+
+            {/* Right: Navigation Links */}
+            <nav style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                onClick={() => navigate("/landing")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "none",
+                  color: "#065f46",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => navigate("/csr-dashboard")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "rgba(16, 185, 129, 0.2)",
+                  border: "2px solid rgba(16, 185, 129, 0.4)",
+                  color: "#047857",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => navigate("/organizations")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "none",
+                  color: "#065f46",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Organizations
+              </button>
+              <button
+                onClick={() => navigate("/help")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "none",
+                  color: "#065f46",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Help
+              </button>
+            </nav>
           </div>
         </div>
 
-        {/* KPI Metrics Buttons Row - Moved to top for visibility */}
+        {/* Main Content Area */}
+        <div style={{ flex: 1, padding: "24px", maxWidth: "1400px", margin: "0 auto", width: "100%" }}>
+        {/* KPI Metrics Buttons Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", marginBottom: "8px" }}>
           <button
             onClick={() => {
@@ -10567,6 +10640,7 @@ export default function CSRDashboard() {
           }}
         />
       )}
+        </div>
       </div>
     </CSRLayout>
   );

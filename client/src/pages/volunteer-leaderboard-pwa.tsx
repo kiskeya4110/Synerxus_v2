@@ -173,30 +173,38 @@ export default function VolunteerLeaderboardPWA() {
         <main className="flex-1 overflow-y-auto pb-20">
           <div className="p-4 space-y-4">
           {/* Header Banner */}
-          <div className="bg-gradient-to-br from-purple-200 via-indigo-200 to-blue-200 rounded-2xl p-4 text-slate-800 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-800">Volunteer Leaderboard</h1>
-                <p className="text-slate-600 text-xs">{organization?.name || "Organization"}</p>
-              </div>
+          <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-emerald-400/30" />
+              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-teal-400/20" />
             </div>
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-emerald-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Top Performers</p>
+                  <h1 className="text-xl font-bold text-slate-800">Volunteer Leaderboard</h1>
+                  <p className="text-slate-600 text-xs">{organization?.name || "Organization"}</p>
+                </div>
+              </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold text-slate-800">{totalVolunteers}</p>
-                <p className="text-[10px] text-purple-700">Volunteers</p>
-              </div>
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold text-slate-800">{totalHours.toLocaleString()}</p>
-                <p className="text-[10px] text-purple-700">Total Hours</p>
-              </div>
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold text-slate-800">{totalPoints.toLocaleString()}</p>
-                <p className="text-[10px] text-purple-700">Total Points</p>
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{totalVolunteers}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Volunteers</p>
+                </div>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{totalHours.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Total Hours</p>
+                </div>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{totalPoints.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Total Points</p>
+                </div>
               </div>
             </div>
           </div>
@@ -213,7 +221,7 @@ export default function VolunteerLeaderboardPWA() {
                   onClick={() => setLeaderboardType(type)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                     leaderboardType === type
-                      ? "bg-gradient-to-r from-purple-300 to-indigo-300 text-purple-800 shadow-sm"
+                      ? "bg-gradient-to-r from-emerald-300 to-teal-300 text-emerald-800 shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >

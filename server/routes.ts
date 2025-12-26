@@ -35,6 +35,7 @@ import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } f
 import { updateVolunteerProfileWithUser } from "./profile-service";
 import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "./email-digest-service";
+import { registerChatRoutes } from "./replit_integrations/chat";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { getPaginationParams, paginateArray } from "./pagination";
@@ -347,6 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
   // Phases 1-6 routers: mounted at resource-specific paths
+  registerChatRoutes(app);
   app.use("/api/users", usersRouter);
   app.use("/api/organizations", organizationsRouter);
   app.use("/api/projects", projectsRouter);

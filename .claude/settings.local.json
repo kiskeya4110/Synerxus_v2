@@ -96,7 +96,11 @@
       "Bash(for i in 1 2 3 4 5 6)",
       "Bash(do echo -n \".\")",
       "Bash(for i in 1 2 3 4 5)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "Bash(then psql \"$DATABASE_URL\" -c \"SELECT id, display_name, username, email FROM users WHERE display_name ILIKE ''%Fatima%'' OR username ILIKE ''%fatima%''\")",
+      "Bash(then psql \"$DATABASE_URL\" -c \"SELECT va.id, va.user_id, va.project_id, va.hours, va.verification_status, va.description, va.created_at FROM volunteer_activities va WHERE va.user_id = 2072 ORDER BY va.created_at DESC\")",
+      "Bash(then psql \"$DATABASE_URL\" -c \"\nSELECT \n  SUM\\(hours\\) as total_hours,\n  SUM\\(CASE WHEN verification_status IN \\(''approved'', ''verified''\\) THEN hours ELSE 0 END\\) as verified_hours,\n  SUM\\(CASE WHEN verification_status = ''pending'' THEN hours ELSE 0 END\\) as pending_hours\nFROM volunteer_activities \nWHERE user_id = 2072;\n\")",
+      "Bash(then psql \"$DATABASE_URL\" -c \"\nSELECT \n  project_id,\n  SUM\\(hours\\) as total_hours,\n  SUM\\(CASE WHEN verification_status IN \\(''approved'', ''verified''\\) THEN hours ELSE 0 END\\) as verified_hours,\n  COUNT\\(*\\) as activity_count\nFROM volunteer_activities \nWHERE user_id = 2072\nGROUP BY project_id\nORDER BY project_id;\n\")"
     ],
     "deny": [],
     "ask": []

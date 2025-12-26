@@ -1291,8 +1291,12 @@ export default function Dashboard() {
 
             {/* Stats Cards - LinkedIn-style Professional Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Hours</p>
@@ -1307,11 +1311,15 @@ export default function Dashboard() {
                       <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
 
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Projects</p>
@@ -1321,11 +1329,15 @@ export default function Dashboard() {
                       <Briefcase className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
 
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Tasks</p>
@@ -1336,11 +1348,15 @@ export default function Dashboard() {
                       <CheckSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
 
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Skills", kpis.skills)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("Skills", kpis.skills)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Skills</p>
@@ -1350,11 +1366,15 @@ export default function Dashboard() {
                       <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
 
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">AIUs Earned</p>
@@ -1364,11 +1384,15 @@ export default function Dashboard() {
                       <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
 
-              <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
-                <CardContent className="p-4">
+              <button
+                type="button"
+                onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-orange-300 dark:hover:border-orange-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Streak</p>
@@ -1379,8 +1403,8 @@ export default function Dashboard() {
                       <Flame className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
             </div>
 
             {/* SDG Contributions (1/3) + Impact Over Time (2/3) */}
@@ -1886,17 +1910,83 @@ export default function Dashboard() {
 
         {/* KPI Detail Dialog for Volunteer Web View */}
         <Dialog open={!!selectedKPI} onOpenChange={(open) => !open && setSelectedKPI(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto z-[200] bg-white dark:bg-gray-900">
             <DialogHeader>
-              <DialogTitle>{selectedKPI?.title}</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                {selectedKPI?.title?.includes("Hours") && <Clock className="h-5 w-5 text-blue-600" />}
+                {selectedKPI?.title?.includes("Projects") && <Briefcase className="h-5 w-5 text-emerald-600" />}
+                {selectedKPI?.title?.includes("Tasks") && <CheckSquare className="h-5 w-5 text-purple-600" />}
+                {selectedKPI?.title?.includes("Skills") && <Award className="h-5 w-5 text-amber-600" />}
+                {selectedKPI?.title?.includes("AIU") && <TrendingUp className="h-5 w-5 text-cyan-600" />}
+                {selectedKPI?.title?.includes("Streak") && <Flame className="h-5 w-5 text-orange-600" />}
+                {selectedKPI?.title}
+              </DialogTitle>
+              <DialogDescription className="text-base">
                 {selectedKPI?.title?.includes("Impact Score")
                   ? "Your impact score breakdown across multiple dimensions"
+                  : selectedKPI?.title?.includes("Hours")
+                  ? "Track your volunteer hours and contribution patterns"
+                  : selectedKPI?.title?.includes("Projects")
+                  ? "View your active project engagements and progress"
+                  : selectedKPI?.title?.includes("Tasks")
+                  ? "See completed tasks and your productivity metrics"
+                  : selectedKPI?.title?.includes("Skills")
+                  ? "Skills you bring to volunteer projects"
                   : selectedKPI?.title?.includes("AIU")
-                  ? "Total beneficiaries reached and impact efficiency metrics"
+                  ? "Anthropic Impact Units - measuring your real-world impact"
+                  : selectedKPI?.title?.includes("Streak")
+                  ? "Your consistency in making an impact"
                   : `Detailed breakdown of ${selectedKPI?.title?.toLowerCase() || 'metric'}`}
               </DialogDescription>
             </DialogHeader>
+
+            {/* KPI Analysis Summary Card */}
+            {selectedKPI?.items && selectedKPI.items.length > 0 && (
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg">
+                    <Lightbulb className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Quick Analysis</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {selectedKPI?.title?.includes("Hours") && (
+                        <>You have logged <span className="font-bold text-blue-600">{kpis.hours} hours</span> of volunteer work.
+                        {kpis.hours >= 50 ? " Outstanding dedication! You're in the top tier of contributors." :
+                         kpis.hours >= 20 ? " Great progress! Keep up the momentum." :
+                         " Every hour counts. Consider joining more projects to increase your impact."}</>
+                      )}
+                      {selectedKPI?.title?.includes("Projects") && (
+                        <>You're engaged with <span className="font-bold text-emerald-600">{kpis.activeProjects} project{kpis.activeProjects !== 1 ? 's' : ''}</span>.
+                        {kpis.activeProjects >= 3 ? " Excellent portfolio diversity!" :
+                         " Consider exploring new opportunities to broaden your impact."}</>
+                      )}
+                      {selectedKPI?.title?.includes("Tasks") && (
+                        <>You've completed <span className="font-bold text-purple-600">{kpis.completedTasks} of {kpis.tasks} tasks</span>
+                        ({kpis.tasks > 0 ? Math.round((kpis.completedTasks / kpis.tasks) * 100) : 0}% completion rate).
+                        {kpis.completedTasks === kpis.tasks && kpis.tasks > 0 ? " Perfect completion! Amazing work!" :
+                         " Keep pushing to complete your pending tasks."}</>
+                      )}
+                      {selectedKPI?.title?.includes("Skills") && (
+                        <>You have <span className="font-bold text-amber-600">{kpis.skills} skill{kpis.skills !== 1 ? 's' : ''}</span> on your profile.
+                        {kpis.skills >= 5 ? " Diverse skill set! You're valuable for various projects." :
+                         " Add more skills to unlock matching opportunities."}</>
+                      )}
+                      {selectedKPI?.title?.includes("AIU") && (
+                        <>You've earned <span className="font-bold text-cyan-600">{formatDecimal(kpis.aiuEarned)} AIUs</span> through your impact.
+                        AIUs represent real people helped and communities served.</>
+                      )}
+                      {selectedKPI?.title?.includes("Streak") && (
+                        <>Your current streak is <span className="font-bold text-orange-600">{impactStreakData.currentStreak} day{impactStreakData.currentStreak !== 1 ? 's' : ''}</span>.
+                        {impactStreakData.currentStreak >= 7 ? " Incredible consistency! You're building lasting habits." :
+                         impactStreakData.currentStreak >= 3 ? " Good streak going! Try to maintain daily activity." :
+                         " Start logging activities daily to build momentum."}</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-4">
               {/* Impact Score Breakdown */}
               {selectedKPI?.totalScore !== undefined && selectedKPI?.title?.includes("Impact Score") && (

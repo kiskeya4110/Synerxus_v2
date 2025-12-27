@@ -17,7 +17,7 @@ import {
   insertMatchableOrganizationSchema,
   insertMatchSchema,
   insertCalendarEventSchema,
-  insertMessageSchema,
+  insertOrgMessageSchema,
   insertOpportunitySchema,
   insertApplicationSchema,
   insertProjectAssignmentSchema,
@@ -2175,7 +2175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/messages", async (req, res) => {
     try {
-      const messageData = insertMessageSchema.parse(req.body);
+      const messageData = insertOrgMessageSchema.parse(req.body);
       const message = await storage.createMessage(messageData);
 
       // Create notification for the recipient
@@ -6727,95 +6727,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
-  // File upload endpoint - accepts FormData with file
-  app.post("/api/upload", async (req, res) => {
-    try {
-      const path = req.query.path as string;
-      
-      if (!path) {
-        return res.status(400).json({ message: "path is required" });
-      }
-
-      // Generate file URL for storage reference
-      const fileUrl = `/api/storage/${encodeURIComponent(path)}`;
-      
-      console.log(`File upload request: ${path}`);
-      
-      res.json({
-        url: fileUrl,
-        path: path,
-        message: "File uploaded successfully"
-      });
-    } catch (err) {
-      console.error("Error uploading file:", err);
-      res.status(500).json({ message: "Failed to upload file" });
-    }
-  });
-
-  // File delete endpoint
-  app.delete("/api/upload", async (req, res) => {
-    try {
-      const { path: filePath } = req.body;
-
-      if (!filePath) {
-        return res.status(400).json({ message: "path is required" });
-      }
-
-      // Delete file from local storage
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      const fullPath = path.join(process.cwd(), 'uploads', filePath);
-
-      try {
-        await fs.unlink(fullPath);
-        console.log(`File deleted: ${filePath}`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') {
-          throw err;
-        }
-        // File doesn't exist, that's ok
-      }
-
-      res.json({
-        message: "File deleted successfully"
-      });
-    } catch (err) {
-      console.error("Error deleting file:", err);
-      res.status(500).json({ message: "Failed to delete file" });
-    }
-  });
-
-  // Serve stored files
-  app.get("/api/storage/:filePath(*)", async (req, res) => {
-    try {
-      const filePath = req.params.filePath;
-      const fs = await import('fs/promises');
-      const path = await import('path');
-
-      // Sanitize path to prevent directory traversal
-      const sanitizedPath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
-      const fullPath = path.join(process.cwd(), 'uploads', sanitizedPath);
-
-      // Check if file exists
-      try {
-        await fs.access(fullPath);
-      } catch {
-        // Also check attached_assets directory for static assets
-        const attachedPath = path.join(process.cwd(), 'attached_assets', sanitizedPath);
-        try {
-          await fs.access(attachedPath);
-          return res.sendFile(attachedPath);
-        } catch {
-          return res.status(404).json({ message: "File not found" });
-        }
-      }
-
-      res.sendFile(fullPath);
-    } catch (err) {
-      console.error("Error retrieving file:", err);
-      res.status(500).json({ message: "Failed to retrieve file" });
-    }
-  });
+  // File upload/storage endpoints are handled by storageRouter (registered at /api)
+  // - POST /api/upload - upload files with multer and Sharp image processing
+  // - DELETE /api/upload - delete uploaded files
+  // - GET /api/storage/:filePath(*) - retrieve stored files
 
   // Get current week's volunteer spotlight
   app.get("/api/volunteer-spotlight", async (req, res) => {

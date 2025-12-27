@@ -1276,9 +1276,6 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type ConversationThread = typeof conversationThreads.$inferSelect;
 export type InsertConversationThread = z.infer<typeof insertConversationThreadSchema>;
 
-export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-
 export type Badge = typeof badges.$inferSelect;
 export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 

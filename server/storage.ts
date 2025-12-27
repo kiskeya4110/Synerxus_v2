@@ -19,7 +19,7 @@ import {
   savedOpportunities,
   rejectedOpportunities,
   conversationThreads,
-  messages,
+  orgMessages,
   notifications,
   userDataAuditLogs,
   csrPartners,
@@ -76,8 +76,8 @@ import {
   type InsertRejectedOpportunity,
   type ConversationThread,
   type InsertConversationThread,
-  type Message,
-  type InsertMessage,
+  type OrgMessage,
+  type InsertOrgMessage,
   type Notification,
   type InsertNotification,
   type UserDataAuditLog,
@@ -318,16 +318,16 @@ export interface IStorage {
   listConversationThreadsByVolunteer(volunteerId: number): Promise<ConversationThread[]>;
   getConversationThreadBetween(organizationId: number, volunteerId: number, topic?: string): Promise<ConversationThread | undefined>;
   
-  // Message operations
-  getMessage(id: number): Promise<Message | undefined>;
-  createMessage(message: InsertMessage): Promise<Message>;
-  updateMessage(id: number, message: Partial<InsertMessage>): Promise<Message | undefined>;
-  listMessages(): Promise<Message[]>;
-  listMessagesBySender(senderId: number): Promise<Message[]>;
-  listMessagesByReceiver(receiverId: number): Promise<Message[]>;
-  listMessagesByThread(threadId: number): Promise<Message[]>;
-  listConversation(userId1: number, userId2: number): Promise<Message[]>;
-  markMessageAsRead(id: number): Promise<Message | undefined>;
+  // Message operations (org-volunteer messaging)
+  getMessage(id: number): Promise<OrgMessage | undefined>;
+  createMessage(message: InsertOrgMessage): Promise<OrgMessage>;
+  updateMessage(id: number, message: Partial<InsertOrgMessage>): Promise<OrgMessage | undefined>;
+  listMessages(): Promise<OrgMessage[]>;
+  listMessagesBySender(senderId: number): Promise<OrgMessage[]>;
+  listMessagesByReceiver(receiverId: number): Promise<OrgMessage[]>;
+  listMessagesByThread(threadId: number): Promise<OrgMessage[]>;
+  listConversation(userId1: number, userId2: number): Promise<OrgMessage[]>;
+  markMessageAsRead(id: number): Promise<OrgMessage | undefined>;
 
   // Notification operations
   getNotification(id: number): Promise<Notification | undefined>;
@@ -1345,60 +1345,60 @@ export class DatabaseStorage implements IStorage {
     return results[0] || undefined;
   }
 
-  // Message operations
-  async getMessage(id: number): Promise<Message | undefined> {
-    const [result] = await db.select().from(messages).where(eq(messages.id, id));
+  // Message operations (org-volunteer messaging)
+  async getMessage(id: number): Promise<OrgMessage | undefined> {
+    const [result] = await db.select().from(orgMessages).where(eq(orgMessages.id, id));
     return result || undefined;
   }
 
-  async createMessage(message: InsertMessage): Promise<Message> {
-    const [newMessage] = await db.insert(messages).values(message).returning();
+  async createMessage(message: InsertOrgMessage): Promise<OrgMessage> {
+    const [newMessage] = await db.insert(orgMessages).values(message).returning();
     return newMessage;
   }
 
-  async updateMessage(id: number, messageData: Partial<InsertMessage>): Promise<Message | undefined> {
-    const [result] = await db.update(messages).set(messageData).where(eq(messages.id, id)).returning();
+  async updateMessage(id: number, messageData: Partial<InsertOrgMessage>): Promise<OrgMessage | undefined> {
+    const [result] = await db.update(orgMessages).set(messageData).where(eq(orgMessages.id, id)).returning();
     return result || undefined;
   }
 
-  async listMessages(): Promise<Message[]> {
-    return await db.select().from(messages);
+  async listMessages(): Promise<OrgMessage[]> {
+    return await db.select().from(orgMessages);
   }
 
-  async listMessagesBySender(senderId: number): Promise<Message[]> {
-    return await db.select().from(messages).where(eq(messages.senderId, senderId));
+  async listMessagesBySender(senderId: number): Promise<OrgMessage[]> {
+    return await db.select().from(orgMessages).where(eq(orgMessages.senderId, senderId));
   }
 
-  async listMessagesByReceiver(receiverId: number): Promise<Message[]> {
-    return await db.select().from(messages).where(eq(messages.receiverId, receiverId));
+  async listMessagesByReceiver(receiverId: number): Promise<OrgMessage[]> {
+    return await db.select().from(orgMessages).where(eq(orgMessages.receiverId, receiverId));
   }
 
-  async listMessagesByThread(threadId: number): Promise<Message[]> {
+  async listMessagesByThread(threadId: number): Promise<OrgMessage[]> {
     return await db
       .select()
-      .from(messages)
-      .where(eq(messages.threadId, threadId))
-      .orderBy(asc(messages.createdAt));
+      .from(orgMessages)
+      .where(eq(orgMessages.threadId, threadId))
+      .orderBy(asc(orgMessages.createdAt));
   }
 
-  async listConversation(userId1: number, userId2: number): Promise<Message[]> {
+  async listConversation(userId1: number, userId2: number): Promise<OrgMessage[]> {
     return await db
       .select()
-      .from(messages)
+      .from(orgMessages)
       .where(
         or(
-          and(eq(messages.senderId, userId1), eq(messages.receiverId, userId2)),
-          and(eq(messages.senderId, userId2), eq(messages.receiverId, userId1))
+          and(eq(orgMessages.senderId, userId1), eq(orgMessages.receiverId, userId2)),
+          and(eq(orgMessages.senderId, userId2), eq(orgMessages.receiverId, userId1))
         )
       )
-      .orderBy(asc(messages.createdAt));
+      .orderBy(asc(orgMessages.createdAt));
   }
 
-  async markMessageAsRead(id: number): Promise<Message | undefined> {
+  async markMessageAsRead(id: number): Promise<OrgMessage | undefined> {
     const [result] = await db
-      .update(messages)
+      .update(orgMessages)
       .set({ read: true })
-      .where(eq(messages.id, id))
+      .where(eq(orgMessages.id, id))
       .returning();
     return result || undefined;
   }

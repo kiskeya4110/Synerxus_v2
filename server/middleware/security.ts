@@ -1,6 +1,186 @@
 import { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
+import jwt from "jsonwebtoken";
 import { logger } from "../logger";
+
+// ============================================
+// Token Blacklist (In-Memory)
+// For production, consider Redis or database
+// ============================================
+
+interface BlacklistedToken {
+  expiresAt: number;
+}
+
+class TokenBlacklist {
+  private blacklist: Map<string, number> = new Map();
+  private cleanupInterval: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Clean up expired tokens every 5 minutes
+    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
+  }
+
+  add(token: string, expiresAt: number): void {
+    this.blacklist.set(token, expiresAt);
+  }
+
+  isBlacklisted(token: string): boolean {
+    return this.blacklist.has(token);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [token, expiresAt] of this.blacklist.entries()) {
+      if (expiresAt < now) {
+        this.blacklist.delete(token);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      logger.info(`[TokenBlacklist] Cleaned up ${cleaned} expired tokens`);
+    }
+  }
+
+  size(): number {
+    return this.blacklist.size;
+  }
+
+  stop(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+  }
+}
+
+export const tokenBlacklist = new TokenBlacklist();
+
+// ============================================
+// Refresh Token Support
+// ============================================
+
+const JWT_SECRET = process.env.JWT_SECRET || "synerxus-jwt-secret-change-in-production";
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET + "-refresh";
+
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+interface TokenPayload {
+  userId: number;
+  email: string;
+  userType: string;
+  organizationId?: number | null;
+  type?: "access" | "refresh";
+}
+
+/**
+ * Generate access and refresh token pair
+ */
+export function generateTokenPair(user: {
+  id: number;
+  email: string;
+  userType: string;
+  organizationId?: number | null;
+}): TokenPair {
+  const payload: TokenPayload = {
+    userId: user.id,
+    email: user.email,
+    userType: user.userType,
+    organizationId: user.organizationId,
+  };
+
+  const accessToken = jwt.sign(
+    { ...payload, type: "access" },
+    JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const refreshToken = jwt.sign(
+    { ...payload, type: "refresh" },
+    REFRESH_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresIn: 15 * 60,
+  };
+}
+
+/**
+ * Verify refresh token
+ */
+export function verifyRefreshToken(token: string): TokenPayload | null {
+  try {
+    if (tokenBlacklist.isBlacklisted(token)) {
+      return null;
+    }
+
+    const decoded = jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+    if (decoded.type !== "refresh") {
+      return null;
+    }
+
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Blacklist a token (for logout)
+ */
+export function blacklistToken(token: string): void {
+  try {
+    const decoded = jwt.decode(token) as jwt.JwtPayload;
+    if (decoded?.exp) {
+      tokenBlacklist.add(token, decoded.exp * 1000);
+    }
+  } catch {
+    tokenBlacklist.add(token, Date.now() + 24 * 60 * 60 * 1000);
+  }
+}
+
+/**
+ * Middleware to check token blacklist
+ */
+export function checkTokenBlacklist(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+
+    if (tokenBlacklist.isBlacklisted(token)) {
+      res.status(401).json({
+        error: "TOKEN_REVOKED",
+        message: "This token has been revoked. Please log in again.",
+      });
+      return;
+    }
+  }
+
+  next();
+}
+
+/**
+ * Cleanup function for graceful shutdown
+ */
+export function cleanupSecurity(): void {
+  tokenBlacklist.stop();
+  logger.info("[Security] Cleanup complete");
+}
 
 /**
  * Rate limiter for general API endpoints

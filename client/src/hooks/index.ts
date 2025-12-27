@@ -13,6 +13,9 @@ export {
   useVolunteerDashboard,
   useOrganizationDashboard,
   useCSRDashboard,
+  usePendingApprovals,
+  useOrganizationAIU,
+  useVolunteerAIU,
   useFilteredData,
   useAggregatedData,
   useGroupedData,
@@ -20,6 +23,12 @@ export {
   type DashboardMetrics,
   type ProjectSummary,
   type ActivitySummary,
+  type PendingActivity,
+  type PendingImpact,
+  type PendingApprovalsData,
+  type OrganizationAIUSummary,
+  type AIUFilters,
+  type VolunteerAIUData,
 } from "./use-dashboard-data";
 
 // Toast notifications

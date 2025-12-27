@@ -372,10 +372,235 @@ export function useGroupedData<T>(
   }, [data, ...deps]);
 }
 
+// ============================================
+// PENDING APPROVALS HOOK
+// ============================================
+
+export interface PendingActivity {
+  id: number;
+  projectId: number;
+  userId: number;
+  hours: number;
+  description?: string;
+  verificationStatus: string;
+  volunteerName?: string;
+  volunteerEmail?: string;
+  projectName?: string;
+  type: 'hours';
+}
+
+export interface PendingImpact {
+  id: number;
+  projectId: number;
+  userId?: number;
+  metricId?: number;
+  value: number;
+  verificationStatus: string;
+  volunteerName?: string;
+  volunteerEmail?: string;
+  projectName?: string;
+  metricName?: string;
+  type: 'impact';
+}
+
+export interface PendingApprovalsData {
+  pendingActivities: PendingActivity[];
+  pendingImpacts: PendingImpact[];
+  totalPending: number;
+}
+
+export function usePendingApprovals(userId: string | number | null) {
+  const query = useQuery<PendingApprovalsData>({
+    queryKey: ['/api/pending-approvals', userId],
+    queryFn: async () => {
+      if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
+      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      return response.json();
+    },
+    enabled: !!userId,
+    ...QUERY_CONFIG.LIVE,
+  });
+
+  const approveActivity = useCallback(async (activityId: number, reviewerId: number) => {
+    const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewerId }),
+    });
+    if (!response.ok) throw new Error('Failed to approve activity');
+    query.refetch();
+    return response.json();
+  }, [query]);
+
+  const rejectActivity = useCallback(async (activityId: number) => {
+    const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to reject activity');
+    query.refetch();
+    return response.json();
+  }, [query]);
+
+  const approveImpact = useCallback(async (impactId: number, reviewerId: number) => {
+    const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewerId }),
+    });
+    if (!response.ok) throw new Error('Failed to approve impact');
+    query.refetch();
+    return response.json();
+  }, [query]);
+
+  const rejectImpact = useCallback(async (impactId: number) => {
+    const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to reject impact');
+    query.refetch();
+    return response.json();
+  }, [query]);
+
+  return {
+    pendingActivities: query.data?.pendingActivities ?? [],
+    pendingImpacts: query.data?.pendingImpacts ?? [],
+    totalPending: query.data?.totalPending ?? 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    approveActivity,
+    rejectActivity,
+    approveImpact,
+    rejectImpact,
+  };
+}
+
+// ============================================
+// ORGANIZATION AIU HOOK
+// ============================================
+
+export interface OrganizationAIUSummary {
+  organizationId: number;
+  organizationName: string;
+  totalAiu: number;
+  aiuUnique: number;
+  aiuSessions: number;
+  projectCount: number;
+  volunteerCount: number;
+  totalHours: number;
+  livesImpacted: number;
+  sdgsCovered: number[];
+  verificationRate: number;
+  projects: Array<{
+    projectId: number;
+    projectName: string;
+    aiu: number;
+    orgDirectShare: number;
+    volunteerAiuSum: number;
+    sdgIndicator: string;
+    verificationStatus: string;
+  }>;
+}
+
+export interface AIUFilters {
+  projectId?: string;
+  timePeriod?: string;
+  sdgGoal?: string;
+}
+
+export function useOrganizationAIU(
+  organizationId: number | string | null,
+  filters: AIUFilters = {}
+) {
+  const { projectId, timePeriod, sdgGoal } = filters;
+
+  const query = useQuery<OrganizationAIUSummary | null>({
+    queryKey: ['/api/aiu/organization', organizationId, projectId, timePeriod, sdgGoal],
+    queryFn: async () => {
+      if (!organizationId) return null;
+      const params = new URLSearchParams();
+      if (projectId && projectId !== 'all') params.append('projectId', projectId);
+      if (timePeriod && timePeriod !== 'all') params.append('timePeriod', timePeriod);
+      if (sdgGoal) params.append('sdgGoal', sdgGoal);
+      const queryString = params.toString();
+      const url = `/api/aiu/organization/${organizationId}${queryString ? `?${queryString}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!organizationId,
+    ...QUERY_CONFIG.MODERATE,
+  });
+
+  return {
+    data: query.data,
+    totalAiu: query.data?.totalAiu ?? 0,
+    aiuUnique: query.data?.aiuUnique ?? 0,
+    projectCount: query.data?.projectCount ?? 0,
+    volunteerCount: query.data?.volunteerCount ?? 0,
+    totalHours: query.data?.totalHours ?? 0,
+    livesImpacted: query.data?.livesImpacted ?? 0,
+    sdgsCovered: query.data?.sdgsCovered ?? [],
+    verificationRate: query.data?.verificationRate ?? 0,
+    projects: query.data?.projects ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+// ============================================
+// VOLUNTEER AIU HOOK
+// ============================================
+
+export interface VolunteerAIUData {
+  volunteerId: number;
+  totalAiu: number;
+  projectAiu: Array<{
+    projectId: number;
+    projectName: string;
+    aiu: number;
+    hoursContributed: number;
+    sdgIndicator: string;
+  }>;
+  sdgsContributed: number[];
+}
+
+export function useVolunteerAIU(volunteerId: number | string | null) {
+  const query = useQuery<VolunteerAIUData | null>({
+    queryKey: ['/api/aiu/volunteer', volunteerId],
+    queryFn: async () => {
+      if (!volunteerId) return null;
+      const response = await fetch(`/api/aiu/volunteer/${volunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!volunteerId,
+    ...QUERY_CONFIG.MODERATE,
+  });
+
+  return {
+    data: query.data,
+    totalAiu: query.data?.totalAiu ?? 0,
+    projectAiu: query.data?.projectAiu ?? [],
+    sdgsContributed: query.data?.sdgsContributed ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
 export default {
   useVolunteerDashboard,
   useOrganizationDashboard,
   useCSRDashboard,
+  usePendingApprovals,
+  useOrganizationAIU,
+  useVolunteerAIU,
   useFilteredData,
   useAggregatedData,
   useGroupedData,

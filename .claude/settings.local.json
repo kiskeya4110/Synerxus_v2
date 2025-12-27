@@ -72,7 +72,9 @@
       "Bash(yes:*)",
       "Bash(convert:*)",
       "Bash(jq:*)",
-      "Bash(sleep:*)"
+      "Bash(sleep:*)",
+      "Bash(npm test:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

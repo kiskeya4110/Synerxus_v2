@@ -212,76 +212,9 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
       }
     }
 
-    // **CSR Dashboard KPI Tracking**: Update employee engagement hours when volunteer with employer link logs activity
-    if (activity.userId && activity.hours) {
-      try {
-        const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
-
-        if (volunteerProfile?.employerId) {
-          // Get user email for employee engagement tracking
-          const user = await storage.getUser(activity.userId);
-          if (user?.email) {
-            // Get existing employee engagement record (ensure type consistency)
-            const allEngagements = (await storage.listEmployeeEngagement()) || [];
-            const employerIdNum = typeof volunteerProfile.employerId === 'string'
-              ? parseInt(volunteerProfile.employerId)
-              : volunteerProfile.employerId;
-
-            const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
-              e?.partnerId === employerIdNum &&
-              e?.employeeEmail === user.email
-            );
-
-            if (existing) {
-              // Increment hours
-              await storage.updateEmployeeEngagement(existing.id, {
-                hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
-                projectId: activity.projectId
-              });
-            } else {
-              // Create new employee engagement record with correct partnerId type
-              await storage.createEmployeeEngagement({
-                partnerId: employerIdNum,
-                employeeEmail: user.email,
-                employeeName: volunteerProfile.volunteerName || user.displayName,
-                projectId: activity.projectId,
-                hoursVolunteered: activity.hours,
-                engagementType: 'vto'
-              });
-            }
-
-            // **SDG-Specific Hours Tracking**: Update CSR challenge progress if activity contributes to SDG
-            if (activity.projectId) {
-              try {
-                const project = await storage.getProject(activity.projectId);
-                if (project?.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
-                  const primarySDG = project.sdgGoals[0];
-                  const allChallenges = await storage.listCSRChallenges();
-                  const activeChallenges = allChallenges.filter((c: any) =>
-                    c.partnerId === employerIdNum &&
-                    c.status === 'active' &&
-                    c.sdgGoal === primarySDG
-                  );
-
-                  for (const challenge of activeChallenges) {
-                    const currentHours = challenge.currentHours || 0;
-                    await storage.updateCSRChallenge(challenge.id, {
-                      currentHours: currentHours + activity.hours
-                    });
-                  }
-                }
-              } catch (sdgErr) {
-                console.error("Error updating SDG-specific hours for challenge:", sdgErr);
-                // Non-critical
-              }
-            }
-          }
-        }
-      } catch (crsErr) {
-        console.error("Error updating employee engagement hours:", crsErr);
-        // Non-critical, don't fail the activity creation
-      }
-    }
+    // **CSR Dashboard KPI Tracking**: Note - Employee engagement hours are now updated
+    // only when hours are APPROVED (not at creation time). This ensures only verified
+    // hours flow to CSR corporate dashboards. See POST /volunteer-activities/:id/approve
 
     broadcastUpdate("volunteer_activity_created", activity);
     res.status(201).json(activity);
@@ -348,8 +281,10 @@ activitiesRouter.patch("/volunteer-activities/:id", async (req: Request, res: Re
       }
     }
 
-    // **CSR Dashboard KPI Tracking**: Update employee engagement hours when activity hours are changed
-    if (updatedActivity.userId && oldActivity && oldActivity.hours !== updatedActivity.hours) {
+    // **CSR Dashboard KPI Tracking**: Update employee engagement hours when APPROVED activity hours are changed
+    // Only update CSR engagement if the activity is already approved
+    if (updatedActivity.userId && oldActivity && oldActivity.hours !== updatedActivity.hours &&
+        updatedActivity.verificationStatus === 'approved') {
       try {
         const volunteerProfile = await storage.getVolunteerProfileByUserId(updatedActivity.userId);
         if (volunteerProfile?.employerId) {
@@ -720,10 +655,12 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
 
 /**
  * POST /volunteer-activities/:id/approve - Approve a volunteer activity (hours)
+ * Also updates CSR employee engagement, challenge progress, and creates verified output records
  */
 activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, res: Response) => {
   try {
     const activityId = parseInt(req.params.id);
+    const { reviewerId } = req.body;
 
     const activity = await storage.getVolunteerActivity(activityId);
     if (!activity) {
@@ -733,6 +670,95 @@ activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, 
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
       verificationStatus: 'approved'
     });
+
+    // **CSR Dashboard KPI Tracking**: Update employee engagement when activity is approved
+    // This ensures verified hours flow to CSR corporate dashboards
+    if (activity.userId && activity.hours) {
+      try {
+        const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
+
+        if (volunteerProfile?.employerId) {
+          const user = await storage.getUser(activity.userId);
+          if (user?.email) {
+            const allEngagements = (await storage.listEmployeeEngagement()) || [];
+            const employerIdNum = typeof volunteerProfile.employerId === 'string'
+              ? parseInt(volunteerProfile.employerId)
+              : volunteerProfile.employerId;
+
+            const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
+              e?.partnerId === employerIdNum &&
+              e?.employeeEmail === user.email
+            );
+
+            if (existing) {
+              // Increment hours for verified activity
+              await storage.updateEmployeeEngagement(existing.id, {
+                hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
+                projectId: activity.projectId
+              });
+            } else {
+              // Create new employee engagement record
+              await storage.createEmployeeEngagement({
+                partnerId: employerIdNum,
+                employeeEmail: user.email,
+                employeeName: volunteerProfile.volunteerName || user.displayName,
+                projectId: activity.projectId,
+                hoursVolunteered: activity.hours,
+                engagementType: 'vto'
+              });
+            }
+
+            // **Create Verified Output for CSR Audit Trail**
+            await storage.createVerifiedOutput({
+              activityId: activityId,
+              partnerId: employerIdNum,
+              projectId: activity.projectId,
+              outputType: 'hours',
+              outputValue: activity.hours,
+              verificationStatus: 'verified',
+              verifiedBy: reviewerId ? parseInt(reviewerId) : null,
+              verifiedAt: new Date(),
+              auditTrail: {
+                action: 'hours_approved',
+                description: `Volunteer hours approved: ${activity.hours}h by ${user.displayName || user.email}`,
+                timestamp: new Date().toISOString(),
+                reviewerId: reviewerId
+              }
+            });
+
+            // **SDG-Specific Hours Tracking**: Update CSR challenge progress
+            if (activity.projectId) {
+              try {
+                const project = await storage.getProject(activity.projectId);
+                if (project?.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
+                  const primarySDG = project.sdgGoals[0];
+                  const allChallenges = await storage.listCSRChallenges();
+                  const activeChallenges = allChallenges.filter((c: any) =>
+                    c.partnerId === employerIdNum &&
+                    c.status === 'active' &&
+                    c.sdgGoal === primarySDG
+                  );
+
+                  for (const challenge of activeChallenges) {
+                    const currentHours = challenge.currentHours || 0;
+                    await storage.updateCSRChallenge(challenge.id, {
+                      currentHours: currentHours + activity.hours
+                    });
+                  }
+                }
+              } catch (sdgErr) {
+                console.error("Error updating SDG-specific hours for challenge:", sdgErr);
+              }
+            }
+
+            console.log(`[CSR] Updated employee engagement for ${user.email} with ${activity.hours}h verified hours`);
+          }
+        }
+      } catch (csrErr) {
+        console.error("Error updating CSR employee engagement:", csrErr);
+        // Non-critical, don't fail the approval
+      }
+    }
 
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
@@ -768,10 +794,12 @@ activitiesRouter.post("/volunteer-activities/:id/reject", async (req: Request, r
 
 /**
  * POST /project-impacts/:id/approve - Approve a project impact (AIU/KPI)
+ * Also updates CSR verified outputs and employee impact data when applicable
  */
 activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: Response) => {
   try {
     const impactId = parseInt(req.params.id);
+    const { reviewerId } = req.body;
 
     const impact = await storage.getProjectImpact(impactId);
     if (!impact) {
@@ -788,6 +816,43 @@ activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: 
         await updateAiuKpiFromImpacts(updatedImpact.projectId);
       } catch (aiuErr) {
         console.error("Error updating AIU settings:", aiuErr);
+      }
+    }
+
+    // **CSR Dashboard Integration**: Create verified output record for approved impacts
+    // This ensures impact data flows to CSR dashboards for reporting
+    if (impact.userId && impact.projectId && impact.value) {
+      try {
+        const volunteerProfile = await storage.getVolunteerProfileByUserId(impact.userId);
+
+        if (volunteerProfile?.employerId) {
+          const employerIdNum = typeof volunteerProfile.employerId === 'string'
+            ? parseInt(volunteerProfile.employerId)
+            : volunteerProfile.employerId;
+
+          // Create a verified output record for CSR audit trail
+          await storage.createVerifiedOutput({
+            activityId: null, // This is an impact, not an activity
+            partnerId: employerIdNum,
+            projectId: impact.projectId,
+            outputType: 'outcomes_achieved',
+            outputValue: impact.value,
+            verificationStatus: 'verified',
+            verifiedBy: reviewerId ? parseInt(reviewerId) : null,
+            verifiedAt: new Date(),
+            auditTrail: {
+              action: 'impact_approved',
+              description: `Impact approved: ${impact.value} units`,
+              timestamp: new Date().toISOString(),
+              reviewerId: reviewerId
+            }
+          });
+
+          console.log(`[CSR] Created verified output for impact ${impactId} from volunteer ${impact.userId}`);
+        }
+      } catch (csrErr) {
+        console.error("Error creating CSR verified output:", csrErr);
+        // Non-critical, don't fail the approval
       }
     }
 

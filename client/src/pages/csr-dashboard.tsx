@@ -4329,23 +4329,68 @@ export default function CSRDashboard() {
                     </p>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "160px", maxWidth: "160px", flexShrink: 0 }}>
-                    <div
-                      style={{ padding: "12px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px" }}
+                    <button
+                      onClick={() => setSelectedMainTab('engagement')}
+                      style={{
+                        padding: "12px",
+                        background: "rgba(16, 185, 129, 0.1)",
+                        border: "1px solid rgba(16, 185, 129, 0.2)",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.25)";
+                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                      }}
+                      title="View employee engagement details"
                     >
                       <div style={{ fontSize: "22px", fontWeight: "700", color: "#059669" }}>
                         {displayTotalHours.toLocaleString()}
                       </div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>Volunteer Hours</div>
-                    </div>
-                    <div
-                      className="glass-card"
-                      style={{ padding: "12px", background: "rgba(0, 217, 255, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px" }}
+                      <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                        Volunteer Hours
+                        <ChevronRight style={{ width: "12px", height: "12px", opacity: 0.6 }} />
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setSelectedMainTab('engagement')}
+                      style={{
+                        padding: "12px",
+                        background: "rgba(0, 217, 255, 0.1)",
+                        border: "1px solid rgba(59, 130, 246, 0.2)",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.25)";
+                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                        e.currentTarget.style.background = "rgba(0, 217, 255, 0.1)";
+                      }}
+                      title="View active volunteer list"
                     >
                       <div style={{ fontSize: "22px", fontWeight: "700", color: "#3b82f6" }}>
                         {displayActiveEmployees.toLocaleString()}
                       </div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>Active Volunteers</div>
-                    </div>
+                      <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                        Active Volunteers
+                        <ChevronRight style={{ width: "12px", height: "12px", opacity: 0.6 }} />
+                      </div>
+                    </button>
                   </div>
                 </div>
 

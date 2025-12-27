@@ -284,6 +284,18 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
+  // Fetch pending volunteer hours for verification
+  const { data: pendingHours, refetch: refetchPendingHours } = useQuery({
+    queryKey: ['/api/pending-approvals', userId],
+    queryFn: async () => {
+      if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
+      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      return response.json();
+    },
+    enabled: !!userId && isOrganizationUser,
+  });
+
   // Fetch detailed volunteer profile data when a volunteer is selected
   const { data: selectedVolunteerData, isLoading: isLoadingVolunteer } = useQuery({
     queryKey: ['/api/volunteer/profile-insights', selectedVolunteerId, currentUser?.organizationId],
@@ -1411,14 +1423,19 @@ export default function OrganizationDashboard() {
           </div>
 
           {/* Pending AIU Verification Card - Interactive */}
+          {(() => {
+            const totalPendingCount = (pendingVerifications?.length || 0) + (pendingHours?.pendingActivities?.length || 0);
+            const hasHours = (pendingHours?.pendingActivities?.length || 0) > 0;
+            const hasImpacts = (pendingVerifications?.length || 0) > 0;
+            return (
           <button
             onClick={() => setActiveModal('verification')}
             style={{
-              backgroundColor: (pendingVerifications?.length || 0) > 0 ? '#fef3c7' : 'white',
+              backgroundColor: totalPendingCount > 0 ? '#fef3c7' : 'white',
               borderRadius: '12px',
               padding: '20px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: (pendingVerifications?.length || 0) > 0 ? '2px solid #f59e0b' : '2px solid transparent',
+              border: totalPendingCount > 0 ? '2px solid #f59e0b' : '2px solid transparent',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'all 0.2s'
@@ -1432,16 +1449,19 @@ export default function OrganizationDashboard() {
                 <ShieldCheck size={18} style={{ color: '#f59e0b' }} />
                 Pending Verification
               </h3>
-              {(pendingVerifications?.length || 0) > 0 && (
+              {totalPendingCount > 0 && (
                 <span style={{ backgroundColor: '#dc2626', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                  {pendingVerifications?.length || 0}
+                  {totalPendingCount}
                 </span>
               )}
             </div>
-            {(pendingVerifications?.length || 0) > 0 ? (
+            {totalPendingCount > 0 ? (
               <>
                 <p style={{ fontSize: '13px', color: '#92400e', marginBottom: '12px' }}>
-                  {pendingVerifications?.length} impact record{(pendingVerifications?.length || 0) !== 1 ? 's' : ''} awaiting your review
+                  {hasHours && `${pendingHours?.pendingActivities?.length} hour${pendingHours?.pendingActivities?.length !== 1 ? 's' : ''} record`}
+                  {hasHours && hasImpacts && ' & '}
+                  {hasImpacts && `${pendingVerifications?.length} impact${pendingVerifications?.length !== 1 ? 's' : ''}`}
+                  {' awaiting your review'}
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <span style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
@@ -1456,6 +1476,8 @@ export default function OrganizationDashboard() {
               </div>
             )}
           </button>
+            );
+          })()}
         </div>
 
         {/* Volunteer Management Panel - Collapsible - Desktop Only */}
@@ -2716,90 +2738,183 @@ export default function OrganizationDashboard() {
       {/* Pending Verification Modal */}
       {activeModal === 'verification' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck size={20} style={{ color: '#f59e0b' }} />
-                Pending AIU Verification
+                Pending Verification
               </h2>
               <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
                 <X size={24} />
               </button>
             </div>
-            <div style={{ padding: '24px' }}>
-              {(pendingVerifications?.length || 0) === 0 ? (
+            <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {((pendingVerifications?.length || 0) + (pendingHours?.pendingActivities?.length || 0)) === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
                   <ShieldCheck size={48} style={{ color: '#10b981', margin: '0 auto 16px' }} />
                   <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827', margin: '0 0 8px 0' }}>All Caught Up!</p>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>No pending impact records to verify.</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>No pending records to verify.</p>
                 </div>
               ) : (
                 <>
                   <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
-                    Review and verify impact records submitted by volunteers. Verified records receive full AIU credit.
+                    Review and verify volunteer hours and impact records. Verified records receive full credit.
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '400px', overflowY: 'auto' }}>
-                    {(pendingVerifications || []).map((impact: any) => (
-                      <div key={impact.id} style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                          <div>
-                            <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{impact.metricName || 'Impact Record'}</p>
-                            <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                              Submitted by: {impact.userName || 'Volunteer'} • {new Date(impact.date).toLocaleDateString()}
-                            </p>
+
+                  {/* Pending Volunteer Hours Section */}
+                  {(pendingHours?.pendingActivities?.length || 0) > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Clock size={18} />
+                        Volunteer Hours ({pendingHours?.pendingActivities?.length})
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {(pendingHours?.pendingActivities || []).map((activity: any) => (
+                          <div key={`hours-${activity.id}`} style={{ padding: '16px', backgroundColor: '#dbeafe', borderRadius: '10px', border: '1px solid #93c5fd' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                              <div>
+                                <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{activity.volunteerName || 'Volunteer'}</p>
+                                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                                  {activity.projectName} • {new Date(activity.date).toLocaleDateString()}
+                                </p>
+                                {activity.description && (
+                                  <p style={{ fontSize: '12px', color: '#4b5563', margin: '4px 0 0 0', fontStyle: 'italic' }}>
+                                    "{activity.description}"
+                                  </p>
+                                )}
+                              </div>
+                              <span style={{ fontSize: '18px', fontWeight: '700', color: '#2563eb' }}>{activity.hours}h</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ reviewerId: userId })
+                                    });
+                                    refetchPendingHours();
+                                    refetchDashboard();
+                                    toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
+                                  } catch (err) {
+                                    toast({ title: 'Error', description: 'Failed to approve hours', variant: 'destructive' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                              >
+                                <ThumbsUp size={14} />
+                                Approve
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ reviewerId: userId })
+                                    });
+                                    refetchPendingHours();
+                                    toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
+                                  } catch (err) {
+                                    toast({ title: 'Error', description: 'Failed to reject hours', variant: 'destructive' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                              >
+                                Reject
+                              </button>
+                              <button
+                                onClick={() => navigate(`/projects/${activity.projectId}`)}
+                                style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <Eye size={14} />
+                                View
+                              </button>
+                            </div>
                           </div>
-                          <span style={{ fontSize: '18px', fontWeight: '700', color: '#d97706' }}>{impact.value}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await fetch(`/api/activities/project-impacts/${impact.id}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ verificationStatus: 'verified', userId: userId })
-                                });
-                                refetchVerifications();
-                                refetchDashboard();
-                                toast({ title: 'Impact verified', description: 'The impact record has been verified.' });
-                              } catch (err) {
-                                toast({ title: 'Error', description: 'Failed to verify impact', variant: 'destructive' });
-                              }
-                            }}
-                            style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                          >
-                            <ThumbsUp size={14} />
-                            Verify
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await fetch(`/api/activities/project-impacts/${impact.id}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ verificationStatus: 'rejected', userId: userId })
-                                });
-                                refetchVerifications();
-                                toast({ title: 'Impact rejected', description: 'The impact record has been rejected.' });
-                              } catch (err) {
-                                toast({ title: 'Error', description: 'Failed to reject impact', variant: 'destructive' });
-                              }
-                            }}
-                            style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                          >
-                            Reject
-                          </button>
-                          <button
-                            onClick={() => navigate(`/projects/${impact.projectId}`)}
-                            style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                          >
-                            <Eye size={14} />
-                            View
-                          </button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Pending Impact Records Section */}
+                  {(pendingVerifications?.length || 0) > 0 && (
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#d97706', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Target size={18} />
+                        Impact Records ({pendingVerifications?.length})
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {(pendingVerifications || []).map((impact: any) => (
+                          <div key={`impact-${impact.id}`} style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', border: '1px solid #fde68a' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                              <div>
+                                <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{impact.metricName || 'Impact Record'}</p>
+                                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                                  Submitted by: {impact.userName || 'Volunteer'} • {new Date(impact.date).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <span style={{ fontSize: '18px', fontWeight: '700', color: '#d97706' }}>{impact.value}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    // Use dedicated approve endpoint which sets status to 'approved' and recalculates AIU
+                                    const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ reviewerId: userId })
+                                    });
+                                    if (!response.ok) throw new Error('Failed to approve');
+                                    refetchVerifications();
+                                    refetchDashboard();
+                                    refetchPendingHours(); // Refresh all pending items
+                                    toast({ title: 'Impact approved', description: 'The impact record has been approved and AIU recalculated.' });
+                                  } catch (err) {
+                                    toast({ title: 'Error', description: 'Failed to approve impact', variant: 'destructive' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                              >
+                                <ThumbsUp size={14} />
+                                Approve
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    // Use dedicated reject endpoint which sets status to 'rejected' and recalculates AIU
+                                    const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ reviewerId: userId })
+                                    });
+                                    if (!response.ok) throw new Error('Failed to reject');
+                                    refetchVerifications();
+                                    refetchPendingHours(); // Refresh all pending items
+                                    toast({ title: 'Impact rejected', description: 'The impact record has been rejected.' });
+                                  } catch (err) {
+                                    toast({ title: 'Error', description: 'Failed to reject impact', variant: 'destructive' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                              >
+                                Reject
+                              </button>
+                              <button
+                                onClick={() => navigate(`/projects/${impact.projectId}`)}
+                                style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <Eye size={14} />
+                                View
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

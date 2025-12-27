@@ -49,6 +49,11 @@ export function ProfilePictureUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
     // Validate userId early
     if (!userId) {
       toast({
@@ -70,9 +75,28 @@ export function ProfilePictureUpload({
       return;
     }
 
-    // Skip cropper and upload directly for reliability
-    // The server will handle resizing and optimization
-    await uploadImage(file);
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Show cropper for profile photos
+    if (enableCrop) {
+      // Create a blob URL for the cropper
+      const imageUrl = URL.createObjectURL(file);
+      setPendingImage(imageUrl);
+      setPendingFile(file);
+      setShowCropper(true);
+    } else {
+      // Upload directly without cropping
+      await uploadImage(file);
+    }
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
@@ -105,25 +129,46 @@ export function ProfilePictureUpload({
   };
 
   const uploadImage = async (file: File) => {
+    console.log("[ProfilePictureUpload] Starting upload for user:", userId, "userType:", userType);
+    console.log("[ProfilePictureUpload] File:", file.name, file.type, file.size, "bytes");
+
+    // Validate userId before upload
+    if (!userId || userId === "") {
+      console.error("[ProfilePictureUpload] No userId provided");
+      toast({
+        title: "Upload failed",
+        description: "User ID is required. Please refresh the page and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsUploading(true);
 
       // Delete old photo if exists
       if (storagePath) {
         try {
+          console.log("[ProfilePictureUpload] Deleting old photo:", storagePath);
           await deleteFile(storagePath);
         } catch (delErr) {
-          console.warn("Could not delete old photo:", delErr);
+          console.warn("[ProfilePictureUpload] Could not delete old photo:", delErr);
         }
       }
 
       // Upload new photo with timeout
+      console.log("[ProfilePictureUpload] Uploading new photo...");
       const uploadPromise = uploadProfilePhoto(file, userId, userType);
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Upload timeout. Please try again.")), 30000)
       );
 
       const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+      console.log("[ProfilePictureUpload] Upload result:", result);
+
+      if (!result || !result.url) {
+        throw new Error("Upload failed - no URL returned");
+      }
 
       setPhotoUrl(result.url);
       setStoragePath(result.path);
@@ -134,7 +179,7 @@ export function ProfilePictureUpload({
         description: "Your profile picture has been updated."
       });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error("[ProfilePictureUpload] Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload photo. Please try again.",

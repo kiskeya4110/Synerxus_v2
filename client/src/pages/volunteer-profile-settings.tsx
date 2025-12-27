@@ -1596,7 +1596,7 @@ export default function VolunteerProfileSettings() {
                 form={form}
                 onPhotoChange={setProfilePhotoUrl}
                 currentPhotoUrl={profilePhotoUrl}
-                userId={currentUser?.id || ""}
+                userId={currentUser?.id ? String(currentUser.id) : ""}
               />
               <AvailabilitySection
                 form={form}

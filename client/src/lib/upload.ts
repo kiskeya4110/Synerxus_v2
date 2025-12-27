@@ -53,6 +53,14 @@ export async function uploadProfilePhoto(
   userId: string,
   userType: 'volunteer' | 'organization'
 ): Promise<UploadResult> {
+  console.log('[uploadProfilePhoto] Called with userId:', userId, 'userType:', userType);
+  console.log('[uploadProfilePhoto] File:', file.name, file.type, file.size);
+
+  // Validate userId
+  if (!userId || userId === '') {
+    throw new Error('User ID is required for upload');
+  }
+
   // Validate file type
   if (!file.type.startsWith('image/')) {
     throw new Error('Only image files are allowed');
@@ -71,7 +79,12 @@ export async function uploadProfilePhoto(
   const filename = `${sanitizedUserId}-${timestamp}.${fileExtension}`;
   const path = `profile-photos/${userType}/${filename}`;
 
-  return uploadFile(file, path, 'profile');
+  console.log('[uploadProfilePhoto] Generated path:', path);
+
+  const result = await uploadFile(file, path, 'profile');
+  console.log('[uploadProfilePhoto] Upload result:', result);
+
+  return result;
 }
 
 /**

@@ -88,10 +88,14 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
 
       const processed = await processImage(req.file.buffer, options);
 
+      // Extract actual storage path from URL for deletion support
+      // URL format: /api/storage/profiles/profile-123-abc.jpg → profiles/profile-123-abc.jpg
+      const actualStoragePath = processed.url.replace('/api/storage/', '');
+
       return res.json({
         url: processed.url,
         thumbnailUrl: processed.thumbnailUrl,
-        path: pathParam,
+        path: actualStoragePath,
         width: processed.width,
         height: processed.height,
         fileSize: processed.fileSize,

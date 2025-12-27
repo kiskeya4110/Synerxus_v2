@@ -144,6 +144,12 @@ function RootRedirectRoute() {
             return;
           }
 
+          // Ensure response is JSON before parsing
+          const contentType = response.headers.get('content-type');
+          if (!contentType?.includes('application/json')) {
+            throw new Error('Non-JSON response from server');
+          }
+
           const jsonData = await response.json();
           // For organization endpoint, response is an array of organizations
           const data = Array.isArray(jsonData) ? jsonData[0] : jsonData;

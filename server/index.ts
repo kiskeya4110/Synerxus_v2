@@ -24,12 +24,17 @@ import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
-import { securityHeaders, sanitizeInput } from "./middleware/security";
+import { securityHeaders, sanitizeInput, cleanupSecurity } from "./middleware/security";
 import { exec } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
+import { initializeEnv } from "./utils/env";
+import { setupSwagger } from "./swagger";
 
 // Server PID for debugging
 const serverPid = process.pid;
+
+// Initialize environment validation early
+initializeEnv();
 
 // Initialize error tracking (Sentry) early
 initErrorTracking();
@@ -344,6 +349,10 @@ app.use((req, res, next) => {
   // This prevents stale cached data from causing data isolation issues
   cache.clear();
   logger.info('[Server] Cleared all caches on startup');
+
+  // Setup Swagger API documentation (available at /api/docs)
+  setupSwagger(app);
+  logger.info('[Server] Swagger documentation initialized at /api/docs');
 
   let server;
   try {

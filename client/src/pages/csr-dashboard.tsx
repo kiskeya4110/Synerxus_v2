@@ -78,6 +78,7 @@ import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { CSRLayout } from "@/components/layout/csr-layout";
 import KPIDetailModal from "@/components/dashboard/kpi-detail-modal";
+import { ChartSkeleton as ImportedChartSkeleton, MapSkeleton as ImportedMapSkeleton } from "@/components/csr-dashboard";
 import SDGDetailModal from "@/components/dashboard/sdg-detail-modal";
 import AIInsightModal from "@/components/dashboard/ai-insight-modal";
 import { formatDecimal, formatMetric, formatCompact } from "@/lib/format-utils";
@@ -329,20 +330,9 @@ GlobalImpactMap.displayName = "GlobalImpactMap";
 // Lazy load the map component
 const LazyGlobalImpactMap = lazy(() => Promise.resolve({ default: GlobalImpactMap }));
 
-// Skeleton component for lazy-loaded sections
-const ChartSkeleton = memo(({ height = "h-64" }: { height?: string }) => (
-  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
-    <div className="text-slate-400 text-sm">Loading chart...</div>
-  </div>
-));
-ChartSkeleton.displayName = "ChartSkeleton";
-
-const MapSkeleton = memo(() => (
-  <div className="h-64 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
-    <div className="text-slate-400 text-sm">Loading map...</div>
-  </div>
-));
-MapSkeleton.displayName = "MapSkeleton";
+// Use skeleton components from csr-dashboard component library
+const ChartSkeleton = ImportedChartSkeleton;
+const MapSkeleton = ImportedMapSkeleton;
 
 interface SDGEmployee {
   name: string;

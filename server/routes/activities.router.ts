@@ -3,7 +3,9 @@ import { storage } from "../storage";
 import {
   insertVolunteerActivitySchema,
   insertImpactMetricSchema,
-  insertProjectImpactSchema
+  insertProjectImpactSchema,
+  type VolunteerActivity,
+  type ProjectImpact,
 } from "@shared/schema";
 import {
   handleValidationError,
@@ -45,7 +47,7 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
     const { userId, projectId, organizationId } = req.query;
     const authenticatedUser = req.user;
 
-    let activities: any[] = [];
+    let activities: VolunteerActivity[] = [];
 
     if (userId) {
       const requestedUserId = parseInt(userId as string);
@@ -573,8 +575,8 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
     }
 
     const results: {
-      pendingActivities: any[];
-      pendingImpacts: any[];
+      pendingActivities: VolunteerActivity[];
+      pendingImpacts: ProjectImpact[];
       totalPending: number;
     } = {
       pendingActivities: [],

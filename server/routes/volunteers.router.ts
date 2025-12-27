@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertVolunteerSchema } from "@shared/schema";
+import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { extractUserId } from "../user-validation";
 
@@ -213,8 +213,8 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
       return res.status(400).json({ error: "Invalid volunteer ID" });
     }
 
-    let activities: any[] = [];
-    let projectAssignments: any[] = [];
+    let activities: VolunteerActivity[] = [];
+    let projectAssignments: ProjectAssignment[] = [];
 
     // Safely fetch volunteer activities
     try {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare, TrendingUp, AlertCircle, Zap } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare, TrendingUp, AlertCircle, Zap, AlertTriangle, CheckCheck, XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +105,102 @@ export default function Volunteers() {
       return response.json();
     },
     enabled: !!userId && isOrganization
+  });
+
+  // Fetch pending approvals for organization
+  const { data: pendingApprovals, isLoading: loadingApprovals, refetch: refetchApprovals } = useQuery<{
+    pendingActivities: any[];
+    pendingImpacts: any[];
+    totalPending: number;
+  }>({
+    queryKey: ["/api/pending-approvals", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
+      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      return response.json();
+    },
+    enabled: !!userId && isOrganization
+  });
+
+  // Approve/Reject mutations
+  const approveActivityMutation = useMutation({
+    mutationFn: async (activityId: number) => {
+      const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+      });
+      if (!response.ok) throw new Error('Failed to approve');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Hours Approved", description: "The volunteer hours have been approved." });
+      refetchApprovals();
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to approve hours", variant: "destructive" });
+    }
+  });
+
+  const rejectActivityMutation = useMutation({
+    mutationFn: async (activityId: number) => {
+      const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+      });
+      if (!response.ok) throw new Error('Failed to reject');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Hours Rejected", description: "The volunteer hours have been rejected." });
+      refetchApprovals();
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reject hours", variant: "destructive" });
+    }
+  });
+
+  const approveImpactMutation = useMutation({
+    mutationFn: async (impactId: number) => {
+      const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+      });
+      if (!response.ok) throw new Error('Failed to approve');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Impact Approved", description: "The impact/KPI has been approved." });
+      refetchApprovals();
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to approve impact", variant: "destructive" });
+    }
+  });
+
+  const rejectImpactMutation = useMutation({
+    mutationFn: async (impactId: number) => {
+      const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+      });
+      if (!response.ok) throw new Error('Failed to reject');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Impact Rejected", description: "The impact/KPI has been rejected." });
+      refetchApprovals();
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reject impact", variant: "destructive" });
+    }
   });
 
   // Fetch volunteer profile when selected
@@ -321,7 +417,7 @@ export default function Volunteers() {
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={volunteer.avatar} alt={volunteer.displayName} />
+                    <AvatarImage src={volunteer.avatar || volunteer.profilePhotoUrl} alt={volunteer.displayName} />
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {volunteer.displayName?.charAt(0) || <User className="h-4 w-4" />}
                     </AvatarFallback>
@@ -397,7 +493,7 @@ export default function Volunteers() {
                 <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white px-4 py-5 rounded-t-2xl">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-14 w-14 border-2 border-white/30">
-                      <AvatarImage src={volunteerProfile.user?.avatar} />
+                      <AvatarImage src={volunteerProfile.volunteerProfile?.profilePhotoUrl || volunteerProfile.user?.avatar} />
                       <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
                         {volunteerProfile.user?.displayName?.[0] || "V"}
                       </AvatarFallback>
@@ -632,22 +728,47 @@ export default function Volunteers() {
 
       {/* Volunteers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredVolunteers.map((volunteer: any) => (
-          <Card key={volunteer.id} className="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
+        {filteredVolunteers.map((volunteer: any) => {
+          // Calculate pending approvals for this volunteer
+          const volunteerPendingCount = pendingApprovals?.pendingActivities?.filter(
+            (a: any) => a.userId === volunteer.id
+          ).length || 0;
+
+          return (
+          <Card
+            key={volunteer.id}
+            className="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+            onClick={() => openProfileDialog(volunteer.id)}
+          >
             {/* Gradient Background Overlay */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 group-hover:h-2 transition-all duration-300" />
-            
+
+            {/* Click hint overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10" />
+
             <CardHeader className="pb-3 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-              {isOrganization && volunteer.projectCount > 0 && (
-                <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 flex gap-2">
+                {/* Pending approval indicator */}
+                {volunteerPendingCount > 0 && (
+                  <Badge className="gap-1 bg-orange-500 text-white shadow-lg animate-pulse">
+                    <AlertTriangle className="h-3 w-3" />
+                    {volunteerPendingCount} Pending
+                  </Badge>
+                )}
+                {/* Project count badge */}
+                {isOrganization && volunteer.projectCount > 0 && (
                   <Badge className="gap-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
                     <Briefcase className="h-3 w-3" />
                     {volunteer.projectCount} Project{volunteer.projectCount !== 1 ? 's' : ''}
                   </Badge>
-                </div>
-              )}
+                )}
+              </div>
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="h-14 w-14 ring-2 ring-purple-200 dark:ring-purple-700 shadow-md">
+                  <AvatarImage
+                    src={volunteer.avatar || volunteer.profilePhotoUrl}
+                    alt={volunteer.displayName || 'Volunteer'}
+                  />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                     {volunteer.displayName?.split(' ').map((n: string) => n[0]).join('') || volunteer.email?.[0] || '?'}
                   </AvatarFallback>
@@ -741,7 +862,10 @@ export default function Volunteers() {
                   <Button
                     size="sm"
                     className="flex-1 min-h-[40px] bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-                    onClick={() => openProfileDialog(volunteer.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openProfileDialog(volunteer.id);
+                    }}
                     data-testid={`button-view-profile-${volunteer.id}`}
                   >
                     <User className="h-4 w-4 mr-2" />
@@ -750,7 +874,8 @@ export default function Volunteers() {
                   <Button
                     size="sm"
                     className="flex-1 min-h-[40px] bg-gradient-to-r from-slate-300 to-slate-400 hover:from-slate-400 hover:to-slate-500 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-slate-900 dark:text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedVolunteer(volunteer);
                       setShowContactModal(true);
                     }}
@@ -767,7 +892,8 @@ export default function Volunteers() {
                     size="sm"
                     variant="outline"
                     className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const volId = volunteer.id || volunteer.userId;
 
                       if (!volId) {
@@ -794,7 +920,8 @@ export default function Volunteers() {
                     size="sm"
                     variant="outline"
                     className="flex-1 min-h-[40px] border-2 border-red-500 text-red-700 hover:bg-red-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setVolunteerToDelete({
                         id: volunteer.id,
                         name: volunteer.displayName || 'this volunteer'
@@ -810,13 +937,154 @@ export default function Volunteers() {
               </div>
             </CardContent>
           </Card>
-        ))}
+        );
+        })}
       </div>
 
       {filteredVolunteers.length === 0 && (
         <Card className="p-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">No volunteers found</p>
         </Card>
+      )}
+
+      {/* Pending Approvals Section - Only for Organizations */}
+      {isOrganization && pendingApprovals && pendingApprovals.totalPending > 0 && (
+        <div className="mt-8">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-orange-500" />
+              Pending Approvals
+              <Badge className="bg-orange-500 text-white ml-2 animate-pulse">
+                {pendingApprovals.totalPending} Pending
+              </Badge>
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Review and approve volunteer hours, KPIs, and impact contributions
+            </p>
+          </div>
+
+          {/* Pending Hours Section */}
+          {pendingApprovals.pendingActivities.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-500" />
+                Volunteer Hours Awaiting Approval ({pendingApprovals.pendingActivities.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingApprovals.pendingActivities.map((activity: any) => (
+                  <Card key={activity.id} className="border-2 border-orange-200 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-900/10">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-bold">
+                              {activity.volunteerName?.charAt(0) || 'V'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-sm">{activity.volunteerName}</p>
+                            <p className="text-xs text-gray-500">{activity.projectName}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-orange-500 text-white">
+                          {activity.hours}h
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                        {activity.description || 'No description provided'}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(activity.date).toLocaleDateString()}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => approveActivityMutation.mutate(activity.id)}
+                          disabled={approveActivityMutation.isPending}
+                        >
+                          <CheckCheck className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1"
+                          onClick={() => rejectActivityMutation.mutate(activity.id)}
+                          disabled={rejectActivityMutation.isPending}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pending Impacts/KPIs Section */}
+          {pendingApprovals.pendingImpacts.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Target className="h-5 w-5 text-purple-500" />
+                Impact & KPIs Awaiting Approval ({pendingApprovals.pendingImpacts.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingApprovals.pendingImpacts.map((impact: any) => (
+                  <Card key={impact.id} className="border-2 border-purple-200 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-900/10">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                            <Target className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{impact.metricName}</p>
+                            <p className="text-xs text-gray-500">{impact.projectName}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-purple-500 text-white">
+                          {impact.value} {impact.unit || 'units'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Reported by: {impact.volunteerName}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(impact.date).toLocaleDateString()}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => approveImpactMutation.mutate(impact.id)}
+                          disabled={approveImpactMutation.isPending}
+                        >
+                          <CheckCheck className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1"
+                          onClick={() => rejectImpactMutation.mutate(impact.id)}
+                          disabled={rejectImpactMutation.isPending}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Matching Candidates Section - Only for Organizations */}
@@ -1060,7 +1328,7 @@ export default function Volunteers() {
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="h-16 w-16 border-4 border-white/20">
-                      <AvatarImage src={volunteerProfile.user?.avatar} />
+                      <AvatarImage src={volunteerProfile.volunteerProfile?.profilePhotoUrl || volunteerProfile.user?.avatar} />
                       <AvatarFallback className="bg-white/20 text-white text-2xl font-bold">
                         {volunteerProfile.user?.displayName?.[0] || "V"}
                       </AvatarFallback>

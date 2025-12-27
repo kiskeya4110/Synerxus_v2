@@ -621,3 +621,213 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
     res.status(error.status).json({ message: error.message });
   }
 });
+
+// ==================== Approval Routes ====================
+
+/**
+ * GET /pending-approvals - Get all pending items awaiting approval for an organization
+ * Query params:
+ *   - organizationId: Filter by organization ID (required)
+ */
+activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) => {
+  try {
+    const { organizationId, userId } = req.query;
+
+    if (!organizationId && !userId) {
+      return res.status(400).json({ message: "organizationId or userId is required" });
+    }
+
+    const results: {
+      pendingActivities: any[];
+      pendingImpacts: any[];
+      totalPending: number;
+    } = {
+      pendingActivities: [],
+      pendingImpacts: [],
+      totalPending: 0
+    };
+
+    // Get organization's projects
+    let projectIds: number[] = [];
+    if (organizationId) {
+      const orgProjects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
+      projectIds = orgProjects.map(p => p.id);
+    } else if (userId) {
+      // For a specific user ID (organization user), get their org's projects
+      const user = await storage.getUser(parseInt(userId as string));
+      if (user?.organizationId) {
+        const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
+        projectIds = orgProjects.map(p => p.id);
+      }
+    }
+
+    if (projectIds.length === 0) {
+      return res.json(results);
+    }
+
+    // Get pending volunteer activities
+    const allActivities = await storage.listVolunteerActivities();
+    const pendingActivities = allActivities.filter((a: any) =>
+      a.projectId &&
+      projectIds.includes(a.projectId) &&
+      (a.verificationStatus === 'pending' || !a.verificationStatus)
+    );
+
+    // Enrich activities with volunteer info
+    for (const activity of pendingActivities) {
+      const volunteer = activity.userId ? await storage.getUser(activity.userId) : null;
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      results.pendingActivities.push({
+        ...activity,
+        volunteerName: volunteer?.displayName || volunteer?.email || 'Unknown',
+        volunteerEmail: volunteer?.email,
+        projectName: project?.name || 'Unknown Project',
+        type: 'hours'
+      });
+    }
+
+    // Get pending project impacts
+    const allImpacts = await storage.listProjectImpacts();
+    const pendingImpacts = allImpacts.filter((i: any) =>
+      i.projectId &&
+      projectIds.includes(i.projectId) &&
+      i.verificationStatus === 'pending'
+    );
+
+    // Enrich impacts with volunteer and project info
+    for (const impact of pendingImpacts) {
+      const volunteer = impact.userId ? await storage.getUser(impact.userId) : null;
+      const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
+      const metric = impact.metricId ? await storage.getImpactMetric(impact.metricId) : null;
+      results.pendingImpacts.push({
+        ...impact,
+        volunteerName: volunteer?.displayName || volunteer?.email || 'System',
+        volunteerEmail: volunteer?.email,
+        projectName: project?.name || 'Unknown Project',
+        metricName: metric?.name || 'Unknown Metric',
+        type: 'impact'
+      });
+    }
+
+    results.totalPending = results.pendingActivities.length + results.pendingImpacts.length;
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching pending approvals:", err);
+    res.status(500).json({ message: "Failed to fetch pending approvals" });
+  }
+});
+
+/**
+ * POST /volunteer-activities/:id/approve - Approve a volunteer activity (hours)
+ */
+activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, res: Response) => {
+  try {
+    const activityId = parseInt(req.params.id);
+
+    const activity = await storage.getVolunteerActivity(activityId);
+    if (!activity) {
+      return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    const updatedActivity = await storage.updateVolunteerActivity(activityId, {
+      verificationStatus: 'approved'
+    });
+
+    broadcastUpdate("activity_approved", updatedActivity);
+    res.json(updatedActivity);
+  } catch (err) {
+    console.error("Error approving activity:", err);
+    res.status(500).json({ message: "Failed to approve activity" });
+  }
+});
+
+/**
+ * POST /volunteer-activities/:id/reject - Reject a volunteer activity (hours)
+ */
+activitiesRouter.post("/volunteer-activities/:id/reject", async (req: Request, res: Response) => {
+  try {
+    const activityId = parseInt(req.params.id);
+
+    const activity = await storage.getVolunteerActivity(activityId);
+    if (!activity) {
+      return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    const updatedActivity = await storage.updateVolunteerActivity(activityId, {
+      verificationStatus: 'rejected'
+    });
+
+    broadcastUpdate("activity_rejected", updatedActivity);
+    res.json(updatedActivity);
+  } catch (err) {
+    console.error("Error rejecting activity:", err);
+    res.status(500).json({ message: "Failed to reject activity" });
+  }
+});
+
+/**
+ * POST /project-impacts/:id/approve - Approve a project impact (AIU/KPI)
+ */
+activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: Response) => {
+  try {
+    const impactId = parseInt(req.params.id);
+
+    const impact = await storage.getProjectImpact(impactId);
+    if (!impact) {
+      return res.status(404).json({ message: "Project impact not found" });
+    }
+
+    const updatedImpact = await storage.updateProjectImpact(impactId, {
+      verificationStatus: 'approved'
+    });
+
+    // Recalculate AIU when impact is approved
+    if (updatedImpact?.projectId) {
+      try {
+        await updateAiuKpiFromImpacts(updatedImpact.projectId);
+      } catch (aiuErr) {
+        console.error("Error updating AIU settings:", aiuErr);
+      }
+    }
+
+    broadcastUpdate("impact_approved", updatedImpact);
+    res.json(updatedImpact);
+  } catch (err) {
+    console.error("Error approving impact:", err);
+    res.status(500).json({ message: "Failed to approve impact" });
+  }
+});
+
+/**
+ * POST /project-impacts/:id/reject - Reject a project impact (AIU/KPI)
+ */
+activitiesRouter.post("/project-impacts/:id/reject", async (req: Request, res: Response) => {
+  try {
+    const impactId = parseInt(req.params.id);
+
+    const impact = await storage.getProjectImpact(impactId);
+    if (!impact) {
+      return res.status(404).json({ message: "Project impact not found" });
+    }
+
+    const updatedImpact = await storage.updateProjectImpact(impactId, {
+      verificationStatus: 'rejected'
+    });
+
+    // Recalculate AIU when impact is rejected
+    if (updatedImpact?.projectId) {
+      try {
+        await updateAiuKpiFromImpacts(updatedImpact.projectId);
+      } catch (aiuErr) {
+        console.error("Error updating AIU settings:", aiuErr);
+      }
+    }
+
+    broadcastUpdate("impact_rejected", updatedImpact);
+    res.json(updatedImpact);
+  } catch (err) {
+    console.error("Error rejecting impact:", err);
+    res.status(500).json({ message: "Failed to reject impact" });
+  }
+});

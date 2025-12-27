@@ -59,16 +59,19 @@ export function ProfilePictureUpload({
       return;
     }
 
-    // If crop is enabled, show cropper first
-    if (enableCrop) {
-      const imageUrl = URL.createObjectURL(file);
-      setPendingImage(imageUrl);
-      setPendingFile(file);
-      setShowCropper(true);
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPG, PNG, WebP, or GIF image.",
+        variant: "destructive"
+      });
       return;
     }
 
-    // Otherwise upload directly
+    // Skip cropper and upload directly for reliability
+    // The server will handle resizing and optimization
     await uploadImage(file);
   };
 

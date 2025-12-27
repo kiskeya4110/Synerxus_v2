@@ -283,20 +283,20 @@ export default function Login() {
           localStorage.setItem('pendingOrganizationName', organizationName);
         }
 
-        // Redirect to appropriate intake form based on user type
+        // Redirect to profile settings page based on user type
         if (userType === 'volunteer') {
-          setLocation("/volunteer-intake");
+          setLocation("/volunteer-profile-settings");
         } else if (userType === 'organization') {
-          setLocation("/organization-intake");
+          setLocation("/organization-profile-settings");
         } else if (userType === 'corporate-partner') {
-          setLocation("/corporate-partner-intake");
+          setLocation("/corporate-partner-profile-settings");
         } else {
           setLocation("/dashboard");
         }
-        
+
         toast({
           title: "Account created",
-          description: "Please complete your profile to get started.",
+          description: "Please complete your profile settings to get started.",
         });
       } else {
         setLocation("/dashboard");

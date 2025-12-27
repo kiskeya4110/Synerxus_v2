@@ -571,11 +571,12 @@ volunteersRouter.get("/spotlight", async (req: Request, res: Response) => {
         user: {
           id: volunteer.id,
           displayName: volunteer.displayName,
-          avatar: volunteer.avatar
+          avatar: selectedProfile.profilePhotoUrl || volunteer.avatar
         },
         profile: {
           skills: selectedProfile.skills,
-          interests: selectedProfile.interests
+          interests: selectedProfile.interests,
+          profilePhotoUrl: selectedProfile.profilePhotoUrl
         },
         stats: {
           thisWeekHours: totalHours,

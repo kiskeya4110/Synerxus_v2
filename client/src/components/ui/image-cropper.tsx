@@ -52,7 +52,10 @@ export function ImageCropper({
     if (!imageSrc || !isOpen) return;
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Only set crossOrigin for remote URLs, not for blob URLs (local files)
+    if (!imageSrc.startsWith('blob:')) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => {
       imageRef.current = img;
       setImageLoaded(true);
@@ -62,8 +65,9 @@ export function ImageCropper({
       setRotation(0);
       setPosition({ x: 0, y: 0 });
     };
-    img.onerror = () => {
-      console.error("Failed to load image for cropping");
+    img.onerror = (e) => {
+      console.error("Failed to load image for cropping:", e);
+      setImageLoaded(false);
     };
     img.src = imageSrc;
   }, [imageSrc, isOpen]);

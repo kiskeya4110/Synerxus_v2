@@ -3777,11 +3777,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const activityCount = volunteerActivities.length;
 
         // Return consistent structure with all expected fields defaulted
+        // Use profile photo URL if available, fall back to user avatar
+        const avatarUrl = volunteer.profile?.profilePhotoUrl || volunteer.avatar || null;
         return {
           id: volunteer.id,
           displayName: volunteer.displayName || '',
           email: volunteer.email || '',
-          avatar: volunteer.avatar || null,
+          avatar: avatarUrl,
+          profilePhotoUrl: volunteer.profile?.profilePhotoUrl || null,
           skills: Array.isArray(volunteer.profile?.skills) ? volunteer.profile.skills : [],
           hours: totalHours || 0,
           tasksCompleted: activityCount || 0,

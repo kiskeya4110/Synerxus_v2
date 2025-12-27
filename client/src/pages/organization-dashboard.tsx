@@ -2849,11 +2849,11 @@ export default function OrganizationDashboard() {
                       fontWeight: '700',
                       flexShrink: 0
                     }}>
-                      {selectedVolunteerData.user?.name?.charAt(0).toUpperCase() || '?'}
+                      {(selectedVolunteerData.user?.displayName || selectedVolunteerData.user?.name)?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: '0 0 4px 0' }}>
-                        {selectedVolunteerData.user?.name || 'Unknown Volunteer'}
+                        {selectedVolunteerData.user?.displayName || selectedVolunteerData.user?.name || 'Unknown Volunteer'}
                       </h3>
                       <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
                         {selectedVolunteerData.user?.email}

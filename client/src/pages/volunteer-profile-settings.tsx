@@ -1343,8 +1343,9 @@ export default function VolunteerProfileSettings() {
     // Don't auto-save if no user or during initial load
     if (!currentUser?.id || isInitialLoadRef.current) return;
 
-    // Check if data actually changed
-    const dataString = JSON.stringify(data);
+    // Check if data actually changed (include profilePhotoUrl in the check)
+    const dataWithPhoto = { ...data, profilePhotoUrl };
+    const dataString = JSON.stringify(dataWithPhoto);
     if (dataString === lastSavedDataRef.current) return;
 
     // Clear existing timeout
@@ -1436,7 +1437,7 @@ export default function VolunteerProfileSettings() {
     if (formValues.name && formValues.name.length > 0) {
       performAutoSave(formValues as FormData);
     }
-  }, [formValues, loadingProfile, performAutoSave]);
+  }, [formValues, loadingProfile, performAutoSave, profilePhotoUrl]); // Also trigger when profilePhotoUrl changes
 
   // Mark initial load as complete after profile loads
   useEffect(() => {

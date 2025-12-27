@@ -1286,8 +1286,9 @@ export default function VolunteerProfileSettings() {
   });
 
   // Auto-save mutation (silent, no redirect, no toast)
+  // Note: profilePhotoUrl is passed as part of the input to avoid stale closure issues
   const autoSaveMutation = useMutation({
-    mutationFn: async (data: FormData) => {
+    mutationFn: async ({ data, photoUrl }: { data: FormData; photoUrl: string }) => {
       if (!currentUser?.id) throw new Error("User not authenticated");
 
       const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
@@ -1319,7 +1320,7 @@ export default function VolunteerProfileSettings() {
         personalStatement: data.personalStatement,
         matchingPriorities: data.matchingPriorities,
         experienceLevel: data.experienceLevel,
-        profilePhotoUrl: profilePhotoUrl,
+        profilePhotoUrl: photoUrl, // Use passed photoUrl to avoid stale closure
       };
 
       return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
@@ -1356,10 +1357,14 @@ export default function VolunteerProfileSettings() {
     // Set saving status immediately for feedback
     setAutoSaveStatus('saving');
 
+    // Capture current profilePhotoUrl to avoid stale closure in timeout
+    const currentPhotoUrl = profilePhotoUrl;
+
     // Debounce the actual save by 2 seconds
     autoSaveTimeoutRef.current = setTimeout(() => {
       lastSavedDataRef.current = dataString;
-      autoSaveMutation.mutate(data);
+      // Pass both form data and photoUrl to avoid stale closure issues
+      autoSaveMutation.mutate({ data, photoUrl: currentPhotoUrl });
     }, 2000);
   }, [currentUser?.id, autoSaveMutation, profilePhotoUrl]);
 
@@ -1438,6 +1443,30 @@ export default function VolunteerProfileSettings() {
       performAutoSave(formValues as FormData);
     }
   }, [formValues, loadingProfile, performAutoSave, profilePhotoUrl]); // Also trigger when profilePhotoUrl changes
+
+  // Immediate save when profile photo changes (bypass debounce for better UX)
+  const previousPhotoRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Skip during initial load
+    if (loadingProfile || isInitialLoadRef.current) return;
+
+    // Only trigger if photo actually changed (not initial load)
+    if (previousPhotoRef.current !== null && previousPhotoRef.current !== profilePhotoUrl) {
+      const formValues = form.getValues();
+      if (formValues.name && formValues.name.length > 0) {
+        // Clear any pending debounced save
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+        // Immediately save with the new photo URL
+        setAutoSaveStatus('saving');
+        const dataWithPhoto = { ...formValues, profilePhotoUrl };
+        lastSavedDataRef.current = JSON.stringify(dataWithPhoto);
+        autoSaveMutation.mutate({ data: formValues as FormData, photoUrl: profilePhotoUrl });
+      }
+    }
+    previousPhotoRef.current = profilePhotoUrl;
+  }, [profilePhotoUrl, loadingProfile, form, autoSaveMutation]);
 
   // Mark initial load as complete after profile loads
   useEffect(() => {

@@ -3666,7 +3666,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                       <div>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">Skills Match (5%)</span>
+                          <span className="text-slate-600">Skills Listed (5%)</span>
                           <span className="text-amber-600 font-semibold">{kpis.skills} skills</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">

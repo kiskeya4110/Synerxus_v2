@@ -2507,7 +2507,7 @@ export default function ImpactReport() {
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Skills Match (5%)</span>
+                  <span className="text-sm text-gray-600">Skills Listed (5%)</span>
                   <span className="font-bold">{allSkills.length} skills</span>
                 </div>
                 <Progress value={Math.min(allSkills.length * 10, 100)} className="h-2" />

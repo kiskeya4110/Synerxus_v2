@@ -4149,7 +4149,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                 <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#15803d' }}>
                   <li style={{ marginBottom: '4px' }}><strong>Hours Contributed:</strong> Volunteer time invested in projects</li>
                   <li style={{ marginBottom: '4px' }}><strong>SDG Alignment:</strong> Impact across Sustainable Development Goals</li>
-                  <li style={{ marginBottom: '4px' }}><strong>Lives Touched:</strong> Direct beneficiaries of your projects</li>
+                  <li style={{ marginBottom: '4px' }}><strong>Lives Impacted:</strong> Direct beneficiaries of your projects</li>
                   <li><strong>Verification:</strong> Validated impact records receive higher weight</li>
                 </ul>
               </div>

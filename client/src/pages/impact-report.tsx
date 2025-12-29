@@ -903,7 +903,7 @@ export default function ImpactReport() {
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-3 md:space-y-6">
                 {/* Enhanced KPI Buttons in responsive grid - All Interactive */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3 lg:gap-4 print:gap-2">
+                <div className="grid grid-cols-4 gap-1.5 md:gap-3 lg:gap-4 print:gap-2">
                   <button
                     onClick={() => setShowHoursModal(true)}
                     className="impact-report-section bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all print:page-break-inside-avoid print:shadow-none text-left cursor-pointer"
@@ -1286,13 +1286,13 @@ export default function ImpactReport() {
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                        Beneficiaries
+                        Lives Impacted
                       </h3>
                       <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-                        {activeProjects * 10}
+                        {dashboardData?.totalPeopleImpacted || 0}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Estimated reached
+                        Verified beneficiaries
                       </p>
                     </CardContent>
                   </Card>
@@ -1798,9 +1798,9 @@ export default function ImpactReport() {
                   </Card>
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Beneficiaries</h3>
-                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{activeProjects * 10}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Estimated reached</p>
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Lives Impacted</h3>
+                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{dashboardData?.totalPeopleImpacted || 0}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Verified beneficiaries</p>
                     </CardContent>
                   </Card>
                 </div>

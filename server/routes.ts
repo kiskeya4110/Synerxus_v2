@@ -8094,7 +8094,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         ["IMPACT METRICS"],
         ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
         ["Indirect Beneficiaries", impactData.impactMetrics.indirectBeneficiaries],
-        ["Total Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
+        ["Total Lives Impacted", impactData.impactMetrics.estimatedLivesTouched],
         ["Impact per Hour", impactData.impactMetrics.impactPerHour],
         [""],
         ["FINANCIAL METRICS"],
@@ -8240,7 +8240,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       </div>
       <div class="metric-card highlight">
         <div class="metric-value">${impactData.impactMetrics.estimatedLivesTouched.toLocaleString()}</div>
-        <div class="metric-label">Lives Touched</div>
+        <div class="metric-label">Lives Impacted</div>
       </div>
       <div class="metric-card">
         <div class="metric-value">$${(impactData.financialMetrics.volunteerHourValue || 0).toLocaleString()}</div>

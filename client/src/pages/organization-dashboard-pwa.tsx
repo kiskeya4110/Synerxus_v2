@@ -768,7 +768,7 @@ export default function OrganizationDashboardPWA() {
                   <p className="text-lg font-bold text-emerald-700">
                     {dashboardData.impactOverTime.reduce((sum, m) => sum + (m.peopleImpacted || 0), 0).toLocaleString()}
                   </p>
-                  <p className="text-[9px] text-emerald-600 font-medium">Lives Touched</p>
+                  <p className="text-[9px] text-emerald-600 font-medium">Lives Impacted</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-2.5 text-center border border-purple-100">
                   <p className="text-lg font-bold text-purple-700">
@@ -2064,7 +2064,7 @@ export default function OrganizationDashboardPWA() {
                   <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} AIU</p>
                 </div>
 
-                {/* Lives Touched (25%) */}
+                {/* Lives Impacted (25%) */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

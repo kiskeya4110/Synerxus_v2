@@ -925,7 +925,7 @@ export default function ProjectEdit() {
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
                         <Heart className="h-4 w-4" />
-                        Lives Touched
+                        Lives Impacted
                       </FormLabel>
                       <FormControl>
                         <Input

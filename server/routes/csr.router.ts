@@ -1507,7 +1507,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", async (req: Request, res: Resp
       ["IMPACT METRICS"],
       ["Direct Beneficiaries", impact.directBeneficiaries ?? "N/A"],
       ["Indirect Beneficiaries", impact.indirectBeneficiaries ?? "N/A"],
-      ["Total Lives Touched", impact.estimatedLivesTouched ?? "N/A"],
+      ["Total Lives Impacted", impact.estimatedLivesTouched ?? "N/A"],
       ["Impact per Hour", impact.impactPerHour ?? "N/A"],
       [""],
       ["FINANCIAL METRICS"],
@@ -1678,7 +1678,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
       </div>
       <div class="metric-card highlight">
         <div class="metric-value">${(safeImpact.estimatedLivesTouched || 0).toLocaleString()}</div>
-        <div class="metric-label">Lives Touched</div>
+        <div class="metric-label">Lives Impacted</div>
       </div>
       <div class="metric-card">
         <div class="metric-value">$${(safeFinancial.volunteerHourValue || 0).toLocaleString()}</div>

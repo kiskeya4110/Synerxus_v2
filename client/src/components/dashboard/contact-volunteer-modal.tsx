@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import UserAvatar from "@/components/ui/user-avatar";
 import { Send, UserPlus } from "lucide-react";
-import { insertMessageSchema } from "@shared/schema";
+import { insertOrgMessageSchema } from "@shared/schema";
 
 interface ContactVolunteerModalProps {
   open: boolean;
@@ -34,8 +34,8 @@ interface ContactVolunteerModalProps {
   preSelectedVolunteer?: { id: number; displayName?: string; email?: string } | null;
 }
 
-// Client-side form validation schema extending insertMessageSchema
-const formSchema = insertMessageSchema.extend({
+// Client-side form validation schema extending insertOrgMessageSchema
+const formSchema = insertOrgMessageSchema.extend({
   receiverId: z.number({ required_error: "Please select a volunteer" }),
   content: z.string().min(1, "Message is required"),
 }).refine((data) => data.receiverId !== data.senderId, {

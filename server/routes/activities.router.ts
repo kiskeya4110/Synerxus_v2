@@ -615,7 +615,7 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       const volunteer = activity.userId ? await storage.getUser(activity.userId) : null;
       const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
       results.pendingActivities.push({
-        ...activity,
+        ...(activity as any),
         volunteerName: volunteer?.displayName || volunteer?.email || 'Unknown',
         volunteerEmail: volunteer?.email,
         projectName: project?.name || 'Unknown Project',
@@ -637,7 +637,7 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
       const metric = impact.metricId ? await storage.getImpactMetric(impact.metricId) : null;
       results.pendingImpacts.push({
-        ...impact,
+        ...(impact as any),
         volunteerName: volunteer?.displayName || volunteer?.email || 'System',
         volunteerEmail: volunteer?.email,
         projectName: project?.name || 'Unknown Project',
@@ -714,7 +714,7 @@ activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, 
             await storage.createVerifiedOutput({
               activityId: activityId,
               partnerId: employerIdNum,
-              projectId: activity.projectId,
+              projectId: activity.projectId || 0,
               outputType: 'hours',
               outputValue: activity.hours,
               verificationStatus: 'verified',

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertMessageSchema } from "@shared/schema";
+import { insertOrgMessageSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { notifyNewMessage, notifyThreadMessage } from "../notification-service";
 
@@ -65,7 +65,7 @@ messagesRouter.get("/conversation/:userId", async (req: Request, res: Response) 
 // POST /api/messages - Create new message
 messagesRouter.post("/", async (req: Request, res: Response) => {
   try {
-    const messageData = insertMessageSchema.parse(req.body);
+    const messageData = insertOrgMessageSchema.parse(req.body);
     const message = await storage.createMessage(messageData);
 
     // Create notification for the recipient

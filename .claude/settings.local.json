@@ -77,7 +77,8 @@
       "Bash(git restore:*)",
       "Bash(apt list:*)",
       "Bash(nix-env:*)",
-      "Bash(ssh-keygen:*)"
+      "Bash(ssh-keygen:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

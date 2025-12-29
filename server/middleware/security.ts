@@ -33,7 +33,9 @@ class TokenBlacklist {
     const now = Date.now();
     let cleaned = 0;
 
-    for (const [token, expiresAt] of this.blacklist.entries()) {
+    // Convert to array to avoid iteration issues with Map
+    const entries = Array.from(this.blacklist.entries());
+    for (const [token, expiresAt] of entries) {
       if (expiresAt < now) {
         this.blacklist.delete(token);
         cleaned++;

@@ -234,21 +234,23 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
       projectAssignments = [];
     }
 
-    // Calculate metrics
+    // Calculate metrics - cast to any to handle extended properties from joins
     const totalHours = activities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
-    const tasksCompleted = activities.filter(a => a.status === 'completed').length;
-    const tasksPending = activities.filter(a => a.status !== 'completed').length;
+    const tasksCompleted = activities.filter(a => (a as any).verificationStatus === 'approved').length;
+    const tasksPending = activities.filter(a => (a as any).verificationStatus !== 'approved').length;
     const projectsActive = projectAssignments.filter(p => p.status === 'accepted').length;
     const projectsCompleted = projectAssignments.filter(p => p.status === 'completed').length;
 
-    // Calculate SDG contributions
+    // Calculate SDG contributions - get SDG from project if available
     const sdgMap = new Map();
     activities.forEach(activity => {
-      if (activity.primarySdg) {
-        const existing = sdgMap.get(activity.primarySdg) || { goal: activity.primarySdg, hours: 0, tasks: 0 };
+      const activityAny = activity as any;
+      const sdg = activityAny.primarySdg || activityAny.sdgGoal;
+      if (sdg) {
+        const existing = sdgMap.get(sdg) || { goal: sdg, hours: 0, tasks: 0 };
         existing.hours += activity.hours || 0;
         existing.tasks += 1;
-        sdgMap.set(activity.primarySdg, existing);
+        sdgMap.set(sdg, existing);
       }
     });
     const sdgContributions = Array.from(sdgMap.values()).sort((a, b) => b.hours - a.hours);
@@ -270,16 +272,19 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
       });
     }
 
-    // Get recent activity
+    // Get recent activity - cast to any to handle extended properties
     const recentActivity = activities
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10)
-      .map(activity => ({
-        description: activity.activityDescription || activity.activityName || 'Activity',
-        project: activity.organizationName || 'Project',
-        date: new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        status: activity.status || 'pending',
-      }));
+      .map(activity => {
+        const activityAny = activity as any;
+        return {
+          description: activityAny.activityDescription || activityAny.activityName || activity.description || 'Activity',
+          project: activityAny.organizationName || activityAny.projectName || 'Project',
+          date: new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          status: activityAny.status || activity.verificationStatus || 'pending',
+        };
+      });
 
     // If no data exists, generate demo data for better UX
     let finalData;

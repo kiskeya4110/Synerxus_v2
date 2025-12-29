@@ -526,29 +526,68 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
             <p className="text-sm text-gray-600">Visualize your volunteer impact</p>
           </div>
 
-          {/* Stats Cards - Mobile */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <Card className="p-3 text-center">
-              <Clock className="h-5 w-5 text-green-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{aggregatedMetrics.totalHours.toLocaleString()}</p>
-              <p className="text-[10px] text-gray-500">Total Hours</p>
-            </Card>
-            <Card className="p-3 text-center">
-              <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{aggregatedMetrics.totalPeople.toLocaleString()}</p>
-              <p className="text-[10px] text-gray-500">People Impacted</p>
-            </Card>
-            <Card className="p-3 text-center">
-              <TrendingUp className="h-5 w-5 text-purple-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{aggregatedMetrics.communitiesServed}</p>
-              <p className="text-[10px] text-gray-500">Communities</p>
-            </Card>
-            <Card className="p-3 text-center">
-              <Target className="h-5 w-5 text-orange-600 mx-auto mb-1" />
-              <p className="text-lg font-bold">{aggregatedMetrics.sdgsAddressed}</p>
-              <p className="text-[10px] text-gray-500">SDGs Addressed</p>
-            </Card>
+          {/* Stats Cards - Mobile (4 columns in 1 row) */}
+          <div className="grid grid-cols-4 gap-1.5 mb-4">
+            <button
+              onClick={() => handleMetricClick("Volunteer Hours", aggregatedMetrics.totalHours)}
+              className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-green-300 active:scale-95 transition-all"
+            >
+              <Clock className="h-4 w-4 text-green-600 mx-auto mb-0.5" />
+              <p className="text-sm font-bold text-gray-900">{aggregatedMetrics.totalHours.toLocaleString()}</p>
+              <p className="text-[8px] text-gray-500 leading-tight">Hours</p>
+            </button>
+            <button
+              onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
+              className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-blue-300 active:scale-95 transition-all"
+            >
+              <Users className="h-4 w-4 text-blue-600 mx-auto mb-0.5" />
+              <p className="text-sm font-bold text-gray-900">{aggregatedMetrics.totalPeople.toLocaleString()}</p>
+              <p className="text-[8px] text-gray-500 leading-tight">Impacted</p>
+            </button>
+            <button
+              onClick={() => handleMetricClick("Communities Served", aggregatedMetrics.communitiesServed)}
+              className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-purple-300 active:scale-95 transition-all"
+            >
+              <TrendingUp className="h-4 w-4 text-purple-600 mx-auto mb-0.5" />
+              <p className="text-sm font-bold text-gray-900">{aggregatedMetrics.communitiesServed}</p>
+              <p className="text-[8px] text-gray-500 leading-tight">Communities</p>
+            </button>
+            <button
+              onClick={() => handleMetricClick("SDGs Addressed", aggregatedMetrics.sdgsAddressed)}
+              className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-orange-300 active:scale-95 transition-all"
+            >
+              <Target className="h-4 w-4 text-orange-600 mx-auto mb-0.5" />
+              <p className="text-sm font-bold text-gray-900">{aggregatedMetrics.sdgsAddressed}</p>
+              <p className="text-[8px] text-gray-500 leading-tight">SDGs</p>
+            </button>
           </div>
+
+          {/* Metric Details Modal */}
+          <Dialog open={!!selectedMetric} onOpenChange={() => setSelectedMetric(null)}>
+            <DialogContent className="max-w-sm mx-4">
+              <DialogHeader>
+                <DialogTitle className="text-lg">{selectedMetric?.title}</DialogTitle>
+                <DialogDescription>Detailed breakdown</DialogDescription>
+              </DialogHeader>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {selectedMetric?.items?.length > 0 ? (
+                  selectedMetric.items.map((item: any, idx: number) => (
+                    <div key={idx} className="p-2 bg-gray-50 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-900">{item.label}</span>
+                        <span className="text-sm font-bold text-blue-600">{item.value}</span>
+                      </div>
+                      {item.project && (
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{item.project}</p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No detailed data available</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Before/After Section */}
           <Card className="mb-4">

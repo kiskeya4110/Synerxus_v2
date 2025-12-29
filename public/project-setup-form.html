@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synerxus Project Setup Form</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #4f46e5;
+        }
+
+        .header h1 {
+            color: #4f46e5;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+            page-break-inside: avoid;
+        }
+
+        .section-header {
+            background: #4f46e5;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 0;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-content {
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            padding: 20px;
+            border-radius: 0 0 6px 6px;
+            background: #fafafa;
+        }
+
+        .instruction-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1e40af;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        .field-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .field-group label .required {
+            color: #ef4444;
+        }
+
+        .field-group .hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .row .field-group {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .role-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .role-table th,
+        .role-table td {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .role-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .role-table td input {
+            width: 100%;
+            padding: 6px 8px;
+        }
+
+        .milestone-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .milestone-table th,
+        .milestone-table td {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .milestone-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .sdg-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .sdg-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .sdg-item input {
+            width: 14px;
+            height: 14px;
+        }
+
+        .tips-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .tips-box h4 {
+            color: #166534;
+            margin-bottom: 10px;
+        }
+
+        .tips-box ul {
+            padding-left: 20px;
+            font-size: 13px;
+            color: #166534;
+        }
+
+        .tips-box li {
+            margin-bottom: 5px;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .signature-row {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .signature-field {
+            flex: 1;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #333;
+            height: 40px;
+            margin-bottom: 5px;
+        }
+
+        .signature-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .print-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px 24px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .print-button:hover {
+            background: #4338ca;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .form-container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .print-button {
+                display: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+
+        .version-info {
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="header">
+            <h1>Project Setup Form</h1>
+            <p>Complete this form to set up a new volunteer project in Synerxus</p>
+            <p><strong>Organization Name:</strong> ________________________________</p>
+        </div>
+
+        <!-- SECTION 1: BASIC INFORMATION -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 1: Basic Information</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Provide the essential details about your project. The project name and description will be visible to volunteers when browsing opportunities.
+                </div>
+
+                <div class="field-group">
+                    <label>Project Name <span class="required">*</span></label>
+                    <div class="hint">Choose a clear, descriptive name (minimum 3 characters)</div>
+                    <input type="text" placeholder="e.g., Youth Literacy Program 2025">
+                </div>
+
+                <div class="field-group">
+                    <label>Project Description <span class="required">*</span></label>
+                    <div class="hint">Describe what volunteers will do and the impact they'll make (minimum 10 characters)</div>
+                    <textarea placeholder="Describe the project objectives, volunteer activities, and expected outcomes..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Project Status <span class="required">*</span></label>
+                        <select>
+                            <option value="">Select status...</option>
+                            <option value="planning">Planning</option>
+                            <option value="active">Active</option>
+                            <option value="on-hold">On Hold</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Location <span class="required">*</span></label>
+                        <div class="hint">City, Country (used for volunteer matching)</div>
+                        <input type="text" placeholder="e.g., San Francisco, USA">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Cover Image URL</label>
+                    <div class="hint">Optional: URL to a project cover image</div>
+                    <input type="text" placeholder="https://...">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: TIMELINE & SCHEDULE -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 2: Timeline & Schedule</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Define when the project runs and the time commitment expected from volunteers. This helps match volunteers with appropriate availability.
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Start Date</label>
+                        <input type="date">
+                    </div>
+                    <div class="field-group">
+                        <label>End Date</label>
+                        <input type="date">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Engagement Type <span class="required">*</span></label>
+                        <select>
+                            <option value="">Select type...</option>
+                            <option value="remote">Remote</option>
+                            <option value="in-person">In-Person</option>
+                            <option value="hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Commitment Type <span class="required">*</span></label>
+                        <select>
+                            <option value="">Select type...</option>
+                            <option value="ongoing">Ongoing (Regular hours per week)</option>
+                            <option value="project-based">Project-Based (Total hours)</option>
+                            <option value="event">Event (One-time)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Hours Per Week (if ongoing)</label>
+                        <input type="number" placeholder="e.g., 5">
+                    </div>
+                    <div class="field-group">
+                        <label>Total Project Hours (if project-based)</label>
+                        <input type="number" placeholder="e.g., 40">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: VOLUNTEER REQUIREMENTS -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 3: Volunteer Requirements</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Specify the skills and experience needed. Required skills carry 35% weight in volunteer matching. Be realistic - too many requirements will reduce your volunteer pool.
+                </div>
+
+                <div class="field-group">
+                    <label>Experience Level <span class="required">*</span></label>
+                    <select>
+                        <option value="">Select level...</option>
+                        <option value="entry-level">Entry-Level (No experience needed)</option>
+                        <option value="intermediate">Intermediate (Some experience preferred)</option>
+                        <option value="expert">Expert (Significant experience required)</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label>Required Skills <span class="required">*</span></label>
+                    <div class="hint">List skills that volunteers MUST have (comma-separated)</div>
+                    <textarea placeholder="e.g., Teaching, Communication, English Fluency"></textarea>
+                </div>
+
+                <div class="field-group">
+                    <label>Optional/Preferred Skills</label>
+                    <div class="hint">List nice-to-have skills (comma-separated)</div>
+                    <textarea placeholder="e.g., Spanish Language, Curriculum Development, Child Psychology"></textarea>
+                </div>
+
+                <div class="field-group">
+                    <label>Number of Volunteers Needed</label>
+                    <input type="number" placeholder="e.g., 10">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: VOLUNTEER ROLES -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 4: Volunteer Roles & Contribution</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Define different volunteer roles and how much each role contributes to project impact. The contribution percentages should total 100%. This is used to calculate Attributable Impact Units (AIU) for each volunteer.
+                </div>
+
+                <div class="field-group">
+                    <label>Total Volunteer Contribution to Project (%)</label>
+                    <div class="hint">What percentage of total project impact is attributable to volunteers? (Default: 30%)</div>
+                    <input type="number" placeholder="30" min="0" max="100">
+                </div>
+
+                <table class="role-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">Role Name</th>
+                            <th style="width: 15%">Count</th>
+                            <th style="width: 20%">Contribution %</th>
+                            <th style="width: 40%">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Team Lead"></td>
+                            <td><input type="number" placeholder="1"></td>
+                            <td><input type="number" placeholder="40"></td>
+                            <td><input type="text" placeholder="Coordinates team activities"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Mentor"></td>
+                            <td><input type="number" placeholder="3"></td>
+                            <td><input type="number" placeholder="35"></td>
+                            <td><input type="text" placeholder="Provides direct tutoring"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Support"></td>
+                            <td><input type="number" placeholder="6"></td>
+                            <td><input type="number" placeholder="25"></td>
+                            <td><input type="text" placeholder="Assists with logistics"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text"></td>
+                            <td><input type="number"></td>
+                            <td><input type="number"></td>
+                            <td><input type="text"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;"><strong>Note:</strong> Contribution percentages must total 100%</p>
+            </div>
+        </div>
+
+        <!-- SECTION 5: SDG ALIGNMENT & IMPACT -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 5: SDG Alignment & Impact Metrics</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Select which UN Sustainable Development Goals your project aligns with. The Primary SDG carries 20% weight in volunteer matching. Impact metrics define how you'll measure success.
+                </div>
+
+                <div class="field-group">
+                    <label>Primary SDG <span class="required">*</span></label>
+                    <div class="hint">Select the main SDG your project addresses</div>
+                    <select>
+                        <option value="">Select Primary SDG...</option>
+                        <option value="1">SDG 1: No Poverty</option>
+                        <option value="2">SDG 2: Zero Hunger</option>
+                        <option value="3">SDG 3: Good Health and Well-being</option>
+                        <option value="4">SDG 4: Quality Education</option>
+                        <option value="5">SDG 5: Gender Equality</option>
+                        <option value="6">SDG 6: Clean Water and Sanitation</option>
+                        <option value="7">SDG 7: Affordable and Clean Energy</option>
+                        <option value="8">SDG 8: Decent Work and Economic Growth</option>
+                        <option value="9">SDG 9: Industry, Innovation and Infrastructure</option>
+                        <option value="10">SDG 10: Reduced Inequalities</option>
+                        <option value="11">SDG 11: Sustainable Cities and Communities</option>
+                        <option value="12">SDG 12: Responsible Consumption and Production</option>
+                        <option value="13">SDG 13: Climate Action</option>
+                        <option value="14">SDG 14: Life Below Water</option>
+                        <option value="15">SDG 15: Life on Land</option>
+                        <option value="16">SDG 16: Peace, Justice and Strong Institutions</option>
+                        <option value="17">SDG 17: Partnerships for the Goals</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label>Additional SDGs</label>
+                    <div class="hint">Check all other SDGs that apply to your project</div>
+                    <div class="sdg-grid">
+                        <label class="sdg-item"><input type="checkbox"> SDG 1</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 2</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 3</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 4</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 5</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 6</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 7</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 8</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 9</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 10</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 11</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 12</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 13</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 14</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 15</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 16</label>
+                        <label class="sdg-item"><input type="checkbox"> SDG 17</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Impact Metric Name <span class="required">*</span></label>
+                        <div class="hint">What are you measuring?</div>
+                        <input type="text" placeholder="e.g., Students Tutored">
+                    </div>
+                    <div class="field-group">
+                        <label>Impact Metric Unit <span class="required">*</span></label>
+                        <div class="hint">Unit of measurement</div>
+                        <input type="text" placeholder="e.g., students">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Lives to be Impacted (Target)</label>
+                    <div class="hint">Estimated number of people who will benefit from this project</div>
+                    <input type="number" placeholder="e.g., 500">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: AIU SETTINGS -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 6: Attributable Impact Units (AIU) Settings</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> AIU measures the quantifiable impact volunteers contribute to outcomes. Define your Key Performance Indicator (KPI) and the methodology for attributing change to volunteers. This enables verified impact reporting.
+                </div>
+
+                <div class="field-group">
+                    <label>Enable AIU Calculation?</label>
+                    <div style="display: flex; gap: 20px; margin-top: 5px;">
+                        <label><input type="radio" name="aiu-enabled" value="yes"> Yes</label>
+                        <label><input type="radio" name="aiu-enabled" value="no"> No</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>KPI Name</label>
+                        <div class="hint">The measurable outcome indicator</div>
+                        <input type="text" placeholder="e.g., Reading Level Improvement">
+                    </div>
+                    <div class="field-group">
+                        <label>KPI Unit</label>
+                        <div class="hint">Unit of measurement for KPI</div>
+                        <input type="text" placeholder="e.g., grade levels">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>KPI Before (Baseline)</label>
+                        <div class="hint">Value before volunteer intervention</div>
+                        <input type="number" placeholder="e.g., 2.5">
+                    </div>
+                    <div class="field-group">
+                        <label>KPI After (Target)</label>
+                        <div class="hint">Expected value after intervention</div>
+                        <input type="number" placeholder="e.g., 4.0">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Attribution Factor (%)</label>
+                    <div class="hint">What percentage of the KPI change is attributable to volunteer efforts? (Default: 20%)</div>
+                    <input type="number" placeholder="20" min="0" max="100">
+                </div>
+
+                <div class="field-group">
+                    <label>Attribution Methodology</label>
+                    <div class="hint">Document how you determined the attribution factor (required for verification)</div>
+                    <textarea placeholder="Explain the rationale for your attribution factor. Example: 'Based on comparative analysis with control group that did not receive volunteer tutoring. Factor accounts for other influences including teacher instruction, home support, and natural development.'"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 7: MILESTONES -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 7: Project Milestones</h2>
+            </div>
+            <div class="section-content">
+                <div class="instruction-box">
+                    <strong>Instructions:</strong> Define key milestones for tracking project progress. Completion is calculated using a weighted combination of hours logged and milestones completed.
+                </div>
+
+                <div class="row">
+                    <div class="field-group">
+                        <label>Hours Weight in Completion (%)</label>
+                        <div class="hint">Default: 60%</div>
+                        <input type="number" placeholder="60" min="0" max="100">
+                    </div>
+                    <div class="field-group">
+                        <label>Milestones Weight in Completion (%)</label>
+                        <div class="hint">Default: 40%</div>
+                        <input type="number" placeholder="40" min="0" max="100">
+                    </div>
+                </div>
+
+                <table class="milestone-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">Milestone Name</th>
+                            <th style="width: 25%">Target Date</th>
+                            <th style="width: 20%">Weight (%)</th>
+                            <th style="width: 20%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Volunteer Orientation Complete"></td>
+                            <td><input type="date"></td>
+                            <td><input type="number" placeholder="20"></td>
+                            <td>
+                                <select>
+                                    <option>Pending</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., First Teaching Session"></td>
+                            <td><input type="date"></td>
+                            <td><input type="number" placeholder="25"></td>
+                            <td>
+                                <select>
+                                    <option>Pending</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Mid-Program Assessment"></td>
+                            <td><input type="date"></td>
+                            <td><input type="number" placeholder="25"></td>
+                            <td>
+                                <select>
+                                    <option>Pending</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="e.g., Program Completion"></td>
+                            <td><input type="date"></td>
+                            <td><input type="number" placeholder="30"></td>
+                            <td>
+                                <select>
+                                    <option>Pending</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;"><strong>Note:</strong> Milestone weights should total 100%</p>
+            </div>
+        </div>
+
+        <!-- SECTION 8: AI TRACKING -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Section 8: Additional Settings</h2>
+            </div>
+            <div class="section-content">
+                <div class="field-group">
+                    <label>Enable AI-Powered Completion Tracking?</label>
+                    <div class="hint">AI can automatically estimate project completion based on activity patterns</div>
+                    <div style="display: flex; gap: 20px; margin-top: 5px;">
+                        <label><input type="radio" name="ai-tracking" value="yes"> Yes</label>
+                        <label><input type="radio" name="ai-tracking" value="no"> No</label>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Additional Notes</label>
+                    <div class="hint">Any other information relevant to project setup</div>
+                    <textarea placeholder="Enter any additional notes or special requirements..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIPS -->
+        <div class="tips-box">
+            <h4>Tips for Successful Project Setup</h4>
+            <ul>
+                <li><strong>Be specific with skills:</strong> Clear skill requirements improve volunteer matching accuracy.</li>
+                <li><strong>Set realistic attribution factors:</strong> Overestimating volunteer attribution undermines credibility.</li>
+                <li><strong>Document your methodology:</strong> Well-documented AIU methodology speeds up verification.</li>
+                <li><strong>Balance role contributions:</strong> Ensure contribution percentages reflect actual impact differences.</li>
+                <li><strong>Use measurable milestones:</strong> Clear milestones help track progress and maintain volunteer engagement.</li>
+                <li><strong>Consider hybrid engagement:</strong> Offering flexibility increases your volunteer pool.</li>
+            </ul>
+        </div>
+
+        <!-- SIGNATURE SECTION -->
+        <div class="signature-section">
+            <h3>Submission Approval</h3>
+            <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                By signing below, I confirm that the information provided is accurate and complete. I understand that this project will be visible to volunteers once created in the Synerxus platform.
+            </p>
+            <div class="signature-row">
+                <div class="signature-field">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Project Manager / Coordinator Name</div>
+                </div>
+                <div class="signature-field">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Signature</div>
+                </div>
+                <div class="signature-field">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Date</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="print-button" onclick="window.print()">Print / Save as PDF</button>
+
+        <div class="version-info">
+            <p>Synerxus Project Setup Form v1.0 | For questions, contact your platform administrator</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1469,29 +1469,31 @@ export default function CSRDashboardPWA() {
                 </div>
 
                 {/* ESG Rating */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-violet-100 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">ESG Rating</span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                      (metrics?.engagementRate || 0) >= 40 ? 'bg-emerald-100 text-emerald-700' :
-                      (metrics?.engagementRate || 0) >= 20 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {(metrics?.engagementRate || 0) >= 40 ? 'AA' : (metrics?.engagementRate || 0) >= 20 ? 'A' : 'BBB'}
-                    </span>
-                  </div>
-                  <div className="flex items-end gap-1">
-                    <span className="text-2xl font-bold text-violet-700">
-                      {Math.min(100, Math.round(35 + (metrics?.engagementRate || 0) * 0.5 + (metrics?.beneficiaries || 0) / 100))}
-                    </span>
-                    <span className="text-xs text-slate-500 mb-1">/100</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full transition-all"
-                      style={{ width: `${Math.min(100, Math.round(35 + (metrics?.engagementRate || 0) * 0.5 + (metrics?.beneficiaries || 0) / 100))}%` }}
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const esgScore = Math.min(100, Math.round(35 + (metrics?.engagementRate || 0) * 0.5 + (metrics?.beneficiaries || 0) / 100));
+                  const esgGrade = esgScore >= 80 ? 'AAA' : esgScore >= 70 ? 'AA' : esgScore >= 60 ? 'A' : esgScore >= 50 ? 'BBB' : 'BB';
+                  const gradeColor = esgScore >= 70 ? 'bg-emerald-100 text-emerald-700' : esgScore >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600';
+                  return (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-violet-100 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">ESG Rating</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${gradeColor}`}>
+                          {esgGrade}
+                        </span>
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <span className="text-2xl font-bold text-violet-700">{esgScore}</span>
+                        <span className="text-xs text-slate-500 mb-1">/100</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full transition-all"
+                          style={{ width: `${esgScore}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* ISO 26000 */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-amber-100 shadow-sm">

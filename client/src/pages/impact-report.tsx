@@ -1939,16 +1939,27 @@ export default function ImpactReport() {
             </div>
             )}
 
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">
-              <p>
+            {/* Footer - Synerxus Branding */}
+            <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center print:mt-4 print:pt-3 print:border-t">
+              {/* Synerxus Logo */}
+              <div className="flex justify-center items-center gap-1 mb-2">
+                <span className="text-xl font-extrabold text-[#1e3a5f] tracking-tight">SYNER</span>
+                <span className="text-xl font-extrabold text-[#f59e0b] tracking-tight">XUS</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-3">
+                Connect. Manage. Impact Globally.
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
                 Generated on {new Date().toLocaleDateString()} • SDG Impact Report {timeFilter !== 'all' && `(${['All Time', 'This Month', 'This Quarter', 'This Year'][['all', 'month', 'quarter', 'year'].indexOf(timeFilter)]})`}
               </p>
               {!isPrinting && volunteerId && (
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
                   Share this link: {shareUrl}
                 </p>
               )}
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-3 print:mt-2">
+                © {new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com
+              </p>
             </div>
           </CardContent>
         </Card>

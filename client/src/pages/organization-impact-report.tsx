@@ -1196,15 +1196,15 @@ export default function OrganizationImpactReport() {
                       </p>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Lives:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Direct:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {(beneficiariesServed * 1.2).toLocaleString()}
+                            {beneficiariesServed.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Rate:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Indirect:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {beneficiariesServed > 0 ? "95%" : "0%"}
+                            {Math.round(beneficiariesServed * 0.2).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1221,7 +1221,7 @@ export default function OrganizationImpactReport() {
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Rating:</span>
                           <span className="font-bold text-red-600 dark:text-red-400">
-                            {organizationImpactScore >= 75 ? "A+" : organizationImpactScore >= 60 ? "A" : "B+"}
+                            {organizationImpactScore >= 90 ? "A+" : organizationImpactScore >= 80 ? "A" : organizationImpactScore >= 70 ? "B+" : organizationImpactScore >= 60 ? "B" : "C"}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
@@ -1969,15 +1969,15 @@ export default function OrganizationImpactReport() {
                       </p>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Lives:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Direct:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {(beneficiariesServed * 1.2).toLocaleString()}
+                            {beneficiariesServed.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Rate:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Indirect:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {beneficiariesServed > 0 ? "95%" : "0%"}
+                            {Math.round(beneficiariesServed * 0.2).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1994,7 +1994,7 @@ export default function OrganizationImpactReport() {
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Rating:</span>
                           <span className="font-bold text-red-600 dark:text-red-400">
-                            {organizationImpactScore >= 75 ? "A+" : organizationImpactScore >= 60 ? "A" : "B+"}
+                            {organizationImpactScore >= 90 ? "A+" : organizationImpactScore >= 80 ? "A" : organizationImpactScore >= 70 ? "B+" : organizationImpactScore >= 60 ? "B" : "C"}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
@@ -2592,10 +2592,10 @@ export default function OrganizationImpactReport() {
                         <div>
                           <div className="flex justify-between mb-1">
                             <span className="text-xs print:text-xs font-medium">
-                              Lives Transformed
+                              Total Lives Impacted
                             </span>
                             <span className="text-xs print:text-xs font-bold">
-                              {(beneficiariesServed * 1.2).toLocaleString()}
+                              {Math.round(beneficiariesServed * 1.2).toLocaleString()}
                             </span>
                           </div>
                           <Progress value={85} className="h-1.5 print:h-1" />
@@ -2639,6 +2639,24 @@ export default function OrganizationImpactReport() {
                 </div>
               </div>
             )}
+
+            {/* Footer - Synerxus Branding */}
+            <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center print:mt-4 print:pt-3 print:border-t">
+              {/* Synerxus Logo */}
+              <div className="flex justify-center items-center gap-1 mb-2">
+                <span className="text-xl font-extrabold text-[#1e3a5f] tracking-tight">SYNER</span>
+                <span className="text-xl font-extrabold text-[#f59e0b] tracking-tight">XUS</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-3">
+                Connect. Manage. Impact Globally.
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                Generated on {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} • SDG Impact Report
+              </p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-3 print:mt-2">
+                © {new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com
+              </p>
+            </div>
           </CardContent>
         </Card>
 

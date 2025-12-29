@@ -366,36 +366,27 @@ const RealTimeStatsBanner = () => {
 
   const stats = data?.stats || DEFAULT_STATS;
 
+  // Triple the stats for seamless looping
+  const displayStats = isLoading ? DEFAULT_STATS : stats;
+  const scrollItems = [...displayStats, ...displayStats, ...displayStats];
+
   return (
-    <section className="bg-gradient-to-r from-blue-900/20 via-blue-600/15 to-amber-600/20 py-6 sm:py-8 md:py-10 border-y-2 border-blue-900/30 w-full overflow-hidden shadow-lg">
-      <h3 className="text-center text-base sm:text-lg md:text-xl font-bold text-blue-900 mb-4 sm:mb-5 uppercase tracking-wide px-[8%] sm:px-[15%] drop-shadow-sm">
+    <section className="bg-gradient-to-r from-blue-900/20 via-blue-600/15 to-amber-600/20 py-4 sm:py-6 md:py-8 border-y-2 border-blue-900/30 w-full overflow-hidden shadow-lg">
+      <h3 className="text-center text-base sm:text-lg md:text-xl font-bold text-blue-900 mb-3 sm:mb-4 uppercase tracking-wide px-[8%] sm:px-[15%] drop-shadow-sm">
         📊 Live Impact Dashboard
       </h3>
-      <div className="relative overflow-hidden w-full bg-gradient-to-r from-white/70 via-blue-50/80 to-white/70 py-4 shadow-inner">
-        <div className="animate-scroll flex whitespace-nowrap gap-10 sm:gap-16 will-change-transform px-6">
-            {isLoading ? (
-              // Show placeholder while loading
-              [...DEFAULT_STATS, ...DEFAULT_STATS].map((stat, index) => (
-                <div
-                  key={index}
-                  className="px-5 sm:px-7 py-3 flex-shrink-0 bg-white rounded-xl shadow-md border-2 border-blue-200 hover:scale-105 transition-transform duration-300"
-                >
-                  <p className="text-sm sm:text-base md:text-lg text-blue-900 font-bold">{stat}</p>
-                </div>
-              ))
-            ) : (
-              // Show real stats
-              [...stats, ...stats].map((stat, index) => (
-                <div
-                  key={index}
-                  className="px-5 sm:px-7 py-3 flex-shrink-0 bg-white rounded-xl shadow-lg border-2 border-blue-300 hover:scale-110 hover:shadow-xl transition-all duration-300 hover:border-amber-500"
-                >
-                  <p className="text-sm sm:text-base md:text-lg text-blue-900 font-bold">{stat}</p>
-                </div>
-              ))
-            )}
-          </div>
+      <div className="relative w-full bg-gradient-to-r from-white/70 via-blue-50/80 to-white/70 py-3 shadow-inner overflow-hidden">
+        <div className="animate-scroll whitespace-nowrap">
+          {scrollItems.map((stat, index) => (
+            <div
+              key={index}
+              className="inline-block mx-3 sm:mx-5 px-4 sm:px-6 py-2.5 flex-shrink-0 bg-white rounded-xl shadow-lg border-2 border-blue-300 hover:scale-105 hover:shadow-xl transition-all duration-300 hover:border-amber-500"
+            >
+              <p className="text-sm sm:text-base md:text-lg text-blue-900 font-bold whitespace-nowrap">{stat}</p>
+            </div>
+          ))}
         </div>
+      </div>
     </section>
   );
 };
@@ -771,9 +762,9 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-[8%] sm:px-[15%] py-12 sm:py-16 md:py-20">
+      <section className="container mx-auto px-[8%] sm:px-[15%] py-6 sm:py-8 md:py-10">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center pt-8 sm:pt-12 px-4 relative z-20">
+          <div className="text-center pt-4 sm:pt-6 px-4 relative z-20">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
               <span className="text-blue-900">From Local Service</span><br />
               <span className="text-amber-600">to Global Legacy</span>

@@ -191,20 +191,24 @@ img, video, iframe, embed, object {
   border-top-color: rgba(30, 58, 138, 0.95) !important;
 }
 
-/* Scrolling facts banner animation */
+/* Scrolling facts banner animation - seamless infinite loop */
 @keyframes scroll {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    /* Translate exactly 1/3 since content is tripled */
+    transform: translateX(-33.333%);
   }
 }
 
 .animate-scroll {
-  animation: scroll 10s linear infinite;
+  display: inline-flex;
+  animation: scroll 18s linear infinite;
   will-change: transform;
-  transform-origin: 0 0;
+  /* Ensure smooth animation */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .animate-scroll:hover {

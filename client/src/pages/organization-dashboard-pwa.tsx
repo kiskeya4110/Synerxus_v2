@@ -866,60 +866,48 @@ export default function OrganizationDashboardPWA() {
                 View Team →
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {/* Active Volunteers - Clickable */}
               <button
                 onClick={() => navigate('/volunteers')}
-                className="p-3 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-sky-100"
+                className="p-2.5 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-sky-100"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <Users className="w-4 h-4 text-sky-600" />
-                  <ChevronRight className="w-3 h-3 text-sky-400" />
-                </div>
-                <p className="text-xl font-bold text-sky-700">{metrics.activeVolunteers || 0}</p>
-                <p className="text-[10px] text-sky-600">Active Volunteers</p>
+                <Users className="w-4 h-4 text-sky-600 mb-1" />
+                <p className="text-lg font-bold text-sky-700">{metrics.activeVolunteers || 0}</p>
+                <p className="text-[9px] text-sky-600">Volunteers</p>
               </button>
               {/* Avg Hours/Volunteer - Clickable */}
               <button
                 onClick={() => navigate('/projects')}
-                className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-emerald-100"
+                className="p-2.5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-emerald-100"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <Clock className="w-4 h-4 text-emerald-600" />
-                  <ChevronRight className="w-3 h-3 text-emerald-400" />
-                </div>
-                <p className="text-xl font-bold text-emerald-700">
+                <Clock className="w-4 h-4 text-emerald-600 mb-1" />
+                <p className="text-lg font-bold text-emerald-700">
                   {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}
                 </p>
-                <p className="text-[10px] text-emerald-600">Avg Hours/Person</p>
+                <p className="text-[9px] text-emerald-600">Avg Hrs</p>
               </button>
               {/* Lives Impacted - Clickable */}
               <button
                 onClick={() => navigate('/impact-visualization')}
-                className="p-3 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-rose-100"
+                className="p-2.5 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-rose-100"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <Heart className="w-4 h-4 text-rose-600" />
-                  <ChevronRight className="w-3 h-3 text-rose-400" />
-                </div>
-                <p className="text-xl font-bold text-rose-700">
+                <Heart className="w-4 h-4 text-rose-600 mb-1" />
+                <p className="text-lg font-bold text-rose-700">
                   {(metrics.livesTouched || metrics.peopleImpacted || totalPeopleImpacted || 0).toLocaleString()}
                 </p>
-                <p className="text-[10px] text-rose-600">Lives Impacted</p>
+                <p className="text-[9px] text-rose-600">Impacted</p>
               </button>
               {/* Completion Rate - Clickable */}
               <button
                 onClick={() => navigate('/projects')}
-                className="p-3 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-violet-100"
+                className="p-2.5 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-violet-100"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <CheckCircle className="w-4 h-4 text-violet-600" />
-                  <ChevronRight className="w-3 h-3 text-violet-400" />
-                </div>
-                <p className="text-xl font-bold text-violet-700">
+                <CheckCircle className="w-4 h-4 text-violet-600 mb-1" />
+                <p className="text-lg font-bold text-violet-700">
                   {metrics.totalProjects > 0 ? Math.round((metrics.completedProjects / metrics.totalProjects) * 100) : 0}%
                 </p>
-                <p className="text-[10px] text-violet-600">Completion Rate</p>
+                <p className="text-[9px] text-violet-600">Complete</p>
               </button>
             </div>
           </div>

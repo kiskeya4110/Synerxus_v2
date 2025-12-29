@@ -1912,29 +1912,41 @@ export default function OrganizationDashboardPWA() {
                   <TrendingUp className="w-3.5 h-3.5" />
                   Return on Investment Summary
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/60 rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-amber-700">{metrics.totalHours.toLocaleString()}h</p>
-                    <p className="text-[9px] text-amber-600">Total Hours Invested</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-orange-700">
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    onClick={() => setShowVolunteerHoursModal(true)}
+                    className="bg-white/60 rounded-lg p-2 text-center hover:bg-white/80 transition-all active:scale-[0.98]"
+                  >
+                    <p className="text-base font-bold text-amber-700">{metrics.totalHours.toLocaleString()}h</p>
+                    <p className="text-[8px] text-amber-600">Hours Invested</p>
+                  </button>
+                  <button
+                    onClick={() => navigate('/volunteers')}
+                    className="bg-white/60 rounded-lg p-2 text-center hover:bg-white/80 transition-all active:scale-[0.98]"
+                  >
+                    <p className="text-base font-bold text-orange-700">
                       {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}h
                     </p>
-                    <p className="text-[9px] text-orange-600">Avg Hours/Volunteer</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-emerald-700">
+                    <p className="text-[8px] text-orange-600">Avg/Volunteer</p>
+                  </button>
+                  <button
+                    onClick={() => setShowLivesPerHourModal(true)}
+                    className="bg-white/60 rounded-lg p-2 text-center hover:bg-white/80 transition-all active:scale-[0.98]"
+                  >
+                    <p className="text-base font-bold text-emerald-700">
                       {totalPeopleImpacted > 0 ? formatDecimal(metrics.totalHours / totalPeopleImpacted) : 0}h
                     </p>
-                    <p className="text-[9px] text-emerald-600">Hours/Beneficiary</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-teal-700">
+                    <p className="text-[8px] text-emerald-600">Hrs/Beneficiary</p>
+                  </button>
+                  <button
+                    onClick={() => setShowActiveProjectsModal(true)}
+                    className="bg-white/60 rounded-lg p-2 text-center hover:bg-white/80 transition-all active:scale-[0.98]"
+                  >
+                    <p className="text-base font-bold text-teal-700">
                       {metrics.activeProjects > 0 ? Math.round(metrics.totalHours / metrics.activeProjects) : 0}h
                     </p>
-                    <p className="text-[9px] text-teal-600">Hours/Project</p>
-                  </div>
+                    <p className="text-[8px] text-teal-600">Hrs/Project</p>
+                  </button>
                 </div>
               </div>
 
@@ -2878,23 +2890,44 @@ export default function OrganizationDashboardPWA() {
 
             {/* Content */}
             <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
-              {/* Key Metrics Grid */}
+              {/* Key Metrics Grid - Interactive */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 text-center border border-emerald-100">
+                <button
+                  onClick={() => {
+                    setShowVolunteerProfileModal(false);
+                    navigate(`/impact-report/${selectedVolunteer.id}`);
+                  }}
+                  className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 text-center border border-emerald-100 hover:shadow-md hover:border-emerald-300 transition-all active:scale-[0.98]"
+                >
                   <Clock className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
                   <p className="text-xl font-bold text-emerald-700">{selectedVolunteer.hours}</p>
                   <p className="text-[10px] text-emerald-600">Hours</p>
-                </div>
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 text-center border border-blue-100">
+                  <p className="text-[8px] text-emerald-500 mt-0.5">Tap for details →</p>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowVolunteerProfileModal(false);
+                    navigate('/tasks');
+                  }}
+                  className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 text-center border border-blue-100 hover:shadow-md hover:border-blue-300 transition-all active:scale-[0.98]"
+                >
                   <CheckCircle className="w-5 h-5 text-blue-600 mx-auto mb-1" />
                   <p className="text-xl font-bold text-blue-700">{selectedVolunteer.tasksCompleted}</p>
                   <p className="text-[10px] text-blue-600">Tasks Done</p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 text-center border border-purple-100">
+                  <p className="text-[8px] text-blue-500 mt-0.5">View tasks →</p>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowVolunteerProfileModal(false);
+                    navigate(`/impact-report/${selectedVolunteer.id}`);
+                  }}
+                  className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 text-center border border-purple-100 hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
+                >
                   <Award className="w-5 h-5 text-purple-600 mx-auto mb-1" />
                   <p className="text-xl font-bold text-purple-700">{formatDecimal(volunteerAiuData?.totalAiu || selectedVolunteer.hours * 0.1)}</p>
                   <p className="text-[10px] text-purple-600">AIU Earned</p>
-                </div>
+                  <p className="text-[8px] text-purple-500 mt-0.5">Impact report →</p>
+                </button>
               </div>
 
               {/* Economic Value */}
@@ -2977,11 +3010,20 @@ export default function OrganizationDashboardPWA() {
                 )}
               </div>
 
-              {/* Performance Summary */}
-              <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
-                  <BarChart3 className="w-4 h-4 text-indigo-500" />
-                  Performance Summary
+              {/* Performance Summary - Interactive */}
+              <button
+                onClick={() => {
+                  setShowVolunteerProfileModal(false);
+                  navigate(`/impact-report/${selectedVolunteer.id}`);
+                }}
+                className="w-full text-left bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-slate-200 hover:shadow-lg hover:border-indigo-300 transition-all active:scale-[0.99]"
+              >
+                <h4 className="text-sm font-semibold text-slate-800 flex items-center justify-between mb-3">
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-indigo-500" />
+                    Performance Summary
+                  </span>
+                  <span className="text-[9px] text-indigo-500 font-medium">View Full Report →</span>
                 </h4>
                 <div className="space-y-3">
                   <div>
@@ -3023,7 +3065,7 @@ export default function OrganizationDashboardPWA() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Action Buttons */}
               <div className="flex gap-3">

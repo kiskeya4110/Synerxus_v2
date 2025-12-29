@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DeleteConfirmDialog } from "@/components/ui/dialog-factory";
 import { Label } from "@/components/ui/label";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +52,7 @@ export default function Volunteers() {
   const [selectedKpiInsight, setSelectedKpiInsight] = useState<{ type: string; title: string; value: string; description: string; volunteers: any[] } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [, navigate] = useLocation();
 
   // Get current user to check if organization
   const userId = localStorage.getItem('currentUserId');
@@ -415,22 +416,43 @@ export default function Volunteers() {
             <p className="text-sm text-gray-600">Manage volunteer profiles</p>
           </div>
 
-          {/* Stats Cards - Mobile */}
+          {/* Stats Cards - Mobile - Interactive */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <Card className="p-3 text-center">
+            <Card
+              className="p-3 text-center cursor-pointer hover:shadow-md hover:border-blue-300 transition-all active:scale-[0.98]"
+              onClick={() => {
+                // Scroll to volunteers list
+                document.querySelector('.space-y-2')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
               <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.length}</p>
               <p className="text-[10px] text-gray-500">Volunteers</p>
+              <p className="text-[8px] text-blue-500 mt-0.5">View list →</p>
             </Card>
-            <Card className="p-3 text-center">
+            <Card
+              className="p-3 text-center cursor-pointer hover:shadow-md hover:border-green-300 transition-all active:scale-[0.98]"
+              onClick={() => {
+                // Navigate to hours breakdown in organization impact report
+                navigate('/organization-impact-report');
+              }}
+            >
               <Clock className="h-5 w-5 text-green-600 mx-auto mb-1" />
               <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
               <p className="text-[10px] text-gray-500">Hours</p>
+              <p className="text-[8px] text-green-500 mt-0.5">View report →</p>
             </Card>
-            <Card className="p-3 text-center">
+            <Card
+              className="p-3 text-center cursor-pointer hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
+              onClick={() => {
+                // Navigate to tasks
+                navigate('/tasks');
+              }}
+            >
               <CheckSquare className="h-5 w-5 text-purple-600 mx-auto mb-1" />
               <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
               <p className="text-[10px] text-gray-500">Tasks</p>
+              <p className="text-[8px] text-purple-500 mt-0.5">View tasks →</p>
             </Card>
           </div>
 
@@ -800,12 +822,18 @@ export default function Volunteers() {
             </div>
           )}
 
-          {/* Quick Stats Summary */}
+          {/* Quick Stats Summary - Interactive */}
           <div className="mt-4 mb-6">
-            <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-blue-600" />
-                Team Performance Summary
+            <Card
+              className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-lg hover:border-purple-300 transition-all active:scale-[0.99]"
+              onClick={() => navigate('/organization-impact-report')}
+            >
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-blue-600" />
+                  Team Performance Summary
+                </span>
+                <span className="text-[9px] text-purple-500 font-medium">View Full Report →</span>
               </h3>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>

@@ -1090,8 +1090,8 @@ export default function OrganizationImpactReport() {
 
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4 md:space-y-6">
-                  {/* Overview buttons - responsive grid for mobile */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+                  {/* Overview buttons - 4 columns on mobile for compact display */}
+                  <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-1.5 md:gap-4">
                     <div className="bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                       <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">
                         Team
@@ -1863,8 +1863,8 @@ export default function OrganizationImpactReport() {
               <div className="space-y-6 md:space-y-8">
                 {/* OVERVIEW SECTION */}
                 <div className="space-y-4 md:space-y-6">
-                  {/* Responsive KPIs grid - 2 cols mobile, 3 cols tablet, 5 cols desktop */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+                  {/* KPIs grid - 4 columns on mobile for compact display */}
+                  <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-1.5 md:gap-4">
                     <div className="bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                       <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">
                         Team

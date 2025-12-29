@@ -452,6 +452,213 @@ export default function Volunteers() {
               <p className="text-gray-500 text-sm">No volunteers found</p>
             </div>
           )}
+
+          {/* Volunteer Insights KPIs */}
+          <div className="mt-6 mb-4">
+            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Volunteer Insights
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Average Hours per Volunteer */}
+              <Card className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-green-600" />
+                  <span className="text-xs text-gray-500">Avg Hours</span>
+                </div>
+                <p className="text-xl font-bold text-green-600">
+                  {volunteersWithStats.length > 0
+                    ? Math.round(volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0) / volunteersWithStats.length)
+                    : 0}h
+                </p>
+                <p className="text-[10px] text-gray-400">per volunteer</p>
+              </Card>
+
+              {/* Active Volunteers */}
+              <Card className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="h-4 w-4 text-amber-600" />
+                  <span className="text-xs text-gray-500">Active</span>
+                </div>
+                <p className="text-xl font-bold text-amber-600">
+                  {volunteersWithStats.filter((v: any) => v.hours > 0).length}
+                </p>
+                <p className="text-[10px] text-gray-400">with logged hours</p>
+              </Card>
+
+              {/* High Performers */}
+              <Card className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Award className="h-4 w-4 text-purple-600" />
+                  <span className="text-xs text-gray-500">High Performers</span>
+                </div>
+                <p className="text-xl font-bold text-purple-600">
+                  {volunteersWithStats.filter((v: any) => v.hours >= 20).length}
+                </p>
+                <p className="text-[10px] text-gray-400">20+ hours</p>
+              </Card>
+
+              {/* Completion Rate */}
+              <Card className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs text-gray-500">Avg Tasks</span>
+                </div>
+                <p className="text-xl font-bold text-blue-600">
+                  {volunteersWithStats.length > 0
+                    ? Math.round(volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0) / volunteersWithStats.length * 10) / 10
+                    : 0}
+                </p>
+                <p className="text-[10px] text-gray-400">per volunteer</p>
+              </Card>
+            </div>
+          </div>
+
+          {/* Pending Approvals Section */}
+          {pendingApprovals && pendingApprovals.totalPending > 0 && (
+            <div className="mt-4 mb-4">
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Pending Approvals
+                <Badge className="bg-orange-500 text-white text-xs animate-pulse">
+                  {pendingApprovals.totalPending}
+                </Badge>
+              </h2>
+
+              {/* Pending Hours */}
+              {pendingApprovals.pendingActivities.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    Hours ({pendingApprovals.pendingActivities.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {pendingApprovals.pendingActivities.map((activity: any) => (
+                      <Card key={activity.id} className="p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{activity.volunteerName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500 truncate">{activity.projectName || 'Unknown Project'}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-2">
+                            <p className="font-bold text-blue-600">{activity.hours}h</p>
+                            <p className="text-[10px] text-gray-400">
+                              {new Date(activity.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs"
+                            onClick={() => approveActivityMutation.mutate(activity.id)}
+                            disabled={approveActivityMutation.isPending}
+                          >
+                            <CheckCheck className="h-3 w-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1 h-8 text-xs"
+                            onClick={() => rejectActivityMutation.mutate(activity.id)}
+                            disabled={rejectActivityMutation.isPending}
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pending KPIs/Impacts */}
+              {pendingApprovals.pendingImpacts.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <Target className="h-4 w-4 text-amber-500" />
+                    KPIs & Impacts ({pendingApprovals.pendingImpacts.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {pendingApprovals.pendingImpacts.map((impact: any) => (
+                      <Card key={impact.id} className="p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Badge className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5">
+                                {impact.metricName || 'KPI'}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600 truncate">{impact.projectName || 'Unknown Project'}</p>
+                            <p className="text-[10px] text-gray-400">{impact.volunteerName || 'System'}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-2">
+                            <p className="font-bold text-amber-600">{impact.value} {impact.unit || ''}</p>
+                            <p className="text-[10px] text-gray-400">
+                              {new Date(impact.date || impact.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs"
+                            onClick={() => approveImpactMutation.mutate(impact.id)}
+                            disabled={approveImpactMutation.isPending}
+                          >
+                            <CheckCheck className="h-3 w-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1 h-8 text-xs"
+                            onClick={() => rejectImpactMutation.mutate(impact.id)}
+                            disabled={rejectImpactMutation.isPending}
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Stats Summary */}
+          <div className="mt-4 mb-6">
+            <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-600" />
+                Team Performance Summary
+              </h3>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}
+                  </p>
+                  <p className="text-[10px] text-gray-500">Total Hours</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                    {volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}
+                  </p>
+                  <p className="text-[10px] text-gray-500">Total Tasks</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    {volunteersWithStats.filter((v: any) => v.projectCount && v.projectCount > 0).length}
+                  </p>
+                  <p className="text-[10px] text-gray-500">On Projects</p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
         {/* Modals */}

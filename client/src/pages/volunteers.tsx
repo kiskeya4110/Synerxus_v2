@@ -44,6 +44,12 @@ export default function Volunteers() {
   // Pending item detail view state
   const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
   const [selectedPendingItem, setSelectedPendingItem] = useState<{ type: 'hours' | 'impact'; data: any } | null>(null);
+  // Track individual item processing states
+  const [processingActivityIds, setProcessingActivityIds] = useState<Set<number>>(new Set());
+  const [processingImpactIds, setProcessingImpactIds] = useState<Set<number>>(new Set());
+  // KPI insight detail modal
+  const [kpiInsightOpen, setKpiInsightOpen] = useState(false);
+  const [selectedKpiInsight, setSelectedKpiInsight] = useState<{ type: string; title: string; value: string; description: string; volunteers: any[] } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -128,83 +134,117 @@ export default function Volunteers() {
     enabled: !!userId && isOrganization
   });
 
-  // Approve/Reject mutations
+  // Helper functions to manage processing state
+  const addProcessingActivity = (id: number) => {
+    setProcessingActivityIds(prev => new Set(prev).add(id));
+  };
+  const removeProcessingActivity = (id: number) => {
+    setProcessingActivityIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+  const addProcessingImpact = (id: number) => {
+    setProcessingImpactIds(prev => new Set(prev).add(id));
+  };
+  const removeProcessingImpact = (id: number) => {
+    setProcessingImpactIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // Approve/Reject mutations with individual item tracking
   const approveActivityMutation = useMutation({
     mutationFn: async (activityId: number) => {
+      addProcessingActivity(activityId);
       const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to approve');
-      return response.json();
+      return { ...await response.json(), activityId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      removeProcessingActivity(data.activityId);
       toast({ title: "Hours Approved", description: "The volunteer hours have been approved." });
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
     },
-    onError: () => {
+    onError: (_error, activityId) => {
+      removeProcessingActivity(activityId);
       toast({ title: "Error", description: "Failed to approve hours", variant: "destructive" });
     }
   });
 
   const rejectActivityMutation = useMutation({
     mutationFn: async (activityId: number) => {
+      addProcessingActivity(activityId);
       const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to reject');
-      return response.json();
+      return { ...await response.json(), activityId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      removeProcessingActivity(data.activityId);
       toast({ title: "Hours Rejected", description: "The volunteer hours have been rejected." });
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
     },
-    onError: () => {
+    onError: (_error, activityId) => {
+      removeProcessingActivity(activityId);
       toast({ title: "Error", description: "Failed to reject hours", variant: "destructive" });
     }
   });
 
   const approveImpactMutation = useMutation({
     mutationFn: async (impactId: number) => {
+      addProcessingImpact(impactId);
       const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to approve');
-      return response.json();
+      return { ...await response.json(), impactId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      removeProcessingImpact(data.impactId);
       toast({ title: "Impact Approved", description: "The impact/KPI has been approved." });
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
     },
-    onError: () => {
+    onError: (_error, impactId) => {
+      removeProcessingImpact(impactId);
       toast({ title: "Error", description: "Failed to approve impact", variant: "destructive" });
     }
   });
 
   const rejectImpactMutation = useMutation({
     mutationFn: async (impactId: number) => {
+      addProcessingImpact(impactId);
       const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to reject');
-      return response.json();
+      return { ...await response.json(), impactId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      removeProcessingImpact(data.impactId);
       toast({ title: "Impact Rejected", description: "The impact/KPI has been rejected." });
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
     },
-    onError: () => {
+    onError: (_error, impactId) => {
+      removeProcessingImpact(impactId);
       toast({ title: "Error", description: "Failed to reject impact", variant: "destructive" });
     }
   });
@@ -467,7 +507,22 @@ export default function Volunteers() {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               {/* Average Hours per Volunteer */}
-              <Card className="p-3">
+              <Card
+                className="p-3 cursor-pointer hover:shadow-md hover:border-green-300 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  const avgHours = volunteersWithStats.length > 0
+                    ? Math.round(volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0) / volunteersWithStats.length)
+                    : 0;
+                  setSelectedKpiInsight({
+                    type: 'avg_hours',
+                    title: 'Average Hours per Volunteer',
+                    value: `${avgHours}h`,
+                    description: 'Average volunteer hours logged across all volunteers',
+                    volunteers: volunteersWithStats.sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0)).slice(0, 10)
+                  });
+                  setKpiInsightOpen(true);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-green-600" />
                   <span className="text-xs text-gray-500">Avg Hours</span>
@@ -481,7 +536,20 @@ export default function Volunteers() {
               </Card>
 
               {/* Active Volunteers */}
-              <Card className="p-3">
+              <Card
+                className="p-3 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  const activeVolunteers = volunteersWithStats.filter((v: any) => v.hours > 0);
+                  setSelectedKpiInsight({
+                    type: 'active',
+                    title: 'Active Volunteers',
+                    value: `${activeVolunteers.length}`,
+                    description: 'Volunteers who have logged hours',
+                    volunteers: activeVolunteers.sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
+                  });
+                  setKpiInsightOpen(true);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-amber-600" />
                   <span className="text-xs text-gray-500">Active</span>
@@ -493,7 +561,20 @@ export default function Volunteers() {
               </Card>
 
               {/* High Performers */}
-              <Card className="p-3">
+              <Card
+                className="p-3 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  const highPerformers = volunteersWithStats.filter((v: any) => v.hours >= 20);
+                  setSelectedKpiInsight({
+                    type: 'high_performers',
+                    title: 'High Performers',
+                    value: `${highPerformers.length}`,
+                    description: 'Volunteers with 20+ hours logged',
+                    volunteers: highPerformers.sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
+                  });
+                  setKpiInsightOpen(true);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <Award className="h-4 w-4 text-purple-600" />
                   <span className="text-xs text-gray-500">High Performers</span>
@@ -505,7 +586,22 @@ export default function Volunteers() {
               </Card>
 
               {/* Completion Rate */}
-              <Card className="p-3">
+              <Card
+                className="p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  const avgTasks = volunteersWithStats.length > 0
+                    ? Math.round(volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0) / volunteersWithStats.length * 10) / 10
+                    : 0;
+                  setSelectedKpiInsight({
+                    type: 'avg_tasks',
+                    title: 'Average Tasks Completed',
+                    value: `${avgTasks}`,
+                    description: 'Average tasks completed per volunteer',
+                    volunteers: volunteersWithStats.sort((a: any, b: any) => (b.tasksCompleted || 0) - (a.tasksCompleted || 0)).slice(0, 10)
+                  });
+                  setKpiInsightOpen(true);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="h-4 w-4 text-blue-600" />
                   <span className="text-xs text-gray-500">Avg Tasks</span>
@@ -569,12 +665,25 @@ export default function Volunteers() {
                         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
-                            className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-xs font-medium shadow-sm"
+                            className={`flex-1 h-9 text-white text-xs font-medium shadow-sm ${
+                              processingActivityIds.has(activity.id)
+                                ? 'bg-green-400 cursor-wait'
+                                : 'bg-green-600 hover:bg-green-700'
+                            }`}
                             onClick={() => approveActivityMutation.mutate(activity.id)}
-                            disabled={approveActivityMutation.isPending}
+                            disabled={processingActivityIds.has(activity.id)}
                           >
-                            <CheckCheck className="h-3.5 w-3.5 mr-1" />
-                            Approve
+                            {processingActivityIds.has(activity.id) ? (
+                              <>
+                                <span className="animate-spin mr-1">⏳</span>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                                Approve
+                              </>
+                            )}
                           </Button>
                           <Button
                             size="sm"
@@ -589,7 +698,7 @@ export default function Volunteers() {
                               });
                               setRejectConfirmOpen(true);
                             }}
-                            disabled={rejectActivityMutation.isPending}
+                            disabled={processingActivityIds.has(activity.id)}
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1" />
                             Reject
@@ -644,12 +753,25 @@ export default function Volunteers() {
                         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
-                            className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-xs font-medium shadow-sm"
+                            className={`flex-1 h-9 text-white text-xs font-medium shadow-sm ${
+                              processingImpactIds.has(impact.id)
+                                ? 'bg-green-400 cursor-wait'
+                                : 'bg-green-600 hover:bg-green-700'
+                            }`}
                             onClick={() => approveImpactMutation.mutate(impact.id)}
-                            disabled={approveImpactMutation.isPending}
+                            disabled={processingImpactIds.has(impact.id)}
                           >
-                            <CheckCheck className="h-3.5 w-3.5 mr-1" />
-                            Approve
+                            {processingImpactIds.has(impact.id) ? (
+                              <>
+                                <span className="animate-spin mr-1">⏳</span>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                                Approve
+                              </>
+                            )}
                           </Button>
                           <Button
                             size="sm"
@@ -664,7 +786,7 @@ export default function Volunteers() {
                               });
                               setRejectConfirmOpen(true);
                             }}
-                            disabled={rejectImpactMutation.isPending}
+                            disabled={processingImpactIds.has(impact.id)}
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1" />
                             Reject
@@ -788,11 +910,20 @@ export default function Volunteers() {
                     setItemToReject(null);
                   }
                 }}
-                disabled={rejectActivityMutation.isPending || rejectImpactMutation.isPending}
+                disabled={
+                  itemToReject
+                    ? itemToReject.type === 'hours'
+                      ? processingActivityIds.has(itemToReject.id)
+                      : processingImpactIds.has(itemToReject.id)
+                    : false
+                }
                 className="flex-1"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                {rejectActivityMutation.isPending || rejectImpactMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+                {itemToReject && (
+                  (itemToReject.type === 'hours' && processingActivityIds.has(itemToReject.id)) ||
+                  (itemToReject.type === 'impact' && processingImpactIds.has(itemToReject.id))
+                ) ? 'Rejecting...' : 'Confirm Rejection'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -905,18 +1036,25 @@ export default function Volunteers() {
                     <Button
                       className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-medium"
                       onClick={() => {
+                        const itemId = selectedPendingItem.data.id;
                         if (selectedPendingItem.type === 'hours') {
-                          approveActivityMutation.mutate(selectedPendingItem.data.id);
+                          approveActivityMutation.mutate(itemId);
                         } else {
-                          approveImpactMutation.mutate(selectedPendingItem.data.id);
+                          approveImpactMutation.mutate(itemId);
                         }
                         setPendingDetailOpen(false);
                         setSelectedPendingItem(null);
                       }}
-                      disabled={approveActivityMutation.isPending || approveImpactMutation.isPending}
+                      disabled={
+                        selectedPendingItem.type === 'hours'
+                          ? processingActivityIds.has(selectedPendingItem.data.id)
+                          : processingImpactIds.has(selectedPendingItem.data.id)
+                      }
                     >
                       <CheckCheck className="h-4 w-4 mr-2" />
-                      {approveActivityMutation.isPending || approveImpactMutation.isPending ? 'Approving...' : 'Approve'}
+                      {(selectedPendingItem.type === 'hours' && processingActivityIds.has(selectedPendingItem.data.id)) ||
+                       (selectedPendingItem.type === 'impact' && processingImpactIds.has(selectedPendingItem.data.id))
+                        ? 'Approving...' : 'Approve'}
                     </Button>
                     <Button
                       variant="destructive"
@@ -934,11 +1072,94 @@ export default function Volunteers() {
                         setSelectedPendingItem(null);
                         setRejectConfirmOpen(true);
                       }}
+                      disabled={
+                        selectedPendingItem.type === 'hours'
+                          ? processingActivityIds.has(selectedPendingItem.data.id)
+                          : processingImpactIds.has(selectedPendingItem.data.id)
+                      }
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Reject
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* KPI Insight Detail Dialog */}
+        <Dialog open={kpiInsightOpen} onOpenChange={setKpiInsightOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[80vh] overflow-y-auto rounded-xl p-0">
+            {selectedKpiInsight && (
+              <div className="flex flex-col">
+                {/* Header */}
+                <div className={`px-4 py-4 rounded-t-xl bg-gradient-to-r ${
+                  selectedKpiInsight.type === 'avg_hours' ? 'from-green-600 to-teal-600' :
+                  selectedKpiInsight.type === 'active' ? 'from-amber-500 to-orange-500' :
+                  selectedKpiInsight.type === 'high_performers' ? 'from-purple-600 to-pink-600' :
+                  'from-blue-600 to-cyan-600'
+                } text-white`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {selectedKpiInsight.type === 'avg_hours' && <Clock className="h-5 w-5" />}
+                    {selectedKpiInsight.type === 'active' && <Zap className="h-5 w-5" />}
+                    {selectedKpiInsight.type === 'high_performers' && <Award className="h-5 w-5" />}
+                    {selectedKpiInsight.type === 'avg_tasks' && <CheckCircle2 className="h-5 w-5" />}
+                    <h2 className="font-bold text-lg">{selectedKpiInsight.title}</h2>
+                  </div>
+                  <p className="text-3xl font-bold">{selectedKpiInsight.value}</p>
+                  <p className="text-white/80 text-sm mt-1">{selectedKpiInsight.description}</p>
+                </div>
+
+                {/* Volunteer List */}
+                <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+                  <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                    {selectedKpiInsight.type === 'avg_hours' || selectedKpiInsight.type === 'avg_tasks'
+                      ? 'Top Contributors'
+                      : 'Volunteers'}
+                    {selectedKpiInsight.volunteers.length > 0 && ` (${selectedKpiInsight.volunteers.length})`}
+                  </h3>
+
+                  {selectedKpiInsight.volunteers.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500">
+                      <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">No volunteers in this category</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedKpiInsight.volunteers.map((v: any, idx: number) => (
+                        <div
+                          key={v.id || idx}
+                          className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => {
+                            setKpiInsightOpen(false);
+                            openProfileDialog(v.id);
+                          }}
+                        >
+                          <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full text-sm font-bold">
+                            {idx + 1}
+                          </div>
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={v.avatar || v.profilePhotoUrl} />
+                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                              {v.displayName?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{v.displayName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500 truncate">{v.email}</p>
+                          </div>
+                          <div className="text-right">
+                            {selectedKpiInsight.type === 'avg_tasks' ? (
+                              <p className="font-bold text-blue-600">{v.tasksCompleted || 0} tasks</p>
+                            ) : (
+                              <p className="font-bold text-green-600">{v.hours || 0}h</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1473,12 +1694,22 @@ export default function Volunteers() {
                           <div className="flex gap-2 justify-center">
                             <Button
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs"
+                              className={`h-8 px-3 text-xs text-white ${
+                                processingActivityIds.has(activity.id)
+                                  ? 'bg-green-400 cursor-wait'
+                                  : 'bg-green-600 hover:bg-green-700'
+                              }`}
                               onClick={() => approveActivityMutation.mutate(activity.id)}
-                              disabled={approveActivityMutation.isPending}
+                              disabled={processingActivityIds.has(activity.id)}
                             >
-                              <CheckCheck className="h-3 w-3 mr-1" />
-                              Approve
+                              {processingActivityIds.has(activity.id) ? (
+                                <span className="animate-pulse">Processing...</span>
+                              ) : (
+                                <>
+                                  <CheckCheck className="h-3 w-3 mr-1" />
+                                  Approve
+                                </>
+                              )}
                             </Button>
                             <Button
                               size="sm"
@@ -1493,7 +1724,7 @@ export default function Volunteers() {
                                 });
                                 setRejectConfirmOpen(true);
                               }}
-                              disabled={rejectActivityMutation.isPending}
+                              disabled={processingActivityIds.has(activity.id)}
                             >
                               <XCircle className="h-3 w-3 mr-1" />
                               Reject
@@ -1559,12 +1790,22 @@ export default function Volunteers() {
                           <div className="flex gap-2 justify-center">
                             <Button
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs"
+                              className={`h-8 px-3 text-xs text-white ${
+                                processingImpactIds.has(impact.id)
+                                  ? 'bg-green-400 cursor-wait'
+                                  : 'bg-green-600 hover:bg-green-700'
+                              }`}
                               onClick={() => approveImpactMutation.mutate(impact.id)}
-                              disabled={approveImpactMutation.isPending}
+                              disabled={processingImpactIds.has(impact.id)}
                             >
-                              <CheckCheck className="h-3 w-3 mr-1" />
-                              Approve
+                              {processingImpactIds.has(impact.id) ? (
+                                <span className="animate-pulse">Processing...</span>
+                              ) : (
+                                <>
+                                  <CheckCheck className="h-3 w-3 mr-1" />
+                                  Approve
+                                </>
+                              )}
                             </Button>
                             <Button
                               size="sm"
@@ -1579,7 +1820,7 @@ export default function Volunteers() {
                                 });
                                 setRejectConfirmOpen(true);
                               }}
-                              disabled={rejectImpactMutation.isPending}
+                              disabled={processingImpactIds.has(impact.id)}
                             >
                               <XCircle className="h-3 w-3 mr-1" />
                               Reject
@@ -2180,10 +2421,19 @@ export default function Volunteers() {
                   setItemToReject(null);
                 }
               }}
-              disabled={rejectActivityMutation.isPending || rejectImpactMutation.isPending}
+              disabled={
+                itemToReject
+                  ? itemToReject.type === 'hours'
+                    ? processingActivityIds.has(itemToReject.id)
+                    : processingImpactIds.has(itemToReject.id)
+                  : false
+              }
             >
               <XCircle className="h-4 w-4 mr-2" />
-              {rejectActivityMutation.isPending || rejectImpactMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+              {itemToReject && (
+                (itemToReject.type === 'hours' && processingActivityIds.has(itemToReject.id)) ||
+                (itemToReject.type === 'impact' && processingImpactIds.has(itemToReject.id))
+              ) ? 'Rejecting...' : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1977,11 +1977,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
 
               <Button
-                onClick={() => navigate('/impact-visualization')}
+                onClick={() => navigate(`/impact-report/${userId}`)}
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3"
               >
                 <Globe className="w-4 h-4 mr-2" />
-                View Full Impact Visualization
+                View Full SDG Impact Report
               </Button>
 
               {/* Discover Opportunities Section */}

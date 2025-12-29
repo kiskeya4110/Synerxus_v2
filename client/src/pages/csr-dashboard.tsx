@@ -470,20 +470,35 @@ export default function CSRDashboard() {
     null,
   );
   const [showFunnelModal, setShowFunnelModal] = useState(false);
+  // Initialize tab from URL params synchronously to prevent flash when navigating from other pages
   const [selectedMainTab, setSelectedMainTab] = useState<
     "overview" | "engagement" | "sdgs" | "leaderboard" | "recognition" | "challenges" | "geographic"
-  >("overview");
+  >(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const validTabs = ['overview', 'engagement', 'sdgs', 'leaderboard', 'recognition', 'challenges', 'geographic'];
+    if (tabParam && validTabs.includes(tabParam)) {
+      return tabParam as "overview" | "engagement" | "sdgs" | "leaderboard" | "recognition" | "challenges" | "geographic";
+    }
+    return 'overview';
+  });
 
-  // Handle URL query parameter for tab switching (from sidebar nav)
-  // Re-run when location changes to handle client-side navigation
+  // Handle URL query parameter changes for client-side navigation (sidebar nav)
+  // This effect handles tab changes AFTER initial mount (e.g., clicking sidebar links)
+  // Uses startTransition for non-blocking tab updates to keep UI responsive
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
     const validTabs = ['overview', 'engagement', 'sdgs', 'leaderboard', 'recognition', 'challenges', 'geographic'];
     if (tabParam && validTabs.includes(tabParam)) {
-      setSelectedMainTab(tabParam as typeof selectedMainTab);
-    } else if (!tabParam) {
-      setSelectedMainTab('overview');
+      startTransition(() => {
+        setSelectedMainTab(tabParam as typeof selectedMainTab);
+      });
+    } else if (!tabParam && location === '/csr-dashboard') {
+      // Only reset to overview if we're on the base dashboard URL without any tab param
+      startTransition(() => {
+        setSelectedMainTab('overview');
+      });
     }
   }, [location]);
 

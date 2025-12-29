@@ -970,28 +970,42 @@ export default function Dashboard() {
         };
         break;
       case "People Impacted":
-        // Group people impacted by project
+        // Group people impacted by project using impacts data (not activities)
         const impactByProject = new Map<string, { projectName: string; peopleImpacted: number; activities: number }>();
 
+        // First, count activities per project
+        const activitiesPerProject = new Map<number, number>();
         filteredData.activities.forEach((a: any) => {
           if (a.projectId !== undefined && a.projectId !== null) {
-            const projectKey = `project_${a.projectId}`;
-            let projectName = "Unknown Project";
-            const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
-                           projects.find((p: any) => p.id === a.projectId);
-            projectName = project?.name || "Unknown Project";
+            activitiesPerProject.set(a.projectId, (activitiesPerProject.get(a.projectId) || 0) + 1);
+          }
+        });
+
+        // Then, sum impact values per project from the impacts data
+        // Impacts contain the actual people impacted values with projectId, metricId, and value
+        filteredData.impacts.forEach((impact: any) => {
+          if (impact.projectId !== undefined && impact.projectId !== null && impact.value) {
+            const projectKey = `project_${impact.projectId}`;
 
             if (!impactByProject.has(projectKey)) {
+              const project = filteredData.projects.find((p: any) => p.id === impact.projectId) ||
+                             projects.find((p: any) => p.id === impact.projectId);
+              const projectName = project?.name || "Unknown Project";
+
               impactByProject.set(projectKey, {
                 projectName,
                 peopleImpacted: 0,
-                activities: 0
+                activities: activitiesPerProject.get(impact.projectId) || 0
               });
             }
 
             const projectData = impactByProject.get(projectKey)!;
-            projectData.peopleImpacted += a.peopleImpacted || 0;
-            projectData.activities += 1;
+            // Apply verification weighting: verified at 100%, pending at 70%
+            const verificationMultiplier =
+              impact.verificationStatus === 'verified' || impact.verificationStatus === 'approved'
+                ? 1.0
+                : 0.7;
+            projectData.peopleImpacted += Math.round((impact.value || 0) * verificationMultiplier);
           }
         });
 

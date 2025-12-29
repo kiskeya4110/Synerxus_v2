@@ -16,23 +16,16 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
   const [, navigate] = useLocation();
 
   const navItems = [
-    { id: 'overview', label: 'Home', icon: Home, path: '/csr-dashboard' },
-    { id: 'employees', label: 'Team', icon: Users, path: '/csr-dashboard?tab=employees' },
+    { id: 'overview', label: 'Home', icon: Home, path: '/csr-dashboard?tab=overview' },
+    { id: 'employees', label: 'Team', icon: Users, path: '/csr-dashboard?tab=engagement' },
     { id: 'sdgs', label: 'SDGs', icon: Target, path: '/csr-dashboard?tab=sdgs' },
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/csr-reports-exports' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/corporate-partner-profile-settings' },
   ];
 
   const handleNavClick = (item: typeof navItems[0]) => {
-    if (item.path.includes('?tab=')) {
-      // For dashboard tabs, navigate to dashboard with state
-      const tab = item.path.split('=')[1];
-      navigate('/csr-dashboard');
-      // Store the target tab in sessionStorage for the dashboard to read
-      sessionStorage.setItem('csrMobileTab', tab);
-    } else {
-      navigate(item.path);
-    }
+    // Navigate directly to the full path with query params for immediate tab loading
+    navigate(item.path);
   };
 
   return (

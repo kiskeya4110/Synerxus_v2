@@ -88,11 +88,34 @@ export function ProfilePictureUpload({
 
     // Show cropper for profile photos
     if (enableCrop) {
-      // Create a blob URL for the cropper
-      const imageUrl = URL.createObjectURL(file);
-      setPendingImage(imageUrl);
-      setPendingFile(file);
-      setShowCropper(true);
+      console.log("[ProfilePictureUpload] File details:", file.name, file.type, file.size);
+
+      // Use FileReader to create a data URL (more reliable than blob URL)
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        console.log("[ProfilePictureUpload] Created data URL for cropper, length:", dataUrl?.length);
+        if (dataUrl) {
+          setPendingImage(dataUrl);
+          setPendingFile(file);
+          setShowCropper(true);
+        } else {
+          toast({
+            title: "Error loading image",
+            description: "Failed to read the image file. Please try again.",
+            variant: "destructive"
+          });
+        }
+      };
+      reader.onerror = () => {
+        console.error("[ProfilePictureUpload] FileReader error");
+        toast({
+          title: "Error loading image",
+          description: "Failed to read the image file. Please try again.",
+          variant: "destructive"
+        });
+      };
+      reader.readAsDataURL(file);
     } else {
       // Upload directly without cropping
       await uploadImage(file);
@@ -112,10 +135,7 @@ export function ProfilePictureUpload({
       { type: mimeType }
     );
 
-    // Clean up pending state
-    if (pendingImage) {
-      URL.revokeObjectURL(pendingImage);
-    }
+    // Clean up pending state (data URLs don't need revoking)
     setPendingImage("");
     setPendingFile(null);
     setShowCropper(false);
@@ -125,9 +145,7 @@ export function ProfilePictureUpload({
   };
 
   const handleCropCancel = () => {
-    if (pendingImage) {
-      URL.revokeObjectURL(pendingImage);
-    }
+    // Data URLs don't need to be revoked (unlike blob URLs)
     setPendingImage("");
     setPendingFile(null);
     setShowCropper(false);

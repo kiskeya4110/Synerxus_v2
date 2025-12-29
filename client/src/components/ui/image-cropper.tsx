@@ -39,6 +39,18 @@ export function ImageCropper({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  // Track when canvas becomes available
+  useEffect(() => {
+    if (isOpen && canvasRef.current) {
+      console.log("[ImageCropper] Canvas is ready");
+      setCanvasReady(true);
+    } else {
+      setCanvasReady(false);
+    }
+  }, [isOpen]);
 
   // Canvas dimensions
   const CANVAS_SIZE = 400;
@@ -49,27 +61,52 @@ export function ImageCropper({
 
   // Load image
   useEffect(() => {
-    if (!imageSrc || !isOpen) return;
+    if (!imageSrc || !isOpen) {
+      console.log("[ImageCropper] Not loading - imageSrc:", !!imageSrc, "isOpen:", isOpen);
+      return;
+    }
+
+    console.log("[ImageCropper] Loading image:", imageSrc.substring(0, 50) + "...");
+
+    // Reset state before loading new image
+    setImageLoaded(false);
+    setImageError(null);
+    imageRef.current = null;
 
     const img = new Image();
-    // Only set crossOrigin for remote URLs, not for blob URLs (local files)
-    if (!imageSrc.startsWith('blob:')) {
+
+    // Only set crossOrigin for remote URLs, not for local sources (blob: or data: URLs)
+    if (!imageSrc.startsWith('blob:') && !imageSrc.startsWith('data:')) {
       img.crossOrigin = "anonymous";
     }
+
     img.onload = () => {
+      console.log("[ImageCropper] Image loaded successfully:", img.width, "x", img.height);
       imageRef.current = img;
       setImageLoaded(true);
+      setImageError(null);
 
-      // Reset state when new image loads
+      // Reset transform state when new image loads
       setZoom(1);
       setRotation(0);
       setPosition({ x: 0, y: 0 });
     };
+
     img.onerror = (e) => {
-      console.error("Failed to load image for cropping:", e);
+      console.error("[ImageCropper] Failed to load image:", e);
       setImageLoaded(false);
+      setImageError("Failed to load image. Please try a different file.");
     };
+
+    // Set src after attaching event handlers
     img.src = imageSrc;
+
+    // Cleanup function
+    return () => {
+      console.log("[ImageCropper] Cleanup - removing image ref");
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [imageSrc, isOpen]);
 
   // Draw canvas
@@ -165,10 +202,28 @@ export function ImageCropper({
 
   // Redraw when state changes
   useEffect(() => {
-    if (imageLoaded) {
-      drawCanvas();
+    if (imageLoaded && canvasRef.current) {
+      console.log("[ImageCropper] Drawing canvas...");
+      // Use requestAnimationFrame to ensure canvas is ready
+      requestAnimationFrame(() => {
+        drawCanvas();
+      });
     }
   }, [drawCanvas, imageLoaded]);
+
+  // Additional effect to handle Dialog animation delay
+  useEffect(() => {
+    if (isOpen && imageSrc) {
+      // Give Dialog animation time to complete before checking canvas
+      const timer = setTimeout(() => {
+        if (canvasRef.current && imageRef.current) {
+          console.log("[ImageCropper] Delayed redraw after dialog animation");
+          drawCanvas();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, imageSrc, drawCanvas]);
 
   // Mouse handlers for dragging
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -281,6 +336,8 @@ export function ImageCropper({
     setRotation(0);
     setPosition({ x: 0, y: 0 });
     setImageLoaded(false);
+    setCanvasReady(false);
+    setImageError(null);
     imageRef.current = null;
     onClose();
   };
@@ -318,8 +375,17 @@ export function ImageCropper({
               onTouchEnd={handleTouchEnd}
             />
             {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              <div className="absolute inset-0 flex items-center justify-center flex-col gap-2">
+                {imageError ? (
+                  <div className="text-red-400 text-center px-4">
+                    <p className="text-sm">{imageError}</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    <p className="text-white text-sm">Loading image...</p>
+                  </>
+                )}
               </div>
             )}
           </div>

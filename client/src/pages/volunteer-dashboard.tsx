@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart, CheckCircle2 } from "lucide-react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -510,9 +510,16 @@ export default function Dashboard() {
       // This gives volunteers visibility into all their project involvement
       const projectCount = dashboardData?.totalProjects ?? dashboardData?.activeProjects ?? 0;
 
+      // Calculate verified vs pending hours for visual distinction
+      const totalHours = Math.round(dashboardData?.totalHours || 0);
+      const verifiedHours = Math.round(dashboardData?.verifiedHours || 0);
+      const pendingHours = totalHours - verifiedHours;
+
       return {
         volunteers: dashboardData?.activeVolunteers || 0,
-        hours: Math.round(dashboardData?.totalHours || 0),
+        hours: totalHours,
+        verifiedHours: verifiedHours,
+        pendingHours: pendingHours,
         tasks: dashboardData?.totalTasks || 0,
         completedTasks: dashboardData?.completedTasks || 0,
         activeProjects: projectCount,
@@ -528,6 +535,12 @@ export default function Dashboard() {
 
     // When a specific project is filtered, calculate filtered KPIs
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
+    // Calculate verified hours from filtered activities
+    const filteredVerifiedHours = filteredData.activities
+      .filter((a: any) => a.verificationStatus === 'approved' || a.verificationStatus === 'verified')
+      .reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
+    const filteredPendingHours = filteredHours - filteredVerifiedHours;
+
     const filteredTotalTasks = filteredData.tasks.length;
     const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
     // Show all filtered projects (not just active) for consistency
@@ -547,6 +560,8 @@ export default function Dashboard() {
     return {
       volunteers: dashboardData?.activeVolunteers || 0,
       hours: Math.round(filteredHours),
+      verifiedHours: Math.round(filteredVerifiedHours),
+      pendingHours: Math.round(filteredPendingHours),
       tasks: filteredTotalTasks,
       completedTasks: filteredCompletedTasks,
       activeProjects: filteredProjectsCount,
@@ -1375,9 +1390,14 @@ export default function Dashboard() {
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Hours</p>
                       <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.hours)}</p>
-                      {dashboardData?.hoursTrend && (
-                        <p className="text-green-600 dark:text-green-400 text-xs mt-1.5 flex items-center gap-1 font-medium">
-                          <ArrowUp className="h-3 w-3" /> {dashboardData.hoursTrend}
+                      {kpis.verifiedHours > 0 && (
+                        <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1 flex items-center gap-1 font-medium">
+                          <CheckCircle2 className="h-3 w-3" /> {formatNumber(kpis.verifiedHours)} verified
+                        </p>
+                      )}
+                      {kpis.pendingHours > 0 && (
+                        <p className="text-amber-600 dark:text-amber-400 text-[10px] mt-0.5">
+                          {formatNumber(kpis.pendingHours)} pending approval
                         </p>
                       )}
                     </div>

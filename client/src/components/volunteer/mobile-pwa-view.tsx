@@ -225,6 +225,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const kpis = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
     const totalHours = Math.round(Number(dashboardData?.totalHours) || 0); // Round to whole hours
+    // Track verified vs pending hours for visual distinction
+    const verifiedHours = Math.round(Number(dashboardData?.verifiedHours) || 0);
+    const pendingHours = totalHours - verifiedHours;
+
     const projectsCompleted = safeProjects.filter((p: any) =>
       (Number(p?.completionPercentage) >= 100) || p?.status === 'Completed'
     ).length;
@@ -265,6 +269,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
     return {
       totalHours,
+      verifiedHours,            // Organization-approved hours
+      pendingHours,             // Hours pending approval
       projectsCompleted,
       activeProjects,
       totalProjects,
@@ -1124,7 +1130,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-[10px] font-medium text-slate-500">AIU Score</div>
                 <div className="text-[8px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
               </button>
-              {/* Total Hours - Time contributed */}
+              {/* Total Hours - Time contributed with verification status */}
               <button
                 onClick={() => setShowKpiModal('hours')}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
@@ -1135,6 +1141,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 </div>
                 <div className="text-xl font-bold text-slate-800">{kpis.totalHours}</div>
                 <div className="text-[10px] font-medium text-slate-500">Hours</div>
+                {kpis.verifiedHours > 0 && (
+                  <div className="text-[8px] text-emerald-600 font-medium flex items-center justify-center gap-0.5">
+                    <CheckCircle className="w-2.5 h-2.5" /> {kpis.verifiedHours} verified
+                  </div>
+                )}
               </button>
               {/* SDG Goals - Sustainable Development Goals contributed */}
               <button

@@ -263,38 +263,33 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
-  // Fetch pending AIU verifications - filtered by selected project
-  const { data: pendingVerifications, refetch: refetchVerifications } = useQuery({
-    queryKey: ['/api/project-impacts/pending', currentUser?.organizationId, projectFilter],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      // Get all project impacts for organization projects that need verification
-      const response = await fetch(`/api/activities/project-impacts?organizationId=${currentUser.organizationId}`);
-      if (!response.ok) return [];
-      const allImpacts = await response.json();
-      let filteredImpacts = allImpacts.filter((impact: any) =>
-        impact.verificationStatus === 'pending' || impact.verificationStatus === 'self_reported'
-      );
-      // Filter by project if specified
-      if (projectFilter && projectFilter !== 'all') {
-        filteredImpacts = filteredImpacts.filter((i: any) => String(i.projectId) === projectFilter);
-      }
-      return filteredImpacts;
-    },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
-  });
-
-  // Fetch pending volunteer hours for verification
-  const { data: pendingHours, refetch: refetchPendingHours } = useQuery({
-    queryKey: ['/api/pending-approvals', userId],
+  // Fetch ALL pending approvals (hours + impacts) from unified endpoint
+  // This endpoint properly filters by organization's projects
+  const { data: pendingApprovals, refetch: refetchPendingApprovals } = useQuery({
+    queryKey: ['/api/pending-approvals', userId, projectFilter],
     queryFn: async () => {
       if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
       const response = await fetch(`/api/pending-approvals?userId=${userId}`);
       if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      return response.json();
+      const data = await response.json();
+
+      // Apply project filter if specified
+      if (projectFilter && projectFilter !== 'all') {
+        data.pendingActivities = data.pendingActivities.filter((a: any) => String(a.projectId) === projectFilter);
+        data.pendingImpacts = data.pendingImpacts.filter((i: any) => String(i.projectId) === projectFilter);
+        data.totalPending = data.pendingActivities.length + data.pendingImpacts.length;
+      }
+
+      return data;
     },
     enabled: !!userId && isOrganizationUser,
   });
+
+  // Aliases for backward compatibility with existing UI code
+  const pendingHours = pendingApprovals;
+  const pendingVerifications = pendingApprovals?.pendingImpacts || [];
+  const refetchPendingHours = refetchPendingApprovals;
+  const refetchVerifications = refetchPendingApprovals;
 
   // Fetch detailed volunteer profile data when a volunteer is selected
   const { data: selectedVolunteerData, isLoading: isLoadingVolunteer } = useQuery({

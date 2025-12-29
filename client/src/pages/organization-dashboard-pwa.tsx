@@ -34,6 +34,7 @@ import {
   ArrowUpRight,
   Eye,
   Trophy,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
@@ -282,6 +283,23 @@ export default function OrganizationDashboardPWA() {
       return allApps.filter((app: any) => app.status === 'pending');
     },
     enabled: !!currentUser?.organizationId,
+    staleTime: 30000,
+  });
+
+  // Fetch pending approvals (hours + impacts needing verification)
+  const { data: pendingApprovals } = useQuery<{
+    pendingActivities: any[];
+    pendingImpacts: any[];
+    totalPending: number;
+  }>({
+    queryKey: ['/api/pending-approvals', userId],
+    queryFn: async () => {
+      if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
+      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      return response.json();
+    },
+    enabled: !!userId,
     staleTime: 30000,
   });
 
@@ -547,6 +565,32 @@ export default function OrganizationDashboardPWA() {
                     {pendingApplications.length} New Application{pendingApplications.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-emerald-100 text-[10px]">Volunteers waiting for approval</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          )}
+
+          {/* Pending Approvals Alert - Hours & Impacts needing verification */}
+          {pendingApprovals && pendingApprovals.totalPending > 0 && (
+            <button
+              onClick={() => navigate('/volunteers')}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-semibold text-sm">
+                    {pendingApprovals.totalPending} Pending Verification{pendingApprovals.totalPending > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-amber-100 text-[10px]">
+                    {pendingApprovals.pendingActivities.length > 0 && `${pendingApprovals.pendingActivities.length} hours`}
+                    {pendingApprovals.pendingActivities.length > 0 && pendingApprovals.pendingImpacts.length > 0 && ' & '}
+                    {pendingApprovals.pendingImpacts.length > 0 && `${pendingApprovals.pendingImpacts.length} impacts`}
+                    {' awaiting review'}
+                  </p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-white" />

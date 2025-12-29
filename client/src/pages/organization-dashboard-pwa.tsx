@@ -766,7 +766,7 @@ export default function OrganizationDashboardPWA() {
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-2.5 text-center border border-emerald-100">
                   <p className="text-lg font-bold text-emerald-700">
-                    {dashboardData.impactOverTime.reduce((sum, m) => sum + (m.peopleImpacted || 0), 0).toLocaleString()}
+                    {totalPeopleImpacted.toLocaleString()}
                   </p>
                   <p className="text-[9px] text-emerald-600 font-medium">Lives Impacted</p>
                 </div>

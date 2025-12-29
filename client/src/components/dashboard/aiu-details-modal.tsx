@@ -25,6 +25,10 @@ interface AIUDetailsModalProps {
   totalHours?: number;
   volunteerName?: string;
   sdgsContributed?: number[];
+  verificationRate?: number;
+  verifiedHours?: number;
+  pendingHours?: number;
+  onNavigateToVerification?: () => void;
 }
 
 export default function AIUDetailsModal({
@@ -34,7 +38,11 @@ export default function AIUDetailsModal({
   projects = [],
   totalHours = 0,
   volunteerName,
-  sdgsContributed = []
+  sdgsContributed = [],
+  verificationRate = 0,
+  verifiedHours = 0,
+  pendingHours = 0,
+  onNavigateToVerification
 }: AIUDetailsModalProps) {
   // Calculate metrics
   const aiuPerHour = formatDecimal(totalHours > 0 ? totalAIU / totalHours : 0);
@@ -107,6 +115,49 @@ export default function AIUDetailsModal({
               <p className="text-lg font-bold text-amber-700">{sdgsContributed.length}</p>
             </div>
           </div>
+
+          {/* Verified Outcomes - Interactive */}
+          <button
+            onClick={onNavigateToVerification}
+            className="w-full text-left"
+            disabled={!onNavigateToVerification}
+          >
+            <Card className={`border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 ${onNavigateToVerification ? 'hover:shadow-md hover:border-emerald-300 cursor-pointer transition-all active:scale-[0.99]' : ''}`}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-emerald-100 rounded-lg">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-emerald-800 text-sm">Verified Outcomes</p>
+                      <p className="text-xs text-emerald-600">
+                        {verificationRate}% of your activities are verified by organizations
+                      </p>
+                    </div>
+                  </div>
+                  {onNavigateToVerification && (
+                    <div className="text-emerald-500 text-xs font-medium flex items-center gap-1">
+                      View Details
+                      <TrendingUp className="h-3 w-3" />
+                    </div>
+                  )}
+                </div>
+                {(verifiedHours > 0 || pendingHours > 0) && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="bg-white/60 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-emerald-700">{formatDecimal(verifiedHours)}</p>
+                      <p className="text-[10px] text-emerald-600">Verified Hours</p>
+                    </div>
+                    <div className="bg-white/60 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-amber-600">{formatDecimal(pendingHours)}</p>
+                      <p className="text-[10px] text-amber-600">Pending Approval</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </button>
 
           {/* What is AIU - Compact */}
           <Card className="border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
@@ -236,6 +287,62 @@ export default function AIUDetailsModal({
                     {item.role}
                   </span>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Insights - Interactive */}
+          <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-4 w-4 text-violet-600" />
+                <p className="font-semibold text-violet-800 text-sm">Performance Insights</p>
+              </div>
+              <div className="space-y-2">
+                {/* AIU Efficiency */}
+                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-3.5 w-3.5 text-violet-500" />
+                    <span className="text-xs text-slate-700">AIU Efficiency</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold text-violet-600">{aiuPerHour}</span>
+                    <span className="text-[10px] text-slate-500">AIU/hr</span>
+                  </div>
+                </button>
+                {/* Project Diversity */}
+                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-3.5 w-3.5 text-violet-500" />
+                    <span className="text-xs text-slate-700">Project Diversity</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold text-violet-600">{projectCount}</span>
+                    <span className="text-[10px] text-slate-500">projects</span>
+                  </div>
+                </button>
+                {/* SDG Coverage */}
+                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3.5 w-3.5 text-violet-500" />
+                    <span className="text-xs text-slate-700">SDG Coverage</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold text-violet-600">{Math.round((sdgsContributed.length / 17) * 100)}%</span>
+                    <span className="text-[10px] text-slate-500">of 17 SDGs</span>
+                  </div>
+                </button>
+                {/* Verification Rate */}
+                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-violet-500" />
+                    <span className="text-xs text-slate-700">Verification Rate</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold text-violet-600">{verificationRate}%</span>
+                    <span className="text-[10px] text-slate-500">verified</span>
+                  </div>
+                </button>
               </div>
             </CardContent>
           </Card>

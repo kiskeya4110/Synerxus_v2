@@ -1369,7 +1369,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-emerald-600 text-[9px]">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
                               {sdgAiu > 0 && (
-                                <span className="text-amber-600 text-[9px] bg-amber-50 px-1.5 py-0.5 rounded font-medium">{formatNumber(sdgAiu)} AIU</span>
+                                <span className="text-amber-600 text-[9px] bg-amber-50 px-1.5 py-0.5 rounded font-medium">
+                                  {sdgAiu >= 1 ? formatNumber(sdgAiu) : sdgAiu.toFixed(1)} AIU
+                                </span>
                               )}
                             </div>
                           </div>
@@ -4636,6 +4638,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         totalHours={aiuSummary?.totalHours ?? kpis.totalHours ?? 0}
         volunteerName={user?.displayName}
         sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+        verificationRate={Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}
+        verifiedHours={kpis.verifiedHours}
+        pendingHours={kpis.pendingHours}
+        onNavigateToVerification={() => {
+          setShowAIUDetailsModal(false);
+          setActiveTab('projects');
+        }}
       />
 
       {/*

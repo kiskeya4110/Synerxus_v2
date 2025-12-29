@@ -1714,12 +1714,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span>Skills Match</span>
+                          <span>Skills Profile</span>
                           <span>{skillsMatch}%</span>
                         </div>
                         <Progress value={skillsMatch} className="h-1.5 bg-white/20" />
                         <div className="flex justify-between text-xs">
-                          <span>SDG Alignment</span>
+                          <span>SDG Contributions</span>
                           <span>{sdgAlignment}%</span>
                         </div>
                         <Progress value={sdgAlignment} className="h-1.5 bg-white/20" />
@@ -4518,12 +4518,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="space-y-3">
                       <h3 className="text-slate-700 font-semibold text-sm">Score Breakdown</h3>
 
-                      {/* Skills Match */}
+                      {/* Skills Profile - measures profile completeness, not opportunity matching */}
                       <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Award className="w-4 h-4 text-orange-600" />
-                            <span className="text-slate-700 font-medium text-sm">Skills Match</span>
+                            <span className="text-slate-700 font-medium text-sm">Skills Profile</span>
                           </div>
                           <span className="text-orange-600 font-bold">{skillsMatch}%</span>
                         </div>
@@ -4531,16 +4531,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full" style={{ width: `${skillsMatch}%` }} />
                         </div>
                         <p className="text-xs text-slate-500 mt-2">
-                          Based on {kpis.skills} skills. Add more skills to improve this score.
+                          You have {kpis.skills} skills on your profile. Add more to increase visibility to organizations.
                         </p>
                       </div>
 
-                      {/* SDG Alignment */}
+                      {/* SDG Contributions - measures actual project participation, not preference alignment */}
                       <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Globe className="w-4 h-4 text-emerald-600" />
-                            <span className="text-slate-700 font-medium text-sm">SDG Alignment</span>
+                            <span className="text-slate-700 font-medium text-sm">SDG Contributions</span>
                           </div>
                           <span className="text-emerald-600 font-bold">{sdgAlignment}%</span>
                         </div>
@@ -4548,7 +4548,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" style={{ width: `${sdgAlignment}%` }} />
                         </div>
                         <p className="text-xs text-slate-500 mt-2">
-                          Contributing to {kpis.sdgsContributed} SDGs. Expand your impact across more goals.
+                          You've contributed to {kpis.sdgsContributed} SDGs through projects. Join diverse projects to expand impact.
                         </p>
                       </div>
 
@@ -4580,19 +4580,19 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         {skillsMatch < 100 && (
                           <li className="flex items-start gap-2">
                             <span className="text-purple-500 mt-0.5">•</span>
-                            <span>Add more skills to your profile to increase Skills Match</span>
+                            <span>Add more skills to your profile to boost your Skills Profile score</span>
                           </li>
                         )}
                         {sdgAlignment < 100 && (
                           <li className="flex items-start gap-2">
                             <span className="text-purple-500 mt-0.5">•</span>
-                            <span>Join projects targeting different SDGs to improve alignment</span>
+                            <span>Join projects targeting different SDGs to increase your SDG Contributions</span>
                           </li>
                         )}
                         {engagementLevel < 100 && (
                           <li className="flex items-start gap-2">
                             <span className="text-purple-500 mt-0.5">•</span>
-                            <span>Log more volunteer hours to boost engagement</span>
+                            <span>Log more volunteer hours to boost your Engagement Level</span>
                           </li>
                         )}
                       </ul>

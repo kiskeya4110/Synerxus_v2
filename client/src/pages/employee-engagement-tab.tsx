@@ -105,7 +105,7 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
     const retentionRate = engagementData?.retentionRate || (activeEmployees > 0 ? Math.round((returningVolunteers / activeEmployees) * 100) : 0);
     const repeatVolunteerRate = activeEmployees > 0 ? Math.round((leaderboard.filter((v: any) => v.hours >= 10).length / activeEmployees) * 100) : 0;
 
-    // Skills match calculated from skills breakdown
+    // Skills utilization calculated from skills breakdown (measures diversity of skills used)
     const skillsBreakdown = engagementData?.skillsBreakdown || [];
     const skillsMatchScore = skillsBreakdown.length > 0 ? Math.min(100, skillsBreakdown.length * 15) : 0;
 
@@ -274,7 +274,7 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
     { metric: "Participation", value: computedMetrics.engagementRate, benchmark: VMS_ENGAGEMENT_BENCHMARKS.participationRate.good, fullMark: 100 },
     { metric: "Retention", value: computedMetrics.retentionRate, benchmark: VMS_ENGAGEMENT_BENCHMARKS.retentionRate.good, fullMark: 100 },
     { metric: "Satisfaction", value: computedMetrics.volunteerSatisfaction, benchmark: VMS_ENGAGEMENT_BENCHMARKS.satisfactionScore.good, fullMark: 100 },
-    { metric: "Skills Match", value: computedMetrics.skillsMatchScore, benchmark: VMS_ENGAGEMENT_BENCHMARKS.skillsMatchRate.good, fullMark: 100 },
+    { metric: "Skills Utilized", value: computedMetrics.skillsMatchScore, benchmark: VMS_ENGAGEMENT_BENCHMARKS.skillsMatchRate.good, fullMark: 100 },
     { metric: "Repeat Rate", value: computedMetrics.repeatVolunteerRate, benchmark: VMS_ENGAGEMENT_BENCHMARKS.repeatVolunteerRate.good, fullMark: 100 },
     { metric: "Growth", value: 68, benchmark: 50, fullMark: 100 },
   ], [computedMetrics]);
@@ -955,9 +955,9 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
               <p className="text-emerald-200 text-xs mt-2">Above average (+12%)</p>
             </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 text-white">
-              <p className="text-purple-100 text-sm font-medium mb-1">Skills Match Score</p>
+              <p className="text-purple-100 text-sm font-medium mb-1">Skills Utilization</p>
               <p className="text-3xl font-bold">{computedMetrics.skillsMatchScore}%</p>
-              <p className="text-purple-200 text-xs mt-2">High alignment</p>
+              <p className="text-purple-200 text-xs mt-2">Skill diversity in projects</p>
             </div>
             <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white">
               <p className="text-amber-100 text-sm font-medium mb-1">New This Month</p>
@@ -1297,7 +1297,7 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
                 { label: "Satisfaction Score", value: computedMetrics.volunteerSatisfaction, benchmark: VMS_ENGAGEMENT_BENCHMARKS.satisfactionScore, unit: "%", description: "Based on post-activity surveys" },
                 { label: "Avg Hours/Volunteer", value: computedMetrics.avgHoursPerVolunteer, benchmark: VMS_ENGAGEMENT_BENCHMARKS.avgHoursPerVolunteer, unit: "h", description: "Average annual contribution" },
                 { label: "Repeat Volunteer Rate", value: computedMetrics.repeatVolunteerRate, benchmark: VMS_ENGAGEMENT_BENCHMARKS.repeatVolunteerRate, unit: "%", description: "Multi-activity participants" },
-                { label: "Skills Match Rate", value: computedMetrics.skillsMatchScore, benchmark: VMS_ENGAGEMENT_BENCHMARKS.skillsMatchRate, unit: "%", description: "Skill-opportunity alignment" },
+                { label: "Skills Utilization", value: computedMetrics.skillsMatchScore, benchmark: VMS_ENGAGEMENT_BENCHMARKS.skillsMatchRate, unit: "%", description: "Diversity of skills used in projects" },
               ].map((item) => {
                 const status = getBenchmarkStatus(item.value, item.benchmark);
                 return (

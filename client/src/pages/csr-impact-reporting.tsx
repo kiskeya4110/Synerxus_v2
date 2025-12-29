@@ -927,10 +927,10 @@ export function CSRImpactReporting() {
             </div>
           </div>
 
-          {/* Skills Match Rate */}
+          {/* Skills Utilization */}
           <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", border: "2px solid #f59e0b" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
-              <div style={{ fontSize: "13px", color: "#6b7280", fontWeight: "500" }}>Skills Match Rate</div>
+              <div style={{ fontSize: "13px", color: "#6b7280", fontWeight: "500" }}>Skills Utilization</div>
               <Target style={{ width: "20px", height: "20px", color: "#f59e0b" }} />
             </div>
             <div style={{ fontSize: "32px", fontWeight: "bold", color: "#f59e0b", marginBottom: "4px" }}>72%</div>

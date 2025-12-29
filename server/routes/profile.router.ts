@@ -272,8 +272,15 @@ profileRouter.get("/volunteer", async (req: Request, res: Response) => {
       console.error("Error fetching volunteer profile:", err);
     }
 
+    // Merge user.avatar into volunteerProfile.profilePhotoUrl if missing
+    // This ensures profile photos are displayed even when only stored in users.avatar
+    const mergedProfile = volunteerProfile ? {
+      ...volunteerProfile,
+      profilePhotoUrl: volunteerProfile.profilePhotoUrl || user.avatar || null
+    } : null;
+
     // Calculate profile completion based on filled fields
-    const profileCompletion = volunteerProfile ? calculateProfileCompletion(volunteerProfile) : 0;
+    const profileCompletion = mergedProfile ? calculateProfileCompletion(mergedProfile) : 0;
     const profileComplete = profileCompletion === 100;
 
     res.json({
@@ -282,7 +289,7 @@ profileRouter.get("/volunteer", async (req: Request, res: Response) => {
         profileComplete,
         profileCompletion
       },
-      volunteerProfile
+      volunteerProfile: mergedProfile
     });
   } catch (err) {
     console.error("Error fetching volunteer profile:", err);
@@ -378,10 +385,17 @@ profileRouter.get("/intake/volunteer-profile", async (req: Request, res: Respons
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Merge user.avatar into volunteerProfile.profilePhotoUrl if missing
+    // This ensures profile photos are displayed even when only stored in users.avatar
+    const mergedProfile = volunteerProfile ? {
+      ...volunteerProfile,
+      profilePhotoUrl: volunteerProfile.profilePhotoUrl || user.avatar || null
+    } : null;
+
     // Return both user and volunteerProfile so frontend can access all data
     res.json({
       user,
-      volunteerProfile
+      volunteerProfile: mergedProfile
     });
   } catch (err) {
     console.error("Error fetching volunteer profile:", err);

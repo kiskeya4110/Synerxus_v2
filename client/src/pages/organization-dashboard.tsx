@@ -2320,7 +2320,7 @@ export default function OrganizationDashboard() {
               <Sparkles size={18} style={{ color: '#f59e0b' }} />
               Quick Actions
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               <button
                 onClick={() => navigate('/projects?create=true')}
                 style={{
@@ -2409,8 +2409,31 @@ export default function OrganizationDashboard() {
               >
                 <BarChart3 size={20} style={{ color: '#d97706' }} />
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#d97706', margin: 0 }}>View Reports</p>
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Analyze impact</p>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#d97706', margin: 0 }}>SDG Report</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Impact overview</p>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate('/impact-visualization')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#fff1f2',
+                  border: '2px solid #fecdd3',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fecdd3'; e.currentTarget.style.borderColor = '#e11d48'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff1f2'; e.currentTarget.style.borderColor = '#fecdd3'; }}
+                data-testid="quick-action-before-after"
+              >
+                <Eye size={20} style={{ color: '#e11d48' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#e11d48', margin: 0 }}>Before & After</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Compare outcomes</p>
                 </div>
               </button>
             </div>

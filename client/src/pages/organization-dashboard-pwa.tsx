@@ -491,10 +491,10 @@ export default function OrganizationDashboardPWA() {
     {
       title: "Analytics & Reports",
       items: [
-        { icon: BarChart3, label: "Impact Report", desc: "Visualize your impact", action: () => navigate('/organization-impact-report'), color: "purple" },
+        { icon: BarChart3, label: "Impact Report", desc: "SDG Impact Report", action: () => navigate('/organization-impact-report'), color: "purple" },
+        { icon: Eye, label: "Before & After", desc: "Compare outcomes", action: () => navigate('/impact-visualization'), color: "rose" },
         { icon: Target, label: "SDG Mapping", desc: "UN Goals alignment", action: () => navigate('/sdg-mapping'), color: "teal" },
         { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/volunteer-leaderboard/pwa'), color: "amber", hot: true },
-        { icon: TrendingUp, label: "Analytics", desc: "Performance metrics", action: () => navigate('/csr-reports-exports'), color: "indigo" },
       ]
     },
     {

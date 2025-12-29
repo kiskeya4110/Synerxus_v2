@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart, CheckCircle2 } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart, CheckCircle2, Eye } from "lucide-react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -2490,6 +2490,21 @@ export default function Dashboard() {
             <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Zap className="h-4 w-4" />
               <span>Cal</span>
+            </Button>
+          </Link>
+        </div>
+        {/* Second row - Reports */}
+        <div className="grid grid-cols-2 gap-1 mt-1">
+          <Link href={`/impact-report/${userId}`} className="w-full">
+            <Button variant="outline" size="sm" className="w-full h-10 px-2 text-xs rounded-lg bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              <span>SDG Report</span>
+            </Button>
+          </Link>
+          <Link href="/impact-visualization" className="w-full">
+            <Button variant="outline" size="sm" className="w-full h-10 px-2 text-xs rounded-lg bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+              <Eye className="h-4 w-4" />
+              <span>Before & After</span>
             </Button>
           </Link>
         </div>

@@ -2476,6 +2476,7 @@ function ProjectsSection({ csrData, navigate, onOpenMap }: { csrData: CSRDashboa
 function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | undefined; navigate: any }) {
   const reports = [
     { id: 'sdg', title: 'SDG Impact Report', desc: 'SDG contributions & progress', icon: Target, color: 'emerald', path: '/impact-report' },
+    { id: 'beforeafter', title: 'Before & After', desc: 'Compare outcomes', icon: Eye, color: 'rose', path: '/impact-visualization' },
     { id: 'org', title: 'Organization Report', desc: 'Company-wide metrics', icon: Building2, color: 'blue', path: '/organization-impact-report' },
     { id: 'export', title: 'Export Data', desc: 'CSV, PDF, Excel', icon: Download, color: 'amber', path: '/csr-reports-exports' },
     { id: 'impact', title: 'Impact Metrics', desc: 'Real-time tracking', icon: Activity, color: 'purple', path: '/csr-impact-reporting' },
@@ -2511,12 +2512,14 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
             blue: 'bg-blue-50 border-blue-300',
             amber: 'bg-amber-50 border-amber-300',
             purple: 'bg-purple-50 border-purple-300',
+            rose: 'bg-rose-50 border-rose-300',
           };
           const textColors: Record<string, string> = {
             emerald: 'text-emerald-700',
             blue: 'text-blue-700',
             amber: 'text-amber-700',
             purple: 'text-purple-700',
+            rose: 'text-rose-700',
           };
 
           return (

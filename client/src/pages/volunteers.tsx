@@ -38,6 +38,12 @@ export default function Volunteers() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [deleteVolunteerDialogOpen, setDeleteVolunteerDialogOpen] = useState(false);
   const [volunteerToDelete, setVolunteerToDelete] = useState<{ id: number; name: string } | null>(null);
+  // Rejection confirmation state
+  const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
+  const [itemToReject, setItemToReject] = useState<{ id: number; type: 'hours' | 'impact'; name: string; details: string } | null>(null);
+  // Pending item detail view state
+  const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
+  const [selectedPendingItem, setSelectedPendingItem] = useState<{ type: 'hours' | 'impact'; data: any } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -530,41 +536,62 @@ export default function Volunteers() {
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                     <Clock className="h-4 w-4 text-blue-500" />
-                    Hours ({pendingApprovals.pendingActivities.length})
+                    Volunteer Hours ({pendingApprovals.pendingActivities.length})
                   </h3>
                   <div className="space-y-2">
                     {pendingApprovals.pendingActivities.map((activity: any) => (
-                      <Card key={activity.id} className="p-3">
+                      <Card
+                        key={activity.id}
+                        className="p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all active:scale-[0.99]"
+                        onClick={() => {
+                          setSelectedPendingItem({ type: 'hours', data: activity });
+                          setPendingDetailOpen(true);
+                        }}
+                      >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate">{activity.volunteerName || 'Unknown'}</p>
                             <p className="text-xs text-gray-500 truncate">{activity.projectName || 'Unknown Project'}</p>
+                            {activity.description && (
+                              <p className="text-[10px] text-gray-400 truncate mt-1">{activity.description}</p>
+                            )}
                           </div>
                           <div className="text-right flex-shrink-0 ml-2">
                             <p className="font-bold text-blue-600">{activity.hours}h</p>
                             <p className="text-[10px] text-gray-400">
                               {new Date(activity.date).toLocaleDateString()}
                             </p>
+                            <Badge className="mt-1 bg-amber-100 text-amber-700 text-[8px] px-1">
+                              Pending
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
-                            className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs"
+                            className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-xs font-medium shadow-sm"
                             onClick={() => approveActivityMutation.mutate(activity.id)}
                             disabled={approveActivityMutation.isPending}
                           >
-                            <CheckCheck className="h-3 w-3 mr-1" />
+                            <CheckCheck className="h-3.5 w-3.5 mr-1" />
                             Approve
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="flex-1 h-8 text-xs"
-                            onClick={() => rejectActivityMutation.mutate(activity.id)}
+                            className="flex-1 h-9 text-xs font-medium shadow-sm"
+                            onClick={() => {
+                              setItemToReject({
+                                id: activity.id,
+                                type: 'hours',
+                                name: activity.volunteerName || 'Unknown',
+                                details: `${activity.hours} hours for ${activity.projectName || 'Unknown Project'}`
+                              });
+                              setRejectConfirmOpen(true);
+                            }}
                             disabled={rejectActivityMutation.isPending}
                           >
-                            <XCircle className="h-3 w-3 mr-1" />
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
                             Reject
                           </Button>
                         </div>
@@ -583,7 +610,14 @@ export default function Volunteers() {
                   </h3>
                   <div className="space-y-2">
                     {pendingApprovals.pendingImpacts.map((impact: any) => (
-                      <Card key={impact.id} className="p-3">
+                      <Card
+                        key={impact.id}
+                        className="p-3 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all active:scale-[0.99]"
+                        onClick={() => {
+                          setSelectedPendingItem({ type: 'impact', data: impact });
+                          setPendingDetailOpen(true);
+                        }}
+                      >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1 mb-1">
@@ -593,32 +627,46 @@ export default function Volunteers() {
                             </div>
                             <p className="text-xs text-gray-600 truncate">{impact.projectName || 'Unknown Project'}</p>
                             <p className="text-[10px] text-gray-400">{impact.volunteerName || 'System'}</p>
+                            {impact.notes && (
+                              <p className="text-[10px] text-gray-400 truncate mt-1">{impact.notes}</p>
+                            )}
                           </div>
                           <div className="text-right flex-shrink-0 ml-2">
                             <p className="font-bold text-amber-600">{impact.value} {impact.unit || ''}</p>
                             <p className="text-[10px] text-gray-400">
                               {new Date(impact.date || impact.createdAt).toLocaleDateString()}
                             </p>
+                            <Badge className="mt-1 bg-amber-100 text-amber-700 text-[8px] px-1">
+                              {impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
-                            className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs"
+                            className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-xs font-medium shadow-sm"
                             onClick={() => approveImpactMutation.mutate(impact.id)}
                             disabled={approveImpactMutation.isPending}
                           >
-                            <CheckCheck className="h-3 w-3 mr-1" />
+                            <CheckCheck className="h-3.5 w-3.5 mr-1" />
                             Approve
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="flex-1 h-8 text-xs"
-                            onClick={() => rejectImpactMutation.mutate(impact.id)}
+                            className="flex-1 h-9 text-xs font-medium shadow-sm"
+                            onClick={() => {
+                              setItemToReject({
+                                id: impact.id,
+                                type: 'impact',
+                                name: impact.volunteerName || 'System',
+                                details: `${impact.metricName || 'KPI'}: ${impact.value} ${impact.unit || ''} for ${impact.projectName || 'Unknown Project'}`
+                              });
+                              setRejectConfirmOpen(true);
+                            }}
                             disabled={rejectImpactMutation.isPending}
                           >
-                            <XCircle className="h-3 w-3 mr-1" />
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
                             Reject
                           </Button>
                         </div>
@@ -690,6 +738,212 @@ export default function Volunteers() {
             toast({ title: "Volunteer Removed", description: `${volunteerToDelete?.name || 'Volunteer'} has been removed` });
           }}
         />
+
+        {/* Rejection Confirmation Dialog */}
+        <Dialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>
+          <DialogContent className="max-w-[90vw] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Confirm Rejection
+              </DialogTitle>
+              <DialogDescription className="text-left pt-2">
+                Are you sure you want to reject this submission? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {itemToReject && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 my-2">
+                <p className="font-medium text-sm text-red-800 dark:text-red-200">
+                  {itemToReject.type === 'hours' ? 'Volunteer Hours' : 'Impact/KPI'}
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                  <span className="font-medium">Submitted by:</span> {itemToReject.name}
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  <span className="font-medium">Details:</span> {itemToReject.details}
+                </p>
+              </div>
+            )}
+            <DialogFooter className="flex gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRejectConfirmOpen(false);
+                  setItemToReject(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (itemToReject) {
+                    if (itemToReject.type === 'hours') {
+                      rejectActivityMutation.mutate(itemToReject.id);
+                    } else {
+                      rejectImpactMutation.mutate(itemToReject.id);
+                    }
+                    setRejectConfirmOpen(false);
+                    setItemToReject(null);
+                  }
+                }}
+                disabled={rejectActivityMutation.isPending || rejectImpactMutation.isPending}
+                className="flex-1"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                {rejectActivityMutation.isPending || rejectImpactMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Pending Item Detail Dialog */}
+        <Dialog open={pendingDetailOpen} onOpenChange={setPendingDetailOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[80vh] overflow-y-auto rounded-xl p-0">
+            {selectedPendingItem && (
+              <div className="flex flex-col">
+                {/* Header */}
+                <div className={`px-4 py-4 rounded-t-xl ${
+                  selectedPendingItem.type === 'hours'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600'
+                    : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                } text-white`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {selectedPendingItem.type === 'hours' ? (
+                      <Clock className="h-5 w-5" />
+                    ) : (
+                      <Target className="h-5 w-5" />
+                    )}
+                    <h2 className="font-bold text-lg">
+                      {selectedPendingItem.type === 'hours' ? 'Volunteer Hours' : 'Impact / KPI'}
+                    </h2>
+                  </div>
+                  <Badge className="bg-white/20 text-white">
+                    Pending Approval
+                  </Badge>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-4 bg-white dark:bg-gray-900">
+                  {selectedPendingItem.type === 'hours' ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Volunteer</p>
+                          <p className="font-medium">{selectedPendingItem.data.volunteerName || 'Unknown'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Hours</p>
+                          <p className="font-bold text-2xl text-blue-600">{selectedPendingItem.data.hours}h</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Project</p>
+                        <p className="font-medium">{selectedPendingItem.data.projectName || 'Unknown Project'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Date Submitted</p>
+                        <p className="font-medium">{new Date(selectedPendingItem.data.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      </div>
+                      {selectedPendingItem.data.description && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Description</p>
+                          <p className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">{selectedPendingItem.data.description}</p>
+                        </div>
+                      )}
+                      {selectedPendingItem.data.role && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Role</p>
+                          <Badge variant="outline">{selectedPendingItem.data.role}</Badge>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Metric Type</p>
+                          <Badge className="bg-amber-100 text-amber-700">{selectedPendingItem.data.metricName || 'KPI'}</Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Value</p>
+                          <p className="font-bold text-2xl text-amber-600">
+                            {selectedPendingItem.data.value} {selectedPendingItem.data.unit || ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Reported By</p>
+                        <p className="font-medium">{selectedPendingItem.data.volunteerName || 'System'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Project</p>
+                        <p className="font-medium">{selectedPendingItem.data.projectName || 'Unknown Project'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Date Submitted</p>
+                        <p className="font-medium">{new Date(selectedPendingItem.data.date || selectedPendingItem.data.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      </div>
+                      {selectedPendingItem.data.notes && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Notes</p>
+                          <p className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">{selectedPendingItem.data.notes}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Verification Status</p>
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          {selectedPendingItem.data.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending Verification'}
+                        </Badge>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button
+                      className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-medium"
+                      onClick={() => {
+                        if (selectedPendingItem.type === 'hours') {
+                          approveActivityMutation.mutate(selectedPendingItem.data.id);
+                        } else {
+                          approveImpactMutation.mutate(selectedPendingItem.data.id);
+                        }
+                        setPendingDetailOpen(false);
+                        setSelectedPendingItem(null);
+                      }}
+                      disabled={approveActivityMutation.isPending || approveImpactMutation.isPending}
+                    >
+                      <CheckCheck className="h-4 w-4 mr-2" />
+                      {approveActivityMutation.isPending || approveImpactMutation.isPending ? 'Approving...' : 'Approve'}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1 h-11 font-medium"
+                      onClick={() => {
+                        setPendingDetailOpen(false);
+                        setItemToReject({
+                          id: selectedPendingItem.data.id,
+                          type: selectedPendingItem.type,
+                          name: selectedPendingItem.data.volunteerName || 'Unknown',
+                          details: selectedPendingItem.type === 'hours'
+                            ? `${selectedPendingItem.data.hours} hours for ${selectedPendingItem.data.projectName || 'Unknown Project'}`
+                            : `${selectedPendingItem.data.metricName || 'KPI'}: ${selectedPendingItem.data.value} ${selectedPendingItem.data.unit || ''} for ${selectedPendingItem.data.projectName || 'Unknown Project'}`
+                        });
+                        setSelectedPendingItem(null);
+                        setRejectConfirmOpen(true);
+                      }}
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Mobile Profile Dialog */}
         <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
@@ -1230,10 +1484,19 @@ export default function Volunteers() {
                               size="sm"
                               variant="destructive"
                               className="h-8 px-3 text-xs"
-                              onClick={() => rejectActivityMutation.mutate(activity.id)}
+                              onClick={() => {
+                                setItemToReject({
+                                  id: activity.id,
+                                  type: 'hours',
+                                  name: activity.volunteerName || 'Unknown',
+                                  details: `${activity.hours} hours for ${activity.projectName || 'Unknown Project'}`
+                                });
+                                setRejectConfirmOpen(true);
+                              }}
                               disabled={rejectActivityMutation.isPending}
                             >
-                              <XCircle className="h-3 w-3" />
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Reject
                             </Button>
                           </div>
                         </td>
@@ -1307,10 +1570,19 @@ export default function Volunteers() {
                               size="sm"
                               variant="destructive"
                               className="h-8 px-3 text-xs"
-                              onClick={() => rejectImpactMutation.mutate(impact.id)}
+                              onClick={() => {
+                                setItemToReject({
+                                  id: impact.id,
+                                  type: 'impact',
+                                  name: impact.volunteerName || 'System',
+                                  details: `${impact.metricName || 'KPI'}: ${impact.value} ${impact.unit || ''} for ${impact.projectName || 'Unknown Project'}`
+                                });
+                                setRejectConfirmOpen(true);
+                              }}
                               disabled={rejectImpactMutation.isPending}
                             >
-                              <XCircle className="h-3 w-3" />
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Reject
                             </Button>
                           </div>
                         </td>
@@ -1859,6 +2131,63 @@ export default function Volunteers() {
 
       {/* Footer - Hidden when mobile navigation is shown */}
       {!isOrganization && <Footer />}
+
+      {/* Rejection Confirmation Dialog - Desktop */}
+      <Dialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Confirm Rejection
+            </DialogTitle>
+            <DialogDescription className="text-left pt-2">
+              Are you sure you want to reject this submission? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {itemToReject && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 my-2">
+              <p className="font-medium text-sm text-red-800 dark:text-red-200">
+                {itemToReject.type === 'hours' ? 'Volunteer Hours' : 'Impact/KPI'}
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                <span className="font-medium">Submitted by:</span> {itemToReject.name}
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                <span className="font-medium">Details:</span> {itemToReject.details}
+              </p>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectConfirmOpen(false);
+                setItemToReject(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (itemToReject) {
+                  if (itemToReject.type === 'hours') {
+                    rejectActivityMutation.mutate(itemToReject.id);
+                  } else {
+                    rejectImpactMutation.mutate(itemToReject.id);
+                  }
+                  setRejectConfirmOpen(false);
+                  setItemToReject(null);
+                }
+              }}
+              disabled={rejectActivityMutation.isPending || rejectImpactMutation.isPending}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              {rejectActivityMutation.isPending || rejectImpactMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Volunteer Confirmation Dialog */}
       <DeleteConfirmDialog

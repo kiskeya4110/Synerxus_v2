@@ -223,20 +223,37 @@ export function ImageCropper({
     // Create output canvas
     const outputCanvas = document.createElement("canvas");
     const outputSize = Math.max(cropWidth, cropHeight) * 2; // Higher resolution output
-    outputCanvas.width = outputSize * aspectRatio >= 1 ? outputSize : outputSize * aspectRatio;
-    outputCanvas.height = outputSize * aspectRatio >= 1 ? outputSize / aspectRatio : outputSize;
+    const canvasWidth = aspectRatio >= 1 ? outputSize : outputSize * aspectRatio;
+    const canvasHeight = aspectRatio >= 1 ? outputSize / aspectRatio : outputSize;
+    outputCanvas.width = canvasWidth;
+    outputCanvas.height = canvasHeight;
     const ctx = outputCanvas.getContext("2d");
 
     if (!ctx) return;
 
+    // For round crops, apply circular clip FIRST before drawing
+    if (cropShape === "round") {
+      ctx.beginPath();
+      ctx.ellipse(
+        canvasWidth / 2,
+        canvasHeight / 2,
+        canvasWidth / 2,
+        canvasHeight / 2,
+        0,
+        0,
+        2 * Math.PI
+      );
+      ctx.clip();
+    }
+
     // Apply transformations
-    ctx.translate(outputCanvas.width / 2, outputCanvas.height / 2);
+    ctx.translate(canvasWidth / 2, canvasHeight / 2);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(zoom, zoom);
 
     // Calculate scale
     const scale = Math.max(cropWidth / img.width, cropHeight / img.height);
-    const scaleFactor = outputCanvas.width / cropWidth;
+    const scaleFactor = canvasWidth / cropWidth;
 
     ctx.drawImage(
       img,
@@ -246,35 +263,7 @@ export function ImageCropper({
       img.height * scale * scaleFactor
     );
 
-    // If round crop, create circular mask
-    if (cropShape === "round") {
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = outputCanvas.width;
-      tempCanvas.height = outputCanvas.height;
-      const tempCtx = tempCanvas.getContext("2d");
-
-      if (tempCtx) {
-        tempCtx.beginPath();
-        tempCtx.ellipse(
-          tempCanvas.width / 2,
-          tempCanvas.height / 2,
-          tempCanvas.width / 2,
-          tempCanvas.height / 2,
-          0,
-          0,
-          2 * Math.PI
-        );
-        tempCtx.clip();
-        tempCtx.drawImage(outputCanvas, 0, 0);
-
-        outputCanvas.width = tempCanvas.width;
-        outputCanvas.height = tempCanvas.height;
-        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        ctx.drawImage(tempCanvas, 0, 0);
-      }
-    }
-
-    // Convert to blob
+    // Convert to blob - use PNG for round crops to preserve transparency
     outputCanvas.toBlob(
       (blob) => {
         if (blob) {
@@ -282,7 +271,7 @@ export function ImageCropper({
           handleClose();
         }
       },
-      "image/jpeg",
+      cropShape === "round" ? "image/png" : "image/jpeg",
       0.9
     );
   }, [zoom, rotation, position, cropWidth, cropHeight, aspectRatio, cropShape, onCropComplete]);

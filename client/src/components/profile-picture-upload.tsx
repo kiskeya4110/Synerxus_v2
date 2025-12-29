@@ -100,11 +100,16 @@ export function ProfilePictureUpload({
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
-    // Convert blob to file
+    // Determine file extension based on blob type
+    const isPng = croppedBlob.type === 'image/png';
+    const extension = isPng ? 'png' : 'jpg';
+    const mimeType = isPng ? 'image/png' : 'image/jpeg';
+
+    // Convert blob to file with correct type
     const croppedFile = new File(
       [croppedBlob],
-      pendingFile?.name || 'cropped-image.jpg',
-      { type: 'image/jpeg' }
+      pendingFile?.name?.replace(/\.\w+$/, `.${extension}`) || `cropped-image.${extension}`,
+      { type: mimeType }
     );
 
     // Clean up pending state

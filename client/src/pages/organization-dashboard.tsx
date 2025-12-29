@@ -173,6 +173,15 @@ export default function OrganizationDashboard() {
   const [showVolunteerManagement, setShowVolunteerManagement] = useState(false);
   const [showEngagementDetails, setShowEngagementDetails] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
+  // Pending item detail view state
+  const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
+  const [selectedPendingItem, setSelectedPendingItem] = useState<{ type: 'hours' | 'impact'; data: any } | null>(null);
+  // Track individual item processing states
+  const [processingActivityIds, setProcessingActivityIds] = useState<Set<number>>(new Set());
+  const [processingImpactIds, setProcessingImpactIds] = useState<Set<number>>(new Set());
+  // Rejection confirmation state
+  const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
+  const [itemToReject, setItemToReject] = useState<{ id: number; type: 'hours' | 'impact'; name: string; details: string } | null>(null);
 
   // Check if user is an organization user (used for query enabled flags)
   const isOrganizationUser = userType === 'organization';
@@ -290,6 +299,103 @@ export default function OrganizationDashboard() {
   const pendingVerifications = pendingApprovals?.pendingImpacts || [];
   const refetchPendingHours = refetchPendingApprovals;
   const refetchVerifications = refetchPendingApprovals;
+
+  // Helper functions to manage individual item processing states
+  const addProcessingActivity = (id: number) => {
+    setProcessingActivityIds(prev => new Set(prev).add(id));
+  };
+  const removeProcessingActivity = (id: number) => {
+    setProcessingActivityIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+  const addProcessingImpact = (id: number) => {
+    setProcessingImpactIds(prev => new Set(prev).add(id));
+  };
+  const removeProcessingImpact = (id: number) => {
+    setProcessingImpactIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // Approval/rejection handlers with individual state tracking
+  const handleApproveActivity = async (activity: any) => {
+    addProcessingActivity(activity.id);
+    try {
+      const response = await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: userId })
+      });
+      if (!response.ok) throw new Error('Failed to approve');
+      refetchPendingApprovals();
+      refetchDashboard();
+      toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to approve hours', variant: 'destructive' });
+    } finally {
+      removeProcessingActivity(activity.id);
+    }
+  };
+
+  const handleRejectActivity = async (activity: any) => {
+    addProcessingActivity(activity.id);
+    try {
+      const response = await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: userId })
+      });
+      if (!response.ok) throw new Error('Failed to reject');
+      refetchPendingApprovals();
+      toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to reject hours', variant: 'destructive' });
+    } finally {
+      removeProcessingActivity(activity.id);
+    }
+  };
+
+  const handleApproveImpact = async (impact: any) => {
+    addProcessingImpact(impact.id);
+    try {
+      const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: userId })
+      });
+      if (!response.ok) throw new Error('Failed to approve');
+      refetchPendingApprovals();
+      refetchDashboard();
+      toast({ title: 'KPI approved', description: `${impact.metricName || 'Impact'} has been approved and AIU recalculated.` });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to approve KPI', variant: 'destructive' });
+    } finally {
+      removeProcessingImpact(impact.id);
+    }
+  };
+
+  const handleRejectImpact = async (impact: any) => {
+    addProcessingImpact(impact.id);
+    try {
+      const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId: userId })
+      });
+      if (!response.ok) throw new Error('Failed to reject');
+      refetchPendingApprovals();
+      toast({ title: 'KPI rejected', description: 'The KPI record has been rejected.' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to reject KPI', variant: 'destructive' });
+    } finally {
+      removeProcessingImpact(impact.id);
+    }
+  };
 
   // Fetch detailed volunteer profile data when a volunteer is selected
   const { data: selectedVolunteerData, isLoading: isLoadingVolunteer } = useQuery({
@@ -2778,7 +2884,20 @@ export default function OrganizationDashboard() {
                           </thead>
                           <tbody>
                             {(pendingHours?.pendingActivities || []).map((activity: any, index: number) => (
-                              <tr key={`hours-${activity.id}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                              <tr
+                                key={`hours-${activity.id}`}
+                                style={{
+                                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
+                                  borderBottom: '1px solid #e5e7eb',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                className="hover:bg-blue-50"
+                                onClick={() => {
+                                  setSelectedPendingItem({ type: 'hours', data: activity });
+                                  setPendingDetailOpen(true);
+                                }}
+                              >
                                 <td style={{ padding: '12px 16px', color: '#374151' }}>
                                   {new Date(activity.date).toLocaleDateString()}
                                 </td>
@@ -2801,45 +2920,55 @@ export default function OrganizationDashboard() {
                                     Pending
                                   </span>
                                 </td>
-                                <td style={{ padding: '12px 16px' }}>
+                                <td style={{ padding: '12px 16px' }} onClick={(e) => e.stopPropagation()}>
                                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                                     <button
-                                      onClick={async () => {
-                                        try {
-                                          const response = await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ reviewerId: userId })
-                                          });
-                                          if (!response.ok) throw new Error('Failed to approve');
-                                          refetchPendingApprovals();
-                                          refetchDashboard();
-                                          toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
-                                        } catch (err) {
-                                          toast({ title: 'Error', description: 'Failed to approve hours', variant: 'destructive' });
-                                        }
+                                      onClick={() => handleApproveActivity(activity)}
+                                      disabled={processingActivityIds.has(activity.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: processingActivityIds.has(activity.id) ? '#86efac' : '#166534',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        cursor: processingActivityIds.has(activity.id) ? 'wait' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        opacity: processingActivityIds.has(activity.id) ? 0.7 : 1
                                       }}
-                                      style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                       title="Approve"
                                     >
-                                      <ThumbsUp size={12} /> Approve
+                                      {processingActivityIds.has(activity.id) ? (
+                                        <span style={{ animation: 'pulse 1s infinite' }}>Processing...</span>
+                                      ) : (
+                                        <><ThumbsUp size={12} /> Approve</>
+                                      )}
                                     </button>
                                     <button
-                                      onClick={async () => {
-                                        try {
-                                          const response = await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ reviewerId: userId })
-                                          });
-                                          if (!response.ok) throw new Error('Failed to reject');
-                                          refetchPendingApprovals();
-                                          toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
-                                        } catch (err) {
-                                          toast({ title: 'Error', description: 'Failed to reject hours', variant: 'destructive' });
-                                        }
+                                      onClick={() => {
+                                        setItemToReject({
+                                          id: activity.id,
+                                          type: 'hours',
+                                          name: activity.volunteerName || 'Unknown',
+                                          details: `${activity.hours} hours for ${activity.projectName || 'Unknown Project'}`
+                                        });
+                                        setRejectConfirmOpen(true);
                                       }}
-                                      style={{ padding: '6px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                                      disabled={processingActivityIds.has(activity.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#dc2626',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        cursor: processingActivityIds.has(activity.id) ? 'not-allowed' : 'pointer',
+                                        opacity: processingActivityIds.has(activity.id) ? 0.5 : 1
+                                      }}
                                       title="Reject"
                                     >
                                       <X size={12} />
@@ -2876,7 +3005,20 @@ export default function OrganizationDashboard() {
                           </thead>
                           <tbody>
                             {(pendingVerifications || []).map((impact: any, index: number) => (
-                              <tr key={`impact-${impact.id}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fffbeb', borderBottom: '1px solid #e5e7eb' }}>
+                              <tr
+                                key={`impact-${impact.id}`}
+                                style={{
+                                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#fffbeb',
+                                  borderBottom: '1px solid #e5e7eb',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                className="hover:bg-amber-50"
+                                onClick={() => {
+                                  setSelectedPendingItem({ type: 'impact', data: impact });
+                                  setPendingDetailOpen(true);
+                                }}
+                              >
                                 <td style={{ padding: '12px 16px', color: '#374151' }}>
                                   {new Date(impact.date || impact.createdAt).toLocaleDateString()}
                                 </td>
@@ -2901,45 +3043,55 @@ export default function OrganizationDashboard() {
                                     {impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
                                   </span>
                                 </td>
-                                <td style={{ padding: '12px 16px' }}>
+                                <td style={{ padding: '12px 16px' }} onClick={(e) => e.stopPropagation()}>
                                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                                     <button
-                                      onClick={async () => {
-                                        try {
-                                          const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ reviewerId: userId })
-                                          });
-                                          if (!response.ok) throw new Error('Failed to approve');
-                                          refetchPendingApprovals();
-                                          refetchDashboard();
-                                          toast({ title: 'KPI approved', description: `${impact.metricName || 'Impact'} has been approved and AIU recalculated.` });
-                                        } catch (err) {
-                                          toast({ title: 'Error', description: 'Failed to approve KPI', variant: 'destructive' });
-                                        }
+                                      onClick={() => handleApproveImpact(impact)}
+                                      disabled={processingImpactIds.has(impact.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: processingImpactIds.has(impact.id) ? '#86efac' : '#166534',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        cursor: processingImpactIds.has(impact.id) ? 'wait' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        opacity: processingImpactIds.has(impact.id) ? 0.7 : 1
                                       }}
-                                      style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                       title="Approve"
                                     >
-                                      <ThumbsUp size={12} /> Approve
+                                      {processingImpactIds.has(impact.id) ? (
+                                        <span style={{ animation: 'pulse 1s infinite' }}>Processing...</span>
+                                      ) : (
+                                        <><ThumbsUp size={12} /> Approve</>
+                                      )}
                                     </button>
                                     <button
-                                      onClick={async () => {
-                                        try {
-                                          const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ reviewerId: userId })
-                                          });
-                                          if (!response.ok) throw new Error('Failed to reject');
-                                          refetchPendingApprovals();
-                                          toast({ title: 'KPI rejected', description: 'The KPI record has been rejected.' });
-                                        } catch (err) {
-                                          toast({ title: 'Error', description: 'Failed to reject KPI', variant: 'destructive' });
-                                        }
+                                      onClick={() => {
+                                        setItemToReject({
+                                          id: impact.id,
+                                          type: 'impact',
+                                          name: impact.volunteerName || impact.userName || 'System',
+                                          details: `${impact.metricName || 'KPI'}: ${impact.value} ${impact.unit || ''} for ${impact.projectName || 'Unknown Project'}`
+                                        });
+                                        setRejectConfirmOpen(true);
                                       }}
-                                      style={{ padding: '6px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                                      disabled={processingImpactIds.has(impact.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#dc2626',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        cursor: processingImpactIds.has(impact.id) ? 'not-allowed' : 'pointer',
+                                        opacity: processingImpactIds.has(impact.id) ? 0.5 : 1
+                                      }}
                                       title="Reject"
                                     >
                                       <X size={12} />
@@ -3272,6 +3424,246 @@ export default function OrganizationDashboard() {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
+
+      {/* Pending Item Detail Modal */}
+      {pendingDetailOpen && selectedPendingItem && (
+        <div
+          className="fixed inset-0 z-[1002] flex items-center justify-center bg-black/50"
+          onClick={() => {
+            setPendingDetailOpen(false);
+            setSelectedPendingItem(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={`px-6 py-5 ${
+              selectedPendingItem.type === 'hours'
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-600'
+                : 'bg-gradient-to-r from-amber-500 to-orange-500'
+            } text-white`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {selectedPendingItem.type === 'hours' ? (
+                    <Clock size={24} />
+                  ) : (
+                    <Target size={24} />
+                  )}
+                  <h2 className="text-xl font-bold">
+                    {selectedPendingItem.type === 'hours' ? 'Volunteer Hours' : 'Impact / KPI'}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setPendingDetailOpen(false);
+                    setSelectedPendingItem(null);
+                  }}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm">
+                Pending Approval
+              </span>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[50vh]">
+              {selectedPendingItem.type === 'hours' ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Volunteer</p>
+                      <p className="font-semibold text-gray-900">{selectedPendingItem.data.volunteerName || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Hours</p>
+                      <p className="text-3xl font-bold text-blue-600">{selectedPendingItem.data.hours}h</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Project</p>
+                    <p className="font-semibold text-gray-900">{selectedPendingItem.data.projectName || 'Unknown Project'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Date Submitted</p>
+                    <p className="font-medium text-gray-700">{new Date(selectedPendingItem.data.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  {selectedPendingItem.data.description && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Description</p>
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedPendingItem.data.description}</p>
+                    </div>
+                  )}
+                  {selectedPendingItem.data.role && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Role</p>
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">{selectedPendingItem.data.role}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Metric Type</p>
+                      <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">{selectedPendingItem.data.metricName || 'KPI'}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Value</p>
+                      <p className="text-3xl font-bold text-amber-600">
+                        {selectedPendingItem.data.value} {selectedPendingItem.data.unit || ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Reported By</p>
+                    <p className="font-semibold text-gray-900">{selectedPendingItem.data.volunteerName || selectedPendingItem.data.userName || 'System'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Project</p>
+                    <p className="font-semibold text-gray-900">{selectedPendingItem.data.projectName || 'Unknown Project'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Date Submitted</p>
+                    <p className="font-medium text-gray-700">{new Date(selectedPendingItem.data.date || selectedPendingItem.data.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  {selectedPendingItem.data.notes && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Notes</p>
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedPendingItem.data.notes}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Verification Status</p>
+                    <span className="inline-block px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-sm">
+                      {selectedPendingItem.data.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending Verification'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-4 border-t bg-gray-50 flex gap-3">
+              <button
+                onClick={() => {
+                  if (selectedPendingItem.type === 'hours') {
+                    handleApproveActivity(selectedPendingItem.data);
+                  } else {
+                    handleApproveImpact(selectedPendingItem.data);
+                  }
+                  setPendingDetailOpen(false);
+                  setSelectedPendingItem(null);
+                }}
+                disabled={
+                  selectedPendingItem.type === 'hours'
+                    ? processingActivityIds.has(selectedPendingItem.data.id)
+                    : processingImpactIds.has(selectedPendingItem.data.id)
+                }
+                className="flex-1 py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ThumbsUp size={18} />
+                Approve
+              </button>
+              <button
+                onClick={() => {
+                  setPendingDetailOpen(false);
+                  setItemToReject({
+                    id: selectedPendingItem.data.id,
+                    type: selectedPendingItem.type,
+                    name: selectedPendingItem.data.volunteerName || selectedPendingItem.data.userName || 'Unknown',
+                    details: selectedPendingItem.type === 'hours'
+                      ? `${selectedPendingItem.data.hours} hours for ${selectedPendingItem.data.projectName || 'Unknown Project'}`
+                      : `${selectedPendingItem.data.metricName || 'KPI'}: ${selectedPendingItem.data.value} ${selectedPendingItem.data.unit || ''} for ${selectedPendingItem.data.projectName || 'Unknown Project'}`
+                  });
+                  setSelectedPendingItem(null);
+                  setRejectConfirmOpen(true);
+                }}
+                className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <X size={18} />
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Confirmation Modal */}
+      {rejectConfirmOpen && itemToReject && (
+        <div
+          className="fixed inset-0 z-[1003] flex items-center justify-center bg-black/50"
+          onClick={() => {
+            setRejectConfirmOpen(false);
+            setItemToReject(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <h2 className="text-xl font-bold text-red-600">Confirm Rejection</h2>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to reject this submission? This action cannot be undone.
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p className="font-semibold text-sm text-red-800">
+                  {itemToReject.type === 'hours' ? 'Volunteer Hours' : 'Impact/KPI'}
+                </p>
+                <p className="text-sm text-red-700 mt-1">
+                  <span className="font-medium">Submitted by:</span> {itemToReject.name}
+                </p>
+                <p className="text-sm text-red-700">
+                  <span className="font-medium">Details:</span> {itemToReject.details}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setRejectConfirmOpen(false);
+                    setItemToReject(null);
+                  }}
+                  className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (itemToReject.type === 'hours') {
+                      handleRejectActivity({ id: itemToReject.id });
+                    } else {
+                      handleRejectImpact({ id: itemToReject.id });
+                    }
+                    setRejectConfirmOpen(false);
+                    setItemToReject(null);
+                  }}
+                  disabled={
+                    itemToReject.type === 'hours'
+                      ? processingActivityIds.has(itemToReject.id)
+                      : processingImpactIds.has(itemToReject.id)
+                  }
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <X size={18} />
+                  {(itemToReject.type === 'hours' && processingActivityIds.has(itemToReject.id)) ||
+                   (itemToReject.type === 'impact' && processingImpactIds.has(itemToReject.id))
+                    ? 'Rejecting...' : 'Confirm Rejection'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -74,7 +74,10 @@
       "Bash(jq:*)",
       "Bash(sleep:*)",
       "Bash(npm test:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(apt list:*)",
+      "Bash(nix-env:*)",
+      "Bash(ssh-keygen:*)"
     ],
     "deny": [],
     "ask": []

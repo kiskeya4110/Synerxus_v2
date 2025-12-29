@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart } from "lucide-react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -1390,17 +1390,18 @@ export default function Dashboard() {
 
               <button
                 type="button"
-                onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                onClick={() => handleKPIClick("People Impacted", dashboardData?.totalPeopleImpacted || 0)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-rose-300 dark:hover:border-rose-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Projects</p>
-                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{kpis.activeProjects}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">Impacted</p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{dashboardData?.totalPeopleImpacted || 0}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">people reached</p>
                     </div>
-                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-                      <Briefcase className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="p-2 bg-rose-50 dark:bg-rose-900/30 rounded-lg">
+                      <Heart className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                     </div>
                   </div>
                 </div>

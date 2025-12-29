@@ -1093,20 +1093,20 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
             )}
 
-            {/* KPI Cards - Key metrics: Impact ROI, AIU Score, Hours, SDGs */}
+            {/* KPI Cards - Key metrics: Lives Impacted, AIU Score, Hours, SDGs */}
             <div className="px-4 grid grid-cols-4 gap-2">
-              {/* Impact ROI - Lives impacted per hour volunteered */}
+              {/* Lives Impacted - Total people reached */}
               <button
-                onClick={() => setShowKpiModal('impact-roi')}
+                onClick={() => setShowKpiModal('people')}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
-                data-testid="kpi-impact-roi"
+                data-testid="kpi-lives-impacted"
               >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-rose-100 to-pink-100 rounded-xl flex items-center justify-center">
+                  <Heart className="w-4 h-4 text-rose-600" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.impactROI}</div>
-                <div className="text-[10px] font-medium text-slate-500">Impact ROI</div>
-                <div className="text-[8px] text-slate-400">per hour</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.livesImpacted}</div>
+                <div className="text-[10px] font-medium text-slate-500">Impacted</div>
+                <div className="text-[8px] text-slate-400">people</div>
               </button>
               {/* AIU Score - Attributable Impact Units */}
               <button

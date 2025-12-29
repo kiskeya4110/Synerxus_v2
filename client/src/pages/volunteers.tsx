@@ -963,124 +963,154 @@ export default function Volunteers() {
             </p>
           </div>
 
-          {/* Pending Hours Section */}
+          {/* Pending Hours Table */}
           {pendingApprovals.pendingActivities.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <Clock className="h-5 w-5 text-blue-500" />
                 Volunteer Hours Awaiting Approval ({pendingApprovals.pendingActivities.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pendingApprovals.pendingActivities.map((activity: any) => (
-                  <Card key={activity.id} className="border-2 border-orange-200 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-900/10">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-bold">
-                              {activity.volunteerName?.charAt(0) || 'V'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-sm">{activity.volunteerName}</p>
-                            <p className="text-xs text-gray-500">{activity.projectName}</p>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-200 dark:border-blue-700">
+                      <th className="px-4 py-3 text-left font-semibold text-blue-800 dark:text-blue-200">Date</th>
+                      <th className="px-4 py-3 text-left font-semibold text-blue-800 dark:text-blue-200">Type</th>
+                      <th className="px-4 py-3 text-left font-semibold text-blue-800 dark:text-blue-200">Volunteer</th>
+                      <th className="px-4 py-3 text-left font-semibold text-blue-800 dark:text-blue-200">Project</th>
+                      <th className="px-4 py-3 text-center font-semibold text-blue-800 dark:text-blue-200">Hours</th>
+                      <th className="px-4 py-3 text-center font-semibold text-blue-800 dark:text-blue-200">Status</th>
+                      <th className="px-4 py-3 text-center font-semibold text-blue-800 dark:text-blue-200">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingApprovals.pendingActivities.map((activity: any, index: number) => (
+                      <tr key={activity.id} className={`border-b border-gray-100 dark:border-gray-800 ${index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                          {new Date(activity.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-semibold">
+                            <Clock className="h-3 w-3" /> Hours
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                          {activity.volunteerName || 'Unknown'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                          {activity.projectName || 'Unknown Project'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{activity.hours}h</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            Pending
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs"
+                              onClick={() => approveActivityMutation.mutate(activity.id)}
+                              disabled={approveActivityMutation.isPending}
+                            >
+                              <CheckCheck className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-8 px-3 text-xs"
+                              onClick={() => rejectActivityMutation.mutate(activity.id)}
+                              disabled={rejectActivityMutation.isPending}
+                            >
+                              <XCircle className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </div>
-                        <Badge className="bg-orange-500 text-white">
-                          {activity.hours}h
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                        {activity.description || 'No description provided'}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(activity.date).toLocaleDateString()}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => approveActivityMutation.mutate(activity.id)}
-                          disabled={approveActivityMutation.isPending}
-                        >
-                          <CheckCheck className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1"
-                          onClick={() => rejectActivityMutation.mutate(activity.id)}
-                          disabled={rejectActivityMutation.isPending}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
-          {/* Pending Impacts/KPIs Section */}
+          {/* Pending Impacts/KPIs Table */}
           {pendingApprovals.pendingImpacts.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <Target className="h-5 w-5 text-purple-500" />
                 Impact & KPIs Awaiting Approval ({pendingApprovals.pendingImpacts.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pendingApprovals.pendingImpacts.map((impact: any) => (
-                  <Card key={impact.id} className="border-2 border-purple-200 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-900/10">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                            <Target className="h-5 w-5 text-purple-600" />
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-amber-50 dark:bg-amber-900/20 border-b-2 border-amber-200 dark:border-amber-700">
+                      <th className="px-4 py-3 text-left font-semibold text-amber-800 dark:text-amber-200">Date</th>
+                      <th className="px-4 py-3 text-left font-semibold text-amber-800 dark:text-amber-200">KPI Type</th>
+                      <th className="px-4 py-3 text-left font-semibold text-amber-800 dark:text-amber-200">Reported By</th>
+                      <th className="px-4 py-3 text-left font-semibold text-amber-800 dark:text-amber-200">Project</th>
+                      <th className="px-4 py-3 text-center font-semibold text-amber-800 dark:text-amber-200">Value</th>
+                      <th className="px-4 py-3 text-center font-semibold text-amber-800 dark:text-amber-200">Status</th>
+                      <th className="px-4 py-3 text-center font-semibold text-amber-800 dark:text-amber-200">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingApprovals.pendingImpacts.map((impact: any, index: number) => (
+                      <tr key={impact.id} className={`border-b border-gray-100 dark:border-gray-800 ${index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-amber-50/50 dark:bg-amber-900/10'}`}>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                          {new Date(impact.date || impact.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded text-xs font-semibold">
+                            <Target className="h-3 w-3" /> {impact.metricName || 'KPI'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                          {impact.volunteerName || 'System'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                          {impact.projectName || 'Unknown Project'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="font-bold text-amber-600 dark:text-amber-400">
+                            {impact.value} {impact.unit || ''}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            {impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs"
+                              onClick={() => approveImpactMutation.mutate(impact.id)}
+                              disabled={approveImpactMutation.isPending}
+                            >
+                              <CheckCheck className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-8 px-3 text-xs"
+                              onClick={() => rejectImpactMutation.mutate(impact.id)}
+                              disabled={rejectImpactMutation.isPending}
+                            >
+                              <XCircle className="h-3 w-3" />
+                            </Button>
                           </div>
-                          <div>
-                            <p className="font-medium text-sm">{impact.metricName}</p>
-                            <p className="text-xs text-gray-500">{impact.projectName}</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-purple-500 text-white">
-                          {impact.value} {impact.unit || 'units'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Reported by: {impact.volunteerName}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(impact.date).toLocaleDateString()}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => approveImpactMutation.mutate(impact.id)}
-                          disabled={approveImpactMutation.isPending}
-                        >
-                          <CheckCheck className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1"
-                          onClick={() => rejectImpactMutation.mutate(impact.id)}
-                          disabled={rejectImpactMutation.isPending}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

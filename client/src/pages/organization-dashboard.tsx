@@ -2756,157 +2756,200 @@ export default function OrganizationDashboard() {
                     Review and verify volunteer hours and impact records. Verified records receive full credit.
                   </p>
 
-                  {/* Pending Volunteer Hours Section */}
+                  {/* Pending Volunteer Hours Table */}
                   {(pendingHours?.pendingActivities?.length || 0) > 0 && (
                     <div style={{ marginBottom: '24px' }}>
                       <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Clock size={18} />
                         Volunteer Hours ({pendingHours?.pendingActivities?.length})
                       </h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {(pendingHours?.pendingActivities || []).map((activity: any) => (
-                          <div key={`hours-${activity.id}`} style={{ padding: '16px', backgroundColor: '#dbeafe', borderRadius: '10px', border: '1px solid #93c5fd' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                              <div>
-                                <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{activity.volunteerName || 'Volunteer'}</p>
-                                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                                  {activity.projectName} • {new Date(activity.date).toLocaleDateString()}
-                                </p>
-                                {activity.description && (
-                                  <p style={{ fontSize: '12px', color: '#4b5563', margin: '4px 0 0 0', fontStyle: 'italic' }}>
-                                    "{activity.description}"
-                                  </p>
-                                )}
-                              </div>
-                              <span style={{ fontSize: '18px', fontWeight: '700', color: '#2563eb' }}>{activity.hours}h</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ reviewerId: userId })
-                                    });
-                                    refetchPendingHours();
-                                    refetchDashboard();
-                                    toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
-                                  } catch (err) {
-                                    toast({ title: 'Error', description: 'Failed to approve hours', variant: 'destructive' });
-                                  }
-                                }}
-                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                              >
-                                <ThumbsUp size={14} />
-                                Approve
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ reviewerId: userId })
-                                    });
-                                    refetchPendingHours();
-                                    toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
-                                  } catch (err) {
-                                    toast({ title: 'Error', description: 'Failed to reject hours', variant: 'destructive' });
-                                  }
-                                }}
-                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                              >
-                                Reject
-                              </button>
-                              <button
-                                onClick={() => navigate(`/projects/${activity.projectId}`)}
-                                style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                              >
-                                <Eye size={14} />
-                                View
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                      <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#dbeafe', borderBottom: '2px solid #93c5fd' }}>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#1e40af' }}>Date</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#1e40af' }}>Type</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#1e40af' }}>Volunteer</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#1e40af' }}>Project</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#1e40af' }}>Hours</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#1e40af' }}>Status</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#1e40af' }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(pendingHours?.pendingActivities || []).map((activity: any, index: number) => (
+                              <tr key={`hours-${activity.id}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                                <td style={{ padding: '12px 16px', color: '#374151' }}>
+                                  {new Date(activity.date).toLocaleDateString()}
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', backgroundColor: '#dbeafe', color: '#1d4ed8', borderRadius: '4px', fontSize: '11px', fontWeight: '600' }}>
+                                    <Clock size={12} /> Hours
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px', color: '#111827', fontWeight: '500' }}>
+                                  {activity.volunteerName || 'Unknown'}
+                                </td>
+                                <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                                  {activity.projectName || 'Unknown Project'}
+                                </td>
+                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                  <span style={{ fontWeight: '700', color: '#2563eb', fontSize: '14px' }}>{activity.hours}h</span>
+                                </td>
+                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                  <span style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                                    Pending
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ reviewerId: userId })
+                                          });
+                                          if (!response.ok) throw new Error('Failed to approve');
+                                          refetchPendingApprovals();
+                                          refetchDashboard();
+                                          toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
+                                        } catch (err) {
+                                          toast({ title: 'Error', description: 'Failed to approve hours', variant: 'destructive' });
+                                        }
+                                      }}
+                                      style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                      title="Approve"
+                                    >
+                                      <ThumbsUp size={12} /> Approve
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ reviewerId: userId })
+                                          });
+                                          if (!response.ok) throw new Error('Failed to reject');
+                                          refetchPendingApprovals();
+                                          toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
+                                        } catch (err) {
+                                          toast({ title: 'Error', description: 'Failed to reject hours', variant: 'destructive' });
+                                        }
+                                      }}
+                                      style={{ padding: '6px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                                      title="Reject"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
 
-                  {/* Pending Impact Records Section */}
+                  {/* Pending Impact/KPI Records Table */}
                   {(pendingVerifications?.length || 0) > 0 && (
                     <div>
                       <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#d97706', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Target size={18} />
-                        Impact Records ({pendingVerifications?.length})
+                        Impact & KPI Records ({pendingVerifications?.length})
                       </h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {(pendingVerifications || []).map((impact: any) => (
-                          <div key={`impact-${impact.id}`} style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                              <div>
-                                <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{impact.metricName || 'Impact Record'}</p>
-                                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                                  Submitted by: {impact.userName || 'Volunteer'} • {new Date(impact.date).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <span style={{ fontSize: '18px', fontWeight: '700', color: '#d97706' }}>{impact.value}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    // Use dedicated approve endpoint which sets status to 'approved' and recalculates AIU
-                                    const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ reviewerId: userId })
-                                    });
-                                    if (!response.ok) throw new Error('Failed to approve');
-                                    refetchVerifications();
-                                    refetchDashboard();
-                                    refetchPendingHours(); // Refresh all pending items
-                                    toast({ title: 'Impact approved', description: 'The impact record has been approved and AIU recalculated.' });
-                                  } catch (err) {
-                                    toast({ title: 'Error', description: 'Failed to approve impact', variant: 'destructive' });
-                                  }
-                                }}
-                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                              >
-                                <ThumbsUp size={14} />
-                                Approve
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    // Use dedicated reject endpoint which sets status to 'rejected' and recalculates AIU
-                                    const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ reviewerId: userId })
-                                    });
-                                    if (!response.ok) throw new Error('Failed to reject');
-                                    refetchVerifications();
-                                    refetchPendingHours(); // Refresh all pending items
-                                    toast({ title: 'Impact rejected', description: 'The impact record has been rejected.' });
-                                  } catch (err) {
-                                    toast({ title: 'Error', description: 'Failed to reject impact', variant: 'destructive' });
-                                  }
-                                }}
-                                style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                              >
-                                Reject
-                              </button>
-                              <button
-                                onClick={() => navigate(`/projects/${impact.projectId}`)}
-                                style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                              >
-                                <Eye size={14} />
-                                View
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                      <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#fef3c7', borderBottom: '2px solid #fde68a' }}>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#92400e' }}>Date</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#92400e' }}>KPI Type</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#92400e' }}>Reported By</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#92400e' }}>Project</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#92400e' }}>Value</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#92400e' }}>Status</th>
+                              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#92400e' }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(pendingVerifications || []).map((impact: any, index: number) => (
+                              <tr key={`impact-${impact.id}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fffbeb', borderBottom: '1px solid #e5e7eb' }}>
+                                <td style={{ padding: '12px 16px', color: '#374151' }}>
+                                  {new Date(impact.date || impact.createdAt).toLocaleDateString()}
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '4px', fontSize: '11px', fontWeight: '600' }}>
+                                    <Target size={12} /> {impact.metricName || 'KPI'}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px', color: '#111827', fontWeight: '500' }}>
+                                  {impact.volunteerName || impact.userName || 'System'}
+                                </td>
+                                <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                                  {impact.projectName || 'Unknown Project'}
+                                </td>
+                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                  <span style={{ fontWeight: '700', color: '#d97706', fontSize: '14px' }}>
+                                    {impact.value} {impact.unit || ''}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                  <span style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                                    {impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ reviewerId: userId })
+                                          });
+                                          if (!response.ok) throw new Error('Failed to approve');
+                                          refetchPendingApprovals();
+                                          refetchDashboard();
+                                          toast({ title: 'KPI approved', description: `${impact.metricName || 'Impact'} has been approved and AIU recalculated.` });
+                                        } catch (err) {
+                                          toast({ title: 'Error', description: 'Failed to approve KPI', variant: 'destructive' });
+                                        }
+                                      }}
+                                      style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                      title="Approve"
+                                    >
+                                      <ThumbsUp size={12} /> Approve
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ reviewerId: userId })
+                                          });
+                                          if (!response.ok) throw new Error('Failed to reject');
+                                          refetchPendingApprovals();
+                                          toast({ title: 'KPI rejected', description: 'The KPI record has been rejected.' });
+                                        } catch (err) {
+                                          toast({ title: 'Error', description: 'Failed to reject KPI', variant: 'destructive' });
+                                        }
+                                      }}
+                                      style={{ padding: '6px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                                      title="Reject"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}

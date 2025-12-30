@@ -11,6 +11,7 @@ import {
   MapPin,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   X,
   Bell,
   Settings,
@@ -184,6 +185,7 @@ export default function OrganizationDashboardPWA() {
   const [showSdgCoverageModal, setShowSdgCoverageModal] = useState(false);
   const [selectedSdgGoal, setSelectedSdgGoal] = useState<number | null>(null);
   const [sdgViewMode, setSdgViewMode] = useState<'chart' | 'cards'>('cards');
+  const [showAllSdgs, setShowAllSdgs] = useState(false);
   const [showVolunteerProfileModal, setShowVolunteerProfileModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<OrganizationVolunteer | null>(null);
   const aiuModalRef = useRef<HTMLDivElement>(null);
@@ -985,10 +987,10 @@ export default function OrganizationDashboardPWA() {
                 </button>
               </div>
 
-              {/* Cards View - Top 4 SDGs */}
+              {/* Cards View - SDGs (expandable) */}
               {sdgViewMode === 'cards' && (
                 <div className="space-y-2">
-                  {dashboardData.sdgDistribution.slice(0, 4).map((sdg, index) => {
+                  {(showAllSdgs ? dashboardData.sdgDistribution : dashboardData.sdgDistribution.slice(0, 4)).map((sdg, index) => {
                     // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
                     const actualTotalHours = metrics.totalHours || 1;
                     const percentage = actualTotalHours > 0 ? Math.round((sdg.hours / actualTotalHours) * 100) : 0;
@@ -1067,10 +1069,14 @@ export default function OrganizationDashboardPWA() {
 
                   {dashboardData.sdgDistribution.length > 4 && (
                     <button
-                      onClick={() => navigate('/sdg-mapping')}
-                      className="w-full py-2.5 text-center text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 rounded-xl transition-colors"
+                      onClick={() => setShowAllSdgs(!showAllSdgs)}
+                      className="w-full py-2.5 text-center text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 rounded-xl transition-colors flex items-center justify-center gap-1"
                     >
-                      View All {dashboardData.sdgDistribution.length} SDGs →
+                      {showAllSdgs ? (
+                        <>Show Less <ChevronUp className="w-3.5 h-3.5" /></>
+                      ) : (
+                        <>View All {dashboardData.sdgDistribution.length} SDGs <ChevronDown className="w-3.5 h-3.5" /></>
+                      )}
                     </button>
                   )}
                 </div>
@@ -1652,40 +1658,64 @@ export default function OrganizationDashboardPWA() {
 
                 return (
                   <div className="space-y-4">
-                    {/* Stats Grid */}
+                    {/* Stats Grid - Interactive */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
-                      <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+                      <button
+                        onClick={() => {
+                          setSelectedSdgGoal(null);
+                          navigate('/organization-impact-report');
+                        }}
+                        className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100 hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
+                      >
                         <Clock className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
                         <p className="text-lg font-bold text-emerald-700">
                           {sdgData?.hours?.toLocaleString() || 0}
                         </p>
                         <p className="text-[10px] text-emerald-600 font-medium">Contributing Hours</p>
                         <p className="text-[8px] text-slate-400 mt-0.5">from projects involving this SDG</p>
-                      </div>
-                      <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSdgGoal(null);
+                          navigate('/organization-impact-report');
+                        }}
+                        className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
+                      >
                         <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
                         <p className="text-lg font-bold text-blue-700">
                           {Math.round(sdgData?.dedicatedHours || 0)}
                         </p>
                         <p className="text-[10px] text-blue-600 font-medium">Dedicated Hours</p>
                         <p className="text-[8px] text-slate-400 mt-0.5">proportionally allocated</p>
-                      </div>
+                      </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-50 rounded-xl p-3 text-center">
+                      <button
+                        onClick={() => {
+                          setSelectedSdgGoal(null);
+                          navigate('/projects');
+                        }}
+                        className="bg-slate-50 rounded-xl p-3 text-center hover:bg-slate-100 hover:shadow-sm transition-all active:scale-[0.98]"
+                      >
                         <FolderOpen className="w-5 h-5 mx-auto text-slate-400 mb-1" />
                         <p className="text-lg font-bold text-slate-800">
                           {sdgData?.projects || 0}
                         </p>
                         <p className="text-[10px] text-slate-500">Projects</p>
-                      </div>
-                      <div className="bg-slate-50 rounded-xl p-3 text-center">
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSdgGoal(null);
+                          navigate('/organization-team');
+                        }}
+                        className="bg-slate-50 rounded-xl p-3 text-center hover:bg-slate-100 hover:shadow-sm transition-all active:scale-[0.98]"
+                      >
                         <Users className="w-5 h-5 mx-auto text-slate-400 mb-1" />
                         <p className="text-lg font-bold text-slate-800">
                           {sdgData?.volunteers || 0}
                         </p>
                         <p className="text-[10px] text-slate-500">Volunteers</p>
-                      </div>
+                      </button>
                     </div>
 
                     {/* Contribution Progress */}

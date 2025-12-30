@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -137,6 +140,7 @@ export default function OrganizationImpactReport() {
   >("all");
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
+  const isMobile = useIsMobile();
 
   // Get the current userId from localStorage for cache key
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -781,6 +785,169 @@ export default function OrganizationImpactReport() {
     );
   }
 
+  // PWA Mobile Layout
+  if (isMobile && currentUser?.userType === 'organization') {
+    return (
+      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
+        <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+          <OrganizationPWAHeader />
+          <main className="flex-1 overflow-y-auto pb-20">
+            <div className="p-4 relative z-10">
+              {/* Back Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/organization-dashboard/pwa")}
+                className="mb-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+
+              {/* Page Title */}
+              <h1 className="text-xl font-bold text-slate-800 mb-4">Impact Report</h1>
+
+              {/* Time Filter */}
+              <div className="mb-4">
+                <Select
+                  value={timeFilter}
+                  onValueChange={(value: any) => setTimeFilter(value)}
+                >
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="quarter">This Quarter</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Key Metrics Cards */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
+                  <CardContent className="p-3 text-center">
+                    <Users className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
+                    <p className="text-lg font-bold text-emerald-700">{beneficiariesServed.toLocaleString()}</p>
+                    <p className="text-[10px] text-emerald-600">People Impacted</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+                  <CardContent className="p-3 text-center">
+                    <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+                    <p className="text-lg font-bold text-blue-700">{totalHours.toLocaleString()}</p>
+                    <p className="text-[10px] text-blue-600">Volunteer Hours</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
+                  <CardContent className="p-3 text-center">
+                    <DollarSign className="w-5 h-5 mx-auto text-purple-500 mb-1" />
+                    <p className="text-lg font-bold text-purple-700">${estimatedVolunteerValue.toLocaleString()}</p>
+                    <p className="text-[10px] text-purple-600">Economic Value</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100">
+                  <CardContent className="p-3 text-center">
+                    <Target className="w-5 h-5 mx-auto text-amber-500 mb-1" />
+                    <p className="text-lg font-bold text-amber-700">{programDistribution.length}</p>
+                    <p className="text-[10px] text-amber-600">SDGs Addressed</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* SDG Wheel */}
+              <Card className="mb-4">
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-semibold mb-3">SDG Coverage</h3>
+                  <div className="flex justify-center">
+                    <SDGCircularWheel scale={0.8} />
+                  </div>
+                  {/* Top SDGs List */}
+                  <div className="mt-3 space-y-2">
+                    {programDistribution.slice(0, 4).map((sdg) => (
+                      <div key={sdg.sdg} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded flex items-center justify-center text-white text-[8px] font-bold"
+                            style={{ backgroundColor: sdg.color }}
+                          >
+                            {sdg.sdg}
+                          </div>
+                          <span className="text-slate-600 truncate max-w-[120px]">{sdg.name}</span>
+                        </div>
+                        <span className="font-medium text-slate-800">{sdg.value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Volunteer Stats */}
+              <Card className="mb-4">
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-semibold mb-3">Volunteer Engagement</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-600">Active Volunteers</span>
+                      <span className="font-bold text-slate-800">{activeVolunteers}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-600">Active Projects</span>
+                      <span className="font-bold text-slate-800">{projects.filter((p: any) => p.status?.toLowerCase() === 'active').length}</span>
+                    </div>
+                    {leaderData && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <p className="text-xs text-slate-500 mb-2">Top Contributor</p>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={leaderData.avatar} />
+                            <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700">
+                              {leaderData.name?.charAt(0) || 'V'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">{leaderData.name}</p>
+                            <p className="text-[10px] text-slate-500">{leaderData.hours} hours</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="flex-1"
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadPDF}
+                  className="flex-1"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  PDF
+                </Button>
+              </div>
+            </div>
+          </main>
+          <OrganizationPWANav />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Layout
   return (
     <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
       <OrganizationHeader activeTab="reports" />

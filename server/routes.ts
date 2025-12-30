@@ -4668,22 +4668,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiuEarned = Math.round((totalHours / 5) * sdgMultiplier * 100) / 100;
       }
 
-      // SDG Distribution
-      const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};
+      // SDG Distribution - track both contributing hours (full) and dedicated hours (proportional)
+      const sdgDistribution: Record<number, { hours: number; dedicatedHours: number; projects: number; volunteers: number }> = {};
       organizationProjects.forEach(project => {
-        if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
           const projectHours = organizationActivities
             .filter(a => a.projectId === project.id)
             .reduce((sum, a) => sum + a.hours, 0);
           const projectVolunteers = organizationAssignments
             .filter(pa => pa.projectId === project.id)
             .map(pa => pa.volunteerId);
-          
+
+          // Proportional hours = project hours divided by number of SDGs
+          const dedicatedHoursPerSdg = projectHours / project.sdgGoals.length;
+
           project.sdgGoals.forEach(goal => {
             if (!sdgDistribution[goal]) {
-              sdgDistribution[goal] = { hours: 0, projects: 0, volunteers: 0 };
+              sdgDistribution[goal] = { hours: 0, dedicatedHours: 0, projects: 0, volunteers: 0 };
             }
-            sdgDistribution[goal].hours += projectHours;
+            sdgDistribution[goal].hours += projectHours; // Full attribution (contributing hours)
+            sdgDistribution[goal].dedicatedHours += dedicatedHoursPerSdg; // Proportional (dedicated hours)
             sdgDistribution[goal].projects += 1;
             sdgDistribution[goal].volunteers += projectVolunteers.length;
           });
@@ -4830,7 +4834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({
           goal: parseInt(goal),
           ...data,
-        })).sort((a, b) => a.goal - b.goal),
+        })).sort((a, b) => b.hours - a.hours), // Sort by hours descending so top-performing SDGs are first
         projectLocations,
         alerts,
         impactOverTime,
@@ -6902,14 +6906,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         trend: data.hours > 50 ? "increasing" : data.hours > 20 ? "stable" : "decreasing" as "increasing" | "stable" | "decreasing",
       }));
 
-      // SDG Metrics
+      // SDG Metrics - sorted by hours descending so top-performing SDGs are first
       const sdgMetrics = Array.from(sdgActivities.entries()).map(([sdg, data]) => ({
         sdg,
         volunteers: data.volunteers.size,
         hours: data.hours,
         projects: data.projects.size,
         impactScore: Math.min(100, Math.round((data.volunteers.size * 10 + data.hours / 10) * 0.8)),
-      }));
+      })).sort((a, b) => b.hours - a.hours);
 
       // ML Insights
       const mlInsights = [
@@ -7398,7 +7402,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
 
-      // Convert to final format with detailed employee and project info
+      // Convert to final format with detailed employee and project info - sorted by totalHours descending so top-performing SDGs are first
       const sdgMetrics = Object.values(orgwideSDGMetrics).map((m: any) => ({
         sdg: m.sdg,
         totalHours: m.totalHours,
@@ -7406,7 +7410,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         projectsContributed: m.projectCount.size,
         employees: m.employeeDetails.sort((a: any, b: any) => b.hours - a.hours),
         projects: m.projectDetails.sort((a: any, b: any) => b.hours - a.hours)
-      }));
+      })).sort((a, b) => b.totalHours - a.totalHours);
 
       // SDG Progress - calculate actual average project completion per SDG
       const sdgProgress: Record<number, any> = {};

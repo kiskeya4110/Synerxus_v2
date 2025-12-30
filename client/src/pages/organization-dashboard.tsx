@@ -122,7 +122,7 @@ interface DashboardData {
     aiuEarned: number; // Replaced livesTouched with AIU
     activeVolunteers: number;
   };
-  sdgDistribution: Array<{ goal: number; hours: number; projects: number; volunteers: number }>;
+  sdgDistribution: Array<{ goal: number; hours: number; dedicatedHours: number; projects: number; volunteers: number }>;
   projectLocations: Array<{ id: number; name: string; location: string; status: string; sdgGoals: number[] }>;
   alerts: Array<{ id: string; type: string; title: string; message: string; severity: string }>;
   impactOverTime: Array<{ month: string; hours: number; peopleImpacted: number; volunteers: number }>;
@@ -542,9 +542,10 @@ export default function OrganizationDashboard() {
     aiuEarned: calculatedAiu
   }), [rawMetrics, calculatedAiu]);
 
+  // Use actual volunteer hours for SDG percentage calculations (not inflated sum from multi-SDG projects)
   const sdgTotalHours = useMemo(() =>
-    dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0,
-    [dashboardData?.sdgDistribution]
+    rawMetrics.totalHours || dashboardData?.keyMetrics?.totalHours || 0,
+    [rawMetrics.totalHours, dashboardData?.keyMetrics?.totalHours]
   );
 
   const avgProjectCompletion = useMemo(() =>
@@ -1039,9 +1040,9 @@ export default function OrganizationDashboard() {
                 </div>
                 <div style={{ padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center' }}>
                   <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
-                    {dashboardData.sdgDistribution.reduce((sum: number, s: any) => sum + (s.hours || 0), 0).toLocaleString()}
+                    {metrics.totalHours.toLocaleString()}
                   </p>
-                  <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Total Hours</p>
+                  <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Volunteer Hours</p>
                 </div>
                 <div style={{ padding: '8px', backgroundColor: '#faf5ff', borderRadius: '8px', textAlign: 'center' }}>
                   <p style={{ fontSize: '16px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
@@ -1050,11 +1051,12 @@ export default function OrganizationDashboard() {
                   <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Projects</p>
                 </div>
               </div>
-              {/* Top SDGs List */}
+              {/* Top SDGs List - sorted by hours to show best performing first */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {dashboardData.sdgDistribution.slice(0, 4).map((sdg: any, idx: number) => {
-                  const totalHours = dashboardData.sdgDistribution.reduce((sum: number, s: any) => sum + (s.hours || 0), 0);
-                  const percent = totalHours > 0 ? Math.round((sdg.hours / totalHours) * 100) : 0;
+                {[...dashboardData.sdgDistribution].sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0)).slice(0, 4).map((sdg: any, idx: number) => {
+                  // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
+                  const actualTotalHours = metrics.totalHours || 1;
+                  const percent = actualTotalHours > 0 ? Math.round((sdg.hours / actualTotalHours) * 100) : 0;
                   return (
                     <button
                       key={sdg.goal}
@@ -1086,8 +1088,11 @@ export default function OrganizationDashboard() {
                         <p style={{ fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {getSDGName(sdg.goal)}
                         </p>
-                        <p style={{ fontSize: '10px', color: '#6b7280', margin: '2px 0 0 0' }}>
-                          {sdg.hours?.toLocaleString() || 0}h • {sdg.projects || 0} projects
+                        <p style={{ fontSize: '10px', color: '#059669', margin: '2px 0 0 0' }} title="Hours from projects involving this SDG">
+                          {sdg.hours?.toLocaleString() || 0}h contributing
+                        </p>
+                        <p style={{ fontSize: '9px', color: '#6b7280', margin: '1px 0 0 0' }} title="Hours proportionally dedicated to this SDG">
+                          {Math.round(sdg.dedicatedHours || 0)}h dedicated • {sdg.projects || 0} projects
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -1806,8 +1811,9 @@ export default function OrganizationDashboard() {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               const sdgInfo = SDG_GOALS[data.goal];
-                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                              const percent = formatDecimal((data.hours / total) * 100);
+                              // Use actual volunteer hours as denominator
+                              const actualTotal = metrics.totalHours || 1;
+                              const percent = formatDecimal((data.hours / actualTotal) * 100);
                               return (
                                 <div style={{ 
                                   backgroundColor: 'white', 
@@ -1873,8 +1879,9 @@ export default function OrganizationDashboard() {
                           formatter={(value, entry: any) => {
                             const sdg = entry.payload;
                             const sdgInfo = SDG_GOALS[sdg.goal];
-                            const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                            const percent = total > 0 ? Math.round((sdg.hours / total) * 100) : 0;
+                            // Use actual volunteer hours as denominator
+                            const actualTotal = metrics.totalHours || 1;
+                            const percent = actualTotal > 0 ? Math.round((sdg.hours / actualTotal) * 100) : 0;
                             return (
                               <span 
                                 style={{ 

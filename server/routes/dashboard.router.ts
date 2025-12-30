@@ -199,10 +199,10 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       totalAiuEarned = Math.round((totalHours / 50) * sdgMultiplier * 100) / 100;
     }
 
-    // SDG Distribution
-    const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};
+    // SDG Distribution - track both contributing hours (full) and dedicated hours (proportional)
+    const sdgDistribution: Record<number, { hours: number; dedicatedHours: number; projects: number; volunteers: number }> = {};
     organizationProjects.forEach(project => {
-      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
         const projectHours = organizationActivities
           .filter(a => a.projectId === project.id)
           .reduce((sum, a) => sum + a.hours, 0);
@@ -210,11 +210,15 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           .filter(pa => pa.projectId === project.id)
           .map(pa => pa.volunteerId);
 
+        // Proportional hours = project hours divided by number of SDGs
+        const dedicatedHoursPerSdg = projectHours / project.sdgGoals.length;
+
         project.sdgGoals.forEach(goal => {
           if (!sdgDistribution[goal]) {
-            sdgDistribution[goal] = { hours: 0, projects: 0, volunteers: 0 };
+            sdgDistribution[goal] = { hours: 0, dedicatedHours: 0, projects: 0, volunteers: 0 };
           }
-          sdgDistribution[goal].hours += projectHours;
+          sdgDistribution[goal].hours += projectHours; // Full attribution (contributing hours)
+          sdgDistribution[goal].dedicatedHours += dedicatedHoursPerSdg; // Proportional (dedicated hours)
           sdgDistribution[goal].projects += 1;
           sdgDistribution[goal].volunteers += projectVolunteers.length;
         });
@@ -360,7 +364,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({
         goal: parseInt(goal),
         ...data,
-      })).sort((a, b) => a.goal - b.goal),
+      })).sort((a, b) => b.hours - a.hours), // Sort by hours descending so top-performing SDGs are first
       projectLocations,
       alerts,
       impactOverTime,

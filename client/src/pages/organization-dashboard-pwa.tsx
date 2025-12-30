@@ -83,7 +83,7 @@ interface DashboardData {
     livesTouched?: number;
     peopleImpacted?: number;
   };
-  sdgDistribution: Array<{ goal: number; hours: number; projects: number; volunteers: number }>;
+  sdgDistribution: Array<{ goal: number; hours: number; dedicatedHours: number; projects: number; volunteers: number }>;
   projectLocations: Array<{ id: number; name: string; location: string; status: string; sdgGoals: number[] }>;
   impactOverTime: Array<{ month: string; hours: number; peopleImpacted: number; volunteers: number }>;
   projects: Array<{ id: number; name: string; status: string; completionPercentage: number; sdgGoals: number[]; aiuEarned?: number }>;
@@ -964,11 +964,11 @@ export default function OrganizationDashboardPWA() {
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[10px] text-slate-500 font-medium">Total Hours</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Volunteer Hours</p>
                     <ChevronRight className="w-3 h-3 text-emerald-400" />
                   </div>
                   <p className="text-lg font-bold text-emerald-600">
-                    {dashboardData.sdgDistribution.reduce((sum, s) => sum + (s.hours || 0), 0).toLocaleString()}
+                    {metrics.totalHours.toLocaleString()}
                   </p>
                 </button>
                 <button
@@ -989,8 +989,9 @@ export default function OrganizationDashboardPWA() {
               {sdgViewMode === 'cards' && (
                 <div className="space-y-2">
                   {dashboardData.sdgDistribution.slice(0, 4).map((sdg, index) => {
-                    const totalHours = dashboardData.sdgDistribution.reduce((sum, s) => sum + (s.hours || 0), 0);
-                    const percentage = totalHours > 0 ? Math.round((sdg.hours / totalHours) * 100) : 0;
+                    // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
+                    const actualTotalHours = metrics.totalHours || 1;
+                    const percentage = actualTotalHours > 0 ? Math.round((sdg.hours / actualTotalHours) * 100) : 0;
                     const isTopSDG = index === 0;
 
                     return (
@@ -1023,15 +1024,23 @@ export default function OrganizationDashboardPWA() {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[10px] text-slate-500">
-                              <Clock className="w-3 h-3 inline mr-0.5" />
-                              {sdg.hours?.toLocaleString() || 0}h
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              <FolderOpen className="w-3 h-3 inline mr-0.5" />
-                              {sdg.projects || 0}
-                            </span>
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-emerald-600 font-medium" title="Hours from projects involving this SDG">
+                                <Clock className="w-3 h-3 inline mr-0.5" />
+                                {sdg.hours?.toLocaleString() || 0}h contributing
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-500" title="Hours proportionally dedicated to this SDG">
+                                {Math.round(sdg.dedicatedHours || 0)}h dedicated
+                              </span>
+                              <span className="text-[10px] text-slate-400">•</span>
+                              <span className="text-[10px] text-slate-500">
+                                <FolderOpen className="w-3 h-3 inline mr-0.5" />
+                                {sdg.projects || 0}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -1637,20 +1646,32 @@ export default function OrganizationDashboardPWA() {
             <div className="p-4 overflow-y-auto max-h-[60vh]">
               {(() => {
                 const sdgData = dashboardData?.sdgDistribution?.find(s => s.goal === selectedSdgGoal);
-                const totalHours = dashboardData?.sdgDistribution?.reduce((sum, s) => sum + (s.hours || 0), 0) || 0;
-                const percentage = totalHours > 0 ? Math.round(((sdgData?.hours || 0) / totalHours) * 100) : 0;
+                // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
+                const actualTotalHours = metrics.totalHours || 1;
+                const percentage = actualTotalHours > 0 ? Math.round(((sdgData?.hours || 0) / actualTotalHours) * 100) : 0;
 
                 return (
                   <div className="space-y-4">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-50 rounded-xl p-3 text-center">
-                        <Clock className="w-5 h-5 mx-auto text-slate-400 mb-1" />
-                        <p className="text-lg font-bold text-slate-800">
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+                        <Clock className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
+                        <p className="text-lg font-bold text-emerald-700">
                           {sdgData?.hours?.toLocaleString() || 0}
                         </p>
-                        <p className="text-[10px] text-slate-500">Hours</p>
+                        <p className="text-[10px] text-emerald-600 font-medium">Contributing Hours</p>
+                        <p className="text-[8px] text-slate-400 mt-0.5">from projects involving this SDG</p>
                       </div>
+                      <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                        <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+                        <p className="text-lg font-bold text-blue-700">
+                          {Math.round(sdgData?.dedicatedHours || 0)}
+                        </p>
+                        <p className="text-[10px] text-blue-600 font-medium">Dedicated Hours</p>
+                        <p className="text-[8px] text-slate-400 mt-0.5">proportionally allocated</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-50 rounded-xl p-3 text-center">
                         <FolderOpen className="w-5 h-5 mx-auto text-slate-400 mb-1" />
                         <p className="text-lg font-bold text-slate-800">
@@ -1670,22 +1691,22 @@ export default function OrganizationDashboardPWA() {
                     {/* Contribution Progress */}
                     <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-slate-700">Contribution Share</p>
+                        <p className="text-xs font-medium text-slate-700">Focus Share (Dedicated)</p>
                         <p className="text-sm font-bold" style={{ color: getSDGColor(selectedSdgGoal) }}>
-                          {percentage}%
+                          {actualTotalHours > 0 ? Math.round(((sdgData?.dedicatedHours || 0) / actualTotalHours) * 100) : 0}%
                         </p>
                       </div>
                       <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{
-                            width: `${percentage}%`,
+                            width: `${actualTotalHours > 0 ? Math.round(((sdgData?.dedicatedHours || 0) / actualTotalHours) * 100) : 0}%`,
                             backgroundColor: getSDGColor(selectedSdgGoal)
                           }}
                         />
                       </div>
                       <p className="text-[10px] text-slate-500 mt-2">
-                        {sdgData?.hours?.toLocaleString() || 0} of {totalHours.toLocaleString()} total hours across all SDGs
+                        {Math.round(sdgData?.dedicatedHours || 0)} dedicated hours of {actualTotalHours.toLocaleString()} total volunteer hours
                       </p>
                     </div>
 

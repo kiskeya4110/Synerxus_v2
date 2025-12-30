@@ -494,14 +494,14 @@ gamificationRouter.get("/team-overview", async (req: Request, res: Response) => 
       trend: data.hours > 50 ? "increasing" : data.hours > 20 ? "stable" : "decreasing" as "increasing" | "stable" | "decreasing",
     }));
 
-    // SDG Metrics
+    // SDG Metrics - sorted by hours descending so top-performing SDGs are first
     const sdgMetrics = Array.from(sdgActivities.entries()).map(([sdg, data]) => ({
       sdg,
       volunteers: data.volunteers.size,
       hours: data.hours,
       projects: data.projects.size,
       impactScore: Math.min(100, Math.round((data.volunteers.size * 10 + data.hours / 10) * 0.8)),
-    }));
+    })).sort((a, b) => b.hours - a.hours);
 
     // ML Insights
     const mlInsights = [

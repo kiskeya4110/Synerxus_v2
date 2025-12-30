@@ -82,7 +82,7 @@ export default function OrganizationLeaderboard() {
 
     // Auto-import volunteers from dashboard if no leaderboard data
     if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
-      return dashboardData.volunteerSummaries.map((v: any): LeaderboardEntry => ({
+      const mapped = dashboardData.volunteerSummaries.map((v: any): LeaderboardEntry => ({
         userId: v.id,
         displayName: v.name || `Volunteer ${v.id}`,
         totalHours: v.hours || 0,
@@ -94,9 +94,17 @@ export default function OrganizationLeaderboard() {
         totalPoints: Math.round((v.hours || 0) * 10),
         badgesEarned: 0,
       }));
+      // Sort by selected leaderboard type so top performers are first
+      return mapped.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+        if (leaderboardType === "hours") return b.totalHours - a.totalHours;
+        if (leaderboardType === "impacts") return b.impactsLogged - a.impactsLogged;
+        if (leaderboardType === "tasks") return b.tasksCompleted - a.tasksCompleted;
+        if (leaderboardType === "points") return b.totalPoints - a.totalPoints;
+        return b.weeklyStreak - a.weeklyStreak;
+      });
     }
     return [];
-  }, [leaderboardData, dashboardData]);
+  }, [leaderboardData, dashboardData, leaderboardType]);
 
   // Calculate aggregate stats using merged data
   const stats = useMemo(() => {

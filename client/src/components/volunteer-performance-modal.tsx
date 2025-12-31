@@ -207,12 +207,11 @@ export function VolunteerPerformanceModal({
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-5'} mb-6`}>
+              <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} mb-6`}>
                 <TabsTrigger value="overview" className={isMobile ? 'text-xs' : ''}>Overview</TabsTrigger>
                 <TabsTrigger value="insights" className={isMobile ? 'text-xs' : ''}>Insights</TabsTrigger>
                 {!isMobile && <TabsTrigger value="activity">Activity</TabsTrigger>}
                 {!isMobile && <TabsTrigger value="sdg">SDG Impact</TabsTrigger>}
-                {!isMobile && <TabsTrigger value="trends">Trends</TabsTrigger>}
               </TabsList>
 
               {/* Overview Tab - Industry Standard KPIs */}
@@ -529,6 +528,75 @@ export function VolunteerPerformanceModal({
 
               {/* SDG Impact Tab */}
               <TabsContent value="sdg" className="space-y-6">
+                {/* SDG Summary Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <Card className="border-l-4 border-l-purple-500">
+                    <CardContent className="pt-4">
+                      <Target className="h-5 w-5 text-purple-600 mb-2" />
+                      <p className="text-2xl font-bold">{data.sdgContributions?.length || 0}</p>
+                      <p className="text-xs text-muted-foreground">SDGs Addressed</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-l-4 border-l-blue-500">
+                    <CardContent className="pt-4">
+                      <Clock className="h-5 w-5 text-blue-600 mb-2" />
+                      <p className="text-2xl font-bold">
+                        {data.sdgContributions?.reduce((sum: number, s: any) => sum + (s.hours || 0), 0) || 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">SDG Hours</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-l-4 border-l-green-500">
+                    <CardContent className="pt-4">
+                      <CheckCircle className="h-5 w-5 text-green-600 mb-2" />
+                      <p className="text-2xl font-bold">
+                        {data.sdgContributions?.reduce((sum: number, s: any) => sum + (s.tasks || 0), 0) || 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">SDG Tasks</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* SDG Distribution Chart */}
+                {data.sdgContributions && data.sdgContributions.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <PieChart className="h-5 w-5" />
+                        SDG Distribution
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">Hours contributed by SDG goal</p>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <RechartsPieChart>
+                          <Pie
+                            data={data.sdgContributions.map((sdg: any) => ({
+                              name: `SDG ${sdg.goal}`,
+                              value: sdg.hours || 0,
+                              goal: sdg.goal,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            labelLine={{ stroke: '#6b7280', strokeWidth: 1 }}
+                          >
+                            {data.sdgContributions.map((sdg: any, index: number) => (
+                              <Cell key={`cell-${index}`} fill={getSDGColor(sdg.goal)} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => [`${value} hours`, 'Hours']} />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* SDG Details List */}
                 <Card>
                   <CardHeader>
                     <CardTitle>SDG Contributions</CardTitle>
@@ -536,66 +604,45 @@ export function VolunteerPerformanceModal({
                   <CardContent>
                     {data.sdgContributions && data.sdgContributions.length > 0 ? (
                       <div className="space-y-3">
-                        {data.sdgContributions.map((sdg: any) => (
-                          <div
-                            key={sdg.goal}
-                            className="flex items-center justify-between p-4 rounded-lg border"
-                            style={{ borderLeftWidth: "4px", borderLeftColor: getSDGColor(sdg.goal) }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                                style={{ backgroundColor: getSDGColor(sdg.goal) }}
-                              >
-                                {sdg.goal}
+                        {data.sdgContributions.map((sdg: any) => {
+                          const totalSDGHours = data.sdgContributions.reduce((sum: number, s: any) => sum + (s.hours || 0), 0);
+                          const percentage = totalSDGHours > 0 ? ((sdg.hours || 0) / totalSDGHours * 100).toFixed(1) : 0;
+                          return (
+                            <div
+                              key={sdg.goal}
+                              className="p-4 rounded-lg border"
+                              style={{ borderLeftWidth: "4px", borderLeftColor: getSDGColor(sdg.goal) }}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                                    style={{ backgroundColor: getSDGColor(sdg.goal) }}
+                                  >
+                                    {sdg.goal}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{getSDGName(sdg.goal)}</p>
+                                    <p className="text-xs text-muted-foreground">{sdg.hours || 0} hours • {sdg.tasks || 0} tasks</p>
+                                  </div>
+                                </div>
+                                <Badge variant="secondary">{percentage}%</Badge>
                               </div>
-                              <div>
-                                <p className="font-medium">{getSDGName(sdg.goal)}</p>
-                                <p className="text-sm text-muted-foreground">{sdg.hours} hours contributed</p>
+                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{ width: `${percentage}%`, backgroundColor: getSDGColor(sdg.goal) }}
+                                />
                               </div>
                             </div>
-                            <Badge>{sdg.tasks} tasks</Badge>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-muted-foreground">No SDG contributions yet</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Trends Tab */}
-              <TabsContent value="trends" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hours Worked Over Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {data.hoursOverTime && data.hoursOverTime.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={data.hoursOverTime}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="hours"
-                            stroke="#8b5cf6"
-                            strokeWidth={2}
-                            dot={{ fill: "#8b5cf6" }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="text-center py-12">
-                        <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-muted-foreground">No trend data available</p>
+                        <p className="text-xs text-muted-foreground mt-1">SDG data will appear when volunteer activity is linked to SDG-aligned projects</p>
                       </div>
                     )}
                   </CardContent>

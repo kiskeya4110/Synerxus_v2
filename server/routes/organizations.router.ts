@@ -278,6 +278,26 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
     const orgId = parseInt(req.params.id);
     const { email, role, title, department, permissions, invitedBy, invitationMethod, customMessage } = req.body;
 
+    // Verify that the inviting user belongs to this organization
+    if (!invitedBy) {
+      return res.status(401).json({ message: "Authentication required - invitedBy is missing" });
+    }
+
+    const invitingUser = await storage.getUser(parseInt(invitedBy));
+    if (!invitingUser) {
+      return res.status(401).json({ message: "Inviting user not found" });
+    }
+
+    // Verify user belongs to this organization
+    if (invitingUser.organizationId !== orgId) {
+      return res.status(403).json({ message: "You can only invite members to your own organization" });
+    }
+
+    // Verify user is organization type
+    if (invitingUser.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization admins can invite members" });
+    }
+
     const organization = await storage.getOrganization(orgId);
     if (!organization) {
       return res.status(404).json({ message: "Organization not found" });

@@ -515,7 +515,7 @@ export default function CorporatePartnerProfileSettings() {
                         currentPhotoUrl={logoUrl}
                         onPhotoChange={setLogoUrl}
                         userId={currentUser.id.toString()}
-                        userType="organization"
+                        userType="corporate-partner"
                         type="logo"
                         label="Company Logo"
                       />

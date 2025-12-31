@@ -51,7 +51,7 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
 export async function uploadProfilePhoto(
   file: File,
   userId: string,
-  userType: 'volunteer' | 'organization'
+  userType: 'volunteer' | 'organization' | 'corporate-partner'
 ): Promise<UploadResult> {
   console.log('[uploadProfilePhoto] Called with userId:', userId, 'userType:', userType);
   console.log('[uploadProfilePhoto] File:', file.name, file.type, file.size);

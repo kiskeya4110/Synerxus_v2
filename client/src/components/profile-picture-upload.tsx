@@ -10,7 +10,7 @@ interface ProfilePictureUploadProps {
   currentPhotoUrl?: string;
   onPhotoChange: (url: string) => void;
   userId: string;
-  userType: 'volunteer' | 'organization';
+  userType: 'volunteer' | 'organization' | 'corporate-partner';
   type?: 'avatar' | 'logo';
   label?: string;
   enableCrop?: boolean;

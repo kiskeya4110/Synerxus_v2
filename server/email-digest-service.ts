@@ -535,10 +535,222 @@ async function sendOrganizationWeeklyDigest(organizationId: number): Promise<boo
   }
 }
 
+// ==================== Approval Notification Emails ====================
+
+interface ApprovalNotificationData {
+  recipientEmail: string;
+  recipientName: string;
+  itemType: 'hours' | 'impact';
+  projectName: string;
+  status: 'approved' | 'rejected';
+  details: {
+    hours?: number;
+    date?: string;
+    description?: string;
+    impactValue?: number;
+    metricName?: string;
+  };
+  reviewerName?: string;
+}
+
+// Generate HTML template for approval notification
+function generateApprovalNotificationTemplate(data: ApprovalNotificationData): string {
+  const isApproved = data.status === 'approved';
+  const statusColor = isApproved ? '#10b981' : '#ef4444';
+  const statusIcon = isApproved ? '✅' : '❌';
+  const statusText = isApproved ? 'Approved' : 'Rejected';
+
+  const itemDescription = data.itemType === 'hours'
+    ? `${data.details.hours || 0} volunteer hours`
+    : `Impact: ${data.details.impactValue || 0} ${data.details.metricName || 'units'}`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: ${statusColor}; color: white; padding: 25px; border-radius: 8px; text-align: center; }
+          .header h1 { margin: 0; font-size: 24px; }
+          .content { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+          .detail-label { color: #6b7280; font-size: 13px; }
+          .detail-value { font-weight: bold; color: #111827; }
+          .status-badge { display: inline-block; background: ${statusColor}; color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+          .footer { background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 12px; color: #6b7280; text-align: center; margin-top: 20px; }
+          .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; margin: 15px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${statusIcon} ${data.itemType === 'hours' ? 'Hours' : 'Impact'} ${statusText}</h1>
+          </div>
+
+          <p>Hi ${data.recipientName},</p>
+          <p>Your ${data.itemType === 'hours' ? 'volunteer hours submission' : 'impact report'} has been <strong>${statusText.toLowerCase()}</strong>.</p>
+
+          <div class="content">
+            <div class="detail-row">
+              <span class="detail-label">Project</span>
+              <span class="detail-value">${data.projectName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Submission</span>
+              <span class="detail-value">${itemDescription}</span>
+            </div>
+            ${data.details.date ? `
+              <div class="detail-row">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">${data.details.date}</span>
+              </div>
+            ` : ''}
+            ${data.details.description ? `
+              <div class="detail-row">
+                <span class="detail-label">Description</span>
+                <span class="detail-value">${data.details.description}</span>
+              </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="detail-label">Status</span>
+              <span class="status-badge">${statusText}</span>
+            </div>
+            ${data.reviewerName ? `
+              <div class="detail-row">
+                <span class="detail-label">Reviewed by</span>
+                <span class="detail-value">${data.reviewerName}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          ${isApproved ? `
+            <p style="color: #047857; background: #ecfdf5; padding: 15px; border-radius: 6px; font-size: 13px;">
+              🎉 Great work! Your contribution has been verified and added to your impact record.
+            </p>
+          ` : `
+            <p style="color: #b91c1c; background: #fef2f2; padding: 15px; border-radius: 6px; font-size: 13px;">
+              ℹ️ If you believe this was rejected in error, please contact your project coordinator or update and resubmit your entry.
+            </p>
+          `}
+
+          <div style="text-align: center;">
+            <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-dashboard" class="button">View Your Dashboard</a>
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0 0 10px 0;">Synerxus - Connect. Manage. Impact Globally.</p>
+            <p style="margin: 0;">You received this email because your submission status changed.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+// Send approval/rejection notification email
+async function sendApprovalNotification(data: ApprovalNotificationData): Promise<boolean> {
+  try {
+    const htmlContent = generateApprovalNotificationTemplate(data);
+    const statusText = data.status === 'approved' ? 'Approved' : 'Rejected';
+    const statusIcon = data.status === 'approved' ? '✅' : '❌';
+    const itemType = data.itemType === 'hours' ? 'Hours' : 'Impact';
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'notifications@synerxus.io',
+      to: data.recipientEmail,
+      subject: `${statusIcon} ${itemType} ${statusText} - ${data.projectName}`,
+      html: htmlContent,
+      text: `Hi ${data.recipientName},\n\nYour ${data.itemType === 'hours' ? 'volunteer hours' : 'impact report'} for "${data.projectName}" has been ${data.status}.\n\n${data.itemType === 'hours' ? `Hours: ${data.details.hours || 0}` : `Impact: ${data.details.impactValue || 0} ${data.details.metricName || ''}`}\n\nView your dashboard: ${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-dashboard`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info(`[Notification] ${data.status} notification sent to ${data.recipientEmail} for ${data.itemType}`);
+    return true;
+  } catch (error) {
+    logger.error(`Error sending approval notification to ${data.recipientEmail}`, error);
+    return false;
+  }
+}
+
+// Helper function to send activity approval notification
+async function sendActivityApprovalNotification(
+  activityId: number,
+  status: 'approved' | 'rejected',
+  reviewerId?: number
+): Promise<boolean> {
+  try {
+    const activity = await storage.getVolunteerActivity(activityId);
+    if (!activity || !activity.userId) return false;
+
+    const user = await storage.getUser(activity.userId);
+    if (!user || !user.email) return false;
+
+    const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+    const reviewer = reviewerId ? await storage.getUser(reviewerId) : null;
+
+    return await sendApprovalNotification({
+      recipientEmail: user.email,
+      recipientName: user.displayName || user.username || 'Volunteer',
+      itemType: 'hours',
+      projectName: project?.name || 'Unknown Project',
+      status,
+      details: {
+        hours: activity.hours || 0,
+        date: activity.date ? new Date(activity.date).toLocaleDateString() : undefined,
+        description: activity.description || undefined,
+      },
+      reviewerName: reviewer?.displayName || reviewer?.username,
+    });
+  } catch (error) {
+    logger.error(`Error sending activity approval notification for ${activityId}`, error);
+    return false;
+  }
+}
+
+// Helper function to send impact approval notification
+async function sendImpactApprovalNotification(
+  impactId: number,
+  status: 'approved' | 'rejected',
+  reviewerId?: number
+): Promise<boolean> {
+  try {
+    const impact = await storage.getProjectImpact(impactId);
+    if (!impact || !impact.userId) return false;
+
+    const user = await storage.getUser(impact.userId);
+    if (!user || !user.email) return false;
+
+    const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
+    const metric = impact.metricId ? await storage.getImpactMetric(impact.metricId) : null;
+    const reviewer = reviewerId ? await storage.getUser(reviewerId) : null;
+
+    return await sendApprovalNotification({
+      recipientEmail: user.email,
+      recipientName: user.displayName || user.username || 'Volunteer',
+      itemType: 'impact',
+      projectName: project?.name || 'Unknown Project',
+      status,
+      details: {
+        impactValue: impact.value || 0,
+        metricName: metric?.name || 'units',
+        date: impact.date ? new Date(impact.date).toLocaleDateString() : undefined,
+      },
+      reviewerName: reviewer?.displayName || reviewer?.username,
+    });
+  } catch (error) {
+    logger.error(`Error sending impact approval notification for ${impactId}`, error);
+    return false;
+  }
+}
+
 export {
   sendWeeklyDigest,
   sendWeeklyDigestsToAll,
   sendOrganizationWeeklyDigest,
   getWeeklyDigestData,
-  generateEmailTemplate
+  generateEmailTemplate,
+  sendApprovalNotification,
+  sendActivityApprovalNotification,
+  sendImpactApprovalNotification,
 };

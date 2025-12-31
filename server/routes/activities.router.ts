@@ -18,6 +18,10 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middleware/auth";
+import {
+  sendActivityApprovalNotification,
+  sendImpactApprovalNotification,
+} from "../email-digest-service";
 
 export const activitiesRouter = Router();
 
@@ -570,8 +574,24 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
   try {
     const { organizationId, userId } = req.query;
 
-    if (!organizationId && !userId) {
-      return res.status(400).json({ message: "organizationId or userId is required" });
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required - userId is missing" });
+    }
+
+    // Verify requesting user exists and has permission
+    const requestingUser = await storage.getUser(parseInt(userId as string));
+    if (!requestingUser) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Only organization users can view pending approvals
+    if (requestingUser.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization admins can view pending approvals" });
+    }
+
+    // If organizationId is provided, verify it matches the user's organization
+    if (organizationId && parseInt(organizationId as string) !== requestingUser.organizationId) {
+      return res.status(403).json({ message: "You can only view approvals for your own organization" });
     }
 
     const results: {
@@ -584,18 +604,12 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       totalPending: 0
     };
 
-    // Get organization's projects
+    // Get organization's projects - use requesting user's org
     let projectIds: number[] = [];
-    if (organizationId) {
-      const orgProjects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
+    const targetOrgId = requestingUser.organizationId;
+    if (targetOrgId) {
+      const orgProjects = await storage.listProjectsByOrganization(targetOrgId);
       projectIds = orgProjects.map(p => p.id);
-    } else if (userId) {
-      // For a specific user ID (organization user), get their org's projects
-      const user = await storage.getUser(parseInt(userId as string));
-      if (user?.organizationId) {
-        const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
-        projectIds = orgProjects.map(p => p.id);
-      }
     }
 
     if (projectIds.length === 0) {
@@ -659,14 +673,36 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
  * POST /volunteer-activities/:id/approve - Approve a volunteer activity (hours)
  * Also updates CSR employee engagement, challenge progress, and creates verified output records
  */
-activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, res: Response) => {
+activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async (req: Request, res: Response) => {
   try {
     const activityId = parseInt(req.params.id);
-    const { reviewerId } = req.body;
+    const reviewerId = req.user?.id;
+
+    // Security: Require organization user type
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can approve activities" });
+    }
 
     const activity = await storage.getVolunteerActivity(activityId);
     if (!activity) {
       return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    // Security: Validate activity belongs to user's organization
+    if (activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot approve activities for other organizations" });
+      }
+    }
+
+    // Security: Check canApproveHours permission
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to approve hours" });
+      }
     }
 
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
@@ -718,7 +754,7 @@ activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, 
               outputType: 'hours',
               outputValue: activity.hours,
               verificationStatus: 'verified',
-              verifiedBy: reviewerId ? parseInt(reviewerId) : null,
+              verifiedBy: reviewerId || null,
               verifiedAt: new Date(),
               auditTrail: {
                 action: 'hours_approved',
@@ -762,6 +798,11 @@ activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, 
       }
     }
 
+    // Send email notification to volunteer (non-blocking)
+    sendActivityApprovalNotification(activityId, 'approved', reviewerId).catch(err => {
+      console.error("Failed to send approval notification:", err);
+    });
+
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
@@ -773,17 +814,44 @@ activitiesRouter.post("/volunteer-activities/:id/approve", async (req: Request, 
 /**
  * POST /volunteer-activities/:id/reject - Reject a volunteer activity (hours)
  */
-activitiesRouter.post("/volunteer-activities/:id/reject", async (req: Request, res: Response) => {
+activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async (req: Request, res: Response) => {
   try {
     const activityId = parseInt(req.params.id);
+
+    // Security: Require organization user type
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can reject activities" });
+    }
 
     const activity = await storage.getVolunteerActivity(activityId);
     if (!activity) {
       return res.status(404).json({ message: "Volunteer activity not found" });
     }
 
+    // Security: Validate activity belongs to user's organization
+    if (activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot reject activities for other organizations" });
+      }
+    }
+
+    // Security: Check canApproveHours permission (same permission for approve/reject)
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to reject hours" });
+      }
+    }
+
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
       verificationStatus: 'rejected'
+    });
+
+    // Send email notification to volunteer (non-blocking)
+    sendActivityApprovalNotification(activityId, 'rejected', req.user?.id).catch(err => {
+      console.error("Failed to send rejection notification:", err);
     });
 
     broadcastUpdate("activity_rejected", updatedActivity);
@@ -798,14 +866,36 @@ activitiesRouter.post("/volunteer-activities/:id/reject", async (req: Request, r
  * POST /project-impacts/:id/approve - Approve a project impact (AIU/KPI)
  * Also updates CSR verified outputs and employee impact data when applicable
  */
-activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: Response) => {
+activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req: Request, res: Response) => {
   try {
     const impactId = parseInt(req.params.id);
-    const { reviewerId } = req.body;
+    const reviewerId = req.user?.id;
+
+    // Security: Require organization user type
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can approve impacts" });
+    }
 
     const impact = await storage.getProjectImpact(impactId);
     if (!impact) {
       return res.status(404).json({ message: "Project impact not found" });
+    }
+
+    // Security: Validate impact belongs to user's organization
+    if (impact.projectId) {
+      const project = await storage.getProject(impact.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot approve impacts for other organizations" });
+      }
+    }
+
+    // Security: Check canApproveHours permission (same permission for impacts)
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to approve impacts" });
+      }
     }
 
     const updatedImpact = await storage.updateProjectImpact(impactId, {
@@ -840,7 +930,7 @@ activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: 
             outputType: 'outcomes_achieved',
             outputValue: impact.value,
             verificationStatus: 'verified',
-            verifiedBy: reviewerId ? parseInt(reviewerId) : null,
+            verifiedBy: reviewerId || null,
             verifiedAt: new Date(),
             auditTrail: {
               action: 'impact_approved',
@@ -858,6 +948,11 @@ activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: 
       }
     }
 
+    // Send email notification to volunteer (non-blocking)
+    sendImpactApprovalNotification(impactId, 'approved', reviewerId).catch(err => {
+      console.error("Failed to send impact approval notification:", err);
+    });
+
     broadcastUpdate("impact_approved", updatedImpact);
     res.json(updatedImpact);
   } catch (err) {
@@ -869,13 +964,35 @@ activitiesRouter.post("/project-impacts/:id/approve", async (req: Request, res: 
 /**
  * POST /project-impacts/:id/reject - Reject a project impact (AIU/KPI)
  */
-activitiesRouter.post("/project-impacts/:id/reject", async (req: Request, res: Response) => {
+activitiesRouter.post("/project-impacts/:id/reject", authMiddleware, async (req: Request, res: Response) => {
   try {
     const impactId = parseInt(req.params.id);
+
+    // Security: Require organization user type
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can reject impacts" });
+    }
 
     const impact = await storage.getProjectImpact(impactId);
     if (!impact) {
       return res.status(404).json({ message: "Project impact not found" });
+    }
+
+    // Security: Validate impact belongs to user's organization
+    if (impact.projectId) {
+      const project = await storage.getProject(impact.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot reject impacts for other organizations" });
+      }
+    }
+
+    // Security: Check canApproveHours permission (same permission for impacts)
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to reject impacts" });
+      }
     }
 
     const updatedImpact = await storage.updateProjectImpact(impactId, {
@@ -890,6 +1007,11 @@ activitiesRouter.post("/project-impacts/:id/reject", async (req: Request, res: R
         console.error("Error updating AIU settings:", aiuErr);
       }
     }
+
+    // Send email notification to volunteer (non-blocking)
+    sendImpactApprovalNotification(impactId, 'rejected', req.user?.id).catch(err => {
+      console.error("Failed to send impact rejection notification:", err);
+    });
 
     broadcastUpdate("impact_rejected", updatedImpact);
     res.json(updatedImpact);

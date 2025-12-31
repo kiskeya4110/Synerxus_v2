@@ -1479,25 +1479,37 @@ export default function SDGMapping() {
               Track SDG alignment and project impact
             </p>
           </div>
-          {/* Project Filter - Inline */}
-          {organizationProjects.length > 1 && (
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
-                <SelectTrigger className="w-48 sm:w-56 h-9" data-testid="select-project-filter">
-                  <SelectValue placeholder="Filter project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
-                  {organizationProjects.map((project: any) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Impact Report Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/organization-impact-report')}
+              className="bg-gradient-to-r from-amber-50 to-blue-50 border-blue-200 hover:from-amber-100 hover:to-blue-100 text-blue-800"
+            >
+              <BarChart className="h-4 w-4 mr-2" />
+              Impact Report
+            </Button>
+            {/* Project Filter - Inline */}
+            {organizationProjects.length > 1 && (
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+                  <SelectTrigger className="w-48 sm:w-56 h-9" data-testid="select-project-filter">
+                    <SelectValue placeholder="Filter project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                    {organizationProjects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id.toString()}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* SDG Chart - Adapts based on SDG count: Bar for 1-2 SDGs, Radar for 3+ */}

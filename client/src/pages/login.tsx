@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiKey } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
 
 export default function Login() {
@@ -46,8 +47,21 @@ export default function Login() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Check if platform is in invite-only mode
+  const { data: inviteSettings } = useQuery<{ inviteOnlyMode: boolean } | null>({
+    queryKey: ["/api/invitation-codes/settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/invitation-codes/settings");
+      if (!response.ok) return null;
+      return response.json();
+    },
+  });
+
+  const isInviteOnly = inviteSettings?.inviteOnlyMode ?? false;
   
   // Helper function to determine where to redirect after login
   const getRedirectPath = async (userId: number, userType: string) => {
@@ -80,10 +94,20 @@ export default function Login() {
   };
 
   const handleGoogleSignIn = async () => {
+    // Check for invitation code if invite-only mode is enabled and registering
+    if (isInviteOnly && activeTab === 'register' && !invitationCode.trim()) {
+      toast({
+        title: "Invitation code required",
+        description: "This platform requires an invitation code to register. Please enter your code first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       const firebaseUser = await signInWithGoogle();
-      
+
       // Sync with backend database
       if (firebaseUser) {
         const response = await fetch('/api/users/firebase-sync', {
@@ -93,11 +117,17 @@ export default function Login() {
             firebaseUid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: firebaseUser.displayName,
-            userType: userType || 'volunteer' // Default to volunteer
+            userType: userType || 'volunteer', // Default to volunteer
+            // Include invitation code if provided (for new registrations)
+            invitationCode: invitationCode.trim() || undefined
           })
         });
-        
+
         if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.requiresInvitation) {
+            throw new Error(errorData.message || 'Invalid invitation code');
+          }
           throw new Error('Failed to sync with backend');
         }
         
@@ -232,7 +262,7 @@ export default function Login() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!registerName || !registerEmail || !registerPassword || !confirmPassword) {
       toast({
         title: "Missing information",
@@ -241,7 +271,17 @@ export default function Login() {
       });
       return;
     }
-    
+
+    // Check for invitation code if invite-only mode is enabled
+    if (isInviteOnly && !invitationCode.trim()) {
+      toast({
+        title: "Invitation code required",
+        description: "This platform requires an invitation code to register.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (registerPassword !== confirmPassword) {
       toast({
         title: "Password mismatch",
@@ -250,11 +290,11 @@ export default function Login() {
       });
       return;
     }
-    
+
     try {
       setIsLoading(true);
       const firebaseUser = await signUp(registerEmail, registerPassword, userType || undefined, registerName);
-      
+
       // Sync with backend database
       if (firebaseUser && userType) {
         const response = await fetch('/api/users/firebase-sync', {
@@ -266,11 +306,17 @@ export default function Login() {
             displayName: registerName,
             userType,
             // Pass organization name for org/corporate users - will be saved and used to pre-fill intake form
-            organizationName: (userType === 'organization' || userType === 'corporate-partner') ? organizationName : undefined
+            organizationName: (userType === 'organization' || userType === 'corporate-partner') ? organizationName : undefined,
+            // Include invitation code if provided
+            invitationCode: invitationCode.trim() || undefined
           })
         });
 
         if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.requiresInvitation) {
+            throw new Error(errorData.message || 'Invalid invitation code');
+          }
           throw new Error('Failed to sync with backend');
         }
 
@@ -553,10 +599,10 @@ export default function Login() {
                         <Label htmlFor="confirm-password">Confirm Password</Label>
                         <div className="relative">
                           <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                          <Input 
-                            id="confirm-password" 
+                          <Input
+                            id="confirm-password"
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="••••••••" 
+                            placeholder="••••••••"
                             className="pl-10 pr-10"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -574,6 +620,31 @@ export default function Login() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Invitation Code - shown when invite-only mode is enabled */}
+                      {isInviteOnly && (
+                        <div className="space-y-2">
+                          <Label htmlFor="invitation-code" className="flex items-center gap-2">
+                            <span className="text-amber-600">*</span> Invitation Code
+                          </Label>
+                          <div className="relative">
+                            <FiKey className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" />
+                            <Input
+                              id="invitation-code"
+                              placeholder="Enter your invitation code"
+                              className="pl-10 border-amber-200 focus:border-amber-400"
+                              value={invitationCode}
+                              onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                              disabled={isLoading}
+                              data-testid="input-invitation-code"
+                            />
+                          </div>
+                          <p className="text-xs text-amber-600">
+                            This platform requires an invitation code to register
+                          </p>
+                        </div>
+                      )}
+
                       <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit-register">
                         {isLoading ? "Creating profile..." : "Create Profile"}
                       </Button>

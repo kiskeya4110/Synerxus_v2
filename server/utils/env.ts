@@ -107,13 +107,17 @@ export function isTest(): boolean {
 
 /**
  * Get JWT secret with fallback for development
+ * Uses SESSION_SECRET as fallback in production if JWT_SECRET not set
  */
 export function getJWTSecret(): string {
   const env = getEnv();
   if (env.JWT_SECRET) return env.JWT_SECRET;
+  
+  // Use SESSION_SECRET as fallback in production
+  if (env.SESSION_SECRET) return env.SESSION_SECRET;
 
   if (isProduction()) {
-    throw new Error("JWT_SECRET is required in production");
+    throw new Error("JWT_SECRET or SESSION_SECRET is required in production");
   }
 
   // Development fallback

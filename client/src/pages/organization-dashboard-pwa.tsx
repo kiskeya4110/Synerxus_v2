@@ -600,16 +600,16 @@ export default function OrganizationDashboardPWA() {
           )}
 
           {/* Welcome Banner - Enhanced */}
-          <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-amber-100 via-blue-50 to-blue-200 rounded-2xl p-4 text-slate-800 shadow-xl relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-emerald-400/30" />
-              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-teal-400/20" />
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-400/30" />
+              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-blue-300/20" />
             </div>
             <div className="relative">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-emerald-700 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
+                  <p className="text-blue-800 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
                   <h2 className="text-xl font-bold text-slate-800">
                     {organization?.name || 'Organization'}
                   </h2>
@@ -626,7 +626,7 @@ export default function OrganizationDashboardPWA() {
                       }}
                     />
                   ) : (
-                    <Briefcase className="w-6 h-6 text-emerald-700" />
+                    <Briefcase className="w-6 h-6 text-blue-800" />
                   )}
                 </div>
               </div>
@@ -636,21 +636,21 @@ export default function OrganizationDashboardPWA() {
                   className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
                 >
                   <p className="text-xl font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
-                  <p className="text-[9px] text-emerald-700 font-medium">Hours</p>
+                  <p className="text-[9px] text-blue-800 font-medium">Hours</p>
                 </button>
                 <button
                   onClick={() => navigate('/projects')}
                   className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
                 >
                   <p className="text-xl font-bold text-slate-800">{metrics.activeProjects}</p>
-                  <p className="text-[9px] text-emerald-700 font-medium">Projects</p>
+                  <p className="text-[9px] text-blue-800 font-medium">Projects</p>
                 </button>
                 <button
                   onClick={() => setShowLivesPerHourModal(true)}
                   className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
                 >
                   <p className="text-xl font-bold text-slate-800">{totalPeopleImpacted.toLocaleString()}</p>
-                  <p className="text-[9px] text-emerald-700 font-medium">Lives</p>
+                  <p className="text-[9px] text-blue-800 font-medium">Lives</p>
                 </button>
               </div>
             </div>

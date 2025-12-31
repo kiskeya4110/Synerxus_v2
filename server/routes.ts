@@ -61,6 +61,7 @@ import { adminRouter } from "./routes/admin.router";
 import { storageRouter } from "./routes/storage.router";
 import { miscRouter } from "./routes/misc.router";
 import { aiuRouter } from "./routes/aiu.router";
+import { invitationCodesRouter } from "./routes/invitation-codes.router";
 import { calculateOrganizationAIU } from "./aiu-service";
 import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
 import uptimeMonitor from "./services/uptime-monitor";
@@ -372,6 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
   app.use("/api", storiesRouter); // Handles /stories and story likes
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime
+  app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.

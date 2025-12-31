@@ -579,21 +579,27 @@ profileRouter.get("/intake/organization-profile", async (req: Request, res: Resp
 // POST /api/intake/organization-profile - Create or update organization profile via intake
 profileRouter.post("/intake/organization-profile", async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.organizationId as string;
+    // Accept both userId (preferred) and organizationId (legacy) parameters
+    const userIdParam = (req.query.userId || req.query.organizationId) as string;
 
     if (!userIdParam) {
-      return res.status(400).json({ message: "organizationId parameter is required" });
+      return res.status(400).json({ message: "userId parameter is required" });
     }
 
     const userId = parseInt(userIdParam);
     if (isNaN(userId)) {
-      return res.status(400).json({ message: "organizationId must be a valid number" });
+      return res.status(400).json({ message: "userId must be a valid number" });
     }
 
-    // Get the user to access their email
+    // Get the user to access their email and validate user type
     const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate user type - only organization or unset users can use this endpoint
+    if (user.userType && user.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can update organization profiles" });
     }
 
     // Get or create organization

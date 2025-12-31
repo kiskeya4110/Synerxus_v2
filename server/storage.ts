@@ -116,7 +116,16 @@ import {
   type TeamInvitation,
   type InsertTeamInvitation,
   type InvitationTemplate,
-  type InsertInvitationTemplate
+  type InsertInvitationTemplate,
+  invitationCodes,
+  invitationCodeUsage,
+  platformSettings,
+  type InvitationCode,
+  type InsertInvitationCode,
+  type InvitationCodeUsage,
+  type InsertInvitationCodeUsage,
+  type PlatformSetting,
+  type InsertPlatformSetting
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -1878,6 +1887,126 @@ export class DatabaseStorage implements IStorage {
   async deleteInvitationTemplate(id: number): Promise<boolean> {
     await db.delete(invitationTemplates).where(eq(invitationTemplates.id, id));
     return true;
+  }
+
+  // ==================== Invitation Codes ====================
+
+  async listInvitationCodes(organizationId?: number): Promise<InvitationCode[]> {
+    if (organizationId) {
+      return db.select().from(invitationCodes).where(eq(invitationCodes.organizationId, organizationId)).orderBy(desc(invitationCodes.createdAt));
+    }
+    return db.select().from(invitationCodes).orderBy(desc(invitationCodes.createdAt));
+  }
+
+  async getInvitationCode(id: number): Promise<InvitationCode | undefined> {
+    const [result] = await db.select().from(invitationCodes).where(eq(invitationCodes.id, id));
+    return result;
+  }
+
+  async getInvitationCodeByCode(code: string): Promise<InvitationCode | undefined> {
+    const [result] = await db.select().from(invitationCodes).where(eq(invitationCodes.code, code.toUpperCase()));
+    return result;
+  }
+
+  async createInvitationCode(data: InsertInvitationCode): Promise<InvitationCode> {
+    const [result] = await db.insert(invitationCodes).values({
+      ...data,
+      code: data.code.toUpperCase(),
+    }).returning();
+    return result;
+  }
+
+  async validateInvitationCode(code: string, email?: string, userType?: string): Promise<{ valid: boolean; message: string; invitationCode?: InvitationCode }> {
+    const inviteCode = await this.getInvitationCodeByCode(code);
+
+    if (!inviteCode) {
+      return { valid: false, message: "Invalid invitation code" };
+    }
+
+    if (!inviteCode.isActive) {
+      return { valid: false, message: "This invitation code has been deactivated" };
+    }
+
+    if (inviteCode.expiresAt && new Date(inviteCode.expiresAt) < new Date()) {
+      return { valid: false, message: "This invitation code has expired" };
+    }
+
+    if (inviteCode.maxUses && inviteCode.usedCount >= inviteCode.maxUses) {
+      return { valid: false, message: "This invitation code has reached its usage limit" };
+    }
+
+    if (inviteCode.email && email && inviteCode.email.toLowerCase() !== email.toLowerCase()) {
+      return { valid: false, message: "This invitation code is for a different email address" };
+    }
+
+    if (inviteCode.userType && userType && inviteCode.userType !== userType) {
+      return { valid: false, message: `This invitation code is only valid for ${inviteCode.userType} accounts` };
+    }
+
+    return { valid: true, message: "Invitation code is valid", invitationCode: inviteCode };
+  }
+
+  async useInvitationCode(code: string, userId: number): Promise<{ success: boolean; message: string }> {
+    const inviteCode = await this.getInvitationCodeByCode(code);
+
+    if (!inviteCode) {
+      return { success: false, message: "Invalid invitation code" };
+    }
+
+    // Increment usage count
+    await db.update(invitationCodes)
+      .set({
+        usedCount: inviteCode.usedCount + 1,
+        updatedAt: new Date()
+      })
+      .where(eq(invitationCodes.id, inviteCode.id));
+
+    // Record the usage
+    await db.insert(invitationCodeUsage).values({
+      codeId: inviteCode.id,
+      userId,
+    });
+
+    return { success: true, message: "Invitation code used successfully" };
+  }
+
+  async deactivateInvitationCode(id: number): Promise<boolean> {
+    await db.update(invitationCodes)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(invitationCodes.id, id));
+    return true;
+  }
+
+  // ==================== Platform Settings ====================
+
+  async getPlatformSetting(key: string): Promise<PlatformSetting | undefined> {
+    const [result] = await db.select().from(platformSettings).where(eq(platformSettings.key, key));
+    return result;
+  }
+
+  async setPlatformSetting(key: string, value: string, description?: string, updatedBy?: number): Promise<PlatformSetting> {
+    const existing = await this.getPlatformSetting(key);
+
+    if (existing) {
+      const [result] = await db.update(platformSettings)
+        .set({ value, description, updatedBy, updatedAt: new Date() })
+        .where(eq(platformSettings.key, key))
+        .returning();
+      return result;
+    }
+
+    const [result] = await db.insert(platformSettings).values({
+      key,
+      value,
+      description,
+      updatedBy,
+    }).returning();
+    return result;
+  }
+
+  async isInviteOnlyMode(): Promise<boolean> {
+    const setting = await this.getPlatformSetting("INVITE_ONLY_MODE");
+    return setting?.value === "true";
   }
 }
 

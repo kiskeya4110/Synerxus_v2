@@ -11,8 +11,13 @@ import {
   type ImageUploadOptions,
 } from "../services/image-service";
 import { IMAGE_CONFIG, type ImageType } from "../../shared/constants";
+import { optionalAuthMiddleware } from "../middleware/auth";
+import { logger } from "../logger";
 
 export const storageRouter = Router();
+
+// Apply optional auth to all storage routes - extracts user if token present
+storageRouter.use(optionalAuthMiddleware);
 
 // Configure multer for memory storage (process in memory before saving)
 const upload = multer({
@@ -64,6 +69,12 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
       return res.status(400).json({ message: "path is required" });
     }
 
+    // Security: Require authentication for uploads
+    if (!req.user) {
+      logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}`);
+      return res.status(401).json({ message: "Authentication required for file uploads" });
+    }
+
     // Parse options from query
     const imageType = (req.query.imageType as ImageType) || "profile";
     const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
@@ -71,6 +82,18 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
       ? parseInt(req.query.organizationId as string)
       : undefined;
     const generateThumbnail = req.query.generateThumbnail !== "false";
+
+    // Security: Validate user ownership - users can only upload for themselves
+    if (userId && userId !== req.user.id) {
+      logger.warn(`[Storage] User ${req.user.id} attempted upload for different user ${userId}`);
+      return res.status(403).json({ message: "Cannot upload files for other users" });
+    }
+
+    // Security: Validate organization ownership - users can only upload for their own organization
+    if (organizationId && req.user.organizationId !== organizationId) {
+      logger.warn(`[Storage] User ${req.user.id} (org: ${req.user.organizationId}) attempted upload for org ${organizationId}`);
+      return res.status(403).json({ message: "Cannot upload files for other organizations" });
+    }
 
     // If file was uploaded via multer
     if (req.file) {
@@ -139,6 +162,24 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
 
     if (!filePath) {
       return res.status(400).json({ message: "path is required" });
+    }
+
+    // Security: Require authentication for file deletion
+    if (!req.user) {
+      logger.warn(`[Storage] Unauthenticated delete attempt for path: ${filePath}`);
+      return res.status(401).json({ message: "Authentication required for file deletion" });
+    }
+
+    // Security: Validate the file belongs to the user/org
+    // Files are stored with user/org identifiers in path (e.g., profiles/profile-123-xxx.jpg)
+    const pathLower = filePath.toLowerCase();
+    const isOwnFile =
+      pathLower.includes(`-${req.user.id}-`) ||
+      (req.user.organizationId && pathLower.includes(`org-${req.user.organizationId}`));
+
+    if (!isOwnFile) {
+      logger.warn(`[Storage] User ${req.user.id} attempted to delete file: ${filePath}`);
+      return res.status(403).json({ message: "Cannot delete files belonging to other users" });
     }
 
     const deleted = await deleteImage(filePath);

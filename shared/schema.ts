@@ -1709,3 +1709,66 @@ export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
 
 export type InvitationTemplate = typeof invitationTemplates.$inferSelect;
 export type InsertInvitationTemplate = z.infer<typeof insertInvitationTemplateSchema>;
+
+// Platform Invitation Codes - Controls who can register on the platform
+export const invitationCodes = pgTable("invitation_codes", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(), // The actual invitation code (e.g., "WELCOME2025")
+  email: text("email"), // Optional: restrict to specific email
+  userType: text("user_type"), // Optional: 'volunteer' or 'organization' - restrict what type can use this code
+  organizationId: integer("organization_id").references(() => organizations.id), // Optional: auto-assign to org
+  maxUses: integer("max_uses").default(1), // How many times this code can be used (null = unlimited)
+  usedCount: integer("used_count").default(0).notNull(), // How many times it's been used
+  expiresAt: timestamp("expires_at"), // Optional expiration date
+  isActive: boolean("is_active").default(true).notNull(), // Can be deactivated
+  createdBy: integer("created_by").references(() => users.id), // Who created this code
+  notes: text("notes"), // Admin notes about this invitation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Track invitation code usage
+export const invitationCodeUsage = pgTable("invitation_code_usage", {
+  id: serial("id").primaryKey(),
+  codeId: integer("code_id").references(() => invitationCodes.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(), // User who used this code
+  usedAt: timestamp("used_at").defaultNow().notNull(),
+});
+
+// Platform settings for invite-only mode
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  description: text("description"),
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas for invitation codes
+export const insertInvitationCodeSchema = createInsertSchema(invitationCodes).omit({
+  id: true,
+  usedCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvitationCodeUsageSchema = createInsertSchema(invitationCodeUsage).omit({
+  id: true,
+  usedAt: true,
+});
+
+export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// Types for invitation codes
+export type InvitationCode = typeof invitationCodes.$inferSelect;
+export type InsertInvitationCode = z.infer<typeof insertInvitationCodeSchema>;
+
+export type InvitationCodeUsage = typeof invitationCodeUsage.$inferSelect;
+export type InsertInvitationCodeUsage = z.infer<typeof insertInvitationCodeUsageSchema>;
+
+export type PlatformSetting = typeof platformSettings.$inferSelect;
+export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;

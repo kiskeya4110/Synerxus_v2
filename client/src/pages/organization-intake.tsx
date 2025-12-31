@@ -218,7 +218,7 @@ export default function OrganizationIntake() {
       // Backend will create organization if needed and update userType
       return await apiRequest(
         "POST",
-        `/api/intake/organization-profile?organizationId=${userId}`,
+        `/api/intake/organization-profile?userId=${userId}`,
         {
           ...data,
           logo: profilePhotoUrl,

@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@shared/schema";
-import { Loader2, Plus, X, Building2, MapPin, Target, Heart, User, Briefcase, Sliders, LogOut } from "lucide-react";
+import { Loader2, Plus, X, Building2, MapPin, Target, Heart, User, Briefcase, Sliders, LogOut, Key, Copy, Trash2, Check, Mail } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
@@ -99,12 +100,31 @@ class OrganizationProfileErrorBoundary extends Component<ErrorBoundaryProps, Err
   }
 }
 
+// Invitation code type
+interface InvitationCode {
+  id: number;
+  code: string;
+  email: string | null;
+  userType: string | null;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: string | null;
+  isActive: boolean;
+  notes: string | null;
+  createdAt: string;
+}
+
 export default function OrganizationProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const isMobile = useIsMobile();
+
+  // Invitation code states
+  const [newCodeEmail, setNewCodeEmail] = useState("");
+  const [newCodeNotes, setNewCodeNotes] = useState("");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Guard against repeated operations
   const redirectAttemptedRef = useRef(false);
@@ -150,6 +170,109 @@ export default function OrganizationProfileSettings() {
     enabled: !!userId,
     staleTime: 0,
   });
+
+  // Fetch invitation code settings
+  const { data: inviteSettings } = useQuery<{ inviteOnlyMode: boolean } | null>({
+    queryKey: ["/api/invitation-codes/settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/invitation-codes/settings");
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: currentUser?.userType === 'organization',
+  });
+
+  // Fetch invitation codes
+  const { data: invitationCodes, refetch: refetchCodes } = useQuery<InvitationCode[]>({
+    queryKey: ["/api/invitation-codes", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const response = await fetch(`/api/invitation-codes?userId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId && currentUser?.userType === 'organization',
+  });
+
+  // Toggle invite-only mode mutation
+  const toggleInviteModeMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      return await apiRequest("PUT", "/api/invitation-codes/settings", {
+        userId: parseInt(userId || '0'),
+        inviteOnlyMode: enabled,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invitation-codes/settings"] });
+      toast({
+        title: "Settings Updated",
+        description: `Invite-only mode ${inviteSettings?.inviteOnlyMode ? 'disabled' : 'enabled'}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create invitation code mutation
+  const createCodeMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/invitation-codes", {
+        userId: parseInt(userId || '0'),
+        email: newCodeEmail || undefined,
+        notes: newCodeNotes || undefined,
+        maxUses: 1,
+      });
+    },
+    onSuccess: () => {
+      refetchCodes();
+      setNewCodeEmail("");
+      setNewCodeNotes("");
+      toast({
+        title: "Invitation Code Created",
+        description: "New invitation code has been generated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create invitation code",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete invitation code mutation
+  const deleteCodeMutation = useMutation({
+    mutationFn: async (codeId: number) => {
+      return await apiRequest("DELETE", `/api/invitation-codes/${codeId}?userId=${userId}`);
+    },
+    onSuccess: () => {
+      refetchCodes();
+      toast({
+        title: "Code Deactivated",
+        description: "Invitation code has been deactivated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to deactivate code",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Copy code to clipboard
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   // Find the organization profile for current user (match by email or userId)
   const existingProfile = organizations?.find(o =>
@@ -774,6 +897,139 @@ export default function OrganizationProfileSettings() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span className="text-sm">Updating account type...</span>
                   </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Invitation Codes Section */}
+          <Card className="mt-6 border-amber-200 dark:border-amber-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <Key className="h-5 w-5" />
+                Invitation Codes
+              </CardTitle>
+              <CardDescription>
+                Control platform access with invitation codes. When enabled, new users must have a valid code to register.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Invite-only mode toggle */}
+              <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Invite-Only Mode</h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                    When enabled, new users require an invitation code to register
+                  </p>
+                </div>
+                <Switch
+                  checked={inviteSettings?.inviteOnlyMode ?? false}
+                  onCheckedChange={(checked) => toggleInviteModeMutation.mutate(checked)}
+                  disabled={toggleInviteModeMutation.isPending}
+                />
+              </div>
+
+              {/* Create new invitation code */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 dark:text-white">Create New Invitation Code</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="code-email" className="flex items-center gap-2 mb-2">
+                      <Mail className="h-4 w-4" />
+                      Email (Optional)
+                    </Label>
+                    <Input
+                      id="code-email"
+                      type="email"
+                      placeholder="Restrict code to specific email"
+                      value={newCodeEmail}
+                      onChange={(e) => setNewCodeEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="code-notes" className="mb-2 block">Notes (Optional)</Label>
+                    <Input
+                      id="code-notes"
+                      placeholder="e.g., For new team member"
+                      value={newCodeNotes}
+                      onChange={(e) => setNewCodeNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={() => createCodeMutation.mutate()}
+                  disabled={createCodeMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {createCodeMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Generate Invitation Code
+                </Button>
+              </div>
+
+              {/* List of existing codes */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 dark:text-white">Active Invitation Codes</h4>
+                {invitationCodes && invitationCodes.length > 0 ? (
+                  <div className="space-y-3">
+                    {invitationCodes.filter(c => c.isActive).map((code) => (
+                      <div
+                        key={code.id}
+                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <code className="text-lg font-mono font-bold text-amber-700 dark:text-amber-400">
+                              {code.code}
+                            </code>
+                            <Badge variant={code.usedCount >= code.maxUses ? "secondary" : "outline"}>
+                              {code.usedCount}/{code.maxUses} uses
+                            </Badge>
+                          </div>
+                          {code.email && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              Restricted to: {code.email}
+                            </p>
+                          )}
+                          {code.notes && (
+                            <p className="text-sm text-gray-400 mt-1">
+                              {code.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(code.code)}
+                            className="flex items-center gap-1"
+                          >
+                            {copiedCode === code.code ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteCodeMutation.mutate(code.id)}
+                            disabled={deleteCodeMutation.isPending}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">
+                    No active invitation codes. Generate one above to share with new users.
+                  </p>
                 )}
               </div>
             </CardContent>

@@ -206,11 +206,40 @@ volunteersRouter.get("/", async (req: Request, res: Response) => {
 volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => {
   try {
     const volunteerId = parseInt(req.params.id);
+    const requestingUserId = req.query.userId as string;
     console.log(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
 
     if (!volunteerId || isNaN(volunteerId)) {
       console.error(`[Performance API] Invalid volunteer ID: ${req.params.id}`);
       return res.status(400).json({ error: "Invalid volunteer ID" });
+    }
+
+    // Access control: verify requesting user has permission to view this volunteer's data
+    if (requestingUserId) {
+      const requestingUser = await storage.getUser(parseInt(requestingUserId));
+      if (requestingUser) {
+        // Allow if: requesting user is the volunteer, or is an organization/CSR admin
+        const isSelf = requestingUser.id === volunteerId;
+        const isOrgAdmin = requestingUser.userType === 'organization';
+        const isCSRAdmin = requestingUser.userType === 'corporate-partner';
+
+        // If organization, verify volunteer is assigned to their projects
+        if (!isSelf && isOrgAdmin && requestingUser.organizationId) {
+          const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
+          const orgProjects = await storage.listProjectsByOrganization(requestingUser.organizationId);
+          const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+          const hasOrgProject = volunteerAssignments.some(a => orgProjectIds.has(a.projectId));
+          if (!hasOrgProject) {
+            console.log(`[Performance API] Org ${requestingUser.organizationId} denied - volunteer not on their projects`);
+            return res.status(403).json({ error: "You can only view performance data for volunteers assigned to your projects" });
+          }
+        }
+
+        // If neither self, org admin, or CSR admin - deny access
+        if (!isSelf && !isOrgAdmin && !isCSRAdmin) {
+          return res.status(403).json({ error: "You don't have permission to view this volunteer's performance" });
+        }
+      }
     }
 
     let activities: VolunteerActivity[] = [];
@@ -241,19 +270,56 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
     const projectsActive = projectAssignments.filter(p => p.status === 'accepted').length;
     const projectsCompleted = projectAssignments.filter(p => p.status === 'completed').length;
 
-    // Calculate SDG contributions - get SDG from project if available
+    // Calculate SDG contributions - get SDGs from projects the volunteer worked on
     const sdgMap = new Map();
-    activities.forEach(activity => {
-      const activityAny = activity as any;
-      const sdg = activityAny.primarySdg || activityAny.sdgGoal;
-      if (sdg) {
-        const existing = sdgMap.get(sdg) || { goal: sdg, hours: 0, tasks: 0 };
-        existing.hours += activity.hours || 0;
-        existing.tasks += 1;
-        sdgMap.set(sdg, existing);
+
+    // First, get all projects to look up their SDGs
+    const allProjects = await storage.listProjects();
+    const projectSdgMap = new Map<number, number[]>();
+    allProjects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        projectSdgMap.set(project.id, project.sdgGoals);
       }
     });
-    const sdgContributions = Array.from(sdgMap.values()).sort((a, b) => b.hours - a.hours);
+
+    // Calculate SDG contributions from activities linked to projects
+    activities.forEach(activity => {
+      const activityAny = activity as any;
+      const projectId = activityAny.projectId || activity.projectId;
+      const projectSdgs = projectSdgMap.get(projectId) || [];
+      const hours = activity.hours || 0;
+
+      // Also check for direct SDG on activity (legacy support)
+      const directSdg = activityAny.primarySdg || activityAny.sdgGoal;
+      if (directSdg) {
+        projectSdgs.push(directSdg);
+      }
+
+      // Distribute hours across all SDGs for this project
+      const uniqueSdgs = Array.from(new Set(projectSdgs));
+      const hoursPerSdg = uniqueSdgs.length > 0 ? hours / uniqueSdgs.length : 0;
+
+      uniqueSdgs.forEach(sdg => {
+        const existing = sdgMap.get(sdg) || { goal: sdg, hours: 0, tasks: 0 };
+        existing.hours += hoursPerSdg;
+        existing.tasks += 1;
+        sdgMap.set(sdg, existing);
+      });
+    });
+
+    // Also add SDGs from project assignments (even if no hours logged yet)
+    projectAssignments.forEach(assignment => {
+      const projectSdgs = projectSdgMap.get(assignment.projectId) || [];
+      projectSdgs.forEach(sdg => {
+        if (!sdgMap.has(sdg)) {
+          sdgMap.set(sdg, { goal: sdg, hours: 0, tasks: 0 });
+        }
+      });
+    });
+
+    const sdgContributions = Array.from(sdgMap.values())
+      .filter(sdg => sdg.hours > 0 || sdg.tasks > 0)
+      .sort((a, b) => b.hours - a.hours);
 
     // Calculate hours over time (last 6 months)
     const hoursOverTime = [];

@@ -106,8 +106,8 @@ export default function OrganizationPWAHeader({
       <header
         className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between w-full"
         style={{
-          background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
-          boxShadow: '0 4px 20px rgba(245, 158, 11, 0.25)'
+          background: 'linear-gradient(to right, #fef9c3 0%, #fef3c7 25%, #dbeafe 50%, #bfdbfe 75%, #93c5fd 100%)',
+          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.25)'
         }}
       >
         <img
@@ -155,9 +155,9 @@ export default function OrganizationPWAHeader({
             {/* Menu Header */}
             <div
               className="px-4 py-4 flex items-center justify-between flex-shrink-0"
-              style={{ background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 50%, #f59e0b 100%)' }}
+              style={{ background: 'linear-gradient(to right, #fef9c3 0%, #dbeafe 50%, #93c5fd 100%)' }}
             >
-              <p className="font-bold text-lg text-amber-900">Menu</p>
+              <p className="font-bold text-lg text-blue-900">Menu</p>
               <button
                 onClick={() => setShowMenu(false)}
                 className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all"

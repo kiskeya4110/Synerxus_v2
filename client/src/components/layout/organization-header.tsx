@@ -153,10 +153,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 24px',
-          background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
+          background: 'linear-gradient(to right, #fef9c3 0%, #fef3c7 25%, #dbeafe 50%, #bfdbfe 75%, #93c5fd 100%)',
           borderRadius: '12px',
-          boxShadow: '0 4px 20px rgba(245, 158, 11, 0.25)',
-          border: '1px solid rgba(245, 158, 11, 0.2)'
+          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.25)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
         }}>
         {/* Left: Logo + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -168,7 +168,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               alignItems: 'center',
               gap: '8px',
               paddingRight: '16px',
-              borderRight: '1px solid rgba(180, 83, 9, 0.3)',
+              borderRight: '1px solid rgba(30, 58, 138, 0.3)',
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -198,34 +198,34 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                backgroundColor: currentTab === tab.id ? 'rgba(180, 83, 9, 0.15)' : 'rgba(255,255,255,0.5)',
-                border: currentTab === tab.id ? '1px solid rgba(180, 83, 9, 0.4)' : '1px solid rgba(180, 83, 9, 0.2)',
+                backgroundColor: currentTab === tab.id ? 'rgba(30, 58, 138, 0.15)' : 'rgba(255,255,255,0.5)',
+                border: currentTab === tab.id ? '1px solid rgba(30, 58, 138, 0.4)' : '1px solid rgba(30, 58, 138, 0.2)',
                 borderRadius: '8px',
-                color: currentTab === tab.id ? '#92400e' : '#78350f',
+                color: currentTab === tab.id ? '#1e3a8a' : '#1e40af',
                 fontSize: '14px',
                 fontWeight: currentTab === tab.id ? '600' : '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
                 textShadow: 'none',
-                boxShadow: currentTab === tab.id ? '0 2px 8px rgba(180, 83, 9, 0.15)' : 'none',
+                boxShadow: currentTab === tab.id ? '0 2px 8px rgba(30, 58, 138, 0.15)' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (currentTab !== tab.id) {
-                  e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.3)';
+                  e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (currentTab !== tab.id) {
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.5)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.2)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >
-              <tab.icon size={16} style={{ color: currentTab === tab.id ? '#92400e' : '#78350f' }} />
+              <tab.icon size={16} style={{ color: currentTab === tab.id ? '#1e3a8a' : '#1e40af' }} />
               {tab.label}
             </button>
           ))}
@@ -244,28 +244,28 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                   height: '40px',
                   borderRadius: '50%',
                   backgroundColor: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(180, 83, 9, 0.3)',
+                  border: '1px solid rgba(30, 58, 138, 0.3)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#78350f',
+                  color: '#1e40af',
                   transition: 'all 0.2s',
-                  boxShadow: '0 2px 8px rgba(180, 83, 9, 0.1)',
+                  boxShadow: '0 2px 8px rgba(30, 58, 138, 0.1)',
                   position: 'relative',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.4)';
                   e.currentTarget.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.3)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                <Bell size={18} style={{ color: '#78350f' }} />
+                <Bell size={18} style={{ color: '#1e40af' }} />
                 {unreadCount > 0 && (
                   <Badge
                     variant="destructive"
@@ -334,31 +334,31 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               height: '42px',
               borderRadius: '50%',
               backgroundColor: 'rgba(255,255,255,0.7)',
-              border: '2px solid rgba(180, 83, 9, 0.4)',
+              border: '2px solid rgba(30, 58, 138, 0.4)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#78350f',
+              color: '#1e40af',
               overflow: 'hidden',
               transition: 'all 0.2s',
-              boxShadow: '0 2px 10px rgba(180, 83, 9, 0.15)',
+              boxShadow: '0 2px 10px rgba(30, 58, 138, 0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.5)';
+              e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.5)';
               e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.7)';
-              e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
+              e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.4)';
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
             {(user as any)?.avatar ? (
               <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
             ) : (
-              <Users size={18} style={{ color: '#78350f' }} />
+              <Users size={18} style={{ color: '#1e40af' }} />
             )}
           </button>
 
@@ -372,39 +372,39 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                   height: '40px',
                   borderRadius: '50%',
                   backgroundColor: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(180, 83, 9, 0.3)',
+                  border: '1px solid rgba(30, 58, 138, 0.3)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#78350f',
+                  color: '#1e40af',
                   transition: 'all 0.2s',
-                  boxShadow: '0 2px 8px rgba(180, 83, 9, 0.1)',
+                  boxShadow: '0 2px 8px rgba(30, 58, 138, 0.1)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(180, 83, 9, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.4)';
                   e.currentTarget.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
-                  e.currentTarget.style.borderColor = 'rgba(180, 83, 9, 0.3)';
+                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                <MoreVertical size={18} style={{ color: '#78350f' }} />
+                <MoreVertical size={18} style={{ color: '#1e40af' }} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               {/* User Info Header */}
-              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-blue-50 border-b">
                 <div
                   style={{
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(180, 83, 9, 0.1)',
-                    border: '2px solid rgba(180, 83, 9, 0.3)',
+                    backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                    border: '2px solid rgba(30, 58, 138, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -414,7 +414,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                   {(user as any)?.avatar ? (
                     <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    <Users size={18} style={{ color: '#78350f' }} />
+                    <Users size={18} style={{ color: '#1e40af' }} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">

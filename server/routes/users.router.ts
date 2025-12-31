@@ -14,15 +14,51 @@ export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
 }
 
-// GET /api/users - List all users with optional filtering
+// GET /api/users - List users with access control
+// Organizations can see users in their org, CSR partners can see their employees
 usersRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { userType } = req.query;
-    const users = await storage.listUsers();
+    const { userType, userId } = req.query;
 
+    // Require authentication - get requesting user
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const requestingUserId = parseInt(userId as string);
+    if (isNaN(requestingUserId)) {
+      return res.status(400).json({ message: "Invalid userId" });
+    }
+
+    const requestingUser = await storage.getUser(requestingUserId);
+    if (!requestingUser) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    let users = await storage.listUsers();
+
+    // Filter based on requesting user's type and access rights
+    if (requestingUser.userType === 'organization' && requestingUser.organizationId) {
+      // Organizations can only see users in their organization
+      users = users.filter((u: any) =>
+        u.organizationId === requestingUser.organizationId ||
+        u.id === requestingUserId
+      );
+    } else if (requestingUser.userType === 'corporate-partner') {
+      // CSR partners can see their linked employees/volunteers
+      // For now, they can only see themselves and their org members
+      users = users.filter((u: any) =>
+        u.organizationId === requestingUser.organizationId ||
+        u.id === requestingUserId
+      );
+    } else if (requestingUser.userType === 'volunteer') {
+      // Volunteers can only see their own profile
+      users = users.filter((u: any) => u.id === requestingUserId);
+    }
+
+    // Additional filter by userType if provided
     if (userType) {
-      const filtered = users.filter((u: any) => u.userType === userType);
-      return res.json(filtered);
+      users = users.filter((u: any) => u.userType === userType);
     }
 
     res.json(users);
@@ -73,7 +109,7 @@ usersRouter.get("/:id", async (req: Request, res: Response) => {
 // Apply strict rate limiting to prevent enumeration attacks
 usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { firebaseUid, email, displayName, userType, organizationName } = req.body;
+    const { firebaseUid, email, displayName, userType, organizationName, invitationCode } = req.body;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
@@ -93,6 +129,26 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
         displayName: displayName || user.displayName
       });
       return res.json(updatedUser);
+    }
+
+    // Check if platform is in invite-only mode for new user registration
+    const isInviteOnly = await storage.isInviteOnlyMode();
+    if (isInviteOnly) {
+      if (!invitationCode) {
+        return res.status(403).json({
+          message: "This platform requires an invitation code to register",
+          requiresInvitation: true
+        });
+      }
+
+      // Validate the invitation code
+      const validation = await storage.validateInvitationCode(invitationCode, email, userType);
+      if (!validation.valid) {
+        return res.status(403).json({
+          message: validation.message || "Invalid invitation code",
+          requiresInvitation: true
+        });
+      }
     }
 
     if (!userType) {
@@ -123,6 +179,12 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     };
 
     user = await storage.createUser(userData);
+
+    // Mark invitation code as used if one was provided
+    if (invitationCode && user) {
+      await storage.useInvitationCode(invitationCode, user.id);
+    }
+
     broadcastUpdate("user_created", user);
     res.status(201).json(user);
   } catch (err) {

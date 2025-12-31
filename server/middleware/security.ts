@@ -66,10 +66,10 @@ export const tokenBlacklist = new TokenBlacklist();
 // Refresh Token Support
 // ============================================
 
-// JWT secret - REQUIRED in production
-const JWT_SECRET = process.env.JWT_SECRET;
+// JWT secret - use SESSION_SECRET as fallback in production
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET environment variable is required in production");
+  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required in production");
 }
 const JWT_SECRET_VALUE = JWT_SECRET || "synerxus-dev-jwt-secret-do-not-use-in-production";
 const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET_VALUE + "-refresh";

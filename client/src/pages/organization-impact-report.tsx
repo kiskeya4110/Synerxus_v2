@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import { formatDecimal } from "@/lib/format-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,8 @@ import {
   Crown,
   Clock,
   Award,
+  Mail,
+  Send,
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -268,6 +271,41 @@ export default function OrganizationImpactReport() {
     enabled: !!currentUser?.id && !!currentUser?.organizationId,
     staleTime: 0,
     refetchOnMount: true,
+  });
+
+  // Fetch accurate AIU data from dedicated AIU endpoint (single source of truth)
+  // This ensures consistency with the main organization dashboard
+  const { data: organizationAIU } = useQuery<{ totalAiu: number; aiuUnique: number; projects: any[] } | null>({
+    queryKey: ['/api/aiu/organization', currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/aiu/organization/${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: Boolean(currentUser?.organizationId && isOrganizationManager),
+  });
+
+  // Mutation to send impact report as newsletter email
+  const sendNewsletterMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/email-digest/organization/${currentUser?.organizationId}`, {
+        userId: currentUser?.id
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Newsletter Sent!",
+        description: "The impact report has been sent as a newsletter to your organization's email.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send newsletter",
+        variant: "destructive",
+      });
+    },
   });
 
   // Redirect users without organization context away from organization pages
@@ -1038,6 +1076,28 @@ export default function OrganizationImpactReport() {
                 <Printer className="h-4 w-4 mr-1" />
                 <span className="hidden md:inline">Print</span>
               </Button>
+              {isOrganizationManager && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => sendNewsletterMutation.mutate()}
+                  disabled={sendNewsletterMutation.isPending}
+                  className="flex-1 sm:flex-none text-xs md:text-sm bg-gradient-to-r from-amber-50 to-blue-50 border-blue-200 hover:from-amber-100 hover:to-blue-100 text-blue-800"
+                  title="Send as Newsletter"
+                >
+                  {sendNewsletterMutation.isPending ? (
+                    <>
+                      <Send className="h-4 w-4 mr-1 animate-pulse" />
+                      <span className="hidden md:inline">Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-1" />
+                      <span className="hidden md:inline">Newsletter</span>
+                    </>
+                  )}
+                </Button>
+              )}
 
               <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ml-auto sm:ml-0">
                 <Button
@@ -1403,13 +1463,13 @@ export default function OrganizationImpactReport() {
                         AIUs Earned
                       </p>
                       <p className="text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-1 md:mb-2">
-                        {formatDecimal(organizationImpactScore * 0.0035)}
+                        {formatDecimal(organizationAIU?.totalAiu || dashboardData?.totalAiuEarned || 0)}
                       </p>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Verified:</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            {Math.round(organizationImpactScore * 0.9)}%
+                            {(organizationAIU?.totalAiu || dashboardData?.totalAiuEarned) > 0 ? '100' : '0'}%
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">

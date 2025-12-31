@@ -65,59 +65,65 @@ export async function isPortInUseAsync(port: number): Promise<boolean> {
  * Check if a port has processes (using system tools)
  */
 export function hasProcessesOnPort(port: number): boolean {
-  try {
-    // Try using lsof first (most reliable on Linux/Mac)
-    const result = execSync(`lsof -i :${port} -t 2>/dev/null || true`, {
-      encoding: 'utf-8',
-      timeout: 5000
-    }).trim();
-    return result.length > 0;
-  } catch {
+  // Try multiple methods to find processes on port
+  const commands = [
+    `lsof -i :${port} -t 2>/dev/null`,
+    `fuser ${port}/tcp 2>/dev/null`,
+    `ss -tlnp 'sport = :${port}' 2>/dev/null | grep -v State`,
+    `netstat -tlnp 2>/dev/null | grep :${port}`,
+  ];
+
+  for (const cmd of commands) {
     try {
-      // Fallback to fuser
-      const result = execSync(`fuser ${port}/tcp 2>/dev/null || true`, {
+      const result = execSync(`${cmd} || true`, {
         encoding: 'utf-8',
-        timeout: 5000
+        timeout: 5000,
+        stdio: ['pipe', 'pipe', 'pipe']
       }).trim();
-      return result.length > 0;
+      if (result.length > 0 && !result.includes('command not found')) {
+        return true;
+      }
     } catch {
-      // If both fail, assume no processes
-      return false;
+      // Command failed, try next one
+      continue;
     }
   }
+
+  // If all tools fail, we can't determine - return false
+  return false;
 }
 
 /**
  * Get PIDs of processes using a port
  */
 export function getProcessesOnPort(port: number): number[] {
-  try {
-    const result = execSync(`lsof -i :${port} -t 2>/dev/null || true`, {
-      encoding: 'utf-8',
-      timeout: 5000
-    }).trim();
+  // Try multiple methods to get PIDs
+  const pidCommands = [
+    { cmd: `lsof -i :${port} -t 2>/dev/null`, parser: (r: string) => r.split('\n') },
+    { cmd: `fuser ${port}/tcp 2>/dev/null`, parser: (r: string) => r.split(/\s+/) },
+  ];
 
-    if (!result) return [];
-
-    return result.split('\n')
-      .map(pid => parseInt(pid.trim(), 10))
-      .filter(pid => !isNaN(pid) && pid > 0);
-  } catch {
+  for (const { cmd, parser } of pidCommands) {
     try {
-      const result = execSync(`fuser ${port}/tcp 2>/dev/null || true`, {
+      const result = execSync(`${cmd} || true`, {
         encoding: 'utf-8',
-        timeout: 5000
+        timeout: 5000,
+        stdio: ['pipe', 'pipe', 'pipe']
       }).trim();
 
-      if (!result) return [];
+      if (!result || result.includes('command not found')) continue;
 
-      return result.split(/\s+/)
+      const pids = parser(result)
         .map(pid => parseInt(pid.trim(), 10))
         .filter(pid => !isNaN(pid) && pid > 0);
+
+      if (pids.length > 0) return pids;
     } catch {
-      return [];
+      continue;
     }
   }
+
+  return [];
 }
 
 /**
@@ -241,30 +247,33 @@ export async function forceKillPortAsync(port: number): Promise<boolean> {
 /**
  * Ensure port is available before starting server
  * This is the main function to call before server.listen()
- * Handles both process cleanup and TIME_WAIT state
+ * Uses actual socket binding test - simplified approach without shell commands
  */
 export async function ensurePortAvailable(port: number = 5000): Promise<boolean> {
-  // Kill any processes that might be using the port
-  const pids = getProcessesOnPort(port);
-  if (pids.length > 0) {
-    logger.warn(`[PortManager] Found ${pids.length} process(es) on port ${port}, killing them...`);
-    await forceKillPortAsync(port);
-    // Wait a moment for processes to fully terminate
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Verify processes are gone
-    const remainingPids = getProcessesOnPort(port);
-    if (remainingPids.length > 0) {
-      logger.warn(`[PortManager] Still have ${remainingPids.length} process(es) after cleanup, waiting...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  } else {
-    logger.info(`[PortManager] No processes found on port ${port}`);
+  // Test if port is actually available by attempting to bind
+  const portInUse = await isPortInUseAsync(port);
+  
+  if (!portInUse) {
+    logger.info(`[PortManager] Port ${port} is available, ready to bind`);
+    return true;
   }
-
-  // If no processes are using the port, it should be safe to bind directly
-  // Skip the test bind which can create its own TIME_WAIT issues
-  logger.info(`[PortManager] Port ${port} cleanup complete, ready to bind`);
+  
+  // Port is in use - wait for it to become available (TIME_WAIT typically takes 30-60s)
+  logger.warn(`[PortManager] Port ${port} is in use, waiting for it to become available...`);
+  
+  // Wait with increasing delays, checking periodically
+  for (let i = 0; i < 5; i++) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const stillInUse = await isPortInUseAsync(port);
+    if (!stillInUse) {
+      logger.info(`[PortManager] Port ${port} is now available`);
+      return true;
+    }
+    logger.info(`[PortManager] Port ${port} still in use, waiting... (${(i + 1) * 2}s elapsed)`);
+  }
+  
+  // After 10 seconds, the port is still in use - proceed anyway and let listen() handle it
+  logger.warn(`[PortManager] Port ${port} may still be in TIME_WAIT state. Attempting to bind anyway...`);
   return true;
 }
 

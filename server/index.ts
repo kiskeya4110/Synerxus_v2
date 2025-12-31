@@ -435,33 +435,31 @@ app.use((req, res, next) => {
   // Port 5000 is the only port that is not firewalled on Replit.
   const port = parseInt(process.env.PORT || '5000', 10);
 
-  // PRE-STARTUP CLEANUP: Ensure port is available before attempting to bind
-  // This kills any stale processes and handles TIME_WAIT states
-  logger.info(`[Server] Pre-startup cleanup for port ${port}...`);
-  await ensurePortAvailable(port);
-  logger.info(`[Server] Port ${port} cleanup complete`);
-
-  // Function to start listening with retry (fallback for edge cases)
-  const startListening = async (attempt: number = 1, maxAttempts: number = 5) => {
-    logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/${maxAttempts})`);
-
-    const onError = async (err: any) => {
-      server.removeListener('error', onError);
+  // PRE-STARTUP: Wait briefly for any lingering connections to close
+  logger.info(`[Server] Preparing to start on port ${port}...`);
+  
+  // Simple retry logic for port binding
+  const maxRetries = 10;
+  const retryDelay = 3000; // 3 seconds between retries
+  
+  const attemptBind = (attempt: number): void => {
+    logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/${maxRetries})`);
+    
+    const onError = (err: any) => {
       server.removeListener('listening', onListening);
-
+      
       if (err.code === 'EADDRINUSE') {
-        if (attempt < maxAttempts) {
-          logger.warn(`[Server] Port ${port} busy, force killing and retry ${attempt}/${maxAttempts}...`);
-
-          // Use robust force kill from port-manager
-          await forceKillPortAsync(port);
-
-          // Exponential backoff with jitter
-          const delay = Math.min(1000 * Math.pow(1.5, attempt) + Math.random() * 500, 10000);
-          logger.info(`[Server] Waiting ${Math.round(delay)}ms before retry...`);
-          setTimeout(() => startListening(attempt + 1, maxAttempts), delay);
+        if (attempt < maxRetries) {
+          logger.warn(`[Server] Port ${port} in use, retrying in ${retryDelay/1000}s... (attempt ${attempt}/${maxRetries})`);
+          // Close the server to reset its state before retrying
+          try {
+            server.close();
+          } catch (e) {
+            // Ignore close errors
+          }
+          setTimeout(() => attemptBind(attempt + 1), retryDelay);
         } else {
-          logger.error(`[Server] Port ${port} unavailable after ${maxAttempts} attempts. Exiting...`);
+          logger.error(`[Server] Port ${port} unavailable after ${maxRetries} attempts. Exiting...`);
           process.exit(1);
         }
       } else {
@@ -469,7 +467,7 @@ app.use((req, res, next) => {
         process.exit(1);
       }
     };
-
+    
     const onListening = () => {
       server.removeListener('error', onError);
       log(`serving on port ${port}`);
@@ -482,14 +480,20 @@ app.use((req, res, next) => {
 
       logger.info(`[Server] Connection tracking enabled`);
     };
-
+    
     server.once('error', onError);
     server.once('listening', onListening);
-    server.listen(port, "0.0.0.0");
+    
+    // Use exclusive: false to allow port reuse for TIME_WAIT handling
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      exclusive: false,
+    });
   };
-
-  // Start listening (port should be clean now)
-  startListening(1, 5);
+  
+  // Start the binding attempt
+  attemptBind(1);
 
   // Setup comprehensive graceful shutdown handlers
   // Handles SIGTERM, SIGINT, SIGHUP, uncaught exceptions, and exit

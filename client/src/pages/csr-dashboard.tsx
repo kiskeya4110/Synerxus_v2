@@ -2924,7 +2924,14 @@ export default function CSRDashboard() {
                         <div className="text-emerald-600 text-xs">Expected Next Month</div>
                       </div>
                       <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
-                        <div className="text-blue-700 text-xl font-bold">87%</div>
+                        <div className="text-blue-700 text-xl font-bold">
+                          {Math.min(95, Math.max(55,
+                            60 + // Base confidence
+                            (displayActiveEmployees >= 10 ? 15 : displayActiveEmployees >= 5 ? 8 : 3) + // Employee data volume
+                            (displayTotalHours >= 100 ? 10 : displayTotalHours >= 50 ? 5 : 2) + // Hours data volume
+                            (displayProjectsCompleted >= 5 ? 10 : displayProjectsCompleted >= 2 ? 5 : 0) // Project completion data
+                          ))}%
+                        </div>
                         <div className="text-blue-600 text-xs">Confidence Score</div>
                       </div>
                     </div>

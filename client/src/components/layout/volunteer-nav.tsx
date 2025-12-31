@@ -202,13 +202,12 @@ export default function VolunteerNav() {
           {/* Right Section: Notifications + User Profile Menu */}
           <div className="flex items-center gap-3">
             {/* Notifications Bell */}
-            <Link href="/notifications">
-              <button
-                className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="w-5 h-5" />
-              </button>
+            <Link
+              href="/notifications"
+              className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer z-50"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
             </Link>
 
             {/* User Profile Menu */}

@@ -4,7 +4,8 @@ import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart, CheckCircle2, Eye } from "lucide-react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
@@ -44,6 +45,90 @@ interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
 declare const html2pdf: { (): Html2PdfInstance };
+
+// Geocoding function for project locations
+function getCoordinatesFromLocation(location: string): { lat: number; lng: number } {
+  const locationCoords: Record<string, { lat: number; lng: number }> = {
+    // African Countries
+    'zambia': { lat: -13.1939, lng: 27.8493 },
+    'kenya': { lat: 0.0236, lng: 37.9062 },
+    'nigeria': { lat: 9.0765, lng: 7.3986 },
+    'south africa': { lat: -30.5595, lng: 22.9375 },
+    'uganda': { lat: 1.3733, lng: 32.2903 },
+    'tanzania': { lat: -6.3690, lng: 34.8888 },
+    'ethiopia': { lat: 9.1450, lng: 40.4897 },
+    'ghana': { lat: 7.3697, lng: -5.6789 },
+    'zimbabwe': { lat: -19.0154, lng: 29.1549 },
+    'rwanda': { lat: -1.9536, lng: 29.8739 },
+    'malawi': { lat: -13.2543, lng: 34.3015 },
+    'mozambique': { lat: -18.6657, lng: 35.5296 },
+    // African Cities
+    'nairobi': { lat: -1.2921, lng: 36.8219 },
+    'mombasa': { lat: -4.0435, lng: 39.6682 },
+    'lagos': { lat: 6.5244, lng: 3.3792 },
+    'cape town': { lat: -33.9249, lng: 18.4241 },
+    'johannesburg': { lat: -26.2023, lng: 28.0436 },
+    'lusaka': { lat: -15.3875, lng: 28.2833 },
+    'ndola': { lat: -12.9587, lng: 28.6366 },
+    'kitwe': { lat: -12.8024, lng: 28.2132 },
+    'harare': { lat: -17.8252, lng: 31.0335 },
+    'bulawayo': { lat: -20.1325, lng: 28.5848 },
+    'kampala': { lat: 0.3476, lng: 32.5825 },
+    'dar es salaam': { lat: -6.8000, lng: 39.2833 },
+    'accra': { lat: 5.6037, lng: -0.187 },
+    // Americas
+    'united states': { lat: 37.0902, lng: -95.7129 },
+    'usa': { lat: 37.0902, lng: -95.7129 },
+    'canada': { lat: 56.1304, lng: -106.3468 },
+    'mexico': { lat: 23.6345, lng: -102.5528 },
+    'brazil': { lat: -14.2350, lng: -51.9253 },
+    'haiti': { lat: 18.9712, lng: -72.2852 },
+    'philippines': { lat: 12.8797, lng: 121.7740 },
+    'india': { lat: 20.5937, lng: 78.9629 },
+    // Cities
+    'new york': { lat: 40.7128, lng: -74.006 },
+    'los angeles': { lat: 34.0522, lng: -118.2437 },
+    'london': { lat: 51.5074, lng: -0.1278 },
+    'manila': { lat: 14.5995, lng: 120.9842 },
+    'port-au-prince': { lat: 18.5944, lng: -72.3074 },
+    // Special
+    'remote': { lat: 20, lng: 0 },
+    'online': { lat: 20, lng: 0 },
+    'virtual': { lat: 20, lng: 0 },
+    'global': { lat: 20, lng: 0 },
+  };
+
+  const locationLower = location.toLowerCase().trim();
+
+  // Exact match
+  if (locationCoords[locationLower]) {
+    return locationCoords[locationLower];
+  }
+
+  // Partial match
+  for (const [key, coords] of Object.entries(locationCoords)) {
+    if (locationLower.includes(key)) {
+      return coords;
+    }
+  }
+
+  // Default to Africa center for unknown locations
+  return { lat: 0, lng: 20 };
+}
+
+// Component to auto-fit map bounds to all markers
+function FitBounds({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (positions.length > 0) {
+      const bounds = L.latLngBounds(positions.map(pos => L.latLng(pos[0], pos[1])));
+      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 6 });
+    }
+  }, [map, positions]);
+
+  return null;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -1584,55 +1669,77 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="h-64 relative">
-                      {typeof window !== 'undefined' && (
-                        <MapContainer
-                          key="volunteer-project-map"
-                          center={[20, 0]}
-                          zoom={2}
-                          style={{ height: '100%', width: '100%' }}
-                          scrollWheelZoom={false}
-                          dragging={true}
-                          zoomControl={true}
-                        >
-                          <TileLayer
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                          />
-                          {filteredData.projects.filter((p: any) => p.location).map((project: any, idx: number) => {
-                            // Parse location to get coordinates (simplified - uses default coords if not available)
-                            const lat = project.latitude || (10 + idx * 5);
-                            const lng = project.longitude || (-20 + idx * 15);
-                            const isCompleted = project.status?.toLowerCase() === 'completed';
-                            return (
-                              <CircleMarker
-                                key={project.id || idx}
-                                center={[lat, lng]}
-                                radius={Math.max(6, Math.min(14, (project.hours || 10) / 5))}
-                                fillColor={isCompleted ? '#3B82F6' : '#10B981'}
-                                fillOpacity={0.7}
-                                stroke={true}
-                                color="#fff"
-                                weight={2}
-                              >
-                                <Popup>
-                                  <div className="text-sm min-w-[180px]">
-                                    <p className="font-bold text-gray-900 mb-1">{project.name}</p>
-                                    <p className="text-gray-500 text-xs mb-2">{project.location || 'Unknown Location'}</p>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span className={`px-2 py-0.5 rounded-full ${isCompleted ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                        {project.status || 'Active'}
-                                      </span>
-                                      {project.hours && (
-                                        <span className="text-gray-600">{project.hours}h logged</span>
-                                      )}
+                      {typeof window !== 'undefined' && (() => {
+                        // Calculate positions for all projects with locations
+                        const projectPositions = filteredData.projects
+                          .filter((p: any) => p.location)
+                          .map((project: any) => {
+                            // Use project's stored coordinates or geocode from location string
+                            if (project.latitude && project.longitude) {
+                              return [project.latitude, project.longitude] as [number, number];
+                            }
+                            const coords = getCoordinatesFromLocation(project.location);
+                            return [coords.lat, coords.lng] as [number, number];
+                          });
+
+                        return (
+                          <MapContainer
+                            key="volunteer-project-map"
+                            center={[0, 20]}
+                            zoom={3}
+                            style={{ height: '100%', width: '100%' }}
+                            scrollWheelZoom={false}
+                            dragging={true}
+                            zoomControl={true}
+                          >
+                            <TileLayer
+                              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                            />
+                            <FitBounds positions={projectPositions} />
+                            {filteredData.projects.filter((p: any) => p.location).map((project: any, idx: number) => {
+                              // Use project's stored coordinates or geocode from location string
+                              let lat: number, lng: number;
+                              if (project.latitude && project.longitude) {
+                                lat = project.latitude;
+                                lng = project.longitude;
+                              } else {
+                                const coords = getCoordinatesFromLocation(project.location);
+                                lat = coords.lat;
+                                lng = coords.lng;
+                              }
+                              const isCompleted = project.status?.toLowerCase() === 'completed';
+                              return (
+                                <CircleMarker
+                                  key={project.id || idx}
+                                  center={[lat, lng]}
+                                  radius={Math.max(6, Math.min(14, (project.hours || 10) / 5))}
+                                  fillColor={isCompleted ? '#3B82F6' : '#10B981'}
+                                  fillOpacity={0.7}
+                                  stroke={true}
+                                  color="#fff"
+                                  weight={2}
+                                >
+                                  <Popup>
+                                    <div className="text-sm min-w-[180px]">
+                                      <p className="font-bold text-gray-900 mb-1">{project.name}</p>
+                                      <p className="text-gray-500 text-xs mb-2">{project.location || 'Unknown Location'}</p>
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className={`px-2 py-0.5 rounded-full ${isCompleted ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                          {project.status || 'Active'}
+                                        </span>
+                                        {project.hours && (
+                                          <span className="text-gray-600">{project.hours}h logged</span>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                </Popup>
-                              </CircleMarker>
-                            );
-                          })}
-                        </MapContainer>
-                      )}
+                                  </Popup>
+                                </CircleMarker>
+                              );
+                            })}
+                          </MapContainer>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>

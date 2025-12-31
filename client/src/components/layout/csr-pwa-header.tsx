@@ -87,8 +87,8 @@ export default function CSRPWAHeader({
 
             {/* Notifications */}
             <button
-              onClick={() => navigate("/applications")}
-              className="relative w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100"
+              onClick={() => navigate("/notifications")}
+              className="relative w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 cursor-pointer"
             >
               <Bell className="w-4 h-4 text-emerald-600" />
               {notificationCount > 0 && (

@@ -606,6 +606,78 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     };
   }, [projects, volunteerProfile?.skills, sdgDistribution, impactOverTimeData, kpis]);
 
+  // Calculate AI confidence and match level for SDG impact forecast
+  // Based on: profile completeness, skills match, historical data, and project activity
+  const calculateSDGForecastConfidence = (sdg: { sdg: number; value: number; projectCount: number }) => {
+    let confidence = 50; // Base confidence
+    let matchLevel: 'High' | 'Medium' | 'Low' = 'Low';
+    let projectedGrowth = 10; // Base projected growth
+
+    // Factor 1: Profile completeness (up to +15%)
+    const profileComplete = volunteerProfile ? (
+      (volunteerProfile.skills?.length > 0 ? 5 : 0) +
+      (volunteerProfile.preferredSdgs?.length > 0 ? 5 : 0) +
+      (volunteerProfile.weeklyAvailability ? 3 : 0) +
+      (volunteerProfile.professionalTitle ? 2 : 0)
+    ) : 0;
+    confidence += profileComplete;
+
+    // Factor 2: SDG alignment with profile preferences (up to +15%)
+    const preferredSdgs = volunteerProfile?.preferredSdgs || [];
+    if (preferredSdgs.includes(sdg.sdg)) {
+      confidence += 15;
+      projectedGrowth += 15;
+    }
+
+    // Factor 3: Historical activity in this SDG (up to +15%)
+    if (sdg.projectCount >= 3) {
+      confidence += 15;
+      projectedGrowth += 10;
+    } else if (sdg.projectCount >= 1) {
+      confidence += 8;
+      projectedGrowth += 5;
+    }
+
+    // Factor 4: Hours contributed to this SDG (up to +10%)
+    if (sdg.value >= 20) {
+      confidence += 10;
+      projectedGrowth += 8;
+    } else if (sdg.value >= 5) {
+      confidence += 5;
+      projectedGrowth += 4;
+    }
+
+    // Factor 5: Skills match for SDG-related projects
+    const volunteerSkills = volunteerProfile?.skills || [];
+    if (volunteerSkills.length >= 5) {
+      confidence += 5;
+      projectedGrowth += 5;
+    } else if (volunteerSkills.length >= 2) {
+      confidence += 3;
+      projectedGrowth += 3;
+    }
+
+    // Determine match level based on confidence
+    if (confidence >= 75) {
+      matchLevel = 'High';
+    } else if (confidence >= 55) {
+      matchLevel = 'Medium';
+    } else {
+      matchLevel = 'Low';
+    }
+
+    // Cap values
+    confidence = Math.min(Math.max(confidence, 35), 98);
+    projectedGrowth = Math.min(Math.max(projectedGrowth, 8), 45);
+
+    return {
+      confidence,
+      matchLevel,
+      projectedGrowth,
+      matchColor: matchLevel === 'High' ? 'text-emerald-600' : matchLevel === 'Medium' ? 'text-amber-600' : 'text-slate-500'
+    };
+  };
+
   // Calculate match score with reasons
   const calculateMatchScore = (project: any) => {
     if (!volunteerProfile) return { score: 75, reasons: ['Based on project popularity'] };
@@ -754,6 +826,71 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
     return analytics;
   }, [volunteerProfile?.skills, discoverOpportunities, projects]);
+
+  // Calculate high-demand skills across all opportunities for profile optimization insights
+  const highDemandSkillsAnalysis = useMemo(() => {
+    const allOpportunities = discoverOpportunities || [];
+    const volunteerSkills = (volunteerProfile?.skills || []).map((s: string) => s.toLowerCase());
+
+    // Aggregate all skills from opportunities with demand count
+    const skillDemand: Record<string, { count: number; opportunities: number[]; avgUrgency: number }> = {};
+
+    allOpportunities.forEach((opp: any) => {
+      const requiredSkills = opp.requiredSkills || opp.skillsRequired || [];
+      const urgency = opp.urgency === 'high' ? 3 : opp.urgency === 'medium' ? 2 : 1;
+
+      requiredSkills.forEach((skill: string) => {
+        if (!skill) return;
+        const normalizedSkill = skill.trim();
+        const skillKey = normalizedSkill.toLowerCase();
+
+        if (!skillDemand[skillKey]) {
+          skillDemand[skillKey] = { count: 0, opportunities: [], avgUrgency: 0 };
+        }
+        skillDemand[skillKey].count += 1;
+        skillDemand[skillKey].opportunities.push(opp.id);
+        skillDemand[skillKey].avgUrgency =
+          (skillDemand[skillKey].avgUrgency * (skillDemand[skillKey].count - 1) + urgency) / skillDemand[skillKey].count;
+      });
+    });
+
+    // Sort by demand (count * urgency weight)
+    const sortedSkills = Object.entries(skillDemand)
+      .map(([skill, data]) => ({
+        skill: skill.charAt(0).toUpperCase() + skill.slice(1), // Capitalize
+        rawSkill: skill,
+        count: data.count,
+        urgencyScore: data.avgUrgency,
+        demandScore: Math.round(data.count * data.avgUrgency * 10),
+        userHasSkill: volunteerSkills.some(vs => vs.includes(skill) || skill.includes(vs)),
+        opportunityIds: data.opportunities
+      }))
+      .sort((a, b) => b.demandScore - a.demandScore);
+
+    // Top high-demand skills (limit to top 6)
+    const topDemandSkills = sortedSkills.slice(0, 6);
+
+    // Skills user has that are in demand
+    const userMatchingSkills = sortedSkills.filter(s => s.userHasSkill).slice(0, 4);
+
+    // Skills user should consider adding (high demand, user doesn't have)
+    const suggestedSkills = sortedSkills.filter(s => !s.userHasSkill && s.count >= 2).slice(0, 4);
+
+    // Calculate user's skill coverage percentage
+    const totalDemandedSkills = sortedSkills.length;
+    const userCoverage = totalDemandedSkills > 0
+      ? Math.round((userMatchingSkills.length / Math.min(totalDemandedSkills, 10)) * 100)
+      : 0;
+
+    return {
+      topDemandSkills,
+      userMatchingSkills,
+      suggestedSkills,
+      userCoverage,
+      totalOpportunities: allOpportunities.length,
+      hasData: allOpportunities.length > 0
+    };
+  }, [discoverOpportunities, volunteerProfile?.skills]);
 
   // Check if user has applied for an opportunity
   const hasAppliedToOpportunity = (opportunityId: number) => {
@@ -1838,25 +1975,81 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     </div>
                   </div>
 
-                  {/* Skills in Demand */}
+                  {/* Skills in Demand - Dynamic based on opportunities */}
                   <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3">
-                    <div className="text-xs font-semibold text-slate-700 mb-2">High-Demand Skills This Month</div>
-                    <div className="flex gap-2 flex-wrap">
-                      {['Project Management', 'Data Analysis', 'Content Creation', 'Community Outreach'].map((skill) => (
-                        <span key={skill} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-medium">
-                          {skill}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold text-slate-700">High-Demand Skills This Month</div>
+                      {highDemandSkillsAnalysis.hasData && (
+                        <span className="text-[9px] text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                          {highDemandSkillsAnalysis.totalOpportunities} opportunities analyzed
                         </span>
-                      ))}
+                      )}
                     </div>
+                    {highDemandSkillsAnalysis.hasData ? (
+                      <div className="space-y-2">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {highDemandSkillsAnalysis.topDemandSkills.slice(0, 4).map((skillData) => (
+                            <span
+                              key={skillData.rawSkill}
+                              className={`px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 ${
+                                skillData.userHasSkill
+                                  ? 'bg-emerald-200 text-emerald-800 ring-1 ring-emerald-400'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}
+                              title={`${skillData.count} opportunities require this skill`}
+                            >
+                              {skillData.userHasSkill && <CheckCircle className="w-2.5 h-2.5" />}
+                              {skillData.skill}
+                              <span className="text-[8px] opacity-70">({skillData.count})</span>
+                            </span>
+                          ))}
+                        </div>
+                        {/* Suggested skills to add */}
+                        {highDemandSkillsAnalysis.suggestedSkills.length > 0 && (
+                          <div className="pt-1.5 border-t border-emerald-200/50">
+                            <div className="text-[9px] text-slate-500 mb-1">
+                              <Lightbulb className="w-3 h-3 inline mr-1 text-amber-500" />
+                              Consider adding:
+                            </div>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {highDemandSkillsAnalysis.suggestedSkills.slice(0, 3).map((skillData) => (
+                                <span
+                                  key={skillData.rawSkill}
+                                  className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[9px] font-medium border border-amber-200"
+                                >
+                                  + {skillData.skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-slate-500 py-2">
+                        <Sparkles className="w-4 h-4 inline mr-1 text-slate-400" />
+                        Loading skill demand data...
+                      </div>
+                    )}
                   </div>
 
-                  {/* Your Competitive Edge */}
+                  {/* Your Competitive Edge - Dynamic analysis */}
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
-                    <div className="text-xs font-semibold text-slate-700 mb-1">Your Competitive Advantage</div>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs font-semibold text-slate-700">Your Competitive Advantage</div>
+                      {highDemandSkillsAnalysis.userMatchingSkills.length > 0 && (
+                        <span className="text-[9px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded-full">
+                          {highDemandSkillsAnalysis.userCoverage}% market coverage
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-slate-600">
-                      {volunteerProfile?.skills?.length > 3
-                        ? `Your combination of ${volunteerProfile.skills.slice(0, 2).join(' and ')} places you in the top 15% of volunteers for impact potential.`
-                        : 'Add more skills to unlock your competitive edge analysis.'}
+                      {highDemandSkillsAnalysis.userMatchingSkills.length >= 3
+                        ? `Your skills in ${highDemandSkillsAnalysis.userMatchingSkills.slice(0, 2).map(s => s.skill).join(' and ')} match ${highDemandSkillsAnalysis.userMatchingSkills.reduce((sum, s) => sum + s.count, 0)} open opportunities. You're well-positioned for high-impact projects!`
+                        : highDemandSkillsAnalysis.userMatchingSkills.length >= 1
+                        ? `Your ${highDemandSkillsAnalysis.userMatchingSkills[0].skill} skill matches ${highDemandSkillsAnalysis.userMatchingSkills[0].count} opportunities. Add more skills to increase your match rate.`
+                        : volunteerProfile?.skills?.length > 0
+                        ? 'Your skills are unique! Consider adding in-demand skills shown above to match more opportunities.'
+                        : 'Add skills to your profile to unlock personalized opportunity matching.'}
                     </p>
                   </div>
                 </div>
@@ -1867,10 +2060,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="flex items-center gap-2 mb-3">
                   <Target className="w-5 h-5 text-emerald-600" />
                   <span className="text-slate-800 font-semibold">Impact Forecast</span>
+                  <span className="ml-auto text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">AI-Powered</span>
                 </div>
                 <div className="space-y-2">
                   {sdgDistribution.slice(0, 3).map((sdg) => {
-                    const projectedGrowth = Math.floor(Math.random() * 30 + 20);
+                    const forecast = calculateSDGForecastConfidence(sdg);
                     return (
                       <div key={sdg.sdg} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
                         <div
@@ -1882,18 +2076,24 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="flex-1">
                           <div className="text-slate-800 text-sm font-medium">{sdg.name}</div>
                           <div className="flex items-center gap-2">
-                            <span className="text-slate-500 text-xs">{sdg.value} projects</span>
-                            <span className="text-emerald-600 text-xs font-medium">+{projectedGrowth}% potential</span>
+                            <span className="text-slate-500 text-xs">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
+                            <span className="text-emerald-600 text-xs font-medium">+{forecast.projectedGrowth}% potential</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-emerald-600 text-xs font-semibold">High Match</div>
-                          <div className="text-[10px] text-slate-400">AI Confidence: 94%</div>
+                          <div className={`text-xs font-semibold ${forecast.matchColor}`}>{forecast.matchLevel} Match</div>
+                          <div className="text-[10px] text-slate-400">AI Confidence: {forecast.confidence}%</div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+                {sdgDistribution.length === 0 && (
+                  <div className="text-center py-4 text-slate-500 text-sm">
+                    <Target className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    <p>Complete projects to see your impact forecast</p>
+                  </div>
+                )}
               </div>
 
               {/* Growth Journey */}

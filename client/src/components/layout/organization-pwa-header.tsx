@@ -130,6 +130,15 @@ export default function OrganizationPWAHeader({
             </button>
           )}
 
+          {/* Notifications Button */}
+          <button
+            onClick={() => navigate('/notifications')}
+            className="relative w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all cursor-pointer"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-slate-700" />
+          </button>
+
           {/* Menu Button */}
           <button
             onClick={() => setShowMenu(true)}

@@ -92,14 +92,20 @@ export default function ImpactChart({
     };
 
     if (viewMode === 'cumulative' && impactGrowthSeries.length > 0) {
+      // Calculate cumulative algorithm scores
+      let cumulativeScore = 0;
+      const cumulativeScores = impactGrowthSeries.map((item) => {
+        const monthlyScore = algorithmScoreMap.get(item.month) || 0;
+        cumulativeScore += monthlyScore;
+        return cumulativeScore;
+      });
+
       return {
         labels: impactGrowthSeries.map((item) => formatMonth(item.month)),
         hours: impactGrowthSeries.map((item) => item.cumulativeHours),
         impact: impactGrowthSeries.map((item) => item.cumulativePeople),
         aiu: impactGrowthSeries.map((item) => item.cumulativeAiu || 0),
-        algorithmScores: impactGrowthSeries.map((item) =>
-          algorithmScoreMap.get(item.month) || 0
-        ),
+        algorithmScores: cumulativeScores,
       };
     }
 

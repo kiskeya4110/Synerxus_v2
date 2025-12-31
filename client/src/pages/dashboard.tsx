@@ -1,9 +1,18 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect, useState } from "react";
-import VolunteerDashboard from "./volunteer-dashboard";
-import OrganizationDashboard from "./organization-dashboard";
-import CSRDashboard from "./csr-dashboard";
+import { useEffect, useState, lazy, Suspense } from "react";
+
+// Lazy load dashboard components to reduce main bundle size
+const VolunteerDashboard = lazy(() => import("./volunteer-dashboard"));
+const OrganizationDashboard = lazy(() => import("./organization-dashboard"));
+const CSRDashboard = lazy(() => import("./csr-dashboard"));
+
+// Loading fallback for dashboards
+const DashboardLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 export default function Dashboard() {
   // All hooks must be called unconditionally at the top
@@ -31,11 +40,23 @@ export default function Dashboard() {
 
   // Route to appropriate dashboard based on user type
   if (userType === 'volunteer') {
-    return <VolunteerDashboard />;
+    return (
+      <Suspense fallback={<DashboardLoader />}>
+        <VolunteerDashboard />
+      </Suspense>
+    );
   } else if (userType === 'organization') {
-    return <OrganizationDashboard />;
+    return (
+      <Suspense fallback={<DashboardLoader />}>
+        <OrganizationDashboard />
+      </Suspense>
+    );
   } else if (userType === 'corporate-partner') {
-    return <CSRDashboard />;
+    return (
+      <Suspense fallback={<DashboardLoader />}>
+        <CSRDashboard />
+      </Suspense>
+    );
   }
 
   return null;

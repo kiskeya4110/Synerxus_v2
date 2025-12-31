@@ -45,6 +45,10 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
               return 'vendor-react';
             }
+            // Lucide icons - very large when bundled together
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
             // Recharts needs its d3 dependencies bundled together to avoid circular deps
             if (id.includes('recharts')) {
               return 'vendor-recharts';
@@ -54,7 +58,7 @@ export default defineConfig({
               return 'vendor-d3';
             }
             // Map libraries - large bundles
-            if (id.includes('leaflet')) {
+            if (id.includes('leaflet') || id.includes('react-leaflet')) {
               return 'vendor-maps';
             }
             // UI components - shadcn/radix
@@ -76,6 +80,22 @@ export default defineConfig({
             // Date utilities
             if (id.includes('date-fns') || id.includes('dayjs') || id.includes('moment')) {
               return 'vendor-date';
+            }
+            // Wouter routing
+            if (id.includes('wouter')) {
+              return 'vendor-router';
+            }
+            // Firebase
+            if (id.includes('firebase') || id.includes('@firebase')) {
+              return 'vendor-firebase';
+            }
+            // Animation libraries
+            if (id.includes('framer-motion') || id.includes('popmotion')) {
+              return 'vendor-animation';
+            }
+            // Cropper and image utilities
+            if (id.includes('cropper') || id.includes('react-cropper')) {
+              return 'vendor-image';
             }
           }
         },

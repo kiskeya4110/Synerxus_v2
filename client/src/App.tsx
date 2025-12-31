@@ -7,13 +7,13 @@ import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
 
-// Core pages - loaded immediately for fast initial render
-import Landing from "@/pages/landing";
-import Login from "@/pages/login";
-import Dashboard from "@/pages/dashboard";
-import VolunteerDashboard from "@/pages/volunteer-dashboard";
-import OrganizationDashboard from "@/pages/organization-dashboard";
-import NotFound from "@/pages/not-found";
+// Core pages - lazy loaded for smaller initial bundle
+const Landing = lazy(() => import("@/pages/landing"));
+const Login = lazy(() => import("@/pages/login"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const VolunteerDashboard = lazy(() => import("@/pages/volunteer-dashboard"));
+const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Lazy-loaded pages - loaded on demand to reduce initial bundle size
 const Profile = lazy(() => import("@/pages/profile"));

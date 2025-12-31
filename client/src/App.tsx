@@ -1,7 +1,8 @@
 import { Route, Router, Switch, useLocation } from "wouter";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useMemo } from "react";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
-import { volunteerOnboardingSteps, organizationOnboardingSteps, csrOnboardingSteps } from "@shared/onboarding-steps";
+import { ABTestingProvider, useABTesting } from "@/contexts/ab-testing-context";
+import { getOnboardingSteps } from "@shared/onboarding-steps";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
@@ -199,14 +200,21 @@ function RootRedirectRoute() {
   return null;
 }
 
-export default function App() {
-  // Determine user type from localStorage to select appropriate onboarding steps
-  const userType = localStorage.getItem('userType');
-  const steps = userType === 'corporate-partner' 
-    ? csrOnboardingSteps 
-    : userType === 'organization' 
-      ? organizationOnboardingSteps 
-      : volunteerOnboardingSteps;
+// Inner app component that uses A/B testing context
+function AppWithOnboarding() {
+  const { getVariant } = useABTesting();
+
+  // Get the onboarding variant to determine step count
+  const onboardingVariant = getVariant('onboarding-flow');
+  const stepCount = onboardingVariant?.config?.stepCount || 'full';
+
+  // Determine user type from localStorage
+  const userType = localStorage.getItem('userType') as 'volunteer' | 'organization' | 'corporate-partner' || 'volunteer';
+
+  // Get onboarding steps based on user type and A/B variant
+  const steps = useMemo(() => {
+    return getOnboardingSteps(userType, stepCount as 'full' | 'minimal');
+  }, [userType, stepCount]);
 
   return (
     <OnboardingProvider steps={steps}>
@@ -251,6 +259,14 @@ export default function App() {
         </Router>
         </Suspense>
     </OnboardingProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ABTestingProvider>
+      <AppWithOnboarding />
+    </ABTestingProvider>
   );
 }
 

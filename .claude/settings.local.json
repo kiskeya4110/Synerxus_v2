@@ -80,7 +80,14 @@
       "Bash(ssh-keygen:*)",
       "Bash(tee:*)",
       "Bash(PORT=5000 npm run dev:*)",
-      "Bash(pgrep:*)"
+      "Bash(pgrep:*)",
+      "Bash(while read file)",
+      "Bash(do basename \"$file\" .tsx)",
+      "Bash(done)",
+      "Bash(node scripts/optimize-images.js:*)",
+      "Bash(node scripts/optimize-images.cjs:*)",
+      "Bash(npx lighthouse:*)",
+      "Bash(dpkg:*)"
     ],
     "deny": [],
     "ask": []

@@ -46,67 +46,68 @@ interface Html2PdfInstance {
 }
 declare const html2pdf: { (): Html2PdfInstance };
 
+// Module-level constant for location coordinates (avoids recreation on every function call)
+const LOCATION_COORDS: Record<string, { lat: number; lng: number }> = {
+  // African Countries
+  'zambia': { lat: -13.1939, lng: 27.8493 },
+  'kenya': { lat: 0.0236, lng: 37.9062 },
+  'nigeria': { lat: 9.0765, lng: 7.3986 },
+  'south africa': { lat: -30.5595, lng: 22.9375 },
+  'uganda': { lat: 1.3733, lng: 32.2903 },
+  'tanzania': { lat: -6.3690, lng: 34.8888 },
+  'ethiopia': { lat: 9.1450, lng: 40.4897 },
+  'ghana': { lat: 7.3697, lng: -5.6789 },
+  'zimbabwe': { lat: -19.0154, lng: 29.1549 },
+  'rwanda': { lat: -1.9536, lng: 29.8739 },
+  'malawi': { lat: -13.2543, lng: 34.3015 },
+  'mozambique': { lat: -18.6657, lng: 35.5296 },
+  // African Cities
+  'nairobi': { lat: -1.2921, lng: 36.8219 },
+  'mombasa': { lat: -4.0435, lng: 39.6682 },
+  'lagos': { lat: 6.5244, lng: 3.3792 },
+  'cape town': { lat: -33.9249, lng: 18.4241 },
+  'johannesburg': { lat: -26.2023, lng: 28.0436 },
+  'lusaka': { lat: -15.3875, lng: 28.2833 },
+  'ndola': { lat: -12.9587, lng: 28.6366 },
+  'kitwe': { lat: -12.8024, lng: 28.2132 },
+  'harare': { lat: -17.8252, lng: 31.0335 },
+  'bulawayo': { lat: -20.1325, lng: 28.5848 },
+  'kampala': { lat: 0.3476, lng: 32.5825 },
+  'dar es salaam': { lat: -6.8000, lng: 39.2833 },
+  'accra': { lat: 5.6037, lng: -0.187 },
+  // Americas
+  'united states': { lat: 37.0902, lng: -95.7129 },
+  'usa': { lat: 37.0902, lng: -95.7129 },
+  'canada': { lat: 56.1304, lng: -106.3468 },
+  'mexico': { lat: 23.6345, lng: -102.5528 },
+  'brazil': { lat: -14.2350, lng: -51.9253 },
+  'haiti': { lat: 18.9712, lng: -72.2852 },
+  'philippines': { lat: 12.8797, lng: 121.7740 },
+  'india': { lat: 20.5937, lng: 78.9629 },
+  // Cities
+  'new york': { lat: 40.7128, lng: -74.006 },
+  'los angeles': { lat: 34.0522, lng: -118.2437 },
+  'london': { lat: 51.5074, lng: -0.1278 },
+  'manila': { lat: 14.5995, lng: 120.9842 },
+  'port-au-prince': { lat: 18.5944, lng: -72.3074 },
+  // Special
+  'remote': { lat: 20, lng: 0 },
+  'online': { lat: 20, lng: 0 },
+  'virtual': { lat: 20, lng: 0 },
+  'global': { lat: 20, lng: 0 },
+};
+
 // Geocoding function for project locations
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } {
-  const locationCoords: Record<string, { lat: number; lng: number }> = {
-    // African Countries
-    'zambia': { lat: -13.1939, lng: 27.8493 },
-    'kenya': { lat: 0.0236, lng: 37.9062 },
-    'nigeria': { lat: 9.0765, lng: 7.3986 },
-    'south africa': { lat: -30.5595, lng: 22.9375 },
-    'uganda': { lat: 1.3733, lng: 32.2903 },
-    'tanzania': { lat: -6.3690, lng: 34.8888 },
-    'ethiopia': { lat: 9.1450, lng: 40.4897 },
-    'ghana': { lat: 7.3697, lng: -5.6789 },
-    'zimbabwe': { lat: -19.0154, lng: 29.1549 },
-    'rwanda': { lat: -1.9536, lng: 29.8739 },
-    'malawi': { lat: -13.2543, lng: 34.3015 },
-    'mozambique': { lat: -18.6657, lng: 35.5296 },
-    // African Cities
-    'nairobi': { lat: -1.2921, lng: 36.8219 },
-    'mombasa': { lat: -4.0435, lng: 39.6682 },
-    'lagos': { lat: 6.5244, lng: 3.3792 },
-    'cape town': { lat: -33.9249, lng: 18.4241 },
-    'johannesburg': { lat: -26.2023, lng: 28.0436 },
-    'lusaka': { lat: -15.3875, lng: 28.2833 },
-    'ndola': { lat: -12.9587, lng: 28.6366 },
-    'kitwe': { lat: -12.8024, lng: 28.2132 },
-    'harare': { lat: -17.8252, lng: 31.0335 },
-    'bulawayo': { lat: -20.1325, lng: 28.5848 },
-    'kampala': { lat: 0.3476, lng: 32.5825 },
-    'dar es salaam': { lat: -6.8000, lng: 39.2833 },
-    'accra': { lat: 5.6037, lng: -0.187 },
-    // Americas
-    'united states': { lat: 37.0902, lng: -95.7129 },
-    'usa': { lat: 37.0902, lng: -95.7129 },
-    'canada': { lat: 56.1304, lng: -106.3468 },
-    'mexico': { lat: 23.6345, lng: -102.5528 },
-    'brazil': { lat: -14.2350, lng: -51.9253 },
-    'haiti': { lat: 18.9712, lng: -72.2852 },
-    'philippines': { lat: 12.8797, lng: 121.7740 },
-    'india': { lat: 20.5937, lng: 78.9629 },
-    // Cities
-    'new york': { lat: 40.7128, lng: -74.006 },
-    'los angeles': { lat: 34.0522, lng: -118.2437 },
-    'london': { lat: 51.5074, lng: -0.1278 },
-    'manila': { lat: 14.5995, lng: 120.9842 },
-    'port-au-prince': { lat: 18.5944, lng: -72.3074 },
-    // Special
-    'remote': { lat: 20, lng: 0 },
-    'online': { lat: 20, lng: 0 },
-    'virtual': { lat: 20, lng: 0 },
-    'global': { lat: 20, lng: 0 },
-  };
-
   const locationLower = location.toLowerCase().trim();
 
   // Exact match
-  if (locationCoords[locationLower]) {
-    return locationCoords[locationLower];
+  if (LOCATION_COORDS[locationLower]) {
+    return LOCATION_COORDS[locationLower];
   }
 
   // Partial match
-  for (const [key, coords] of Object.entries(locationCoords)) {
+  for (const [key, coords] of Object.entries(LOCATION_COORDS)) {
     if (locationLower.includes(key)) {
       return coords;
     }
@@ -411,27 +412,25 @@ export default function Dashboard() {
     // Filter by project if specific project is selected
     if (selectedProject !== 'all' && filteredData.activities.length > 0) {
       // Calculate trend data from filtered activities for this project
-      const projectTrendMap = new Map<string, number>();
-      
+      // Single-pass aggregation to avoid O(n²) nested filter
+      const projectTrendMap = new Map<string, { totalScore: number; count: number }>();
+
       filteredData.impacts.forEach((impact: any) => {
         const date = new Date(impact.date || impact.createdAt);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
+
         if (!projectTrendMap.has(monthKey)) {
-          projectTrendMap.set(monthKey, 0);
+          projectTrendMap.set(monthKey, { totalScore: 0, count: 0 });
         }
-        
-        const current = projectTrendMap.get(monthKey) || 0;
-        projectTrendMap.set(monthKey, current + (impact.algorithmScore || 0));
+
+        const month = projectTrendMap.get(monthKey)!;
+        month.totalScore += impact.algorithmScore || 0;
+        month.count += 1;
       });
-      
-      trendData = Array.from(projectTrendMap.entries()).map(([month, score]) => ({
+
+      trendData = Array.from(projectTrendMap.entries()).map(([month, data]) => ({
         month,
-        score: Math.round(score / (filteredData.impacts.filter((i: any) => {
-          const date = new Date(i.date || i.createdAt);
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          return monthKey === month;
-        }).length || 1))
+        score: Math.round(data.totalScore / (data.count || 1))
       }));
     }
     

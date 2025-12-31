@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
+import { authRateLimiter } from "../middleware/security";
 
 export const usersRouter = Router();
 
@@ -69,7 +70,8 @@ usersRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/users/firebase-sync - Sync Firebase user with database
-usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
+// Apply strict rate limiting to prevent enumeration attacks
+usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { firebaseUid, email, displayName, userType, organizationName } = req.body;
 

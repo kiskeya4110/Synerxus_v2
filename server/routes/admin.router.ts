@@ -16,8 +16,11 @@ export const adminRouter = Router();
  */
 adminRouter.delete("/users/me", async (req: Request, res: Response) => {
   try {
-    // TODO: Get userId from session instead of hardcoding
-    const userId = 1;
+    const userId = extractUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     const user = await storage.getUser(userId);
 
     if (!user) {

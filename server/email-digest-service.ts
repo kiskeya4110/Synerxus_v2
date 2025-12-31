@@ -1,14 +1,63 @@
 import { storage } from "./storage";
 import { logger } from "./logger";
+import nodemailer from "nodemailer";
 
-// Simple email transporter (can be replaced with actual email service)
-const transporter = {
-  sendMail: async (options: any) => {
-    logger.info(`[EMAIL] To: ${options.to}, Subject: ${options.subject}`);
-    // In production, use actual email service like SendGrid, Mailgun, or nodemailer
-    return { response: "Email queued (mock)" };
-  }
+// Email configuration from environment variables
+const EMAIL_CONFIG = {
+  provider: process.env.EMAIL_PROVIDER || "mock", // 'smtp', 'sendgrid', 'mock'
+  smtp: {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  },
+  sendgrid: {
+    apiKey: process.env.SENDGRID_API_KEY,
+  },
+  from: process.env.EMAIL_FROM || "noreply@synerxus.com",
 };
+
+// Create email transporter based on configuration
+function createTransporter() {
+  if (EMAIL_CONFIG.provider === "smtp" && EMAIL_CONFIG.smtp.auth.user) {
+    logger.info("[EMAIL] Using SMTP transporter");
+    return nodemailer.createTransport({
+      host: EMAIL_CONFIG.smtp.host,
+      port: EMAIL_CONFIG.smtp.port,
+      secure: EMAIL_CONFIG.smtp.secure,
+      auth: EMAIL_CONFIG.smtp.auth,
+    });
+  }
+
+  if (EMAIL_CONFIG.provider === "sendgrid" && EMAIL_CONFIG.sendgrid.apiKey) {
+    logger.info("[EMAIL] Using SendGrid transporter");
+    return nodemailer.createTransport({
+      host: "smtp.sendgrid.net",
+      port: 587,
+      auth: {
+        user: "apikey",
+        pass: EMAIL_CONFIG.sendgrid.apiKey,
+      },
+    });
+  }
+
+  // Mock transporter for development
+  logger.warn("[EMAIL] Using mock transporter - emails will not be sent");
+  return {
+    sendMail: async (options: any) => {
+      logger.info(`[EMAIL-MOCK] To: ${options.to}, Subject: ${options.subject}`);
+      if (process.env.NODE_ENV === "production") {
+        logger.error("[EMAIL] No email provider configured in production!");
+      }
+      return { response: "Email queued (mock)", messageId: `mock-${Date.now()}` };
+    },
+  };
+}
+
+const transporter = createTransporter();
 
 interface WeeklyDigestData {
   userId: number;

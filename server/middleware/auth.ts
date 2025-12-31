@@ -19,8 +19,12 @@ declare global {
   }
 }
 
-// JWT secret - in production, use a strong secret from environment
-const JWT_SECRET = process.env.JWT_SECRET || "synerxus-jwt-secret-change-in-production";
+// JWT secret - REQUIRED in production
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+const JWT_SECRET_VALUE = JWT_SECRET || "synerxus-dev-jwt-secret-do-not-use-in-production";
 // Token expiration in seconds (7 days)
 const JWT_EXPIRES_IN_SECONDS = parseInt(process.env.JWT_EXPIRES_IN_SECONDS || "604800", 10);
 
@@ -42,7 +46,7 @@ export function generateToken(user: {
       organizationId: user.organizationId,
       firebaseUid: user.firebaseUid,
     },
-    JWT_SECRET,
+    JWT_SECRET_VALUE,
     { expiresIn: JWT_EXPIRES_IN_SECONDS }
   );
 }
@@ -52,7 +56,7 @@ export function generateToken(user: {
  */
 export function verifyToken(token: string): jwt.JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET_VALUE);
     return decoded as jwt.JwtPayload;
   } catch (error) {
     return null;

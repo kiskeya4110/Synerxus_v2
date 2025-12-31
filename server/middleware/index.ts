@@ -23,4 +23,8 @@ export {
   corsOptions,
   logSuspiciousActivity,
   validateIntParam,
+  secureCookieOptions,
+  csrfTokenMiddleware,
+  csrfValidationMiddleware,
+  generateCsrfToken,
 } from "./security";

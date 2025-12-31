@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { logger } from "../logger";
 
 // ============================================
@@ -65,8 +66,13 @@ export const tokenBlacklist = new TokenBlacklist();
 // Refresh Token Support
 // ============================================
 
-const JWT_SECRET = process.env.JWT_SECRET || "synerxus-jwt-secret-change-in-production";
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET + "-refresh";
+// JWT secret - REQUIRED in production
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+const JWT_SECRET_VALUE = JWT_SECRET || "synerxus-dev-jwt-secret-do-not-use-in-production";
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET_VALUE + "-refresh";
 
 interface TokenPair {
   accessToken: string;
@@ -100,7 +106,7 @@ export function generateTokenPair(user: {
 
   const accessToken = jwt.sign(
     { ...payload, type: "access" },
-    JWT_SECRET,
+    JWT_SECRET_VALUE,
     { expiresIn: "15m" }
   );
 
@@ -462,4 +468,102 @@ export function validateIntParam(
   }
 
   return { valid: true, value: parsed };
+}
+
+/**
+ * Secure cookie options for session/auth cookies
+ */
+export const secureCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict" as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: "/",
+};
+
+/**
+ * CSRF Protection Middleware
+ * Uses the Synchronizer Token Pattern with Double Submit Cookie
+ * Note: Since the app uses JWT tokens in Authorization headers (not cookies),
+ * the CSRF risk is already mitigated. This provides defense-in-depth.
+ */
+const CSRF_COOKIE_NAME = "csrf-token";
+const CSRF_HEADER_NAME = "x-csrf-token";
+
+/**
+ * Generate a secure CSRF token
+ */
+export function generateCsrfToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+/**
+ * CSRF token generation middleware
+ * Sets a CSRF token cookie for use in forms/requests
+ */
+export function csrfTokenMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  // Only generate token if not already present
+  if (!req.cookies?.[CSRF_COOKIE_NAME]) {
+    const token = generateCsrfToken();
+    res.cookie(CSRF_COOKIE_NAME, token, {
+      ...secureCookieOptions,
+      httpOnly: false, // Client needs to read this for the header
+    });
+  }
+  next();
+}
+
+/**
+ * CSRF validation middleware
+ * Validates that the CSRF token in the header matches the cookie
+ * Only applies to state-changing methods (POST, PUT, PATCH, DELETE)
+ */
+export function csrfValidationMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  // Skip CSRF validation for safe methods
+  const safeMethods = ["GET", "HEAD", "OPTIONS"];
+  if (safeMethods.includes(req.method)) {
+    return next();
+  }
+
+  // Skip CSRF for API requests with Bearer token (already protected)
+  if (req.headers.authorization?.startsWith("Bearer ")) {
+    return next();
+  }
+
+  // Skip CSRF for Firebase UID authenticated requests
+  if (req.headers["x-firebase-uid"]) {
+    return next();
+  }
+
+  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
+  const headerToken = req.headers[CSRF_HEADER_NAME] as string;
+
+  if (!cookieToken || !headerToken) {
+    logger.warn(`[CSRF] Missing token - cookie: ${!!cookieToken}, header: ${!!headerToken}`);
+    res.status(403).json({
+      error: "CSRF_VALIDATION_FAILED",
+      message: "CSRF token validation failed. Please refresh and try again.",
+    });
+    return;
+  }
+
+  // Constant-time comparison to prevent timing attacks
+  if (!crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken))) {
+    logger.warn(`[CSRF] Token mismatch for ${req.path}`);
+    res.status(403).json({
+      error: "CSRF_VALIDATION_FAILED",
+      message: "CSRF token validation failed. Please refresh and try again.",
+    });
+    return;
+  }
+
+  next();
 }

@@ -145,8 +145,10 @@ invitationCodesRouter.delete("/:id", async (req: Request, res: Response) => {
 invitationCodesRouter.get("/settings", async (req: Request, res: Response) => {
   try {
     const inviteOnly = await storage.getPlatformSetting("INVITE_ONLY_MODE");
+    // Default to true (invite-only) if no setting exists
+    // This ensures the platform is restricted by default
     res.json({
-      inviteOnlyMode: inviteOnly?.value === "true",
+      inviteOnlyMode: inviteOnly ? inviteOnly.value === "true" : true,
       updatedAt: inviteOnly?.updatedAt
     });
   } catch (err) {

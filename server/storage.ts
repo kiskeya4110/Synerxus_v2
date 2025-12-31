@@ -2006,7 +2006,12 @@ export class DatabaseStorage implements IStorage {
 
   async isInviteOnlyMode(): Promise<boolean> {
     const setting = await this.getPlatformSetting("INVITE_ONLY_MODE");
-    return setting?.value === "true";
+    // Default to true (invite-only) if no setting exists
+    // This ensures the platform is restricted by default until explicitly opened
+    if (!setting) {
+      return true;
+    }
+    return setting.value === "true";
   }
 }
 

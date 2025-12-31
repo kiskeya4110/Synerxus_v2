@@ -379,8 +379,19 @@ export default function Login() {
           <CardHeader>
             <CardTitle className="text-xl text-center">Welcome</CardTitle>
             <CardDescription className="text-center">
-              Sign in to your account or create a new one
+              {isInviteOnly
+                ? "This platform is invitation-only. Sign in if you have an account, or register with an invitation code."
+                : "Sign in to your account or create a new one"
+              }
             </CardDescription>
+            {isInviteOnly && (
+              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
+                  <FiKey className="inline-block mr-1 h-3 w-3" />
+                  Access is by invitation only. Contact an approved organization to request access.
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

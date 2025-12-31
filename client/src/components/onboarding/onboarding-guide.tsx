@@ -447,7 +447,7 @@ export default function OnboardingGuide() {
             )}
           </div>
 
-          {/* Controls */}
+          {/* Controls - Skip button visibility based on A/B variant */}
           <div className="px-5 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex gap-2">
             <Button
               variant="outline"
@@ -461,26 +461,44 @@ export default function OnboardingGuide() {
               Back
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={skipOnboarding}
-              className="text-gray-500"
-              data-testid="button-onboarding-skip"
-            >
-              Skip Tour
-            </Button>
+            {config.showSkipButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkip}
+                className="text-gray-500"
+                data-testid="button-onboarding-skip"
+              >
+                Skip Tour
+              </Button>
+            )}
 
             <Button
               size="sm"
-              onClick={currentStepIndex === totalSteps - 1 ? completeOnboarding : nextStep}
-              className="flex items-center gap-1.5 flex-1 bg-blue-600 hover:bg-blue-700"
+              onClick={handleNext}
+              className={`flex items-center gap-1.5 flex-1 ${
+                config.highlightStyle === 'glow'
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : config.highlightStyle === 'spotlight'
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
               data-testid="button-onboarding-next"
             >
               {currentStepIndex === totalSteps - 1 ? "Get Started!" : "Next"}
               {currentStepIndex < totalSteps - 1 && <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>
+
+          {/* Variant indicator (for debugging/testing - remove in production) */}
+          {variant && (
+            <div className="px-5 py-1.5 bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                A/B Test: {variant.name}
+              </p>
+            </div>
+          )}
 
           {/* Interactive hint */}
           {hasTarget && (

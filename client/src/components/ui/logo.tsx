@@ -50,19 +50,12 @@ export default function Logo({
     </div>
   );
 
-  // Handle click - custom onClick or navigate to dashboard
+  // Handle click - custom onClick or navigate to landing page
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else if (clickable) {
-      const userType = localStorage.getItem('userType');
-      if (userType === 'corporate-partner') {
-        navigate('/csr-dashboard');
-      } else if (userType === 'organization') {
-        navigate('/organization-dashboard');
-      } else {
-        navigate('/volunteer-dashboard');
-      }
+      navigate('/landing');
     }
   };
 

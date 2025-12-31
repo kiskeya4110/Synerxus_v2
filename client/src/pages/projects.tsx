@@ -13,7 +13,8 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
-import WebBottomNav from "@/components/layout/web-bottom-nav";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import PWAHeader from "@/components/pwa/pwa-header";
 import Footer from "@/components/layout/footer";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
@@ -387,12 +388,15 @@ export default function Projects() {
 
   return (
     <div className="bg-[#f8f9fa] min-h-screen">
+      {/* Volunteer Mobile PWA Header */}
+      {isVolunteer && isMobile && <PWAHeader />}
+
       {/* Volunteer Desktop Navigation - only for volunteers */}
-      {!isOrganization && !isCSR && <VolunteerNav />}
+      {isVolunteer && !isMobile && <VolunteerNav />}
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
       {isOrganization && <OrganizationWelcomeBanner pageTitle="Projects & Tasks" />}
-      <div className="h-screen overflow-y-auto pb-24" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
+      <div className={`h-screen overflow-y-auto ${isVolunteer && isMobile ? 'pt-20 pb-24' : 'pb-24'}`} style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
@@ -561,7 +565,7 @@ export default function Projects() {
       </div>
 
       {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+      {isVolunteer && isMobile && <VolunteerPWANav activeTab="projects" />}
 
       {/* Mobile Bottom Navigation for Organizations */}
       {isOrganization && <MobileBottomNav />}

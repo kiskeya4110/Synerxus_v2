@@ -258,7 +258,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
         <div className="px-4 py-3 flex items-center justify-between">
           {/* Logo - Site approved logo */}
           <button
-            onClick={() => navigate('/volunteer-dashboard')}
+            onClick={() => navigate('/landing')}
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <img

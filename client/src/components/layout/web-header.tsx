@@ -67,7 +67,7 @@ export default function WebHeader({ showSearch = false, transparent = false, act
         <div className="px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <button
-            onClick={() => navigate('/volunteer-dashboard')}
+            onClick={() => navigate('/landing')}
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <div className="relative">

@@ -17,6 +17,8 @@ import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle, Users, Clock, Globe, Award } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
@@ -1200,14 +1202,18 @@ export default function SDGMapping() {
       : [];
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-24">
-        {/* Volunteer Header */}
-        <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-4 shadow-lg">
-          <h1 className="text-lg font-bold">My SDG Impact</h1>
-          <p className="text-xs text-blue-100">Track your UN Goals contributions</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        {/* PWA Header */}
+        <PWAHeader />
 
+        {/* Spacer for fixed header */}
+        <div className="pt-20 pb-24">
         <div className="p-4">
+          {/* Page Title */}
+          <div className="mb-4">
+            <h1 className="text-lg font-bold text-slate-800">My SDG Impact</h1>
+            <p className="text-xs text-slate-500">Track your UN Goals contributions</p>
+          </div>
           {/* KPI Cards - 3 column grid */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -1452,15 +1458,9 @@ export default function SDGMapping() {
             </Card>
           )}
 
-          {/* Back to Dashboard */}
-          <div className="mt-4">
-            <Link href="/volunteer-dashboard/pwa">
-              <Button variant="outline" className="w-full">
-                ← Back to Dashboard
-              </Button>
-            </Link>
-          </div>
         </div>
+        </div>
+        <VolunteerPWANav activeTab="home" />
       </div>
     );
   }

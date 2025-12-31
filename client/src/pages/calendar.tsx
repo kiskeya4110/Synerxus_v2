@@ -18,7 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import OrganizationHeader from "@/components/layout/organization-header";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 
 // Form schema for adding events
 const eventFormSchema = z.object({
@@ -173,65 +174,12 @@ export default function Calendar() {
   const isPWAView = isMobile && isVolunteer;
 
   return (
-    <div className={isPWAView ? "min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-      {/* PWA Header for Volunteers on Mobile - Matching approved format */}
-      {isPWAView && (
-        <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-          <button
-            onClick={() => navigate("/landing")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
-          </button>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate('/volunteer-messages/pwa')}
-              className="p-2 hover:bg-slate-800/10 rounded-full"
-            >
-              <MessageCircle className="w-5 h-5 text-slate-700" />
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 hover:bg-slate-800/10 rounded-full"
-              >
-                <MoreVertical className="w-5 h-5 text-slate-700" />
-              </button>
-              {showMobileMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMobileMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                    <button onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
-                      <ClipboardList className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm">My Work</span>
-                    </button>
-                    <button onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
-                      <Clock className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm">Log Activity</span>
-                    </button>
-                    <button onClick={() => { navigate('/discover-opportunities/pwa'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
-                      <Lightbulb className="w-4 h-4 text-amber-400" />
-                      <span className="text-sm">Find Opportunities</span>
-                    </button>
-                    <div className="border-t border-gray-700 my-1"></div>
-                    <button onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
-                      <Settings className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm">Settings</span>
-                    </button>
-                    <button onClick={() => { localStorage.removeItem('currentUserId'); localStorage.removeItem('userType'); navigate('/login'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors">
-                      <LogOut className="w-4 h-4" />
-                      <span className="text-sm">Logout</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
-      )}
+    <div className={isPWAView ? "min-h-screen bg-[#FDF8F3]" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {/* PWA Header for Volunteers on Mobile */}
+      {isPWAView && <PWAHeader />}
 
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={isPWAView ? "flex-1 overflow-y-auto pb-20 p-4" : isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
+      <div className={isPWAView ? "pt-20 pb-24 p-4" : isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -560,58 +508,8 @@ export default function Calendar() {
       </Dialog>
       </div>
 
-      {/* Bottom Navigation for PWA - Matching Dashboard Frame */}
-      {isPWAView && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
-          <div className="flex justify-around items-center">
-            <button
-              type="button"
-              onClick={() => navigate('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Home className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Home</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/projects')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Briefcase className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Projects</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Lightbulb className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Insights</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/impact-report/${userId || ''}`)}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <BarChart3 className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Impact</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/volunteer-profile-settings')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <User className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Profile</span>
-            </button>
-          </div>
-        </nav>
-      )}
+      {/* Bottom Navigation for PWA */}
+      {isPWAView && <VolunteerPWANav activeTab="home" />}
     </div>
   );
 }

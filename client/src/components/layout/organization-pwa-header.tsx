@@ -114,7 +114,7 @@ export default function OrganizationPWAHeader({
           src={logoUrl}
           alt="Synerxus"
           className="h-10 object-contain cursor-pointer flex-shrink-0"
-          onClick={() => navigate('/organization-dashboard/pwa')}
+          onClick={() => navigate('/landing')}
         />
 
         <div className="flex items-center gap-2 flex-shrink-0">

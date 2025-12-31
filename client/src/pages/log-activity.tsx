@@ -49,6 +49,10 @@ export default function LogActivity() {
   const [selectedTaskForComment, setSelectedTaskForComment] = useState<any>(null);
   const [taskComment, setTaskComment] = useState<string>("");
 
+  // Calendar popover states
+  const [activityCalendarOpen, setActivityCalendarOpen] = useState(false);
+  const [impactCalendarOpen, setImpactCalendarOpen] = useState(false);
+
   // Fetch current user
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
   const { data: currentUser } = useQuery<User>({
@@ -575,7 +579,7 @@ export default function LogActivity() {
                     Project active: {selectedProject.startDate ? format(new Date(selectedProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedProject.endDate ? format(new Date(selectedProject.endDate), "MMM d, yyyy") : 'Ongoing'}
                   </p>
                 )}
-                <Popover>
+                <Popover open={activityCalendarOpen} onOpenChange={setActivityCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -591,7 +595,12 @@ export default function LogActivity() {
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={(newDate) => newDate && setDate(newDate)}
+                      onSelect={(newDate) => {
+                        if (newDate) {
+                          setDate(newDate);
+                          setActivityCalendarOpen(false);
+                        }
+                      }}
                       disabled={activityDateRestrictions.disabled}
                       fromDate={activityDateRestrictions.fromDate}
                       toDate={activityDateRestrictions.toDate}
@@ -804,7 +813,7 @@ export default function LogActivity() {
                     Project active: {selectedImpactProject.startDate ? format(new Date(selectedImpactProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedImpactProject.endDate ? format(new Date(selectedImpactProject.endDate), "MMM d, yyyy") : 'Ongoing'}
                   </p>
                 )}
-                <Popover>
+                <Popover open={impactCalendarOpen} onOpenChange={setImpactCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -820,7 +829,12 @@ export default function LogActivity() {
                     <Calendar
                       mode="single"
                       selected={impactDate}
-                      onSelect={(newDate) => newDate && setImpactDate(newDate)}
+                      onSelect={(newDate) => {
+                        if (newDate) {
+                          setImpactDate(newDate);
+                          setImpactCalendarOpen(false);
+                        }
+                      }}
                       disabled={impactDateRestrictions.disabled}
                       fromDate={impactDateRestrictions.fromDate}
                       toDate={impactDateRestrictions.toDate}

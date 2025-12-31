@@ -1,5 +1,9 @@
 import { OnboardingStep } from "../client/src/contexts/onboarding-context";
 
+// ============================================
+// FULL ONBOARDING STEPS (Control & Guided variants)
+// ============================================
+
 export const volunteerOnboardingSteps: OnboardingStep[] = [
   {
     id: "welcome",
@@ -223,3 +227,159 @@ export const csrOnboardingSteps: OnboardingStep[] = [
     userType: "corporate-partner" as any,
   },
 ];
+
+// ============================================
+// STREAMLINED ONBOARDING STEPS (Minimal variant - A/B Test)
+// Focuses on 4-5 essential steps for faster onboarding
+// ============================================
+
+export const volunteerOnboardingStepsMinimal: OnboardingStep[] = [
+  {
+    id: "welcome",
+    title: "Welcome to Synerxus!",
+    description: "Let's get you started in under 2 minutes. We'll show you the key features to make an impact.",
+    userType: "volunteer",
+  },
+  {
+    id: "dashboard-quick",
+    title: "Your Dashboard",
+    description: "This is your home base. Track your hours, see active projects, and monitor your impact score - all at a glance.",
+    targetSelector: '[data-testid="kpi-hours"]',
+    actions: ["Explore your metrics"],
+    userType: "volunteer",
+  },
+  {
+    id: "discover-apply",
+    title: "Find & Apply",
+    description: "Discover volunteer opportunities that match your skills. Click any opportunity to learn more and apply.",
+    targetSelector: '[data-testid="volunteer-nav-discover"], [data-testid="nav-discover"]',
+    actions: ["Browse opportunities"],
+    userType: "volunteer",
+  },
+  {
+    id: "log-track",
+    title: "Log Your Hours",
+    description: "After volunteering, log your hours here. This tracks your contributions and generates impact reports.",
+    targetSelector: '[data-testid="volunteer-nav-profile-menu"], [data-testid="button-pwa-menu"]',
+    actions: ["Access Log Activity from menu"],
+    userType: "volunteer",
+  },
+  {
+    id: "complete",
+    title: "You're All Set!",
+    description: "Start exploring opportunities and making an impact. Your profile menu has all the tools you need.",
+    actions: ["Discover opportunities", "Complete your profile"],
+    userType: "volunteer",
+  },
+];
+
+export const organizationOnboardingStepsMinimal: OnboardingStep[] = [
+  {
+    id: "welcome",
+    title: "Welcome to Synerxus!",
+    description: "Let's get your organization set up in under 2 minutes. We'll cover the essentials.",
+    userType: "organization",
+  },
+  {
+    id: "dashboard-quick",
+    title: "Your Dashboard",
+    description: "Monitor volunteer activity, project status, and impact metrics - all in one place.",
+    targetSelector: '[data-testid="nav-tab-dashboard"]',
+    actions: ["View your KPIs"],
+    userType: "organization",
+  },
+  {
+    id: "manage-projects",
+    title: "Manage Projects",
+    description: "Create projects, assign volunteers, and track progress from this central hub.",
+    targetSelector: '[data-testid="nav-tab-projects"], [data-testid="menu-projects"]',
+    actions: ["Create or view projects"],
+    userType: "organization",
+  },
+  {
+    id: "review-volunteers",
+    title: "Review Applications",
+    description: "When volunteers apply, review their profiles and accept them to your projects.",
+    targetSelector: '[data-testid="nav-tab-applications"], [data-testid="menu-applications"]',
+    actions: ["Check pending applications"],
+    userType: "organization",
+  },
+  {
+    id: "complete",
+    title: "You're Ready!",
+    description: "Start creating projects and building your volunteer team. Use the menu for all features.",
+    actions: ["Create your first project"],
+    userType: "organization",
+  },
+];
+
+export const csrOnboardingStepsMinimal: OnboardingStep[] = [
+  {
+    id: "welcome",
+    title: "Welcome to Synerxus CSR!",
+    description: "Quick setup for your corporate volunteering dashboard. Let's cover the key features.",
+    userType: "corporate-partner" as any,
+  },
+  {
+    id: "dashboard-quick",
+    title: "CSR Dashboard",
+    description: "Track employee participation, total hours, and ROI - your complete CSR command center.",
+    targetSelector: '[data-testid="kpi-total-hours"], [data-testid="csr-kpi-hours"]',
+    actions: ["Explore your metrics"],
+    userType: "corporate-partner" as any,
+  },
+  {
+    id: "sdg-overview",
+    title: "SDG Impact",
+    description: "See how employee volunteering aligns with UN Sustainable Development Goals.",
+    targetSelector: '[data-testid="chart-sdg-alignment"], [data-testid="sdg-section"]',
+    actions: ["View SDG breakdown"],
+    userType: "corporate-partner" as any,
+  },
+  {
+    id: "reports-quick",
+    title: "Generate Reports",
+    description: "Create professional CSR reports for stakeholders with one click.",
+    targetSelector: '[data-testid="nav-csr-reports"], [data-testid="csr-nav-reports"]',
+    actions: ["Access reports"],
+    userType: "corporate-partner" as any,
+  },
+  {
+    id: "complete",
+    title: "You're All Set!",
+    description: "Start tracking your CSR program. Use the navigation to explore all features.",
+    actions: ["Explore your dashboard"],
+    userType: "corporate-partner" as any,
+  },
+];
+
+// Helper to get steps based on variant
+export function getOnboardingSteps(
+  userType: 'volunteer' | 'organization' | 'corporate-partner',
+  variant: 'full' | 'minimal' = 'full'
+): OnboardingStep[] {
+  if (variant === 'minimal') {
+    switch (userType) {
+      case 'volunteer':
+        return volunteerOnboardingStepsMinimal;
+      case 'organization':
+        return organizationOnboardingStepsMinimal;
+      case 'corporate-partner':
+        return csrOnboardingStepsMinimal;
+      default:
+        return volunteerOnboardingStepsMinimal;
+    }
+  }
+
+  // Full variant
+  switch (userType) {
+    case 'volunteer':
+      return volunteerOnboardingSteps;
+    case 'organization':
+      return organizationOnboardingSteps;
+    case 'corporate-partner':
+      return csrOnboardingSteps;
+    default:
+      return volunteerOnboardingSteps;
+  }
+}

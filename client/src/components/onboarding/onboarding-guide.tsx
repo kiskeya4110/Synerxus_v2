@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useOnboarding } from "@/contexts/onboarding-context";
+import { useOnboardingExperiment } from "@/contexts/ab-testing-context";
 import { Button } from "@/components/ui/button";
-import { X, ChevronRight, ChevronLeft, MousePointerClick, Navigation } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, MousePointerClick, Navigation, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Route mappings for steps that require navigation
@@ -33,13 +34,70 @@ const STEP_ROUTES: Record<string, string> = {
 
 export default function OnboardingGuide() {
   const { isActive, currentStep, currentStepIndex, steps, nextStep, prevStep, skipOnboarding, completeOnboarding } = useOnboarding();
+  const { variant, config, track } = useOnboardingExperiment();
   const [location, navigate] = useLocation();
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [targetFound, setTargetFound] = useState(false);
   const [isOnCorrectPage, setIsOnCorrectPage] = useState(true);
   const [clickHintVisible, setClickHintVisible] = useState(false);
+  const [startTime] = useState(() => Date.now());
   const targetRef = useRef<HTMLElement | null>(null);
   const observerRef = useRef<MutationObserver | null>(null);
+
+  // Track onboarding start
+  useEffect(() => {
+    if (isActive && currentStepIndex === 0) {
+      track('onboarding_started', { variant: variant?.id, totalSteps: steps.length });
+    }
+  }, [isActive, currentStepIndex, track, variant?.id, steps.length]);
+
+  // Track step views
+  useEffect(() => {
+    if (isActive && currentStep) {
+      track('step_viewed', {
+        stepId: currentStep.id,
+        stepIndex: currentStepIndex,
+        variant: variant?.id
+      });
+    }
+  }, [isActive, currentStep, currentStepIndex, track, variant?.id]);
+
+  // Track completion/skip with timing
+  const handleComplete = useCallback(() => {
+    const duration = Math.round((Date.now() - startTime) / 1000);
+    track('onboarding_completed', {
+      variant: variant?.id,
+      stepsCompleted: currentStepIndex + 1,
+      totalSteps: steps.length,
+      durationSeconds: duration
+    });
+    completeOnboarding();
+  }, [track, variant?.id, currentStepIndex, steps.length, startTime, completeOnboarding]);
+
+  const handleSkip = useCallback(() => {
+    const duration = Math.round((Date.now() - startTime) / 1000);
+    track('onboarding_skipped', {
+      variant: variant?.id,
+      stepsCompleted: currentStepIndex,
+      skipAtStep: currentStep?.id,
+      durationSeconds: duration
+    });
+    skipOnboarding();
+  }, [track, variant?.id, currentStepIndex, currentStep?.id, startTime, skipOnboarding]);
+
+  const handleNext = useCallback(() => {
+    track('step_completed', { stepId: currentStep?.id, stepIndex: currentStepIndex });
+    if (currentStepIndex === steps.length - 1) {
+      handleComplete();
+    } else {
+      // Apply delay if configured (for guided variant)
+      if (config.delayBetweenSteps > 0) {
+        setTimeout(nextStep, config.delayBetweenSteps);
+      } else {
+        nextStep();
+      }
+    }
+  }, [track, currentStep?.id, currentStepIndex, steps.length, handleComplete, config.delayBetweenSteps, nextStep]);
 
   // Find and position target element
   const findAndPositionTarget = useCallback(() => {
@@ -187,7 +245,7 @@ export default function OnboardingGuide() {
 
   return (
     <>
-      {/* Overlay and highlighting */}
+      {/* Overlay and highlighting - Style varies by A/B test variant */}
       <AnimatePresence>
         {hasTarget && (
           <>
@@ -198,33 +256,51 @@ export default function OnboardingGuide() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               style={{
-                background: `radial-gradient(ellipse 300px 200px at ${position.left + position.width / 2}px ${position.top + position.height / 2 - window.scrollY}px, transparent 0%, rgba(0, 0, 0, 0.75) 100%)`,
+                background: config.highlightStyle === 'spotlight'
+                  ? `radial-gradient(ellipse 250px 180px at ${position.left + position.width / 2}px ${position.top + position.height / 2 - window.scrollY}px, transparent 0%, rgba(0, 0, 0, 0.85) 100%)`
+                  : `radial-gradient(ellipse 300px 200px at ${position.left + position.width / 2}px ${position.top + position.height / 2 - window.scrollY}px, transparent 0%, rgba(0, 0, 0, 0.75) 100%)`,
               }}
             />
 
-            {/* Pulsing highlight ring */}
+            {/* Highlight ring - Different styles based on variant */}
             <motion.div
               className="fixed z-[9991] rounded-lg pointer-events-none"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{
                 opacity: 1,
                 scale: 1,
-                boxShadow: [
-                  "0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
-                  "0 0 0 8px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.5)",
-                  "0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
-                ]
+                boxShadow: config.highlightStyle === 'glow'
+                  ? [
+                      "0 0 0 2px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2)",
+                      "0 0 0 4px rgba(16, 185, 129, 0.4), 0 0 50px rgba(16, 185, 129, 0.6), 0 0 80px rgba(16, 185, 129, 0.3)",
+                      "0 0 0 2px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2)",
+                    ]
+                  : config.highlightStyle === 'spotlight'
+                  ? [
+                      "0 0 0 3px rgba(251, 191, 36, 0.7), 0 0 25px rgba(251, 191, 36, 0.5)",
+                      "0 0 0 5px rgba(251, 191, 36, 0.5), 0 0 35px rgba(251, 191, 36, 0.7)",
+                      "0 0 0 3px rgba(251, 191, 36, 0.7), 0 0 25px rgba(251, 191, 36, 0.5)",
+                    ]
+                  : [
+                      "0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
+                      "0 0 0 8px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.5)",
+                      "0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
+                    ]
               }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{
-                boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                boxShadow: { duration: config.highlightStyle === 'glow' ? 1.5 : 2, repeat: Infinity, ease: "easeInOut" }
               }}
               style={{
                 top: position.top - 6 - window.scrollY,
                 left: position.left - 6,
                 width: position.width + 12,
                 height: position.height + 12,
-                border: "3px solid rgb(59, 130, 246)",
+                border: config.highlightStyle === 'glow'
+                  ? "3px solid rgb(16, 185, 129)"
+                  : config.highlightStyle === 'spotlight'
+                  ? "3px solid rgb(251, 191, 36)"
+                  : "3px solid rgb(59, 130, 246)",
                 position: "fixed",
               }}
             />

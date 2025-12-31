@@ -1,9 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense, memo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { TrendingUp, Users, Target, Award, Brain, Zap, AlertCircle } from "lucide-react";
+
+// Lazy load heavy chart components for better initial load
+const LazyBarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
+const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
+
+// Regular imports for lighter chart parts
+import {
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
+} from "recharts";
+
+// Loading fallback for charts
+const ChartSkeleton = memo(({ height = "h-[300px]" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-sm">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import Footer from "@/components/layout/footer";
@@ -311,17 +339,19 @@ export default function TeamOverview() {
               <Zap className="w-5 h-5 text-yellow-500" />
               Skill Gap Analysis
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={teamData?.skillGapAnalysis || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="skill" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="demand" fill="#ef4444" name="Demand" />
-                <Bar dataKey="supply" fill="#10b981" name="Supply" />
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<ChartSkeleton />}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LazyBarChart data={teamData?.skillGapAnalysis || []}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="skill" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="demand" fill="#ef4444" name="Demand" />
+                  <Bar dataKey="supply" fill="#10b981" name="Supply" />
+                </LazyBarChart>
+              </ResponsiveContainer>
+            </Suspense>
           </div>
 
           {/* Volunteer Retention Prediction */}
@@ -330,29 +360,31 @@ export default function TeamOverview() {
               <Users className="w-5 h-5 text-blue-500" />
               Retention Predictions
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={teamData?.volunteerRetentionPrediction || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="cohort" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="predicted"
-                  stroke="#8b5cf6"
-                  strokeWidth={2}
-                  name="ML Predicted"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="actual"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  name="Actual"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<ChartSkeleton />}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LazyLineChart data={teamData?.volunteerRetentionPrediction || []}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="cohort" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    name="ML Predicted"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="actual"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    name="Actual"
+                  />
+                </LazyLineChart>
+              </ResponsiveContainer>
+            </Suspense>
           </div>
         </div>
 

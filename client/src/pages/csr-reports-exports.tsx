@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { useAuth } from "@/hooks/use-auth";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
 import Logo from "@/components/ui/logo";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -42,11 +42,36 @@ import {
   AlertCircle,
   Eye,
 } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell } from "recharts";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { useToast } from "@/hooks/use-toast";
+
+// Lazy load heavy chart components for better initial load
+const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
+const LazyBarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
+const LazyPieChart = lazy(() => import("recharts").then(m => ({ default: m.PieChart })));
+
+// Regular imports for lighter chart parts
+import {
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Pie,
+  Cell
+} from "recharts";
+
+// Loading fallback for charts
+const ChartSkeleton = memo(({ height = "h-[200px]" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-sm">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
 
 interface ReportTemplate {
   id: string;
@@ -1333,16 +1358,18 @@ export default function CSRReportsExports() {
                 {/* Spending Trend Chart */}
                 <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
                   <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Budget vs Actual Spending</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={monthlySpendingData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
-                      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={(v) => `$${v/1000}K`} />
-                      <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} formatter={(value: number) => `$${value.toLocaleString()}`} />
-                      <Bar dataKey="budget" fill="#e5e7eb" name="Budget" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="actual" fill="#3b82f6" name="Actual" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<ChartSkeleton height="h-[300px]" />}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LazyBarChart data={monthlySpendingData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                        <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={(v) => `$${v/1000}K`} />
+                        <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} formatter={(value: number) => `$${value.toLocaleString()}`} />
+                        <Bar dataKey="budget" fill="#e5e7eb" name="Budget" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="actual" fill="#3b82f6" name="Actual" radius={[4, 4, 0, 0]} />
+                      </LazyBarChart>
+                    </ResponsiveContainer>
+                  </Suspense>
                   <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <div style={{ width: "12px", height: "12px", backgroundColor: "#e5e7eb", borderRadius: "2px" }} />
@@ -1358,24 +1385,26 @@ export default function CSRReportsExports() {
                 {/* Category Breakdown Pie Chart */}
                 <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
                   <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Spending by Category</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <RechartsPie>
-                      <Pie
-                        data={expenseCategoriesData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={70}
-                        innerRadius={40}
-                      >
-                        {expenseCategoriesData.map((entry, index) => (
-                          <Cell key={index} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                    </RechartsPie>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<ChartSkeleton />}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LazyPieChart>
+                        <Pie
+                          data={expenseCategoriesData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={70}
+                          innerRadius={40}
+                        >
+                          {expenseCategoriesData.map((entry, index) => (
+                            <Cell key={index} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                      </LazyPieChart>
+                    </ResponsiveContainer>
+                  </Suspense>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
                     {expenseCategoriesData.map((cat) => (
                       <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>

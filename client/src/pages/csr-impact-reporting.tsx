@@ -2,15 +2,47 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target, Clock, FolderKanban, ChevronRight, BarChart2, PieChart, Activity, Award, Briefcase, Calculator, TrendingDown, ArrowUpRight, ArrowDownRight, Layers, Star, Shield, FileText, Eye } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense, memo } from "react";
 import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
 import Logo from "@/components/ui/logo";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { CSRLayout } from "@/components/layout/csr-layout";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell, PieChart as RechartsPie, Pie } from "recharts";
 import { formatDecimal } from "@/lib/format-utils";
+
+// Lazy load heavy chart components for better initial load
+const LazyAreaChart = lazy(() => import("recharts").then(m => ({ default: m.AreaChart })));
+const LazyBarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
+const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
+const LazyPieChart = lazy(() => import("recharts").then(m => ({ default: m.PieChart })));
+
+// Regular imports for lighter chart parts
+import {
+  Area,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Cell,
+  Pie
+} from "recharts";
+
+// Loading fallback for charts
+const ChartSkeleton = memo(({ height = "h-[300px]" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-sm">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -1006,26 +1038,28 @@ export function CSRImpactReporting() {
               {/* Monthly Trend Chart */}
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
                 <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Monthly Performance Trend</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={monthlyTrendData}>
-                    <defs>
-                      <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="employeesGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
-                    <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
-                    <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
-                    <Area type="monotone" dataKey="hours" stroke="#3b82f6" fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
-                    <Area type="monotone" dataKey="employees" stroke="#10b981" fill="url(#employeesGradient)" strokeWidth={2} name="Employees" />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<ChartSkeleton height="h-[250px]" />}>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LazyAreaChart data={monthlyTrendData}>
+                      <defs>
+                        <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="employeesGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+                      <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+                      <Area type="monotone" dataKey="hours" stroke="#3b82f6" fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
+                      <Area type="monotone" dataKey="employees" stroke="#10b981" fill="url(#employeesGradient)" strokeWidth={2} name="Employees" />
+                    </LazyAreaChart>
+                  </ResponsiveContainer>
+                </Suspense>
                 <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />

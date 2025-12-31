@@ -1,7 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
+import { useState, lazy, Suspense, memo } from "react";
 import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home, BarChart3, Users, FileText, TrendingUp, Target, Zap, ArrowUpRight, ArrowDownRight, Award, Activity, Layers, Globe } from "lucide-react";
+
+// Lazy load heavy chart components for better initial load
+const LazyBarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
+const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
+const LazyPieChart = lazy(() => import("recharts").then(m => ({ default: m.PieChart })));
+const LazyAreaChart = lazy(() => import("recharts").then(m => ({ default: m.AreaChart })));
+
+// Regular imports for lighter chart parts
+import {
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Pie,
+  Cell,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis
+} from "recharts";
+
+// Loading fallback for charts
+const ChartSkeleton = memo(({ height = "h-[300px]" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-sm">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
@@ -582,15 +615,17 @@ export default function ProjectPortfolio() {
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px", marginBottom: "24px" }}>
           <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
             <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>SDG Distribution Across Portfolio</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={portfolioSDGData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#6b7280" }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#6b7280" }} width={120} />
-                <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
-                <Bar dataKey="hours" fill="#3b82f6" name="Hours" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<ChartSkeleton />}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LazyBarChart data={portfolioSDGData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#6b7280" }} width={120} />
+                  <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+                  <Bar dataKey="hours" fill="#3b82f6" name="Hours" radius={[0, 4, 4, 0]} />
+                </LazyBarChart>
+              </ResponsiveContainer>
+            </Suspense>
           </div>
           <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
             <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>SDG Summary</h3>
@@ -615,27 +650,29 @@ export default function ProjectPortfolio() {
       {activeSubTab === "timeline" && (
         <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "24px" }}>
           <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Timeline Overview</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={timelineData}>
-              <defs>
-                <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="inProgressGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
-              <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
-              <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
-              <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#completedGrad)" strokeWidth={2} name="Completed" />
-              <Area type="monotone" dataKey="inProgress" stroke="#3b82f6" fill="url(#inProgressGrad)" strokeWidth={2} name="In Progress" />
-              <Line type="monotone" dataKey="planned" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Planned" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<ChartSkeleton />}>
+            <ResponsiveContainer width="100%" height={300}>
+              <LazyAreaChart data={timelineData}>
+                <defs>
+                  <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="inProgressGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+                <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#completedGrad)" strokeWidth={2} name="Completed" />
+                <Area type="monotone" dataKey="inProgress" stroke="#3b82f6" fill="url(#inProgressGrad)" strokeWidth={2} name="In Progress" />
+                <Line type="monotone" dataKey="planned" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Planned" />
+              </LazyAreaChart>
+            </ResponsiveContainer>
+          </Suspense>
           <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <div style={{ width: "12px", height: "12px", backgroundColor: "#10b981", borderRadius: "2px" }} />
@@ -752,39 +789,43 @@ export default function ProjectPortfolio() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
         <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
           <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Budget Burn-down</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={[
-              { month: "Jan", allocated: 100, spent: 20 },
-              { month: "Feb", allocated: 100, spent: 45 },
-              { month: "Mar", allocated: 100, spent: 70 },
-            ]}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
-              <Legend />
-              <Line type="monotone" dataKey="allocated" stroke="#1e3a8a" strokeWidth={2} />
-              <Line type="monotone" dataKey="spent" stroke="#f59e0b" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<ChartSkeleton height="h-[200px]" />}>
+            <ResponsiveContainer width="100%" height={200}>
+              <LazyLineChart data={[
+                { month: "Jan", allocated: 100, spent: 20 },
+                { month: "Feb", allocated: 100, spent: 45 },
+                { month: "Mar", allocated: 100, spent: 70 },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+                <Legend />
+                <Line type="monotone" dataKey="allocated" stroke="#1e3a8a" strokeWidth={2} />
+                <Line type="monotone" dataKey="spent" stroke="#f59e0b" strokeWidth={2} />
+              </LazyLineChart>
+            </ResponsiveContainer>
+          </Suspense>
         </div>
         <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
           <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Status & Health</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={[
-                { name: "Excellent", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score >= 80).length || 0 },
-                { name: "Good", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 60 && s < 80;}).length || 0 },
-                { name: "At Risk", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 40 && s < 60;}).length || 0 },
-                { name: "Critical", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score < 40).length || 0 }
-              ]} cx="50%" cy="50%" outerRadius={60} dataKey="value">
-                <Cell fill="#10b981" />
-                <Cell fill="#3b82f6" />
-                <Cell fill="#f59e0b" />
-                <Cell fill="#ef4444" />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<ChartSkeleton height="h-[200px]" />}>
+            <ResponsiveContainer width="100%" height={200}>
+              <LazyPieChart>
+                <Pie data={[
+                  { name: "Excellent", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score >= 80).length || 0 },
+                  { name: "Good", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 60 && s < 80;}).length || 0 },
+                  { name: "At Risk", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 40 && s < 60;}).length || 0 },
+                  { name: "Critical", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score < 40).length || 0 }
+                ]} cx="50%" cy="50%" outerRadius={60} dataKey="value">
+                  <Cell fill="#10b981" />
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#f59e0b" />
+                  <Cell fill="#ef4444" />
+                </Pie>
+              </LazyPieChart>
+            </ResponsiveContainer>
+          </Suspense>
         </div>
       </div>
         </>

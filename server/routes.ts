@@ -7233,8 +7233,9 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         'lusaka': { lat: -15.3875, lng: 28.3228, region: 'Africa - Lusaka, Zambia' },
         'kitwe': { lat: -12.8024, lng: 28.2132, region: 'Africa - Kitwe, Zambia' },
         // Other African locations
-        'kenya': { lat: -1.2921, lng: 36.8219, region: 'Africa - Kenya' },
+        'kenya': { lat: 0.0236, lng: 37.9062, region: 'Africa - Kenya' },
         'nairobi': { lat: -1.2921, lng: 36.8219, region: 'Africa - Nairobi, Kenya' },
+        'mombasa': { lat: -4.0435, lng: 39.6682, region: 'Africa - Mombasa, Kenya' },
         'south africa': { lat: -33.9249, lng: 18.4241, region: 'Africa - South Africa' },
         'cape town': { lat: -33.9249, lng: 18.4241, region: 'Africa - Cape Town, South Africa' },
         'johannesburg': { lat: -26.2041, lng: 28.0473, region: 'Africa - Johannesburg, South Africa' },

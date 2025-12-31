@@ -117,7 +117,7 @@ interface OrganizationVolunteer {
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } | null {
   const locationCoords: Record<string, { lat: number; lng: number }> = {
     'zambia': { lat: -13.1939, lng: 27.8493 },
-    'kenya': { lat: -0.0236, lng: 37.9062 },
+    'kenya': { lat: 0.0236, lng: 37.9062 },
     'nigeria': { lat: 9.0765, lng: 7.3986 },
     'south africa': { lat: -30.5595, lng: 22.9375 },
     'uganda': { lat: 1.3733, lng: 32.2903 },

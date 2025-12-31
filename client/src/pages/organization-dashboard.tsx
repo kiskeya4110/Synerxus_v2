@@ -4838,7 +4838,7 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
   const locationCoords: Record<string, { lat: number; lng: number }> = {
     // African Countries (centers)
     'zambia': { lat: -13.1939, lng: 27.8493 },
-    'kenya': { lat: -0.0236, lng: 37.9062 },
+    'kenya': { lat: 0.0236, lng: 37.9062 },
     'nigeria': { lat: 9.0765, lng: 7.3986 },
     'south africa': { lat: -30.5595, lng: 22.9375 },
     'democratic republic of congo': { lat: -4.0383, lng: 21.7587 },

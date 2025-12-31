@@ -607,7 +607,7 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
         'uk': { lat: 55.3781, lng: -3.436 },
         'united kingdom': { lat: 55.3781, lng: -3.436 },
         'india': { lat: 20.5937, lng: 78.9629 },
-        'kenya': { lat: -0.0236, lng: 37.9062 },
+        'kenya': { lat: 0.0236, lng: 37.9062 },
         'south africa': { lat: -30.5595, lng: 22.9375 },
         'brazil': { lat: -14.235, lng: -51.9253 },
         'canada': { lat: 56.1304, lng: -106.3468 },

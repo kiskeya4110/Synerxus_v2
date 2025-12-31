@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -158,24 +158,33 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
     return null;
   };
 
-  // Separate opportunities into applied and available
-  const appliedOpportunities = opportunities.filter(
-    opp => opportunityStatus?.appliedIds.includes(opp.id)
-  );
-  
-  const availableOpportunities = opportunities.filter(
-    opp => !opportunityStatus?.rejectedIds.includes(opp.id) && !opportunityStatus?.appliedIds.includes(opp.id)
+  // Separate opportunities into applied and available (memoized to avoid recalculation on every render)
+  const appliedOpportunities = useMemo(() =>
+    opportunities.filter(opp => opportunityStatus?.appliedIds.includes(opp.id)),
+    [opportunities, opportunityStatus?.appliedIds]
   );
 
-  // Get unique categories from available opportunities
-  const categories = Array.from(
-    new Set(availableOpportunities.map(opp => opp.category).filter(Boolean))
-  ).sort();
+  const availableOpportunities = useMemo(() =>
+    opportunities.filter(opp =>
+      !opportunityStatus?.rejectedIds.includes(opp.id) &&
+      !opportunityStatus?.appliedIds.includes(opp.id)
+    ),
+    [opportunities, opportunityStatus?.rejectedIds, opportunityStatus?.appliedIds]
+  );
 
-  // Apply category filter
-  const filteredAvailableOpportunities = selectedCategory === "all"
-    ? availableOpportunities
-    : availableOpportunities.filter(opp => opp.category === selectedCategory);
+  // Get unique categories from available opportunities (memoized)
+  const categories = useMemo(() =>
+    Array.from(new Set(availableOpportunities.map(opp => opp.category).filter(Boolean))).sort(),
+    [availableOpportunities]
+  );
+
+  // Apply category filter (memoized)
+  const filteredAvailableOpportunities = useMemo(() =>
+    selectedCategory === "all"
+      ? availableOpportunities
+      : availableOpportunities.filter(opp => opp.category === selectedCategory),
+    [availableOpportunities, selectedCategory]
+  );
 
   if (isLoading) {
     return (

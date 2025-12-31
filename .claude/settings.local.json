@@ -79,7 +79,8 @@
       "Bash(nix-env:*)",
       "Bash(ssh-keygen:*)",
       "Bash(tee:*)",
-      "Bash(PORT=5000 npm run dev:*)"
+      "Bash(PORT=5000 npm run dev:*)",
+      "Bash(pgrep:*)"
     ],
     "deny": [],
     "ask": []

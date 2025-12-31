@@ -45,9 +45,13 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
               return 'vendor-react';
             }
-            // Charting libraries - large bundles
-            if (id.includes('recharts') || id.includes('chart.js') || id.includes('d3')) {
-              return 'vendor-charts';
+            // Recharts needs its d3 dependencies bundled together to avoid circular deps
+            if (id.includes('recharts')) {
+              return 'vendor-recharts';
+            }
+            // D3 libraries (separate from recharts to allow proper initialization order)
+            if (id.includes('d3-') || id.includes('d3/')) {
+              return 'vendor-d3';
             }
             // Map libraries - large bundles
             if (id.includes('leaflet')) {

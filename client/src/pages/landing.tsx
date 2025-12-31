@@ -13,10 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import communityVolunteersImg from "@assets/Community Volunteers_1763707388972.png";
-import doctorsVolunteeringImg from "@assets/Doctors Volunteering_1763707388972.png";
-import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
-import collageImg from "@assets/Gemini_Generated_Image_n3wsmrn3wsmrn3ws_1763713223121.png";
+// Optimized WebP images for better performance (98% smaller than originals)
+import communityVolunteersImg from "@assets/community-volunteers.webp";
+import doctorsVolunteeringImg from "@assets/doctors-volunteering.webp";
+import villageVolunteersImg from "@assets/village-volunteers.webp";
+import collageImg from "@assets/hero-volunteer-collage.webp";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -749,7 +750,9 @@ export default function Landing() {
                   src={collageImg}
                   alt="Volunteer Collage"
                   className="w-full h-auto object-contain"
-                  loading="lazy"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
               </div>

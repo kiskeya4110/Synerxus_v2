@@ -13,6 +13,13 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <title>Synerxus - Intelligent Connections for Sustainable Development</title>
     <meta name="description" content="Synerxus: Intelligently connecting global volunteers with impactful opportunities worldwide through AI-powered matching for sustainable development." />
+
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon-16.png" sizes="16x16" />
@@ -25,10 +32,7 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- PDF Export Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- PDF Export Dependencies are now lazy-loaded via dynamic imports for better performance -->
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>

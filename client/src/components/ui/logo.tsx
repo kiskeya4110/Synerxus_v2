@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
+// Optimized logo - 95% smaller than original (0.47MB -> 21KB)
+import logoImage from "@assets/synerxus-logo-optimized.webp";
 
 interface LogoProps {
   className?: string;

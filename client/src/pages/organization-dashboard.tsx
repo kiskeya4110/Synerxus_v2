@@ -1088,11 +1088,11 @@ export default function OrganizationDashboard() {
                         <p style={{ fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {getSDGName(sdg.goal)}
                         </p>
-                        <p style={{ fontSize: '10px', color: '#059669', margin: '2px 0 0 0' }} title="Hours from projects involving this SDG">
-                          {sdg.hours?.toLocaleString() || 0}h contributing
+                        <p style={{ fontSize: '10px', color: '#059669', margin: '2px 0 0 0' }} title="Total hours from all projects aligned with this SDG">
+                          {sdg.hours?.toLocaleString() || 0}h total
                         </p>
-                        <p style={{ fontSize: '9px', color: '#6b7280', margin: '1px 0 0 0' }} title="Hours proportionally dedicated to this SDG">
-                          {Math.round(sdg.dedicatedHours || 0)}h dedicated • {sdg.projects || 0} projects
+                        <p style={{ fontSize: '9px', color: '#6b7280', margin: '1px 0 0 0' }} title="Hours allocated to this SDG based on project SDG distribution">
+                          {Math.round(sdg.dedicatedHours || 0)}h attributed • {sdg.projects || 0} projects
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>

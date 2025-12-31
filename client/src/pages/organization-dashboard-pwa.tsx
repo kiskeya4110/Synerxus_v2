@@ -2987,7 +2987,7 @@ export default function OrganizationDashboardPWA() {
                   <TrendingUp className="w-4 h-4" />
                   Economic Contribution
                 </h4>
-                <p className="text-2xl font-bold text-amber-700">${(selectedVolunteer.hours * 34.79).toLocaleString()}</p>
+                <p className="text-2xl font-bold text-amber-700">${Math.round(selectedVolunteer.hours * 34.79).toLocaleString()}</p>
                 <p className="text-[10px] text-amber-600 mt-1">Based on {selectedVolunteer.hours} hours × $34.79/hr (Independent Sector 2025)</p>
               </div>
 

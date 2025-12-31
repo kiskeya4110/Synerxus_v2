@@ -1354,7 +1354,7 @@ export default function CSRDashboardPWA() {
                       <p className="text-lg font-bold text-amber-900 truncate">{metrics.topPerformer}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-amber-800 font-semibold">{metrics.topPerformerHours}h contributed</span>
-                        <span className="text-[10px] text-amber-700">• ${(metrics.topPerformerHours * 34.79).toLocaleString()} value</span>
+                        <span className="text-[10px] text-amber-700">• ${Math.round(metrics.topPerformerHours * 34.79).toLocaleString()} value</span>
                       </div>
                     </div>
                   </div>
@@ -2493,7 +2493,7 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
           <p className="text-[10px] text-slate-700 font-medium">Total Hours</p>
         </div>
         <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-300 shadow-sm">
-          <p className="text-xl font-bold text-amber-700">${((csrData?.totalHours || 0) * 34.79).toLocaleString()}</p>
+          <p className="text-xl font-bold text-amber-700">${Math.round((csrData?.totalHours || 0) * 34.79).toLocaleString()}</p>
           <p className="text-[10px] text-slate-700 font-medium">Value</p>
         </div>
         <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-300 shadow-sm">
@@ -3175,7 +3175,7 @@ function GeographicSection({ csrData }: { csrData: CSRDashboardData | undefined 
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-[9px] text-slate-400">{percentage}% of total impact</span>
-                  <span className="text-[9px] text-emerald-600 font-medium">${(region.hours * 34.79).toLocaleString()} value</span>
+                  <span className="text-[9px] text-emerald-600 font-medium">${Math.round(region.hours * 34.79).toLocaleString()} value</span>
                 </div>
               </div>
             );
@@ -3284,7 +3284,7 @@ function GeographicSection({ csrData }: { csrData: CSRDashboardData | undefined 
           </div>
           <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-emerald-100">
             <p className="text-[10px] text-slate-500 uppercase font-medium mb-1">Economic Value</p>
-            <p className="text-sm font-bold text-emerald-700">${(totalHours * 34.79).toLocaleString()}</p>
+            <p className="text-sm font-bold text-emerald-700">${Math.round(totalHours * 34.79).toLocaleString()}</p>
             <p className="text-[10px] text-slate-500">volunteer contribution</p>
           </div>
         </div>

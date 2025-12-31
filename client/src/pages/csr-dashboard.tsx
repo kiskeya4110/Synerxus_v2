@@ -2009,7 +2009,7 @@ export default function CSRDashboard() {
                           </td>
                           <td className="py-1.5 text-slate-900 truncate max-w-[120px] font-medium">{employee.name || employee.employeeName}</td>
                           <td className="py-1.5 text-amber-700 font-semibold text-right">{formatDecimal(employee.hours)}h</td>
-                          <td className="py-1.5 text-emerald-600 text-right font-medium">${(employee.hours * 34.79).toLocaleString()}</td>
+                          <td className="py-1.5 text-emerald-600 text-right font-medium">${Math.round(employee.hours * 34.79).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2541,7 +2541,7 @@ export default function CSRDashboard() {
                             </div>
                             <div className="text-right">
                               <div className="text-emerald-600 text-sm font-bold">{emp.hours || 0}h</div>
-                              <div className="text-purple-600 text-[10px] font-medium">${((emp.hours || 0) * 34.79).toLocaleString()}</div>
+                              <div className="text-purple-600 text-[10px] font-medium">${Math.round((emp.hours || 0) * 34.79).toLocaleString()}</div>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-400" />
                           </button>
@@ -4119,7 +4119,7 @@ export default function CSRDashboard() {
           <button
             onClick={() => {
               setSelectedKPI("economic");
-              toast({ title: "Economic Value", description: `$${(displayTotalHours * 34.79).toLocaleString()} total value (${displayTotalHours.toLocaleString()} hours × $34.79/hr industry standard rate).` });
+              toast({ title: "Economic Value", description: `$${Math.round(displayTotalHours * 34.79).toLocaleString()} total value (${displayTotalHours.toLocaleString()} hours × $34.79/hr industry standard rate).` });
             }}
             style={{
               padding: "12px",
@@ -5067,7 +5067,7 @@ export default function CSRDashboard() {
                         {/* Economic Value of Alignment */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
                           <div style={{ backgroundColor: "#ecfdf5", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
-                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "#059669" }}>${(totalCommittedHours * 34.79).toLocaleString()}</div>
+                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "#059669" }}>${Math.round(totalCommittedHours * 34.79).toLocaleString()}</div>
                             <div style={{ fontSize: "10px", color: "#6b7280" }}>Aligned Value</div>
                           </div>
                           <div style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
@@ -7069,7 +7069,7 @@ export default function CSRDashboard() {
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                             <span style={{ fontWeight: "600", color: "#1e3a8a", fontSize: "13px" }}>{formatDecimal(metric.totalHours)} hrs</span>
-                            <span style={{ fontWeight: "600", color: "#059669", fontSize: "12px" }}>${(metric.totalHours * 34.79).toLocaleString()}</span>
+                            <span style={{ fontWeight: "600", color: "#059669", fontSize: "12px" }}>${Math.round(metric.totalHours * 34.79).toLocaleString()}</span>
                             <ChevronRight style={{ width: "16px", height: "16px", color: "#9ca3af" }} />
                           </div>
                         </button>
@@ -7267,7 +7267,7 @@ export default function CSRDashboard() {
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{ fontWeight: "600", color: "#7c3aed", fontSize: "13px" }}>{formatDecimal(emp.hours)}h</span>
-                          <span style={{ fontWeight: "600", color: "#059669", fontSize: "12px" }}>${(emp.hours * 34.79).toLocaleString()}</span>
+                          <span style={{ fontWeight: "600", color: "#059669", fontSize: "12px" }}>${Math.round(emp.hours * 34.79).toLocaleString()}</span>
                           <ChevronRight style={{ width: "14px", height: "14px", color: "#9ca3af" }} />
                         </div>
                       </button>
@@ -7427,7 +7427,7 @@ export default function CSRDashboard() {
                           </div>
                           <div style={{ textAlign: "right", borderLeft: "1px solid #e5e7eb", paddingLeft: "10px" }}>
                             <div style={{ fontSize: "14px", fontWeight: "bold", color: "#7c3aed" }}>
-                              ${((volunteer.hours || 0) * 34.79).toLocaleString()}
+                              ${Math.round((volunteer.hours || 0) * 34.79).toLocaleString()}
                             </div>
                             <div style={{ fontSize: "10px", color: "#6b7280" }}>value</div>
                           </div>
@@ -7560,7 +7560,7 @@ export default function CSRDashboard() {
                         onClick={() => startTransition(() => {
                           setSelectedKPI(null);
                           setSelectedMapRegion(project.region || "all");
-                          toast({ title: project.name || `Project ${idx + 1}`, description: `${project.hours || 0} hours • $${(project.economicValue || (project.hours || 0) * 34.79).toLocaleString()} value • ${project.employees || 0} volunteers • ${project.region || "N/A"}` });
+                          toast({ title: project.name || `Project ${idx + 1}`, description: `${project.hours || 0} hours • $${Math.round(project.economicValue || (project.hours || 0) * 34.79).toLocaleString()} value • ${project.employees || 0} volunteers • ${project.region || "N/A"}` });
                         })}
                         style={{
                           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -7597,7 +7597,7 @@ export default function CSRDashboard() {
                           </div>
                           <div style={{ textAlign: "right", borderLeft: "1px solid #e5e7eb", paddingLeft: "12px" }}>
                             <div style={{ fontSize: "14px", fontWeight: "bold", color: "#059669" }}>
-                              ${(project.economicValue || (project.hours || 0) * 34.79).toLocaleString()}
+                              ${Math.round(project.economicValue || (project.hours || 0) * 34.79).toLocaleString()}
                             </div>
                             <div style={{ fontSize: "10px", color: "#6b7280" }}>value</div>
                           </div>
@@ -7994,7 +7994,7 @@ export default function CSRDashboard() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                     <span style={{ fontSize: "14px", fontWeight: "600", color: "#065f46" }}>Total Economic Impact</span>
                     <span style={{ fontSize: "20px", fontWeight: "bold", color: "#059669" }}>
-                      ${(displayTotalHours * 34.79).toLocaleString()}
+                      ${Math.round(displayTotalHours * 34.79).toLocaleString()}
                     </span>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
@@ -8224,7 +8224,7 @@ export default function CSRDashboard() {
                   <span style={{ fontSize: "18px" }}>💼</span>
                   <span style={{ fontSize: "13px", color: "#1e40af" }}>
                     <strong>Impact:</strong> Employee volunteers have contributed{" "}
-                    {displayTotalHours.toLocaleString()} total hours worth ${(displayTotalHours * 34.79).toLocaleString()} in economic value.
+                    {displayTotalHours.toLocaleString()} total hours worth ${Math.round(displayTotalHours * 34.79).toLocaleString()} in economic value.
                   </span>
                 </div>
               </div>
@@ -8666,7 +8666,7 @@ export default function CSRDashboard() {
                           margin: 0,
                         }}
                       >
-                        ${((selectedMetric?.totalHours || 0) * 34.79).toLocaleString()}
+                        ${Math.round((selectedMetric?.totalHours || 0) * 34.79).toLocaleString()}
                       </p>
                       <p
                         style={{
@@ -9910,7 +9910,7 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "12px", color: "#3b82f6", margin: "4px 0 0 0" }}>Hours Logged</p>
                 </div>
                 <div style={{ backgroundColor: "#ecfdf5", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                  <p style={{ fontSize: "28px", fontWeight: "bold", color: "#059669", margin: 0 }}>${((selectedEmployee.hours || 0) * 34.79).toLocaleString()}</p>
+                  <p style={{ fontSize: "28px", fontWeight: "bold", color: "#059669", margin: 0 }}>${Math.round((selectedEmployee.hours || 0) * 34.79).toLocaleString()}</p>
                   <p style={{ fontSize: "12px", color: "#10b981", margin: "4px 0 0 0" }}>Economic Value</p>
                 </div>
                 <div style={{ backgroundColor: "#fef3c7", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
@@ -10121,7 +10121,7 @@ export default function CSRDashboard() {
                 </div>
                 <div>
                   <div style={{ fontSize: "18px", fontWeight: "bold" }}>
-                    ${(selectedEmployee.hours || 0) * 34.79}
+                    ${Math.round((selectedEmployee.hours || 0) * 34.79).toLocaleString()}
                   </div>
                   <div style={{ fontSize: "11px", opacity: 0.8 }}>Value Generated</div>
                 </div>

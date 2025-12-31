@@ -49,13 +49,13 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
   ];
 
   const organizationActions: QuickAction[] = [
-    {
+    ...(onContactVolunteers ? [{
       id: "contact-volunteers",
       label: "Contact Volunteers",
       icon: <MessageSquare className="h-5 w-5 mb-1" />,
       color: "text-blue-500",
       onClick: onContactVolunteers
-    },
+    }] : []),
     {
       id: "add-project",
       label: "Add Project",
@@ -89,9 +89,29 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
       <CardContent className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {actions.map((action) => {
-            const content = (
-              <div 
-                className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[80px]"
+            const baseClasses = "flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[80px] w-full";
+
+            if (action.href) {
+              return (
+                <Link key={action.id} href={action.href}>
+                  <div
+                    className={baseClasses}
+                    data-testid={`button-${action.id}`}
+                  >
+                    <div className={action.color}>
+                      {action.icon}
+                    </div>
+                    <span className="text-sm text-center font-medium mt-1">{action.label}</span>
+                  </div>
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={action.id}
+                type="button"
+                className={baseClasses}
                 data-testid={`button-${action.id}`}
                 onClick={action.onClick}
               >
@@ -99,18 +119,8 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
                   {action.icon}
                 </div>
                 <span className="text-sm text-center font-medium mt-1">{action.label}</span>
-              </div>
+              </button>
             );
-
-            if (action.href) {
-              return (
-                <Link key={action.id} href={action.href}>
-                  {content}
-                </Link>
-              );
-            }
-
-            return <div key={action.id}>{content}</div>;
           })}
         </div>
       </CardContent>

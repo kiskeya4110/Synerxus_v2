@@ -205,7 +205,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     <>
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Primary SDGs</CardTitle>
+        <CardTitle className="text-lg font-semibold">{isVolunteer ? "SDG Goals" : "Primary SDGs"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
 

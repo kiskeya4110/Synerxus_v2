@@ -674,7 +674,7 @@ export default function KPIDetailModal({
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">{project.hours || 0} hours</span>
                   <span className="font-semibold text-emerald-600">
-                    ${((project.hours || 0) * economicValueRate).toLocaleString()}
+                    ${Math.round((project.hours || 0) * economicValueRate).toLocaleString()}
                   </span>
                 </div>
                 {project.sdgGoals && project.sdgGoals.length > 0 && (

@@ -228,7 +228,7 @@ export default function AIInsightModal({
                   <p className="text-xs text-purple-600 font-medium">Economic Value</p>
                 </div>
                 <p className="text-lg font-bold text-purple-700">
-                  ${potentialImpact.projectedEconomicValue.toLocaleString()}
+                  ${Math.round(potentialImpact.projectedEconomicValue).toLocaleString()}
                 </p>
               </div>
               <div className="bg-amber-50 rounded-lg p-3">

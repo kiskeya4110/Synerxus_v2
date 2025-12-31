@@ -300,7 +300,7 @@ export default function AIUDetailsModal({
               </div>
               <div className="space-y-2">
                 {/* AIU Efficiency */}
-                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Zap className="h-3.5 w-3.5 text-violet-500" />
                     <span className="text-xs text-slate-700">AIU Efficiency</span>
@@ -309,9 +309,9 @@ export default function AIUDetailsModal({
                     <span className="text-sm font-bold text-violet-600">{aiuPerHour}</span>
                     <span className="text-[10px] text-slate-500">AIU/hr</span>
                   </div>
-                </button>
+                </div>
                 {/* Project Diversity */}
-                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Target className="h-3.5 w-3.5 text-violet-500" />
                     <span className="text-xs text-slate-700">Project Diversity</span>
@@ -320,9 +320,9 @@ export default function AIUDetailsModal({
                     <span className="text-sm font-bold text-violet-600">{projectCount}</span>
                     <span className="text-[10px] text-slate-500">projects</span>
                   </div>
-                </button>
+                </div>
                 {/* SDG Coverage */}
-                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Globe className="h-3.5 w-3.5 text-violet-500" />
                     <span className="text-xs text-slate-700">SDG Coverage</span>
@@ -331,9 +331,9 @@ export default function AIUDetailsModal({
                     <span className="text-sm font-bold text-violet-600">{Math.round((sdgsContributed.length / 17) * 100)}%</span>
                     <span className="text-[10px] text-slate-500">of 17 SDGs</span>
                   </div>
-                </button>
+                </div>
                 {/* Verification Rate */}
-                <button className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg hover:bg-white/80 transition-all text-left">
+                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Shield className="h-3.5 w-3.5 text-violet-500" />
                     <span className="text-xs text-slate-700">Verification Rate</span>
@@ -342,7 +342,7 @@ export default function AIUDetailsModal({
                     <span className="text-sm font-bold text-violet-600">{verificationRate}%</span>
                     <span className="text-[10px] text-slate-500">verified</span>
                   </div>
-                </button>
+                </div>
               </div>
             </CardContent>
           </Card>

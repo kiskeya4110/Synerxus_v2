@@ -466,19 +466,19 @@ export default function ImpactChart({
             <p className="text-lg font-bold text-blue-600">
               {summaryTotals.totalHours.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">Total Hours</p>
+            <p className="text-xs text-gray-500">{labels.hours}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-emerald-600">
               {summaryTotals.totalPeople.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">People Impacted</p>
+            <p className="text-xs text-gray-500">{labels.impact}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-violet-600">
               {formatDecimal(summaryTotals.totalAiu)}
             </p>
-            <p className="text-xs text-gray-500">Total AIU</p>
+            <p className="text-xs text-gray-500">{labels.aiu}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-amber-600">

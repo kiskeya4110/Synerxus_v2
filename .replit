@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
-run = "pkill -f 'tsx server' 2>/dev/null; lsof -ti:5000 | xargs kill -9 2>/dev/null; sleep 1; npm run dev"
+run = "pkill -f 'tsx server' 2>/dev/null; pkill -f 'node dist/index' 2>/dev/null; sleep 1; npm run dev"
 entrypoint = "server/index.ts"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -38,7 +38,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -f 'tsx server' 2>/dev/null; lsof -ti:5000 | xargs kill -9 2>/dev/null; sleep 1; npm run dev"
+args = "pkill -f 'tsx server' 2>/dev/null; pkill -f 'node dist/index' 2>/dev/null; sleep 1; npm run dev"
 waitForPort = 5000
 
 [agent]

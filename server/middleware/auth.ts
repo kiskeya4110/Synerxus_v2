@@ -210,6 +210,25 @@ export async function optionalAuthMiddleware(
       }
     }
 
+    // Also check x-user-id header (legacy support, matches authMiddleware behavior)
+    if (!req.user && req.headers["x-user-id"]) {
+      const legacyUserId = req.headers["x-user-id"] as string;
+      const parsedId = parseInt(legacyUserId);
+      if (!isNaN(parsedId)) {
+        const user = await storage.getUser(parsedId);
+        if (user) {
+          req.user = {
+            id: user.id,
+            email: user.email,
+            userType: user.userType || "volunteer",
+            organizationId: user.organizationId,
+            firebaseUid: user.firebaseUid,
+          };
+          req.userId = user.id;
+        }
+      }
+    }
+
     next();
   } catch (error) {
     // Don't fail on optional auth errors

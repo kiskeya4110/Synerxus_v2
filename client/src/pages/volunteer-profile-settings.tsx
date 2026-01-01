@@ -662,6 +662,7 @@ const AvailabilitySection = ({
               placeholder="e.g., 5"
               {...field}
               onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+              onFocus={(e) => e.target.select()}
               data-testid="input-volunteer-weekly-hours"
             />
           </FormControl>

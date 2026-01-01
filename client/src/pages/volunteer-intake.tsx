@@ -814,6 +814,7 @@ export default function VolunteerIntake() {
                           const value = e.target.value;
                           field.onChange(value === "" ? "" : parseInt(value) || "");
                         }}
+                        onFocus={(e) => e.target.select()}
                         data-testid="input-volunteer-weekly-hours"
                       />
                     </FormControl>

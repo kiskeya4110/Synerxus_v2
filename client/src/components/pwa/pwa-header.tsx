@@ -320,41 +320,41 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             onClick={() => setMenuOpen(false)}
           />
 
-          {/* Menu Panel */}
-          <div className="relative ml-auto w-[85%] max-w-sm h-full bg-white dark:bg-slate-900 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-            {/* Menu Header - Brand gradient */}
-            <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-5 py-6 pt-[max(1.5rem,calc(env(safe-area-inset-top)+0.5rem))]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-white/60 text-sm font-medium">Menu</span>
+          {/* Menu Panel - Compact design */}
+          <div className="relative ml-auto w-[75%] max-w-[280px] h-full bg-white dark:bg-slate-900 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            {/* Menu Header - Compact brand gradient */}
+            <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/60 text-xs font-medium">Menu</span>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
                 >
-                  <X className="w-5 h-5 text-white" />
+                  <X className="w-4 h-4 text-white" />
                 </button>
               </div>
 
-              {/* User Info */}
-              <div className="flex items-center gap-3">
-                <Avatar className="h-14 w-14 border-2 border-white/30 shadow-lg">
+              {/* User Info - Compact */}
+              <div className="flex items-center gap-2.5">
+                <Avatar className="h-10 w-10 border-2 border-white/30 shadow-lg">
                   <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xl font-semibold">
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-base font-semibold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-lg truncate">
+                  <p className="text-white font-semibold text-sm truncate">
                     {currentUser?.displayName || currentUser?.username || 'Volunteer'}
                   </p>
-                  <p className="text-white/60 text-sm truncate">
+                  <p className="text-white/60 text-xs truncate">
                     {currentUser?.email || ''}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Menu Items */}
-            <div className="flex-1 overflow-y-auto py-3">
+            {/* Menu Items - Compact */}
+            <div className="flex-1 overflow-y-auto py-1.5">
               {menuItems.map((item, index) => (
                 <button
                   key={index}
@@ -366,26 +366,26 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                       navigate(item.path);
                     }
                   }}
-                  className={`w-full flex items-center gap-4 px-5 py-3.5 transition-colors text-left ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left ${
                     item.highlight
                       ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
                       : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                   data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                     item.highlight
                       ? 'bg-emerald-100 dark:bg-emerald-900/40'
                       : 'bg-slate-100 dark:bg-slate-800'
                   }`}>
-                    <item.icon className={`w-5 h-5 ${
+                    <item.icon className={`w-4 h-4 ${
                       item.highlight
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-slate-600 dark:text-slate-400'
                     }`} />
                   </div>
-                  <span className="font-medium flex-1">{item.label}</span>
-                  <ChevronRight className={`w-5 h-5 ${
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  <ChevronRight className={`w-4 h-4 ${
                     item.highlight
                       ? 'text-emerald-400'
                       : 'text-slate-400 dark:text-slate-500'
@@ -394,14 +394,14 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               ))}
             </div>
 
-            {/* Logout Button */}
-            <div className="border-t border-slate-200 dark:border-slate-700 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {/* Logout Button - Compact */}
+            <div className="border-t border-slate-200 dark:border-slate-700 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                 data-testid="menu-logout"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
               </button>
             </div>

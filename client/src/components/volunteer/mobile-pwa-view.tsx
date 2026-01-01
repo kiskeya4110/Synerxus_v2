@@ -1152,11 +1152,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
             {dashboardData?.volunteerProfile && (
-              <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6 -mt-0.5">
+              <div className="bg-gradient-to-r from-sky-300 via-sky-200 to-amber-100 px-4 pt-4 pb-6 -mt-0.5">
                 <div className="flex items-center gap-4">
                   {/* Profile Picture */}
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg ring-2 ring-white/20">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/50 shadow-lg ring-2 ring-white/30">
                       {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
                         <img
                           src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
@@ -1164,24 +1164,24 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white text-xl font-bold">
+                        <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-xl font-bold">
                           {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white flex items-center justify-center">
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
                       <CheckCircle className="w-3 h-3 text-white" />
                     </div>
                   </div>
 
                   {/* Welcome Text */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-blue-100 text-xs font-medium">Welcome back,</p>
-                    <h1 className="text-white text-lg font-bold truncate">
+                    <p className="text-slate-600 text-xs font-medium">Welcome back,</p>
+                    <h1 className="text-slate-800 text-lg font-bold truncate">
                       {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
                     </h1>
                     {dashboardData.volunteerProfile.professionalTitle && (
-                      <p className="text-blue-200 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
+                      <p className="text-slate-600 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
                     )}
                   </div>
                 </div>
@@ -1189,15 +1189,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {/* Quick Stats Row */}
                 <div className="flex items-center gap-2 mt-4">
                   {dashboardData.volunteerProfile.weeklyAvailability && (
-                    <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <Clock className="h-3.5 w-3.5 text-blue-200" />
-                      <span className="text-white text-xs font-medium">{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
+                    <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Clock className="h-3.5 w-3.5 text-slate-600" />
+                      <span className="text-slate-700 text-xs font-medium">{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
                     </div>
                   )}
                   {kpis.activeProjects > 0 && (
-                    <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <Briefcase className="h-3.5 w-3.5 text-blue-200" />
-                      <span className="text-white text-xs font-medium">{kpis.activeProjects} Active</span>
+                    <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Briefcase className="h-3.5 w-3.5 text-slate-600" />
+                      <span className="text-slate-700 text-xs font-medium">{kpis.activeProjects} Active</span>
                     </div>
                   )}
                 </div>

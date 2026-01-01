@@ -20,9 +20,18 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
       url += `&imageType=${encodeURIComponent(imageType)}`;
     }
 
+    // Get userId from localStorage for authentication
+    const userId = localStorage.getItem('currentUserId');
+    const headers: Record<string, string> = {};
+    if (userId) {
+      headers['x-user-id'] = userId;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
+      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -93,12 +102,20 @@ export async function uploadProfilePhoto(
  */
 export async function deleteFile(path: string): Promise<void> {
   try {
+    // Get userId from localStorage for authentication
+    const userId = localStorage.getItem('currentUserId');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (userId) {
+      headers['x-user-id'] = userId;
+    }
+
     const response = await fetch('/api/upload', {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ path }),
+      credentials: 'include',
     });
 
     if (!response.ok && response.status !== 404) {

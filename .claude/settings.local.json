@@ -87,7 +87,8 @@
       "Bash(node scripts/optimize-images.js:*)",
       "Bash(node scripts/optimize-images.cjs:*)",
       "Bash(npx lighthouse:*)",
-      "Bash(dpkg:*)"
+      "Bash(dpkg:*)",
+      "Bash(__NEW_LINE__ echo \"\")"
     ],
     "deny": [],
     "ask": []

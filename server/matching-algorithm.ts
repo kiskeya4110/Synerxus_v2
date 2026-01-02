@@ -920,8 +920,12 @@ export function findTopVolunteers(
     matchReasons: string[];
   }
 > {
-  const scoredVolunteers = volunteers
-    .filter((vol) => vol.userType === "volunteer")
+  console.log(`[findTopVolunteers] Input: ${volunteers.length} volunteers, limit=${limit}`);
+
+  const volunteerTypeFiltered = volunteers.filter((vol) => vol.userType === "volunteer");
+  console.log(`[findTopVolunteers] After userType filter: ${volunteerTypeFiltered.length} volunteers`);
+
+  const scoredVolunteers = volunteerTypeFiltered
     .map((vol) => {
       const match = calculateMatchScore(vol, opportunity);
       return {
@@ -933,6 +937,7 @@ export function findTopVolunteers(
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, limit);
 
+  console.log(`[findTopVolunteers] Output: ${scoredVolunteers.length} volunteers, top score: ${scoredVolunteers[0]?.matchScore || 'N/A'}`);
   return scoredVolunteers;
 }
 

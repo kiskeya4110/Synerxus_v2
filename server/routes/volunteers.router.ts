@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { extractUserId } from "../user-validation";
+import { findTopVolunteers } from "../matching-algorithm";
 
 export const volunteersRouter = Router();
 
@@ -11,17 +12,6 @@ let broadcastUpdate: BroadcastFn = () => {};
 
 export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
-}
-
-// Import findTopVolunteers for AI matching
-// Note: This assumes the function exists in the appropriate module
-let findTopVolunteers: any;
-try {
-  const matchingModule = require("../matching-algorithm");
-  findTopVolunteers = matchingModule.findTopVolunteers;
-} catch {
-  // Fallback if module doesn't exist
-  findTopVolunteers = () => [];
 }
 
 // Python backend URL for AI features
@@ -69,7 +59,7 @@ volunteersRouter.get("/me", async (req: Request, res: Response) => {
 });
 
 // GET /api/volunteers/matches - AI-matched volunteers endpoint
-// Returns volunteers matched to organization's needs
+// Returns volunteers matched to organization's needs with enriched match data
 volunteersRouter.get("/matches", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string | undefined;
@@ -92,15 +82,21 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Only organizations can access matched volunteers" });
     }
 
-    // Use the authenticated user's ID as the organization ID
-    const orgId = userIdNum;
+    // Get the actual organization ID from the user record
+    const orgId = user.organizationId;
+    console.log(`[Matches API] User ${userIdNum} has organizationId: ${orgId}`);
+    if (!orgId) {
+      return res.status(400).json({ message: "Organization user does not have an associated organization" });
+    }
 
     // Get organization's open opportunities to match against
     const orgOpportunities = await storage.listOpportunitiesByOrganization(orgId);
     const openOpportunities = orgOpportunities.filter(opp => opp.status === 'open');
+    console.log(`[Matches API] Found ${orgOpportunities.length} total opportunities, ${openOpportunities.length} open`);
 
     if (openOpportunities.length === 0) {
       // No opportunities to match against - return empty array
+      console.log(`[Matches API] No open opportunities found for org ${orgId}`);
       return res.json([]);
     }
 
@@ -120,28 +116,136 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
     const volunteersWithProfiles = volunteers.map((vol) => {
       const matchingVolunteer = vol.email ? volunteerByEmail.get(vol.email) : null;
       const volunteerProfile = volunteerProfileByUserId.get(vol.id);
-      return { ...vol, profile: matchingVolunteer, volunteerProfile } as any;
+      return {
+        ...vol,
+        profile: volunteerProfile, // Use volunteerProfile which has preferredSdgs
+        volunteerProfile,
+        volunteerDetails: matchingVolunteer
+      } as any;
     });
 
     // Match volunteers against the organization's most representative opportunity
     // (using first open opportunity as baseline)
     const representativeOpportunity = openOpportunities[0];
+    console.log(`[Matches API] Matching against opportunity: "${representativeOpportunity.title}" (ID: ${representativeOpportunity.id})`);
+    console.log(`[Matches API] Opportunity required skills: ${JSON.stringify(representativeOpportunity.requiredSkills)}`);
+    console.log(`[Matches API] Opportunity SDGs: ${JSON.stringify(representativeOpportunity.sdgGoals)}, primary: ${representativeOpportunity.primarySdg}`);
+    console.log(`[Matches API] Total volunteers to match: ${volunteersWithProfiles.length}`);
+
+    // Debug: check sample volunteer data
+    const sampleVol = volunteersWithProfiles.find((v: any) => v.displayName === 'Al Honorat');
+    if (sampleVol) {
+      console.log(`[Matches API] Al Honorat data: userType=${sampleVol.userType}, skills=${JSON.stringify(sampleVol.skills)}, profile.preferredSdgs=${JSON.stringify(sampleVol.profile?.preferredSdgs)}`);
+    } else {
+      const first = volunteersWithProfiles[0];
+      console.log(`[Matches API] First volunteer: userType=${first?.userType}, skills=${JSON.stringify(first?.skills?.slice(0,2))}, hasProfile=${!!first?.profile}`);
+    }
+
     const matchedVolunteers = findTopVolunteers(
       representativeOpportunity,
       volunteersWithProfiles as any,
       100 // Get all volunteers, will filter by threshold
     );
+    console.log(`[Matches API] findTopVolunteers returned ${matchedVolunteers.length} volunteers`);
 
-    // Filter by threshold and add match data
-    const filteredVolunteers = matchedVolunteers
+    // Helper to normalize skill names for comparison
+    const normalizeSkill = (skill: any): string => {
+      if (typeof skill === 'string') {
+        // Handle "Skill Name (75%)" format
+        const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+        return (match ? match[1] : skill).toLowerCase().trim();
+      }
+      if (skill && typeof skill === 'object') {
+        return (skill.name || skill.skill || skill.skillName || '').toLowerCase().trim();
+      }
+      return '';
+    };
+
+    // Get opportunity's required skills and SDGs for matching computation
+    const oppRequiredSkills = (representativeOpportunity.requiredSkills || []).map(normalizeSkill);
+    const oppOptionalSkills = (representativeOpportunity.optionalSkills || []).map(normalizeSkill);
+    const allOppSkills = [...oppRequiredSkills, ...oppOptionalSkills];
+    const oppSdgs = representativeOpportunity.sdgGoals || [];
+    const oppPrimarySdg = representativeOpportunity.primarySdg;
+
+    // Log top scores before filtering
+    const topScores = matchedVolunteers.slice(0, 5).map((v: any) => ({ name: v.displayName, score: v.matchScore }));
+    console.log(`[Matches API] Top 5 match scores before threshold (${threshold}): ${JSON.stringify(topScores)}`);
+
+    // Filter by threshold and enrich with computed matching data
+    const enrichedVolunteers = matchedVolunteers
       .filter((vol: any) => vol.matchScore >= threshold)
-      .map((vol: any) => ({
-        ...vol,
-        matchPercentage: vol.matchScore,
-        matchReasons: vol.matchReasons
-      }));
+      .map((vol: any) => {
+        // Parse volunteer skills
+        const volSkills = (vol.skills || []).map(normalizeSkill).filter(Boolean);
 
-    res.json(filteredVolunteers);
+        // Compute matching skills (intersection of volunteer skills and opportunity skills)
+        const matchingSkills = volSkills.filter((skill: string) =>
+          allOppSkills.some(oppSkill =>
+            skill.includes(oppSkill) || oppSkill.includes(skill) || skill === oppSkill
+          )
+        ).map((skill: string) => skill.charAt(0).toUpperCase() + skill.slice(1)); // Capitalize
+
+        // Get volunteer's preferred SDGs from profile
+        const volSdgs = vol.profile?.preferredSdgs || vol.volunteerProfile?.preferredSdgs || [];
+
+        // Compute matching SDGs (intersection of volunteer SDGs and opportunity SDGs)
+        const allOppSdgsList = oppPrimarySdg ? [oppPrimarySdg, ...oppSdgs] : oppSdgs;
+        const matchingSdgs = volSdgs.filter((sdg: number) =>
+          allOppSdgsList.includes(sdg)
+        );
+
+        // Get location from profile
+        const location = vol.profile?.location || vol.volunteerProfile?.location || '';
+
+        // Compile match reason from matchReasons array
+        const matchReason = vol.matchReasons && vol.matchReasons.length > 1
+          ? vol.matchReasons.slice(1, 3).join(', ') // Skip the first "Excellent/Good/Fair match" prefix
+          : vol.matchReasons?.[0] || 'Skills and SDG alignment';
+
+        return {
+          // Core identifiers
+          volunteerId: vol.id,
+          id: vol.id,
+
+          // Volunteer info
+          volunteerName: vol.displayName || vol.username || 'Unknown Volunteer',
+          name: vol.displayName || vol.username || 'Unknown Volunteer',
+          email: vol.email || '',
+          avatar: vol.avatar || vol.profile?.profilePhotoUrl || vol.volunteerProfile?.profilePhotoUrl,
+          location: location,
+
+          // All skills
+          skills: (vol.skills || []).map((s: any) => {
+            if (typeof s === 'string') {
+              const match = s.match(/^(.+?)\s*\((\d+)%\)$/);
+              return match ? match[1].trim() : s;
+            }
+            return s?.name || s?.skill || s;
+          }).filter(Boolean),
+
+          // Match-specific data
+          matchScore: vol.matchScore,
+          matchPercentage: vol.matchScore,
+          matchReasons: vol.matchReasons,
+          matchReason: matchReason,
+
+          // Computed matching overlaps
+          matchingSkills: matchingSkills.length > 0 ? matchingSkills : volSkills.slice(0, 3).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
+          matchingSdgs: matchingSdgs.length > 0 ? matchingSdgs : volSdgs.slice(0, 3),
+
+          // Opportunity context
+          opportunityId: representativeOpportunity.id,
+          opportunityTitle: representativeOpportunity.title || 'Organization Opportunity',
+
+          // Additional profile data for display
+          weeklyAvailability: vol.profile?.weeklyAvailability || vol.volunteerProfile?.weeklyAvailability,
+          preferredWorkStyle: vol.profile?.preferredWorkStyle || vol.volunteerProfile?.preferredWorkStyle,
+          yearsOfExperience: vol.profile?.yearsOfExperience || vol.volunteerProfile?.yearsOfExperience,
+        };
+      });
+
+    res.json(enrichedVolunteers);
   } catch (err) {
     console.error("Error fetching matched volunteers:", err);
     res.status(500).json({ message: "Failed to fetch matched volunteers", error: err instanceof Error ? err.message : String(err) });

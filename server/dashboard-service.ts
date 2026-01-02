@@ -1056,8 +1056,15 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       storage.listProjectAssignmentsByProjectIds(visibleProjectIdArray),
     ]);
 
-    // Create alias for project impacts (already fetched above)
-    const allImpacts = volunteerImpacts;
+    // IMPORTANT: Filter impacts to only include the volunteer's OWN contributions
+    // When a new volunteer joins a project, they must NOT inherit existing project impacts
+    // They only get impacts, hours, time, people served, and AIU from their own contributions
+    const allProjectImpacts = volunteerImpacts; // All impacts from projects (for project-level display)
+    const volunteerOwnImpacts = volunteerImpacts.filter(i => i.userId === userId); // Only this volunteer's impacts
+
+    // Use volunteer's own impacts for personal metrics (not project-level totals)
+    // This ensures new volunteers start with zero metrics when joining a project
+    const allImpacts = allProjectImpacts; // For project enrichment (shows project totals)
     const allActivities = allProjectActivities;
 
     // Step 3: Fetch reference data (needed for lookups)
@@ -1144,14 +1151,15 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const volunteersCount = projectVolunteerIds.size;
 
       // Calculate AIU earned for this project (from VERIFIED impacts only)
-      // Filter to only include verified/approved impacts to prevent falsely submitted data
-      const projectImpacts = allImpacts.filter(i => i.projectId === project.id);
-      const verifiedImpacts = projectImpacts.filter(i =>
+      // IMPORTANT: Filter to only include the VOLUNTEER'S OWN impacts, not other volunteers' impacts
+      // This prevents volunteers from inheriting impact credit from other contributors
+      const volunteerProjectImpacts = allImpacts.filter(i => i.projectId === project.id && i.userId === userId);
+      const verifiedImpacts = volunteerProjectImpacts.filter(i =>
         i.verificationStatus === 'verified' || i.verificationStatus === 'approved'
       );
       // Use verified impacts for AIU calculation; fall back to pending impacts weighted at 70%
       const verifiedLivesImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
-      const pendingImpacts = projectImpacts.filter(i =>
+      const pendingImpacts = volunteerProjectImpacts.filter(i =>
         i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported'
       );
       const pendingLivesImpacted = pendingImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
@@ -1338,7 +1346,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       });
 
       // Filter impacts from this month (use i.date like buildMonthlyImpactSeries does)
-      const monthImpacts = volunteerImpacts.filter(i => {
+      // IMPORTANT: Use volunteerOwnImpacts to only count the volunteer's own contributions
+      const monthImpacts = volunteerOwnImpacts.filter(i => {
         const impactDate = new Date(i.date || i.createdAt);
         const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
         return impactMonthKey === monthKey;
@@ -1376,7 +1385,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     });
 
     // Now calculate people impacted and recalculate impact score with people as a major driver
-    const totalPeopleImpacted = calculatePeopleImpacted(volunteerImpacts, peopleMetricIds);
+    // IMPORTANT: Use volunteerOwnImpacts to only count the volunteer's own contributions
+    // New volunteers must NOT inherit existing project impacts when they join
+    const totalPeopleImpacted = calculatePeopleImpacted(volunteerOwnImpacts, peopleMetricIds);
 
     const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
 
@@ -1401,10 +1412,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Compute real monthly impact data (hours, people impacted, and AIU) using shared utility
     // AIU is distributed proportionally by hours to ensure sum equals the official total
+    // IMPORTANT: Use volunteerOwnImpacts to only count the volunteer's own contributions
     const monthlyImpactSeries = buildMonthlyImpactSeries(
       months,
       volunteerActivities,
-      volunteerImpacts,
+      volunteerOwnImpacts, // Only this volunteer's own impacts, not inherited from project
       peopleMetricIds,
       volunteerTotalAiu
     );
@@ -1465,7 +1477,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       projects: projectsWithOrganization, // Enriched projects with organization information - ALL consumers get this
       tasks: tasksWithProjects, // Enriched tasks with project and organization metadata
       activities: volunteerActivities,
-      impacts: volunteerImpacts, // Project impacts for assigned projects
+      impacts: volunteerOwnImpacts, // Only this volunteer's own impacts (not inherited from project)
       applications: volunteerApplications,
       matchedOpportunities, // AI-filtered opportunities above threshold
       projectAssignments: volunteerAssignments,

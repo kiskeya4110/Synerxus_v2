@@ -3825,77 +3825,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI-matched volunteers endpoint - returns volunteers matched to organization's needs
-  app.get("/api/volunteers/matches", async (req, res) => {
-    try {
-      const userId = req.query.userId as string | undefined;
-      const thresholdParam = req.query.threshold as string | undefined;
-      
-      if (!userId) {
-        return res.status(400).json({ message: "userId query parameter is required" });
-      }
-      
-      const userIdNum = parseInt(userId);
-      const threshold = thresholdParam ? parseInt(thresholdParam) : 40; // Default 40% threshold
-      
-      // Get authenticated user and verify they are an organization
-      const user = await storage.getUser(userIdNum);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      if (user.userType !== 'organization') {
-        return res.status(403).json({ message: "Only organizations can access matched volunteers" });
-      }
-      
-      // Use the authenticated user's ID as the organization ID
-      const orgId = userIdNum;
-      
-      // Get organization's open opportunities to match against
-      const orgOpportunities = await storage.listOpportunitiesByOrganization(orgId);
-      const openOpportunities = orgOpportunities.filter(opp => opp.status === 'open');
-      
-      if (openOpportunities.length === 0) {
-        // No opportunities to match against - return empty array
-        return res.json([]);
-      }
-      
-      // Get all volunteers with their profiles
-      const allUsers = await storage.listUsers();
-      const volunteers = allUsers.filter(u => u.userType === 'volunteer');
-      
-      // Get volunteer profiles - pass full profile object to matching algorithm
-      const volunteersWithProfiles = await Promise.all(
-        volunteers.map(async (vol) => {
-          const profile = vol.email ? await storage.getVolunteerByEmail(vol.email) : null;
-          return { ...vol, profile } as any; // Type cast for flexibility
-        })
-      );
-      
-      // Match volunteers against the organization's most representative opportunity
-      // (using first open opportunity as baseline)
-      const representativeOpportunity = openOpportunities[0];
-      const matchedVolunteers = findTopVolunteers(
-        representativeOpportunity, 
-        volunteersWithProfiles as any,
-        100 // Get all volunteers, will filter by threshold
-      );
-      
-      // Filter by threshold and add match data
-      const filteredVolunteers = matchedVolunteers
-        .filter(vol => vol.matchScore >= threshold)
-        .map(vol => ({
-          ...vol,
-          matchPercentage: vol.matchScore,
-          matchReasons: vol.matchReasons
-        }));
-      
-      res.json(filteredVolunteers);
-    } catch (err) {
-      console.error("Error fetching matched volunteers:", err);
-      res.status(500).json({ message: "Failed to fetch matched volunteers", error: err instanceof Error ? err.message : String(err) });
-    }
-  });
+  // NOTE: /api/volunteers/matches is now handled by volunteersRouter (mounted at line 361)
+  // The volunteersRouter implementation properly:
+  // 1. Uses user.organizationId instead of userId to query opportunities
+  // 2. Uses volunteer_profiles table which contains preferred_sdgs for matching
+  // 3. Returns enriched data with matchingSkills, matchingSdgs, opportunityTitle
 
   app.get("/api/volunteers", async (req, res) => {
     try {
@@ -6561,7 +6495,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const assignments = await storage.listProjectAssignmentsByVolunteer(userId);
       const impacts = await storage.listProjectImpacts();
 
-      const userImpacts = impacts.filter((i: any) => i.volunteerId === userId);
+      // Fix: Use userId field from schema (not volunteerId) to ensure volunteers only get their own impacts
+      const userImpacts = impacts.filter((i: any) => i.userId === userId);
       const completedAssignments = assignments.filter((a: any) => a.status === 'completed');
       const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
@@ -6607,7 +6542,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           .map(async (user: any) => {
             const userActivities = allActivities.filter((a: any) => a.userId === user.id);
             const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
-            const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+            // Fix: Use userId field from schema (not volunteerId) to ensure volunteers only get their own impacts
+            const userImpacts = allImpacts.filter((i: any) => i.userId === user.id);
             const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
             const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
@@ -6673,7 +6609,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const leaderboardData = orgVolunteers.map((user: any) => {
         const userActivities = allActivities.filter((a: any) => a.userId === user.id);
         const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
-        const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+        // Fix: Use userId field from schema (not volunteerId) to ensure volunteers only get their own impacts
+        const userImpacts = allImpacts.filter((i: any) => i.userId === user.id);
         const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
         const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 

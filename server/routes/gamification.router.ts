@@ -34,7 +34,8 @@ gamificationRouter.get("/leaderboard-stats", async (req: Request, res: Response)
     const assignments = await storage.listProjectAssignmentsByVolunteer(userId);
     const impacts = await storage.listProjectImpacts();
 
-    const userImpacts = impacts.filter((i: any) => i.volunteerId === userId);
+    // Fix: Use userId field from schema (not volunteerId)
+    const userImpacts = impacts.filter((i: any) => i.userId === userId);
     const completedAssignments = assignments.filter((a: any) => a.status === 'completed');
     const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
@@ -94,7 +95,8 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
         .map(async (user: any) => {
           const userActivities = allActivities.filter((a: any) => a.userId === user.id);
           const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
-          const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+          // Fix: Use userId field from schema (not volunteerId)
+          const userImpacts = allImpacts.filter((i: any) => i.userId === user.id);
           const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
           const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 

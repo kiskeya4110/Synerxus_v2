@@ -50,6 +50,10 @@ export default function Volunteers() {
   // KPI insight detail modal
   const [kpiInsightOpen, setKpiInsightOpen] = useState(false);
   const [selectedKpiInsight, setSelectedKpiInsight] = useState<{ type: string; title: string; value: string; description: string; volunteers: any[] } | null>(null);
+  // Project invite modal for potential matches
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [volunteerToInvite, setVolunteerToInvite] = useState<{ id: number; name: string } | null>(null);
+  const [selectedInviteProjectId, setSelectedInviteProjectId] = useState<string>("");
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [, navigate] = useLocation();
@@ -822,6 +826,110 @@ export default function Volunteers() {
             </div>
           )}
 
+          {/* Potential Matches Section - Mobile PWA */}
+          {isOrganization && matchingCandidates.length > 0 && (
+            <div className="mt-4 mb-4">
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <Target className="h-5 w-5 text-amber-500" />
+                Potential Matches
+                <Badge className="bg-amber-500 text-white text-xs">
+                  {matchingCandidates.length}
+                </Badge>
+              </h2>
+              <div className="space-y-2">
+                {matchingCandidates.slice(0, 5).map((match: any) => (
+                  <Card
+                    key={match.volunteerId || match.id}
+                    className="p-3 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all active:scale-[0.99] border-l-4 border-l-amber-400"
+                    onClick={() => {
+                      if (match.volunteerId) {
+                        openProfileDialog(match.volunteerId);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10 ring-2 ring-amber-200 flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xs font-bold">
+                          {(match.volunteerName || match.name || match.email || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-sm truncate">{match.volunteerName || match.name || 'Unknown Volunteer'}</p>
+                          <Badge className="ml-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                            {match.matchScore || match.score || 0}%
+                          </Badge>
+                        </div>
+                        {match.matchingSkills && match.matchingSkills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-1">
+                            {match.matchingSkills.slice(0, 3).map((skill: string, idx: number) => (
+                              <Badge key={idx} className="text-[9px] bg-green-100 text-green-700 px-1 py-0">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {match.matchingSkills.length > 3 && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0">+{match.matchingSkills.length - 3}</Badge>
+                            )}
+                          </div>
+                        )}
+                        {match.opportunityTitle && (
+                          <p className="text-[10px] text-amber-600 truncate">Best for: {match.opportunityTitle}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        className="flex-1 h-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-medium"
+                        onClick={() => {
+                          if (match.volunteerId) {
+                            openProfileDialog(match.volunteerId);
+                          }
+                        }}
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 h-8 border-green-500 text-green-700 hover:bg-green-50 text-xs font-medium"
+                        onClick={() => {
+                          if (orgProjects.length > 0) {
+                            setVolunteerToInvite({
+                              id: match.volunteerId,
+                              name: match.volunteerName || match.name || 'Volunteer'
+                            });
+                            setSelectedInviteProjectId("");
+                            setInviteModalOpen(true);
+                          } else {
+                            toast({
+                              title: "No Projects",
+                              description: "Create a project first to invite volunteers",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Invite
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+                {matchingCandidates.length > 5 && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-10 text-amber-600 border-amber-300 hover:bg-amber-50"
+                    onClick={() => navigate('/potential-volunteers')}
+                  >
+                    View All {matchingCandidates.length} Matches
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats Summary - Interactive */}
           <div className="mt-4 mb-6">
             <Card
@@ -888,6 +996,75 @@ export default function Volunteers() {
             toast({ title: "Volunteer Removed", description: `${volunteerToDelete?.name || 'Volunteer'} has been removed` });
           }}
         />
+
+        {/* Project Invite Modal - Mobile */}
+        <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+          <DialogContent className="max-w-[90vw] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-600">
+                <FolderKanban className="h-5 w-5" />
+                Invite to Project
+              </DialogTitle>
+              <DialogDescription className="text-left pt-2">
+                Select a project to invite <span className="font-semibold">{volunteerToInvite?.name}</span> to join.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label className="text-sm font-medium mb-2 block">Select Project</Label>
+              <Select value={selectedInviteProjectId} onValueChange={setSelectedInviteProjectId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a project..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgProjects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <FolderKanban className="h-4 w-4 text-blue-500" />
+                        {project.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedInviteProjectId && (
+                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <span className="font-medium">{volunteerToInvite?.name}</span> will receive an invitation to join this project. They can accept or decline from their dashboard.
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setInviteModalOpen(false);
+                  setVolunteerToInvite(null);
+                  setSelectedInviteProjectId("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={!selectedInviteProjectId || assignProjectMutation.isPending}
+                onClick={() => {
+                  if (volunteerToInvite && selectedInviteProjectId) {
+                    assignProjectMutation.mutate({
+                      volunteerId: volunteerToInvite.id,
+                      projectId: parseInt(selectedInviteProjectId)
+                    });
+                    setInviteModalOpen(false);
+                    setVolunteerToInvite(null);
+                    setSelectedInviteProjectId("");
+                  }
+                }}
+              >
+                {assignProjectMutation.isPending ? "Sending..." : "Send Invitation"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Rejection Confirmation Dialog */}
         <Dialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>
@@ -2021,11 +2198,13 @@ export default function Volunteers() {
                           variant="outline"
                           className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
                           onClick={() => {
-                            if (match.volunteerId && orgProjects.length > 0) {
-                              assignProjectMutation.mutate({
-                                volunteerId: match.volunteerId,
-                                projectId: orgProjects[0].id
+                            if (orgProjects.length > 0) {
+                              setVolunteerToInvite({
+                                id: match.volunteerId,
+                                name: match.volunteerName || match.name || 'Volunteer'
                               });
+                              setSelectedInviteProjectId("");
+                              setInviteModalOpen(true);
                             } else {
                               toast({
                                 title: "No Projects",
@@ -2400,6 +2579,75 @@ export default function Volunteers() {
 
       {/* Footer - Hidden when mobile navigation is shown */}
       {!isOrganization && <Footer />}
+
+      {/* Project Invite Modal - Desktop */}
+      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <FolderKanban className="h-5 w-5" />
+              Invite to Project
+            </DialogTitle>
+            <DialogDescription className="text-left pt-2">
+              Select a project to invite <span className="font-semibold">{volunteerToInvite?.name}</span> to join.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label className="text-sm font-medium mb-2 block">Select Project</Label>
+            <Select value={selectedInviteProjectId} onValueChange={setSelectedInviteProjectId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a project..." />
+              </SelectTrigger>
+              <SelectContent>
+                {orgProjects.map((project: any) => (
+                  <SelectItem key={project.id} value={project.id.toString()}>
+                    <div className="flex items-center gap-2">
+                      <FolderKanban className="h-4 w-4 text-blue-500" />
+                      {project.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedInviteProjectId && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <span className="font-medium">{volunteerToInvite?.name}</span> will receive an invitation to join this project. They can accept or decline from their dashboard.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setInviteModalOpen(false);
+                setVolunteerToInvite(null);
+                setSelectedInviteProjectId("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={!selectedInviteProjectId || assignProjectMutation.isPending}
+              onClick={() => {
+                if (volunteerToInvite && selectedInviteProjectId) {
+                  assignProjectMutation.mutate({
+                    volunteerId: volunteerToInvite.id,
+                    projectId: parseInt(selectedInviteProjectId)
+                  });
+                  setInviteModalOpen(false);
+                  setVolunteerToInvite(null);
+                  setSelectedInviteProjectId("");
+                }
+              }}
+            >
+              {assignProjectMutation.isPending ? "Sending..." : "Send Invitation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Rejection Confirmation Dialog - Desktop */}
       <Dialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>

@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,6 +280,11 @@ export default function MyWork() {
   const activeProjectCount = currentUser?.userType === 'volunteer' && dashboardData?.activeProjects !== undefined
     ? dashboardData.activeProjects
     : (Array.isArray(projectAssignments) ? projectAssignments.filter(a => a.status === 'active').length : 0);
+
+  // Calculate pending invitations count for badge
+  const pendingInvitationsCount = Array.isArray(projectAssignments)
+    ? projectAssignments.filter(a => a.status === 'pending').length
+    : 0;
 
   // Calculate weekly capacity usage
   const weeklyCapacity = volunteerProfile?.weeklyAvailability || 0;
@@ -831,15 +837,41 @@ export default function MyWork() {
           </div>
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-[1400px] mx-auto px-6 pb-20 md:pb-4">
+        <div className="w-full max-w-[1400px] mx-auto px-6 pb-20 md:pb-4">
+          {/* Pending Invitations Alert Banner */}
+          {pendingInvitationsCount > 0 && (
+            <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertTitle className="text-amber-800 dark:text-amber-200">
+                You have {pendingInvitationsCount} pending project invitation{pendingInvitationsCount > 1 ? 's' : ''}!
+              </AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                <span>Organizations have invited you to join their projects. </span>
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-amber-800 dark:text-amber-200 font-semibold underline"
+                  onClick={() => handleTabChange('assignments')}
+                >
+                  Review and respond to invitations →
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 md:grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />
               <span>Apps</span>
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-assignments">
+            <TabsTrigger value="assignments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm relative" data-testid="tab-assignments">
               <FolderKanban className="h-4 w-4" />
               <span>Assign</span>
+              {pendingInvitationsCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] px-1.5 text-xs font-bold animate-pulse">
+                  {pendingInvitationsCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
               <ListTodo className="h-4 w-4" />
@@ -875,6 +907,7 @@ export default function MyWork() {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       )}
       
       {/* Mobile Metrics Grid - Organization Only */}

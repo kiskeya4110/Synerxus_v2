@@ -843,9 +843,9 @@ export default function OrganizationDashboardPWA() {
               <p className="text-[9px] text-slate-500">AIU Score</p>
             </button>
 
-            {/* SDG Coverage - Opens SDG Coverage modal with AI suggestions */}
+            {/* SDG Coverage - Opens Impact Report */}
             <button
-              onClick={() => setShowSdgCoverageModal(true)}
+              onClick={() => navigate('/organization-impact-report')}
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-amber-300 transition-all active:scale-[0.98]"
             >
               <Target className="w-4 h-4 text-amber-500 mb-1" />
@@ -1123,7 +1123,7 @@ export default function OrganizationDashboardPWA() {
                     return (
                       <button
                         key={sdg.goal}
-                        onClick={() => setSelectedSdgGoal(sdg.goal)}
+                        onClick={() => navigate('/organization-impact-report')}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-[0.98] ${
                           isTopSDG
                             ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md'
@@ -1216,7 +1216,7 @@ export default function OrganizationDashboardPWA() {
                         cx="50%" cy="50%"
                         innerRadius={35} outerRadius={55}
                         paddingAngle={2} dataKey="hours" nameKey="goal"
-                        onClick={(data) => setSelectedSdgGoal(data.goal)}
+                        onClick={() => navigate('/organization-impact-report')}
                       >
                         {dashboardData.sdgDistribution.slice(0, 8).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getSDGColor(entry.goal)} stroke="white" strokeWidth={2} style={{ cursor: 'pointer' }} />

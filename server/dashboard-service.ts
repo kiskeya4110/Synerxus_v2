@@ -1058,13 +1058,15 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // IMPORTANT: Filter impacts to only include the volunteer's OWN contributions
     // When a new volunteer joins a project, they must NOT inherit existing project impacts
-    // They only get impacts, hours, time, people served, and AIU from their own contributions
+    // They only see impacts they personally logged - if none, show 0 people impacted
     const allProjectImpacts = volunteerImpacts; // All impacts from projects (for project-level display)
-    const volunteerOwnImpacts = volunteerImpacts.filter(i => i.userId === userId); // Only this volunteer's impacts
 
-    // Use volunteer's own impacts for personal metrics (not project-level totals)
-    // This ensures new volunteers start with zero metrics when joining a project
-    const allImpacts = allProjectImpacts; // For project enrichment (shows project totals)
+    // Strictly filter to volunteer's own impacts only - no fallback to project-level data
+    // Volunteers start at 0 until they log their own impacts
+    const volunteerOwnImpacts = volunteerImpacts.filter(i => i.userId === userId);
+
+    // Use all project impacts for project enrichment (shows project totals on cards)
+    const allImpacts = allProjectImpacts;
     const allActivities = allProjectActivities;
 
     // Step 3: Fetch reference data (needed for lookups)

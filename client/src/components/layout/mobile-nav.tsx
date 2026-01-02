@@ -1,4 +1,4 @@
-import { Home, Search, BarChart3, User, Briefcase, Users, Calendar, ClipboardList, Menu, X, FileText, MessageSquare, Settings } from "lucide-react";
+import { Home, Search, User, ClipboardList, Menu, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +27,23 @@ export default function MobileNav() {
     '/csr-dashboard',
     '/csr-dashboard-pwa',
     '/organization-dashboard',
+    '/organization-dashboard-pwa',
     '/discover-opportunities/pwa',
+    '/discover-opportunities',
+    '/applications',
+    '/volunteers',
+    '/my-work',
+    '/projects',
+    '/opportunities',
+    '/organization-messages',
+    '/organization-messages-pwa',
+    '/organization-profile-settings',
+    '/organization-impact-report',
+    '/organization-leaderboard',
+    '/organization-team',
+    '/sdg-mapping',
+    '/impact-visualization',
+    '/overview',
     '/landing',
     '/login',
     '/'
@@ -41,27 +57,28 @@ export default function MobileNav() {
 
   const isOrganization = currentUser?.userType === 'organization';
 
-  const volunteerNavItems = [
+  // Never show MobileNav for organization users - they have their own navigation (OrganizationHeader, OrganizationPWAHeader, OrganizationPWANav)
+  if (isOrganization) {
+    return null;
+  }
+
+  // Don't render on standalone routes
+  if (isStandaloneRoute) {
+    return null;
+  }
+
+  // Don't render hamburger menu for logged-in volunteers - they use their own bottom navigation (VolunteerPWANav)
+  if (currentUser) {
+    return null;
+  }
+
+  // Fallback nav items for non-logged-in users (should rarely reach this point)
+  const navItems = [
     { href: "/dashboard", icon: Home, label: "Home", testId: "nav-dashboard" },
     { href: "/discover-opportunities", icon: Search, label: "Discover", testId: "nav-opportunities" },
     { href: "/my-work", icon: ClipboardList, label: "My Work", testId: "nav-my-work" },
     { href: "/volunteer-profile-settings", icon: User, label: "Profile", testId: "nav-profile" },
   ];
-
-  const organizationNavItems = [
-    { href: "/organization-dashboard", icon: Home, label: "Home", testId: "nav-dashboard" },
-    { href: "/applications", icon: FileText, label: "Applications", testId: "nav-applications" },
-    { href: "/my-work", icon: Briefcase, label: "Projects", testId: "nav-projects" },
-    { href: "/volunteers", icon: Users, label: "Volunteers", testId: "nav-volunteers" },
-    { href: "/organization-profile-settings", icon: User, label: "Profile", testId: "nav-profile" },
-  ];
-
-  const navItems = isOrganization ? organizationNavItems : volunteerNavItems;
-
-  // Don't render on standalone routes - use conditional rendering instead of early return
-  if (isStandaloneRoute) {
-    return null;
-  }
 
   return (
     <>

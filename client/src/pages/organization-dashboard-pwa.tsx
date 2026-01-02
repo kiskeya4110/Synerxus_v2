@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   Home,
   Target,
@@ -36,6 +37,9 @@ import {
   Eye,
   Trophy,
   ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  FileBarChart,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
@@ -274,15 +278,35 @@ export default function OrganizationDashboardPWA() {
     enabled: !!currentUser?.organizationId,
   });
 
-  // Fetch pending applications
+  // Fetch pending applications with volunteer and opportunity data
   const { data: pendingApplications } = useQuery({
-    queryKey: ['/api/applications', currentUser?.organizationId, 'pending'],
+    queryKey: ['/api/applications', currentUser?.organizationId, 'pending', 'enriched'],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch(`/api/applications?organizationId=${currentUser.organizationId}`);
       if (!response.ok) return [];
       const allApps = await response.json();
-      return allApps.filter((app: any) => app.status === 'pending');
+      const pendingApps = allApps.filter((app: any) => app.status === 'pending');
+
+      // Enrich with volunteer and opportunity data
+      const enrichedApps = await Promise.all(
+        pendingApps.map(async (app: any) => {
+          try {
+            const [volRes, oppRes] = await Promise.all([
+              fetch(`/api/users/${app.volunteerId}`),
+              fetch(`/api/opportunities/${app.opportunityId}`)
+            ]);
+            return {
+              ...app,
+              volunteer: volRes.ok ? await volRes.json() : null,
+              opportunity: oppRes.ok ? await oppRes.json() : null
+            };
+          } catch (err) {
+            return app;
+          }
+        })
+      );
+      return enrichedApps;
     },
     enabled: !!currentUser?.organizationId,
     staleTime: 30000,
@@ -352,6 +376,34 @@ export default function OrganizationDashboardPWA() {
       return response.json();
     },
     enabled: !!selectedVolunteer?.id,
+  });
+
+  // Application review mutation (approve/reject)
+  const reviewApplicationMutation = useMutation({
+    mutationFn: async ({ applicationId, status, notes }: { applicationId: number; status: 'accepted' | 'rejected'; notes?: string }) => {
+      return await apiRequest("POST", `/api/applications/${applicationId}/review`, {
+        status,
+        notes: notes || '',
+        reviewerId: parseInt(userId || '0')
+      });
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/organization/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/organizations/volunteers'] });
+      toast({
+        title: "Application Updated",
+        description: "The application status has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update application",
+        variant: "destructive",
+      });
+    }
   });
 
   // Derived metrics with real data from API
@@ -552,25 +604,97 @@ export default function OrganizationDashboardPWA() {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pb-20">
         <div className="p-4 space-y-4">
-          {/* Pending Applications Alert */}
-          {pendingApplications && pendingApplications.length > 0 && (
-            <button
-              onClick={() => navigate('/applications')}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-semibold text-sm">
-                    {pendingApplications.length} New Application{pendingApplications.length > 1 ? 's' : ''}
-                  </p>
-                  <p className="text-emerald-100 text-[10px]">Volunteers waiting for approval</p>
-                </div>
+          {/* SDG Impact Report Quick Access */}
+          <button
+            onClick={() => navigate('/organization-impact-report')}
+            className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                <FileBarChart className="w-5 h-5 text-white" />
               </div>
-              <ChevronRight className="w-5 h-5 text-white" />
-            </button>
+              <div className="text-left">
+                <p className="text-white font-semibold text-sm">SDG Impact Report</p>
+                <p className="text-purple-100 text-[10px]">View your UN SDG contributions & metrics</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white" />
+          </button>
+
+          {/* Pending Applications with Quick Approve/Reject */}
+          {pendingApplications && pendingApplications.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-emerald-100">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                    <Bell className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">
+                      {pendingApplications.length} Pending Application{pendingApplications.length > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-emerald-100 text-[10px]">Quick approve or reject</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/applications')}
+                  className="text-white/80 text-xs hover:text-white flex items-center gap-1"
+                >
+                  View All <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                {pendingApplications.slice(0, 5).map((app: any) => (
+                  <div key={app.id} className="p-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-800 truncate">
+                          {app.volunteer?.displayName || app.volunteer?.email || 'Volunteer'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {app.opportunity?.title || 'Opportunity'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          reviewApplicationMutation.mutate({ applicationId: app.id, status: 'accepted' });
+                        }}
+                        disabled={reviewApplicationMutation.isPending}
+                        className="w-8 h-8 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 active:scale-95"
+                        title="Approve"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          reviewApplicationMutation.mutate({ applicationId: app.id, status: 'rejected' });
+                        }}
+                        disabled={reviewApplicationMutation.isPending}
+                        className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 active:scale-95"
+                        title="Reject"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {pendingApplications.length > 5 && (
+                <button
+                  onClick={() => navigate('/applications')}
+                  className="w-full p-2 bg-slate-50 text-emerald-600 text-xs font-medium hover:bg-slate-100 transition-colors"
+                >
+                  View {pendingApplications.length - 5} more applications →
+                </button>
+              )}
+            </div>
           )}
 
           {/* Pending Approvals Alert - Hours & Impacts needing verification */}

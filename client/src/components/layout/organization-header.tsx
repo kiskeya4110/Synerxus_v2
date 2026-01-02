@@ -55,6 +55,12 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
+  // Don't render web header on PWA routes - organization PWA pages have their own OrganizationPWAHeader
+  const isPwaRoute = location.endsWith('/pwa');
+  if (isPwaRoute) {
+    return null;
+  }
+
   // Fetch notifications for organization user
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],

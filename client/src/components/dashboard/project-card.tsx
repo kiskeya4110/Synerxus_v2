@@ -31,6 +31,10 @@ interface ProjectCardProps {
   aiuEarned?: number;
   sdgGoals?: number[];
   showQuickActions?: boolean;
+  // Navigation mode - when true, clicking card navigates directly instead of showing dialog
+  navigateOnClick?: boolean;
+  // PWA mode - determines which route to use for navigation
+  isPWA?: boolean;
 }
 
 // Helper function to normalize and capitalize project status
@@ -71,13 +75,27 @@ export default function ProjectCard({
   totalTasks = 0,
   aiuEarned = 0,
   sdgGoals = [],
-  showQuickActions = true
+  showQuickActions = true,
+  navigateOnClick = true,
+  isPWA = false
 }: ProjectCardProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const actualProjectId = projectId || id;
   const normalizedStatus = normalizeStatus(status);
+
+  // Determine the project URL based on PWA mode
+  const projectUrl = isPWA ? `/projects/${actualProjectId}/pwa` : `/projects/${actualProjectId}`;
+
+  // Handle card click - navigate directly or show dialog
+  const handleCardClick = () => {
+    if (navigateOnClick && actualProjectId) {
+      navigate(projectUrl);
+    } else {
+      setShowDialog(true);
+    }
+  };
   
   const getStatusBadgeClasses = () => {
     switch (normalizedStatus) {
@@ -102,17 +120,17 @@ export default function ProjectCard({
 
   const handleViewTasks = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/projects/${actualProjectId}?tab=tasks`);
+    navigate(`${projectUrl}?tab=tasks`);
   };
 
   const handleViewImpact = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/projects/${actualProjectId}?tab=impact`);
+    navigate(`${projectUrl}?tab=impact`);
   };
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/projects/${actualProjectId}`;
+    const url = `${window.location.origin}${projectUrl}`;
     navigator.clipboard.writeText(url);
     toast({
       title: "Link copied!",
@@ -256,7 +274,7 @@ export default function ProjectCard({
     <>
       <div
         className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100/50 dark:hover:shadow-blue-900/20 transition-all duration-300 cursor-pointer group"
-        onClick={() => setShowDialog(true)}
+        onClick={handleCardClick}
         data-testid={`card-project-${actualProjectId || 'default'}`}
       >
         <CardContent />
@@ -420,7 +438,7 @@ export default function ProjectCard({
             <div className="flex gap-3 pt-4 border-t">
               {actualProjectId && (
                 <>
-                  <Link href={`/projects/${actualProjectId}`} className="flex-1">
+                  <Link href={projectUrl} className="flex-1">
                     <Button variant="outline" className="w-full gap-2" data-testid="button-view-project" onClick={() => setShowDialog(false)}>
                       <Eye className="h-4 w-4" />
                       View Full Project

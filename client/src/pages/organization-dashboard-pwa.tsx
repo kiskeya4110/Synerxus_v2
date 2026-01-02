@@ -545,7 +545,7 @@ export default function OrganizationDashboardPWA() {
     {
       title: "Analytics & Reports",
       items: [
-        { icon: BarChart3, label: "Impact Report", desc: "SDG Impact Report", action: () => navigate('/organization-impact-report'), color: "purple" },
+        { icon: BarChart3, label: "Impact Report", desc: "SDG Impact Report", action: () => navigate('/impact-report'), color: "purple" },
         { icon: Eye, label: "Before & After", desc: "Compare outcomes", action: () => navigate('/impact-visualization'), color: "rose" },
         { icon: Target, label: "SDG Mapping", desc: "UN Goals alignment", action: () => navigate('/sdg-mapping'), color: "teal" },
         { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/volunteer-leaderboard/pwa'), color: "amber", hot: true },
@@ -606,7 +606,7 @@ export default function OrganizationDashboardPWA() {
         <div className="p-4 space-y-4">
           {/* SDG Impact Report Quick Access */}
           <button
-            onClick={() => navigate('/organization-impact-report')}
+            onClick={() => navigate('/impact-report')}
             className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
@@ -845,7 +845,7 @@ export default function OrganizationDashboardPWA() {
 
             {/* SDG Coverage - Opens Impact Report */}
             <button
-              onClick={() => navigate('/organization-impact-report')}
+              onClick={() => navigate('/impact-report')}
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-amber-300 transition-all active:scale-[0.98]"
             >
               <Target className="w-4 h-4 text-amber-500 mb-1" />
@@ -875,7 +875,7 @@ export default function OrganizationDashboardPWA() {
                   Impact Over Time
                 </h3>
                 <button
-                  onClick={() => navigate('/organization-impact-report')}
+                  onClick={() => navigate('/impact-report')}
                   className="text-[11px] text-indigo-600 font-semibold hover:text-indigo-700"
                 >
                   View Details →
@@ -1015,7 +1015,7 @@ export default function OrganizationDashboardPWA() {
               </button>
               {/* Lives Impacted - Clickable */}
               <button
-                onClick={() => navigate('/organization-impact-report')}
+                onClick={() => navigate('/impact-report')}
                 className="p-2.5 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-rose-100"
               >
                 <Heart className="w-4 h-4 text-rose-600 mb-1" />
@@ -1086,7 +1086,7 @@ export default function OrganizationDashboardPWA() {
                   <p className="text-lg font-bold text-teal-600">{dashboardData.sdgDistribution.length}</p>
                 </button>
                 <button
-                  onClick={() => navigate('/organization-impact-report')}
+                  onClick={() => navigate('/impact-report')}
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">
@@ -1123,7 +1123,7 @@ export default function OrganizationDashboardPWA() {
                     return (
                       <button
                         key={sdg.goal}
-                        onClick={() => navigate('/organization-impact-report')}
+                        onClick={() => navigate('/impact-report')}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-[0.98] ${
                           isTopSDG
                             ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md'
@@ -1216,7 +1216,7 @@ export default function OrganizationDashboardPWA() {
                         cx="50%" cy="50%"
                         innerRadius={35} outerRadius={55}
                         paddingAngle={2} dataKey="hours" nameKey="goal"
-                        onClick={() => navigate('/organization-impact-report')}
+                        onClick={() => navigate('/impact-report')}
                       >
                         {dashboardData.sdgDistribution.slice(0, 8).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getSDGColor(entry.goal)} stroke="white" strokeWidth={2} style={{ cursor: 'pointer' }} />
@@ -1247,7 +1247,7 @@ export default function OrganizationDashboardPWA() {
 
           {/* Impact Visualization Button */}
           <button
-            onClick={() => navigate('/organization-impact-report')}
+            onClick={() => navigate('/impact-report')}
             className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl p-4 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
@@ -1787,7 +1787,7 @@ export default function OrganizationDashboardPWA() {
                       <button
                         onClick={() => {
                           setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
+                          navigate('/impact-report');
                         }}
                         className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100 hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                       >
@@ -1801,7 +1801,7 @@ export default function OrganizationDashboardPWA() {
                       <button
                         onClick={() => {
                           setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
+                          navigate('/impact-report');
                         }}
                         className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
                       >
@@ -1928,7 +1928,7 @@ export default function OrganizationDashboardPWA() {
                       <button
                         onClick={() => {
                           setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
+                          navigate('/impact-report');
                         }}
                         className="flex-1 py-3 text-white rounded-xl text-sm font-medium transition-colors"
                         style={{ backgroundColor: getSDGColor(selectedSdgGoal) }}
@@ -2137,7 +2137,7 @@ export default function OrganizationDashboardPWA() {
               <button
                 onClick={() => {
                   setShowImpactRoiModal(false);
-                  navigate('/organization-impact-report');
+                  navigate('/impact-report');
                 }}
                 className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium text-sm hover:from-emerald-600 hover:to-teal-700 transition-all"
               >
@@ -2389,7 +2389,7 @@ export default function OrganizationDashboardPWA() {
               <button
                 onClick={() => {
                   setShowAiuDetailsModal(false);
-                  navigate('/organization-impact-report');
+                  navigate('/impact-report');
                 }}
                 className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-medium text-sm hover:from-teal-600 hover:to-cyan-700 transition-all"
               >
@@ -3007,7 +3007,7 @@ export default function OrganizationDashboardPWA() {
               <button
                 onClick={() => {
                   setShowLivesPerHourModal(false);
-                  navigate('/organization-impact-report');
+                  navigate('/impact-report');
                 }}
                 className="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl font-medium text-sm hover:from-rose-600 hover:to-pink-700 transition-all"
               >

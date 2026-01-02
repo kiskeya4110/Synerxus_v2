@@ -733,7 +733,7 @@ export default function OrganizationDashboard() {
     } else if (actionId === 'create-task') {
       navigate('/tasks?create=true');
     } else if (actionId === 'view-reports') {
-      navigate('/organization-impact-report');
+      navigate('/impact-report');
     }
   }, [navigate]);
 
@@ -876,7 +876,7 @@ export default function OrganizationDashboard() {
         livesImpacted={metrics.livesTouched || metrics.peopleImpacted || 0}
         onActiveProjectsClick={() => setActiveModal('projects')}
         onTotalHoursClick={() => setActiveModal('hours')}
-        onSdgsClick={() => navigate('/organization-impact-report')}
+        onSdgsClick={() => navigate('/impact-report')}
         onAiuClick={() => setActiveModal('aiu')}
       />}
 
@@ -1004,7 +1004,7 @@ export default function OrganizationDashboard() {
               Volunteer Management
             </button>
             <button
-              onClick={() => navigate('/organization-impact-report')}
+              onClick={() => navigate('/impact-report')}
               style={{
                 padding: '10px 16px',
                 backgroundColor: '#166534',
@@ -1066,7 +1066,7 @@ export default function OrganizationDashboard() {
               <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}</p>
             </button>
             <button
-              onClick={() => navigate('/organization-impact-report')}
+              onClick={() => navigate('/impact-report')}
               style={{ padding: '12px', backgroundColor: '#fef2f2', borderRadius: '10px', border: '1px solid #fecaca', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
               onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(239,68,68,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
@@ -1111,7 +1111,7 @@ export default function OrganizationDashboard() {
               {/* SDG Summary Stats - Interactive */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
                 <button
-                  onClick={() => navigate('/organization-impact-report')}
+                  onClick={() => navigate('/impact-report')}
                   style={{ padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '8px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'scale(1.02)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
@@ -1151,7 +1151,7 @@ export default function OrganizationDashboard() {
                   return (
                     <button
                       key={sdg.goal}
-                      onClick={() => navigate('/organization-impact-report')}
+                      onClick={() => navigate('/impact-report')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1326,8 +1326,8 @@ export default function OrganizationDashboard() {
               Create Task
             </button>
             <button
-              onClick={() => navigate('/organization-impact-report')}
-              onTouchEnd={(e) => { e.preventDefault(); navigate('/organization-impact-report'); }}
+              onClick={() => navigate('/impact-report')}
+              onTouchEnd={(e) => { e.preventDefault(); navigate('/impact-report'); }}
               style={{
                 padding: '12px 4px',
                 backgroundColor: '#f3f4f6',
@@ -1763,7 +1763,7 @@ export default function OrganizationDashboard() {
                 <p style={{ fontSize: '10px', color: '#059669', margin: '4px 0 0 0', opacity: 0.7 }}>Review now →</p>
               </button>
               <button
-                onClick={() => navigate('/organization-impact-report')}
+                onClick={() => navigate('/impact-report')}
                 style={{ backgroundColor: '#faf5ff', padding: '16px', borderRadius: '10px', textAlign: 'center', border: '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.2)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
@@ -2173,7 +2173,7 @@ export default function OrganizationDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', margin: 0 }}>SDG Alignment</h4>
                   <button
-                    onClick={() => navigate('/organization-impact-report')}
+                    onClick={() => navigate('/impact-report')}
                     style={{ fontSize: '11px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     View Details →
@@ -2186,7 +2186,7 @@ export default function OrganizationDashboard() {
                     return (
                       <button
                         key={sdg.goal}
-                        onClick={() => navigate('/organization-impact-report')}
+                        onClick={() => navigate('/impact-report')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -2729,7 +2729,7 @@ export default function OrganizationDashboard() {
                 </div>
               </button>
               <button
-                onClick={() => navigate('/organization-impact-report')}
+                onClick={() => navigate('/impact-report')}
                 style={{
                   padding: '16px',
                   backgroundColor: '#fef3c7',
@@ -3196,7 +3196,7 @@ export default function OrganizationDashboard() {
               </div>
 
               <button
-                onClick={() => { setActiveModal(null); navigate('/organization-impact-report'); }}
+                onClick={() => { setActiveModal(null); navigate('/impact-report'); }}
                 style={{ width: '100%', padding: '12px', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
               >
                 View Full Impact Report →
@@ -3656,7 +3656,7 @@ export default function OrganizationDashboard() {
                         </h4>
                         {selectedVolunteerData.sdgsContributed && selectedVolunteerData.sdgsContributed.length > 0 && (
                           <button
-                            onClick={() => { setSelectedVolunteerId(null); navigate('/organization-impact-report'); }}
+                            onClick={() => { setSelectedVolunteerId(null); navigate('/impact-report'); }}
                             style={{ fontSize: '11px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
                           >
                             View All →
@@ -3668,7 +3668,7 @@ export default function OrganizationDashboard() {
                           {selectedVolunteerData.sdgsContributed.map((sdg: number) => (
                             <button
                               key={sdg}
-                              onClick={() => { setSelectedVolunteerId(null); navigate('/organization-impact-report'); }}
+                              onClick={() => { setSelectedVolunteerId(null); navigate('/impact-report'); }}
                               style={{
                                 width: '44px',
                                 height: '44px',

@@ -147,7 +147,7 @@ export default function ProjectChat({ projectId, projectName, organizationId, or
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 z-50 bg-gradient-to-r from-blue-500 to-teal-500 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        className="fixed bottom-28 right-4 z-[55] bg-gradient-to-r from-blue-500 to-teal-500 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
         data-testid="chat-fab"
       >
         <MessageCircle className="w-6 h-6" />
@@ -157,7 +157,7 @@ export default function ProjectChat({ projectId, projectName, organizationId, or
 
   return (
     <div
-      className={`fixed bottom-24 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden transition-all ${
+      className={`fixed bottom-28 right-4 z-[55] w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden transition-all ${
         isMinimized ? 'h-12' : 'h-96'
       }`}
     >

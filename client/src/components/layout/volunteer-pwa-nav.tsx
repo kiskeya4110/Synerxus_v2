@@ -79,7 +79,7 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 py-2 z-50 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-50 shadow-lg">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;

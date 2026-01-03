@@ -705,7 +705,7 @@ export default function ProjectDetailPWA() {
         </div>
 
         {/* Main scrollable content */}
-        <main className="flex-1 overflow-y-auto pb-20">
+        <main className="flex-1 overflow-y-auto pb-28">
           {renderProjectContent()}
         </main>
 

@@ -66,7 +66,7 @@ export default function CSRPWANav({ activeTab }: CSRPWANavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 px-1 py-2 max-w-[428px] mx-auto z-50 border-t shadow-lg"
+      className="fixed bottom-0 left-0 right-0 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] max-w-[428px] mx-auto z-50 border-t shadow-lg"
       style={{
         background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
         borderColor: "rgba(16, 185, 129, 0.2)"

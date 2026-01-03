@@ -238,17 +238,28 @@ export default function Projects() {
     [projects, searchTerm]
   );
 
-  if (isLoading) {
+  // Volunteers can only view projects, not edit them
+  const canManageProjects = currentUser?.userType === 'organization';
+  // Use localStorage userType as fallback when currentUser hasn't loaded yet
+  const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Loading state with proper PWA layout for mobile organizations
+  if (isLoading || !currentUser) {
+    if (isOrganization && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Loading projects...</div>
       </div>
     );
   }
-
-  // Volunteers can only view projects, not edit them
-  const canManageProjects = currentUser?.userType === 'organization';
-  const isOrganization = currentUser?.userType === 'organization';
 
   // Mobile organization PWA view
   if (isOrganization && isMobile) {

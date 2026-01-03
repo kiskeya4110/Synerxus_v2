@@ -14,9 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
-import { AlertCircle, Calendar, MapPin, Users, X } from "lucide-react";
+import { AlertCircle, Calendar, MapPin, Users, X, ArrowLeft } from "lucide-react";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 
 const skillOptions = [
   "No Specific Skills Required", "Physical Labor", "Event Support", "Customer Service",
@@ -42,9 +44,14 @@ export default function PostUrgentOpportunity() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [customSkill, setCustomSkill] = useState("");
 
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const isOrganizationForLayout = userType === 'organization';
+
   const { data: currentUser } = useQuery({ 
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -137,23 +144,34 @@ export default function PostUrgentOpportunity() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="w-8 h-8 text-orange-500" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Post an Urgent Need or Event
-            </h1>
-          </div>
-          <p className="text-gray-600 dark:text-gray-300">
-            Use this form for time-sensitive events like fundraisers, community drives, or disaster response where you need volunteers now.
-            This will prioritize matching by location and availability.
-          </p>
+  // Mobile PWA wrapper for organization users
+  const formContent = (
+    <>
+      <div className={isMobile && isOrganizationForLayout ? "mb-4" : "mb-8"}>
+        {isMobile && isOrganizationForLayout && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/projects')}
+            className="mb-3 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        )}
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className={`text-orange-500 ${isMobile ? "w-6 h-6" : "w-8 h-8"}`} />
+          <h1 className={`font-bold text-gray-900 dark:text-white ${isMobile ? "text-xl" : "text-3xl"}`}>
+            Post an Urgent Need or Event
+          </h1>
         </div>
+        <p className={`text-gray-600 dark:text-gray-300 ${isMobile ? "text-sm" : ""}`}>
+          Use this form for time-sensitive events like fundraisers, community drives, or disaster response where you need volunteers now.
+          This will prioritize matching by location and availability.
+        </p>
+      </div>
 
-        <Form {...form}>
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card data-testid="card-urgent-details">
               <CardHeader>
@@ -438,6 +456,24 @@ export default function PostUrgentOpportunity() {
             </div>
           </form>
         </Form>
+    </>
+  );
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationForLayout) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4">
+          {formContent}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        {formContent}
       </div>
     </div>
   );

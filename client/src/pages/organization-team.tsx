@@ -3,14 +3,18 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   UsersRound, UserPlus, Shield, ShieldCheck, Settings, Trash2,
   Mail, Check, X, ChevronDown, Edit2, Building2, Briefcase, MessageSquare,
-  Phone, MoreVertical, Clock, Calendar, Eye, Send, Copy, RefreshCw
+  Phone, MoreVertical, Clock, Calendar, Eye, Send, Copy, RefreshCw, ArrowLeft
 } from "lucide-react";
 
 interface OrganizationMember {
@@ -91,6 +95,7 @@ const JOB_TITLES = [
 export default function OrganizationTeamPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingMember, setEditingMember] = useState<OrganizationMember | null>(null);
   const [viewingMember, setViewingMember] = useState<OrganizationMember | null>(null);
@@ -106,6 +111,7 @@ export default function OrganizationTeamPage() {
 
   // Get current user's organization
   const userId = localStorage.getItem("currentUserId");
+  const userType = localStorage.getItem("userType");
   const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/users", userId],
     queryFn: async () => {
@@ -252,6 +258,248 @@ export default function OrganizationTeamPage() {
 
   const activeMembers = members.filter(m => m.status === "active");
   const pendingMembers = members.filter(m => m.status === "invited");
+
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const isOrganizationForLayout = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationForLayout) {
+    return (
+      <OrganizationPWALayout activeTab="home">
+        <div className="p-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/organization-dashboard/pwa')}
+            className="mb-3 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+
+          {/* Header */}
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <UsersRound className="h-5 w-5 text-indigo-600" />
+              Team Management
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              Manage team members and permissions
+            </p>
+          </div>
+
+          {/* Invite Button */}
+          {canManageMembers && (
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              className="w-full mb-4 bg-indigo-600 hover:bg-indigo-700"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Invite Team Member
+            </Button>
+          )}
+
+          {/* Active Members */}
+          <Card className="mb-4">
+            <CardHeader className="pb-2 pt-3 px-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <UsersRound className="w-4 h-4 text-indigo-500" />
+                Active Members ({activeMembers.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-3">
+              {isLoading ? (
+                <div className="p-4 text-center text-slate-500 text-sm">Loading...</div>
+              ) : activeMembers.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-sm">
+                  <UsersRound className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+                  <p>No team members yet</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {activeMembers.map((member) => {
+                    const badge = ROLE_BADGES[member.role] || ROLE_BADGES.member;
+                    const Icon = badge.icon;
+                    return (
+                      <div
+                        key={member.id}
+                        className="px-3 py-2.5 flex items-center gap-3 hover:bg-slate-50"
+                        onClick={() => setViewingMember(member)}
+                      >
+                        <div className="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm flex-shrink-0">
+                          {member.user?.avatar ? (
+                            <img src={member.user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+                          ) : (
+                            member.user?.displayName?.charAt(0) || "?"
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{member.user?.displayName || "Unknown"}</p>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border ${badge.color}`}>
+                              <Icon className="h-2.5 w-2.5" />
+                              {member.role}
+                            </span>
+                            {member.title && <span className="text-[10px] text-slate-500 truncate">{member.title}</span>}
+                          </div>
+                        </div>
+                        <ChevronDown className="h-4 w-4 text-slate-400 rotate-[-90deg]" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pending Invitations */}
+          {pendingMembers.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  Pending Invitations ({pendingMembers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-0 pb-3">
+                <div className="divide-y divide-slate-100">
+                  {pendingMembers.map((member) => (
+                    <div key={member.id} className="px-3 py-2.5 flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{member.user?.email || "Pending"}</p>
+                        <p className="text-[10px] text-slate-500">
+                          Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Viewing Member Modal - Reuse existing logic */}
+          {viewingMember && (
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setViewingMember(null)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-lg">
+                    {viewingMember.user?.avatar ? (
+                      <img src={viewingMember.user.avatar} alt="" className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      viewingMember.user?.displayName?.charAt(0) || "?"
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">{viewingMember.user?.displayName}</p>
+                    <p className="text-sm text-slate-500">{viewingMember.user?.email}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  {viewingMember.title && (
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Briefcase className="h-4 w-4" />
+                      {viewingMember.title}
+                    </div>
+                  )}
+                  {viewingMember.department && (
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Building2 className="h-4 w-4" />
+                      {viewingMember.department}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      navigate(`/organization-messages-pwa?member=${viewingMember.userId}`);
+                      setViewingMember(null);
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      if (viewingMember.user?.email) {
+                        window.location.href = `mailto:${viewingMember.user.email}`;
+                      }
+                    }}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Invite Modal - Simplified for mobile */}
+          {showInviteModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setShowInviteModal(false)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Invite Team Member</h3>
+
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="colleague@company.com"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    >
+                      <option value="member">Member</option>
+                      <option value="manager">Manager</option>
+                      <option value="hr">HR</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setShowInviteModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                    onClick={() => {
+                      inviteMutation.mutate({
+                        email: inviteEmail,
+                        role: inviteRole,
+                      });
+                    }}
+                    disabled={!inviteEmail || inviteMutation.isPending}
+                  >
+                    {inviteMutation.isPending ? "Sending..." : "Send Invite"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">

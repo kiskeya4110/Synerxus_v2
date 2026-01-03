@@ -2,10 +2,13 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Clock, TrendingUp, Target, Award, Zap, Flame, Medal, ChevronRight, BarChart3 } from "lucide-react";
+import { Trophy, Users, Clock, TrendingUp, Target, Award, Zap, Flame, Medal, ChevronRight, BarChart3, ArrowLeft } from "lucide-react";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
   userId: number;
@@ -24,8 +27,10 @@ type LeaderboardType = "hours" | "impacts" | "tasks" | "points" | "streak";
 
 export default function OrganizationLeaderboard() {
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
   const [, navigate] = useLocation();
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>("hours");
+  const isMobile = useIsMobile();
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -169,6 +174,190 @@ export default function OrganizationLeaderboard() {
     { type: "points", label: "Points", icon: Zap, color: "bg-amber-500" },
     { type: "streak", label: "Streak", icon: Flame, color: "bg-orange-500" },
   ];
+
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const isOrganizationForLayout = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationForLayout) {
+    return (
+      <OrganizationPWALayout activeTab="leaderboard">
+        <div className="p-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/volunteers')}
+            className="mb-3 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-xl p-4 text-white mb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-yellow-300" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold">Volunteer Leaderboard</h1>
+                <p className="text-orange-100 text-xs">{organization?.name || "Your Organization"}</p>
+              </div>
+            </div>
+
+            {/* Stats */}
+            {stats && (
+              <div className="grid grid-cols-4 gap-2">
+                <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+                  <p className="text-sm font-bold">{stats.totalVolunteers}</p>
+                  <p className="text-[8px] text-white/70">Volunteers</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+                  <p className="text-sm font-bold">{stats.totalHours}</p>
+                  <p className="text-[8px] text-white/70">Hours</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+                  <p className="text-sm font-bold">{stats.totalImpacts}</p>
+                  <p className="text-[8px] text-white/70">Impacts</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+                  <p className="text-sm font-bold">{stats.totalPoints.toLocaleString()}</p>
+                  <p className="text-[8px] text-white/70">Points</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Category Selector */}
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-slate-700 mb-2">Rank By Category</h3>
+            <div className="grid grid-cols-5 gap-1.5">
+              {leaderboardCategories.map((cat) => (
+                <button
+                  key={cat.type}
+                  onClick={() => setLeaderboardType(cat.type)}
+                  className={`flex flex-col items-center justify-center gap-0.5 px-1.5 py-2 rounded-lg font-medium text-[9px] whitespace-nowrap transition-all ${
+                    leaderboardType === cat.type
+                      ? `${cat.color} text-white shadow-md`
+                      : "bg-white text-slate-600 border border-slate-200"
+                  }`}
+                >
+                  <cat.icon className="w-3.5 h-3.5" />
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Top 3 Podium */}
+          {mergedLeaderboardData.length >= 3 && (
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-3 border border-amber-200 mb-4">
+              <h3 className="text-xs font-semibold text-amber-800 mb-3 flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                Top 3 - {getLeaderboardLabel(leaderboardType)}
+              </h3>
+              <div className="flex items-end justify-center gap-2">
+                {/* 2nd Place */}
+                <div className="flex flex-col items-center w-20">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white font-bold text-sm shadow-md mb-1">
+                    {mergedLeaderboardData[1]?.displayName?.charAt(0)?.toUpperCase() || "2"}
+                  </div>
+                  <p className="text-[10px] font-medium text-slate-700 truncate w-full text-center">{mergedLeaderboardData[1]?.displayName}</p>
+                  <p className="text-[9px] text-slate-500">{getLeaderboardValue(mergedLeaderboardData[1], leaderboardType)}</p>
+                </div>
+                {/* 1st Place */}
+                <div className="flex flex-col items-center w-24">
+                  <Medal className="w-5 h-5 text-yellow-500 mb-1" />
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold text-lg shadow-lg mb-1">
+                    {mergedLeaderboardData[0]?.displayName?.charAt(0)?.toUpperCase() || "1"}
+                  </div>
+                  <p className="text-xs font-medium text-slate-800 truncate w-full text-center">{mergedLeaderboardData[0]?.displayName}</p>
+                  <p className="text-[10px] text-amber-600 font-semibold">{getLeaderboardValue(mergedLeaderboardData[0], leaderboardType)}</p>
+                </div>
+                {/* 3rd Place */}
+                <div className="flex flex-col items-center w-20">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center text-white font-bold text-sm shadow-md mb-1">
+                    {mergedLeaderboardData[2]?.displayName?.charAt(0)?.toUpperCase() || "3"}
+                  </div>
+                  <p className="text-[10px] font-medium text-slate-700 truncate w-full text-center">{mergedLeaderboardData[2]?.displayName}</p>
+                  <p className="text-[9px] text-slate-500">{getLeaderboardValue(mergedLeaderboardData[2], leaderboardType)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Full Rankings */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2 pt-3 px-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-slate-500" />
+                Full Rankings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-3">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500" />
+                </div>
+              ) : mergedLeaderboardData.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-sm">
+                  <Trophy className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                  <p>No leaderboard data yet</p>
+                  <p className="text-xs mt-1">Volunteers will appear here when they log activities</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {mergedLeaderboardData.map((volunteer, index) => {
+                    const rank = index + 1;
+                    const medal = getMedalIcon(rank);
+                    const isTopThree = rank <= 3;
+                    const Icon = getLeaderboardIcon(leaderboardType);
+
+                    return (
+                      <div
+                        key={volunteer.userId}
+                        className={`flex items-center gap-3 px-3 py-2.5 ${
+                          isTopThree ? "bg-gradient-to-r from-amber-50/50 to-transparent" : ""
+                        }`}
+                      >
+                        <div className="w-6 flex items-center justify-center flex-shrink-0">
+                          {medal || <span className="text-xs font-bold text-slate-400">#{rank}</span>}
+                        </div>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 ${
+                          isTopThree
+                            ? "bg-gradient-to-br from-amber-500 to-orange-500"
+                            : "bg-gradient-to-br from-slate-400 to-slate-500"
+                        }`}>
+                          {volunteer.displayName?.charAt(0)?.toUpperCase() || "V"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-slate-800 truncate">{volunteer.displayName || "Volunteer"}</p>
+                          <div className="flex items-center gap-2 text-[9px] text-slate-500">
+                            <span>{volunteer.totalHours}h</span>
+                            <span>•</span>
+                            <span>{volunteer.tasksCompleted} tasks</span>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Icon className={`w-3 h-3 ${isTopThree ? "text-amber-500" : "text-slate-400"}`} />
+                            <span className={`text-sm font-bold ${isTopThree ? "text-amber-600" : "text-slate-600"}`}>
+                              {getLeaderboardValue(volunteer, leaderboardType)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50" style={{ paddingBottom: '80px' }}>

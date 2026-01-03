@@ -74,6 +74,9 @@ export default function Volunteers() {
 
   // For organizations, show accepted volunteers. For admin/other users, show all volunteers
   const isOrganization = currentUser?.userType === 'organization';
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const userType = localStorage.getItem('userType');
+  const isOrganizationForLayout = isOrganization || userType === 'organization';
   
   const { data: volunteers = [], isLoading } = useQuery<any[]>({ 
     queryKey: isOrganization ? ["/api/organizations", userId, "volunteers"] : ["/api/users"],
@@ -167,8 +170,11 @@ export default function Volunteers() {
       addProcessingActivity(activityId);
       const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId || ''
+        },
+        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to approve');
       return { ...await response.json(), activityId };
@@ -190,8 +196,11 @@ export default function Volunteers() {
       addProcessingActivity(activityId);
       const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId || ''
+        },
+        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to reject');
       return { ...await response.json(), activityId };
@@ -213,8 +222,11 @@ export default function Volunteers() {
       addProcessingImpact(impactId);
       const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId || ''
+        },
+        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to approve');
       return { ...await response.json(), impactId };
@@ -236,8 +248,11 @@ export default function Volunteers() {
       addProcessingImpact(impactId);
       const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: parseInt(userId || '0') })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId || ''
+        },
+        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
       });
       if (!response.ok) throw new Error('Failed to reject');
       return { ...await response.json(), impactId };
@@ -410,7 +425,7 @@ export default function Volunteers() {
   }, [selectedVolunteerId, volunteersWithStats]);
 
   // Mobile organization PWA view
-  if (isOrganization && isMobile) {
+  if (isOrganizationForLayout && isMobile) {
     return (
       <OrganizationPWALayout activeTab="volunteers">
         <div className="p-4">

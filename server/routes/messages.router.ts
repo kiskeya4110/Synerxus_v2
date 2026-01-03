@@ -105,6 +105,51 @@ messagesRouter.patch("/:id/read", async (req: Request, res: Response) => {
   }
 });
 
+// PATCH /api/messages/:id/delivered - Mark message as delivered (for live chat confirmation)
+messagesRouter.patch("/:id/delivered", async (req: Request, res: Response) => {
+  try {
+    const messageId = parseInt(req.params.id);
+    const updatedMessage = await storage.markMessageAsDelivered(messageId);
+
+    if (!updatedMessage) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    broadcastUpdate("message_delivered", updatedMessage);
+    res.json(updatedMessage);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to mark message as delivered" });
+  }
+});
+
+// POST /api/messages/mark-delivered - Mark multiple messages as delivered (batch)
+messagesRouter.post("/mark-delivered", async (req: Request, res: Response) => {
+  try {
+    const { messageIds } = req.body;
+
+    if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ message: "messageIds array is required" });
+    }
+
+    const results = await Promise.all(
+      messageIds.map(async (id: number) => {
+        try {
+          return await storage.markMessageAsDelivered(id);
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const updated = results.filter(r => r !== null);
+    updated.forEach(msg => broadcastUpdate("message_delivered", msg));
+
+    res.json({ updated: updated.length, total: messageIds.length });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to mark messages as delivered" });
+  }
+});
+
 // GET /api/conversation-threads/organization/:organizationId - Get threads for organization
 messagesRouter.get("/conversation-threads/organization/:organizationId", async (req: Request, res: Response) => {
   try {
@@ -203,10 +248,31 @@ messagesRouter.get("/conversation-threads/:threadId/messages", async (req: Reque
 
     const messages = await storage.listMessagesByThread(threadId);
 
+    // Mark messages as delivered when recipient fetches them (live chat delivery confirmation)
+    const messagesToMarkDelivered = messages.filter(
+      msg => msg.receiverId === requestingUserId &&
+             msg.deliveryStatus === 'sent' &&
+             msg.senderId !== requestingUserId
+    );
+
+    // Update delivery status in background (don't wait for this)
+    if (messagesToMarkDelivered.length > 0) {
+      Promise.all(
+        messagesToMarkDelivered.map(msg => storage.markMessageAsDelivered(msg.id))
+      ).then(updated => {
+        updated.forEach(msg => {
+          if (msg) broadcastUpdate("message_delivered", msg);
+        });
+      }).catch(err => console.error("Failed to mark messages as delivered:", err));
+    }
+
     const enrichedMessages = await Promise.all(messages.map(async (msg) => {
       const sender = await storage.getUser(msg.senderId);
+      // Update the status to 'delivered' for messages we just marked
+      const isBeingDelivered = messagesToMarkDelivered.some(m => m.id === msg.id);
       return {
         ...msg,
+        deliveryStatus: isBeingDelivered ? 'delivered' : (msg.deliveryStatus || 'sent'),
         senderName: sender?.displayName || sender?.username || 'Unknown',
         senderAvatar: sender?.avatar
       };
@@ -255,7 +321,16 @@ messagesRouter.post("/conversation-threads", async (req: Request, res: Response)
     if (initialMessage) {
       // Determine who is the sender - could be volunteer or organization
       const volunteer = await storage.getUser(parseInt(volunteerId));
-      const orgUser = await storage.getUserByOrganizationId(parseInt(organizationId));
+
+      // Try to find org user - first by organizationId field, then by org membership
+      let orgUser = await storage.getUserByOrganizationId(parseInt(organizationId));
+      if (!orgUser) {
+        // Fallback: get any user from the organization
+        const orgUsers = await storage.listUsersByOrganization(parseInt(organizationId));
+        if (orgUsers.length > 0) {
+          orgUser = orgUsers[0];
+        }
+      }
 
       // If the request has a senderId, use that to determine who is sending
       const senderId = req.body.senderId ? parseInt(req.body.senderId) : null;
@@ -281,8 +356,32 @@ messagesRouter.post("/conversation-threads", async (req: Request, res: Response)
         });
 
         broadcastUpdate("message_created", message);
+      } else if (senderId && orgUser) {
+        // Organization user is starting conversation (outreach)
+        // Use the actual senderId from the request, not the orgUser lookup
+        const actualSender = await storage.getUser(senderId);
+        const senderName = actualSender?.displayName || actualSender?.username || 'Organization';
+
+        const message = await storage.createMessage({
+          senderId: senderId, // Use actual sender ID from request
+          receiverId: parseInt(volunteerId),
+          content: initialMessage,
+          messageType: 'outreach',
+          threadId: thread.id
+        });
+
+        await storage.createNotification({
+          userId: parseInt(volunteerId),
+          type: 'message',
+          title: 'New Message',
+          message: `${senderName} sent you a message about "${topic}"`,
+          relatedEntityType: 'thread',
+          relatedEntityId: thread.id
+        });
+
+        broadcastUpdate("message_created", message);
       } else if (orgUser) {
-        // Organization is starting conversation (outreach)
+        // Fallback: Organization starting conversation but no senderId provided
         const message = await storage.createMessage({
           senderId: orgUser.id,
           receiverId: parseInt(volunteerId),
@@ -298,6 +397,19 @@ messagesRouter.post("/conversation-threads", async (req: Request, res: Response)
           message: `You have a new message about "${topic}"`,
           relatedEntityType: 'thread',
           relatedEntityId: thread.id
+        });
+
+        broadcastUpdate("message_created", message);
+      } else if (volunteer) {
+        // Volunteer is starting conversation but no org user found - still create message
+        // This ensures messages aren't lost even if org user lookup fails
+        console.warn(`No org user found for organization ${organizationId}, creating message with volunteer as both sender and temporary receiver`);
+        const message = await storage.createMessage({
+          senderId: parseInt(volunteerId),
+          receiverId: parseInt(volunteerId), // Temporary - will be corrected when org user responds
+          content: initialMessage,
+          messageType: 'inquiry',
+          threadId: thread.id
         });
 
         broadcastUpdate("message_created", message);
@@ -342,12 +454,30 @@ messagesRouter.post("/conversation-threads/:threadId/messages", async (req: Requ
       return res.status(403).json({ message: "Access denied. You are not authorized to send messages in this thread." });
     }
 
-    const receiverId = parseInt(senderId) === thread.volunteerId
-      ? (await storage.getUserByOrganizationId(thread.organizationId))?.id
-      : thread.volunteerId;
+    // Determine the receiver based on who is sending
+    let receiverId: number | undefined;
+
+    if (parseInt(senderId) === thread.volunteerId) {
+      // Volunteer is sending - find org user to receive
+      // First try getUserByOrganizationId, then fall back to listUsersByOrganization
+      const orgUser = await storage.getUserByOrganizationId(thread.organizationId);
+      if (orgUser) {
+        receiverId = orgUser.id;
+      } else {
+        // Fallback: get any user from the organization
+        const orgUsers = await storage.listUsersByOrganization(thread.organizationId);
+        if (orgUsers.length > 0) {
+          receiverId = orgUsers[0].id;
+        }
+      }
+    } else {
+      // Organization is sending - volunteer receives
+      receiverId = thread.volunteerId;
+    }
 
     if (!receiverId) {
-      return res.status(400).json({ message: "Could not determine message recipient" });
+      console.error(`Could not determine message recipient for thread ${threadId}, org ${thread.organizationId}`);
+      return res.status(400).json({ message: "Could not determine message recipient. Organization may not have any users." });
     }
 
     const message = await storage.createMessage({

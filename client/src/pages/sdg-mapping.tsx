@@ -548,9 +548,12 @@ export default function SDGMapping() {
   }
   
   const isOrganization = currentUser?.userType === 'organization';
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const userType = localStorage.getItem('userType');
+  const isOrganizationForLayout = isOrganization || userType === 'organization';
 
   // Mobile organization PWA view - Enhanced with better KPIs
-  if (isOrganization && isMobile) {
+  if (isOrganizationForLayout && isMobile) {
     // Calculate mobile-specific metrics
     const activeProjectsCount = filteredProjects.filter((p: any) =>
       p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'

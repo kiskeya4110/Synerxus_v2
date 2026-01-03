@@ -16,11 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ROLE_WEIGHTS, ROLE_CATEGORIES, getRoleDisplayName } from "@shared/aiu-calculations";
-import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, Info } from "lucide-react";
+import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, Info, ArrowLeft } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 
 const skillOptions = [
   "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
@@ -85,10 +87,15 @@ export default function PostCoreOpportunity() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [customSkill, setCustomSkill] = useState("");
   const [customOptionalSkill, setCustomOptionalSkill] = useState("");
 
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const isOrganizationForLayout = userType === 'organization';
+
   const { data: currentUser } = useQuery({ 
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -188,19 +195,30 @@ export default function PostCoreOpportunity() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Post a Core Opportunity
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            For skilled, ongoing, or project-based volunteer roles. This detailed post will power the AI matching algorithm.
-          </p>
-        </div>
+  // Mobile PWA wrapper for organization users
+  const formContent = (
+    <>
+      <div className={isMobile && isOrganizationForLayout ? "mb-4" : "mb-8"}>
+        {isMobile && isOrganizationForLayout && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/projects')}
+            className="mb-3 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        )}
+        <h1 className={`font-bold text-gray-900 dark:text-white mb-2 ${isMobile ? "text-xl" : "text-3xl"}`}>
+          Post a Core Opportunity
+        </h1>
+        <p className={`text-gray-600 dark:text-gray-300 ${isMobile ? "text-sm" : ""}`}>
+          For skilled, ongoing, or project-based volunteer roles. This detailed post will power the AI matching algorithm.
+        </p>
+      </div>
 
-        <Form {...form}>
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Section 1: The Basics */}
             <Card data-testid="card-basics">
@@ -868,6 +886,24 @@ export default function PostCoreOpportunity() {
             </div>
           </form>
         </Form>
+    </>
+  );
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationForLayout) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4">
+          {formContent}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {formContent}
       </div>
     </div>
   );

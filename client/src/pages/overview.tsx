@@ -107,8 +107,12 @@ export default function Overview() {
 
   const challengeProgress = Math.min(78, Math.round((metrics.totalHours / 500) * 100));
 
-  // Mobile PWA View
-  if (isMobile) {
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const userType = localStorage.getItem('userType');
+  const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Mobile PWA View - Organizations only
+  if (isOrganization && isMobile) {
     return (
       <OrganizationPWALayout activeTab="potential">
         <div style={{ margin: '0 16px', paddingTop: '16px' }}>

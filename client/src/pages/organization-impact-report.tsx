@@ -58,6 +58,11 @@ import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
+import { ImpactScoreGauge } from "@/components/impact/impact-score-gauge";
+import { AINarrativeSection } from "@/components/impact/ai-narrative-section";
+import { FinancialImpactCard } from "@/components/impact/financial-impact-card";
+import { VolunteerSpotlight } from "@/components/impact/volunteer-spotlight";
+import { PeriodComparison } from "@/components/impact/period-comparison";
 interface Html2PdfInstance {
   set(options: Record<string, any>): {
     from(element: HTMLElement): { save(): void };
@@ -1507,6 +1512,67 @@ export default function OrganizationImpactReport() {
                           </div>
                         </div>
                       </div>
+                    )}
+                  </div>
+
+                  {/* AI Executive Summary */}
+                  <AINarrativeSection
+                    context={{
+                      totalHours,
+                      peopleImpacted: beneficiariesServed,
+                      sdgs: Array.from(sdgHoursMap.keys()),
+                      projects: totalProjects,
+                      reportType: "organization",
+                      organizationName: organization?.name,
+                    }}
+                    title="Executive Summary"
+                  />
+
+                  {/* Enhanced Impact Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Financial Impact Card */}
+                    <FinancialImpactCard
+                      volunteerHours={totalHours}
+                      hourlyValue={volunteerTimeValue}
+                      beneficiaries={beneficiariesServed}
+                      operatingCost={totalExpenses}
+                      volunteers={activeVolunteers}
+                      title="Financial Impact"
+                    />
+
+                    {/* Volunteer Spotlight */}
+                    {leaderData && (
+                      <VolunteerSpotlight
+                        volunteer={{
+                          id: leaderData.userId,
+                          name: leaderData.name,
+                          avatar: leaderData.avatar,
+                          hours: leaderData.hours,
+                          activities: leaderData.activities,
+                          sdgsContributed: Array.from(sdgHoursMap.keys()).slice(0, 3),
+                        }}
+                        variant="compact"
+                        title="Impact Leader"
+                      />
+                    )}
+
+                    {/* Period Comparison */}
+                    {quarterlyGrowth.length >= 2 && (
+                      <PeriodComparison
+                        current={{
+                          hours: quarterlyGrowth[currentQuarter - 1]?.hours || 0,
+                          volunteers: quarterlyGrowth[currentQuarter - 1]?.volunteers || 0,
+                          beneficiaries: quarterlyGrowth[currentQuarter - 1]?.beneficiaries || 0,
+                        }}
+                        previous={{
+                          hours: quarterlyGrowth[currentQuarter - 2]?.hours || quarterlyGrowth[0]?.hours || 0,
+                          volunteers: quarterlyGrowth[currentQuarter - 2]?.volunteers || quarterlyGrowth[0]?.volunteers || 0,
+                          beneficiaries: quarterlyGrowth[currentQuarter - 2]?.beneficiaries || quarterlyGrowth[0]?.beneficiaries || 0,
+                        }}
+                        currentLabel={`Q${currentQuarter}`}
+                        previousLabel={currentQuarter > 1 ? `Q${currentQuarter - 1}` : "Q4 (prev)"}
+                        title="Quarterly Comparison"
+                      />
                     )}
                   </div>
 

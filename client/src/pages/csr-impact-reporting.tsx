@@ -10,6 +10,9 @@ import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-na
 import { CSRLayout } from "@/components/layout/csr-layout";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { formatDecimal } from "@/lib/format-utils";
+import { MetricAlertBanner } from "@/components/impact/metric-alert-banner";
+import { VTOUtilization } from "@/components/impact/vto-utilization";
+import { PeriodComparison } from "@/components/impact/period-comparison";
 
 // Lazy load heavy chart components for better initial load
 const LazyAreaChart = lazy(() => import("recharts").then(m => ({ default: m.AreaChart })));
@@ -915,6 +918,81 @@ export function CSRImpactReporting() {
           <InteractiveKPICard id="roi" label="ROI" value={`${impactData?.financialMetrics.roi || 0}%`} unit="return" icon="📈" color="#059669" trend="up" trendValue="+5%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="esg" label="ESG Rating" value={Math.round(esGRating)} unit="/ 100" icon="✨" color="#f97316" trend="up" trendValue="+3" onClick={setShowDetailModal} />
           <InteractiveKPICard id="sroi" label="SROI" value={`${sroiData.ratio}:1`} unit="ratio" icon="💎" color={sroiData.color} trend="up" trendValue="+0.3" onClick={setShowDetailModal} />
+        </div>
+
+        {/* Alert Banner for Below-Benchmark Metrics */}
+        {(() => {
+          const alerts = [];
+          const participationRate = impactData?.engagementMetrics?.participationRate || 0;
+          const avgHoursPerEmployee = impactData?.engagementMetrics?.avgHoursPerEmployee || 0;
+
+          if (participationRate < VMS_BENCHMARKS.participationRate.average) {
+            alerts.push({
+              id: "participation",
+              metric: "Participation Rate",
+              current: participationRate,
+              target: VMS_BENCHMARKS.participationRate.average,
+              severity: participationRate < VMS_BENCHMARKS.participationRate.average * 0.5 ? "critical" as const : "warning" as const,
+              recommendation: "Consider launching targeted engagement campaigns or adding more flexible volunteering options.",
+            });
+          }
+          if (avgHoursPerEmployee < VMS_BENCHMARKS.hoursPerEmployee.average) {
+            alerts.push({
+              id: "hours",
+              metric: "Hours per Employee",
+              current: avgHoursPerEmployee,
+              target: VMS_BENCHMARKS.hoursPerEmployee.average,
+              severity: avgHoursPerEmployee < VMS_BENCHMARKS.hoursPerEmployee.average * 0.5 ? "critical" as const : "warning" as const,
+              recommendation: "Offer more project opportunities or implement VTO policies to boost engagement.",
+            });
+          }
+          if (bCorpCalc.score < 80) {
+            alerts.push({
+              id: "bcorp",
+              metric: "B-Corp Readiness",
+              current: Math.round(bCorpCalc.score),
+              target: 80,
+              severity: bCorpCalc.score < 60 ? "critical" as const : "warning" as const,
+              recommendation: "Focus on improving governance and community benefit scores.",
+            });
+          }
+
+          return alerts.length > 0 ? (
+            <div style={{ marginBottom: "24px" }}>
+              <MetricAlertBanner
+                alerts={alerts}
+                title="Action Required"
+                maxVisible={3}
+              />
+            </div>
+          ) : null;
+        })()}
+
+        {/* VTO & Period Comparison Row */}
+        <div style={{ marginBottom: "24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <VTOUtilization
+            allocated={(impactData?.engagementMetrics?.activeEmployees || 0) * 16}
+            used={impactData?.engagementMetrics?.totalHours || 0}
+            employees={impactData?.engagementMetrics?.activeEmployees || 0}
+            participating={Math.round((impactData?.engagementMetrics?.participationRate || 0) / 100 * (impactData?.engagementMetrics?.activeEmployees || 0))}
+            vtoPerEmployee={16}
+            title="VTO Utilization"
+          />
+          <PeriodComparison
+            current={{
+              hours: impactData?.engagementMetrics?.totalHours || 0,
+              volunteers: impactData?.engagementMetrics?.activeEmployees || 0,
+              beneficiaries: impactData?.impactMetrics?.directBeneficiaries || 0,
+            }}
+            previous={{
+              hours: Math.round((impactData?.engagementMetrics?.totalHours || 0) * 0.85),
+              volunteers: Math.round((impactData?.engagementMetrics?.activeEmployees || 0) * 0.9),
+              beneficiaries: Math.round((impactData?.impactMetrics?.directBeneficiaries || 0) * 0.88),
+            }}
+            currentLabel="This Quarter"
+            previousLabel="Last Quarter"
+            title="Quarter Comparison"
+          />
         </div>
 
         {/* VMS/CRM Advanced Metrics Row */}

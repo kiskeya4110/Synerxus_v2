@@ -22,6 +22,8 @@ import {
   Plus,
   X,
   Loader2,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
@@ -50,6 +52,8 @@ interface Message {
   createdAt: string;
   senderName?: string;
   senderAvatar?: string;
+  deliveryStatus?: 'sending' | 'sent' | 'delivered' | 'read';
+  isOptimistic?: boolean;
 }
 
 interface Project {
@@ -220,8 +224,8 @@ export default function VolunteerMessagesPWA() {
       }
     },
     enabled: !!selectedThread?.id && !!userId,
-    refetchInterval: selectedThread ? 5000 : false,
-    staleTime: 5000,
+    refetchInterval: selectedThread ? 2000 : false, // Reduced for live chat feel
+    staleTime: 1000, // Keep data fresh
   });
 
   // FIX 9: Improved thread creation with better error handling
@@ -280,7 +284,7 @@ export default function VolunteerMessagesPWA() {
     },
   });
 
-  // FIX 11: Improved message sending with optimistic updates
+  // FIX 11: Improved message sending with optimistic updates for live chat feel
   const sendMessageMutation = useMutation({
     mutationFn: async ({
       threadId,
@@ -302,12 +306,51 @@ export default function VolunteerMessagesPWA() {
         },
       );
     },
-    onSuccess: async () => {
+    onMutate: async ({ threadId, content }) => {
+      // Use consistent query key format
+      const queryKey = ["/api/conversation-threads", threadId, "messages", userId];
+
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+
+      // Optimistically update - add the new message immediately with 'sending' status
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return { thread: null, messages: [] };
+        const optimisticMessage = {
+          id: Date.now(), // Temporary ID
+          threadId,
+          senderId: parsedUserId,
+          receiverId: 0, // Will be filled by server
+          content: content.trim(),
+          messageType: "text",
+          read: false,
+          createdAt: new Date().toISOString(),
+          deliveryStatus: 'sending',
+          isOptimistic: true, // Flag to identify optimistic messages
+        };
+        return {
+          ...old,
+          messages: [...(old.messages || []), optimisticMessage],
+        };
+      });
+
+      // Clear input immediately for better UX
       setMessageContent("");
-      // Refetch both messages and threads to update last message time
+
+      return { previousMessages, queryKey };
+    },
+    onSuccess: async () => {
+      // Refetch to get the real message with correct ID and 'sent' status
       await Promise.all([refetchMessages(), refetchThreads()]);
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Roll back to previous messages on error
+      if (context?.previousMessages && context?.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousMessages);
+      }
       console.error("Failed to send message:", error);
       toast({
         title: "Error",
@@ -454,61 +497,64 @@ export default function VolunteerMessagesPWA() {
   }
 
   return (
-    <div className="w-full min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-full overflow-hidden">
-      {/* PWA Header */}
-      <PWAHeader />
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-x-hidden">
+      {/* Centered App Container */}
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+        {/* PWA Header */}
+        <PWAHeader />
 
-      {/* Spacer for fixed header */}
-      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
+        {/* Spacer for fixed header */}
+        <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))] flex-shrink-0" />
 
-      {/* Thread Header - shows when viewing a conversation */}
-      {selectedThread && (
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200">
-          <div className="flex items-center">
+        {/* Thread Header - shows when viewing a conversation */}
+        {selectedThread && (
+          <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200 flex-shrink-0">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-800 hover:bg-slate-100 -ml-2"
+                onClick={() => setSelectedThread(null)}
+                aria-label="Back to conversations"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex-1 text-center min-w-0">
+                <p className="font-semibold text-sm truncate">
+                  {selectedThread.organizationName || "Organization"}
+                </p>
+                <p className="text-xs text-slate-600 truncate">
+                  {selectedThread.topic || "Conversation"}
+                </p>
+              </div>
+              <div className="w-8" />
+            </div>
+          </div>
+        )}
+
+        {/* New Conversation Button - shows in list view */}
+        {!selectedThread && (
+          <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+            <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
             <Button
               variant="ghost"
-              size="icon"
-              className="text-slate-800 hover:bg-slate-100 -ml-2"
-              onClick={() => setSelectedThread(null)}
-              aria-label="Back to conversations"
+              size="sm"
+              className="text-slate-800 hover:bg-slate-100"
+              onClick={() => setShowNewConversation(true)}
+              aria-label="Start new conversation"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <Plus className="h-5 w-5" />
             </Button>
-            <div className="flex-1 text-center min-w-0">
-              <p className="font-semibold text-sm truncate">
-                {selectedThread.organizationName || "Organization"}
-              </p>
-              <p className="text-xs text-slate-600 truncate">
-                {selectedThread.topic || "Conversation"}
-              </p>
-            </div>
-            <div className="w-8" />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* New Conversation Button - shows in list view */}
-      {!selectedThread && (
-        <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-800 hover:bg-slate-100"
-            onClick={() => setShowNewConversation(true)}
-            aria-label="Start new conversation"
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
-
-      {/* Main Content */}
-      {selectedThread ? (
-        /* Chat View */
-        <div className="flex flex-col flex-1 overflow-hidden pb-20">
-          {/* Messages */}
-          <ScrollArea className="flex-1 px-4 py-3">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto pb-20">
+          {selectedThread ? (
+            /* Chat View */
+            <div className="flex flex-col h-full">
+              {/* Messages */}
+              <ScrollArea className="flex-1 px-4 py-3">
             {loadingMessages ? (
               <div className="text-center text-slate-500 py-4">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -524,6 +570,8 @@ export default function VolunteerMessagesPWA() {
               <div className="space-y-3">
                 {(threadMessages?.messages || []).map((msg: Message) => {
                   const isOwnMessage = msg.senderId === parsedUserId;
+                  // Determine delivery status for display
+                  const status = msg.isOptimistic ? 'sending' : (msg.deliveryStatus || (msg.read ? 'read' : 'sent'));
                   return (
                     <div
                       key={msg.id}
@@ -553,15 +601,34 @@ export default function VolunteerMessagesPWA() {
                           <p className="text-sm whitespace-pre-wrap break-words">
                             {msg.content}
                           </p>
-                          <p
-                            className={`text-[10px] mt-1 ${isOwnMessage ? "text-blue-100" : "text-slate-400"}`}
-                          >
-                            {msg.createdAt
-                              ? formatDistanceToNow(new Date(msg.createdAt), {
-                                  addSuffix: true,
-                                })
-                              : ""}
-                          </p>
+                          <div className={`flex items-center gap-1 mt-1 ${isOwnMessage ? "justify-end" : ""}`}>
+                            <span
+                              className={`text-[10px] ${isOwnMessage ? "text-blue-100" : "text-slate-400"}`}
+                            >
+                              {msg.createdAt
+                                ? formatDistanceToNow(new Date(msg.createdAt), {
+                                    addSuffix: true,
+                                  })
+                                : ""}
+                            </span>
+                            {/* Delivery status indicators for own messages */}
+                            {isOwnMessage && (
+                              <span className="flex items-center">
+                                {status === 'sending' && (
+                                  <Loader2 className="w-3 h-3 text-blue-200 animate-spin" />
+                                )}
+                                {status === 'sent' && (
+                                  <Check className="w-3 h-3 text-blue-200" />
+                                )}
+                                {status === 'delivered' && (
+                                  <CheckCheck className="w-3 h-3 text-blue-200" />
+                                )}
+                                {status === 'read' && (
+                                  <CheckCheck className="w-3 h-3 text-blue-100" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -768,10 +835,11 @@ export default function VolunteerMessagesPWA() {
               ))}
             </div>
           )}
-        </div>
-      )}
+          </div>
+        )}
+        </main>
 
-      {/* New Conversation Modal */}
+        {/* New Conversation Modal */}
       {showNewConversation && (
         <div
           className="fixed inset-0 bg-black/50 flex items-end z-50"
@@ -1069,8 +1137,9 @@ export default function VolunteerMessagesPWA() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId} activeTab="messages" />
+        {/* Bottom Navigation */}
+        <VolunteerPWANav userId={userId} activeTab="messages" />
+      </div>
     </div>
   );
 }

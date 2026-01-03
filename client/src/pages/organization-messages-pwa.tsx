@@ -19,6 +19,8 @@ import {
   Plus,
   X,
   Loader2,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
@@ -49,6 +51,8 @@ interface Message {
   createdAt: string;
   senderName?: string;
   senderAvatar?: string;
+  deliveryStatus?: 'sending' | 'sent' | 'delivered' | 'read';
+  isOptimistic?: boolean;
 }
 
 interface Volunteer {
@@ -165,8 +169,8 @@ export default function OrganizationMessagesPWA() {
       }
     },
     enabled: !!selectedThread?.id && !!userId,
-    refetchInterval: selectedThread ? 3000 : false,
-    staleTime: 3000,
+    refetchInterval: selectedThread ? 2000 : false, // Reduced for live chat feel
+    staleTime: 1000, // Keep data fresh
   });
 
   // Create thread mutation
@@ -219,22 +223,28 @@ export default function OrganizationMessagesPWA() {
       });
     },
     onMutate: async ({ threadId, content }) => {
+      // Use the same query key format as the messages query
+      const queryKey = ["/api/conversation-threads", threadId, "messages", userId];
+
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [`/api/conversation-threads/${threadId}/messages`] });
+      await queryClient.cancelQueries({ queryKey });
 
       // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData([`/api/conversation-threads/${threadId}/messages`]);
+      const previousMessages = queryClient.getQueryData(queryKey);
 
-      // Optimistically update - add the new message immediately
-      queryClient.setQueryData([`/api/conversation-threads/${threadId}/messages`], (old: any) => {
-        if (!old) return old;
+      // Optimistically update - add the new message immediately with 'sending' status
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return { thread: null, messages: [] };
         const optimisticMessage = {
           id: Date.now(), // Temporary ID
           threadId,
           senderId: parsedUserId,
+          receiverId: 0, // Will be filled by server
           content: content.trim(),
           messageType: "text",
+          read: false,
           createdAt: new Date().toISOString(),
+          deliveryStatus: 'sending',
           isOptimistic: true, // Flag to identify optimistic messages
         };
         return {
@@ -246,7 +256,7 @@ export default function OrganizationMessagesPWA() {
       // Clear input immediately for better UX
       setMessageContent("");
 
-      return { previousMessages };
+      return { previousMessages, queryKey };
     },
     onSuccess: async () => {
       // Refetch to get the real message with correct ID
@@ -254,8 +264,8 @@ export default function OrganizationMessagesPWA() {
     },
     onError: (error: any, _variables, context) => {
       // Roll back to previous messages on error
-      if (context?.previousMessages && selectedThread) {
-        queryClient.setQueryData([`/api/conversation-threads/${selectedThread.id}/messages`], context.previousMessages);
+      if (context?.previousMessages && context?.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousMessages);
       }
       toast({
         title: "Error",
@@ -442,6 +452,8 @@ export default function OrganizationMessagesPWA() {
               <div className="space-y-3">
                 {(threadMessages?.messages || []).map((msg: Message) => {
                   const isOwnMessage = msg.senderId === parsedUserId;
+                  // Determine delivery status for display
+                  const status = msg.isOptimistic ? 'sending' : (msg.deliveryStatus || (msg.read ? 'read' : 'sent'));
                   return (
                     <div key={msg.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
                       <div className={`flex gap-2 max-w-[80%] ${isOwnMessage ? "flex-row-reverse" : ""}`}>
@@ -461,9 +473,28 @@ export default function OrganizationMessagesPWA() {
                           }`}
                         >
                           <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                          <p className={`text-[10px] mt-1 ${isOwnMessage ? "text-emerald-100" : "text-slate-400"}`}>
-                            {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : ""}
-                          </p>
+                          <div className={`flex items-center gap-1 mt-1 ${isOwnMessage ? "justify-end" : ""}`}>
+                            <span className={`text-[10px] ${isOwnMessage ? "text-emerald-100" : "text-slate-400"}`}>
+                              {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : ""}
+                            </span>
+                            {/* Delivery status indicators for own messages */}
+                            {isOwnMessage && (
+                              <span className="flex items-center">
+                                {status === 'sending' && (
+                                  <Loader2 className="w-3 h-3 text-emerald-200 animate-spin" />
+                                )}
+                                {status === 'sent' && (
+                                  <Check className="w-3 h-3 text-emerald-200" />
+                                )}
+                                {status === 'delivered' && (
+                                  <CheckCheck className="w-3 h-3 text-emerald-200" />
+                                )}
+                                {status === 'read' && (
+                                  <CheckCheck className="w-3 h-3 text-emerald-100" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

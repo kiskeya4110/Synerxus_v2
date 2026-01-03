@@ -5,7 +5,9 @@ import { formatDecimal } from "@/lib/format-utils";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import CSRPWANav from "@/components/layout/csr-pwa-nav";
+import PWAHeader from "@/components/pwa/pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -275,36 +277,6 @@ export default function ProjectDetailPWA() {
   const primarySdg = project.primarySdg || project.sdgGoals?.[0];
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
-  // Simple consistent header for project detail - matches organization dashboard PWA style
-  const renderHeader = () => {
-    // Use organization-style amber gradient for org users, slate for others
-    const isOrg = userType === 'organization';
-    const headerBg = isOrg
-      ? 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)'
-      : 'linear-gradient(to right, #1e293b, #0f172a)';
-    const textColor = isOrg ? 'text-slate-800' : 'text-white';
-    const subTextColor = isOrg ? 'text-slate-600' : 'text-white/60';
-    const buttonBg = isOrg ? 'bg-white/80 hover:bg-white' : 'bg-white/10 hover:bg-white/20';
-    const iconColor = isOrg ? 'text-slate-700' : 'text-white';
-
-    return (
-      <header className="fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ background: headerBg }}>
-        <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
-        <div className="px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={handleBack}
-            className={`w-10 h-10 rounded-full ${buttonBg} flex items-center justify-center transition-all`}
-          >
-            <ArrowLeft className={`w-5 h-5 ${iconColor}`} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className={`${textColor} font-semibold truncate`}>{project?.name || 'Project'}</p>
-            <p className={`${subTextColor} text-xs truncate`}>{project?.organizationName || 'View Details'}</p>
-          </div>
-        </div>
-      </header>
-    );
-  };
 
   // Render appropriate navigation based on user type
   const renderNav = () => {
@@ -319,17 +291,23 @@ export default function ProjectDetailPWA() {
     }
   };
 
-  return (
-    <div className="w-full min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-full overflow-hidden">
-      {/* PWA Header - User Type Aware */}
-      {renderHeader()}
+  // Common content for all user types
+  const renderProjectContent = () => (
+    <>
+      {/* Back button for organization PWA layout */}
+      {userType === 'organization' && (
+        <div className="px-4 pt-2 pb-1">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back to Projects</span>
+          </button>
+        </div>
+      )}
 
-      {/* Spacer for fixed header */}
-      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
-
-      {/* Main scrollable content */}
-      <div className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
-        {/* Hero Image Section */}
+      {/* Hero Image Section - slightly reduced for volunteer/CSR to account for context header */}
       <div className="relative w-full h-64 flex items-center justify-center overflow-hidden">
         {project.coverImage ? (
           <>
@@ -453,7 +431,7 @@ export default function ProjectDetailPWA() {
               </div>
 
               {/* AIU Metrics - Using volunteer's AIU summary as single source of truth */}
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200">
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200 mt-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -686,11 +664,54 @@ export default function ProjectDetailPWA() {
           </div>
         </div>
       )}
+    </>
+  );
 
+  // Organization users get the standardized PWA layout
+  if (userType === 'organization') {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        {renderProjectContent()}
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Other users (volunteer, CSR) get the standard PWA header/nav layout
+  return (
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-x-hidden">
+      {/* Centered App Container */}
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+        {/* PWA Header - Standard volunteer/CSR header */}
+        <PWAHeader />
+
+        {/* Spacer for fixed header */}
+        <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))] flex-shrink-0" />
+
+        {/* Project Context Header - shows project name with back button */}
+        <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center">
+            <button
+              onClick={handleBack}
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors -ml-1 mr-2"
+            >
+              <ArrowLeft className="w-4 h-4 text-slate-600" />
+            </button>
+            <div className="flex-1 text-center min-w-0">
+              <p className="font-semibold text-sm truncate">{project?.name || 'Project'}</p>
+              <p className="text-xs text-slate-600 truncate">{project?.organizationName || 'View Details'}</p>
+            </div>
+            <div className="w-8" />
+          </div>
+        </div>
+
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-y-auto pb-20">
+          {renderProjectContent()}
+        </main>
+
+        {/* Bottom Navigation - User Type Aware */}
+        {renderNav()}
       </div>
-
-      {/* Bottom Navigation - User Type Aware */}
-      {renderNav()}
     </div>
   );
 }

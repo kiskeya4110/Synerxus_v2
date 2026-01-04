@@ -91,7 +91,8 @@
       "Bash(__NEW_LINE__ echo \"\")",
       "Bash(file:*)",
       "Bash(identify:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

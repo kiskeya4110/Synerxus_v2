@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target, Clock, FolderKanban, ChevronRight, BarChart2, PieChart, Activity, Award, Briefcase, Calculator, TrendingDown, ArrowUpRight, ArrowDownRight, Layers, Star, Shield, FileText, Eye } from "lucide-react";
 import { useState, useEffect, lazy, Suspense, memo } from "react";
+import DOMPurify from "dompurify";
 import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
 import Logo from "@/components/ui/logo";
@@ -426,7 +427,7 @@ export function CSRImpactReporting() {
       const { jsPDF } = await import("jspdf");
       const html2Canvas = (await import("html2canvas")).default;
       const element = document.createElement("div");
-      element.innerHTML = pdfContent;
+      element.innerHTML = DOMPurify.sanitize(pdfContent);
       element.style.padding = "20px";
       element.style.width = "800px";
       element.style.backgroundColor = "white";

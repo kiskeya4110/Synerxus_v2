@@ -5617,21 +5617,39 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   app.post("/api/notifications/:id/read", async (req, res) => {
     try {
       const notificationId = parseInt(req.params.id);
-      
+
       if (isNaN(notificationId)) {
         return res.status(400).json({ message: "Invalid notification ID" });
       }
-      
+
       const notification = await storage.markNotificationRead(notificationId);
-      
+
       if (!notification) {
         return res.status(404).json({ message: "Notification not found" });
       }
-      
+
       res.json(notification);
     } catch (err) {
       console.error("Error marking notification as read:", err);
       res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // Clear all notifications (mark all as read) for a user
+  app.post("/api/notifications/clear-all", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const count = await storage.markAllNotificationsRead(userId);
+
+      res.json({ success: true, clearedCount: count });
+    } catch (err) {
+      console.error("Error clearing notifications:", err);
+      res.status(500).json({ message: "Failed to clear notifications" });
     }
   });
 

@@ -76,6 +76,17 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     }
   });
 
+  // Clear all notifications mutation (mark all as read)
+  const clearAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    }
+  });
+
   // Get unread notifications count
   const unreadCount = notifications.filter((n: Notification) => !n.read).length;
 
@@ -434,6 +445,26 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                   <X className="w-5 h-5 text-slate-700" />
                 </button>
               </div>
+              {/* Clear All Button */}
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => clearAllNotificationsMutation.mutate()}
+                  disabled={clearAllNotificationsMutation.isPending}
+                  className="mt-3 w-full py-2 px-3 bg-white/40 hover:bg-white/60 rounded-lg text-slate-700 text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {clearAllNotificationsMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Clearing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Clear All ({unreadCount})
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Notifications List */}

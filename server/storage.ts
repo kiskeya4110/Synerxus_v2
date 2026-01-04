@@ -344,6 +344,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotifications(userId: number): Promise<Notification[]>;
   markNotificationRead(notificationId: number): Promise<Notification | undefined>;
+  markAllNotificationsRead(userId: number): Promise<number>;
 
   // User Data Audit Log operations
   createUserDataAuditLog(log: InsertUserDataAuditLog): Promise<UserDataAuditLog>;
@@ -1455,6 +1456,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, notificationId))
       .returning();
     return result || undefined;
+  }
+
+  async markAllNotificationsRead(userId: number): Promise<number> {
+    const result = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    return result.rowCount || 0;
   }
 
   // Volunteer Profile operations

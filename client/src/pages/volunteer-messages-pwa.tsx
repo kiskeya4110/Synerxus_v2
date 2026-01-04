@@ -504,11 +504,11 @@ export default function VolunteerMessagesPWA() {
         <PWAHeader />
 
         {/* Spacer for fixed header */}
-        <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))] flex-shrink-0" />
+        <div className="h-16 flex-shrink-0" />
 
         {/* Thread Header - shows when viewing a conversation */}
         {selectedThread && (
-          <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200 flex-shrink-0">
+          <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-3 shadow-sm border-b border-slate-200 flex-shrink-0">
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -532,19 +532,46 @@ export default function VolunteerMessagesPWA() {
           </div>
         )}
 
-        {/* New Conversation Button - shows in list view */}
+        {/* Page Banner - shows in list view */}
         {!selectedThread && (
-          <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
-            <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-800 hover:bg-slate-100"
-              onClick={() => setShowNewConversation(true)}
-              aria-label="Start new conversation"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
+          <div className="p-4">
+            <div className="bg-gradient-to-br from-sky-200 via-blue-200 to-indigo-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-400/30" />
+                <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-indigo-400/20" />
+              </div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 text-blue-700" />
+                  </div>
+                  <div>
+                    <p className="text-blue-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Communication</p>
+                    <h2 className="text-xl font-bold text-slate-800">Messages</h2>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-white/40 hover:bg-white/60 text-blue-700 rounded-xl"
+                  onClick={() => setShowNewConversation(true)}
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </div>
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{threads.length}</p>
+                  <p className="text-[9px] text-blue-700 font-medium">Conversations</p>
+                </div>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{threads.filter(t => t.status === 'active').length}</p>
+                  <p className="text-[9px] text-blue-700 font-medium">Active</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -672,7 +699,7 @@ export default function VolunteerMessagesPWA() {
         </div>
       ) : (
         /* Thread List View */
-        <div className="p-4">
+        <div className="px-4 pb-4">
           {/* Search */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -680,7 +707,7 @@ export default function VolunteerMessagesPWA() {
               placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-white border-slate-200"
+              className="pl-9 bg-white border-slate-200 rounded-xl shadow-sm h-11"
               aria-label="Search conversations"
             />
           </div>

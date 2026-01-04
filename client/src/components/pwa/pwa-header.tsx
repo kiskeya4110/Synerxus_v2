@@ -28,6 +28,10 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
   const queryClient = useQueryClient();
 
+  // Get userType from localStorage as immediate fallback
+  const storedUserType = localStorage.getItem('userType');
+  const isVolunteer = storedUserType === 'volunteer';
+
   // Fetch current user
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
@@ -40,13 +44,14 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   });
 
   // Fetch volunteer profile for profile photo (more up-to-date than user.avatar)
+  // Use localStorage userType as fallback so we don't wait for currentUser to load
   const { data: volunteerProfileData } = useQuery<{ user: any; volunteerProfile: VolunteerProfile | null }>({
     queryKey: ["/api/intake/volunteer-profile", userId],
     queryFn: async () => {
       const response = await fetch(`/api/intake/volunteer-profile?userId=${userId}`);
       return response.ok ? response.json() : null;
     },
-    enabled: !!userId && currentUser?.userType === 'volunteer',
+    enabled: !!userId && (isVolunteer || currentUser?.userType === 'volunteer'),
     staleTime: 30000,
   });
 

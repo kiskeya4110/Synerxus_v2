@@ -777,7 +777,8 @@ export const conversationThreads = pgTable("conversation_threads", {
 });
 
 // Messages - Communication between organizations and volunteers
-export const orgMessages = pgTable("org_messages", {
+// Note: table is named "messages" in the database (not "org_messages")
+export const orgMessages = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").references(() => users.id).notNull(),
   receiverId: integer("receiver_id").references(() => users.id).notNull(),
@@ -787,6 +788,9 @@ export const orgMessages = pgTable("org_messages", {
   projectId: integer("project_id").references(() => projects.id), // Optional project context
   messageType: text("message_type").notNull().default("general"), // general, project_invite, project_removal, volunteer_request
   read: boolean("read").default(false).notNull(),
+  deliveryStatus: text("delivery_status").notNull().default("sent"), // sent, delivered, read - for live chat confirmation
+  deliveredAt: timestamp("delivered_at"), // When message was received by recipient
+  readAt: timestamp("read_at"), // When message was read by recipient
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

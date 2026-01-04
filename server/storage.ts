@@ -337,6 +337,7 @@ export interface IStorage {
   listMessagesByThread(threadId: number): Promise<OrgMessage[]>;
   listConversation(userId1: number, userId2: number): Promise<OrgMessage[]>;
   markMessageAsRead(id: number): Promise<OrgMessage | undefined>;
+  markMessageAsDelivered(id: number): Promise<OrgMessage | undefined>;
 
   // Notification operations
   getNotification(id: number): Promise<Notification | undefined>;
@@ -1406,7 +1407,23 @@ export class DatabaseStorage implements IStorage {
   async markMessageAsRead(id: number): Promise<OrgMessage | undefined> {
     const [result] = await db
       .update(orgMessages)
-      .set({ read: true })
+      .set({
+        read: true,
+        deliveryStatus: 'read',
+        readAt: new Date()
+      })
+      .where(eq(orgMessages.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async markMessageAsDelivered(id: number): Promise<OrgMessage | undefined> {
+    const [result] = await db
+      .update(orgMessages)
+      .set({
+        deliveryStatus: 'delivered',
+        deliveredAt: new Date()
+      })
       .where(eq(orgMessages.id, id))
       .returning();
     return result || undefined;

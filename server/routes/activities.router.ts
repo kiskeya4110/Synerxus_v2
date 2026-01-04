@@ -616,12 +616,12 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       return res.json(results);
     }
 
-    // Get pending volunteer activities
+    // Get pending volunteer activities (include 'pending', 'self_reported', or undefined status)
     const allActivities = await storage.listVolunteerActivities();
     const pendingActivities = allActivities.filter((a: any) =>
       a.projectId &&
       projectIds.includes(a.projectId) &&
-      (a.verificationStatus === 'pending' || !a.verificationStatus)
+      (a.verificationStatus === 'pending' || a.verificationStatus === 'self_reported' || !a.verificationStatus)
     );
 
     // Enrich activities with volunteer info
@@ -637,12 +637,12 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       });
     }
 
-    // Get pending project impacts
+    // Get pending project impacts (include both 'pending' and 'self_reported' status)
     const allImpacts = await storage.listProjectImpacts();
     const pendingImpacts = allImpacts.filter((i: any) =>
       i.projectId &&
       projectIds.includes(i.projectId) &&
-      i.verificationStatus === 'pending'
+      (i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported')
     );
 
     // Enrich impacts with volunteer and project info

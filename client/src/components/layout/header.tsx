@@ -358,9 +358,9 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center focus:outline-none">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage 
-                      src={currentUser?.userType === 'organization' ? (organizationProfile?.organization?.logo || organizationProfile?.logo) : (volunteerProfile?.user?.avatar || volunteerProfile?.avatar)} 
-                      alt="User avatar" 
+                    <AvatarImage
+                      src={currentUser?.userType === 'organization' ? (organizationProfile?.organization?.logo || organizationProfile?.logo) : (volunteerProfile?.volunteerProfile?.profilePhotoUrl || volunteerProfile?.user?.avatar || currentUser?.avatar)}
+                      alt="User avatar"
                     />
                     <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                   </Avatar>

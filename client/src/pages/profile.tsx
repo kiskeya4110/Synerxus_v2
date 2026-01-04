@@ -138,8 +138,8 @@ export default function Profile() {
   });
 
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;
-  // volunteerData is directly the profile from /api/intake/volunteer-profile endpoint
-  const volunteerProfile = volunteerData;
+  // volunteerData contains { user, volunteerProfile } from /api/intake/volunteer-profile endpoint
+  const volunteerProfile = volunteerData?.volunteerProfile;
   const organizationData = orgData?.organization;
   const matchableOrgData = orgData?.matchableOrganization;
 

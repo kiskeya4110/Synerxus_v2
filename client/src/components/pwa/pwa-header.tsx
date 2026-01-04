@@ -40,7 +40,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   });
 
   // Fetch volunteer profile for profile photo (more up-to-date than user.avatar)
-  const { data: volunteerProfile } = useQuery<VolunteerProfile>({
+  const { data: volunteerProfileData } = useQuery<{ user: any; volunteerProfile: VolunteerProfile | null }>({
     queryKey: ["/api/intake/volunteer-profile", userId],
     queryFn: async () => {
       const response = await fetch(`/api/intake/volunteer-profile?userId=${userId}`);
@@ -51,7 +51,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   });
 
   // Get the best available profile photo URL (volunteer profile photo takes priority)
-  const profilePhotoUrl = volunteerProfile?.profilePhotoUrl || currentUser?.avatar || undefined;
+  const profilePhotoUrl = volunteerProfileData?.volunteerProfile?.profilePhotoUrl || currentUser?.avatar || undefined;
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<Notification[]>({

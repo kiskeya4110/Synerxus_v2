@@ -36,7 +36,7 @@ export default function Projects() {
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
-  const { data: currentUser } = useQuery<User>({
+  const { data: currentUser, isLoading: isUserLoading, isError: isUserError } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -243,8 +243,38 @@ export default function Projects() {
   // Use localStorage userType as fallback when currentUser hasn't loaded yet
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
 
-  // Loading state with proper PWA layout for mobile organizations
-  if (isLoading || !currentUser) {
+  // Handle user loading or error state
+  if (isUserLoading || (!currentUser && !isUserError)) {
+    if (isOrganization && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Handle user error or no user
+  if (isUserError || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Failed to load user data</p>
+          <p className="text-gray-500 text-sm">Please try refreshing the page or logging in again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state for projects
+  if (isLoading) {
     if (isOrganization && isMobile) {
       return (
         <OrganizationPWALayout activeTab="projects">

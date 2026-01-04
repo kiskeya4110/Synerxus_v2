@@ -77,16 +77,18 @@ export default function MyWork() {
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
   
   // Fetch current user with userId in cache key to avoid stale data
-  const { data: currentUser } = useQuery<User>({
+  const { data: currentUser, isLoading: isUserLoading } = useQuery<User>({
     queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
       const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },
     staleTime: 0,
-    refetchOnMount: true
+    refetchOnMount: true,
+    enabled: !!storedUserId
   });
 
   const userId = localStorage.getItem('currentUserId');
@@ -165,12 +167,16 @@ export default function MyWork() {
   });
 
   // Fetch organization projects
-  const { data: orgProjects = [], isLoading: orgProjectsLoading } = useQuery<any[]>({
+  const { data: orgProjects = [], isLoading: orgProjectsLoading, isError: orgProjectsError } = useQuery<any[]>({
     queryKey: ["/api/projects", "org", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
-      return response.ok ? await response.json() : [];
+      if (!response.ok) {
+        console.error("Failed to fetch organization projects:", response.status);
+        return [];
+      }
+      return response.json();
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization',
     staleTime: 0,
@@ -464,6 +470,18 @@ export default function MyWork() {
   const impactLeaderEntry = Array.from(volunteerHoursMap.entries())
     .sort((a, b) => b[1].hours - a[1].hours)[0];
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
+
+  // Show loading state while user data is being fetched to prevent wrong view flash
+  if (isUserLoading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
@@ -771,12 +789,19 @@ export default function MyWork() {
               )}
             </div>
             <div className="space-y-4">
-              {orgProjectsLoading ? (
+              {(orgProjectsLoading || isUserLoading) ? (
                 <Card className="p-8 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
                     <p className="text-gray-500">Loading projects...</p>
                   </div>
+                </Card>
+              ) : orgProjectsError ? (
+                <Card className="p-8 text-center">
+                  <p className="text-red-500 mb-4">Failed to load projects. Please try refreshing the page.</p>
+                  {currentUser?.organizationId && (
+                    <CreateProjectDialog organizationId={currentUser.organizationId} />
+                  )}
                 </Card>
               ) : orgProjects.length > 0 ? (
                 orgProjects.map((project: Project) => {

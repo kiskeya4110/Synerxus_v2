@@ -366,6 +366,9 @@ export default function OrganizationMessagesPWA() {
           isRefreshing={isRefreshing}
         />
 
+        {/* Spacer for fixed header */}
+        <div className="h-16 flex-shrink-0" />
+
         {/* Thread Header - shows when viewing a conversation */}
         {selectedThread && (
           <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200 flex-shrink-0">
@@ -431,10 +434,10 @@ export default function OrganizationMessagesPWA() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20">
+        <main className="flex-1 overflow-y-auto pb-24">
           {selectedThread ? (
             /* Chat View */
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full pb-16">
           {/* Messages */}
           <ScrollArea className="flex-1 px-4 py-3">
             {loadingMessages ? (
@@ -505,28 +508,30 @@ export default function OrganizationMessagesPWA() {
             )}
           </ScrollArea>
 
-          {/* Input Area */}
-          <div className="p-3 bg-white border-t border-slate-200">
-            <div className="flex gap-2">
-              <Input
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 bg-slate-100 border-0"
-                onKeyDown={handleKeyDown}
-                disabled={sendMessageMutation.isPending}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                className="bg-emerald-500 hover:bg-emerald-600"
-              >
-                {sendMessageMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+          {/* Input Area - Fixed above bottom nav */}
+          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 p-3 bg-white border-t border-slate-200 z-40">
+            <div className="max-w-[428px] mx-auto">
+              <div className="flex gap-2">
+                <Input
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-slate-100 border-0"
+                  onKeyDown={handleKeyDown}
+                  disabled={sendMessageMutation.isPending}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                  className="bg-emerald-500 hover:bg-emerald-600"
+                >
+                  {sendMessageMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -623,12 +628,12 @@ export default function OrganizationMessagesPWA() {
         {/* New Conversation Modal */}
         {showNewConversation && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          className="fixed inset-0 bg-black/50 flex items-end z-[70]"
           onClick={(e) => {
             if (e.target === e.currentTarget) resetNewConversationState();
           }}
         >
-          <div className="bg-white rounded-t-2xl w-full max-w-[428px] mx-auto max-h-[80vh] overflow-hidden">
+          <div className="bg-white rounded-t-2xl w-full max-w-[428px] mx-auto max-h-[70vh] overflow-hidden mb-[calc(4rem+env(safe-area-inset-bottom))]">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-800">New Conversation</h2>

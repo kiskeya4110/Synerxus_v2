@@ -3,6 +3,22 @@ import { useLocation } from "wouter";
 import OrganizationPWAHeader from "./organization-pwa-header";
 import OrganizationPWANav from "./organization-pwa-nav";
 
+/**
+ * OrganizationPWALayout - Standard layout wrapper for organization PWA pages.
+ *
+ * WHEN TO USE THIS LAYOUT:
+ * - For standard organization PWA pages that need the consistent header and navigation
+ * - Examples: projects.tsx, volunteers.tsx, sdg-mapping.tsx, overview.tsx
+ *
+ * WHEN NOT TO USE (use OrganizationPWAHeader + OrganizationPWANav directly):
+ * - For complex pages that need custom scroll behavior (e.g., chat/messages pages)
+ * - When the page needs to manage its own container structure
+ * - Example: organization-messages-pwa.tsx uses components directly for chat functionality
+ *
+ * To prevent inconsistent PWA layouts:
+ * - Always check userType === 'organization' and isMobile before rendering this layout
+ * - Ensure the navigation activeTab matches the current page
+ */
 interface OrganizationPWALayoutProps {
   children: ReactNode;
   activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard';
@@ -48,8 +64,11 @@ export default function OrganizationPWALayout({
           metrics={metrics}
         />
 
+        {/* Spacer for sticky header */}
+        <div className="h-16 flex-shrink-0" />
+
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20">
+        <main className="flex-1 overflow-y-auto pb-24">
           {children}
         </main>
 

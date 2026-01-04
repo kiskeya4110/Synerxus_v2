@@ -738,19 +738,19 @@ export default function OrganizationDashboardPWA() {
                     {organization?.name || 'Organization'}
                   </h2>
                 </div>
-                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden">
-                  {organization?.logo ? (
+                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden relative">
+                  {/* Always show fallback icon */}
+                  <Briefcase className="w-6 h-6 text-blue-800 absolute" />
+                  {/* Logo overlays fallback when loaded successfully */}
+                  {organization?.logo && (
                     <img
                       src={organization.logo}
                       alt={organization.name || 'Organization'}
-                      className="w-10 h-10 object-contain"
+                      className="w-10 h-10 object-contain absolute"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                       }}
                     />
-                  ) : (
-                    <Briefcase className="w-6 h-6 text-blue-800" />
                   )}
                 </div>
               </div>
@@ -1491,11 +1491,21 @@ export default function OrganizationDashboardPWA() {
                   >
                     {/* Avatar with online indicator */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm ring-2 ring-white shadow-md group-hover:shadow-lg group-hover:ring-purple-200 transition-all">
-                        {volunteer.avatar ? (
-                          <img src={volunteer.avatar} alt={volunteer.displayName} className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                          volunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm ring-2 ring-white shadow-md group-hover:shadow-lg group-hover:ring-purple-200 transition-all relative overflow-hidden">
+                        {/* Always show initials as fallback */}
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          {volunteer.displayName?.charAt(0)?.toUpperCase() || 'V'}
+                        </span>
+                        {/* Image overlays initials when loaded successfully */}
+                        {volunteer.avatar && (
+                          <img
+                            src={volunteer.avatar}
+                            alt={volunteer.displayName}
+                            className="absolute inset-0 w-full h-full rounded-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
                         )}
                       </div>
                       {/* Active indicator */}
@@ -3039,11 +3049,21 @@ export default function OrganizationDashboardPWA() {
 
               {/* Volunteer Header Card */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                  {selectedVolunteer.avatar ? (
-                    <img src={selectedVolunteer.avatar} alt={selectedVolunteer.displayName} className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    selectedVolunteer.displayName?.charAt(0)?.toUpperCase() || 'V'
+                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl flex-shrink-0 relative overflow-hidden">
+                  {/* Always show initials as fallback */}
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    {selectedVolunteer.displayName?.charAt(0)?.toUpperCase() || 'V'}
+                  </span>
+                  {/* Image overlays initials when loaded successfully */}
+                  {selectedVolunteer.avatar && (
+                    <img
+                      src={selectedVolunteer.avatar}
+                      alt={selectedVolunteer.displayName}
+                      className="absolute inset-0 w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">

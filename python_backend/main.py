@@ -15,6 +15,12 @@ import re
 import json
 from datetime import datetime
 
+# Security constants
+MAX_FILE_SIZE_MB = 10
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+MAX_IMAGE_DIMENSION = 4096
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
 app = FastAPI(
     title="Synerxus CSR Platform API",
     description="Python backend for OCR ingestion and AI services",
@@ -109,9 +115,35 @@ async def ingest_image(file: UploadFile = File(...)):
     Returns mapped fields with confidence scores for manual review
     """
     try:
-        # Read image file
+        # SECURITY: Validate content type
+        if file.content_type not in ALLOWED_CONTENT_TYPES:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_CONTENT_TYPES)}"
+            )
+        
+        # Read image file with size limit
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
+        
+        # SECURITY: Check file size
+        if len(contents) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File size exceeds maximum allowed size of {MAX_FILE_SIZE_MB}MB"
+            )
+        
+        # Parse and validate image
+        try:
+            image = Image.open(io.BytesIO(contents))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Invalid or corrupted image file")
+        
+        # SECURITY: Check image dimensions to prevent decompression bombs
+        if image.width > MAX_IMAGE_DIMENSION or image.height > MAX_IMAGE_DIMENSION:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image dimensions exceed maximum of {MAX_IMAGE_DIMENSION}x{MAX_IMAGE_DIMENSION} pixels"
+            )
 
         # Perform OCR
         extracted_text = pytesseract.image_to_string(image)
@@ -154,6 +186,9 @@ async def ingest_image(file: UploadFile = File(...)):
             metadata=metadata
         )
 
+    except HTTPException:
+        # Re-raise HTTPExceptions (validation errors) as-is with their original status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Image ingestion failed: {str(e)}")
 

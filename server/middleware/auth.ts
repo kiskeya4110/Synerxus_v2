@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { storage } from "../storage";
 import { logger } from "../logger";
+import { verifyFirebaseIdToken } from "../lib/firebase-admin";
 
 // Extend Express Request to include user
 declare global {
@@ -83,46 +84,30 @@ export async function authMiddleware(
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const decoded = verifyToken(token);
-
-      if (decoded?.userId) {
-        userId = decoded.userId;
+      
+      // First try to verify as our own JWT token
+      const jwtDecoded = verifyToken(token);
+      if (jwtDecoded?.userId) {
+        userId = jwtDecoded.userId;
         userFromToken = true;
-      }
-    }
-
-    // Method 2: Check for Firebase UID and verify against database
-    if (!userId && req.headers["x-firebase-uid"]) {
-      const firebaseUid = req.headers["x-firebase-uid"] as string;
-      const users = await storage.listUsers();
-      const user = users.find((u) => u.firebaseUid === firebaseUid);
-
-      if (user) {
-        userId = user.id;
-        userFromToken = true; // Firebase UID is considered secure
-      }
-    }
-
-    // Method 3: Legacy - userId from query/body (DEPRECATED - will be removed)
-    // This is kept for backward compatibility during migration
-    if (!userId) {
-      const legacyUserId =
-        (req.body as Record<string, any>)?.userId ||
-        (req.query.userId as string) ||
-        (req.headers["x-user-id"] as string);
-
-      if (legacyUserId) {
-        const parsedId = parseInt(String(legacyUserId));
-        if (!isNaN(parsedId)) {
-          userId = parsedId;
-          // Log deprecation warning
-          logger.warn(
-            `[Auth] Legacy userId authentication used for user ${userId}. ` +
-              `This method is deprecated. Please migrate to JWT tokens.`
-          );
+      } else {
+        // Try to verify as Firebase ID token (cryptographically signed)
+        const firebaseDecoded = await verifyFirebaseIdToken(token);
+        if (firebaseDecoded?.uid) {
+          // Look up user by Firebase UID
+          const users = await storage.listUsers();
+          const user = users.find((u) => u.firebaseUid === firebaseDecoded.uid);
+          if (user) {
+            userId = user.id;
+            userFromToken = true;
+          }
         }
       }
     }
+
+    // SECURITY: Legacy x-user-id and x-firebase-uid header authentication REMOVED
+    // These were critical vulnerabilities allowing user impersonation
+    // All authentication must now go through verified JWT or Firebase ID tokens
 
     if (!userId) {
       res.status(401).json({
@@ -175,10 +160,11 @@ export async function optionalAuthMiddleware(
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const decoded = verifyToken(token);
-
-      if (decoded?.userId) {
-        const user = await storage.getUser(decoded.userId);
+      
+      // First try to verify as our own JWT token
+      const jwtDecoded = verifyToken(token);
+      if (jwtDecoded?.userId) {
+        const user = await storage.getUser(jwtDecoded.userId);
         if (user) {
           req.user = {
             id: user.id,
@@ -189,45 +175,28 @@ export async function optionalAuthMiddleware(
           };
           req.userId = user.id;
         }
-      }
-    }
-
-    // Also check Firebase UID
-    if (!req.user && req.headers["x-firebase-uid"]) {
-      const firebaseUid = req.headers["x-firebase-uid"] as string;
-      const users = await storage.listUsers();
-      const user = users.find((u) => u.firebaseUid === firebaseUid);
-
-      if (user) {
-        req.user = {
-          id: user.id,
-          email: user.email,
-          userType: user.userType || "volunteer",
-          organizationId: user.organizationId,
-          firebaseUid: user.firebaseUid,
-        };
-        req.userId = user.id;
-      }
-    }
-
-    // Also check x-user-id header (legacy support, matches authMiddleware behavior)
-    if (!req.user && req.headers["x-user-id"]) {
-      const legacyUserId = req.headers["x-user-id"] as string;
-      const parsedId = parseInt(legacyUserId);
-      if (!isNaN(parsedId)) {
-        const user = await storage.getUser(parsedId);
-        if (user) {
-          req.user = {
-            id: user.id,
-            email: user.email,
-            userType: user.userType || "volunteer",
-            organizationId: user.organizationId,
-            firebaseUid: user.firebaseUid,
-          };
-          req.userId = user.id;
+      } else {
+        // Try to verify as Firebase ID token (cryptographically signed)
+        const firebaseDecoded = await verifyFirebaseIdToken(token);
+        if (firebaseDecoded?.uid) {
+          const users = await storage.listUsers();
+          const user = users.find((u) => u.firebaseUid === firebaseDecoded.uid);
+          if (user) {
+            req.user = {
+              id: user.id,
+              email: user.email,
+              userType: user.userType || "volunteer",
+              organizationId: user.organizationId,
+              firebaseUid: user.firebaseUid,
+            };
+            req.userId = user.id;
+          }
         }
       }
     }
+
+    // SECURITY: Legacy x-user-id and x-firebase-uid header authentication REMOVED
+    // These were vulnerabilities allowing user impersonation
 
     next();
   } catch (error) {
@@ -409,30 +378,14 @@ export function getVerifiedUserId(req: Request): number | null {
 }
 
 /**
- * Get user ID with fallback for backward compatibility
+ * Get user ID - only from verified sources (no legacy fallback)
  * @deprecated Use getVerifiedUserId instead
  */
 export function extractUserIdSecure(req: Request): number | null {
-  // First try verified user
+  // SECURITY: Only return verified user ID - no legacy fallback
+  // Legacy x-user-id header authentication was removed as it allowed impersonation
   if (req.user?.id) {
     return req.user.id;
   }
-
-  // Legacy fallback - log warning
-  const legacyUserId =
-    (req.body as Record<string, any>)?.userId ||
-    (req.query.userId as string) ||
-    (req.headers["x-user-id"] as string);
-
-  if (legacyUserId) {
-    const parsedId = parseInt(String(legacyUserId));
-    if (!isNaN(parsedId)) {
-      logger.warn(
-        `[Security] Legacy userId extraction for ${parsedId}. Migrate to JWT authentication.`
-      );
-      return parsedId;
-    }
-  }
-
   return null;
 }

@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { auth } from "./firebase";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,20 +8,47 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Get current Firebase user's ID token for API authentication
+ * Returns null if user is not authenticated
+ */
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      // Get fresh ID token (Firebase automatically refreshes expired tokens)
+      return await user.getIdToken();
+    }
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+  }
+  return null;
+}
+
+/**
+ * Get Firebase UID for API authentication (fallback)
+ */
+function getFirebaseUid(): string | null {
+  const user = auth.currentUser;
+  return user?.uid || null;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const userId = localStorage.getItem('currentUserId');
   const headers: Record<string, string> = {};
   
   if (data) {
     headers["Content-Type"] = "application/json";
   }
   
-  if (userId) {
-    headers["x-user-id"] = userId;
+  // SECURITY: Use Firebase ID token for secure authentication
+  // ID tokens are cryptographically signed and can be verified on the backend
+  const token = await getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
   
   const res = await fetch(url, {
@@ -40,11 +68,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const userId = localStorage.getItem('currentUserId');
     const headers: Record<string, string> = {};
     
-    if (userId) {
-      headers["x-user-id"] = userId;
+    // SECURITY: Use Firebase ID token for secure authentication
+    const token = await getAuthToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
     
     // Build URL with query parameters from queryKey

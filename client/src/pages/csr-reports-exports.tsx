@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
+import DOMPurify from "dompurify";
 import Logo from "@/components/ui/logo";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -364,7 +365,7 @@ export default function CSRReportsExports() {
         const htmlContent = generatePDFContent(template, reportData);
         const printWindow = window.open("", "_blank");
         if (printWindow) {
-          printWindow.document.write(htmlContent);
+          printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
           printWindow.document.close();
           printWindow.print();
         }

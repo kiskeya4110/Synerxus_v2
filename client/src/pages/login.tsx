@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiKey } from "react-icons/fi";
+import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiKey, FiHeart, FiGlobe, FiBriefcase } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -476,65 +476,109 @@ export default function Login() {
               <TabsContent value="register">
                 {!userType ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-4">
-                      Choose your account type to get started
-                    </p>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full h-20 text-left justify-start"
+                    <div className="text-center mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        Join Synerxus
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Select your account type to get started
+                      </p>
+                    </div>
+
+                    {/* Volunteer Option */}
+                    <button
+                      type="button"
+                      className="w-full p-4 rounded-xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 text-left group"
                       onClick={() => setUserType("volunteer")}
                       data-testid="button-register-volunteer"
                     >
-                      <div>
-                        <div className="font-semibold text-base">I'm a Volunteer</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Find meaningful opportunities worldwide
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiHeart className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-base text-emerald-800 dark:text-emerald-200">
+                            Volunteer
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Find meaningful opportunities to make a difference worldwide
+                          </div>
                         </div>
                       </div>
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full h-20 text-left justify-start"
+                    </button>
+
+                    {/* Organization Option */}
+                    <button
+                      type="button"
+                      className="w-full p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 text-left group"
                       onClick={() => setUserType("organization")}
                       data-testid="button-register-organization"
                     >
-                      <div>
-                        <div className="font-semibold text-base">I'm an Organization</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Connect with global volunteers
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiGlobe className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-base text-blue-800 dark:text-blue-200">
+                            Organization
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Connect with skilled volunteers to amplify your impact
+                          </div>
                         </div>
                       </div>
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full h-20 text-left justify-start border-blue-200 dark:border-blue-800"
+                    </button>
+
+                    {/* Corporate Partner Option */}
+                    <button
+                      type="button"
+                      className="w-full p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-md transition-all duration-200 text-left group"
                       onClick={() => setUserType("corporate-partner")}
                       data-testid="button-register-corporate"
                     >
-                      <div>
-                        <div className="font-semibold text-base">I'm a Corporate Partner</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Manage employee volunteer programs
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiBriefcase className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-base text-purple-800 dark:text-purple-200">
+                            Corporate Partner
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Empower your employees through CSR volunteer programs
+                          </div>
                         </div>
                       </div>
-                    </Button>
+                    </button>
                   </div>
                 ) : (
                   <form onSubmit={handleSignUp}>
                     <div className="space-y-4">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setUserType(null)}
-                        className="mb-2"
-                        data-testid="button-back-to-selection"
-                      >
-                        ← Back to account type selection
-                      </Button>
+                      {/* Selected user type indicator */}
+                      <div className="flex items-center justify-between mb-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUserType(null)}
+                          className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 -ml-2"
+                          data-testid="button-back-to-selection"
+                        >
+                          ← Change type
+                        </Button>
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                          userType === 'volunteer'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                            : userType === 'organization'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                        }`}>
+                          {userType === 'volunteer' && <FiHeart className="w-4 h-4" />}
+                          {userType === 'organization' && <FiGlobe className="w-4 h-4" />}
+                          {userType === 'corporate-partner' && <FiBriefcase className="w-4 h-4" />}
+                          {userType === 'volunteer' ? 'Volunteer' : userType === 'organization' ? 'Organization' : 'Corporate Partner'}
+                        </div>
+                      </div>
                       
                       {(userType === "organization" || userType === "corporate-partner") && (
                         <div className="space-y-2">

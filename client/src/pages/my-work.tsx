@@ -17,6 +17,7 @@ import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";
@@ -483,6 +484,107 @@ export default function MyWork() {
     );
   }
 
+  // PWA view for organization managers on mobile
+  if (isOrganizationManager && isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4 space-y-4">
+          {/* Page Title */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">My Work</h1>
+            {currentUser?.organizationId && (
+              <CreateProjectDialog organizationId={currentUser.organizationId} />
+            )}
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Active Projects</p>
+              <p className="text-xl font-bold">{orgTotalProjects}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Total Hours</p>
+              <p className="text-xl font-bold">{orgTotalHours}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Volunteers</p>
+              <p className="text-xl font-bold">{orgTotalVolunteers}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Completed</p>
+              <p className="text-xl font-bold">{orgCompletedProjects}</p>
+            </Card>
+          </div>
+
+          {/* Projects List */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Organization Projects</h2>
+            <div className="space-y-3">
+              {orgProjectsLoading ? (
+                <Card className="p-6 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                    <p className="text-gray-500 text-sm">Loading projects...</p>
+                  </div>
+                </Card>
+              ) : orgProjectsError ? (
+                <Card className="p-6 text-center">
+                  <p className="text-red-500 text-sm mb-3">Failed to load projects.</p>
+                  {currentUser?.organizationId && (
+                    <CreateProjectDialog organizationId={currentUser.organizationId} />
+                  )}
+                </Card>
+              ) : orgProjects.length > 0 ? (
+                orgProjects.map((project: Project) => {
+                  const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
+                  const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
+                  const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+                  const projectAssignments = orgProjectAssignments.filter((a: any) => a.projectId === project.id);
+                  const projectVolunteerCount = new Set(projectAssignments.map((a: any) => a.volunteerId)).size;
+
+                  return (
+                    <Card key={project.id} className="p-4">
+                      <Link href={`/projects/${project.id}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium text-sm">{project.name}</h3>
+                          <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                            {project.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{project.description}</p>
+                        <div className="flex justify-between text-xs text-gray-500 mb-2">
+                          <span>{projectVolunteerCount} volunteers</span>
+                          <span>{project.completionPercentage ?? progress}% complete</span>
+                        </div>
+                        <Progress value={project.completionPercentage ?? progress} className="h-1.5" />
+                      </Link>
+                    </Card>
+                  );
+                })
+              ) : (
+                <Card className="p-6 text-center">
+                  <FolderOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm mb-3">No projects yet</p>
+                  {currentUser?.organizationId && (
+                    <CreateProjectDialog organizationId={currentUser.organizationId} />
+                  )}
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* Tasks Section */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Tasks</h2>
+            <MyTasksPage />
+          </div>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Desktop view (original)
   return (
     <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
       {/* Volunteer Desktop Navigation - only for volunteers, not organization managers */}

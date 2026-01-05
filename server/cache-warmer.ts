@@ -9,10 +9,11 @@ import { cache, CACHE_TTL, cacheKeys } from './cache';
 import { storage } from './storage';
 import { logger } from './logger';
 
-// Configuration
+// Configuration - use environment variables for flexibility
 const WARM_UP_DELAY = 5000; // Wait 5 seconds after server start before warming
-const BACKGROUND_REFRESH_INTERVAL = 60 * 1000; // Refresh every 60 seconds
+const BACKGROUND_REFRESH_INTERVAL = parseInt(process.env.CACHE_REFRESH_INTERVAL || '300000', 10); // Default: 5 minutes (was 60s)
 const MAX_USERS_TO_WARM = 50; // Limit number of user dashboards to pre-warm
+const DISABLE_CACHE_WARMER = process.env.DISABLE_CACHE_WARMER === 'true' || process.env.NODE_ENV === 'development';
 
 let refreshInterval: NodeJS.Timeout | null = null;
 let isWarming = false;
@@ -21,6 +22,11 @@ let isWarming = false;
  * Pre-warm critical caches on server startup
  */
 export async function warmupCache(): Promise<void> {
+  if (DISABLE_CACHE_WARMER) {
+    logger.info('[CacheWarmer] Cache warming disabled (development mode or DISABLE_CACHE_WARMER=true)');
+    return;
+  }
+
   if (isWarming) {
     logger.info('[CacheWarmer] Cache warming already in progress, skipping...');
     return;
@@ -153,6 +159,11 @@ async function warmOpportunities(): Promise<void> {
  * Start background cache refresh
  */
 export function startBackgroundRefresh(): void {
+  if (DISABLE_CACHE_WARMER) {
+    logger.info('[CacheWarmer] Background refresh disabled (development mode or DISABLE_CACHE_WARMER=true)');
+    return;
+  }
+
   if (refreshInterval) {
     logger.warn('[CacheWarmer] Background refresh already running');
     return;
@@ -218,11 +229,15 @@ export function initCacheWarming(): void {
 export function getCacheWarmerStatus(): {
   isWarming: boolean;
   refreshRunning: boolean;
+  disabled: boolean;
+  refreshIntervalMs: number;
   cacheStats: ReturnType<typeof cache.getStats>;
 } {
   return {
     isWarming,
     refreshRunning: refreshInterval !== null,
+    disabled: DISABLE_CACHE_WARMER,
+    refreshIntervalMs: BACKGROUND_REFRESH_INTERVAL,
     cacheStats: cache.getStats(),
   };
 }

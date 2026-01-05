@@ -94,9 +94,8 @@ export async function authMiddleware(
         // Try to verify as Firebase ID token (cryptographically signed)
         const firebaseDecoded = await verifyFirebaseIdToken(token);
         if (firebaseDecoded?.uid) {
-          // Look up user by Firebase UID
-          const users = await storage.listUsers();
-          const user = users.find((u) => u.firebaseUid === firebaseDecoded.uid);
+          // Look up user by Firebase UID using efficient indexed query
+          const user = await storage.getUserByFirebaseUid(firebaseDecoded.uid);
           if (user) {
             userId = user.id;
             userFromToken = true;
@@ -179,8 +178,8 @@ export async function optionalAuthMiddleware(
         // Try to verify as Firebase ID token (cryptographically signed)
         const firebaseDecoded = await verifyFirebaseIdToken(token);
         if (firebaseDecoded?.uid) {
-          const users = await storage.listUsers();
-          const user = users.find((u) => u.firebaseUid === firebaseDecoded.uid);
+          // Efficient indexed query instead of fetching all users
+          const user = await storage.getUserByFirebaseUid(firebaseDecoded.uid);
           if (user) {
             req.user = {
               id: user.id,

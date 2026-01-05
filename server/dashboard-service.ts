@@ -262,9 +262,8 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
       throw new Error("User is not a volunteer");
     }
 
-    // Get volunteer profile from separate table
-    const allProfiles = await storage.listVolunteerProfiles();
-    const volunteerProfile = allProfiles.find(p => p.userId === volunteerId) || null;
+    // Get volunteer profile using targeted query (not fetching all profiles)
+    const volunteerProfile = await storage.getVolunteerProfileByUserId(volunteerId);
 
     // Get all opportunities AND projects
     const opportunities = await storage.listOpportunities();
@@ -379,8 +378,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
       return status === 'approved' || status === 'verified';
     });
 
-    // Step 3: Fetch users and metrics (these are needed for reference lookups)
-    const allUsers = await storage.listUsers();
+    // Step 3: Fetch metrics (static/cached) - users fetched later with targeted query
     const allImpactMetrics = await storage.listImpactMetrics();
 
     // Identify metrics that represent people/beneficiaries
@@ -417,13 +415,14 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     const orgOpportunityIds = organizationOpportunities.map(opp => opp.id);
     const organizationApplications = await storage.listApplicationsByOpportunityIds(orgOpportunityIds);
 
-    // Get volunteers assigned to organization's projects
-    const volunteerIds = new Set(organizationAssignments.map(pa => pa.volunteerId));
-    const organizationVolunteers = allUsers.filter(u => u.userType === 'volunteer' && volunteerIds.has(u.id));
+    // Get volunteers assigned to organization's projects (efficient batch query)
+    const volunteerIds = Array.from(new Set(organizationAssignments.map(pa => pa.volunteerId)));
+    const organizationVolunteers = volunteerIds.length > 0
+      ? await storage.getUsersByIds(volunteerIds)
+      : [];
 
-    // Get organization profile for selected SDGs
-    const allOrgProfiles = await storage.listOrganizationProfiles();
-    const organizationProfile = allOrgProfiles.find(p => p.organizationId === organizationId) || null;
+    // Get organization profile for selected SDGs (targeted query)
+    const organizationProfile = await storage.getOrganizationProfileByOrgId(organizationId);
     const organizationPrimarySdgs = organizationProfile?.primarySdgs || [];
 
     // Calculate summary metrics
@@ -635,9 +634,22 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
       organizationProjects.map(p => [p.id, { name: p.name, status: p.status }])
     );
 
+    // Collect all user IDs referenced in activities, tasks, applications, assignments
+    const allReferencedUserIds = new Set<number>();
+    organizationActivities.forEach(a => a.userId && allReferencedUserIds.add(a.userId));
+    organizationTasks.forEach(t => t.assigneeId && allReferencedUserIds.add(t.assigneeId));
+    organizationApplications.forEach(a => a.volunteerId && allReferencedUserIds.add(a.volunteerId));
+    organizationAssignments.forEach(a => a.volunteerId && allReferencedUserIds.add(a.volunteerId));
+
+    // Fetch only the users we need (efficient batch query)
+    const referencedUserIds = Array.from(allReferencedUserIds);
+    const referencedUsers = referencedUserIds.length > 0
+      ? await storage.getUsersByIds(referencedUserIds)
+      : [];
+
     // Create a map of user data for assignee lookup
     const userMap = new Map(
-      allUsers.map(u => [u.id, { name: u.displayName || u.username || 'Unknown', avatar: u.avatar }])
+      referencedUsers.map(u => [u.id, { name: u.displayName || u.username || 'Unknown', avatar: u.avatar }])
     );
 
     // Enrich tasks with project metadata and assignee details

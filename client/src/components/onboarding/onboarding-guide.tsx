@@ -33,8 +33,8 @@ const STEP_ROUTES: Record<string, string> = {
 };
 
 export default function OnboardingGuide() {
-  const { isActive, currentStep, currentStepIndex, steps, nextStep, prevStep, skipOnboarding, completeOnboarding } = useOnboarding();
-  const { variant, config, track } = useOnboardingExperiment();
+  const onboarding = useOnboarding();
+  const abTesting = useOnboardingExperiment();
   const [location, navigate] = useLocation();
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [targetFound, setTargetFound] = useState(false);
@@ -43,6 +43,9 @@ export default function OnboardingGuide() {
   const [startTime] = useState(() => Date.now());
   const targetRef = useRef<HTMLElement | null>(null);
   const observerRef = useRef<MutationObserver | null>(null);
+
+  const { isActive, currentStep, currentStepIndex, steps, nextStep, prevStep, skipOnboarding, completeOnboarding } = onboarding;
+  const { variant, config, track } = abTesting;
 
   // Track onboarding start
   useEffect(() => {

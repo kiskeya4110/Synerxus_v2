@@ -84,25 +84,18 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
 
     const organizationId = user.organizationId || userIdNum;
 
-    // Fetch all data
-    const allProjects = await storage.listProjects();
-    const allTasks = await storage.listTasks();
-    const allActivities = await storage.listVolunteerActivities();
-    const allImpacts = await storage.listProjectImpacts();
-    const allProjectAssignments = await storage.listProjectAssignments();
-    const allUsers = await storage.listUsers();
-    const allImpactMetrics = await storage.listImpactMetrics();
+    // Fetch organization-specific data using efficient filtered queries (not full table scans)
+    const allOrganizationProjects = await storage.listProjectsByOrganization(organizationId);
 
-    // Filter to organization's projects
-    let organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
-
-    // Apply project filter if specified
+    // Apply project filter if specified (keep original list for filter dropdown)
+    let organizationProjects = allOrganizationProjects;
     if (projectFilter && projectFilter !== 'all') {
       const filterProjectId = parseInt(projectFilter);
       organizationProjects = organizationProjects.filter(p => p.id === filterProjectId);
     }
 
-    const organizationProjectIds = new Set(organizationProjects.map(p => p.id));
+    const organizationProjectIds = organizationProjects.map(p => p.id);
+    const organizationProjectIdSet = new Set(organizationProjectIds);
 
     // Apply time period filter for activities/impacts
     let startDate = new Date(0);
@@ -117,23 +110,29 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     }
 
-    // Filter data
-    const organizationTasks = allTasks.filter(t => t.projectId && organizationProjectIds.has(t.projectId));
+    // Fetch data using efficient batch queries (only for this organization's projects)
+    const [allTasks, allActivities, allImpacts, organizationAssignments, allImpactMetrics] = await Promise.all([
+      storage.listTasksByProjectIds(organizationProjectIds),
+      storage.listVolunteerActivitiesByProjectIds(organizationProjectIds),
+      storage.listProjectImpactsByProjectIds(organizationProjectIds),
+      storage.listProjectAssignmentsByProjectIds(organizationProjectIds),
+      storage.listImpactMetrics(), // Impact metrics are static/cached, OK to fetch all
+    ]);
+
+    // Apply time filter to activities and impacts (light in-memory filter on already-filtered data)
+    const organizationTasks = allTasks;
     const organizationActivities = allActivities.filter(a => {
-      if (!a.projectId || !organizationProjectIds.has(a.projectId)) return false;
       const activityDate = new Date(a.date);
       return activityDate >= startDate && activityDate <= endDate;
     });
     const organizationImpacts = allImpacts.filter(i => {
-      if (!i.projectId || !organizationProjectIds.has(i.projectId)) return false;
       const impactDate = new Date(i.date);
       return impactDate >= startDate && impactDate <= endDate;
     });
-    const organizationAssignments = allProjectAssignments.filter(pa => organizationProjectIds.has(pa.projectId));
 
-    // Get volunteers
-    const volunteerIds = new Set(organizationAssignments.map(pa => pa.volunteerId));
-    const organizationVolunteers = allUsers.filter(u => u.userType === 'volunteer' && volunteerIds.has(u.id));
+    // Get volunteers using efficient batch query
+    const volunteerIds = Array.from(new Set(organizationAssignments.map(pa => pa.volunteerId)));
+    const organizationVolunteers = await storage.getUsersByIds(volunteerIds);
 
     // Identify people-related metrics
     const peopleMetricIds = new Set(
@@ -482,7 +481,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       filters: {
         projectId: projectFilter || 'all',
         timePeriod: timePeriod || 'all',
-        availableProjects: allProjects.filter(p => p.organizationId === organizationId).map(p => ({ id: p.id, name: p.name })),
+        availableProjects: allOrganizationProjects.map(p => ({ id: p.id, name: p.name })),
       },
     });
   } catch (err) {

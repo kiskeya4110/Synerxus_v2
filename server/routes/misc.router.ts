@@ -276,52 +276,48 @@ miscRouter.get("/tasks/:taskId/recommended-volunteers", async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Get ALL volunteers connected to this organization through any of:
+    // Get volunteers connected to this organization through:
     // 1. Direct organization membership (organizationId field)
     // 2. Project assignments (currently/previously assigned)
     // 3. Opportunity applications (have applied to org's opportunities)
-    const allUsers = await storage.listUsers();
 
-    // Get all projects for this organization
-    const organizationProjects = await storage.listProjects();
-    const orgProjectIds = organizationProjects
-      .filter(p => p.organizationId === project.organizationId)
-      .map(p => p.id);
+    // Use efficient targeted queries instead of fetching all data
+    const [organizationProjects, orgOpportunities, directOrgVolunteers] = await Promise.all([
+      storage.listProjectsByOrganization(project.organizationId!),
+      storage.listOpportunitiesByOrganization(project.organizationId!),
+      storage.listUsersByOrganization(project.organizationId!),
+    ]);
 
-    // Get volunteers assigned to any project in this organization
-    const allAssignments = await storage.listProjectAssignments();
-    const assignedVolunteerIds = new Set(
-      allAssignments
-        .filter(a => orgProjectIds.includes(a.projectId))
-        .map(a => a.volunteerId)
-    );
+    const orgProjectIds = organizationProjects.map(p => p.id);
+    const orgOpportunityIds = orgOpportunities.map(opp => opp.id);
 
-    // Get volunteers who have applied to opportunities from this organization
-    const allOpportunities = await storage.listOpportunities();
-    const orgOpportunityIds = allOpportunities
-      .filter(opp => opp.organizationId === project.organizationId)
-      .map(opp => opp.id);
+    // Get volunteers from assignments and applications using efficient batch queries
+    const [orgAssignments, orgApplications] = await Promise.all([
+      orgProjectIds.length > 0 ? storage.listProjectAssignmentsByProjectIds(orgProjectIds) : Promise.resolve([]),
+      orgOpportunityIds.length > 0 ? storage.listApplicationsByOpportunityIds(orgOpportunityIds) : Promise.resolve([]),
+    ]);
 
-    const allApplications = await storage.listApplications();
-    const applicantVolunteerIds = new Set(
-      allApplications
-        .filter(app => orgOpportunityIds.includes(app.opportunityId))
-        .map(app => app.volunteerId)
-    );
+    const assignedVolunteerIds = new Set(orgAssignments.map(a => a.volunteerId));
+    const applicantVolunteerIds = new Set(orgApplications.map(app => app.volunteerId));
 
-    // Filter users to volunteers connected to this organization via ANY method
-    const organizationVolunteers = allUsers.filter(u => {
-      if (u.userType !== 'volunteer') return false;
+    // Collect all unique volunteer IDs
+    const allVolunteerIds = new Set<number>();
+    directOrgVolunteers.filter(u => u.userType === 'volunteer').forEach(u => allVolunteerIds.add(u.id!));
+    assignedVolunteerIds.forEach(id => allVolunteerIds.add(id));
+    applicantVolunteerIds.forEach(id => allVolunteerIds.add(id));
 
-      // Include if: directly linked to org, assigned to project, or applied to opportunity
-      return u.organizationId === project.organizationId ||
-             assignedVolunteerIds.has(u.id!) ||
-             applicantVolunteerIds.has(u.id!);
-    });
+    // Fetch only the volunteers we need
+    const volunteerIdArray = Array.from(allVolunteerIds);
+    const organizationVolunteers = volunteerIdArray.length > 0
+      ? (await storage.getUsersByIds(volunteerIdArray)).filter(u => u.userType === 'volunteer')
+      : [];
 
-    // Bulk fetch all volunteer profiles to avoid N+1 queries
-    const allProfiles = await storage.listVolunteerProfiles();
-    const profileMap = new Map(allProfiles.map(p => [p.userId, p]));
+    // Bulk fetch volunteer profiles for only these users
+    const volunteerUserIds = organizationVolunteers.map(v => v.id!);
+    const profiles = volunteerUserIds.length > 0
+      ? await storage.listVolunteerProfilesByUserIds(volunteerUserIds)
+      : [];
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
 
     // Combine volunteers with their profiles
     const volunteersWithProfiles = organizationVolunteers.map(volunteer => ({
@@ -362,52 +358,48 @@ miscRouter.get("/projects/:projectId/recommended-volunteers", async (req, res) =
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Get ALL volunteers connected to this organization through any of:
+    // Get volunteers connected to this organization through:
     // 1. Direct organization membership (organizationId field)
     // 2. Project assignments (currently/previously assigned)
     // 3. Opportunity applications (have applied to org's opportunities)
-    const allUsers = await storage.listUsers();
 
-    // Get all projects for this organization
-    const organizationProjects = await storage.listProjects();
-    const orgProjectIds = organizationProjects
-      .filter(p => p.organizationId === project.organizationId)
-      .map(p => p.id);
+    // Use efficient targeted queries instead of fetching all data
+    const [organizationProjects, orgOpportunities, directOrgVolunteers] = await Promise.all([
+      storage.listProjectsByOrganization(project.organizationId!),
+      storage.listOpportunitiesByOrganization(project.organizationId!),
+      storage.listUsersByOrganization(project.organizationId!),
+    ]);
 
-    // Get volunteers assigned to any project in this organization
-    const allAssignments = await storage.listProjectAssignments();
-    const assignedVolunteerIds = new Set(
-      allAssignments
-        .filter(a => orgProjectIds.includes(a.projectId))
-        .map(a => a.volunteerId)
-    );
+    const orgProjectIds = organizationProjects.map(p => p.id);
+    const orgOpportunityIds = orgOpportunities.map(opp => opp.id);
 
-    // Get volunteers who have applied to opportunities from this organization
-    const allOpportunities = await storage.listOpportunities();
-    const orgOpportunityIds = allOpportunities
-      .filter(opp => opp.organizationId === project.organizationId)
-      .map(opp => opp.id);
+    // Get volunteers from assignments and applications using efficient batch queries
+    const [orgAssignments, orgApplications] = await Promise.all([
+      orgProjectIds.length > 0 ? storage.listProjectAssignmentsByProjectIds(orgProjectIds) : Promise.resolve([]),
+      orgOpportunityIds.length > 0 ? storage.listApplicationsByOpportunityIds(orgOpportunityIds) : Promise.resolve([]),
+    ]);
 
-    const allApplications = await storage.listApplications();
-    const applicantVolunteerIds = new Set(
-      allApplications
-        .filter(app => orgOpportunityIds.includes(app.opportunityId))
-        .map(app => app.volunteerId)
-    );
+    const assignedVolunteerIds = new Set(orgAssignments.map(a => a.volunteerId));
+    const applicantVolunteerIds = new Set(orgApplications.map(app => app.volunteerId));
 
-    // Filter users to volunteers connected to this organization via ANY method
-    const organizationVolunteers = allUsers.filter(u => {
-      if (u.userType !== 'volunteer') return false;
+    // Collect all unique volunteer IDs
+    const allVolunteerIds = new Set<number>();
+    directOrgVolunteers.filter(u => u.userType === 'volunteer').forEach(u => allVolunteerIds.add(u.id!));
+    assignedVolunteerIds.forEach(id => allVolunteerIds.add(id));
+    applicantVolunteerIds.forEach(id => allVolunteerIds.add(id));
 
-      // Include if: directly linked to org, assigned to project, or applied to opportunity
-      return u.organizationId === project.organizationId ||
-             assignedVolunteerIds.has(u.id!) ||
-             applicantVolunteerIds.has(u.id!);
-    });
+    // Fetch only the volunteers we need
+    const volunteerIdArray = Array.from(allVolunteerIds);
+    const organizationVolunteers = volunteerIdArray.length > 0
+      ? (await storage.getUsersByIds(volunteerIdArray)).filter(u => u.userType === 'volunteer')
+      : [];
 
-    // Bulk fetch all volunteer profiles to avoid N+1 queries
-    const allProfiles = await storage.listVolunteerProfiles();
-    const profileMap = new Map(allProfiles.map(p => [p.userId, p]));
+    // Bulk fetch volunteer profiles for only these users
+    const volunteerUserIds = organizationVolunteers.map(v => v.id!);
+    const profiles = volunteerUserIds.length > 0
+      ? await storage.listVolunteerProfilesByUserIds(volunteerUserIds)
+      : [];
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
 
     // Combine volunteers with their profiles
     const volunteersWithProfiles = organizationVolunteers.map(volunteer => ({

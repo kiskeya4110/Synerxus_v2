@@ -129,7 +129,7 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
-import { eq, and, or, asc, desc, inArray, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql } from "drizzle-orm";
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -151,6 +151,9 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   listUsers(): Promise<User[]>;
+  getUsersByIds(ids: number[]): Promise<User[]>;
+  listUsersByType(userType: string): Promise<User[]>;
+  countUsersByType(userType: string): Promise<number>;
 
   // Organization operations
   getOrganization(id: number): Promise<Organization | undefined>;
@@ -304,6 +307,7 @@ export interface IStorage {
   createVolunteerProfile(profile: InsertVolunteerProfile): Promise<VolunteerProfile>;
   updateVolunteerProfile(id: number, profile: Partial<InsertVolunteerProfile>): Promise<VolunteerProfile | undefined>;
   listVolunteerProfiles(): Promise<VolunteerProfile[]>;
+  listVolunteerProfilesByUserIds(userIds: number[]): Promise<VolunteerProfile[]>;
 
   // Organization Profile operations
   getOrganizationProfile(id: number): Promise<OrganizationProfile | undefined>;
@@ -537,6 +541,20 @@ export class DatabaseStorage implements IStorage {
 
   async listUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    return await db.select().from(users).where(inArray(users.id, ids));
+  }
+
+  async listUsersByType(userType: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.userType, userType));
+  }
+
+  async countUsersByType(userType: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.userType, userType));
+    return Number(result[0]?.count || 0);
   }
 
   // Organization operations
@@ -1489,6 +1507,11 @@ export class DatabaseStorage implements IStorage {
 
   async listVolunteerProfiles(): Promise<VolunteerProfile[]> {
     return await db.select().from(volunteerProfiles);
+  }
+
+  async listVolunteerProfilesByUserIds(userIds: number[]): Promise<VolunteerProfile[]> {
+    if (userIds.length === 0) return [];
+    return await db.select().from(volunteerProfiles).where(inArray(volunteerProfiles.userId, userIds));
   }
 
   // Organization Profile operations

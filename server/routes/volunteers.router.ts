@@ -100,13 +100,12 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
       return res.json([]);
     }
 
-    // Get all volunteers with their profiles - OPTIMIZED: batch query instead of N+1
-    const [allUsers, allVolunteers, allVolunteerProfiles] = await Promise.all([
-      storage.listUsers(),
+    // Get all volunteers with their profiles - OPTIMIZED: batch query for volunteers only
+    const [volunteers, allVolunteers, allVolunteerProfiles] = await Promise.all([
+      storage.listUsersByType('volunteer'),
       storage.listVolunteers(),
       storage.listVolunteerProfiles()
     ]);
-    const volunteers = allUsers.filter(u => u.userType === 'volunteer');
 
     // Create lookup maps for O(1) access
     const volunteerByEmail = new Map(allVolunteers.map(v => [v.email, v]));
@@ -288,11 +287,10 @@ volunteersRouter.get("/", async (req: Request, res: Response) => {
         return res.json([]);
       }
 
-      // Get volunteer users
-      const allUsers = await storage.listUsers();
-      const volunteers = allUsers.filter((u: any) =>
-        volunteerIds.has(u.id) && u.userType === 'volunteer'
-      );
+      // Get volunteer users using efficient batch query
+      const volunteerIdArray = Array.from(volunteerIds);
+      const users = await storage.getUsersByIds(volunteerIdArray);
+      const volunteers = users.filter((u: any) => u.userType === 'volunteer');
 
       return res.json(volunteers);
     }
@@ -525,9 +523,8 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
       const impactScore = Math.min(10, sdgContributions.length * 2); // Max 10 points
       const performanceScore = Math.round(hoursScore + completionScore + consistencyScore + impactScore);
 
-      // Get total volunteers count for ranking
-      const allUsers = await storage.listUsers();
-      const allVolunteers = allUsers.filter((u: any) => u.userType === 'volunteer');
+      // Get total volunteers count for ranking (efficient count query)
+      const totalVolunteersCount = await storage.countUsersByType('volunteer');
 
       // Calculate rank (simplified - based on total hours)
       const allActivities = await storage.listVolunteerActivities();
@@ -553,7 +550,7 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
         recentActivity,
         performanceScore,
         rank: rank > 0 ? rank : 'N/A',
-        totalVolunteers: allVolunteers.length,
+        totalVolunteers: totalVolunteersCount,
         isDemoData: false,
       };
     }
@@ -699,9 +696,11 @@ volunteersRouter.post("/:id/simulate-match", async (req: Request, res: Response)
 // GET /api/volunteer-spotlight - Get current week's volunteer spotlight
 volunteersRouter.get("/spotlight", async (req: Request, res: Response) => {
   try {
-    const allUsers = await storage.listUsers();
-    const allVolunteerProfiles = await storage.listVolunteerProfiles();
-    const allActivities = await storage.listVolunteerActivities();
+    // Fetch profiles and activities in parallel (avoid fetching all users)
+    const [allVolunteerProfiles, allActivities] = await Promise.all([
+      storage.listVolunteerProfiles(),
+      storage.listVolunteerActivities(),
+    ]);
 
     // Filter for volunteers who have completed onboarding
     const activeVolunteers = allVolunteerProfiles.filter((p: any) => p.onboardingCompleted);
@@ -716,7 +715,8 @@ volunteersRouter.get("/spotlight", async (req: Request, res: Response) => {
 
     // Select volunteer based on week number (rotates through available volunteers)
     const selectedProfile = activeVolunteers[weekNumber % activeVolunteers.length];
-    const volunteer = allUsers.find((u: any) => u.id === selectedProfile.userId);
+    // Fetch only the selected volunteer (not all users)
+    const volunteer = await storage.getUser(selectedProfile.userId);
 
     if (!volunteer) {
       return res.json({ spotlight: null });

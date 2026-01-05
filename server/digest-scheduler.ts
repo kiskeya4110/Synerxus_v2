@@ -19,22 +19,31 @@ let digestInterval: NodeJS.Timeout | null = null;
 
 /**
  * Send weekly digests to all subscribed volunteers
+ * OPTIMIZED: Batch fetch all profiles in one query instead of N+1 queries
  */
 export async function sendWeeklyDigestsToVolunteers(): Promise<void> {
   try {
     logger.info("Starting weekly digest send to volunteers...");
 
-    const users = await storage.listUsers();
+    // Batch fetch users and profiles to avoid N+1 queries
+    const [users, allProfiles] = await Promise.all([
+      storage.listUsers(),
+      storage.listVolunteerProfiles(),
+    ]);
+
     const volunteers = users.filter(u => u.userType === 'volunteer');
+
+    // Build profile lookup map for O(1) access
+    const profilesByUserId = new Map(allProfiles.map(p => [p.userId, p]));
 
     let successCount = 0;
     let failCount = 0;
+    const now = new Date();
 
     for (const volunteer of volunteers) {
       try {
-        const profile = await storage.getVolunteerProfile(volunteer.id);
+        const profile = profilesByUserId.get(volunteer.id);
         const lastAttempt = lastSendAttempt[volunteer.id];
-        const now = new Date();
 
         if (profile?.emailDigestEnabled && (!lastAttempt || now.getTime() - lastAttempt.getTime() >= MIN_INTERVAL_MS)) {
           const sent = await sendWeeklyDigest(volunteer.id);
@@ -59,21 +68,29 @@ export async function sendWeeklyDigestsToVolunteers(): Promise<void> {
 
 /**
  * Send weekly digests to all subscribed organizations
+ * OPTIMIZED: Batch fetch all profiles in one query instead of N+1 queries
  */
 export async function sendWeeklyDigestsToOrganizations(): Promise<void> {
   try {
     logger.info("Starting weekly digest send to organizations...");
 
-    const organizations = await storage.listOrganizations();
+    // Batch fetch organizations and profiles to avoid N+1 queries
+    const [organizations, allProfiles] = await Promise.all([
+      storage.listOrganizations(),
+      storage.listOrganizationProfiles(),
+    ]);
+
+    // Build profile lookup map for O(1) access
+    const profilesByOrgId = new Map(allProfiles.map(p => [p.organizationId, p]));
 
     let successCount = 0;
     let failCount = 0;
+    const now = new Date();
 
     for (const org of organizations) {
       try {
-        const profile = await storage.getOrganizationProfile(org.id);
+        const profile = profilesByOrgId.get(org.id);
         const lastAttempt = lastSendAttempt[org.id];
-        const now = new Date();
 
         if (profile?.emailDigestEnabled && (!lastAttempt || now.getTime() - lastAttempt.getTime() >= MIN_INTERVAL_MS)) {
           const sent = await sendOrganizationWeeklyDigest(org.id);

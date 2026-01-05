@@ -36,9 +36,23 @@ export default function Projects() {
   const isVolunteer = userType === 'volunteer';
   const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
 
-  // Check for ?create=true query parameter to auto-open create dialog
+  // Get org query parameter for viewing specific organization's projects
+  const [viewingOrgId, setViewingOrgId] = useState<number | null>(null);
+
+  // Check for query parameters on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // Check for ?org=X to view specific organization's projects
+    const orgParam = params.get('org');
+    if (orgParam) {
+      const orgId = parseInt(orgParam);
+      if (!isNaN(orgId)) {
+        setViewingOrgId(orgId);
+      }
+    }
+
+    // Check for ?create=true to auto-open create dialog
     if (params.get('create') === 'true') {
       setAutoOpenCreate(true);
       // Clean up the URL by removing the query parameter
@@ -46,7 +60,7 @@ export default function Projects() {
     }
   }, [setLocation]);
 
-  // Fetch current user to get organization ID
+  // Fetch current user to get organization ID (optional for public view)
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser, isLoading: isUserLoading, isError: isUserError } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
@@ -57,13 +71,38 @@ export default function Projects() {
       if (!response.ok) throw new Error("User not found");
       return response.json();
     },
-    enabled: !!userId
+    // Only load user if we're not in public org view mode OR if user is logged in
+    enabled: !!userId && !viewingOrgId
   });
 
-  // Fetch projects scoped to the logged-in organization
-  const { data: projects = [], isLoading } = useQuery<ProjectWithDetails[]>({
-    queryKey: ["/api/projects", userId],
+  // Fetch organization details when viewing a specific org's projects (public view)
+  interface Organization {
+    id: number;
+    name: string;
+    description?: string;
+    logo?: string;
+  }
+  const { data: viewingOrg, isLoading: isOrgLoading } = useQuery<Organization>({
+    queryKey: ["/api/organizations", viewingOrgId],
     queryFn: async () => {
+      const response = await fetch(`/api/organizations/${viewingOrgId}`);
+      if (!response.ok) throw new Error("Organization not found");
+      return response.json();
+    },
+    enabled: viewingOrgId !== null
+  });
+
+  // Fetch projects - either for a specific organization (public view) or for the logged-in user
+  const { data: projects = [], isLoading } = useQuery<ProjectWithDetails[]>({
+    queryKey: ["/api/projects", viewingOrgId ? `org-${viewingOrgId}` : userId],
+    queryFn: async () => {
+      // If viewing a specific organization's projects (public view)
+      if (viewingOrgId) {
+        const response = await fetch(`/api/projects?organizationId=${viewingOrgId}`);
+        if (!response.ok) throw new Error("Failed to fetch projects");
+        return response.json();
+      }
+      // Otherwise, fetch user's own projects
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
       const response = await fetch(`/api/projects?userId=${id}`);
@@ -71,7 +110,8 @@ export default function Projects() {
       return response.json();
     },
     select: (data: Project[]) => data as ProjectWithDetails[],
-    enabled: !!currentUser && !!userId
+    // Enable if viewing org projects (public) or if user is logged in
+    enabled: viewingOrgId !== null || (!!currentUser && !!userId)
   });
 
   // Fetch tasks scoped to the organization
@@ -251,12 +291,26 @@ export default function Projects() {
   );
 
   // Volunteers can only view projects, not edit them
-  const canManageProjects = currentUser?.userType === 'organization';
+  // In public org view mode (viewingOrgId), no one can manage projects
+  const canManageProjects = !viewingOrgId && currentUser?.userType === 'organization';
   // Use localStorage userType as fallback when currentUser hasn't loaded yet
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+  // Determine if we're in public view mode (viewing another org's projects)
+  const isPublicOrgView = viewingOrgId !== null;
 
-  // Handle user loading or error state
-  if (isUserLoading || (!currentUser && !isUserError)) {
+  // Handle loading state for public org view
+  if (isPublicOrgView && (isOrgLoading || isLoading)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle user loading or error state (only when not in public org view)
+  if (!isPublicOrgView && (isUserLoading || (!currentUser && !isUserError))) {
     if (isOrganization && isMobile) {
       return (
         <OrganizationPWALayout activeTab="projects">
@@ -273,8 +327,8 @@ export default function Projects() {
     );
   }
 
-  // Handle user error or no user
-  if (isUserError || !currentUser) {
+  // Handle user error or no user (only when not in public org view)
+  if (!isPublicOrgView && (isUserError || !currentUser)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -299,6 +353,110 @@ export default function Projects() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Loading projects...</div>
+      </div>
+    );
+  }
+
+  // Public organization projects view (viewing another org's projects)
+  if (isPublicOrgView && viewingOrg) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        {/* Header with organization info */}
+        <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-amber-50 border-b border-emerald-200/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <div className="flex items-center gap-4 mb-4">
+              <button
+                onClick={() => setLocation('/organizations')}
+                className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1 text-sm"
+              >
+                <span>← Back to Organizations</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                {viewingOrg.logo ? (
+                  <img src={viewingOrg.logo} alt={viewingOrg.name} className="w-14 h-14 rounded-lg object-cover" />
+                ) : (
+                  <Briefcase className="w-8 h-8 text-emerald-600" />
+                )}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">{viewingOrg.name}</h1>
+                <p className="text-slate-600">Projects & Impact Initiatives</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto p-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Briefcase className="h-6 w-6 mx-auto mb-2 text-emerald-600" />
+                <p className="text-3xl font-bold text-emerald-600">{projects.length}</p>
+                <p className="text-sm text-gray-600">Total Projects</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Briefcase className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                <p className="text-3xl font-bold text-blue-600">{projects.filter(p => p.status === 'active' || p.status === 'in-progress').length}</p>
+                <p className="text-sm text-gray-600">Active Projects</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Briefcase className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                <p className="text-3xl font-bold text-purple-600">{projects.filter(p => p.status === 'completed').length}</p>
+                <p className="text-sm text-gray-600">Completed</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Search */}
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 min-h-[44px]"
+              />
+            </div>
+          </div>
+
+          {/* Projects List */}
+          <div className="space-y-4">
+            {filteredProjects.map((project) => {
+              const projectData = projectMetrics.get(project.id);
+              const { tasks = [], progress = 0, metrics = { totalCommitted: 0, totalCompleted: 0, volunteers: 0, engagementScore: 0, engagementLevel: 'minimal' } } = projectData || {};
+              const isExpanded = expandedProjects.has(project.id);
+              return (
+                <ProjectListCard
+                  key={project.id}
+                  project={project}
+                  tasks={tasks}
+                  metrics={metrics}
+                  progress={progress}
+                  isExpanded={isExpanded}
+                  onToggle={() => toggleProject(project.id)}
+                  canManageProjects={false}
+                />
+              );
+            })}
+          </div>
+
+          {filteredProjects.length === 0 && (
+            <Card className="p-12 text-center">
+              <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">
+                {searchTerm ? "No projects match your search" : "This organization hasn't created any projects yet"}
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
     );
   }

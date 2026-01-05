@@ -84,14 +84,16 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
     const type = (req.query.type as string) || "points";
     const limit = parseInt(req.query.limit as string) || 20;
 
-    const allUsers = await storage.listUsers();
-    const allActivities = await storage.listVolunteerActivities();
-    const allAssignments = await storage.listProjectAssignments();
-    const allImpacts = await storage.listProjectImpacts();
+    // Use efficient query to get only volunteers (not all users)
+    const [volunteers, allActivities, allAssignments, allImpacts] = await Promise.all([
+      storage.listUsersByType('volunteer'),
+      storage.listVolunteerActivities(),
+      storage.listProjectAssignments(),
+      storage.listProjectImpacts(),
+    ]);
 
     const leaderboardData = await Promise.all(
-      allUsers
-        .filter((u: any) => u.userType === 'volunteer')
+      volunteers
         .map(async (user: any) => {
           const userActivities = allActivities.filter((a: any) => a.userId === user.id);
           const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
@@ -168,16 +170,18 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    // Get all projects belonging to this organization
-    const allProjects = await storage.listProjects();
-    const orgProjects = allProjects.filter((p: any) => p.organizationId === organizationId);
-    const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+    // Get organization's projects using efficient query
+    const orgProjects = await storage.listProjectsByOrganization(organizationId);
+    const orgProjectIds = orgProjects.map((p: any) => p.id);
+    const orgProjectIdSet = new Set(orgProjectIds);
 
-    // Get all data
-    const allUsers = await storage.listUsers();
-    const allActivities = await storage.listVolunteerActivities();
-    const allAssignments = await storage.listProjectAssignments();
-    const allImpacts = await storage.listProjectImpacts();
+    // Fetch data using efficient targeted queries
+    const [directOrgUsers, allActivities, allAssignments, allImpacts] = await Promise.all([
+      storage.listUsersByOrganization(organizationId),
+      orgProjectIds.length > 0 ? storage.listVolunteerActivitiesByProjectIds(orgProjectIds) : Promise.resolve([]),
+      orgProjectIds.length > 0 ? storage.listProjectAssignmentsByProjectIds(orgProjectIds) : Promise.resolve([]),
+      orgProjectIds.length > 0 ? storage.listProjectImpactsByProjectIds(orgProjectIds) : Promise.resolve([]),
+    ]);
 
     // Find volunteers through multiple sources:
     // 1. Direct organizationId association
@@ -186,34 +190,39 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
     const volunteerUserIds = new Set<number>();
 
     // Volunteers directly linked to organization
-    allUsers.filter((u: any) => u.organizationId === organizationId && u.userType === 'volunteer')
+    directOrgUsers.filter((u: any) => u.userType === 'volunteer')
       .forEach((u: any) => volunteerUserIds.add(u.id));
 
     // Volunteers assigned to organization's projects
-    allAssignments.filter((a: any) => orgProjectIds.has(a.projectId))
-      .forEach((a: any) => volunteerUserIds.add(a.volunteerId));
+    allAssignments.forEach((a: any) => volunteerUserIds.add(a.volunteerId));
 
     // Volunteers who logged activities on organization's projects
-    allActivities.filter((a: any) => orgProjectIds.has(a.projectId))
+    allActivities
       .forEach((a: any) => volunteerUserIds.add(a.userId));
 
+    // Fetch user data for all identified volunteers
+    const volunteerIdsArray = Array.from(volunteerUserIds);
+    const allUsers = volunteerIdsArray.length > 0
+      ? await storage.getUsersByIds(volunteerIdsArray)
+      : [];
+
     // Build leaderboard for all identified volunteers
-    const leaderboardData = Array.from(volunteerUserIds).map((volunteerId) => {
+    const leaderboardData = volunteerIdsArray.map((volunteerId) => {
       const user = allUsers.find((u: any) => u.id === volunteerId);
       if (!user) return null;
 
       // Get activities for this volunteer (both on org projects and all their activities)
       const userActivities = allActivities.filter((a: any) => a.userId === volunteerId);
-      const orgProjectActivities = userActivities.filter((a: any) => orgProjectIds.has(a.projectId));
+      const orgProjectActivities = userActivities.filter((a: any) => orgProjectIdSet.has(a.projectId));
 
       // Get assignments for this volunteer on org projects
       const userAssignments = allAssignments.filter((a: any) =>
-        a.volunteerId === volunteerId && orgProjectIds.has(a.projectId)
+        a.volunteerId === volunteerId && orgProjectIdSet.has(a.projectId)
       );
 
       // Get impacts logged by this volunteer on org projects (using userId field from schema)
       const userImpacts = allImpacts.filter((i: any) =>
-        i.userId === volunteerId && orgProjectIds.has(i.projectId)
+        i.userId === volunteerId && orgProjectIdSet.has(i.projectId)
       );
 
       const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
@@ -306,9 +315,11 @@ gamificationRouter.get("/user-badges", async (req: Request, res: Response) => {
  */
 gamificationRouter.get("/volunteer-spotlight", async (req: Request, res: Response) => {
   try {
-    const allUsers = await storage.listUsers();
-    const allVolunteerProfiles = await storage.listVolunteerProfiles();
-    const allActivities = await storage.listVolunteerActivities();
+    // Fetch profiles and activities in parallel (avoid fetching all users)
+    const [allVolunteerProfiles, allActivities] = await Promise.all([
+      storage.listVolunteerProfiles(),
+      storage.listVolunteerActivities(),
+    ]);
 
     // Filter for volunteers who have completed onboarding
     const activeVolunteers = allVolunteerProfiles.filter((p: any) => p.onboardingCompleted);
@@ -323,7 +334,8 @@ gamificationRouter.get("/volunteer-spotlight", async (req: Request, res: Respons
 
     // Select volunteer based on week number (rotates through available volunteers)
     const selectedProfile = activeVolunteers[weekNumber % activeVolunteers.length];
-    const volunteer = allUsers.find((u: any) => u.id === selectedProfile.userId);
+    // Fetch only the selected volunteer (not all users)
+    const volunteer = await storage.getUser(selectedProfile.userId);
 
     if (!volunteer) {
       return res.json({ spotlight: null });
@@ -380,13 +392,13 @@ gamificationRouter.get("/volunteer-spotlight", async (req: Request, res: Respons
  */
 gamificationRouter.get("/banner-stats", async (req: Request, res: Response) => {
   try {
-    const allUsers = await storage.listUsers();
-    const allVolunteerProfiles = await storage.listVolunteerProfiles();
-    const allOrganizations = await storage.listOrganizations();
-    const allActivities = await storage.listVolunteerActivities();
-
-    // Calculate real stats
-    const volunteerCount = allUsers.filter((u: any) => u.userType === 'volunteer').length;
+    // Use efficient count query and parallel fetching
+    const [volunteerCount, allVolunteerProfiles, allOrganizations, allActivities] = await Promise.all([
+      storage.countUsersByType('volunteer'),
+      storage.listVolunteerProfiles(),
+      storage.listOrganizations(),
+      storage.listVolunteerActivities(),
+    ]);
     const organizationCount = allOrganizations.length;
     const totalHours = allActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
     const totalActivities = allActivities.length;
@@ -437,10 +449,13 @@ gamificationRouter.get("/team-overview", async (req: Request, res: Response) => 
     const sdgsParam = req.query.sdgs as string;
     const selectedSDGs = sdgsParam ? sdgsParam.split(',').map(Number) : [];
 
-    const allActivities = await storage.listVolunteerActivities();
-    const allProfiles = await storage.listVolunteerProfiles();
-    const allUsers = await storage.listUsers();
-    const allOrganizations = await storage.listOrganizations();
+    // Fetch data in parallel for efficiency
+    const [allActivities, allProfiles, volunteers, allOrganizations] = await Promise.all([
+      storage.listVolunteerActivities(),
+      storage.listVolunteerProfiles(),
+      storage.listUsersByType('volunteer'),
+      storage.listOrganizations(),
+    ]);
 
     // Filter data by SDGs if specified
     const filteredActivities = selectedSDGs.length > 0

@@ -202,10 +202,10 @@ function RootRedirectRoute() {
 
 // Inner app component that uses A/B testing context
 function AppWithOnboarding() {
-  const { getVariant } = useABTesting();
-
+  const abTesting = useABTesting();
+  
   // Get the onboarding variant to determine step count
-  const onboardingVariant = getVariant('onboarding-flow');
+  const onboardingVariant = abTesting.getVariant('onboarding-flow');
   const stepCount = onboardingVariant?.config?.stepCount || 'full';
 
   // Determine user type from localStorage

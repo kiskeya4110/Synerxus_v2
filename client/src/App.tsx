@@ -79,6 +79,7 @@ const InvitationCodes = lazy(() => import("@/pages/invitation-codes"));
 const AdminOrganizationApproval = lazy(() => import("@/pages/admin-organization-approval"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 const PostUrgentOpportunity = lazy(() => import("@/pages/post-urgent-opportunity"));
+const JoinTeam = lazy(() => import("@/pages/join-team"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -249,6 +250,7 @@ function AppWithOnboarding() {
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
           <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
           {/* Standalone utility routes */}
+          <Route path="/join-team" component={JoinTeam} />
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
           {/* PWA Routes - standalone (no Layout wrapper) */}

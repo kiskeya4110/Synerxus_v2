@@ -108,6 +108,7 @@ export default function OrganizationTeamPage() {
   const [customDepartment, setCustomDepartment] = useState("");
   const [invitationMethod, setInvitationMethod] = useState<"email" | "direct_message" | "both">("email");
   const [customMessage, setCustomMessage] = useState("");
+  const [inviteLinkResult, setInviteLinkResult] = useState<{ link: string; email: string } | null>(null);
 
   // Get current user's organization
   const userId = localStorage.getItem("currentUserId");
@@ -185,6 +186,13 @@ export default function OrganizationTeamPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
       setShowInviteModal(false);
+
+      // Show the invite link modal with the generated link
+      if (data.inviteLink) {
+        const fullLink = `${window.location.origin}${data.inviteLink}`;
+        setInviteLinkResult({ link: fullLink, email: inviteEmail });
+      }
+
       setInviteEmail("");
       setInviteRole("member");
       setInviteTitle("");
@@ -194,10 +202,7 @@ export default function OrganizationTeamPage() {
       setCustomTitle("");
       setCustomDepartment("");
 
-      const methodText = invitationMethod === "both" ? "via email and direct message"
-        : invitationMethod === "direct_message" ? "via direct message"
-        : "via email";
-      toast({ title: "Invitation sent", description: `Team member has been invited ${methodText}.` });
+      toast({ title: "Invitation created", description: "Share the invite link with the team member." });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to invite", description: error.message, variant: "destructive" });
@@ -493,6 +498,46 @@ export default function OrganizationTeamPage() {
                     {inviteMutation.isPending ? "Sending..." : "Send Invite"}
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Invite Link Success Modal - Mobile */}
+          {inviteLinkResult && (
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setInviteLinkResult(null)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <h3 className="text-lg font-semibold text-slate-900">Invitation Created</h3>
+                </div>
+
+                <p className="text-sm text-slate-600 mb-3">
+                  Share this link with <span className="font-medium">{inviteLinkResult.email}</span>
+                </p>
+
+                <div className="bg-slate-50 rounded-lg p-3 mb-3">
+                  <input
+                    type="text"
+                    value={inviteLinkResult.link}
+                    readOnly
+                    className="w-full bg-white px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 mb-2"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <Button
+                    onClick={() => {
+                      navigator.clipboard.writeText(inviteLinkResult.link);
+                      toast({ title: "Link Copied!", description: "Invite link copied to clipboard" });
+                    }}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </Button>
+                </div>
+
+                <Button variant="outline" className="w-full" onClick={() => setInviteLinkResult(null)}>
+                  Done
+                </Button>
               </div>
             </div>
           )}
@@ -1256,6 +1301,70 @@ export default function OrganizationTeamPage() {
                   className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
                 >
                   {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Invite Link Success Modal */}
+        {inviteLinkResult && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-600" />
+                  Invitation Created
+                </h3>
+                <button
+                  onClick={() => setInviteLinkResult(null)}
+                  className="p-1 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600">
+                  Share this invite link with <span className="font-medium">{inviteLinkResult.email}</span> to let them join your team.
+                </p>
+
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Invite Link</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={inviteLinkResult.link}
+                      readOnly
+                      className="flex-1 bg-white px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 select-all"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(inviteLinkResult.link);
+                        toast({ title: "Link Copied!", description: "Invite link copied to clipboard" });
+                      }}
+                      className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-xs text-amber-700">
+                    <strong>Note:</strong> The invitee will need to create an account or log in to accept this invitation.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setInviteLinkResult(null)}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Done
                 </button>
               </div>
             </div>

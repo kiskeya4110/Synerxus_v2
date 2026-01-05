@@ -322,21 +322,16 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    // Find user by email
+    // Find user by email (optional - user may not exist yet)
     const users = await storage.listUsers();
     const user = users.find(u => u.email === email);
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found. They need to register first.",
-        code: "USER_NOT_FOUND"
-      });
-    }
-
-    // Check if already a member
-    const existingMember = await storage.getOrganizationMemberByUserAndOrg(user.id, orgId);
-    if (existingMember) {
-      return res.status(409).json({ message: "User is already a member of this organization" });
+    // Check if already a member (only if user exists)
+    if (user) {
+      const existingMember = await storage.getOrganizationMemberByUserAndOrg(user.id, orgId);
+      if (existingMember) {
+        return res.status(409).json({ message: "User is already a member of this organization" });
+      }
     }
 
     // Set default permissions based on role
@@ -378,26 +373,30 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
     const rolePermissions = defaultPermissions[role as keyof typeof defaultPermissions] || defaultPermissions.member;
     const finalPermissions = { ...rolePermissions, ...(permissions || {}) };
 
-    const memberData = {
-      organizationId: orgId,
-      userId: user.id,
-      role: role || "member",
-      title,
-      department,
-      ...finalPermissions,
-      status: "invited",
-      invitedBy,
-      invitedAt: new Date()
-    };
+    // Generate invitation token
+    const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
-    const member = await storage.createOrganizationMember(memberData);
+    let member = null;
+
+    // Only create organization member record if user exists
+    if (user) {
+      const memberData = {
+        organizationId: orgId,
+        userId: user.id,
+        role: role || "member",
+        title,
+        department,
+        ...finalPermissions,
+        status: "invited",
+        invitedBy,
+        invitedAt: new Date()
+      };
+      member = await storage.createOrganizationMember(memberData);
+    }
 
     // Get inviter info
     const inviter = invitedBy ? await storage.getUser(invitedBy) : null;
     const inviterName = inviter?.displayName || organization.name;
-
-    // Generate invitation token for email links
-    const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
     // Build invitation message content
     const roleDisplay = (role || "member").charAt(0).toUpperCase() + (role || "member").slice(1);
@@ -413,8 +412,8 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
 
     let dmMessageId: number | undefined;
 
-    // Send direct message if requested
-    if (shouldSendDM && invitedBy) {
+    // Send direct message if requested and user exists
+    if (shouldSendDM && invitedBy && user) {
       const dmMessage = await storage.createMessage({
         senderId: invitedBy,
         receiverId: user.id,
@@ -428,10 +427,10 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
 
     // Create team invitation record for tracking
     await storage.createTeamInvitation({
-      organizationMemberId: member.id,
+      organizationMemberId: member?.id || 0, // 0 if user doesn't exist yet
       organizationId: orgId,
       inviterId: invitedBy,
-      inviteeId: user.id,
+      inviteeId: user?.id || null,
       inviteeEmail: email,
       invitationMethod: method,
       messageSubject: `Team Invitation: Join ${organization.name}`,
@@ -440,31 +439,28 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
       role: role || "member",
       title: title || undefined,
       department: department || undefined,
-      emailStatus: shouldSendEmail ? "sent" : "pending",
-      emailSentAt: shouldSendEmail ? new Date() : undefined,
-      dmStatus: shouldSendDM ? "sent" : "pending",
-      dmSentAt: shouldSendDM ? new Date() : undefined,
+      emailStatus: "pending", // We don't send emails
+      dmStatus: shouldSendDM && user ? "sent" : "pending",
+      dmSentAt: shouldSendDM && user ? new Date() : undefined,
       dmMessageId: dmMessageId,
-      status: "sent",
+      status: "pending",
       invitationToken,
-      tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      tokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
 
-    // Create notification for invited user
-    const notificationMessage = method === 'both'
-      ? `${inviterName} has invited you to join ${organization.name} as ${roleDisplay}. Check your messages for details.`
-      : method === 'direct_message'
-      ? `${inviterName} has sent you a team invitation via direct message.`
-      : `${inviterName} has invited you to join ${organization.name} as ${roleDisplay}.`;
+    // Create notification for invited user (only if user exists)
+    if (user) {
+      const notificationMessage = `${inviterName} has invited you to join ${organization.name} as ${roleDisplay}. Check your messages for details.`;
 
-    await storage.createNotification({
-      userId: user.id,
-      type: "organization_invite",
-      title: "Team Invitation",
-      message: notificationMessage,
-      relatedEntityType: "organization_member",
-      relatedEntityId: member.id
-    });
+      await storage.createNotification({
+        userId: user.id,
+        type: "organization_invite",
+        title: "Team Invitation",
+        message: notificationMessage,
+        relatedEntityType: "organization_member",
+        relatedEntityId: member?.id || 0
+      });
+    }
 
     broadcastUpdate("organization_member_invited", {
       organizationId: orgId,
@@ -473,12 +469,15 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
       invitationMethod: method
     });
 
+    // Return invitation token for generating shareable link
     res.status(201).json({
       member,
-      user: { id: user.id, email: user.email, displayName: user.displayName },
+      user: user ? { id: user.id, email: user.email, displayName: user.displayName } : null,
       invitationMethod: method,
-      dmSent: shouldSendDM,
-      emailSent: shouldSendEmail
+      dmSent: shouldSendDM && !!user,
+      invitationToken,
+      inviteLink: `/join-team?token=${invitationToken}`,
+      userExists: !!user
     });
   } catch (err) {
     const error = handleValidationError(err);
@@ -510,6 +509,137 @@ organizationsRouter.post("/:id/members/:memberId/accept", async (req: Request, r
     broadcastUpdate("organization_member_accepted", { organizationId: orgId, member: updatedMember });
     res.json(updatedMember);
   } catch (err) {
+    res.status(500).json({ message: "Failed to accept invitation" });
+  }
+});
+
+// GET /api/team-invitations/:token - Get invitation details by token
+organizationsRouter.get("/team-invitations/by-token/:token", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    const invitation = await storage.getTeamInvitationByToken(token);
+
+    if (!invitation) {
+      return res.status(404).json({ message: "Invitation not found or expired" });
+    }
+
+    if (invitation.status === "accepted") {
+      return res.status(400).json({ message: "Invitation already accepted" });
+    }
+
+    if (invitation.status === "declined" || invitation.status === "cancelled") {
+      return res.status(400).json({ message: "Invitation is no longer valid" });
+    }
+
+    if (invitation.tokenExpiresAt && new Date(invitation.tokenExpiresAt) < new Date()) {
+      return res.status(400).json({ message: "Invitation has expired" });
+    }
+
+    // Get organization details
+    const organization = await storage.getOrganization(invitation.organizationId);
+
+    res.json({
+      invitation,
+      organization: organization ? {
+        id: organization.id,
+        name: organization.name,
+        logo: organization.logo,
+        description: organization.description
+      } : null
+    });
+  } catch (err) {
+    console.error("Error fetching invitation:", err);
+    res.status(500).json({ message: "Failed to fetch invitation" });
+  }
+});
+
+// POST /api/team-invitations/:token/accept - Accept invitation via token
+organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const invitation = await storage.getTeamInvitationByToken(token);
+
+    if (!invitation) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+
+    if (invitation.status === "accepted") {
+      return res.status(400).json({ message: "Invitation already accepted" });
+    }
+
+    if (invitation.tokenExpiresAt && new Date(invitation.tokenExpiresAt) < new Date()) {
+      return res.status(400).json({ message: "Invitation has expired" });
+    }
+
+    const user = await storage.getUser(parseInt(userId));
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user is already a member
+    const existingMember = await storage.getOrganizationMemberByUserAndOrg(user.id, invitation.organizationId);
+    if (existingMember) {
+      return res.status(409).json({ message: "You are already a member of this organization" });
+    }
+
+    // Get default permissions based on role
+    const defaultPermissions = {
+      admin: { canApproveHours: true, canApproveApplications: true, canManageProjects: true, canManageMembers: true, canViewReports: true, canEditOrganization: true },
+      hr: { canApproveHours: true, canApproveApplications: true, canManageProjects: false, canManageMembers: false, canViewReports: true, canEditOrganization: false },
+      manager: { canApproveHours: true, canApproveApplications: true, canManageProjects: true, canManageMembers: false, canViewReports: true, canEditOrganization: false },
+      member: { canApproveHours: false, canApproveApplications: false, canManageProjects: false, canManageMembers: false, canViewReports: true, canEditOrganization: false }
+    };
+
+    const role = (invitation.role || "member") as "admin" | "hr" | "manager" | "member";
+    const permissions = defaultPermissions[role as keyof typeof defaultPermissions] || defaultPermissions.member;
+
+    // Create organization member record
+    const member = await storage.createOrganizationMember({
+      organizationId: invitation.organizationId,
+      userId: user.id,
+      role,
+      title: invitation.title || undefined,
+      department: invitation.department || undefined,
+      ...permissions,
+      status: "active",
+      invitedBy: invitation.inviterId,
+      invitedAt: invitation.createdAt,
+      acceptedAt: new Date()
+    });
+
+    // Update invitation status
+    await storage.updateTeamInvitation(invitation.id, {
+      status: "accepted",
+      respondedAt: new Date(),
+      inviteeId: user.id
+    });
+
+    // Update user's organizationId if they don't have one
+    if (!user.organizationId) {
+      await storage.updateUser(user.id, { organizationId: invitation.organizationId });
+    }
+
+    const organization = await storage.getOrganization(invitation.organizationId);
+
+    broadcastUpdate("organization_member_accepted", {
+      organizationId: invitation.organizationId,
+      member
+    });
+
+    res.json({
+      success: true,
+      member,
+      organization: organization ? { id: organization.id, name: organization.name } : null
+    });
+  } catch (err) {
+    console.error("Error accepting invitation:", err);
     res.status(500).json({ message: "Failed to accept invitation" });
   }
 });

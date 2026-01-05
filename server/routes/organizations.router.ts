@@ -140,7 +140,26 @@ organizationsRouter.get("/:id", async (req: Request, res: Response) => {
 organizationsRouter.post("/", async (req: Request, res: Response) => {
   try {
     const orgData = insertOrganizationSchema.parse(req.body);
-    const organization = await storage.createOrganization(orgData);
+
+    // Check if the organization's contact email is pre-approved
+    let approvalStatus = "pending";
+    const contactEmail = orgData.contactEmail?.toLowerCase().trim();
+
+    if (contactEmail) {
+      // Get pre-approved emails from platform settings
+      const preApprovedSetting = await storage.getPlatformSetting("pre_approved_org_emails");
+      if (preApprovedSetting?.value) {
+        const preApprovedEmails = preApprovedSetting.value.split(",").map((e: string) => e.toLowerCase().trim());
+        if (preApprovedEmails.includes(contactEmail)) {
+          approvalStatus = "approved";
+        }
+      }
+    }
+
+    const organization = await storage.createOrganization({
+      ...orgData,
+      approvalStatus,
+    });
 
     broadcastUpdate("organization_created", organization);
     res.status(201).json(organization);

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Sparkles, BarChart3, ClipboardList, Trophy, MessageCircle, BookOpen } from "lucide-react";
+import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Sparkles, BarChart3, ClipboardList, Trophy, MessageCircle, BookOpen, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
@@ -291,6 +291,24 @@ export default function VolunteerNav() {
                         );
                       })}
                     </div>
+
+                    {/* Admin Section - Only for platform admins */}
+                    {(currentUser as any)?.isAdmin && (
+                      <div className="border-t border-gray-200 dark:border-gray-600 py-1 flex-shrink-0">
+                        <div className="px-4 py-1">
+                          <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Admin</span>
+                        </div>
+                        <Link href="/admin/organization-approval">
+                          <button
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            onClick={() => setMenuOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            <span className="font-medium">Organization Approvals</span>
+                          </button>
+                        </Link>
+                      </div>
+                    )}
 
                     {/* Logout Button */}
                     <div className="border-t border-gray-200 dark:border-gray-600 py-1 flex-shrink-0">

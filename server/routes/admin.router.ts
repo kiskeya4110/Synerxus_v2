@@ -684,3 +684,85 @@ adminRouter.patch("/email-digest/preferences/organization", async (req: Request,
     res.status(500).json({ message: "Error updating digest preference" });
   }
 });
+
+// ===== ORGANIZATION APPROVAL MANAGEMENT =====
+
+/**
+ * GET /organizations
+ * Get all organizations for admin review
+ * Only platform admins can access this endpoint
+ */
+adminRouter.get("/organizations", async (req: Request, res: Response) => {
+  try {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    // Check if user is a platform admin
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    // Get all organizations
+    const organizations = await storage.listOrganizations();
+    res.json(organizations);
+  } catch (err) {
+    console.error("Error fetching organizations for admin:", err);
+    res.status(500).json({ message: "Failed to fetch organizations" });
+  }
+});
+
+/**
+ * POST /organizations/:orgId/approval
+ * Approve or reject an organization
+ * Only platform admins can access this endpoint
+ */
+adminRouter.post("/organizations/:orgId/approval", async (req: Request, res: Response) => {
+  try {
+    const orgId = parseInt(req.params.orgId);
+    const { userId, status, notes } = req.body;
+
+    if (isNaN(orgId)) {
+      return res.status(400).json({ message: "Invalid organization ID" });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    // Check if user is a platform admin
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });
+    }
+
+    // Update organization approval status
+    const updated = await storage.updateOrganization(orgId, {
+      approvalStatus: status,
+      approvalNotes: notes || null,
+      approvedBy: userId,
+      approvedAt: new Date(),
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+
+    // TODO: Send notification to organization about approval/rejection
+
+    res.json({
+      success: true,
+      message: `Organization ${status}`,
+      organization: updated,
+    });
+  } catch (err) {
+    console.error("Error updating organization approval:", err);
+    res.status(500).json({ message: "Failed to update organization approval" });
+  }
+});

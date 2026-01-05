@@ -55,6 +55,7 @@ export const users = pgTable("users", {
   availability: jsonb("availability"), // For volunteers
   credentials: jsonb("credentials"), // For volunteers
   organizationId: integer("organization_id").references(() => organizations.id), // Link to organization if user is org admin
+  isAdmin: boolean("is_admin").default(false), // Platform admin flag
   dataConsent: boolean("data_consent").default(false), // User consent for data processing
   dataConsentDate: timestamp("data_consent_date"), // When consent was given
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -74,6 +75,11 @@ export const organizations = pgTable("organizations", {
   primarySdgs: integer("primary_sdgs").array(), // Organization's selected primary SDG focus areas
   needs: text("needs").array(), // Organization's volunteer needs
   goals: text("goals"), // Organization's goals/mission beyond just mission statement
+  // Approval workflow fields
+  approvalStatus: text("approval_status").default("pending"), // pending, approved, rejected
+  approvalNotes: text("approval_notes"), // Admin notes when approving/rejecting
+  approvedBy: integer("approved_by"), // User ID of admin who approved/rejected
+  approvedAt: timestamp("approved_at"), // When approval decision was made
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

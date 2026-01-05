@@ -647,10 +647,14 @@ profileRouter.post("/intake/organization-profile", async (req: Request, res: Res
       });
     }
 
-    // Update user with userType if needed (logo saved to organization and organizationProfile)
+    // Update user with userType and avatar if needed
     const userUpdates: any = {};
     if (!user.userType) {
       userUpdates.userType = 'organization';
+    }
+    // Sync organization logo to user's avatar for consistent profile display
+    if (req.body.logo) {
+      userUpdates.avatar = req.body.logo;
     }
     if (Object.keys(userUpdates).length > 0) {
       await storage.updateUser(user.id, userUpdates);

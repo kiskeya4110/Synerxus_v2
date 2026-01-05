@@ -63,6 +63,7 @@ import {
   Unlock,
   Eye,
   EyeOff,
+  Link2,
 } from "lucide-react";
 
 interface InvitationCode {
@@ -172,7 +173,7 @@ export default function InvitationCodesPage() {
     },
     onSuccess: async (response) => {
       const result = await response.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/invitation-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invitation-codes", userId] });
       setCreateDialogOpen(false);
       setShowCode(result.code);
       setNewCode({
@@ -207,7 +208,7 @@ export default function InvitationCodesPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invitation-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invitation-codes", userId] });
       toast({
         title: "Code Deactivated",
         description: "The invitation code has been deactivated.",
@@ -222,11 +223,30 @@ export default function InvitationCodesPage() {
     },
   });
 
+  // Generate invite link with code and optional user type
+  const generateInviteLink = (code: string, userType?: string | null) => {
+    const baseUrl = window.location.origin;
+    const params = new URLSearchParams({ code });
+    if (userType) {
+      params.set("type", userType);
+    }
+    return `${baseUrl}/login?${params.toString()}`;
+  };
+
   const copyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({
       title: "Copied!",
       description: `Code "${code}" copied to clipboard.`,
+    });
+  };
+
+  const copyInviteLink = (code: string, userType?: string | null) => {
+    const link = generateInviteLink(code, userType);
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Invite Link Copied!",
+      description: "Share this link with the invitee - the code will be pre-filled.",
     });
   };
 
@@ -523,28 +543,54 @@ export default function InvitationCodesPage() {
 
         {/* Show Created Code Dialog */}
         <Dialog open={!!showCode} onOpenChange={() => setShowCode(null)}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-green-600">
                 <CheckCircle className="h-5 w-5" />
                 Code Created Successfully!
               </DialogTitle>
               <DialogDescription>
-                Share this code with the volunteer to allow them to register.
+                Share the invite link below - the code will be pre-filled for the invitee.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-6">
-              <div className="flex items-center justify-center gap-4 p-4 bg-slate-100 rounded-lg">
-                <code className="text-2xl font-mono font-bold tracking-wider text-blue-600">
-                  {showCode}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => showCode && copyToClipboard(showCode)}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            <div className="py-4 space-y-4">
+              {/* Invite Link - Primary */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Invite Link (Recommended)</Label>
+                <div className="flex items-center gap-2 mt-1.5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Link2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <code className="text-sm font-mono text-blue-700 truncate flex-1">
+                    {showCode && generateInviteLink(showCode, newCode.userType)}
+                  </code>
+                  <Button
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => showCode && copyInviteLink(showCode, newCode.userType)}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Copy Link
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Click to copy - invitee just clicks the link to register with code pre-filled.
+                </p>
+              </div>
+
+              {/* Code Only - Secondary */}
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Or share code only</Label>
+                <div className="flex items-center gap-2 mt-1.5 p-2 bg-slate-50 border rounded-lg">
+                  <code className="text-lg font-mono font-bold tracking-wider text-gray-700 flex-1">
+                    {showCode}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => showCode && copyToClipboard(showCode)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -595,17 +641,27 @@ export default function InvitationCodesPage() {
                     return (
                       <TableRow key={code.id} className={inactive ? "opacity-60" : ""}>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <code className="font-mono font-semibold bg-slate-100 px-2 py-1 rounded">
+                          <div className="flex items-center gap-1">
+                            <code className="font-mono font-semibold bg-slate-100 px-2 py-1 rounded text-sm">
                               {code.code}
                             </code>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6"
-                              onClick={() => copyToClipboard(code.code)}
+                              className="h-7 w-7"
+                              onClick={() => copyInviteLink(code.code, code.userType)}
+                              title="Copy invite link"
                             >
-                              <Copy className="h-3 w-3" />
+                              <Link2 className="h-3.5 w-3.5 text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => copyToClipboard(code.code)}
+                              title="Copy code only"
+                            >
+                              <Copy className="h-3 w-3 text-gray-500" />
                             </Button>
                           </div>
                         </TableCell>

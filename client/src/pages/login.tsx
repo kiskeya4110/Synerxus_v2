@@ -21,19 +21,41 @@ export default function Login() {
   const { signInWithGoogle, signInWithEmail, signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState<"volunteer" | "organization" | "corporate-partner" | null>(null);
   const [privacyConsentAccepted, setPrivacyConsentAccepted] = useState(false);
 
-  // Get initial tab from URL parameter
+  // Get initial values from URL parameters
   const urlParams = new URLSearchParams(searchString);
   const tabFromUrl = urlParams.get('tab') === 'register' ? 'register' : 'login';
-  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const codeFromUrl = urlParams.get('code') || '';
+  const typeFromUrl = urlParams.get('type') as "volunteer" | "organization" | "corporate-partner" | null;
 
-  // Update active tab when URL changes
+  // Initialize userType from URL if valid
+  const [userType, setUserType] = useState<"volunteer" | "organization" | "corporate-partner" | null>(
+    typeFromUrl && ['volunteer', 'organization', 'corporate-partner'].includes(typeFromUrl) ? typeFromUrl : null
+  );
+
+  // If code is in URL, default to register tab
+  const [activeTab, setActiveTab] = useState(codeFromUrl ? 'register' : tabFromUrl);
+
+  // Update state when URL changes (code, tab, type)
   useEffect(() => {
     const params = new URLSearchParams(searchString);
+    const code = params.get('code');
     const tab = params.get('tab') === 'register' ? 'register' : 'login';
-    setActiveTab(tab);
+    const type = params.get('type') as "volunteer" | "organization" | "corporate-partner" | null;
+
+    // If code is provided, switch to register tab and pre-fill code
+    if (code) {
+      setActiveTab('register');
+      setInvitationCode(code);
+    } else {
+      setActiveTab(tab);
+    }
+
+    // Pre-select user type if provided
+    if (type && ['volunteer', 'organization', 'corporate-partner'].includes(type)) {
+      setUserType(type);
+    }
   }, [searchString]);
   
   // Login form state
@@ -48,7 +70,7 @@ export default function Login() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
-  const [invitationCode, setInvitationCode] = useState("");
+  const [invitationCode, setInvitationCode] = useState(codeFromUrl);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 

@@ -77,41 +77,17 @@ export default function MyWork() {
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
   
   // Fetch current user with userId in cache key to avoid stale data
-  const { data: currentUser, isLoading: isUserLoading, isError: isUserError } = useQuery<User>({
+  const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
       const response = await fetch(url);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("USER_NOT_FOUND");
-        }
-        throw new Error("Failed to fetch user");
-      }
       return response.json();
     },
     staleTime: 0,
-    refetchOnMount: true,
-    enabled: !!storedUserId,
-    retry: (failureCount, error) => {
-      // Don't retry if user not found (invalid session)
-      if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    refetchOnMount: true
   });
-
-  // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
-  useEffect(() => {
-    if (isUserError && storedUserId) {
-      console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
-      localStorage.removeItem('currentUserId');
-      localStorage.removeItem('userType');
-      setLocation('/');
-    }
-  }, [isUserError, storedUserId, setLocation]);
 
   const userId = localStorage.getItem('currentUserId');
   const volunteerId = currentUser?.id;
@@ -189,16 +165,12 @@ export default function MyWork() {
   });
 
   // Fetch organization projects
-  const { data: orgProjects = [], isLoading: orgProjectsLoading, isError: orgProjectsError } = useQuery<any[]>({
+  const { data: orgProjects = [], isLoading: orgProjectsLoading } = useQuery<any[]>({
     queryKey: ["/api/projects", "org", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
-      if (!response.ok) {
-        console.error("Failed to fetch organization projects:", response.status);
-        return [];
-      }
-      return response.json();
+      return response.ok ? await response.json() : [];
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization',
     staleTime: 0,
@@ -492,72 +464,6 @@ export default function MyWork() {
   const impactLeaderEntry = Array.from(volunteerHoursMap.entries())
     .sort((a, b) => b[1].hours - a[1].hours)[0];
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
-
-  // Show error if user is not authenticated
-  if (!storedUserId) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <div className="text-center p-6">
-          <p className="text-red-600 font-semibold mb-3">Session expired</p>
-          <p className="text-gray-500 text-sm mb-4">Please log in again to access your work.</p>
-          <button
-            onClick={() => setLocation('/')}
-            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if user fetch failed
-  if (isUserError) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <div className="text-center p-6">
-          <p className="text-red-600 font-semibold mb-3">Failed to load user data</p>
-          <p className="text-gray-500 text-sm mb-4">Please try refreshing the page or logging in again.</p>
-          <button
-            onClick={() => setLocation('/')}
-            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state while user data is being fetched to prevent wrong view flash
-  if (isUserLoading) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not loading and no user, show error
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <div className="text-center p-6">
-          <p className="text-red-600 font-semibold mb-3">Unable to load user</p>
-          <p className="text-gray-500 text-sm mb-4">Please try logging in again.</p>
-          <button
-            onClick={() => setLocation('/')}
-            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
@@ -865,19 +771,12 @@ export default function MyWork() {
               )}
             </div>
             <div className="space-y-4">
-              {(orgProjectsLoading || isUserLoading) ? (
+              {orgProjectsLoading ? (
                 <Card className="p-8 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
                     <p className="text-gray-500">Loading projects...</p>
                   </div>
-                </Card>
-              ) : orgProjectsError ? (
-                <Card className="p-8 text-center">
-                  <p className="text-red-500 mb-4">Failed to load projects. Please try refreshing the page.</p>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
                 </Card>
               ) : orgProjects.length > 0 ? (
                 orgProjects.map((project: Project) => {

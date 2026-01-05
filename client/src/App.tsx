@@ -75,6 +75,7 @@ const StoryDetail = lazy(() => import("@/pages/story-detail"));
 const Help = lazy(() => import("@/pages/help"));
 const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
+const InvitationCodes = lazy(() => import("@/pages/invitation-codes"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -240,6 +241,7 @@ function AppWithOnboarding() {
           <Route path="/organization-team" component={OrganizationTeam} />
           <Route path="/overview" component={Overview} />
           <Route path="/volunteers" component={Volunteers} />
+          <Route path="/invitation-codes" component={InvitationCodes} />
           {/* Standalone utility routes */}
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>

@@ -7,7 +7,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, MessageSquare,
   Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound, MoreVertical, Home, ClipboardList, Trophy,
-  CheckCircle, XCircle, ChevronLeft, ExternalLink, MapPin, Clock, Star, Briefcase
+  CheckCircle, XCircle, ChevronLeft, ExternalLink, MapPin, Clock, Star, Briefcase, Key
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -808,6 +808,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-team'); setIsProfileOpen(false); }} data-testid="menu-team-management">
                   <UsersRound className="mr-2 h-4 w-4" />
                   <span>Team Management</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/invitation-codes'); setIsProfileOpen(false); }} data-testid="menu-invitation-codes">
+                  <Key className="mr-2 h-4 w-4" />
+                  <span>Invitation Codes</span>
                 </DropdownMenuItem>
               </div>
 

@@ -862,7 +862,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         count: data.count,
         urgencyScore: data.avgUrgency,
         demandScore: Math.round(data.count * data.avgUrgency * 10),
-        userHasSkill: volunteerSkills.some(vs => vs.includes(skill) || skill.includes(vs)),
+        userHasSkill: volunteerSkills.some((vs: string) => vs.includes(skill) || skill.includes(vs)),
         opportunityIds: data.opportunities
       }))
       .sort((a, b) => b.demandScore - a.demandScore);

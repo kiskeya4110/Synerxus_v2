@@ -68,12 +68,34 @@ export default function Projects() {
       const id = localStorage.getItem('currentUserId');
       if (!id) throw new Error("No user ID found");
       const response = await fetch(`/api/users/me?userId=${id}`);
-      if (!response.ok) throw new Error("User not found");
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("USER_NOT_FOUND");
+        }
+        throw new Error("User not found");
+      }
       return response.json();
     },
     // Only load user if we're not in public org view mode OR if user is logged in
-    enabled: !!userId && !viewingOrgId
+    enabled: !!userId && !viewingOrgId,
+    retry: (failureCount, error) => {
+      // Don't retry if user not found (invalid session)
+      if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  useEffect(() => {
+    if (isUserError && userId && !viewingOrgId) {
+      console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      setLocation('/');
+    }
+  }, [isUserError, userId, viewingOrgId, setLocation]);
 
   // Fetch organization details when viewing a specific org's projects (public view)
   interface Organization {
@@ -309,8 +331,26 @@ export default function Projects() {
     );
   }
 
+  // Handle missing user ID (not authenticated)
+  if (!isPublicOrgView && !userId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 font-semibold mb-2">Session expired</p>
+          <p className="text-gray-500 text-sm mb-4">Please log in again to view your projects.</p>
+          <button
+            onClick={() => setLocation('/')}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Handle user loading or error state (only when not in public org view)
-  if (!isPublicOrgView && (isUserLoading || (!currentUser && !isUserError))) {
+  if (!isPublicOrgView && userId && (isUserLoading || (!currentUser && !isUserError))) {
     if (isOrganization && isMobile) {
       return (
         <OrganizationPWALayout activeTab="projects">

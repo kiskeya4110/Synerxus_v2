@@ -69,12 +69,14 @@ export const RadarChartLazy = createLazyChartWrapper(LazyRadarChartComponent, 'R
 export function ResponsiveContainerLazy(props: {
   width?: number | string;
   height?: number | string;
-  children: React.ReactNode;
+  children: React.ReactElement;
   className?: string;
 }) {
   return (
     <Suspense fallback={<ChartSkeleton height={typeof props.height === 'number' ? props.height : 300} />}>
-      <LazyResponsiveContainerComponent {...props} />
+      <LazyResponsiveContainerComponent {...props}>
+        {props.children}
+      </LazyResponsiveContainerComponent>
     </Suspense>
   );
 }

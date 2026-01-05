@@ -211,15 +211,38 @@ export default function OrganizationDashboard() {
     staleTime: 10000, // Consider data stale after 10 seconds
   });
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isError: isUserError } = useQuery({
     queryKey: ['/api/users/me', userId],
     queryFn: async () => {
       const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) return null;
+      if (!response.ok) {
+        // If 404, the user doesn't exist - session is invalid
+        if (response.status === 404) {
+          throw new Error('USER_NOT_FOUND');
+        }
+        throw new Error('Failed to fetch user');
+      }
       return response.json();
     },
     enabled: !!userId && isOrganizationUser,
+    retry: (failureCount, error) => {
+      // Don't retry if user not found (invalid session)
+      if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  useEffect(() => {
+    if (isUserError && userId) {
+      console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      navigate('/');
+    }
+  }, [isUserError, userId, navigate]);
 
   const { data: organizationProfile } = useQuery({
     queryKey: ['/api/intake/organization-profile', currentUser?.organizationId],
@@ -750,6 +773,24 @@ export default function OrganizationDashboard() {
     }
   }, [isOrganizationUser, userType, navigate]);
 
+  // Show error if user is not authenticated
+  if (!userId) {
+    return (
+      <div style={{ height: '100vh', backgroundColor: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '24px' }}>
+          <p style={{ color: '#dc2626', fontWeight: '600', marginBottom: '12px' }}>Session expired</p>
+          <p style={{ color: '#6b7280', marginBottom: '16px' }}>Please log in again to access your dashboard.</p>
+          <button
+            onClick={() => navigate('/')}
+            style={{ padding: '10px 20px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show nothing while redirecting non-organization users
   if (!isOrganizationUser) {
     return null;
@@ -769,7 +810,8 @@ export default function OrganizationDashboard() {
     );
   }
 
-  if (isLoading) {
+  // Only show loading when query is enabled and actually loading
+  if (isLoading && userId && isOrganizationUser) {
     return (
       <div style={{ height: '100vh', backgroundColor: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <div style={{ textAlign: 'center' }}>

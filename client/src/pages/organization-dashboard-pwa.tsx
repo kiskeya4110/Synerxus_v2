@@ -256,15 +256,37 @@ export default function OrganizationDashboardPWA() {
   });
 
   // Fetch current user
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isError: isUserError } = useQuery({
     queryKey: ['/api/users/me', userId],
     queryFn: async () => {
       const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) return null;
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('USER_NOT_FOUND');
+        }
+        throw new Error('Failed to fetch user');
+      }
       return response.json();
     },
     enabled: !!userId,
+    retry: (failureCount, error) => {
+      // Don't retry if user not found (invalid session)
+      if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  useEffect(() => {
+    if (isUserError && userId) {
+      console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      navigate('/');
+    }
+  }, [isUserError, userId, navigate]);
 
   // Fetch organization
   const { data: organization } = useQuery({
@@ -511,8 +533,26 @@ export default function OrganizationDashboardPWA() {
     navigate('/');
   };
 
-  // Loading state
-  if (isLoading && !dashboardData) {
+  // Show error if user is not authenticated
+  if (!userId) {
+    return (
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-red-600 font-semibold mb-3">Session expired</p>
+          <p className="text-slate-500 mb-4 text-sm">Please log in again to access your dashboard.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state - only show when query is enabled and loading
+  if (isLoading && !dashboardData && userId) {
     return (
       <div className="h-screen bg-[#faf9f7] flex flex-col overflow-hidden">
         <div className="bg-white border-b border-slate-200 px-4 py-3 h-16 flex items-center justify-between animate-pulse">

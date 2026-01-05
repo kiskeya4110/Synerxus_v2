@@ -5,9 +5,9 @@
 interface PDFOptions {
   margin?: number;
   filename?: string;
-  image?: { type: string; quality: number };
+  image?: { type: 'png' | 'jpeg' | 'webp'; quality: number };
   html2canvas?: { scale: number; useCORS?: boolean; logging?: boolean };
-  jsPDF?: { unit: string; format: string; orientation: string };
+  jsPDF?: { unit: 'pt' | 'mm' | 'cm' | 'in'; format: string; orientation: 'portrait' | 'landscape' };
 }
 
 /**
@@ -27,9 +27,9 @@ export async function exportToPDF(
   const defaultOptions: PDFOptions = {
     margin: 10,
     filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'jpeg' as const, quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    jsPDF: { unit: 'mm' as const, format: 'a4', orientation: 'portrait' as const }
   };
 
   const mergedOptions = { ...defaultOptions, ...options };

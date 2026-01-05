@@ -77,19 +77,41 @@ export default function MyWork() {
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
   
   // Fetch current user with userId in cache key to avoid stale data
-  const { data: currentUser, isLoading: isUserLoading } = useQuery<User>({
+  const { data: currentUser, isLoading: isUserLoading, isError: isUserError } = useQuery<User>({
     queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch user");
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("USER_NOT_FOUND");
+        }
+        throw new Error("Failed to fetch user");
+      }
       return response.json();
     },
     staleTime: 0,
     refetchOnMount: true,
-    enabled: !!storedUserId
+    enabled: !!storedUserId,
+    retry: (failureCount, error) => {
+      // Don't retry if user not found (invalid session)
+      if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
+
+  // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  useEffect(() => {
+    if (isUserError && storedUserId) {
+      console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      setLocation('/');
+    }
+  }, [isUserError, storedUserId, setLocation]);
 
   const userId = localStorage.getItem('currentUserId');
   const volunteerId = currentUser?.id;
@@ -471,13 +493,67 @@ export default function MyWork() {
     .sort((a, b) => b[1].hours - a[1].hours)[0];
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
+  // Show error if user is not authenticated
+  if (!storedUserId) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-red-600 font-semibold mb-3">Session expired</p>
+          <p className="text-gray-500 text-sm mb-4">Please log in again to access your work.</p>
+          <button
+            onClick={() => setLocation('/')}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user fetch failed
+  if (isUserError) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-red-600 font-semibold mb-3">Failed to load user data</p>
+          <p className="text-gray-500 text-sm mb-4">Please try refreshing the page or logging in again.</p>
+          <button
+            onClick={() => setLocation('/')}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading state while user data is being fetched to prevent wrong view flash
-  if (isUserLoading || !currentUser) {
+  if (isUserLoading) {
     return (
       <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
           <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not loading and no user, show error
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-red-600 font-semibold mb-3">Unable to load user</p>
+          <p className="text-gray-500 text-sm mb-4">Please try logging in again.</p>
+          <button
+            onClick={() => setLocation('/')}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );

@@ -20,7 +20,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ROLE_WEIGHTS, ROLE_CATEGORIES, getRoleDisplayName } from "@shared/aiu-calculations";
-import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, Info, ArrowLeft } from "lucide-react";
+import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, Info, ArrowLeft, AlertTriangle, Flag } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 
@@ -39,6 +40,14 @@ const volunteerRoleSchema = z.object({
   description: z.string().optional()
 });
 
+// Milestone schema for ongoing projects
+const milestoneSchema = z.object({
+  name: z.string().min(1, "Milestone name is required"),
+  description: z.string().optional(),
+  targetDate: z.string().optional(),
+  completed: z.boolean().default(false)
+});
+
 const opportunitySchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Please provide a detailed description"),
@@ -55,10 +64,14 @@ const opportunitySchema = z.object({
   volunteersNeeded: z.coerce.number().min(1).optional(),
   requirements: z.string().optional(),
   benefits: z.string().optional(),
+  // Urgent opportunity flag
+  isUrgent: z.boolean().default(false),
   // Total volunteer contribution: percentage of project impact attributed to volunteers (vs paid staff)
   totalVolunteerContribution: z.coerce.number().min(1).max(100).default(100),
   // AIU Formula: Volunteer Roles with contribution percentages (how the volunteer share is divided)
-  volunteerRoles: z.array(volunteerRoleSchema).min(1, "Define at least one volunteer role")
+  volunteerRoles: z.array(volunteerRoleSchema).min(1, "Define at least one volunteer role"),
+  // Milestones for ongoing projects
+  milestones: z.array(milestoneSchema).optional()
 }).refine(data => {
   if (data.commitmentType === "ongoing" && !data.ongoingHoursPerWeek) {
     return false;
@@ -125,11 +138,13 @@ export default function PostCoreOpportunity() {
       volunteersNeeded: 1,
       requirements: "",
       benefits: "",
+      isUrgent: false,
       totalVolunteerContribution: 30, // Default 30% volunteer share, 70% organization staff
       volunteerRoles: [
         { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
         { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
-      ]
+      ],
+      milestones: []
     }
   });
 
@@ -145,7 +160,8 @@ export default function PostCoreOpportunity() {
         sdgGoals: [data.primarySdg],
         volunteersNeeded: totalVolunteersNeeded,
         status: "open",
-        isUrgent: false
+        isUrgent: data.isUrgent || false,
+        milestones: data.milestones || []
       });
     },
     onSuccess: () => {
@@ -264,6 +280,42 @@ export default function PostCoreOpportunity() {
                     </FormItem>
                   )}
                 />
+
+                {/* Urgent Opportunity Toggle */}
+                <FormField
+                  control={form.control}
+                  name="isUrgent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                        field.value
+                          ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-800'
+                          : 'bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${field.value ? 'bg-red-100 dark:bg-red-900' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                            <AlertTriangle className={`h-5 w-5 ${field.value ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}`} />
+                          </div>
+                          <div>
+                            <FormLabel className="text-base font-semibold cursor-pointer">
+                              Mark as Urgent Opportunity
+                            </FormLabel>
+                            <FormDescription className="text-sm">
+                              Urgent opportunities are highlighted and prioritized in volunteer searches
+                            </FormDescription>
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="switch-urgent"
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
@@ -371,6 +423,98 @@ export default function PostCoreOpportunity() {
                         <FormControl>
                           <Input data-testid="input-total-hours" type="number" min="1" placeholder="e.g., 40" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Milestones Section for Ongoing Projects */}
+                {form.watch("commitmentType") === "ongoing" && (
+                  <FormField
+                    control={form.control}
+                    name="milestones"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="border-t pt-4 mt-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Flag className="w-5 h-5 text-indigo-600" />
+                            <FormLabel className="text-base font-semibold">Project Milestones</FormLabel>
+                          </div>
+                          <FormDescription className="mb-4">
+                            Define key milestones for this ongoing opportunity. Volunteers can track progress against these goals.
+                          </FormDescription>
+
+                          <div className="space-y-3">
+                            {field.value?.map((milestone, index) => (
+                              <div key={index} className="flex items-start gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                                <div className="flex-1 space-y-2">
+                                  <Input
+                                    placeholder="Milestone name (e.g., 'Phase 1 Complete')"
+                                    value={milestone.name}
+                                    onChange={(e) => {
+                                      const updated = [...(field.value || [])];
+                                      updated[index] = { ...updated[index], name: e.target.value };
+                                      field.onChange(updated);
+                                    }}
+                                    className="bg-white dark:bg-gray-900"
+                                  />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                      placeholder="Description (optional)"
+                                      value={milestone.description || ""}
+                                      onChange={(e) => {
+                                        const updated = [...(field.value || [])];
+                                        updated[index] = { ...updated[index], description: e.target.value };
+                                        field.onChange(updated);
+                                      }}
+                                      className="bg-white dark:bg-gray-900"
+                                    />
+                                    <Input
+                                      type="date"
+                                      placeholder="Target date"
+                                      value={milestone.targetDate || ""}
+                                      onChange={(e) => {
+                                        const updated = [...(field.value || [])];
+                                        updated[index] = { ...updated[index], targetDate: e.target.value };
+                                        field.onChange(updated);
+                                      }}
+                                      className="bg-white dark:bg-gray-900"
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const updated = (field.value || []).filter((_, i) => i !== index);
+                                    field.onChange(updated);
+                                  }}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                field.onChange([
+                                  ...(field.value || []),
+                                  { name: "", description: "", targetDate: "", completed: false }
+                                ]);
+                              }}
+                              className="w-full border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Milestone
+                            </Button>
+                          </div>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

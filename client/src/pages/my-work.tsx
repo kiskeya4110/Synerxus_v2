@@ -472,6 +472,18 @@ export default function MyWork() {
     .sort((a, b) => b[1].hours - a[1].hours)[0];
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
+  // Debug logging for mobile detection
+  console.log('[MyWork Debug]', {
+    isMobile,
+    isOrganizationManager,
+    userType: currentUser?.userType,
+    organizationId: currentUser?.organizationId,
+    userId: currentUser?.id,
+    windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'SSR',
+    willShowPWALayout: isOrganizationManager && isMobile,
+    willShowCreateProject: !!(currentUser?.organizationId),
+  });
+
   // Show loading state while user data is being fetched to prevent wrong view flash
   if (isUserLoading || !currentUser) {
     return (

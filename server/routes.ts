@@ -453,47 +453,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users/firebase-sync", async (req, res) => {
     try {
-      const { firebaseUid, email, displayName, userType } = req.body;
-      
+      const { firebaseUid, email, displayName, userType, dataConsent, dataConsentDate } = req.body;
+
       if (!firebaseUid || !email) {
         return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
       }
-      
+
       // Check if user already exists by Firebase UID
       let user = await storage.getUserByFirebaseUid(firebaseUid);
-      
+
       if (user) {
         // User exists with this Firebase UID, return it (login case)
         return res.json(user);
       }
-      
+
       // Check if user exists by email (re-linking case for migrated users)
       user = await storage.getUserByEmail(email);
-      
+
       if (user) {
         // User exists in database but needs Firebase UID updated (migration case)
-        const updatedUser = await storage.updateUser(user.id, { 
+        const updatedUser = await storage.updateUser(user.id, {
           firebaseUid,
           displayName: displayName || user.displayName
         });
         console.log(`Re-linked existing user ${email} to new Firebase account`);
         return res.json(updatedUser);
       }
-      
+
       // User doesn't exist at all, create new one (registration case)
       if (!userType) {
         return res.status(400).json({ message: "userType is required for new user registration" });
       }
-      
+
       const username = email.split('@')[0] + '_' + Date.now();
-      const userData = {
+      const userData: any = {
         firebaseUid,
         username,
         email,
         displayName: displayName || email.split('@')[0],
         userType,
       };
-      
+
+      // Add privacy consent if provided (required for new registrations)
+      if (dataConsent !== undefined) {
+        userData.dataConsent = dataConsent === true;
+        userData.dataConsentDate = dataConsent === true ? (dataConsentDate ? new Date(dataConsentDate) : new Date()) : null;
+        console.log(`[Consent] New user ${email} consent: ${dataConsent} at registration`);
+      }
+
       user = await storage.createUser(userData);
       broadcastUpdate("user_created", user);
       res.status(201).json(user);

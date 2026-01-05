@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiKey, FiHeart, FiGlobe, FiBriefcase } from "react-icons/fi";
+import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiKey, FiHeart, FiGlobe, FiBriefcase, FiShield, FiCheck, FiX } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ export default function Login() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState<"volunteer" | "organization" | "corporate-partner" | null>(null);
+  const [privacyConsentAccepted, setPrivacyConsentAccepted] = useState(false);
 
   // Get initial tab from URL parameter
   const urlParams = new URLSearchParams(searchString);
@@ -308,7 +309,10 @@ export default function Login() {
             // Pass organization name for org/corporate users - will be saved and used to pre-fill intake form
             organizationName: (userType === 'organization' || userType === 'corporate-partner') ? organizationName : undefined,
             // Include invitation code if provided
-            invitationCode: invitationCode.trim() || undefined
+            invitationCode: invitationCode.trim() || undefined,
+            // Privacy consent - required during registration
+            dataConsent: privacyConsentAccepted,
+            dataConsentDate: privacyConsentAccepted ? new Date().toISOString() : undefined
           })
         });
 
@@ -474,6 +478,7 @@ export default function Login() {
               
               {/* Register Tab */}
               <TabsContent value="register">
+                {/* Step 1: User Type Selection */}
                 {!userType ? (
                   <div className="space-y-4">
                     <div className="text-center mb-6">
@@ -551,6 +556,83 @@ export default function Login() {
                       </div>
                     </button>
                   </div>
+                ) : !privacyConsentAccepted ? (
+                  /* Step 2: Privacy Consent - Required to Continue */
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                        <FiShield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        Before you continue
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        User Consent for Platform Access
+                      </p>
+                    </div>
+
+                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-3">
+                      <p>
+                        To use Synerxus, we ask for your consent to allow the platform to process
+                        and use your data to help improve system performance, optimize features,
+                        and enhance your overall experience.
+                      </p>
+                      <p>
+                        Your information will always be handled responsibly and in alignment with
+                        our commitment to transparency and impact.
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        By selecting "I Agree", you confirm that:
+                      </p>
+                      <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <FiCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>You understand your data may be used to help optimize the platform</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <FiCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>You consent to this use as part of accessing and using Synerxus</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <FiCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>You acknowledge that this consent is required to continue</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="flex flex-col gap-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={() => setPrivacyConsentAccepted(true)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        size="lg"
+                      >
+                        <FiCheck className="h-4 w-4 mr-2" />
+                        I Agree — Continue to Registration
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setUserType(null);
+                          setPrivacyConsentAccepted(false);
+                          toast({
+                            title: "Consent Required",
+                            description: "You must agree to the data usage policy to create an account.",
+                            variant: "destructive",
+                          });
+                        }}
+                        className="w-full text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
+                        size="lg"
+                      >
+                        <FiX className="h-4 w-4 mr-2" />
+                        I Do Not Agree — Exit
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <form onSubmit={handleSignUp}>
                     <div className="space-y-4">
@@ -560,7 +642,10 @@ export default function Login() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setUserType(null)}
+                          onClick={() => {
+                            setUserType(null);
+                            setPrivacyConsentAccepted(false);
+                          }}
                           className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 -ml-2"
                           data-testid="button-back-to-selection"
                         >

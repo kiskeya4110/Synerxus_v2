@@ -102,7 +102,10 @@
       "Bash(__NEW_LINE__ echo -e \"\\\\n1. /api/users/me \\(requires auth/DB\\):\")",
       "Bash(__NEW_LINE__ echo -e \"\\\\n2. /api/organizations \\(DB list query\\):\")",
       "Bash(__NEW_LINE__ echo -e \"\\\\n3. /api/projects \\(DB list query\\):\")",
-      "Bash(__NEW_LINE__ echo -e \"\\\\n4. /api/opportunities \\(DB list query\\):\")"
+      "Bash(__NEW_LINE__ echo -e \"\\\\n4. /api/opportunities \\(DB list query\\):\")",
+      "Bash(nslookup:*)",
+      "Bash(dig:*)",
+      "Bash(host:*)"
     ],
     "deny": [],
     "ask": []

@@ -12,11 +12,11 @@
     </linearGradient>
   </defs>
 
-  <!-- Background - white/cream for clean PWA icon -->
-  <rect width="512" height="512" rx="76" fill="#FDF8F3"/>
+  <!-- Background with rounded corners for app icon look -->
+  <rect width="512" height="512" rx="96" fill="#FDF8F3"/>
 
-  <!-- Synerxus intertwined ribbon logo - scaled to 50% to fit maskable safe zone (center 60%) -->
-  <g transform="translate(256, 256) scale(0.5)">
+  <!-- Synerxus intertwined ribbon logo - centered and sized for visibility -->
+  <g transform="translate(256, 256) scale(0.52)">
     <!-- Blue ribbon (top loop going left-down) -->
     <path d="M -120 -140
              C -200 -140, -200 60, -120 100
@@ -25,7 +25,7 @@
              C 80 -200, -40 -140, -120 -140"
           fill="none"
           stroke="url(#blueGrad)"
-          stroke-width="42"
+          stroke-width="46"
           stroke-linecap="round"
           stroke-linejoin="round"/>
 
@@ -37,7 +37,7 @@
              C -80 200, 40 140, 120 140"
           fill="none"
           stroke="url(#orangeGrad)"
-          stroke-width="42"
+          stroke-width="46"
           stroke-linecap="round"
           stroke-linejoin="round"/>
   </g>

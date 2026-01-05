@@ -15,8 +15,9 @@
   <!-- Full background for maskable - PWA will crop to circle/rounded shape -->
   <rect width="512" height="512" fill="#FDF8F3"/>
 
-  <!-- Synerxus intertwined ribbon logo - scaled to 40% to fit within maskable safe zone (center 80% of 80% = 64%) -->
-  <g transform="translate(256, 256) scale(0.38)">
+  <!-- Synerxus intertwined ribbon logo - scaled to fit within maskable safe zone (center 80%) -->
+  <!-- Safe zone radius = 204px (40% of 512), logo should fit within ~160px radius -->
+  <g transform="translate(256, 256) scale(0.48)">
     <!-- Blue ribbon (top loop going left-down) -->
     <path d="M -120 -140
              C -200 -140, -200 60, -120 100
@@ -25,7 +26,7 @@
              C 80 -200, -40 -140, -120 -140"
           fill="none"
           stroke="url(#blueGradMask)"
-          stroke-width="44"
+          stroke-width="48"
           stroke-linecap="round"
           stroke-linejoin="round"/>
 
@@ -37,7 +38,7 @@
              C -80 200, 40 140, 120 140"
           fill="none"
           stroke="url(#orangeGradMask)"
-          stroke-width="44"
+          stroke-width="48"
           stroke-linecap="round"
           stroke-linejoin="round"/>
   </g>

@@ -453,7 +453,7 @@ export default function OrganizationDashboardPWA() {
 
   // Get organization's committed SDGs for filtering
   const committedSdgs: number[] = useMemo(() => {
-    return organizationProfile?.organizationProfile?.sdgGoals || [];
+    return organizationProfile?.primarySdgs || organizationProfile?.organizationProfile?.sdgGoals || [];
   }, [organizationProfile]);
 
   // Calculate total AIU with robust fallback

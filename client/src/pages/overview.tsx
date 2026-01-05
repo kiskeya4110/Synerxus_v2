@@ -95,7 +95,7 @@ export default function Overview() {
   };
 
   const sdgContributions = dashboardData?.sdgDistribution || [];
-  const organizationSDGs = orgProfile?.sdgGoals || [];
+  const organizationSDGs = orgProfile?.primarySdgs || orgProfile?.sdgGoals || [];
 
   const getCurrentQuarter = () => {
     const month = new Date().getMonth();

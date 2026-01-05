@@ -144,18 +144,19 @@ export default function Volunteers() {
 
   // Fetch organization profile to get committed SDGs
   const { data: organizationProfile } = useQuery<any>({
-    queryKey: ["/api/intake/organization-profile", userId],
+    queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/intake/organization-profile?userId=${userId}`);
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!userId && isOrganization
+    enabled: !!currentUser?.organizationId && isOrganization
   });
 
   // Get organization's committed SDGs for filtering
   const orgCommittedSdgs: number[] = useMemo(() => {
-    return organizationProfile?.organizationProfile?.sdgGoals || [];
+    return organizationProfile?.primarySdgs || organizationProfile?.organizationProfile?.sdgGoals || [];
   }, [organizationProfile]);
 
   // Helper functions to manage processing state

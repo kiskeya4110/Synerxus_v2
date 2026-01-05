@@ -5304,7 +5304,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         skillRatings: req.body.skillRatings || {}, // Explicitly preserve skillRatings
         availability: req.body.availability || [], // Explicitly preserve availability
         yearsOfExperience: req.body.yearsOfExperience || null, // Explicitly preserve yearsOfExperience
-        profilePhotoUrl: req.body.profilePhotoUrl || null // Explicitly preserve profile photo
+        profilePhotoUrl: req.body.profilePhotoUrl || existingProfile?.profilePhotoUrl || null // Preserve existing photo if no new one provided
       };
       
       console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));

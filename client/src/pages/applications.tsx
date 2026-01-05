@@ -10,11 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar, Brain } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar, Brain, ArrowLeft } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "wouter";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import VolunteerInsightsPanel from "@/components/applications/volunteer-insights-panel";
@@ -45,6 +48,8 @@ export default function ApplicationsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [showAiInsights, setShowAiInsights] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const [, navigate] = useLocation();
 
   // Get current user ID and type
   const userId = localStorage.getItem('currentUserId');
@@ -290,6 +295,269 @@ export default function ApplicationsPage() {
   const pendingApplications = applications.filter(app => app.status === "pending");
   const reviewedApplications = applications.filter(app => app.status !== "pending");
 
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationUser) {
+    if (isLoading) {
+      return (
+        <OrganizationPWALayout activeTab="home">
+          <div className="p-4">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
+
+    return (
+      <OrganizationPWALayout activeTab="home">
+        <div className="p-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-4"
+            onClick={() => navigate('/organization-dashboard/pwa')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+
+          <h1 className="text-2xl font-bold mb-2">Applications</h1>
+          <p className="text-sm text-gray-600 mb-4">
+            Review and manage volunteer applications
+          </p>
+
+          <Tabs defaultValue="pending" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pending">
+                Pending ({pendingApplications.length})
+              </TabsTrigger>
+              <TabsTrigger value="reviewed">
+                Reviewed ({reviewedApplications.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending" className="space-y-3">
+              {pendingApplications.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-4">
+                      <Clock className="h-8 w-8 text-yellow-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No Pending Applications</h3>
+                    <p className="text-gray-500 text-center text-sm">
+                      New applications will appear here
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                pendingApplications.map((app) => (
+                  <Card key={app.id} className="rounded-xl">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={app.volunteer?.avatar} />
+                          <AvatarFallback>{app.volunteer?.displayName?.[0] || "V"}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{app.volunteer?.displayName || "Unknown"}</p>
+                          <p className="text-xs text-gray-500 truncate">{app.opportunity?.title || "Unknown"}</p>
+                        </div>
+                        {app.matchScore && (
+                          <Badge className="bg-green-100 text-green-700 text-xs">
+                            {app.matchScore}%
+                          </Badge>
+                        )}
+                      </div>
+                      {app.coverLetter && (
+                        <p className="text-xs text-gray-600 line-clamp-2 mb-3">{app.coverLetter}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => openProfileDialog(app.volunteerId, app)}
+                        >
+                          <User className="w-3 h-3 mr-1" />
+                          Profile
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          onClick={() => openReviewDialog(app, "accepted")}
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => openReviewDialog(app, "rejected")}
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="reviewed" className="space-y-3">
+              {reviewedApplications.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <CheckCircle2 className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No Reviewed Applications</h3>
+                    <p className="text-gray-500 text-center text-sm">
+                      Reviewed applications will appear here
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                reviewedApplications.map((app) => (
+                  <Card key={app.id} className="rounded-xl">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={app.volunteer?.avatar} />
+                          <AvatarFallback>{app.volunteer?.displayName?.[0] || "V"}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{app.volunteer?.displayName || "Unknown"}</p>
+                          <p className="text-xs text-gray-500 truncate">{app.opportunity?.title || "Unknown"}</p>
+                        </div>
+                        {getStatusBadge(app.status)}
+                      </div>
+                      {app.notes && (
+                        <p className="text-xs text-gray-600 mt-2">{app.notes}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Review Dialog */}
+          <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+            <DialogContent className="max-w-[95vw] rounded-xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {reviewAction === "accepted" ? "Accept" : "Reject"} Application
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {selectedApplication && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-sm">{selectedApplication.volunteer?.displayName}</p>
+                    <p className="text-xs text-gray-500">{selectedApplication.opportunity?.title}</p>
+                  </div>
+                )}
+                <Textarea
+                  placeholder="Add notes..."
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleReview}
+                  disabled={reviewMutation.isPending}
+                  className={reviewAction === "accepted" ? "bg-green-600" : "bg-red-600"}
+                >
+                  {reviewMutation.isPending ? "Processing..." : reviewAction === "accepted" ? "Accept" : "Reject"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Profile Dialog */}
+          <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
+            <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-xl">
+              <DialogHeader>
+                <DialogTitle>Volunteer Profile</DialogTitle>
+              </DialogHeader>
+              {volunteerProfile ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={volunteerProfile.user?.avatar} />
+                      <AvatarFallback>{volunteerProfile.user?.displayName?.[0] || "V"}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{volunteerProfile.user?.displayName}</p>
+                      <p className="text-xs text-gray-500">{volunteerProfile.user?.email}</p>
+                    </div>
+                  </div>
+                  {volunteerProfile.volunteerProfile?.skills?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Skills</p>
+                      <div className="flex flex-wrap gap-1">
+                        {volunteerProfile.volunteerProfile.skills.map((skill: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="text-xs">{skill}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {volunteerProfile.volunteerProfile?.about && (
+                    <div>
+                      <p className="text-sm font-medium mb-1">About</p>
+                      <p className="text-xs text-gray-600">{volunteerProfile.volunteerProfile.about}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-gray-500">Loading profile...</p>
+                </div>
+              )}
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={closeProfileDialog}>Close</Button>
+                {profileApplication?.status === "pending" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="bg-red-50 text-red-600"
+                      onClick={() => {
+                        closeProfileDialog();
+                        openReviewDialog(profileApplication, "rejected");
+                      }}
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      className="bg-green-600"
+                      onClick={() => {
+                        closeProfileDialog();
+                        openReviewDialog(profileApplication, "accepted");
+                      }}
+                    >
+                      Accept
+                    </Button>
+                  </>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Desktop loading state
   if (isLoading) {
     return (
       <div className={isOrganizationUser ? "min-h-screen flex flex-col" : ""}>

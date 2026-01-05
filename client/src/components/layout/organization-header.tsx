@@ -2,11 +2,12 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound, MoreVertical, Home, ClipboardList, Trophy
+  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound, MoreVertical, Home, ClipboardList, Trophy,
+  CheckCircle, XCircle, ChevronLeft, ExternalLink, MapPin, Clock, Star, Briefcase
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -15,7 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 // Helper function for relative time
@@ -53,6 +62,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const userId = localStorage.getItem('currentUserId');
 
   // Don't render web header on PWA routes - organization PWA pages have their own OrganizationPWAHeader
@@ -77,6 +88,71 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
   const unreadCount = notifications.filter((n: any) => !n.read).length;
 
+  // Fetch application details when a notification is selected
+  const { data: applicationDetails } = useQuery({
+    queryKey: ["/api/applications", selectedNotification?.relatedEntityId],
+    queryFn: async () => {
+      if (!selectedNotification?.relatedEntityId || selectedNotification?.relatedEntityType !== 'application') return null;
+      const response = await fetch(`/api/applications/${selectedNotification.relatedEntityId}`);
+      if (!response.ok) return null;
+      const app = await response.json();
+
+      // Fetch opportunity and volunteer details
+      const [oppRes, volRes] = await Promise.all([
+        fetch(`/api/opportunities/${app.opportunityId}`),
+        fetch(`/api/users/${app.volunteerId}`)
+      ]);
+
+      return {
+        ...app,
+        opportunity: oppRes.ok ? await oppRes.json() : null,
+        volunteer: volRes.ok ? await volRes.json() : null
+      };
+    },
+    enabled: !!selectedNotification?.relatedEntityId && selectedNotification?.relatedEntityType === 'application'
+  });
+
+  // Fetch volunteer profile for detailed view
+  const { data: volunteerProfile } = useQuery({
+    queryKey: ["/api/intake/volunteer-profile", applicationDetails?.volunteerId],
+    queryFn: async () => {
+      if (!applicationDetails?.volunteerId) return null;
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${applicationDetails.volunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!applicationDetails?.volunteerId
+  });
+
+  // Review application mutation
+  const reviewMutation = useMutation({
+    mutationFn: async ({ applicationId, status, notes }: { applicationId: number; status: string; notes?: string }) => {
+      return await apiRequest("POST", `/api/applications/${applicationId}/review`, {
+        status,
+        notes,
+        reviewerId: parseInt(userId || "0")
+      });
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: variables.status === "accepted" ? "Application Accepted" : "Application Rejected",
+        description: variables.status === "accepted"
+          ? "The volunteer has been assigned to the project and notified."
+          : "The volunteer has been notified of your decision.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+      setSelectedNotification(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Action Failed",
+        description: error.message || "Failed to process application",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleNotificationClick = async (notification: any) => {
     try {
       // Mark notification as read on backend
@@ -92,23 +168,50 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
       // Invalidate cache to refresh notification list
       await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
 
-      // Navigate based on notification type
+      // For application notifications, show details in panel instead of navigating
       const notificationType = notification.type || '';
-      if (notificationType.includes('application') || notificationType === 'new_application') {
+      if (notificationType === 'new_application' && notification.relatedEntityType === 'application') {
+        setSelectedNotification(notification);
+        return; // Don't navigate, show in panel
+      }
+
+      // For other notifications, navigate to the relevant page
+      if (notificationType.includes('application')) {
         navigate('/applications');
+        setNotificationPanelOpen(false);
       } else if (notificationType.includes('project') || notificationType.includes('assignment')) {
         navigate('/my-work');
+        setNotificationPanelOpen(false);
       } else if (notificationType.includes('message')) {
         navigate('/organization-messages');
+        setNotificationPanelOpen(false);
       } else if (notificationType.includes('volunteer')) {
         navigate('/volunteers');
+        setNotificationPanelOpen(false);
       } else {
-        // Default to dashboard for general notifications
         navigate('/organization-dashboard');
+        setNotificationPanelOpen(false);
       }
     } catch (error) {
       console.error('Error handling notification:', error);
     }
+  };
+
+  const handleAcceptApplication = () => {
+    if (applicationDetails?.id) {
+      reviewMutation.mutate({ applicationId: applicationDetails.id, status: "accepted" });
+    }
+  };
+
+  const handleRejectApplication = () => {
+    if (applicationDetails?.id) {
+      reviewMutation.mutate({ applicationId: applicationDetails.id, status: "rejected" });
+    }
+  };
+
+  const handleViewFullApplication = () => {
+    setNotificationPanelOpen(false);
+    navigate('/applications');
   };
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
@@ -240,17 +343,20 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
         {/* Right: Notifications, Settings, Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Notifications Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Notifications Popover - Interactive Panel */}
+          <Popover open={notificationPanelOpen} onOpenChange={(open) => {
+            setNotificationPanelOpen(open);
+            if (!open) setSelectedNotification(null);
+          }}>
+            <PopoverTrigger asChild>
               <button
                 data-testid="notifications-button"
                 style={{
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(30, 58, 138, 0.3)',
+                  backgroundColor: notificationPanelOpen ? 'rgba(30, 58, 138, 0.15)' : 'rgba(255,255,255,0.6)',
+                  border: `1px solid ${notificationPanelOpen ? 'rgba(30, 58, 138, 0.5)' : 'rgba(30, 58, 138, 0.3)'}`,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -261,13 +367,17 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                   position: 'relative',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.4)';
+                  if (!notificationPanelOpen) {
+                    e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.4)';
+                  }
                   e.currentTarget.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
-                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
+                  if (!notificationPanelOpen) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
+                    e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
+                  }
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
@@ -281,55 +391,269 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                   </Badge>
                 )}
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-              <div className="flex items-center justify-between p-3 border-b">
-                <h3 className="font-semibold">Notifications</h3>
-                <p className="text-xs text-gray-500">{unreadCount} unread</p>
-              </div>
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-                  <p className="text-sm text-gray-500">No notifications yet</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    You'll receive notifications about applications and project updates
-                  </p>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-96 p-0" sideOffset={8}>
+              {selectedNotification ? (
+                /* Application Detail View */
+                <div className="flex flex-col">
+                  {/* Header with back button */}
+                  <div className="flex items-center gap-2 p-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setSelectedNotification(null)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <h3 className="font-semibold text-sm">Application Details</h3>
+                  </div>
+
+                  <ScrollArea className="max-h-[400px]">
+                    {applicationDetails ? (
+                      <div className="p-4 space-y-4">
+                        {/* Volunteer Info */}
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={applicationDetails.volunteer?.avatar} />
+                            <AvatarFallback className="bg-blue-100 text-blue-700">
+                              {applicationDetails.volunteer?.displayName?.[0] || 'V'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm">
+                              {applicationDetails.volunteer?.displayName || 'Unknown'}
+                            </h4>
+                            <p className="text-xs text-gray-500 truncate">
+                              {applicationDetails.volunteer?.email}
+                            </p>
+                            {applicationDetails.matchScore && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <Star className="h-3 w-3 text-yellow-500" />
+                                <span className="text-xs font-medium text-yellow-700">
+                                  {applicationDetails.matchScore}% Match
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Opportunity Info */}
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm font-medium">
+                              {applicationDetails.opportunity?.title || 'Unknown Opportunity'}
+                            </span>
+                          </div>
+                          {applicationDetails.opportunity?.location && (
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <MapPin className="h-3 w-3" />
+                              <span>{applicationDetails.opportunity.location}</span>
+                            </div>
+                          )}
+                          {applicationDetails.opportunity?.timeCommitment && (
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              <span>{applicationDetails.opportunity.timeCommitment}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Volunteer Profile Summary */}
+                        {volunteerProfile?.volunteerProfile && (
+                          <div className="space-y-2">
+                            {volunteerProfile.volunteerProfile.skills?.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-700 mb-1">Skills</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {volunteerProfile.volunteerProfile.skills.slice(0, 5).map((skill: string, i: number) => (
+                                    <Badge key={i} variant="secondary" className="text-xs px-2 py-0">
+                                      {skill}
+                                    </Badge>
+                                  ))}
+                                  {volunteerProfile.volunteerProfile.skills.length > 5 && (
+                                    <Badge variant="outline" className="text-xs px-2 py-0">
+                                      +{volunteerProfile.volunteerProfile.skills.length - 5}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {volunteerProfile.volunteerProfile.sdgGoals?.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-700 mb-1">SDG Commitments</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {volunteerProfile.volunteerProfile.sdgGoals.slice(0, 4).map((sdg: number, i: number) => (
+                                    <Badge key={i} className="text-xs px-2 py-0 bg-green-100 text-green-700">
+                                      SDG {sdg}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {volunteerProfile.volunteerProfile.weeklyAvailability && (
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <Clock className="h-3 w-3" />
+                                <span>{volunteerProfile.volunteerProfile.weeklyAvailability} hrs/week available</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Cover Letter Preview */}
+                        {applicationDetails.coverLetter && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-700 mb-1">Cover Letter</p>
+                            <p className="text-xs text-gray-600 line-clamp-3 bg-white border rounded p-2">
+                              {applicationDetails.coverLetter}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            Applied {applicationDetails.appliedAt ? getRelativeTime(new Date(applicationDetails.appliedAt)) : ''}
+                          </span>
+                          <Badge variant={applicationDetails.status === 'pending' ? 'outline' : applicationDetails.status === 'accepted' ? 'default' : 'destructive'}>
+                            {applicationDetails.status?.charAt(0).toUpperCase() + applicationDetails.status?.slice(1)}
+                          </Badge>
+                        </div>
+
+                        {/* Action Buttons - Only show for pending applications */}
+                        {applicationDetails.status === 'pending' && (
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={handleRejectApplication}
+                              disabled={reviewMutation.isPending}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={handleAcceptApplication}
+                              disabled={reviewMutation.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Accept
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* View Full Details Link */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-blue-600"
+                          onClick={handleViewFullApplication}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          View Full Application
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading...</p>
+                      </div>
+                    )}
+                  </ScrollArea>
                 </div>
               ) : (
-                <>
-                  {notifications.slice(0, 10).map((notification: any) => {
-                    const timeAgo = notification.createdAt ?
-                      getRelativeTime(new Date(notification.createdAt)) : '';
+                /* Notification List View */
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <h3 className="font-semibold">Notifications</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {unreadCount} unread
+                    </Badge>
+                  </div>
 
-                    return (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className={`cursor-pointer p-3 flex flex-col items-start gap-1 ${!notification.read ? 'bg-blue-50' : ''}`}
-                        onClick={() => handleNotificationClick(notification)}
+                  <ScrollArea className="max-h-[350px]">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Bell className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">No notifications yet</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          You'll receive notifications about applications and project updates
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {notifications.slice(0, 10).map((notification: any) => {
+                          const timeAgo = notification.createdAt ?
+                            getRelativeTime(new Date(notification.createdAt)) : '';
+                          const isApplicationNotification = notification.type === 'new_application';
+
+                          return (
+                            <div
+                              key={notification.id}
+                              className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50/50' : ''}`}
+                              onClick={() => handleNotificationClick(notification)}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  isApplicationNotification ? 'bg-green-100' : 'bg-blue-100'
+                                }`}>
+                                  {isApplicationNotification ? (
+                                    <User className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <Bell className="h-4 w-4 text-blue-600" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between">
+                                    <span className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
+                                      {notification.title}
+                                    </span>
+                                    {!notification.read && (
+                                      <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-600 line-clamp-2 mt-0.5">
+                                    {notification.message}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs text-gray-400">{timeAgo}</span>
+                                    {isApplicationNotification && (
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0 text-green-600 border-green-200">
+                                        Review
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </ScrollArea>
+
+                  {notifications.length > 0 && (
+                    <div className="p-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-blue-600"
+                        onClick={handleViewFullApplication}
                       >
-                        <div className="flex items-start justify-between w-full">
-                          <span className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
-                            {notification.title}
-                          </span>
-                          <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
-                        </div>
-                        <span className="text-xs text-gray-600 line-clamp-2">
-                          {notification.message}
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer justify-center text-sm text-primary"
-                    onClick={() => navigate('/applications')}
-                  >
-                    View all applications
-                  </DropdownMenuItem>
-                </>
+                        View all applications
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverContent>
+          </Popover>
 
           {/* Profile Avatar */}
           <button

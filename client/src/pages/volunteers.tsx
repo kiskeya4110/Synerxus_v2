@@ -142,6 +142,22 @@ export default function Volunteers() {
     enabled: !!userId && isOrganization
   });
 
+  // Fetch organization profile to get committed SDGs
+  const { data: organizationProfile } = useQuery<any>({
+    queryKey: ["/api/intake/organization-profile", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/intake/organization-profile?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId && isOrganization
+  });
+
+  // Get organization's committed SDGs for filtering
+  const orgCommittedSdgs: number[] = useMemo(() => {
+    return organizationProfile?.organizationProfile?.sdgGoals || [];
+  }, [organizationProfile]);
+
   // Helper functions to manage processing state
   const addProcessingActivity = (id: number) => {
     setProcessingActivityIds(prev => new Set(prev).add(id));
@@ -2440,8 +2456,32 @@ export default function Volunteers() {
                 </div>
               )}
 
-              {/* SDG Commitments */}
-              {volunteerProfile.volunteerProfile?.preferredSdgs && volunteerProfile.volunteerProfile.preferredSdgs.length > 0 && (
+              {/* SDG Alignment - Show ONLY organization's committed SDGs */}
+              {isOrganization && orgCommittedSdgs.length > 0 ? (
+                <div>
+                  <h4 className="font-medium mb-2">SDG Alignment with Your Organization</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {orgCommittedSdgs.map((sdg: number) => {
+                      const volunteerHasSdg = volunteerProfile.volunteerProfile?.preferredSdgs?.includes(sdg);
+                      return (
+                        <Badge
+                          key={sdg}
+                          className={volunteerHasSdg
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border border-green-300"
+                            : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500 border border-gray-200"
+                          }
+                          title={volunteerHasSdg ? "Volunteer committed to this SDG" : "Not in volunteer's commitments"}
+                        >
+                          SDG {sdg} {volunteerHasSdg && <CheckCircle2 className="w-3 h-3 ml-1" />}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {orgCommittedSdgs.filter((sdg: number) => volunteerProfile.volunteerProfile?.preferredSdgs?.includes(sdg)).length} of {orgCommittedSdgs.length} SDGs aligned
+                  </p>
+                </div>
+              ) : volunteerProfile.volunteerProfile?.preferredSdgs && volunteerProfile.volunteerProfile.preferredSdgs.length > 0 ? (
                 <div>
                   <h4 className="font-medium mb-2">UN SDG Commitments</h4>
                   <div className="flex flex-wrap gap-2">
@@ -2452,7 +2492,7 @@ export default function Volunteers() {
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Availability */}
               <div className="grid grid-cols-2 gap-4">

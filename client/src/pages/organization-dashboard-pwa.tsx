@@ -451,6 +451,11 @@ export default function OrganizationDashboardPWA() {
     };
   }, [dashboardData]);
 
+  // Get organization's committed SDGs for filtering
+  const committedSdgs: number[] = useMemo(() => {
+    return organizationProfile?.organizationProfile?.sdgGoals || [];
+  }, [organizationProfile]);
+
   // Calculate total AIU with robust fallback
   // Priority: 1. Server aiuEarned (from aiu-service), 2. Sum from projects, 3. Lives-based calculation
   // Organization AIU = SUM of all volunteer AIUs on all projects (org AIU >= any volunteer's AIU)
@@ -2778,27 +2783,41 @@ export default function OrganizationDashboardPWA() {
                 </div>
               </div>
 
-              {/* Active SDGs */}
-              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    Active SDG Contributions
-                  </h4>
+              {/* Your Committed SDGs */}
+              <div className="bg-slate-50 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  Your SDG Commitments
+                </h4>
+                {committedSdgs.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {dashboardData.sdgDistribution.map((sdg) => (
-                      <div
-                        key={sdg.goal}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white text-[10px] font-medium"
-                        style={{ backgroundColor: getSDGColor(sdg.goal) }}
-                      >
-                        <span className="font-bold">SDG {sdg.goal}</span>
-                        <span className="opacity-80">• {sdg.hours}h</span>
-                      </div>
-                    ))}
+                    {committedSdgs.map((sdgGoal: number) => {
+                      const contribution = dashboardData?.sdgDistribution?.find((s: any) => s.goal === sdgGoal);
+                      const hasContribution = contribution && contribution.hours > 0;
+                      return (
+                        <div
+                          key={sdgGoal}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white text-[10px] font-medium"
+                          style={{ backgroundColor: getSDGColor(sdgGoal) }}
+                        >
+                          <span className="font-bold">SDG {sdgGoal}</span>
+                          {hasContribution && <span className="opacity-80">• {contribution.hours}h</span>}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-slate-500">No SDGs committed yet</p>
+                    <button
+                      onClick={() => navigate('/organization-profile-settings')}
+                      className="text-xs text-emerald-600 mt-1 underline"
+                    >
+                      Set your SDG commitments →
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* AI Suggestions Section */}
               <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">

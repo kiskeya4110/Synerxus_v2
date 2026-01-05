@@ -428,94 +428,114 @@ export default function Overview() {
               Your SDG Contributions
             </h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '16px' }}>
-              {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
-                const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
-                const isActive = organizationSDGs.includes(sdgNum) || (contribution && contribution.hours > 0);
-                const sdgInfo = SDG_GOALS[sdgNum];
+            {organizationSDGs.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(organizationSDGs.length, 5)}, 1fr)`, gap: '8px', marginBottom: '16px' }}>
+                {organizationSDGs.map((sdgNum: number) => {
+                  const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
+                  const hasContribution = contribution && contribution.hours > 0;
+                  const sdgInfo = SDG_GOALS[sdgNum];
 
-                return (
-                  <button
-                    key={sdgNum}
-                    onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      borderRadius: '8px',
-                      transition: 'transform 0.2s, background-color 0.2s',
-                    }}
-                    onTouchStart={(e) => {
-                      e.currentTarget.style.transform = 'scale(0.95)';
-                      e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                    }}
-                    onTouchEnd={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                    data-testid={`sdg-button-${sdgNum}`}
-                  >
-                    <div
+                  return (
+                    <button
+                      key={sdgNum}
+                      onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
                       style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        border: isActive ? `3px solid ${sdgInfo?.color || '#22c55e'}` : '2px solid #e5e7eb',
-                        opacity: isActive ? 1 : 0.5,
                         position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '8px',
+                        transition: 'transform 0.2s, background-color 0.2s',
                       }}
+                      onTouchStart={(e) => {
+                        e.currentTarget.style.transform = 'scale(0.95)';
+                        e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                      }}
+                      onTouchEnd={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                      data-testid={`sdg-button-${sdgNum}`}
                     >
-                      <img
-                        src={SDG_ICONS[sdgNum]}
-                        alt={`SDG ${sdgNum}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      {isActive && (
-                        <div
+                      <div
+                        style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          border: `3px solid ${sdgInfo?.color || '#22c55e'}`,
+                          position: 'relative',
+                        }}
+                      >
+                        <img
+                          src={SDG_ICONS[sdgNum]}
+                          alt={`SDG ${sdgNum}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        {hasContribution && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '-4px',
+                              right: '-4px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#22c55e',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Check size={10} style={{ color: 'white' }} />
+                          </div>
+                        )}
+                      </div>
+                      {hasContribution && (
+                        <span
                           style={{
                             position: 'absolute',
                             top: '-4px',
-                            right: '-4px',
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            backgroundColor: '#22c55e',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            right: '4px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            backgroundColor: sdgInfo?.color || '#22c55e',
+                            color: 'white',
+                            padding: '2px 4px',
+                            borderRadius: '8px',
                           }}
                         >
-                          <Check size={10} style={{ color: 'white' }} />
-                        </div>
+                          {contribution.hours}h
+                        </span>
                       )}
-                    </div>
-                    {contribution && contribution.hours > 0 && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '-4px',
-                          right: '4px',
-                          fontSize: '10px',
-                          fontWeight: '600',
-                          backgroundColor: sdgInfo?.color || '#22c55e',
-                          color: 'white',
-                          padding: '2px 4px',
-                          borderRadius: '8px',
-                        }}
-                      >
-                        {contribution.hours}h
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                <Target size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                <p style={{ fontSize: '14px' }}>No SDGs committed yet</p>
+                <button
+                  onClick={() => navigate('/organization-profile-settings')}
+                  style={{
+                    marginTop: '8px',
+                    fontSize: '12px',
+                    color: '#22c55e',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Set your SDG commitments →
+                </button>
+              </div>
+            )}
 
             {/* SDG Metrics Compilation - Interactive */}
             <div style={{
@@ -899,33 +919,49 @@ export default function Overview() {
               View All SDGs <ChevronRight size={16} />
             </Button>
           </div>
-          <div className="grid grid-cols-9 gap-4">
-            {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
-              const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
-              const isActive = organizationSDGs.includes(sdgNum) || (contribution && contribution.hours > 0);
+          {organizationSDGs.length > 0 ? (
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${Math.min(organizationSDGs.length, 9)}, 1fr)` }}>
+              {organizationSDGs.map((sdgNum: number) => {
+                const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
+                const hasContribution = contribution && contribution.hours > 0;
 
-              return (
-                <button
-                  key={sdgNum}
-                  onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
-                  className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
-                  data-testid={`desktop-sdg-${sdgNum}`}
-                >
-                  <div
-                    className={`w-16 h-16 rounded-full overflow-hidden transition-all ${isActive ? 'ring-3 ring-green-500 shadow-lg' : 'opacity-40 ring-2 ring-gray-300'}`}
+                return (
+                  <button
+                    key={sdgNum}
+                    onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
+                    className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
+                    data-testid={`desktop-sdg-${sdgNum}`}
                   >
-                    <img src={SDG_ICONS[sdgNum]} alt={`SDG ${sdgNum}`} className="w-full h-full object-cover" />
-                  </div>
-                  {contribution && contribution.hours > 0 && (
-                    <div className="mt-2 text-center">
-                      <span className="text-sm font-bold text-gray-900">{contribution.hours}h</span>
-                      {contribution.volunteers && <p className="text-xs text-gray-600">{contribution.volunteers} vol</p>}
+                    <div
+                      className="w-16 h-16 rounded-full overflow-hidden transition-all ring-3 ring-green-500 shadow-lg"
+                    >
+                      <img src={SDG_ICONS[sdgNum]} alt={`SDG ${sdgNum}`} className="w-full h-full object-cover" />
                     </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                    {hasContribution && (
+                      <div className="mt-2 text-center">
+                        <span className="text-sm font-bold text-gray-900">{contribution.hours}h</span>
+                        {contribution.volunteers && <p className="text-xs text-gray-600">{contribution.volunteers} vol</p>}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-gray-500">
+              <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="text-lg font-medium">No SDGs committed yet</p>
+              <p className="text-sm text-gray-400 mt-1">Set your organization's SDG commitments to track your impact</p>
+              <Button
+                onClick={() => navigate('/organization-profile-settings')}
+                variant="outline"
+                size="sm"
+                className="mt-4 text-green-600 border-green-600 hover:bg-green-50"
+              >
+                Set SDG Commitments
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

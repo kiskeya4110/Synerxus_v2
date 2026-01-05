@@ -126,14 +126,20 @@ export default function AdminOrganizationApprovalPage() {
   // Approve/Reject mutation
   const approvalMutation = useMutation({
     mutationFn: async ({ orgId, status, notes }: { orgId: number; status: string; notes?: string }) => {
-      return apiRequest("POST", `/api/admin/organizations/${orgId}/approval`, {
+      const response = await apiRequest("POST", `/api/admin/organizations/${orgId}/approval`, {
         userId: parseInt(userId || "0"),
         status,
         notes,
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update organization status");
+      }
+      return response.json();
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/organizations"] });
+      // Refetch to ensure immediate update
+      refetch();
       setApprovalDialogOpen(false);
       setSelectedOrg(null);
       setApprovalNotes("");

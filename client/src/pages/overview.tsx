@@ -66,8 +66,14 @@ export default function Overview() {
   });
 
   const { data: orgProfile } = useQuery<any>({
-    queryKey: ["/api/intake/organization-profile", userId],
-    enabled: !!userId && currentUser?.userType === 'organization'
+    queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
   });
 
   // Fetch real leaderboard data from the organization

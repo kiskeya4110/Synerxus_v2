@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertApplicationSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
-import { calculateMatchScore } from "../matching-algorithm";
+import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
 import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication } from "../notification-service";
 import OpenAI from "openai";
 
@@ -612,5 +612,72 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
   } catch (err) {
     console.error("Error generating volunteer insights:", err);
     res.status(500).json({ message: "Failed to generate volunteer insights" });
+  }
+});
+
+// GET /api/applications/:id/match-analysis - Get AI match analysis for an application
+applicationsRouter.get("/:id/match-analysis", async (req: Request, res: Response) => {
+  try {
+    const applicationId = parseInt(req.params.id);
+
+    // Get application details
+    const application = await storage.getApplication(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Get opportunity and volunteer details
+    const opportunity = await storage.getOpportunity(application.opportunityId);
+    const volunteer = await storage.getUser(application.volunteerId);
+
+    if (!opportunity || !volunteer) {
+      return res.status(404).json({ message: "Opportunity or volunteer not found" });
+    }
+
+    // Get volunteer profile
+    let volunteerProfile = null;
+    if (volunteer.email) {
+      volunteerProfile = await storage.getVolunteerByEmail(volunteer.email);
+    }
+
+    // Calculate match score with breakdown using async version for consistency
+    const volunteerWithProfile = {
+      ...volunteer,
+      profile: volunteerProfile || undefined
+    } as any;
+
+    const matchResult = await calculateMatchScoreAsync(volunteerWithProfile, opportunity);
+
+    // Normalize breakdown values to percentages (0-100) and ensure all keys exist
+    const breakdown = matchResult.breakdown || {};
+    const normalizedBreakdown = {
+      skillMatch: (breakdown.skillMatch || 0),
+      locationMatch: (breakdown.locationMatch || 0),
+      sdgMatch: (breakdown.sdgMatch || 0),
+      interestMatch: (breakdown.interestMatch || 0),
+    };
+
+    res.json({
+      score: Math.round(matchResult.score || 0),
+      breakdown: normalizedBreakdown,
+      reasons: matchResult.reasons || [],
+      volunteer: {
+        id: volunteer.id,
+        name: volunteer.displayName || volunteer.username,
+        skills: volunteer.skills || [],
+        location: volunteerProfile?.location || null
+      },
+      opportunity: {
+        id: opportunity.id,
+        title: opportunity.title,
+        requiredSkills: opportunity.requiredSkills || [],
+        optionalSkills: opportunity.optionalSkills || [],
+        location: opportunity.location || null,
+        isRemote: opportunity.isRemote || false
+      }
+    });
+  } catch (err) {
+    console.error("Error getting match analysis:", err);
+    res.status(500).json({ message: "Failed to get match analysis" });
   }
 });

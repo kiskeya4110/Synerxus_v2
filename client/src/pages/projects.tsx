@@ -36,7 +36,7 @@ export default function Projects() {
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
-  const { data: currentUser } = useQuery<User>({
+  const { data: currentUser, isLoading: isUserLoading, isError: isUserError } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -243,8 +243,38 @@ export default function Projects() {
   // Use localStorage userType as fallback when currentUser hasn't loaded yet
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
 
-  // Loading state with proper PWA layout for mobile organizations
-  if (isLoading || !currentUser) {
+  // Handle user loading or error state
+  if (isUserLoading || (!currentUser && !isUserError)) {
+    if (isOrganization && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Handle user error or no user
+  if (isUserError || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Failed to load user data</p>
+          <p className="text-gray-500 text-sm">Please try refreshing the page or logging in again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state for projects
+  if (isLoading) {
     if (isOrganization && isMobile) {
       return (
         <OrganizationPWALayout activeTab="projects">
@@ -265,55 +295,98 @@ export default function Projects() {
   if (isOrganization && isMobile) {
     return (
       <OrganizationPWALayout activeTab="projects">
-        <div className="p-4 space-y-4">
-          <div className="mb-4">
-            <h1 className="text-xl font-bold mb-1">Projects & Tasks</h1>
-            <p className="text-sm text-gray-600">Manage projects and volunteer assignments</p>
-          </div>
-
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-10 text-sm"
-              />
+        {/* Hero Banner */}
+        <div className="p-4">
+          <div className="bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-400/30" />
+              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-purple-400/20" />
             </div>
-            {canManageProjects && currentUser?.organizationId && (
-              <CreateProjectDialog organizationId={currentUser.organizationId} />
-            )}
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
+                  <Briefcase className="w-6 h-6 text-indigo-700" />
+                </div>
+                <div>
+                  <p className="text-indigo-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Project Management</p>
+                  <h2 className="text-xl font-bold text-slate-800">Projects</h2>
+                </div>
+              </div>
+              {canManageProjects && currentUser?.organizationId && (
+                <CreateProjectDialog organizationId={currentUser.organizationId} />
+              )}
+            </div>
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-lg font-bold text-slate-800">{projects.length}</p>
+                <p className="text-[9px] text-indigo-700 font-medium">Projects</p>
+              </div>
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-lg font-bold text-slate-800">{projects.filter(p => p.status === 'active').length}</p>
+                <p className="text-[9px] text-indigo-700 font-medium">Active</p>
+              </div>
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-lg font-bold text-slate-800">{allTasks.length}</p>
+                <p className="text-[9px] text-indigo-700 font-medium">Tasks</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 h-11 text-sm bg-white border-slate-200 rounded-xl shadow-sm"
+            />
           </div>
 
           {/* Post Opportunities - Mobile */}
           {currentUser?.userType === "organization" && (
-            <Card className="border-slate-200">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-sm font-semibold">Post Opportunities</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3">
-                <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-emerald-500" />
+                  Post Opportunities
+                </h3>
+              </div>
+              <div className="p-3">
+                <div className="grid grid-cols-2 gap-3">
                   <Link href="/post-core-opportunity">
-                    <div className="p-2.5 border rounded-lg hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-medium">Core</span>
+                    <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl hover:shadow-md transition-all">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                        <Briefcase className="h-5 w-5 text-blue-600" />
                       </div>
+                      <p className="text-sm font-semibold text-slate-800">Core</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Skilled roles</p>
                     </div>
                   </Link>
                   <Link href="/post-urgent-opportunity">
-                    <div className="p-2.5 border rounded-lg hover:bg-amber-50 transition-colors border-amber-200">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <span className="text-xs font-medium">Urgent</span>
+                    <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl hover:shadow-md transition-all">
+                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-2">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
                       </div>
+                      <p className="text-sm font-semibold text-slate-800">Urgent</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Time-sensitive</p>
                     </div>
                   </Link>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
+
+          {/* Projects List Header */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Your Projects ({filteredProjects.length})
+            </h3>
+          </div>
 
           {/* Projects List - Mobile */}
           <div className="space-y-3">
@@ -338,11 +411,20 @@ export default function Projects() {
             })}
           </div>
 
-          {filteredProjects.length === 0 && canManageProjects && currentUser?.organizationId && (
-            <Card className="p-8 text-center">
-              <p className="text-gray-500 mb-3 text-sm">No projects found</p>
-              <CreateProjectDialog organizationId={currentUser.organizationId} />
-            </Card>
+          {/* Empty State */}
+          {filteredProjects.length === 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">No projects yet</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                {searchTerm ? "No projects match your search" : "Create your first project to get started"}
+              </p>
+              {!searchTerm && canManageProjects && currentUser?.organizationId && (
+                <CreateProjectDialog organizationId={currentUser.organizationId} />
+              )}
+            </div>
           )}
         </div>
       </OrganizationPWALayout>

@@ -67,10 +67,18 @@ type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 interface CreateProjectDialogProps {
   organizationId: number;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpenChange }: CreateProjectDialogProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  // Handle external open state changes
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    onOpenChange?.(newOpen);
+  };
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,7 +250,7 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         title: "Success",
         description: "Project created successfully"
       });
-      setOpen(false);
+      handleOpenChange(false);
       form.reset();
       setCoverImageUrl(""); // Reset cover image
     },
@@ -260,7 +268,7 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button data-testid="button-create-project">
           <Plus className="h-4 w-4 mr-2" />

@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Search, Plus, Briefcase, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,22 @@ interface ProjectWithDetails extends Project {
 export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
+  const [autoOpenCreate, setAutoOpenCreate] = useState(false);
+  const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
   const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
+
+  // Check for ?create=true query parameter to auto-open create dialog
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('create') === 'true') {
+      setAutoOpenCreate(true);
+      // Clean up the URL by removing the query parameter
+      setLocation('/projects', { replace: true });
+    }
+  }, [setLocation]);
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -314,7 +326,11 @@ export default function Projects() {
                 </div>
               </div>
               {canManageProjects && currentUser?.organizationId && (
-                <CreateProjectDialog organizationId={currentUser.organizationId} />
+                <CreateProjectDialog
+                  organizationId={currentUser.organizationId}
+                  defaultOpen={autoOpenCreate}
+                  onOpenChange={(open) => !open && setAutoOpenCreate(false)}
+                />
               )}
             </div>
             {/* Stats Row */}
@@ -422,7 +438,11 @@ export default function Projects() {
                 {searchTerm ? "No projects match your search" : "Create your first project to get started"}
               </p>
               {!searchTerm && canManageProjects && currentUser?.organizationId && (
-                <CreateProjectDialog organizationId={currentUser.organizationId} />
+                <CreateProjectDialog
+                  organizationId={currentUser.organizationId}
+                  defaultOpen={autoOpenCreate}
+                  onOpenChange={(open) => !open && setAutoOpenCreate(false)}
+                />
               )}
             </div>
           )}
@@ -507,7 +527,11 @@ export default function Projects() {
           />
         </div>
         {canManageProjects && currentUser?.organizationId && (
-          <CreateProjectDialog organizationId={currentUser.organizationId} />
+          <CreateProjectDialog
+            organizationId={currentUser.organizationId}
+            defaultOpen={autoOpenCreate}
+            onOpenChange={(open) => !open && setAutoOpenCreate(false)}
+          />
         )}
       </div>
 
@@ -652,7 +676,11 @@ export default function Projects() {
       {filteredProjects.length === 0 && canManageProjects && currentUser?.organizationId && (
         <Card className="p-12 text-center">
           <p className="text-gray-500 mb-4">No projects found</p>
-          <CreateProjectDialog organizationId={currentUser.organizationId} />
+          <CreateProjectDialog
+            organizationId={currentUser.organizationId}
+            defaultOpen={autoOpenCreate}
+            onOpenChange={(open) => !open && setAutoOpenCreate(false)}
+          />
         </Card>
       )}
       </div>

@@ -55,6 +55,8 @@ export const users = pgTable("users", {
   availability: jsonb("availability"), // For volunteers
   credentials: jsonb("credentials"), // For volunteers
   organizationId: integer("organization_id").references(() => organizations.id), // Link to organization if user is org admin
+  dataConsent: boolean("data_consent").default(false), // User consent for data processing
+  dataConsentDate: timestamp("data_consent_date"), // When consent was given
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

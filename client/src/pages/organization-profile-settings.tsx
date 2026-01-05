@@ -24,6 +24,7 @@ import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PrivacyConsentDialog } from "@/components/privacy-consent-dialog";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -145,6 +146,32 @@ export default function OrganizationProfileSettings() {
     enabled: !!userId,
     staleTime: 0,
   });
+
+  // Privacy consent state
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
+
+  // Check if consent is needed
+  useEffect(() => {
+    if (currentUser && !currentUser.dataConsent && !consentGiven) {
+      setShowConsentDialog(true);
+    }
+  }, [currentUser, consentGiven]);
+
+  const handleConsentGiven = () => {
+    setConsentGiven(true);
+    setShowConsentDialog(false);
+  };
+
+  const handleConsentDeclined = () => {
+    // Redirect to homepage if consent is declined
+    toast({
+      title: "Consent Required",
+      description: "You must agree to the data usage policy to continue.",
+      variant: "destructive",
+    });
+    setLocation('/');
+  };
 
   // Fetch existing organization profile by filtering all organizations
   const { data: organizations, isLoading: loadingProfile, error: profileError } = useQuery<MatchableOrganization[]>({
@@ -611,6 +638,14 @@ export default function OrganizationProfileSettings() {
 
   return (
     <OrganizationProfileErrorBoundary>
+      {/* Privacy Consent Dialog */}
+      <PrivacyConsentDialog
+        open={showConsentDialog}
+        onConsentGiven={handleConsentGiven}
+        onDeclined={handleConsentDeclined}
+        userId={currentUser?.id}
+      />
+
       <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
         {/* Header - Mobile PWA or Desktop */}
         {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="settings" />}

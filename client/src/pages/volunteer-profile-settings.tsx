@@ -52,6 +52,7 @@ import WebBottomNav from "@/components/layout/web-bottom-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PrivacyConsentDialog } from "@/components/privacy-consent-dialog";
 import {
   Form,
   FormControl,
@@ -936,6 +937,8 @@ export default function VolunteerProfileSettings() {
     email: string;
     displayName?: string;
     userType?: string;
+    dataConsent?: boolean;
+    dataConsentDate?: string;
   }>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -947,6 +950,32 @@ export default function VolunteerProfileSettings() {
     enabled: !!userId,
     staleTime: 0, // Always fetch fresh - never cache user data
   });
+
+  // Privacy consent state
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
+
+  // Check if consent is needed
+  useEffect(() => {
+    if (currentUser && !currentUser.dataConsent && !consentGiven) {
+      setShowConsentDialog(true);
+    }
+  }, [currentUser, consentGiven]);
+
+  const handleConsentGiven = () => {
+    setConsentGiven(true);
+    setShowConsentDialog(false);
+  };
+
+  const handleConsentDeclined = () => {
+    // Redirect to homepage if consent is declined
+    toast({
+      title: "Consent Required",
+      description: "You must agree to the data usage policy to continue.",
+      variant: "destructive",
+    });
+    setLocation('/');
+  };
 
   // Redirect non-volunteer users to their appropriate settings page
   useEffect(() => {
@@ -1531,6 +1560,14 @@ export default function VolunteerProfileSettings() {
 
   return (
     <div className={`min-h-screen pb-24 ${isVolunteerMobile ? 'bg-[#f8f7f4] pt-14' : 'bg-[#f8f9fa]'}`}>
+      {/* Privacy Consent Dialog */}
+      <PrivacyConsentDialog
+        open={showConsentDialog}
+        onConsentGiven={handleConsentGiven}
+        onDeclined={handleConsentDeclined}
+        userId={currentUser?.id}
+      />
+
       {/* PWA Header for mobile volunteer users - consistent with dashboard */}
       {isVolunteerMobile && <PWAHeader />}
 

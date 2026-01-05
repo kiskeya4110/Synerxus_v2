@@ -535,6 +535,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User consent for data processing
+  app.post("/api/user/consent", async (req, res) => {
+    try {
+      const { userId, dataConsent } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        dataConsent: dataConsent === true,
+        dataConsentDate: dataConsent === true ? new Date() : null,
+      } as any);
+
+      console.log(`[Consent] User ${userId} consent recorded: ${dataConsent} at ${new Date().toISOString()}`);
+
+      res.json({
+        success: true,
+        dataConsent: updatedUser?.dataConsent,
+        dataConsentDate: updatedUser?.dataConsentDate,
+      });
+    } catch (err) {
+      console.error("Error recording consent:", err);
+      res.status(500).json({ message: "Failed to record consent" });
+    }
+  });
+
   // === Organization Routes ===
   app.get("/api/organizations", async (req, res) => {
     try {

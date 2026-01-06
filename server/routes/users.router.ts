@@ -180,11 +180,14 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     // Create organization if organization name is provided for org/corporate users
     let organizationId: number | undefined;
     if ((userType === 'organization' || userType === 'corporate-partner') && organizationName) {
+      // Auto-approve if email is in preapproved list
+      const isPreapproved = isPreapprovedEmail(email);
       const organization = await storage.createOrganization({
         name: organizationName,
         contactEmail: email,
         description: '',
-        address: ''
+        address: '',
+        approvalStatus: isPreapproved ? 'approved' : 'pending'
       });
       organizationId = organization.id;
     }

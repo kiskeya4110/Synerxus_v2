@@ -592,6 +592,54 @@ export default function AdminDashboard() {
                               <p className="text-xs text-gray-500">Projects</p>
                             </div>
                             {getStatusBadge(org.approvalStatus)}
+                            {/* Approval buttons for pending organizations */}
+                            {org.approvalStatus === 'pending' && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/admin/organizations/${org.id}/approval`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ userId: parseInt(userId || '0'), status: 'approved' })
+                                      });
+                                      if (response.ok) {
+                                        refetchOrgs();
+                                      }
+                                    } catch (err) {
+                                      console.error('Error approving organization:', err);
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/admin/organizations/${org.id}/approval`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ userId: parseInt(userId || '0'), status: 'rejected' })
+                                      });
+                                      if (response.ok) {
+                                        refetchOrgs();
+                                      }
+                                    } catch (err) {
+                                      console.error('Error rejecting organization:', err);
+                                    }
+                                  }}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))

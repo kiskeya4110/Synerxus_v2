@@ -20,6 +20,7 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MessageSquare,
   Send,
@@ -63,6 +64,7 @@ export default function OrganizationMessages() {
   const { toast } = useToast();
   const userType = localStorage.getItem("userType");
   const userId = localStorage.getItem("currentUserId");
+  const isMobile = useIsMobile();
 
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -73,6 +75,13 @@ export default function OrganizationMessages() {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Redirect to PWA version on mobile
+  useEffect(() => {
+    if (isMobile) {
+      navigate('/organization-messages/pwa');
+    }
+  }, [isMobile, navigate]);
 
   const { data: currentUser } = useQuery({
     queryKey: ["/api/users/me", userId],

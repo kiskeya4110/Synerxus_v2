@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Globe, Mail, Phone, Building2, Star, Users, FolderOpen, MessageSquare, MapPin, Target, TrendingUp, CheckCircle, Clock, X, Zap, Home, HelpCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { CSRLayout } from "@/components/layout/csr-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 interface OrganizationStats {
@@ -51,10 +52,18 @@ export default function Organizations() {
   const [messageContent, setMessageContent] = useState("");
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
+  const isMobile = useIsMobile();
+
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
   const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
+
+  // Redirect to PWA version on mobile (except for CSR users who have their own mobile layout)
+  useEffect(() => {
+    if (isMobile && !isCSR) {
+      navigate('/organizations/pwa');
+    }
+  }, [isMobile, isCSR, navigate]);
 
   // Fetch organizations with real stats from the new endpoint
   const { data: organizationsWithStats = [], isLoading } = useQuery<OrganizationWithStats[]>({ 

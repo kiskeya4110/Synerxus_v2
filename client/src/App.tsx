@@ -34,6 +34,7 @@ const OpportunityDetailPWA = lazy(() => import("@/pages/opportunity-detail-pwa")
 const Applications = lazy(() => import("@/pages/applications"));
 const MyApplications = lazy(() => import("@/pages/my-applications"));
 const Organizations = lazy(() => import("@/pages/organizations"));
+const OrganizationsPWA = lazy(() => import("@/pages/organizations-pwa"));
 const Volunteers = lazy(() => import("@/pages/volunteers"));
 const Calendar = lazy(() => import("@/pages/calendar"));
 const ImpactReport = lazy(() => import("@/pages/impact-report"));
@@ -310,6 +311,7 @@ function LayoutRoute() {
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/organizations" component={Organizations} />
+      <Route path="/organizations/pwa" component={OrganizationsPWA} />
       <Route path="/help" component={Help} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />

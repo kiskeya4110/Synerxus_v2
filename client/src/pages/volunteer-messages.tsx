@@ -10,8 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Layout from "@/components/layout/layout";
-import { 
-  MessageSquare, Send, Search, Clock, Building2, 
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  MessageSquare, Send, Search, Clock, Building2,
   ChevronLeft, MoreVertical, FolderOpen
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
@@ -46,11 +47,19 @@ export default function VolunteerMessages() {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
-  
+  const isMobile = useIsMobile();
+
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Redirect to PWA version on mobile
+  useEffect(() => {
+    if (isMobile) {
+      navigate('/volunteer-messages/pwa');
+    }
+  }, [isMobile, navigate]);
 
   useEffect(() => {
     if (userType !== 'volunteer') {

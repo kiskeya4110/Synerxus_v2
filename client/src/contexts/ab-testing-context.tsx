@@ -186,25 +186,30 @@ export function ABTestingProvider({ children }: { children: ReactNode }) {
       if (variant) return variant;
     }
 
-    // Assign new variant
-    const variant = assignVariant(experiment, userId);
+    return null; // Return null if not assigned to avoid side effects in render
+  }, [assignments]);
 
-    setAssignments(prev => ({ ...prev, [experimentId]: variant.id }));
-
-    // Initialize metrics
-    setMetrics(prev => ({
-      ...prev,
-      [experimentId]: {
-        experimentId,
-        variantId: variant.id,
-        userId,
-        assignedAt: new Date().toISOString(),
-        events: [{ eventType: 'assigned', timestamp: new Date().toISOString() }]
+  // Effect to handle initial assignments
+  useEffect(() => {
+    Object.values(EXPERIMENTS).forEach(experiment => {
+      if (experiment.isActive && !assignments[experiment.id]) {
+        const variant = assignVariant(experiment, userId);
+        setAssignments(prev => ({ ...prev, [experiment.id]: variant.id }));
+        
+        // Initialize metrics
+        setMetrics(prev => ({
+          ...prev,
+          [experiment.id]: {
+            experimentId: experiment.id,
+            variantId: variant.id,
+            userId,
+            assignedAt: new Date().toISOString(),
+            events: [{ eventType: 'assigned', timestamp: new Date().toISOString() }]
+          }
+        }));
       }
-    }));
-
-    return variant;
-  }, [assignments, userId]);
+    });
+  }, [userId]);
 
   // Track an event for an experiment
   const trackEvent = useCallback((

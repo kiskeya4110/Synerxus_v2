@@ -17,6 +17,7 @@ const PREAPPROVED_EMAILS = [
   'brown.director@yestrust.org.zw',
   'susan.madodo@youngafrica.org',
   'josephine.millioni@youngafrica.org',
+  'emezil97@gmail.com',
 ].map(email => email.toLowerCase());
 
 function isPreapprovedEmail(email: string): boolean {

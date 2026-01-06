@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ProjectCoverUpload } from "@/components/project-cover-upload";
 
 // SDG options
@@ -124,6 +126,9 @@ export default function ProjectEdit() {
   const { toast } = useToast();
   const [newSkill, setNewSkill] = useState("");
   const [newOptionalSkill, setNewOptionalSkill] = useState("");
+  const isMobile = useIsMobile();
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["/api/projects", projectId],
@@ -416,10 +421,123 @@ export default function ProjectEdit() {
   const commitmentType = form.watch("commitmentType");
   const selectedSdgs = form.watch("sdgGoals") || [];
 
+  // For mobile organization users, use PWA layout
+  if (isMobile && isOrganization) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4 space-y-6 max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/projects/${projectId}`)}
+              data-testid="button-back-to-detail"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold">Edit Project</h1>
+              <p className="text-muted-foreground text-sm">{project.name}</p>
+            </div>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Basic Info */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Basic Info
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="planning">Planning</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="paused">Paused</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Save Button */}
+              <div className="sticky bottom-0 bg-white py-4 border-t">
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate(`/projects/${projectId}`)}
+                    disabled={updateMutation.isPending}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    className="flex-1 gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    {updateMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
   return (
     <>
       {isOrganization && <OrganizationHeader activeTab="projects" />}
-
       <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center gap-4">

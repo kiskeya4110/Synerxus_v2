@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
-import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity, ChevronDown, ChevronUp, CheckCircle, ListTodo, Target } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity, ChevronDown, ChevronUp, CheckCircle, ListTodo, Target, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
@@ -29,6 +30,7 @@ interface AssignmentsProps {
 export default function Assignments(props: AssignmentsProps = {}) {
   const { embedded = false } = props;
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
   // Get current user from server session
@@ -185,6 +187,137 @@ export default function Assignments(props: AssignmentsProps = {}) {
         </div>
         {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
       </div>
+    );
+  }
+
+  // Mobile PWA View for Organizations
+  if (!embedded && isMobile && isOrganizationUser) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4 space-y-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2"
+            onClick={() => navigate('/organization-dashboard/pwa')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+
+          <h1 className="text-xl font-bold">My Assignments</h1>
+          <p className="text-sm text-gray-600">
+            Manage your project assignments
+          </p>
+
+          {/* Pending Invitations */}
+          <div>
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              Pending ({pendingAssignments.length})
+            </h2>
+            {pendingAssignments.length === 0 ? (
+              <Card>
+                <CardContent className="py-4 text-center text-sm text-muted-foreground">
+                  No pending invitations
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {enrichedPendingAssignments.map((assignment: any) => (
+                  <Card key={assignment.id} className="border-amber-200">
+                    <CardContent className="py-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <Link href={`/projects/${assignment.projectId}`}>
+                            <p className="font-medium text-sm hover:text-primary">
+                              {assignment.project?.name || "Unknown Project"}
+                            </p>
+                          </Link>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {assignment.organization?.name || "Unknown Organization"}
+                          </p>
+                        </div>
+                        <StatusBadge status="pending" />
+                      </div>
+                      {assignment.role && (
+                        <Badge variant="secondary" className="text-xs mb-2">{assignment.role}</Badge>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => respondMutation.mutate({ assignmentId: assignment.id, status: "active" })}
+                          disabled={respondMutation.isPending}
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => respondMutation.mutate({ assignmentId: assignment.id, status: "declined" })}
+                          disabled={respondMutation.isPending}
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Decline
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Active Assignments */}
+          <div>
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" />
+              Active ({activeAssignments.length})
+            </h2>
+            {activeAssignments.length === 0 ? (
+              <Card>
+                <CardContent className="py-4 text-center text-sm text-muted-foreground">
+                  No active assignments
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {enrichedActiveAssignments.map((assignment: any) => (
+                  <Card key={assignment.id} className="border-green-200">
+                    <CardContent className="py-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <Link href={`/projects/${assignment.projectId}`}>
+                            <p className="font-medium text-sm hover:text-primary">
+                              {assignment.project?.name || "Unknown Project"}
+                            </p>
+                          </Link>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {assignment.organization?.name || "Unknown Organization"}
+                          </p>
+                        </div>
+                        <StatusBadge status="active" />
+                      </div>
+                      {assignment.role && (
+                        <Badge variant="secondary" className="text-xs">{assignment.role}</Badge>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                        <Clock className="w-3 h-3" />
+                        Joined {assignment.respondedAt ? new Date(assignment.respondedAt).toLocaleDateString() : "recently"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </OrganizationPWALayout>
     );
   }
 

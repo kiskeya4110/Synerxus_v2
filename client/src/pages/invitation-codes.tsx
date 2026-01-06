@@ -4,7 +4,9 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +66,7 @@ import {
   Eye,
   EyeOff,
   Link2,
+  ArrowLeft,
 } from "lucide-react";
 
 interface InvitationCode {
@@ -85,6 +88,7 @@ export default function InvitationCodesPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const userId = localStorage.getItem("currentUserId");
+  const isMobile = useIsMobile();
 
   // Form state for creating new codes
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -283,6 +287,274 @@ export default function InvitationCodesPage() {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  // Mobile PWA View for Organizations
+  if (isMobile && currentUser?.userType === "organization") {
+    return (
+      <OrganizationPWALayout activeTab="home">
+        <div className="p-4 space-y-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2"
+            onClick={() => navigate('/organization-dashboard/pwa')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <Key className="h-5 w-5 text-blue-600" />
+            Invitation Codes
+          </h1>
+          <p className="text-sm text-gray-600">
+            Manage who can register on the platform.
+          </p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Key className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">{codes.length}</p>
+                    <p className="text-xs text-gray-500">Total Codes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">
+                      {codes.filter((c) => c.isActive && !isExpired(c.expiresAt)).length}
+                    </p>
+                    <p className="text-xs text-gray-500">Active</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Invite-Only Toggle */}
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {settings?.inviteOnlyMode ? (
+                    <Lock className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <Unlock className="h-5 w-5 text-green-600" />
+                  )}
+                  <div>
+                    <p className="font-medium text-sm">
+                      {settings?.inviteOnlyMode ? "Invite-Only" : "Open Registration"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {settings?.inviteOnlyMode ? "Code required" : "Anyone can register"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings?.inviteOnlyMode || false}
+                  onCheckedChange={(checked) => toggleInviteOnlyMutation.mutate(checked)}
+                  disabled={settingsLoading || toggleInviteOnlyMutation.isPending}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Create Code Button */}
+          <Button className="w-full" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Invitation Code
+          </Button>
+
+          {/* Codes List */}
+          <div className="space-y-3">
+            {codesLoading ? (
+              <div className="p-4 text-center">
+                <RefreshCw className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+                <p className="text-sm text-gray-500 mt-2">Loading codes...</p>
+              </div>
+            ) : codes.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Key className="h-10 w-10 mx-auto text-gray-300 mb-3" />
+                  <p className="text-sm font-medium">No invitation codes yet</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Create your first code to invite volunteers.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              codes.map((code) => {
+                const expired = isExpired(code.expiresAt);
+                const exhausted = code.currentUses >= code.maxUses;
+                const inactive = !code.isActive || expired || exhausted;
+
+                return (
+                  <Card key={code.id} className={inactive ? "opacity-60" : ""}>
+                    <CardContent className="py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <code className="font-mono font-semibold bg-slate-100 px-2 py-1 rounded text-sm">
+                          {code.code}
+                        </code>
+                        {!code.isActive ? (
+                          <Badge variant="destructive" className="text-xs">Deactivated</Badge>
+                        ) : expired ? (
+                          <Badge variant="destructive" className="text-xs">Expired</Badge>
+                        ) : exhausted ? (
+                          <Badge variant="secondary" className="text-xs">Exhausted</Badge>
+                        ) : (
+                          <Badge className="bg-green-100 text-green-700 text-xs">Active</Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                        <span>{code.currentUses}/{code.maxUses} uses</span>
+                        {code.userType && (
+                          <Badge variant="outline" className="text-xs capitalize">{code.userType}</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => copyInviteLink(code.code, code.userType)}
+                        >
+                          <Link2 className="h-3 w-3 mr-1" />
+                          Copy Link
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(code.code)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+
+          {/* Create Code Dialog */}
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Create Invitation Code</DialogTitle>
+                <DialogDescription>
+                  Generate a new invitation code.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <div className="space-y-1">
+                  <Label htmlFor="mobile-email" className="text-sm">Email (Optional)</Label>
+                  <Input
+                    id="mobile-email"
+                    type="email"
+                    placeholder="volunteer@example.com"
+                    value={newCode.email}
+                    onChange={(e) => setNewCode({ ...newCode, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mobile-userType" className="text-sm">User Type</Label>
+                  <Select
+                    value={newCode.userType}
+                    onValueChange={(value) => setNewCode({ ...newCode, userType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="volunteer">Volunteer</SelectItem>
+                      <SelectItem value="organization">Organization</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mobile-maxUses" className="text-sm">Max Uses</Label>
+                  <Input
+                    id="mobile-maxUses"
+                    type="number"
+                    min={1}
+                    value={newCode.maxUses}
+                    onChange={(e) => setNewCode({ ...newCode, maxUses: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => createCodeMutation.mutate(newCode)}
+                  disabled={createCodeMutation.isPending}
+                >
+                  {createCodeMutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Show Created Code Dialog */}
+          <Dialog open={!!showCode} onOpenChange={() => setShowCode(null)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="h-5 w-5" />
+                  Code Created!
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-3">
+                <div>
+                  <Label className="text-sm">Invite Link</Label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <code className="text-xs font-mono text-blue-700 truncate flex-1">
+                      {showCode && generateInviteLink(showCode, newCode.userType)}
+                    </code>
+                    <Button
+                      size="sm"
+                      onClick={() => showCode && copyInviteLink(showCode, newCode.userType)}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-500">Code</Label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-slate-50 border rounded-lg">
+                    <code className="font-mono font-bold flex-1">{showCode}</code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => showCode && copyToClipboard(showCode)}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setShowCode(null)} className="w-full">Done</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </OrganizationPWALayout>
     );
   }
 

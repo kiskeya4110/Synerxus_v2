@@ -185,15 +185,7 @@ export default function Volunteers() {
   const approveActivityMutation = useMutation({
     mutationFn: async (activityId: number) => {
       addProcessingActivity(activityId);
-      const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId || ''
-        },
-        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
-      });
-      if (!response.ok) throw new Error('Failed to approve');
+      const response = await apiRequest('POST', `/api/volunteer-activities/${activityId}/approve`, { reviewerId: parseInt(userId || '0') });
       return { ...await response.json(), activityId };
     },
     onSuccess: (data) => {
@@ -211,15 +203,7 @@ export default function Volunteers() {
   const rejectActivityMutation = useMutation({
     mutationFn: async (activityId: number) => {
       addProcessingActivity(activityId);
-      const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId || ''
-        },
-        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
-      });
-      if (!response.ok) throw new Error('Failed to reject');
+      const response = await apiRequest('POST', `/api/volunteer-activities/${activityId}/reject`, { reviewerId: parseInt(userId || '0') });
       return { ...await response.json(), activityId };
     },
     onSuccess: (data) => {
@@ -237,15 +221,7 @@ export default function Volunteers() {
   const approveImpactMutation = useMutation({
     mutationFn: async (impactId: number) => {
       addProcessingImpact(impactId);
-      const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId || ''
-        },
-        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
-      });
-      if (!response.ok) throw new Error('Failed to approve');
+      const response = await apiRequest('POST', `/api/project-impacts/${impactId}/approve`, { reviewerId: parseInt(userId || '0') });
       return { ...await response.json(), impactId };
     },
     onSuccess: (data) => {
@@ -263,15 +239,7 @@ export default function Volunteers() {
   const rejectImpactMutation = useMutation({
     mutationFn: async (impactId: number) => {
       addProcessingImpact(impactId);
-      const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId || ''
-        },
-        body: JSON.stringify({ userId: parseInt(userId || '0'), reviewerId: parseInt(userId || '0') })
-      });
-      if (!response.ok) throw new Error('Failed to reject');
+      const response = await apiRequest('POST', `/api/project-impacts/${impactId}/reject`, { reviewerId: parseInt(userId || '0') });
       return { ...await response.json(), impactId };
     },
     onSuccess: (data) => {

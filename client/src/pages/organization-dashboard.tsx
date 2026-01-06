@@ -357,12 +357,7 @@ export default function OrganizationDashboard() {
   const handleApproveActivity = async (activity: any) => {
     addProcessingActivity(activity.id);
     try {
-      const response = await fetch(`/api/volunteer-activities/${activity.id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: userId })
-      });
-      if (!response.ok) throw new Error('Failed to approve');
+      await apiRequest('POST', `/api/volunteer-activities/${activity.id}/approve`, { reviewerId: userId });
       refetchPendingApprovals();
       refetchDashboard();
       toast({ title: 'Hours approved', description: `${activity.hours} hours approved for ${activity.volunteerName}.` });
@@ -376,12 +371,7 @@ export default function OrganizationDashboard() {
   const handleRejectActivity = async (activity: any) => {
     addProcessingActivity(activity.id);
     try {
-      const response = await fetch(`/api/volunteer-activities/${activity.id}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: userId })
-      });
-      if (!response.ok) throw new Error('Failed to reject');
+      await apiRequest('POST', `/api/volunteer-activities/${activity.id}/reject`, { reviewerId: userId });
       refetchPendingApprovals();
       toast({ title: 'Hours rejected', description: 'The volunteer hours have been rejected.' });
     } catch (err) {
@@ -394,12 +384,7 @@ export default function OrganizationDashboard() {
   const handleApproveImpact = async (impact: any) => {
     addProcessingImpact(impact.id);
     try {
-      const response = await fetch(`/api/project-impacts/${impact.id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: userId })
-      });
-      if (!response.ok) throw new Error('Failed to approve');
+      await apiRequest('POST', `/api/project-impacts/${impact.id}/approve`, { reviewerId: userId });
       refetchPendingApprovals();
       refetchDashboard();
       toast({ title: 'KPI approved', description: `${impact.metricName || 'Impact'} has been approved and AIU recalculated.` });
@@ -413,12 +398,7 @@ export default function OrganizationDashboard() {
   const handleRejectImpact = async (impact: any) => {
     addProcessingImpact(impact.id);
     try {
-      const response = await fetch(`/api/project-impacts/${impact.id}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewerId: userId })
-      });
-      if (!response.ok) throw new Error('Failed to reject');
+      await apiRequest('POST', `/api/project-impacts/${impact.id}/reject`, { reviewerId: userId });
       refetchPendingApprovals();
       toast({ title: 'KPI rejected', description: 'The KPI record has been rejected.' });
     } catch (err) {

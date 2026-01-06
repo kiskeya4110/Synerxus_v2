@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Filter, CheckCircle2, Circle, Clock } from "lucide-react";
+import { Plus, Search, Filter, CheckCircle2, Circle, Clock, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
@@ -32,9 +33,11 @@ export default function Tasks() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
-  
+  const [, navigate] = useLocation();
+
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
+  const isMobile = useIsMobile();
 
   const { data: tasks = [], isLoading } = useQuery<ITask[]>({ 
     queryKey: ["/api/tasks"] 
@@ -71,7 +74,99 @@ export default function Tasks() {
   };
 
   const isVolunteer = userType === 'volunteer';
-  const isMobile = useIsMobile();
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganizationUser) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-4"
+            onClick={() => navigate('/organization-dashboard/pwa')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+
+          <h1 className="text-2xl font-bold mb-2">Tasks</h1>
+          <p className="text-sm text-gray-600 mb-4">
+            Manage and track volunteer tasks
+          </p>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
+              <TabsTrigger value="unassigned">Unassigned</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTab} className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search tasks..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-24 bg-gray-200 animate-pulse rounded-xl" />
+                  ))}
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <CheckCircle2 className="h-12 w-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Tasks Found</h3>
+                    <p className="text-gray-500 text-center text-sm">
+                      {searchTerm ? "Try a different search term" : "Create a task to get started"}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredTasks.map((task) => (
+                  <Card key={task.id} className="rounded-xl">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        {getStatusIcon(task.status)}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm">{task.title}</p>
+                          {task.project && (
+                            <p className="text-xs text-gray-500">{task.project}</p>
+                          )}
+                          {task.description && (
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{task.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            {task.priority && (
+                              <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
+                                {task.priority}
+                              </Badge>
+                            )}
+                            {task.dueDate && (
+                              <span className="text-xs text-gray-500">
+                                Due: {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-y-auto pb-24 bg-[#f8f9fa]" style={{ paddingBottom: isOrganizationUser ? '180px' : '96px' }}>

@@ -19,9 +19,11 @@ import { formatDecimal } from "@/lib/format-utils";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft } from "lucide-react";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -222,6 +224,116 @@ export default function Profile() {
   const initials = currentUser?.displayName
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : currentUser?.email?.[0].toUpperCase();
+
+  // Mobile PWA View for Organizations
+  if (isMobile && isOrganization) {
+    return (
+      <OrganizationPWALayout activeTab="home">
+        <div className="p-4 space-y-4">
+          {/* Header */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={currentUser?.avatar || profile?.profilePhotoUrl || matchableOrgData?.profilePhotoUrl} />
+                  <AvatarFallback className="text-xl">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h1 className="text-xl font-bold">{currentUser?.displayName || currentUser?.username}</h1>
+                  <Badge variant="secondary" className="mt-1">Organization</Badge>
+                  <p className="text-sm text-muted-foreground mt-1">{currentUser?.email}</p>
+                </div>
+              </div>
+              {(profile?.location || matchableOrgData?.location) && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+                  <MapPin className="h-4 w-4" />
+                  <span>{profile?.location || matchableOrgData?.location}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Mission */}
+          {(currentUser?.bio || profile?.mission || matchableOrgData?.mission) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">About</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  {currentUser?.bio || profile?.mission || matchableOrgData?.mission}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SDG Goals */}
+          {sdgsToDisplay && sdgsToDisplay.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Primary SDG Focus
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2">
+                  {[...sdgsToDisplay].sort((a: number, b: number) => a - b).slice(0, 6).map((goal: number) => (
+                    <div key={goal} className="flex flex-col items-center p-2 border rounded-lg">
+                      {UN_SDG_ICONS[goal] ? (
+                        <img src={UN_SDG_ICONS[goal]} alt={`SDG ${goal}`} className="w-10 h-10 rounded" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                          {goal}
+                        </div>
+                      )}
+                      <span className="text-xs text-center mt-1 line-clamp-1">
+                        {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Volunteer Needs */}
+          {((profile?.needs && profile.needs.length > 0) || (matchableOrgData?.needs && matchableOrgData.needs.length > 0)) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Volunteer Needs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {(profile?.needs || matchableOrgData?.needs || []).map((need: string, index: number) => (
+                    <Badge key={index} variant="outline">{need}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Goals */}
+          {profile?.goals && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Goals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{profile.goals}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <div className={isVolunteer ? "bg-[#f8f9fa] min-h-screen" : ""}>

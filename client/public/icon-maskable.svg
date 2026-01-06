@@ -16,8 +16,8 @@
   <rect width="512" height="512" fill="#FDF8F3"/>
 
   <!-- Synerxus intertwined ribbon logo - scaled to fit within maskable safe zone (center 80%) -->
-  <!-- Safe zone radius = 204px (40% of 512), logo should fit within ~160px radius -->
-  <g transform="translate(256, 256) scale(0.48)">
+  <!-- Safe zone is central 80% circle. Reduced scale to ensure no cropping on any edge -->
+  <g transform="translate(256, 256) scale(0.42)">
     <!-- Blue ribbon (top loop going left-down) -->
     <path d="M -120 -140
              C -200 -140, -200 60, -120 100

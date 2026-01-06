@@ -51,9 +51,15 @@ describe("Format Utils", () => {
     });
 
     it("should handle edge cases", () => {
-      expect(formatDecimal(undefined)).toBe("0");
-      expect(formatDecimal(null)).toBe("0");
-      expect(formatDecimal(NaN)).toBe("0");
+      expect(formatDecimal(undefined)).toBe("0.00");
+      expect(formatDecimal(null)).toBe("0.00");
+      expect(formatDecimal(NaN)).toBe("0.00");
+    });
+
+    it("should show 2 decimal places for values less than 1", () => {
+      expect(formatDecimal(0.5)).toBe("0.50");
+      expect(formatDecimal(0.05)).toBe("0.05");
+      expect(formatDecimal(0.123)).toBe("0.12");
     });
   });
 
@@ -98,6 +104,17 @@ describe("Format Utils", () => {
     it("should handle small numbers", () => {
       expect(formatCompact(100)).toBe("100");
       expect(formatCompact(99.99)).toBe("99.99");
+    });
+
+    it("should show 2 decimal places for values less than 1", () => {
+      expect(formatCompact(0.5)).toBe("0.50");
+      expect(formatCompact(0.05)).toBe("0.05");
+    });
+
+    it("should handle edge cases", () => {
+      expect(formatCompact(undefined)).toBe("0.00");
+      expect(formatCompact(null)).toBe("0.00");
+      expect(formatCompact(NaN)).toBe("0.00");
     });
   });
 

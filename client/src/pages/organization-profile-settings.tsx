@@ -441,6 +441,9 @@ export default function OrganizationProfileSettings() {
         title: "Profile created!",
         description: "Your organization profile has been created successfully.",
       });
+
+      // Redirect to organization dashboard after successful save
+      setTimeout(() => setLocation("/organization-dashboard"), 500);
     },
     onError: (error: Error) => {
       toast({

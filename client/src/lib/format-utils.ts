@@ -15,14 +15,16 @@ export function formatNumber(value: number | undefined | null): string {
 /**
  * Format decimal number with smart precision:
  * - Numbers >= 1000: Use compact notation with 3 significant digits (1.23K, 12.3K, 123K)
+ * - Numbers < 1 (non-zero): Always show 2 decimal places (0.05, 0.50)
  * - Numbers < 1000: Use 2 decimal places (3.14, 99.99)
  * - Whole numbers: No decimal places (100, 50)
  * @example formatDecimal(1234.5678) => "1.23K"
  * @example formatDecimal(99.9876) => "99.99"
+ * @example formatDecimal(0.05) => "0.05"
  * @example formatDecimal(100) => "100"
  */
 export function formatDecimal(value: number | undefined | null): string {
-  if (value === undefined || value === null || isNaN(value)) return "0";
+  if (value === undefined || value === null || isNaN(value)) return "0.00";
 
   const absValue = Math.abs(value);
 
@@ -38,6 +40,12 @@ export function formatDecimal(value: number | undefined | null): string {
   if (absValue >= 1_000) {
     const compact = value / 1_000;
     return formatWithSignificantDigits(compact, 3) + "K";
+  }
+
+  // For values less than 1 (but greater than 0), always show 2 decimal places
+  // This ensures small values like 0.05 don't appear as 0
+  if (absValue > 0 && absValue < 1) {
+    return value.toFixed(2);
   }
 
   // For numbers < 1000, use 2 decimal places
@@ -108,18 +116,25 @@ export function formatPercentage(
  * @example formatCompact(1234567) => "1.23M"
  * @example formatCompact(12345) => "12.3K"
  * @example formatCompact(123456) => "123K"
+ * @example formatCompact(0.05) => "0.05"
  */
 export function formatCompact(value: number | undefined | null): string {
-  if (value === undefined || value === null || isNaN(value)) return "0";
+  if (value === undefined || value === null || isNaN(value)) return "0.00";
 
-  if (value >= 1_000_000_000) {
+  const absValue = Math.abs(value);
+
+  if (absValue >= 1_000_000_000) {
     return formatWithSignificantDigits(value / 1_000_000_000, 3) + "B";
   }
-  if (value >= 1_000_000) {
+  if (absValue >= 1_000_000) {
     return formatWithSignificantDigits(value / 1_000_000, 3) + "M";
   }
-  if (value >= 1_000) {
+  if (absValue >= 1_000) {
     return formatWithSignificantDigits(value / 1_000, 3) + "K";
+  }
+  // For values less than 1 (but greater than 0), always show 2 decimal places
+  if (absValue > 0 && absValue < 1) {
+    return value.toFixed(2);
   }
   // For numbers < 1000, show 2 decimal places if not a whole number
   if (Number.isInteger(value)) {

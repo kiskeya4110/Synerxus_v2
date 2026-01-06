@@ -15,8 +15,8 @@
   <!-- Background with rounded corners for app icon look -->
   <rect width="512" height="512" rx="96" fill="#FDF8F3"/>
 
-  <!-- Synerxus intertwined ribbon logo - centered and sized for visibility -->
-  <g transform="translate(256, 256) scale(0.52)">
+  <!-- Synerxus intertwined ribbon logo - centered and sized to fit within rounded rect -->
+  <g transform="translate(256, 256) scale(0.46)">
     <!-- Blue ribbon (top loop going left-down) -->
     <path d="M -120 -140
              C -200 -140, -200 60, -120 100

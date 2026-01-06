@@ -112,6 +112,8 @@ export interface OrganizationAIUSummary {
     projectId: number;
     projectName: string;
     aiu: number;
+    orgDirectShare: number;
+    volunteerAiuSum: number;
     sdgIndicator: string;
     verificationStatus: string;
   }[];
@@ -636,6 +638,7 @@ export async function calculateOrganizationAIU(
     // This is the BASE from which volunteer and org shares are derived
     let totalProjectAiu = 0;
     if (livesImpacted > 0) {
+      // Primary: Impact-based AIU calculation
       const aiuResult = calculatePureImpactAIU({
         livesImpacted,
         outcomeType,
@@ -646,6 +649,13 @@ export async function calculateOrganizationAIU(
         activityDates: projectActivityDates,
       });
       totalProjectAiu = aiuResult.aiu;
+    } else if (hours > 0) {
+      // Fallback: Hours-based AIU when no impact records exist
+      // 1 AIU = 50 hours of work × SDG multiplier (up to 2x for multi-SDG projects)
+      const projectSdgCount = (project.sdgGoals?.length || 0) + (project.primarySdg ? 1 : 0);
+      const uniqueSdgCount = new Set([...(project.sdgGoals || []), project.primarySdg].filter(Boolean)).size;
+      const sdgMultiplier = Math.min(1 + (uniqueSdgCount * 0.1), 2.0);
+      totalProjectAiu = (hours / 50) * sdgMultiplier;
     }
 
     // STEP 2: Calculate volunteer share of project AIU
@@ -1176,8 +1186,12 @@ export async function calculateVolunteerPureImpactAIU(volunteerId: number): Prom
     }
   });
 
-  // Get unique project IDs from impacts
-  const projectIdSet = new Set(impacts.map(i => i.projectId).filter(Boolean));
+  // Get unique project IDs from BOTH impacts AND activities
+  // This ensures volunteers with only hours (no impacts) still get AIU credit
+  const projectIdSet = new Set([
+    ...impacts.map(i => i.projectId).filter(Boolean),
+    ...activities.map(a => a.projectId).filter(Boolean)
+  ]);
   const projectIds = Array.from(projectIdSet) as number[];
 
   if (projectIds.length === 0) {
@@ -1221,15 +1235,17 @@ export async function calculateVolunteerPureImpactAIU(volunteerId: number): Prom
 
     // Sum lives impacted for this project
     const livesImpacted = projectImpactsList.reduce((sum, i) => sum + (i.value || 0), 0);
-    if (livesImpacted === 0) continue;
 
     // Get hours for this project
     const hours = projectHoursMap.get(projectId) || 0;
 
+    // Skip if no impacts AND no hours
+    if (livesImpacted === 0 && hours === 0) continue;
+
     // Get expected beneficiaries from settings (or use default)
     const expectedBeneficiaries = settings?.kpiAfter || 100;
 
-    // Use the primary impact record's metadata
+    // Use the primary impact record's metadata (or defaults for hours-only)
     const outcomeType = projectImpactsList[0]?.outcomeType || 'individual';
     const role = projectImpactsList[0]?.role || 'support';
     const verificationStatus = projectImpactsList[0]?.verificationStatus || 'pending';
@@ -1239,16 +1255,47 @@ export async function calculateVolunteerPureImpactAIU(volunteerId: number): Prom
       .filter(a => a.projectId === projectId && a.date)
       .map(a => new Date(a.date));
 
-    // Calculate PURE IMPACT AIU (V3) with streak bonus
-    const aiuResult = calculatePureImpactAIU({
-      livesImpacted,
-      outcomeType,
-      role,
-      verificationStatus,
-      hours,
-      projectExpectedBeneficiaries: expectedBeneficiaries,
-      activityDates: projectActivityDates,
-    });
+    let aiuResult: PureImpactAIUResult;
+
+    if (livesImpacted > 0) {
+      // Primary: Calculate PURE IMPACT AIU (V3) with streak bonus
+      aiuResult = calculatePureImpactAIU({
+        livesImpacted,
+        outcomeType,
+        role,
+        verificationStatus,
+        hours,
+        projectExpectedBeneficiaries: expectedBeneficiaries,
+        activityDates: projectActivityDates,
+      });
+    } else {
+      // Fallback: Hours-based AIU when no impact records exist
+      // Matches organization calculation: 1 AIU = 50 hours × SDG multiplier
+      const projectSdgCount = new Set([...(project.sdgGoals || []), project.primarySdg].filter(Boolean)).size;
+      const sdgMultiplier = Math.min(1 + (projectSdgCount * 0.1), 2.0);
+      const hoursBasedAiu = (hours / 50) * sdgMultiplier;
+      const roleWeight = ROLE_WEIGHTS[role as keyof typeof ROLE_WEIGHTS] || 1;
+
+      aiuResult = {
+        // Impact Score Components
+        livesImpacted: 0,
+        depthMultiplier: 1,
+        verificationMultiplier: 1,
+        impactScore: hoursBasedAiu,
+        // Engagement Factor Components
+        roleWeight,
+        hoursFactor: hours / 50,
+        engagementFactor: sdgMultiplier,
+        // Consistency Bonus
+        streakMonths: 0,
+        consistencyBonus: 0,
+        // Final Calculation
+        effectiveScore: hoursBasedAiu,
+        k: 1,
+        aiu: hoursBasedAiu,
+        percentOfCeiling: 0,
+      };
+    }
 
     // Apply attribution factor to get volunteer's share of project AIU
     // Volunteers collectively get attributionFactor % of project (e.g., 20%)

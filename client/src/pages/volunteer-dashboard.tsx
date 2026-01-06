@@ -3474,10 +3474,15 @@ function getEventType(eventType: string): "primary" | "success" | "info" | "warn
 }
 
 // Format number to 2 decimal places if decimal, otherwise show as whole number
+// For values less than 1 (like small AIU scores), always show 2 decimal places
 function formatNumber(value: number | string | undefined | null): string {
-  if (value === undefined || value === null) return '0';
+  if (value === undefined || value === null) return '0.00';
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '0';
+  if (isNaN(num)) return '0.00';
+  // For values less than 1, always show 2 decimal places to avoid showing 0 for small values
+  if (num > 0 && num < 1) {
+    return num.toFixed(2);
+  }
   // Check if it's a whole number
   if (Number.isInteger(num)) {
     return num.toString();

@@ -13,6 +13,20 @@
 import { useQuery, useQueries, UseQueryResult } from "@tanstack/react-query";
 import { useMemo, useCallback } from "react";
 import { safeArray, safeReduce, safeFilter } from "@/lib/safe-array";
+import { auth } from "@/lib/firebase";
+
+// Helper to get auth token for API requests
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      return await user.getIdToken();
+    }
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+  }
+  return null;
+}
 
 // ============================================
 // TYPES
@@ -414,7 +428,12 @@ export function usePendingApprovals(userId: string | number | null) {
     queryKey: ['/api/pending-approvals', userId],
     queryFn: async () => {
       if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
+      const token = await getAuthToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`/api/pending-approvals?userId=${userId}`, { headers });
       if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
       return response.json();
     },
@@ -423,9 +442,14 @@ export function usePendingApprovals(userId: string | number | null) {
   });
 
   const approveActivity = useCallback(async (activityId: number, reviewerId: number) => {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`/api/volunteer-activities/${activityId}/approve`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ reviewerId }),
     });
     if (!response.ok) throw new Error('Failed to approve activity');
@@ -434,8 +458,14 @@ export function usePendingApprovals(userId: string | number | null) {
   }, [query]);
 
   const rejectActivity = useCallback(async (activityId: number) => {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`/api/volunteer-activities/${activityId}/reject`, {
       method: 'POST',
+      headers,
     });
     if (!response.ok) throw new Error('Failed to reject activity');
     query.refetch();
@@ -443,9 +473,14 @@ export function usePendingApprovals(userId: string | number | null) {
   }, [query]);
 
   const approveImpact = useCallback(async (impactId: number, reviewerId: number) => {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`/api/project-impacts/${impactId}/approve`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ reviewerId }),
     });
     if (!response.ok) throw new Error('Failed to approve impact');
@@ -454,8 +489,14 @@ export function usePendingApprovals(userId: string | number | null) {
   }, [query]);
 
   const rejectImpact = useCallback(async (impactId: number) => {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`/api/project-impacts/${impactId}/reject`, {
       method: 'POST',
+      headers,
     });
     if (!response.ok) throw new Error('Failed to reject impact');
     query.refetch();

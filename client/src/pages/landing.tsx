@@ -950,9 +950,9 @@ export default function Landing() {
                   <span>⚠️</span> Progress Update
                 </h3>
                 <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
-                  <li>• Only <strong>15% of targets on track</strong></li>
-                  <li>• <strong>6 years remaining</strong> to achieve 2030 goals</li>
-                  <li>• Climate action needs <strong>7x faster acceleration</strong></li>
+                  <li>• Only <strong>17% of targets on track</strong></li>
+                  <li>• <strong>4 years remaining</strong> to achieve 2030 goals</li>
+                  <li>• Emissions must be cut <strong>43% by 2030</strong></li>
                   <li>• Volunteer action is critical to closing the gap</li>
                 </ul>
               </div>

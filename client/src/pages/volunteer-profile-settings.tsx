@@ -986,6 +986,18 @@ export default function VolunteerProfileSettings() {
     }
   }, [currentUser?.userType, setLocation]);
 
+  // Redirect to login if not authenticated (after loading is complete)
+  useEffect(() => {
+    if (!userLoading && !userId) {
+      toast({
+        title: "Session Expired",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setLocation('/login');
+    }
+  }, [userLoading, userId, setLocation, toast]);
+
   // Fetch volunteer profile using intake API which includes all availability fields
   const profileQuery = useQuery<any>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
@@ -1549,9 +1561,8 @@ export default function VolunteerProfileSettings() {
   if (!currentUser?.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500">
-          Error: User not authenticated. Please log in again.
-        </p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-gray-500">Redirecting to login...</p>
       </div>
     );
   }

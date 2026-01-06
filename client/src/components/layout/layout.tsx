@@ -84,6 +84,8 @@ export default function Layout({ children }: LayoutProps) {
     "/projects", "/opportunities",
     // Public pages with own layout
     "/organizations", "/help",
+    // Admin pages
+    "/admin",
     // PWA routes
     "/pwa"
   ];

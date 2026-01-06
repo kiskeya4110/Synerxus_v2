@@ -78,6 +78,7 @@ const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
 const InvitationCodes = lazy(() => import("@/pages/invitation-codes"));
 const AdminOrganizationApproval = lazy(() => import("@/pages/admin-organization-approval"));
+const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 const PostUrgentOpportunity = lazy(() => import("@/pages/post-urgent-opportunity"));
 const JoinTeam = lazy(() => import("@/pages/join-team"));
@@ -248,6 +249,7 @@ function AppWithOnboarding() {
           <Route path="/volunteers" component={Volunteers} />
           <Route path="/invitation-codes" component={InvitationCodes} />
           <Route path="/admin/organization-approval" component={AdminOrganizationApproval} />
+          <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
           <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
           {/* Standalone utility routes */}

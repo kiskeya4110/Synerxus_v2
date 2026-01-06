@@ -24,8 +24,17 @@ import {
   insertEmployeeCommitmentSchema,
   insertEmployeeActivityLogSchema,
   insertEmployeeMilestoneSchema,
-  insertCSRCommitmentGoalSchema
+  insertCSRCommitmentGoalSchema,
+  // Tables for admin dashboard
+  users,
+  organizations,
+  projects,
+  opportunities,
+  applications,
+  volunteerActivities,
+  organizationMembers
 } from "@shared/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
@@ -8551,7 +8560,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         db.select({ count: sql<number>`count(*)` }).from(projects),
         db.select({ count: sql<number>`count(*)` }).from(opportunities),
         db.select({ count: sql<number>`count(*)` }).from(applications),
-        db.select({ count: sql<number>`count(*)` }).from(activityLogs)
+        db.select({ count: sql<number>`count(*)` }).from(volunteerActivities)
       ]);
 
       // Get recent signups (last 7 days)
@@ -8653,17 +8662,16 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const limit = parseInt(req.query.limit as string) || 100;
 
       const recentActivity = await db.select({
-        id: activityLogs.id,
-        volunteerId: activityLogs.volunteerId,
-        projectId: activityLogs.projectId,
-        activityType: activityLogs.activityType,
-        hoursLogged: activityLogs.hoursLogged,
-        description: activityLogs.description,
-        status: activityLogs.status,
-        createdAt: activityLogs.createdAt
+        id: volunteerActivities.id,
+        volunteerId: volunteerActivities.userId,
+        projectId: volunteerActivities.projectId,
+        hoursLogged: volunteerActivities.hours,
+        description: volunteerActivities.description,
+        status: volunteerActivities.verificationStatus,
+        createdAt: volunteerActivities.createdAt
       })
-        .from(activityLogs)
-        .orderBy(desc(activityLogs.createdAt))
+        .from(volunteerActivities)
+        .orderBy(desc(volunteerActivities.createdAt))
         .limit(limit);
 
       // Enrich with user and project names

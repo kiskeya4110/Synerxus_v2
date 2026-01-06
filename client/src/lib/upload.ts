@@ -1,6 +1,25 @@
+import { auth } from './firebase';
+
 export interface UploadResult {
   url: string;
   path: string;
+}
+
+/**
+ * Get current Firebase user's ID token for API authentication
+ * Returns null if user is not authenticated
+ */
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      // Get fresh ID token (Firebase automatically refreshes expired tokens)
+      return await user.getIdToken();
+    }
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+  }
+  return null;
 }
 
 /**
@@ -20,11 +39,11 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
       url += `&imageType=${encodeURIComponent(imageType)}`;
     }
 
-    // Get userId from localStorage for authentication
-    const userId = localStorage.getItem('currentUserId');
+    // Get Firebase ID token for secure authentication
+    const token = await getAuthToken();
     const headers: Record<string, string> = {};
-    if (userId) {
-      headers['x-user-id'] = userId;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
@@ -102,13 +121,13 @@ export async function uploadProfilePhoto(
  */
 export async function deleteFile(path: string): Promise<void> {
   try {
-    // Get userId from localStorage for authentication
-    const userId = localStorage.getItem('currentUserId');
+    // Get Firebase ID token for secure authentication
+    const token = await getAuthToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (userId) {
-      headers['x-user-id'] = userId;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch('/api/upload', {

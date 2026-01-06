@@ -298,6 +298,15 @@ export default function VolunteerNav() {
                         <div className="px-4 py-1">
                           <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Admin</span>
                         </div>
+                        <Link href="/admin/dashboard">
+                          <button
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            onClick={() => setMenuOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            <span className="font-medium">Admin Dashboard</span>
+                          </button>
+                        </Link>
                         <Link href="/admin/organization-approval">
                           <button
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"

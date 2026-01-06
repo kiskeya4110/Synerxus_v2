@@ -8782,6 +8782,127 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // GET /api/admin/locations - Get organization and project locations for map
+  app.get("/api/admin/locations", async (req, res) => {
+    try {
+      // Fetch organizations and projects with location data
+      const allOrganizations = await storage.listOrganizations();
+      const allProjects = await storage.listProjects();
+      const allVolunteerProfiles = await storage.listVolunteerProfiles();
+
+      // Helper function to geocode location string to coordinates
+      const geocodeLocation = (location: string | null | undefined): { lat: number; lng: number } | null => {
+        if (!location) return null;
+        const locationLower = location.toLowerCase();
+
+        // Common locations mapping
+        const locationMap: Record<string, { lat: number; lng: number }> = {
+          'new york': { lat: 40.7128, lng: -74.0060 },
+          'los angeles': { lat: 34.0522, lng: -118.2437 },
+          'chicago': { lat: 41.8781, lng: -87.6298 },
+          'san francisco': { lat: 37.7749, lng: -122.4194 },
+          'seattle': { lat: 47.6062, lng: -122.3321 },
+          'miami': { lat: 25.7617, lng: -80.1918 },
+          'boston': { lat: 42.3601, lng: -71.0589 },
+          'london': { lat: 51.5074, lng: -0.1278 },
+          'paris': { lat: 48.8566, lng: 2.3522 },
+          'tokyo': { lat: 35.6762, lng: 139.6503 },
+          'sydney': { lat: -33.8688, lng: 151.2093 },
+          'dubai': { lat: 25.2048, lng: 55.2708 },
+          'singapore': { lat: 1.3521, lng: 103.8198 },
+          'mumbai': { lat: 19.0760, lng: 72.8777 },
+          'nairobi': { lat: -1.2921, lng: 36.8219 },
+          'cape town': { lat: -33.9249, lng: 18.4241 },
+          'lagos': { lat: 6.5244, lng: 3.3792 },
+          'cairo': { lat: 30.0444, lng: 31.2357 },
+          'johannesburg': { lat: -26.2041, lng: 28.0473 },
+          'harare': { lat: -17.8252, lng: 31.0335 },
+          'lusaka': { lat: -15.3875, lng: 28.3228 },
+          'addis ababa': { lat: 9.0320, lng: 38.7469 },
+          'accra': { lat: 5.6037, lng: -0.1870 },
+          'mexico city': { lat: 19.4326, lng: -99.1332 },
+          'berlin': { lat: 52.5200, lng: 13.4050 },
+          'amsterdam': { lat: 52.3676, lng: 4.9041 },
+          'madrid': { lat: 40.4168, lng: -3.7038 },
+          'rome': { lat: 41.9028, lng: 12.4964 },
+          'remote': { lat: 0, lng: 0 },
+          'virtual': { lat: 0, lng: 0 },
+        };
+
+        for (const [key, coords] of Object.entries(locationMap)) {
+          if (locationLower.includes(key)) return coords;
+        }
+
+        const coordMatch = location.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+        if (coordMatch) {
+          return { lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) };
+        }
+        return null;
+      };
+
+      // Process organizations
+      const organizationLocations = allOrganizations
+        .map((org: any) => {
+          const coords = geocodeLocation(org.address);
+          if (!coords || (coords.lat === 0 && coords.lng === 0)) return null;
+          return {
+            id: org.id, name: org.name, type: 'organization',
+            location: org.address, lat: coords.lat, lng: coords.lng,
+            status: org.approvalStatus || 'pending', logo: org.logo
+          };
+        })
+        .filter(Boolean);
+
+      // Process projects
+      const projectLocations = allProjects
+        .map((project: any) => {
+          const coords = geocodeLocation(project.location);
+          if (!coords || (coords.lat === 0 && coords.lng === 0)) return null;
+          return {
+            id: project.id, name: project.name, type: 'project',
+            location: project.location, lat: coords.lat, lng: coords.lng,
+            status: project.status || 'active', organizationId: project.organizationId
+          };
+        })
+        .filter(Boolean);
+
+      // Process volunteers (aggregate by location)
+      const volunteerLocationCounts: Record<string, { location: string; count: number; coords: { lat: number; lng: number } }> = {};
+      allVolunteerProfiles.forEach((profile: any) => {
+        const coords = geocodeLocation(profile.location);
+        if (coords && !(coords.lat === 0 && coords.lng === 0)) {
+          const key = `${coords.lat},${coords.lng}`;
+          if (volunteerLocationCounts[key]) {
+            volunteerLocationCounts[key].count++;
+          } else {
+            volunteerLocationCounts[key] = { location: profile.location, count: 1, coords };
+          }
+        }
+      });
+
+      const volunteerLocations = Object.entries(volunteerLocationCounts).map(([key, data]) => ({
+        id: key, name: `${data.count} Volunteer${data.count > 1 ? 's' : ''}`,
+        type: 'volunteers', location: data.location,
+        lat: data.coords.lat, lng: data.coords.lng, count: data.count
+      }));
+
+      res.json({
+        organizations: organizationLocations,
+        projects: projectLocations,
+        volunteers: volunteerLocations,
+        summary: {
+          totalOrganizations: organizationLocations.length,
+          totalProjects: projectLocations.length,
+          totalVolunteerLocations: volunteerLocations.length,
+          totalVolunteers: Object.values(volunteerLocationCounts).reduce((sum, v) => sum + v.count, 0)
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      res.status(500).json({ error: "Failed to fetch locations" });
+    }
+  });
+
 
   return httpServer;
 }

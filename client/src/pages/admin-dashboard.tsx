@@ -1,11 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Users, Building2, FolderOpen, Briefcase, Activity, Clock,
   Server, Database, Cpu, HardDrive, Search, Filter, RefreshCw,
-  CheckCircle, XCircle, AlertCircle, TrendingUp, UserPlus, Shield
+  CheckCircle, XCircle, AlertCircle, TrendingUp, UserPlus, Shield, MapPin
 } from "lucide-react";
+
+// Leaflet imports for map
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+
+// Fix Leaflet default marker icon issue
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// @ts-ignore - Leaflet icon fix
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +105,31 @@ interface SystemInfo {
   pid: number;
 }
 
+interface LocationItem {
+  id: number | string;
+  name: string;
+  type: 'organization' | 'project' | 'volunteers';
+  location: string;
+  lat: number;
+  lng: number;
+  status?: string;
+  logo?: string;
+  organizationId?: number;
+  count?: number;
+}
+
+interface LocationsData {
+  organizations: LocationItem[];
+  projects: LocationItem[];
+  volunteers: LocationItem[];
+  summary: {
+    totalOrganizations: number;
+    totalProjects: number;
+    totalVolunteerLocations: number;
+    totalVolunteers: number;
+  };
+}
+
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -164,10 +207,24 @@ export default function AdminDashboard() {
     refetchInterval: 10000 // Refresh every 10 seconds
   });
 
+  // Fetch locations for map
+  const { data: locationsData, isLoading: locationsLoading, refetch: refetchLocations } = useQuery<LocationsData>({
+    queryKey: ["/api/admin/locations"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/locations");
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    }
+  });
+
+  // Map filter state
+  const [mapFilter, setMapFilter] = useState<'all' | 'organizations' | 'projects' | 'volunteers'>('all');
+
   const handleRefreshAll = () => {
     refetchStats();
     refetchUsers();
     refetchActivity();
+    refetchLocations();
     refetchOrgs();
     refetchSystem();
   };
@@ -314,7 +371,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -330,6 +387,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="system" className="gap-2">
               <Server className="h-4 w-4" />
               System
+            </TabsTrigger>
+            <TabsTrigger value="locations" className="gap-2">
+              <MapPin className="h-4 w-4" />
+              Locations
             </TabsTrigger>
           </TabsList>
 
@@ -669,6 +730,217 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Locations Tab */}
+          <TabsContent value="locations">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Global Locations Map</CardTitle>
+                    <CardDescription>
+                      View organizations, projects, and volunteers on the map
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={mapFilter} onValueChange={(v: any) => setMapFilter(v)}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Filter by type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        <SelectItem value="organizations">Organizations</SelectItem>
+                        <SelectItem value="projects">Projects</SelectItem>
+                        <SelectItem value="volunteers">Volunteers</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={() => refetchLocations()}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <Building2 className="h-6 w-6 mx-auto mb-1 text-blue-600" />
+                    <p className="text-xl font-bold text-blue-600">{locationsData?.summary?.totalOrganizations || 0}</p>
+                    <p className="text-xs text-gray-600">Organizations</p>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <Briefcase className="h-6 w-6 mx-auto mb-1 text-green-600" />
+                    <p className="text-xl font-bold text-green-600">{locationsData?.summary?.totalProjects || 0}</p>
+                    <p className="text-xs text-gray-600">Projects</p>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <MapPin className="h-6 w-6 mx-auto mb-1 text-purple-600" />
+                    <p className="text-xl font-bold text-purple-600">{locationsData?.summary?.totalVolunteerLocations || 0}</p>
+                    <p className="text-xs text-gray-600">Volunteer Locations</p>
+                  </div>
+                  <div className="text-center p-3 bg-amber-50 rounded-lg">
+                    <Users className="h-6 w-6 mx-auto mb-1 text-amber-600" />
+                    <p className="text-xl font-bold text-amber-600">{locationsData?.summary?.totalVolunteers || 0}</p>
+                    <p className="text-xs text-gray-600">Total Volunteers</p>
+                  </div>
+                </div>
+
+                {/* Map */}
+                <div className="h-[500px] rounded-lg overflow-hidden border">
+                  {locationsLoading ? (
+                    <div className="flex items-center justify-center h-full bg-gray-100">
+                      <div className="text-center">
+                        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                        <p className="mt-2 text-gray-500">Loading map data...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <MapContainer
+                      center={[20, 0]}
+                      zoom={2}
+                      style={{ width: "100%", height: "100%" }}
+                      scrollWheelZoom={true}
+                    >
+                      <TileLayer
+                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                      />
+
+                      {/* Organization Markers (Blue) */}
+                      {(mapFilter === 'all' || mapFilter === 'organizations') && locationsData?.organizations?.map((loc) => {
+                        const orgIcon = L.divIcon({
+                          html: `<div style="
+                            background: #3b82f6;
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 50%;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                          ">
+                            <span style="color: white; font-size: 12px; font-weight: bold;">O</span>
+                          </div>`,
+                          className: 'custom-marker',
+                          iconSize: [28, 28],
+                          iconAnchor: [14, 14],
+                        });
+                        return (
+                          <Marker key={`org-${loc.id}`} position={[loc.lat, loc.lng]} icon={orgIcon}>
+                            <Popup>
+                              <div style={{ minWidth: '180px' }}>
+                                <p style={{ fontWeight: 600, margin: '0 0 4px 0', color: '#3b82f6' }}>{loc.name}</p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Type:</strong> Organization
+                                </p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Location:</strong> {loc.location}
+                                </p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Status:</strong> {loc.status}
+                                </p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+
+                      {/* Project Markers (Green) */}
+                      {(mapFilter === 'all' || mapFilter === 'projects') && locationsData?.projects?.map((loc) => {
+                        const projectIcon = L.divIcon({
+                          html: `<div style="
+                            background: #22c55e;
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 50%;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                          ">
+                            <span style="color: white; font-size: 12px; font-weight: bold;">P</span>
+                          </div>`,
+                          className: 'custom-marker',
+                          iconSize: [28, 28],
+                          iconAnchor: [14, 14],
+                        });
+                        return (
+                          <Marker key={`proj-${loc.id}`} position={[loc.lat, loc.lng]} icon={projectIcon}>
+                            <Popup>
+                              <div style={{ minWidth: '180px' }}>
+                                <p style={{ fontWeight: 600, margin: '0 0 4px 0', color: '#22c55e' }}>{loc.name}</p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Type:</strong> Project
+                                </p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Location:</strong> {loc.location}
+                                </p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Status:</strong> {loc.status}
+                                </p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+
+                      {/* Volunteer Markers (Purple) */}
+                      {(mapFilter === 'all' || mapFilter === 'volunteers') && locationsData?.volunteers?.map((loc) => {
+                        const volunteerIcon = L.divIcon({
+                          html: `<div style="
+                            background: #a855f7;
+                            width: ${Math.min(28 + (loc.count || 1) * 2, 48)}px;
+                            height: ${Math.min(28 + (loc.count || 1) * 2, 48)}px;
+                            border-radius: 50%;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                          ">
+                            <span style="color: white; font-size: 11px; font-weight: bold;">${loc.count || 1}</span>
+                          </div>`,
+                          className: 'custom-marker',
+                          iconSize: [Math.min(28 + (loc.count || 1) * 2, 48), Math.min(28 + (loc.count || 1) * 2, 48)],
+                          iconAnchor: [Math.min(14 + (loc.count || 1), 24), Math.min(14 + (loc.count || 1), 24)],
+                        });
+                        return (
+                          <Marker key={`vol-${loc.id}`} position={[loc.lat, loc.lng]} icon={volunteerIcon}>
+                            <Popup>
+                              <div style={{ minWidth: '180px' }}>
+                                <p style={{ fontWeight: 600, margin: '0 0 4px 0', color: '#a855f7' }}>{loc.name}</p>
+                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                                  <strong>Location:</strong> {loc.location}
+                                </p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+                    </MapContainer>
+                  )}
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">Organizations</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                    <span className="text-sm text-gray-600">Projects</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-purple-500"></div>
+                    <span className="text-sm text-gray-600">Volunteers</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

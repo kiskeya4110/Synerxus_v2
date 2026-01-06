@@ -194,9 +194,15 @@ export default function Volunteers() {
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
     },
-    onError: (_error, activityId) => {
+    onError: (error: Error, activityId) => {
       removeProcessingActivity(activityId);
-      toast({ title: "Error", description: "Failed to approve hours", variant: "destructive" });
+      const errorMsg = error.message?.includes('401')
+        ? "Authentication required. Please refresh and try again."
+        : error.message?.includes('403')
+        ? "You don't have permission to approve this activity."
+        : "Failed to approve hours. Please try again.";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      console.error("Approve activity error:", error);
     }
   });
 
@@ -212,9 +218,15 @@ export default function Volunteers() {
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
     },
-    onError: (_error, activityId) => {
+    onError: (error: Error, activityId) => {
       removeProcessingActivity(activityId);
-      toast({ title: "Error", description: "Failed to reject hours", variant: "destructive" });
+      const errorMsg = error.message?.includes('401')
+        ? "Authentication required. Please refresh and try again."
+        : error.message?.includes('403')
+        ? "You don't have permission to reject this activity."
+        : "Failed to reject hours. Please try again.";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      console.error("Reject activity error:", error);
     }
   });
 
@@ -230,9 +242,15 @@ export default function Volunteers() {
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
     },
-    onError: (_error, impactId) => {
+    onError: (error: Error, impactId) => {
       removeProcessingImpact(impactId);
-      toast({ title: "Error", description: "Failed to approve impact", variant: "destructive" });
+      const errorMsg = error.message?.includes('401')
+        ? "Authentication required. Please refresh and try again."
+        : error.message?.includes('403')
+        ? "You don't have permission to approve this impact."
+        : "Failed to approve impact. Please try again.";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      console.error("Approve impact error:", error);
     }
   });
 
@@ -248,9 +266,15 @@ export default function Volunteers() {
       refetchApprovals();
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
     },
-    onError: (_error, impactId) => {
+    onError: (error: Error, impactId) => {
       removeProcessingImpact(impactId);
-      toast({ title: "Error", description: "Failed to reject impact", variant: "destructive" });
+      const errorMsg = error.message?.includes('401')
+        ? "Authentication required. Please refresh and try again."
+        : error.message?.includes('403')
+        ? "You don't have permission to reject this impact."
+        : "Failed to reject impact. Please try again.";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      console.error("Reject impact error:", error);
     }
   });
 

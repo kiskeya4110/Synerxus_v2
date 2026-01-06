@@ -8531,6 +8531,249 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // ==================== ADMIN DASHBOARD ROUTES ====================
+
+  // GET /api/admin/stats - Get platform-wide statistics
+  app.get("/api/admin/stats", async (req, res) => {
+    try {
+      const [
+        userCount,
+        volunteerCount,
+        organizationCount,
+        projectCount,
+        opportunityCount,
+        applicationCount,
+        activityLogCount
+      ] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(users),
+        db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.userType, 'volunteer')),
+        db.select({ count: sql<number>`count(*)` }).from(organizations),
+        db.select({ count: sql<number>`count(*)` }).from(projects),
+        db.select({ count: sql<number>`count(*)` }).from(opportunities),
+        db.select({ count: sql<number>`count(*)` }).from(applications),
+        db.select({ count: sql<number>`count(*)` }).from(activityLogs)
+      ]);
+
+      // Get recent signups (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const recentUsers = await db.select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`${users.createdAt} >= ${sevenDaysAgo}`);
+
+      // Get pending org approvals
+      const pendingOrgs = await db.select({ count: sql<number>`count(*)` })
+        .from(organizations)
+        .where(eq(organizations.approvalStatus, 'pending'));
+
+      res.json({
+        totalUsers: Number(userCount[0]?.count || 0),
+        totalVolunteers: Number(volunteerCount[0]?.count || 0),
+        totalOrganizations: Number(organizationCount[0]?.count || 0),
+        totalProjects: Number(projectCount[0]?.count || 0),
+        totalOpportunities: Number(opportunityCount[0]?.count || 0),
+        totalApplications: Number(applicationCount[0]?.count || 0),
+        totalActivityLogs: Number(activityLogCount[0]?.count || 0),
+        recentSignups: Number(recentUsers[0]?.count || 0),
+        pendingApprovals: Number(pendingOrgs[0]?.count || 0)
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  // GET /api/admin/users - Get all users with pagination
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+      const search = req.query.search as string;
+      const userType = req.query.userType as string;
+
+      let query = db.select({
+        id: users.id,
+        email: users.email,
+        displayName: users.displayName,
+        username: users.username,
+        userType: users.userType,
+        avatar: users.avatar,
+        isAdmin: users.isAdmin,
+        createdAt: users.createdAt,
+        organizationId: users.organizationId
+      }).from(users);
+
+      // Apply filters
+      const conditions = [];
+      if (search) {
+        conditions.push(
+          sql`(${users.email} ILIKE ${'%' + search + '%'} OR ${users.displayName} ILIKE ${'%' + search + '%'})`
+        );
+      }
+      if (userType && userType !== 'all') {
+        conditions.push(eq(users.userType, userType));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+
+      const allUsers = await query
+        .orderBy(desc(users.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions)) as any;
+      }
+      const totalResult = await countQuery;
+      const total = Number(totalResult[0]?.count || 0);
+
+      res.json({
+        users: allUsers,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // GET /api/admin/activity - Get recent activity logs
+  app.get("/api/admin/activity", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+
+      const recentActivity = await db.select({
+        id: activityLogs.id,
+        volunteerId: activityLogs.volunteerId,
+        projectId: activityLogs.projectId,
+        activityType: activityLogs.activityType,
+        hoursLogged: activityLogs.hoursLogged,
+        description: activityLogs.description,
+        status: activityLogs.status,
+        createdAt: activityLogs.createdAt
+      })
+        .from(activityLogs)
+        .orderBy(desc(activityLogs.createdAt))
+        .limit(limit);
+
+      // Enrich with user and project names
+      const enrichedActivity = await Promise.all(
+        recentActivity.map(async (activity) => {
+          const [volunteer, project] = await Promise.all([
+            activity.volunteerId
+              ? db.select({ displayName: users.displayName, email: users.email })
+                  .from(users)
+                  .where(eq(users.id, activity.volunteerId))
+                  .limit(1)
+              : Promise.resolve([]),
+            activity.projectId
+              ? db.select({ name: projects.name })
+                  .from(projects)
+                  .where(eq(projects.id, activity.projectId))
+                  .limit(1)
+              : Promise.resolve([])
+          ]);
+
+          return {
+            ...activity,
+            volunteerName: volunteer[0]?.displayName || volunteer[0]?.email || 'Unknown',
+            projectName: project[0]?.name || 'N/A'
+          };
+        })
+      );
+
+      res.json(enrichedActivity);
+    } catch (error) {
+      console.error("Error fetching admin activity:", error);
+      res.status(500).json({ error: "Failed to fetch activity" });
+    }
+  });
+
+  // GET /api/admin/organizations - Get all organizations with stats
+  app.get("/api/admin/organizations", async (req, res) => {
+    try {
+      const allOrgs = await db.select({
+        id: organizations.id,
+        name: organizations.name,
+        description: organizations.description,
+        logo: organizations.logo,
+        contactEmail: organizations.contactEmail,
+        approvalStatus: organizations.approvalStatus,
+        createdAt: organizations.createdAt
+      })
+        .from(organizations)
+        .orderBy(desc(organizations.createdAt));
+
+      // Enrich with member counts
+      const enrichedOrgs = await Promise.all(
+        allOrgs.map(async (org) => {
+          const memberCount = await db.select({ count: sql<number>`count(*)` })
+            .from(organizationMembers)
+            .where(eq(organizationMembers.organizationId, org.id));
+
+          const projectCount = await db.select({ count: sql<number>`count(*)` })
+            .from(projects)
+            .where(eq(projects.organizationId, org.id));
+
+          return {
+            ...org,
+            memberCount: Number(memberCount[0]?.count || 0),
+            projectCount: Number(projectCount[0]?.count || 0)
+          };
+        })
+      );
+
+      res.json(enrichedOrgs);
+    } catch (error) {
+      console.error("Error fetching admin organizations:", error);
+      res.status(500).json({ error: "Failed to fetch organizations" });
+    }
+  });
+
+  // GET /api/admin/system - Get system health info
+  app.get("/api/admin/system", async (req, res) => {
+    try {
+      const memUsage = process.memoryUsage();
+      const uptime = process.uptime();
+
+      // Get DB connection info
+      const dbStats = {
+        connected: true,
+        timestamp: new Date().toISOString()
+      };
+
+      res.json({
+        memory: {
+          heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+          heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB',
+          rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+          external: Math.round(memUsage.external / 1024 / 1024) + 'MB'
+        },
+        uptime: {
+          seconds: Math.floor(uptime),
+          formatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`
+        },
+        database: dbStats,
+        nodeVersion: process.version,
+        platform: process.platform,
+        pid: process.pid
+      });
+    } catch (error) {
+      console.error("Error fetching system info:", error);
+      res.status(500).json({ error: "Failed to fetch system info" });
+    }
+  });
+
 
   return httpServer;
 }

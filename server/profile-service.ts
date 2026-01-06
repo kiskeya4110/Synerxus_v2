@@ -1,7 +1,7 @@
 import { db } from "./db";
-import { users, volunteerProfiles } from "@shared/schema";
+import { users, volunteerProfiles, organizations, organizationProfiles, matchableOrganizations } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import type { VolunteerProfile, InsertVolunteerProfile } from "@shared/schema";
+import type { VolunteerProfile, InsertVolunteerProfile, OrganizationProfile, InsertOrganizationProfile } from "@shared/schema";
 import { deriveCategoryFromSDGs } from "./matching-algorithm";
 
 interface ProfileUpdateData {
@@ -198,6 +198,136 @@ export async function updateVolunteerProfileWithUser(
       updatedProfile = result;
     }
     
+    return updatedProfile;
+  });
+}
+
+interface OrganizationProfileUpdateData {
+  // User table fields (for avatar sync)
+  logo?: string;
+
+  // Organization table fields
+  name?: string;
+  needs?: string[];
+  goals?: string;
+
+  // Organization profile fields
+  missionStatement?: string;
+  volunteerNeeds?: string[];
+  primarySdgs?: number[];
+  geographicScope?: string;
+  size?: string;
+  yearFounded?: number;
+  websiteUrl?: string;
+  socialMedia?: Record<string, string>;
+  impactStats?: Record<string, any>;
+}
+
+/**
+ * Atomically updates users, organizations, organization_profiles, and matchable_organizations
+ * tables in a single transaction. Ensures data consistency by rolling back all changes if any update fails.
+ *
+ * @param userId - The ID of the user to update
+ * @param organizationId - The ID of the organization to update
+ * @param profileData - Object containing fields to update across all tables
+ * @returns The updated organization profile
+ * @throws Error if any update fails (triggers automatic rollback)
+ */
+export async function updateOrganizationProfileWithUser(
+  userId: number,
+  organizationId: number,
+  profileData: OrganizationProfileUpdateData
+): Promise<OrganizationProfile | null> {
+  return await db.transaction(async (tx) => {
+    // 1. Update user table (sync logo to avatar for consistent display)
+    if (profileData.logo) {
+      const [updatedUser] = await tx
+        .update(users)
+        .set({ avatar: profileData.logo })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        throw new Error(`User ${userId} not found`);
+      }
+    }
+
+    // 2. Update organization table
+    const orgUpdates: any = {};
+    if (profileData.logo) orgUpdates.logo = profileData.logo;
+    if (profileData.needs) orgUpdates.needs = profileData.needs;
+    if (profileData.goals) orgUpdates.goals = profileData.goals;
+    if (profileData.name) orgUpdates.name = profileData.name;
+
+    if (Object.keys(orgUpdates).length > 0) {
+      const [updatedOrg] = await tx
+        .update(organizations)
+        .set(orgUpdates)
+        .where(eq(organizations.id, organizationId))
+        .returning();
+
+      if (!updatedOrg) {
+        throw new Error(`Organization ${organizationId} not found`);
+      }
+    }
+
+    // 3. Update or create organization_profiles entry
+    const [existingProfile] = await tx
+      .select()
+      .from(organizationProfiles)
+      .where(eq(organizationProfiles.organizationId, organizationId));
+
+    const profileUpdates: Partial<InsertOrganizationProfile> = {};
+    if (profileData.logo !== undefined) profileUpdates.logoUrl = profileData.logo;
+    if (profileData.missionStatement !== undefined) profileUpdates.missionStatement = profileData.missionStatement;
+    if (profileData.volunteerNeeds !== undefined) profileUpdates.volunteerNeeds = profileData.volunteerNeeds;
+    if (profileData.primarySdgs !== undefined) profileUpdates.primarySdgs = profileData.primarySdgs;
+    if (profileData.geographicScope !== undefined) profileUpdates.geographicScope = profileData.geographicScope;
+    if (profileData.size !== undefined) profileUpdates.size = profileData.size;
+    if (profileData.yearFounded !== undefined) profileUpdates.yearFounded = profileData.yearFounded;
+    if (profileData.websiteUrl !== undefined) profileUpdates.websiteUrl = profileData.websiteUrl;
+    if (profileData.socialMedia !== undefined) profileUpdates.socialMedia = profileData.socialMedia;
+    if (profileData.impactStats !== undefined) profileUpdates.impactStats = profileData.impactStats;
+
+    let updatedProfile: OrganizationProfile | null = null;
+
+    if (existingProfile) {
+      if (Object.keys(profileUpdates).length > 0) {
+        const [result] = await tx
+          .update(organizationProfiles)
+          .set(profileUpdates)
+          .where(eq(organizationProfiles.id, existingProfile.id))
+          .returning();
+        updatedProfile = result || null;
+      } else {
+        updatedProfile = existingProfile;
+      }
+    }
+
+    // 4. Update matchable_organizations for algorithm consistency
+    if (profileData.logo) {
+      // Get organization data for matchable org update
+      const [org] = await tx
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, organizationId));
+
+      if (org) {
+        const matchableOrgId = `org_${org.contactEmail || organizationId}`;
+        const [existingMatchableOrg] = await tx
+          .select()
+          .from(matchableOrganizations)
+          .where(eq(matchableOrganizations.id, matchableOrgId));
+
+        if (existingMatchableOrg) {
+          await tx
+            .update(matchableOrganizations)
+            .set({ logo: profileData.logo })
+            .where(eq(matchableOrganizations.id, matchableOrgId));
+        }
+      }
+    }
+
     return updatedProfile;
   });
 }

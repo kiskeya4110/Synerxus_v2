@@ -1,7 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { handleValidationError, calculateProfileCompletion } from "./utils";
-import { updateVolunteerProfileWithUser } from "../profile-service";
+import { updateVolunteerProfileWithUser, updateOrganizationProfileWithUser } from "../profile-service";
+import { withTransaction } from "../db";
+import { db } from "../db";
+import { users, organizations, matchableOrganizations } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export const profileRouter = Router();
 
@@ -120,7 +124,7 @@ profileRouter.patch("/volunteer", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/profile/organization - Update organization profile
-// Updates both users/organizations tables and matchable_organizations table
+// Updates users, organizations, and matchable_organizations tables atomically
 profileRouter.patch("/organization", async (req: Request, res: Response) => {
   try {
     const userIdParam = req.query.userId as string;
@@ -147,8 +151,9 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
     const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
     console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name });
 
-    // Create organization if it doesn't exist
-    if (!user.organizationId && name) {
+    // Create organization if it doesn't exist (outside transaction - one-time setup)
+    let organizationId = user.organizationId;
+    if (!organizationId && name) {
       const newOrg = await storage.createOrganization({
         name,
         description: bio || "",
@@ -156,44 +161,47 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
         website: website || null,
         contactEmail: contactEmail || user.email || "",
       });
-
+      organizationId = newOrg.id;
       // Link user to the new organization
       await storage.updateUser(userId, { organizationId: newOrg.id });
-      user.organizationId = newOrg.id;
     }
 
-    // Update user table
-    const userUpdates: any = {};
-    if (profilePhotoUrl !== undefined) userUpdates.avatar = profilePhotoUrl;
-    if (bio !== undefined) userUpdates.bio = bio;
-    if (displayName !== undefined) userUpdates.displayName = displayName;
+    // Use transaction for atomic updates to all profile-related tables
+    await withTransaction(async (tx) => {
+      // 1. Update user table
+      const userUpdates: any = {};
+      if (profilePhotoUrl !== undefined) userUpdates.avatar = profilePhotoUrl;
+      if (bio !== undefined) userUpdates.bio = bio;
+      if (displayName !== undefined) userUpdates.displayName = displayName;
 
-    if (Object.keys(userUpdates).length > 0) {
-      await storage.updateUser(userId, userUpdates);
-    }
-
-    // Update organization table (only if user has an organization)
-    if (user.organizationId) {
-      const orgUpdates: any = {};
-      if (profilePhotoUrl !== undefined) orgUpdates.logo = profilePhotoUrl;
-      if (name !== undefined) orgUpdates.name = name;
-      if (website !== undefined) orgUpdates.website = website;
-      if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
-      if (sdgFocus !== undefined) orgUpdates.primarySdgs = sdgFocus;
-      if (needs !== undefined) orgUpdates.needs = needs;
-      if (mission !== undefined) orgUpdates.goals = mission;
-
-      console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
-
-      if (Object.keys(orgUpdates).length > 0) {
-        await storage.updateOrganization(user.organizationId, orgUpdates);
+      if (Object.keys(userUpdates).length > 0) {
+        await tx.update(users).set(userUpdates).where(eq(users.id, userId));
       }
-    }
 
-    // Update or create matchable organization profile
-    if (user.email) {
-      try {
-        const existingOrg = await storage.getMatchableOrganizationByEmail(user.email);
+      // 2. Update organization table (only if user has an organization)
+      if (organizationId) {
+        const orgUpdates: any = {};
+        if (profilePhotoUrl !== undefined) orgUpdates.logo = profilePhotoUrl;
+        if (name !== undefined) orgUpdates.name = name;
+        if (website !== undefined) orgUpdates.website = website;
+        if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
+        if (sdgFocus !== undefined) orgUpdates.primarySdgs = sdgFocus;
+        if (needs !== undefined) orgUpdates.needs = needs;
+        if (mission !== undefined) orgUpdates.goals = mission;
+
+        console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
+
+        if (Object.keys(orgUpdates).length > 0) {
+          await tx.update(organizations).set(orgUpdates).where(eq(organizations.id, organizationId));
+        }
+      }
+
+      // 3. Update or create matchable organization profile
+      if (user.email) {
+        const [existingOrg] = await tx
+          .select()
+          .from(matchableOrganizations)
+          .where(eq(matchableOrganizations.email, user.email));
 
         if (existingOrg) {
           // Update existing matchable organization
@@ -205,11 +213,13 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
           if (sdgFocus !== undefined) matchableOrgUpdates.sdgFocus = sdgFocus;
           if (location !== undefined) matchableOrgUpdates.location = location;
 
-          await storage.updateMatchableOrganization(existingOrg.id, matchableOrgUpdates);
+          if (Object.keys(matchableOrgUpdates).length > 0) {
+            await tx.update(matchableOrganizations).set(matchableOrgUpdates).where(eq(matchableOrganizations.id, existingOrg.id));
+          }
         } else {
-          // Create new matchable organization if it doesn't exist
+          // Create new matchable organization if all required fields are present
           if (name && mission && needs && sdgFocus && location) {
-            await storage.createMatchableOrganization({
+            await tx.insert(matchableOrganizations).values({
               id: `org_${user.email}`,
               email: user.email,
               name,
@@ -221,11 +231,8 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
             });
           }
         }
-      } catch (err) {
-        console.error("Error updating matchable organization profile:", err);
-        // Continue even if matching profile update fails
       }
-    }
+    });
 
     const updatedUser = await storage.getUser(userId);
     res.json(updatedUser);

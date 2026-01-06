@@ -166,20 +166,13 @@ export function ProfilePictureUpload({
       return;
     }
 
+    // Store old path to delete AFTER successful upload (prevents data loss on upload failure)
+    const oldStoragePath = storagePath;
+
     try {
       setIsUploading(true);
 
-      // Delete old photo if exists
-      if (storagePath) {
-        try {
-          console.log("[ProfilePictureUpload] Deleting old photo:", storagePath);
-          await deleteFile(storagePath);
-        } catch (delErr) {
-          console.warn("[ProfilePictureUpload] Could not delete old photo:", delErr);
-        }
-      }
-
-      // Upload new photo with timeout
+      // Upload new photo first (before deleting old one)
       console.log("[ProfilePictureUpload] Uploading new photo...");
       const uploadPromise = uploadProfilePhoto(file, userId, userType);
       const timeoutPromise = new Promise((_, reject) =>
@@ -191,6 +184,17 @@ export function ProfilePictureUpload({
 
       if (!result || !result.url) {
         throw new Error("Upload failed - no URL returned");
+      }
+
+      // Upload succeeded - now safe to delete old photo
+      if (oldStoragePath) {
+        try {
+          console.log("[ProfilePictureUpload] Deleting old photo:", oldStoragePath);
+          await deleteFile(oldStoragePath);
+        } catch (delErr) {
+          // Non-critical: old file cleanup failed, but new upload succeeded
+          console.warn("[ProfilePictureUpload] Could not delete old photo:", delErr);
+        }
       }
 
       setPhotoUrl(result.url);

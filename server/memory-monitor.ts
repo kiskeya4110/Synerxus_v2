@@ -28,15 +28,15 @@ interface MemoryConfig {
 }
 
 const DEFAULT_CONFIG: MemoryConfig = {
-  warningThresholdPercent: 80,   // Warn when heap exceeds 80% (lowered for earlier detection)
-  criticalThresholdPercent: 90,  // Critical when heap exceeds 90% (lowered for earlier action)
-  checkIntervalMs: 15000,  // Every 15 seconds (more frequent checks)
-  historySize: 120,        // Keep last 120 measurements (30 minutes at 15s intervals)
+  warningThresholdPercent: 85,   // Higher threshold to reduce noise
+  criticalThresholdPercent: 95,  // Higher threshold to reduce noise
+  checkIntervalMs: 30000,  // Every 30 seconds (less frequent checks)
+  historySize: 60,         // Keep last 60 measurements
 };
 
 // Minimum heap size (MB) before percentage-based checks apply
-// Lowered to catch issues earlier in application lifecycle
-const MIN_HEAP_SIZE_FOR_ALERTS_MB = 100;
+// Higher threshold to avoid noise on startup
+const MIN_HEAP_SIZE_FOR_ALERTS_MB = 200;
 
 // Callback for system health updates
 let healthUpdateCallback: ((pressure: boolean) => void) | null = null;

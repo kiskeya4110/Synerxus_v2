@@ -445,6 +445,18 @@ app.use((req, res, next) => {
   const attemptBind = (attempt: number): void => {
     logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/${maxRetries})`);
     
+    // Sat1325upgrade: Force kill port before binding to ensure clean start
+    if (attempt === 1) {
+      try {
+        exec(`fuser -k ${port}/tcp`, (err) => {
+          if (err) logger.debug(`[Server] No lingering processes on port ${port}`);
+          else logger.info(`[Server] Cleaned up lingering processes on port ${port}`);
+        });
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+
     const onError = (err: any) => {
       server.removeListener('listening', onListening);
       

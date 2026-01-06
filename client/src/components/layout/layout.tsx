@@ -65,15 +65,15 @@ export default function Layout({ children }: LayoutProps) {
     // CSR/Corporate Partner routes
     "/csr-dashboard", "/csr-dashboard-pwa", "/team-overview",
     "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports",
-    "/corporate-partner-profile-settings",
+    "/corporate-partner-profile-settings", "/corporate-partner-intake",
     // Organization routes
     "/organization-dashboard", "/overview", "/organization-my-work",
-    "/organization-messages", "/organization-profile-settings",
+    "/organization-messages", "/organization-profile-settings", "/organization-intake",
     "/organization-impact-report", "/organization-leaderboard",
     "/volunteers", "/applications",
     "/employee-engagement-tab",
     // Volunteer routes - all have their own VolunteerNav
-    "/volunteer-dashboard", "/volunteer-profile-settings", "/volunteer-messages",
+    "/volunteer-dashboard", "/volunteer-profile-settings", "/volunteer-intake", "/volunteer-messages",
     "/my-work", "/log-activity", "/tasks", "/assignments",
     "/leaderboard", "/profile", "/impact-report", "/stories",
     "/calendar", "/achievements", "/my-applications",

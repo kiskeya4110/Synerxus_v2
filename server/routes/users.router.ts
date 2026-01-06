@@ -9,6 +9,7 @@ export const usersRouter = Router();
 // Preapproved organization emails that don't require invitation codes
 const PREAPPROVED_EMAILS = [
   'idream@operationidream.org',
+  'kmumba@operationidream.org',
   'asniabarazar07@gmail.com',
   'auldridgechibbwalu@yahoo.co.uk',
   'impactamexicoac@gmail.com',

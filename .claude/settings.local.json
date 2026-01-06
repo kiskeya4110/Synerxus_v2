@@ -107,7 +107,8 @@
       "Bash(dig:*)",
       "Bash(host:*)",
       "Bash(fi)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "WebFetch(domain:2adbd4b0-88ea-440c-8428-e64a7324739e-00-2x14x6bqvth13.janeway.replit.dev)"
     ],
     "deny": [],
     "ask": []

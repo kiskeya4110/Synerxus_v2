@@ -106,7 +106,8 @@
       "Bash(nslookup:*)",
       "Bash(dig:*)",
       "Bash(host:*)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []

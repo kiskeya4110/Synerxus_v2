@@ -6,6 +6,23 @@ import { authRateLimiter } from "../middleware/security";
 
 export const usersRouter = Router();
 
+// Preapproved organization emails that don't require invitation codes
+const PREAPPROVED_EMAILS = [
+  'idream@operationidream.org',
+  'asniabarazar07@gmail.com',
+  'auldridgechibbwalu@yahoo.co.uk',
+  'impactamexicoac@gmail.com',
+  'info@impactamexico.org',
+  'thinamaphosa@gmail.com',
+  'brown.director@yestrust.org.zw',
+  'susan.madodo@youngafrica.org',
+  'josephine.millioni@youngafrica.org',
+].map(email => email.toLowerCase());
+
+function isPreapprovedEmail(email: string): boolean {
+  return PREAPPROVED_EMAILS.includes(email.toLowerCase());
+}
+
 // Broadcast function type (will be injected)
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -132,8 +149,9 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     }
 
     // Check if platform is in invite-only mode for new user registration
+    // Skip invitation code check for preapproved organization emails
     const isInviteOnly = await storage.isInviteOnlyMode();
-    if (isInviteOnly) {
+    if (isInviteOnly && !isPreapprovedEmail(email)) {
       if (!invitationCode) {
         return res.status(403).json({
           message: "This platform requires an invitation code to register",

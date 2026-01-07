@@ -219,11 +219,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     queryKey: ["/api/aiu/volunteer", userId],
     queryFn: async () => {
       const response = await fetch(`/api/aiu/volunteer/${userId}`);
-      if (!response.ok) return null;
+      if (!response.ok) throw new Error('Failed to fetch AIU');
       return response.json();
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 60 * 1000, // Cache for 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Calculate real KPIs from dashboard data

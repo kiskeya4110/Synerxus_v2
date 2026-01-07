@@ -258,11 +258,13 @@ export default function Dashboard() {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
       const response = await fetch(`/api/aiu/volunteer/${id}`);
-      if (!response.ok) return null;
+      if (!response.ok) throw new Error('Failed to fetch AIU');
       return response.json();
     },
     enabled: !!userId && currentUser?.userType === 'volunteer',
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 60 * 1000, // Cache for 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch matched opportunities for volunteer users

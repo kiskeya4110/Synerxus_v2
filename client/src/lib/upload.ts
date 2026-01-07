@@ -15,6 +15,21 @@ async function getAuthToken(): Promise<string | null> {
     if (user) {
       // Get fresh ID token (Firebase automatically refreshes expired tokens)
       return await user.getIdToken();
+    } else {
+      // If no current user, wait briefly for auth state to initialize
+      // This handles race conditions where upload is triggered before auth state is ready
+      return new Promise((resolve) => {
+        const unsubscribe = auth.onAuthStateChanged((authUser) => {
+          unsubscribe();
+          if (authUser) {
+            authUser.getIdToken().then(resolve).catch(() => resolve(null));
+          } else {
+            resolve(null);
+          }
+        });
+        // Timeout after 2 seconds
+        setTimeout(() => resolve(null), 2000);
+      });
     }
   } catch (error) {
     console.error("Error getting auth token:", error);
@@ -41,10 +56,12 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
 
     // Get Firebase ID token for secure authentication
     const token = await getAuthToken();
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (!token) {
+      throw new Error('Authentication required. Please sign in again and try uploading.');
     }
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+    };
 
     const response = await fetch(url, {
       method: 'POST',

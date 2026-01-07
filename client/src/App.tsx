@@ -256,8 +256,11 @@ function AppWithOnboarding() {
           <Route path="/join-team" component={JoinTeam} />
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
-          {/* PWA Routes - standalone (no Layout wrapper) */}
+          {/* Volunteer Routes - standalone (own layout with PWAHeader/VolunteerNav) */}
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
+          <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
+          <Route path="/volunteer-intake" component={VolunteerProfileSettings} />
+          {/* PWA Routes - standalone (no Layout wrapper) */}
           <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
           <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
@@ -292,17 +295,15 @@ function LayoutRoute() {
       <Route path="/projects" component={Projects} />
       <Route path="/projects/:id/edit" component={ProjectEdit} />
       <Route path="/projects/:id" component={ProjectDetail} />
-      {/* Profile & Settings */}
+      {/* Profile & Settings - volunteer settings moved to standalone routes */}
       <Route path="/profile" component={Profile} />
-      <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
       <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
       <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
       {/* Work & Tasks */}
       <Route path="/my-work" component={MyWork} />
       <Route path="/log-activity" component={LogActivity} />
       <Route path="/tasks" component={Tasks} />
-      {/* Intake Forms - Redirect to consolidated settings pages */}
-      <Route path="/volunteer-intake" component={VolunteerProfileSettings} />
+      {/* Intake Forms - Redirect to consolidated settings pages (volunteer moved to standalone) */}
       <Route path="/organization-intake" component={OrganizationProfileSettings} />
       <Route path="/corporate-partner-intake" component={CorporatePartnerProfileSettings} />
       {/* Opportunities */}

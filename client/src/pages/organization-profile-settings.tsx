@@ -538,6 +538,9 @@ export default function OrganizationProfileSettings() {
     },
     onSuccess: (data) => {
       localStorage.setItem('userType', data.userType);
+      // Clear profileComplete flag - user needs to complete new profile type
+      localStorage.removeItem('profileComplete');
+      localStorage.setItem('isNewSignup', 'true');
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
 
       toast({

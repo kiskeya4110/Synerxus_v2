@@ -139,7 +139,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     let user = await storage.getUserByFirebaseUid(firebaseUid);
 
     if (user) {
-      return res.json(user);
+      // Existing user - return with isNewUser: false
+      return res.json({ ...user, isNewUser: false });
     }
 
     user = await storage.getUserByEmail(email);
@@ -149,7 +150,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
         firebaseUid,
         displayName: displayName || user.displayName
       });
-      return res.json(updatedUser);
+      // Existing user (linking account) - return with isNewUser: false
+      return res.json({ ...updatedUser, isNewUser: false });
     }
 
     // Check if platform is in invite-only mode for new user registration
@@ -211,7 +213,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     }
 
     broadcastUpdate("user_created", user);
-    res.status(201).json(user);
+    // New user - return with isNewUser: true
+    res.status(201).json({ ...user, isNewUser: true });
   } catch (err) {
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });

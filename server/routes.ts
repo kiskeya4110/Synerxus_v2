@@ -473,7 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (user) {
         // User exists with this Firebase UID, return it (login case)
-        return res.json(user);
+        return res.json({ ...user, isNewUser: false });
       }
 
       // Check if user exists by email (re-linking case for migrated users)
@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           displayName: displayName || user.displayName
         });
         console.log(`Re-linked existing user ${email} to new Firebase account`);
-        return res.json(updatedUser);
+        return res.json({ ...updatedUser, isNewUser: false });
       }
 
       // User doesn't exist at all, create new one (registration case)
@@ -512,7 +512,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       user = await storage.createUser(userData);
       broadcastUpdate("user_created", user);
-      res.status(201).json(user);
+      // New user - return with isNewUser: true
+      res.status(201).json({ ...user, isNewUser: true });
     } catch (err) {
       console.error("Error syncing Firebase user:", err);
       const error = handleValidationError(err);

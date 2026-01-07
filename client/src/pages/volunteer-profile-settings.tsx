@@ -1303,6 +1303,9 @@ export default function VolunteerProfileSettings() {
     onSuccess: (data) => {
       // Update localStorage
       localStorage.setItem('userType', data.userType);
+      // Clear profileComplete flag - user needs to complete new profile type
+      localStorage.removeItem('profileComplete');
+      localStorage.setItem('isNewSignup', 'true');
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });

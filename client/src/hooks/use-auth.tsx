@@ -85,7 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      // Clear all auth-related localStorage items
       localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('profileComplete');
+      localStorage.removeItem('isNewSignup');
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('lastLoginTime');
+      localStorage.removeItem('pendingOrganizationName');
       // Redirect to landing page after sign out
       window.location.href = '/';
     } catch (error) {

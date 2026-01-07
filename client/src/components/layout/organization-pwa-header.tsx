@@ -315,8 +315,8 @@ export default function OrganizationPWAHeader({
             onClick={() => setShowMenu(false)}
           />
 
-          {/* Menu Panel */}
-          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+          {/* Menu Panel - with safe area padding */}
+          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             {/* Menu Header */}
             <div
               className="px-4 py-4 flex items-center justify-between flex-shrink-0"
@@ -428,7 +428,7 @@ export default function OrganizationPWAHeader({
 
       {/* Notifications Modal */}
       {notificationsOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ padding: 'calc(env(safe-area-inset-top, 0px) + 1rem) 1rem calc(env(safe-area-inset-bottom, 0px) + 1rem) 1rem' }}>
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -436,7 +436,7 @@ export default function OrganizationPWAHeader({
           />
 
           {/* Notifications Panel */}
-          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div
               className="px-4 py-4"

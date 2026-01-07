@@ -165,13 +165,18 @@ function RootRedirectRoute() {
           // Check if intake is complete
           let isIntakeComplete = false;
           if (userType === 'volunteer') {
-            isIntakeComplete = data?.volunteerProfile?.onboardingCompleted === true;
+            // Consider intake complete if onboardingCompleted is true OR if they have a volunteer name set
+            // This ensures users who have filled their profile are not redirected back to settings
+            const volunteerProfile = data?.volunteerProfile;
+            isIntakeComplete = volunteerProfile?.onboardingCompleted === true ||
+              !!(volunteerProfile?.volunteer_name || volunteerProfile?.volunteerName);
           } else if (userType === 'organization') {
             // For organizations, check if organization exists with a name
             // If organization record exists, they've completed basic setup - go to dashboard
             isIntakeComplete = !!data?.id && !!data?.name;
           } else if (userType === 'corporate-partner') {
-            isIntakeComplete = data?.onboardingCompleted === true;
+            // Consider intake complete if onboardingCompleted is true OR if they have company name set
+            isIntakeComplete = data?.onboardingCompleted === true || !!data?.companyName;
           }
           
           if (!isIntakeComplete) {

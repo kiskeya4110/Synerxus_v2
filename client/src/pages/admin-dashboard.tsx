@@ -7,8 +7,9 @@ import {
   CheckCircle, XCircle, AlertCircle, TrendingUp, TrendingDown,
   UserPlus, Shield, MapPin, Bell, ArrowUpRight, ArrowDownRight,
   Zap, Target, BarChart3, PieChart, FileCheck, UserCheck,
-  ClipboardList, AlertTriangle, ChevronRight, Eye
+  ClipboardList, AlertTriangle, ChevronRight, Eye, ArrowLeft, Menu
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Leaflet imports for map
 import L from "leaflet";
@@ -373,7 +374,9 @@ export default function AdminDashboard() {
   const [orgStatusFilter, setOrgStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("overview");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const userId = localStorage.getItem("currentUserId");
 
@@ -551,37 +554,56 @@ export default function AdminDashboard() {
     }
   };
 
+  // Mobile tab items
+  const mobileTabItems = [
+    { value: 'overview', icon: BarChart3, label: 'Overview' },
+    { value: 'users', icon: Users, label: 'Users' },
+    { value: 'activity', icon: Activity, label: 'Activity' },
+    { value: 'organizations', icon: Building2, label: 'Orgs' },
+    { value: 'system', icon: Server, label: 'System' },
+    { value: 'locations', icon: MapPin, label: 'Map' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`${isMobile ? 'fixed inset-0 flex flex-col overflow-hidden' : 'min-h-screen'} bg-gray-50`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className={`bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white ${isMobile ? 'flex-shrink-0' : ''}`}>
+        <div className={`${isMobile ? 'px-3 py-3' : 'max-w-7xl mx-auto px-4 py-4'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img src={logoUrl} alt="Synerxus" className="h-8" />
+            <div className="flex items-center gap-2 md:gap-4">
+              {isMobile && (
+                <button
+                  onClick={() => window.history.back()}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+              )}
+              <img src={logoUrl} alt="Synerxus" className={`${isMobile ? 'h-6' : 'h-8'}`} />
               <div>
-                <h1 className="text-xl font-bold flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
+                <h1 className={`${isMobile ? 'text-sm' : 'text-xl'} font-bold flex items-center gap-1 md:gap-2`}>
+                  <Shield className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
                   Admin Dashboard
                 </h1>
-                <p className="text-sm text-slate-300">Platform Management & Analytics</p>
+                {!isMobile && <p className="text-sm text-slate-300">Platform Management & Analytics</p>}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Pending Org Approvals Indicator */}
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Pending Org Approvals Indicator - Mobile shows count only */}
               {totalActionItems > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => { setOrgStatusFilter("pending"); setActiveTab("organizations"); }}
-                  className="border-amber-500 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                  className={`border-amber-500 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 ${isMobile ? 'px-2 py-1 text-xs' : ''}`}
                 >
-                  <Bell className="h-4 w-4 mr-2" />
-                  {totalActionItems} Org{totalActionItems !== 1 ? 's' : ''} Pending Approval
+                  <Bell className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} ${isMobile ? '' : 'mr-2'}`} />
+                  {!isMobile && `${totalActionItems} Org${totalActionItems !== 1 ? 's' : ''} Pending`}
+                  {isMobile && totalActionItems}
                 </Button>
               )}
-              {/* Last Updated */}
-              {enhancedStats?.updatedAt && (
+              {/* Last Updated - Hidden on mobile */}
+              {enhancedStats?.updatedAt && !isMobile && (
                 <span className="text-xs text-slate-400 hidden md:block">
                   Updated {formatDistanceToNow(new Date(enhancedStats.updatedAt), { addSuffix: true })}
                 </span>
@@ -590,27 +612,33 @@ export default function AdminDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={handleRefreshAll}
-                className="border-slate-600 text-slate-900 hover:bg-slate-700 hover:text-white"
+                className={`border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white ${isMobile ? 'px-2 py-1' : ''}`}
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <RefreshCw className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 mr-2'}`} />
+                {!isMobile && 'Refresh'}
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dashboard")}
-                className="text-slate-300 hover:text-white"
-              >
-                Back to App
-              </Button>
+              {!isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/dashboard")}
+                  className="text-slate-300 hover:text-white"
+                >
+                  Back to App
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Main Content */}
+      <div className={`${isMobile ? 'flex-1 overflow-y-auto' : 'max-w-7xl mx-auto px-4 py-6'}`} style={isMobile ? { paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' } : {}}>
+        <div className={isMobile ? 'p-3' : ''}>
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Desktop Tabs */}
+          {!isMobile && (
           <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-white shadow-sm">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -637,6 +665,32 @@ export default function AdminDashboard() {
               Map
             </TabsTrigger>
           </TabsList>
+          )}
+
+          {/* Mobile Tabs - Horizontal scroll */}
+          {isMobile && (
+            <div className="overflow-x-auto -mx-3 px-3">
+              <div className="flex gap-2 pb-2" style={{ minWidth: 'max-content' }}>
+                {mobileTabItems.map((tab) => {
+                  const isActive = activeTab === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      onClick={() => setActiveTab(tab.value)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                        isActive
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      <tab.icon className="h-3.5 w-3.5" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Overview Tab - Main Dashboard */}
           <TabsContent value="overview" className="space-y-6">
@@ -1513,6 +1567,7 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );

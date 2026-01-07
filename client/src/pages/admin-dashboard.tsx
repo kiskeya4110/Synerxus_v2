@@ -134,7 +134,9 @@ export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [userTypeFilter, setUserTypeFilter] = useState("all");
+  const [orgStatusFilter, setOrgStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("users");
 
   const userId = localStorage.getItem("currentUserId");
 
@@ -229,28 +231,80 @@ export default function AdminDashboard() {
     refetchSystem();
   };
 
-  const getUserTypeBadge = (userType: string | null) => {
+  const getUserTypeBadge = (userType: string | null, clickable = true) => {
+    const handleClick = clickable ? (type: string) => {
+      setUserTypeFilter(type);
+      setActiveTab("users");
+    } : undefined;
+
     switch (userType) {
       case "volunteer":
-        return <Badge className="bg-blue-100 text-blue-800">Volunteer</Badge>;
+        return (
+          <Badge
+            className={`bg-blue-100 text-blue-800 ${clickable ? 'cursor-pointer hover:bg-blue-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("volunteer") : undefined}
+          >
+            Volunteer
+          </Badge>
+        );
       case "organization":
-        return <Badge className="bg-green-100 text-green-800">Organization</Badge>;
+        return (
+          <Badge
+            className={`bg-green-100 text-green-800 ${clickable ? 'cursor-pointer hover:bg-green-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("organization") : undefined}
+          >
+            Organization
+          </Badge>
+        );
       case "corporate-partner":
       case "corporate_partner":
-        return <Badge className="bg-purple-100 text-purple-800">Corporate</Badge>;
+        return (
+          <Badge
+            className={`bg-purple-100 text-purple-800 ${clickable ? 'cursor-pointer hover:bg-purple-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("corporate-partner") : undefined}
+          >
+            Corporate
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
-  const getStatusBadge = (status: string | null) => {
+  const getStatusBadge = (status: string | null, clickable = true) => {
+    const handleClick = clickable ? (filterStatus: string) => {
+      setOrgStatusFilter(filterStatus);
+      setActiveTab("organizations");
+    } : undefined;
+
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+        return (
+          <Badge
+            className={`bg-green-100 text-green-800 ${clickable ? 'cursor-pointer hover:bg-green-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("approved") : undefined}
+          >
+            Approved
+          </Badge>
+        );
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return (
+          <Badge
+            className={`bg-yellow-100 text-yellow-800 ${clickable ? 'cursor-pointer hover:bg-yellow-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("pending") : undefined}
+          >
+            Pending
+          </Badge>
+        );
       case "rejected":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+        return (
+          <Badge
+            className={`bg-red-100 text-red-800 ${clickable ? 'cursor-pointer hover:bg-red-200' : ''}`}
+            onClick={clickable ? () => handleClick?.("rejected") : undefined}
+          >
+            Rejected
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status || "Unknown"}</Badge>;
     }
@@ -296,9 +350,12 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Overview */}
+        {/* Stats Overview - Clickable cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-blue-300"
+            onClick={() => setActiveTab("users")}
+          >
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -312,7 +369,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-green-300"
+            onClick={() => setActiveTab("organizations")}
+          >
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -326,7 +386,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-purple-300"
+            onClick={() => setActiveTab("system")}
+          >
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
@@ -340,7 +403,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-amber-300"
+            onClick={() => { setActiveTab("users"); setUserTypeFilter("all"); }}
+          >
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-amber-100 rounded-lg">
@@ -354,7 +420,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-red-300"
+            onClick={() => { setActiveTab("organizations"); setOrgStatusFilter("pending"); }}
+          >
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-100 rounded-lg">
@@ -370,7 +439,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -440,7 +509,8 @@ export default function AdminDashboard() {
                       (usersData?.users || []).map((user: AdminUser) => (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => navigate("/profile")}
                         >
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
@@ -552,21 +622,39 @@ export default function AdminDashboard() {
           <TabsContent value="organizations">
             <Card>
               <CardHeader>
-                <CardTitle>All Organizations</CardTitle>
-                <CardDescription>{organizations.length} registered organizations</CardDescription>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>All Organizations</CardTitle>
+                    <CardDescription>{organizations.length} registered organizations</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={orgStatusFilter} onValueChange={setOrgStatusFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-3">
                     {orgsLoading ? (
                       <div className="text-center py-8 text-gray-500">Loading organizations...</div>
-                    ) : organizations.length === 0 ? (
+                    ) : organizations.filter(org => orgStatusFilter === 'all' || org.approvalStatus === orgStatusFilter).length === 0 ? (
                       <div className="text-center py-8 text-gray-500">No organizations found</div>
                     ) : (
-                      organizations.map((org) => (
+                      organizations.filter(org => orgStatusFilter === 'all' || org.approvalStatus === orgStatusFilter).map((org) => (
                         <div
                           key={org.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/organizations`)}
                         >
                           <div className="flex items-center gap-3">
                             <Avatar className="h-12 w-12 rounded-lg">
@@ -810,27 +898,47 @@ export default function AdminDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Summary Stats */}
+                {/* Summary Stats - Clickable to filter map */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div
+                    className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
+                      mapFilter === 'organizations' ? 'bg-blue-200 ring-2 ring-blue-400' : 'bg-blue-50 hover:bg-blue-100'
+                    }`}
+                    onClick={() => setMapFilter(mapFilter === 'organizations' ? 'all' : 'organizations')}
+                  >
                     <Building2 className="h-6 w-6 mx-auto mb-1 text-blue-600" />
                     <p className="text-xl font-bold text-blue-600">{locationsData?.summary?.totalOrganizations || 0}</p>
                     <p className="text-xs text-gray-600">Organizations</p>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div
+                    className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
+                      mapFilter === 'projects' ? 'bg-green-200 ring-2 ring-green-400' : 'bg-green-50 hover:bg-green-100'
+                    }`}
+                    onClick={() => setMapFilter(mapFilter === 'projects' ? 'all' : 'projects')}
+                  >
                     <Briefcase className="h-6 w-6 mx-auto mb-1 text-green-600" />
                     <p className="text-xl font-bold text-green-600">{locationsData?.summary?.totalProjects || 0}</p>
                     <p className="text-xs text-gray-600">Projects</p>
                   </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <div
+                    className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
+                      mapFilter === 'volunteers' ? 'bg-purple-200 ring-2 ring-purple-400' : 'bg-purple-50 hover:bg-purple-100'
+                    }`}
+                    onClick={() => setMapFilter(mapFilter === 'volunteers' ? 'all' : 'volunteers')}
+                  >
                     <MapPin className="h-6 w-6 mx-auto mb-1 text-purple-600" />
                     <p className="text-xl font-bold text-purple-600">{locationsData?.summary?.totalVolunteerLocations || 0}</p>
                     <p className="text-xs text-gray-600">Volunteer Locations</p>
                   </div>
-                  <div className="text-center p-3 bg-amber-50 rounded-lg">
+                  <div
+                    className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
+                      mapFilter === 'all' ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-amber-50 hover:bg-amber-100'
+                    }`}
+                    onClick={() => setMapFilter('all')}
+                  >
                     <Users className="h-6 w-6 mx-auto mb-1 text-amber-600" />
                     <p className="text-xl font-bold text-amber-600">{locationsData?.summary?.totalVolunteers || 0}</p>
-                    <p className="text-xs text-gray-600">Total Volunteers</p>
+                    <p className="text-xs text-gray-600">Show All</p>
                   </div>
                 </div>
 

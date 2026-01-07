@@ -79,6 +79,7 @@ const Privacy = lazy(() => import("@/pages/privacy"));
 const InvitationCodes = lazy(() => import("@/pages/invitation-codes"));
 const AdminOrganizationApproval = lazy(() => import("@/pages/admin-organization-approval"));
 const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+const AdminDashboardPWA = lazy(() => import("@/pages/admin-dashboard-pwa"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 const PostUrgentOpportunity = lazy(() => import("@/pages/post-urgent-opportunity"));
 const JoinTeam = lazy(() => import("@/pages/join-team"));
@@ -174,25 +175,38 @@ function RootRedirectRoute() {
           const jsonData = await response.json();
           const data = Array.isArray(jsonData) ? jsonData[0] : jsonData;
 
-          // Check if intake is complete
-          let isIntakeComplete = false;
+          // Check if user is established (has any profile data or activity)
+          // Be PERMISSIVE here - only redirect to settings if user is clearly brand new
+          let isEstablishedUser = false;
           if (userType === 'volunteer') {
             const volunteerProfile = data?.volunteerProfile;
-            isIntakeComplete = volunteerProfile?.onboardingCompleted === true ||
-              !!(volunteerProfile?.volunteer_name || volunteerProfile?.volunteerName);
+            // User is established if they have:
+            // - Completed onboarding, OR
+            // - Have a name set, OR
+            // - Have logged any activities (hours > 0), OR
+            // - Have a profile ID (profile exists in DB)
+            isEstablishedUser = volunteerProfile?.onboardingCompleted === true ||
+              !!(volunteerProfile?.volunteer_name || volunteerProfile?.volunteerName) ||
+              (volunteerProfile?.totalHours && volunteerProfile.totalHours > 0) ||
+              !!volunteerProfile?.id ||
+              !!data?.id; // User record exists
           } else if (userType === 'organization') {
-            isIntakeComplete = !!data?.id && !!data?.name;
+            // Organization is established if it has an ID and name
+            isEstablishedUser = !!data?.id && !!data?.name;
           } else if (userType === 'corporate-partner') {
-            isIntakeComplete = data?.onboardingCompleted === true || !!data?.companyName;
+            // Corporate partner is established if onboarding complete OR has company name OR has ID
+            isEstablishedUser = data?.onboardingCompleted === true || !!data?.companyName || !!data?.id;
           }
 
           // Set profileComplete flag for future visits
-          if (isIntakeComplete) {
+          if (isEstablishedUser) {
             localStorage.setItem('profileComplete', 'true');
             localStorage.removeItem('isNewSignup');
           }
 
-          if (!isIntakeComplete) {
+          // Only redirect to settings if user is NOT established
+          // This prevents established users from being forced to settings on every login
+          if (!isEstablishedUser) {
             let settingsPath = '/volunteer-profile-settings';
             if (userType === 'organization') settingsPath = '/organization-profile-settings';
             else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
@@ -267,6 +281,7 @@ function AppWithOnboarding() {
           <Route path="/invitation-codes" component={InvitationCodes} />
           <Route path="/admin/organization-approval" component={AdminOrganizationApproval} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/dashboard/pwa" component={AdminDashboardPWA} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
           <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
           {/* Standalone utility routes */}

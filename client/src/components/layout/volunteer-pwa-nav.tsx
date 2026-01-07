@@ -88,8 +88,8 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
     { icon: BookOpen, label: 'Stories', path: '/stories' },
     { icon: Award, label: 'Achievements', path: '/achievements' },
     { icon: User, label: 'Profile & Settings', path: '/volunteer-profile-settings' },
-    // Admin dashboard - only shown for admin users (filtered in render)
-    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin/dashboard', isAdmin: true }] : []),
+    // Admin dashboard - only shown for admin users (uses PWA version on mobile)
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin/dashboard/pwa', isAdmin: true }] : []),
   ];
 
   return (

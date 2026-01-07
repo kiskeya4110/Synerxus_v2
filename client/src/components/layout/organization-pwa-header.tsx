@@ -245,7 +245,7 @@ export default function OrganizationPWAHeader({
     ...(currentUser?.isAdmin ? [{
       title: "ADMIN",
       items: [
-        { icon: Shield, label: "Admin Dashboard", desc: "Platform management", action: () => navigate('/admin/dashboard'), isAdmin: true },
+        { icon: Shield, label: "Admin Dashboard", desc: "Platform management", action: () => navigate('/admin/dashboard/pwa'), isAdmin: true },
       ]
     }] : []),
   ];

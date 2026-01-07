@@ -435,16 +435,18 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto pb-16" style={{ background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)" }}>
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full text-slate-800 flex flex-col overflow-hidden" style={{ background: "linear-gradient(135deg, #fffbf5 0%, #fef7ec 30%, #fdf4e8 60%, #fef9f3 100%)" }}>
+      {/* Centered App Container */}
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
       {/* Offline Banner */}
       {isOffline && (
-        <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
+        <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium flex-shrink-0">
           Offline Mode - Using Cached Data
         </div>
       )}
 
       {/* PWA Header with Logo and Menu - Matching web view styling */}
-      <header className="sticky top-0 z-50 px-3 py-2 shadow-md border-b" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)" }}>
+      <header className="fixed top-0 left-0 right-0 z-50 px-3 py-2 shadow-md border-b max-w-[428px] mx-auto" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)", left: '50%', transform: 'translateX(-50%)' }}>
         <div className="flex items-center justify-between max-w-full">
           {/* Logo */}
           <button
@@ -489,8 +491,11 @@ export default function CSRDashboardPWA() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-4" style={{ background: "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)" }}>
+      {/* Spacer for fixed header - matches header height (py-2 = 16px + content ~32px = ~48px) */}
+      <div className="h-[52px] flex-shrink-0" />
+
+      {/* Main Content - scrollable area between header and nav */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)", paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">
@@ -2020,6 +2025,7 @@ export default function CSRDashboardPWA() {
       {showMapModal && (
         <MapModal csrData={csrData} filter={mapFilter} setFilter={setMapFilter} onClose={() => setShowMapModal(false)} />
       )}
+      </div>
     </div>
   );
 }

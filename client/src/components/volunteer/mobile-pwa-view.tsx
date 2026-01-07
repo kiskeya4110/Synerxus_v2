@@ -1153,8 +1153,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
+      {/* Main Content - scrollable area between header and nav */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full" style={{ paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
@@ -4860,8 +4860,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
         Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 py-2 z-50 shadow-lg">
-        <div className="flex justify-around items-center max-w-md mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 pt-2 z-50 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        <div className="flex justify-around items-center max-w-[428px] mx-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}

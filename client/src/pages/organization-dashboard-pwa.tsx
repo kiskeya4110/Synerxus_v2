@@ -627,9 +627,9 @@ export default function OrganizationDashboardPWA() {
   }
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden">
       {/* Centered App Container */}
-      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
         {/* Offline Banner */}
         {isOffline && (
           <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium flex-shrink-0">
@@ -650,8 +650,11 @@ export default function OrganizationDashboardPWA() {
           }}
         />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20">
+        {/* Spacer for fixed header - matches header height (py-3 = 24px + h-10 logo = 40px = ~64px) */}
+        <div className="h-[64px] flex-shrink-0" />
+
+        {/* Main Content - scrollable area between header and nav */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="p-4 space-y-4">
           {/* SDG Impact Report Quick Access */}
           <button
@@ -1649,13 +1652,13 @@ export default function OrganizationDashboardPWA() {
 
         {/* Bottom Navigation Tray - Off-white to Light Yellow Gradient */}
         <nav
-          className="sticky bottom-0 z-50 pb-[env(safe-area-inset-bottom)] w-full flex-shrink-0"
+          className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]"
           style={{
             background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
             boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
           }}
         >
-          <div className="flex items-center justify-around py-2 px-1">
+          <div className="flex items-center justify-around py-2 px-1 max-w-[428px] mx-auto">
             {/* Home - Active */}
             <button
               onClick={() => navigate('/organization-dashboard/pwa')}

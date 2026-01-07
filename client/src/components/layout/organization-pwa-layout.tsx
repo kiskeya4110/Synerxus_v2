@@ -54,9 +54,9 @@ export default function OrganizationPWALayout({
   }, [onRefresh]);
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden">
       {/* Centered App Container */}
-      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
         {/* Shared Header */}
         <OrganizationPWAHeader
           onRefresh={onRefresh ? handleRefresh : undefined}
@@ -64,11 +64,16 @@ export default function OrganizationPWALayout({
           metrics={metrics}
         />
 
-        {/* Spacer for sticky header */}
-        <div className="h-16 flex-shrink-0" />
+        {/* Spacer for sticky header - matches header height (py-3 = 24px + h-10 logo = 40px = ~64px) */}
+        <div className="h-[64px] flex-shrink-0" />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-24">
+        {/* Main Content - scrollable area between header and nav */}
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{
+            paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           {children}
         </main>
 

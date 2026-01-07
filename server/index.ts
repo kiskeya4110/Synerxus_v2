@@ -1,3 +1,4 @@
+import "dotenv/config"; // Load .env file before anything else
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import rateLimit from "express-rate-limit";

@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { X, Mail, Upload, UserPlus, CheckCircle, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Mail, Upload, UserPlus, CheckCircle, AlertCircle, Clock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface AddVolunteerModalProps {
   isOpen: boolean;
@@ -37,8 +38,45 @@ export function AddVolunteerModal({
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Pending invitations state
-  const [pendingInvitations, setPendingInvitations] = useState<InvitationData[]>([]);
+  // Local pending invitations state (for immediate feedback after sending)
+  const [localPendingInvitations, setLocalPendingInvitations] = useState<InvitationData[]>([]);
+  const queryClient = useQueryClient();
+
+  // Fetch organization's projects for the dropdown
+  const { data: orgProjects = [] } = useQuery<any[]>({
+    queryKey: ['/api/projects', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const response = await fetch(`/api/projects?organizationId=${organizationId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: isOpen && !!organizationId,
+    staleTime: 30000,
+  });
+
+  // Fetch actual pending invitations from the server
+  const { data: serverInvitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useQuery<{
+    invitations: any[];
+    total: number;
+  }>({
+    queryKey: ['/api/invitations/pending', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return { invitations: [], total: 0 };
+      const response = await fetch(`/api/invitations/pending?organizationId=${organizationId}`);
+      if (!response.ok) return { invitations: [], total: 0 };
+      return response.json();
+    },
+    enabled: isOpen && !!organizationId,
+    staleTime: 10000,
+  });
+
+  // Clear local state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalPendingInvitations([]);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -74,8 +112,13 @@ export function AddVolunteerModal({
         throw new Error(error.message || "Failed to send invitation");
       }
 
-      // Add to pending invitations
-      setPendingInvitations([...pendingInvitations, invitationData]);
+      // Add to local pending invitations for immediate feedback
+      setLocalPendingInvitations(prev => [...prev, invitationData]);
+
+      // Refetch server invitations to get the updated list
+      refetchInvitations();
+      // Also invalidate project assignments queries
+      queryClient.invalidateQueries({ queryKey: ['/api/project-assignments'] });
 
       toast({
         title: "Invitation sent!",
@@ -271,9 +314,11 @@ export function AddVolunteerModal({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">No project assignment</option>
-                  <option value="1">Healthcare Initiative</option>
-                  <option value="2">Education Program</option>
-                  <option value="3">Environmental Project</option>
+                  {orgProjects.map((project: any) => (
+                    <option key={project.id} value={project.id.toString()}>
+                      {project.title || project.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -392,31 +437,64 @@ export function AddVolunteerModal({
           )}
         </div>
 
-        {/* Pending Invitations */}
-        {pendingInvitations.length > 0 && (
+        {/* Pending Invitations - from server */}
+        {((serverInvitations?.invitations?.length ?? 0) > 0 || localPendingInvitations.length > 0) && (
           <div className="p-6 border-t bg-gray-50">
-            <div className="flex items-center gap-2 mb-4">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900">
-                Pending Invitations ({pendingInvitations.length})
-              </h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" />
+                <h3 className="font-semibold text-gray-900">
+                  Pending Invitations ({(serverInvitations?.total || 0) + localPendingInvitations.length})
+                </h3>
+              </div>
+              <button
+                onClick={() => refetchInvitations()}
+                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-full transition-colors"
+                title="Refresh invitations"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingInvitations ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            <div className="space-y-2">
-              {pendingInvitations.slice(-3).map((inv, idx) => (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {/* Show server invitations first */}
+              {serverInvitations?.invitations?.slice(0, 5).map((inv: any) => (
                 <div
-                  key={idx}
+                  key={`server-${inv.id}`}
                   className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{inv.volunteerName || inv.volunteerEmail}</p>
+                    <p className="text-sm text-gray-600">
+                      {inv.projectName} • {inv.role || 'Volunteer'}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 text-xs font-medium text-amber-800 bg-amber-100 rounded-full">
+                    Awaiting Response
+                  </span>
+                </div>
+              ))}
+              {/* Show locally added invitations (just sent) */}
+              {localPendingInvitations.map((inv, idx) => (
+                <div
+                  key={`local-${idx}`}
+                  className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
                 >
                   <div>
                     <p className="font-medium text-gray-900">{inv.email}</p>
                     <p className="text-sm text-gray-600">Role: {inv.role}</p>
                   </div>
-                  <span className="px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-                    Pending
+                  <span className="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Just Sent
                   </span>
                 </div>
               ))}
             </div>
+            {(serverInvitations?.total || 0) > 5 && (
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                And {(serverInvitations?.total || 0) - 5} more pending invitations...
+              </p>
+            )}
           </div>
         )}
       </div>

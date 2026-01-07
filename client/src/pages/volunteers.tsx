@@ -127,7 +127,7 @@ export default function Volunteers() {
     enabled: !!userId && isOrganization
   });
 
-  // Fetch pending approvals for organization
+  // Fetch pending approvals for organization (uses authenticated API request)
   const { data: pendingApprovals, isLoading: loadingApprovals, refetch: refetchApprovals } = useQuery<{
     pendingActivities: any[];
     pendingImpacts: any[];
@@ -135,9 +135,13 @@ export default function Volunteers() {
   }>({
     queryKey: ["/api/pending-approvals", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
-      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      return response.json();
+      try {
+        const response = await apiRequest('GET', '/api/pending-approvals');
+        return response.json();
+      } catch (err) {
+        console.error('Failed to fetch pending approvals:', err);
+        return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      }
     },
     enabled: !!userId && isOrganization
   });
@@ -1002,6 +1006,7 @@ export default function Volunteers() {
         <AddVolunteerModal
           isOpen={showAddVolunteerModal}
           onClose={() => setShowAddVolunteerModal(false)}
+          organizationId={currentUser?.organizationId}
         />
         {performanceVolunteer && (
           <VolunteerPerformanceModal
@@ -2283,7 +2288,7 @@ export default function Volunteers() {
       <AddVolunteerModal
         isOpen={showAddVolunteerModal}
         onClose={() => setShowAddVolunteerModal(false)}
-        organizationId={currentUser?.id}
+        organizationId={currentUser?.organizationId}
       />
 
       {/* Performance Analytics Modal */}

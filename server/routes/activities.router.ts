@@ -567,31 +567,20 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
 
 /**
  * GET /pending-approvals - Get all pending items awaiting approval for an organization
- * Query params:
- *   - organizationId: Filter by organization ID (required)
+ * Uses authMiddleware for proper authentication via Bearer token
  */
-activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) => {
+activitiesRouter.get("/pending-approvals", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId } = req.query;
+    // Use authenticated user from middleware
+    const requestingUser = req.user;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required - userId is missing" });
-    }
-
-    // Verify requesting user exists and has permission
-    const requestingUser = await storage.getUser(parseInt(userId as string));
     if (!requestingUser) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: "Authentication required" });
     }
 
     // Only organization users can view pending approvals
     if (requestingUser.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can view pending approvals" });
-    }
-
-    // If organizationId is provided, verify it matches the user's organization
-    if (organizationId && parseInt(organizationId as string) !== requestingUser.organizationId) {
-      return res.status(403).json({ message: "You can only view approvals for your own organization" });
     }
 
     const results: {
@@ -604,7 +593,7 @@ activitiesRouter.get("/pending-approvals", async (req: Request, res: Response) =
       totalPending: 0
     };
 
-    // Get organization's projects - use requesting user's org
+    // Get organization's projects - use authenticated user's org
     let projectIds: number[] = [];
     const targetOrgId = requestingUser.organizationId;
     if (targetOrgId) {

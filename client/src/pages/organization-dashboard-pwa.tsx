@@ -334,7 +334,7 @@ export default function OrganizationDashboardPWA() {
     staleTime: 30000,
   });
 
-  // Fetch pending approvals (hours + impacts needing verification)
+  // Fetch pending approvals (hours + impacts needing verification) using authenticated API request
   const { data: pendingApprovals } = useQuery<{
     pendingActivities: any[];
     pendingImpacts: any[];
@@ -343,9 +343,13 @@ export default function OrganizationDashboardPWA() {
     queryKey: ['/api/pending-approvals', userId],
     queryFn: async () => {
       if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
-      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      return response.json();
+      try {
+        const response = await apiRequest('GET', '/api/pending-approvals');
+        return response.json();
+      } catch (err) {
+        console.error('Failed to fetch pending approvals:', err);
+        return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
+      }
     },
     enabled: !!userId,
     staleTime: 30000,

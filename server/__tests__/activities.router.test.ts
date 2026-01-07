@@ -38,6 +38,8 @@ const mockStorage = {
   updateImpactMetric: vi.fn(),
   getAIUSetting: vi.fn(),
   updateAIUSetting: vi.fn(),
+  // For permission checking in approval routes
+  listOrganizationMembers: vi.fn(),
 };
 
 // Mock the storage module - hoisted to top
@@ -54,10 +56,29 @@ vi.mock('../routes/utils', () => ({
   updateAiuKpiFromImpacts: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock auth middleware
+// Mock auth middleware - simulate authenticated organization user
 vi.mock('../middleware/auth', () => ({
-  authMiddleware: (req: any, res: any, next: any) => next(),
-  optionalAuthMiddleware: (req: any, res: any, next: any) => next(),
+  authMiddleware: (req: any, res: any, next: any) => {
+    // Simulate an authenticated organization user with approval permissions
+    req.user = {
+      id: 200,
+      email: 'org@example.com',
+      userType: 'organization',
+      organizationId: 10,
+    };
+    req.userId = 200;
+    next();
+  },
+  optionalAuthMiddleware: (req: any, res: any, next: any) => {
+    req.user = {
+      id: 200,
+      email: 'org@example.com',
+      userType: 'organization',
+      organizationId: 10,
+    };
+    req.userId = 200;
+    next();
+  },
 }));
 
 // Create Express app for testing
@@ -79,6 +100,13 @@ describe('Activities Router', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock: organization member with approval permissions
+    // This matches the mocked req.user.id = 200 and req.user.organizationId = 10
+    mockStorage.listOrganizationMembers.mockResolvedValue([
+      { userId: 200, organizationId: 10, canApproveHours: true, canApproveApplications: true }
+    ]);
+    // Default mock: project belongs to user's organization
+    mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [] });
   });
 
   describe('POST /api/volunteer-activities/:id/approve', () => {
@@ -116,7 +144,8 @@ describe('Activities Router', () => {
       mockStorage.listEmployeeEngagement.mockResolvedValue([]);
       mockStorage.createEmployeeEngagement.mockResolvedValue({ id: 1 });
       mockStorage.createVerifiedOutput.mockResolvedValue({ id: 1 });
-      mockStorage.getProject.mockResolvedValue({ id: 50, sdgGoals: [13] });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [13] });
       mockStorage.listCSRChallenges.mockResolvedValue([]);
 
       const response = await request(app)
@@ -172,7 +201,8 @@ describe('Activities Router', () => {
       mockStorage.listEmployeeEngagement.mockResolvedValue([]);
       mockStorage.createEmployeeEngagement.mockResolvedValue({ id: 1 });
       mockStorage.createVerifiedOutput.mockResolvedValue({ id: 1 });
-      mockStorage.getProject.mockResolvedValue({ id: 50, sdgGoals: [] });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [] });
       mockStorage.listCSRChallenges.mockResolvedValue([]);
 
       await request(app)
@@ -226,7 +256,8 @@ describe('Activities Router', () => {
       mockStorage.listEmployeeEngagement.mockResolvedValue([existingEngagement]);
       mockStorage.updateEmployeeEngagement.mockResolvedValue({ id: 5, hoursVolunteered: 8 });
       mockStorage.createVerifiedOutput.mockResolvedValue({ id: 1 });
-      mockStorage.getProject.mockResolvedValue({ id: 50, sdgGoals: [] });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [] });
       mockStorage.listCSRChallenges.mockResolvedValue([]);
 
       await request(app)
@@ -269,7 +300,8 @@ describe('Activities Router', () => {
       mockStorage.listEmployeeEngagement.mockResolvedValue([]);
       mockStorage.createEmployeeEngagement.mockResolvedValue({ id: 1 });
       mockStorage.createVerifiedOutput.mockResolvedValue({ id: 1 });
-      mockStorage.getProject.mockResolvedValue({ id: 50, sdgGoals: [] });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [] });
       mockStorage.listCSRChallenges.mockResolvedValue([]);
 
       await request(app)
@@ -438,12 +470,12 @@ describe('Activities Router', () => {
       mockStorage.listVolunteerActivities.mockResolvedValue(mockActivities);
       mockStorage.listProjectImpacts.mockResolvedValue(mockImpacts);
       mockStorage.getUser.mockResolvedValue({ id: 100, email: 'test@example.com', displayName: 'Test' });
-      mockStorage.getProject.mockResolvedValue({ id: 50, name: 'Test Project' });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, name: 'Test Project' });
       mockStorage.getImpactMetric.mockResolvedValue({ id: 1, name: 'Test Metric' });
 
       const response = await request(app)
-        .get('/api/pending-approvals')
-        .query({ organizationId: 10 });
+        .get('/api/pending-approvals');
 
       expect(response.status).toBe(200);
       expect(response.body.pendingActivities).toHaveLength(1);
@@ -451,12 +483,17 @@ describe('Activities Router', () => {
       expect(response.body.totalPending).toBe(2);
     });
 
-    it('should return 400 when no organizationId or userId provided', async () => {
+    it('should return empty results when organization has no projects', async () => {
+      // Auth middleware sets user, so endpoint will use authenticated user's organization
+      mockStorage.listProjectsByOrganization.mockResolvedValue([]);
+
       const response = await request(app)
         .get('/api/pending-approvals');
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('organizationId or userId is required');
+      expect(response.status).toBe(200);
+      expect(response.body.pendingActivities).toHaveLength(0);
+      expect(response.body.pendingImpacts).toHaveLength(0);
+      expect(response.body.totalPending).toBe(0);
     });
 
     it('should filter activities by organization projects', async () => {
@@ -470,11 +507,11 @@ describe('Activities Router', () => {
       mockStorage.listVolunteerActivities.mockResolvedValue(mockActivities);
       mockStorage.listProjectImpacts.mockResolvedValue([]);
       mockStorage.getUser.mockResolvedValue({ id: 100, email: 'test@example.com' });
-      mockStorage.getProject.mockResolvedValue({ id: 50, name: 'Test Project' });
+      // Include organizationId: 10 to match the authenticated user's organization
+      mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, name: 'Test Project' });
 
       const response = await request(app)
-        .get('/api/pending-approvals')
-        .query({ organizationId: 10 });
+        .get('/api/pending-approvals');
 
       expect(response.body.pendingActivities).toHaveLength(1);
       expect(response.body.pendingActivities[0].id).toBe(1);

@@ -304,23 +304,27 @@ export default function OrganizationDashboard() {
   });
 
   // Fetch ALL pending approvals (hours + impacts) from unified endpoint
-  // This endpoint properly filters by organization's projects
+  // This endpoint properly filters by organization's projects and uses auth token
   const { data: pendingApprovals, refetch: refetchPendingApprovals } = useQuery({
     queryKey: ['/api/pending-approvals', userId, projectFilter],
     queryFn: async () => {
       if (!userId) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      const response = await fetch(`/api/pending-approvals?userId=${userId}`);
-      if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
-      const data = await response.json();
+      try {
+        const response = await apiRequest('GET', '/api/pending-approvals');
+        const data = await response.json();
 
-      // Apply project filter if specified
-      if (projectFilter && projectFilter !== 'all') {
-        data.pendingActivities = data.pendingActivities.filter((a: any) => String(a.projectId) === projectFilter);
-        data.pendingImpacts = data.pendingImpacts.filter((i: any) => String(i.projectId) === projectFilter);
-        data.totalPending = data.pendingActivities.length + data.pendingImpacts.length;
+        // Apply project filter if specified
+        if (projectFilter && projectFilter !== 'all') {
+          data.pendingActivities = data.pendingActivities.filter((a: any) => String(a.projectId) === projectFilter);
+          data.pendingImpacts = data.pendingImpacts.filter((i: any) => String(i.projectId) === projectFilter);
+          data.totalPending = data.pendingActivities.length + data.pendingImpacts.length;
+        }
+
+        return data;
+      } catch (err) {
+        console.error('Failed to fetch pending approvals:', err);
+        return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
       }
-
-      return data;
     },
     enabled: !!userId && isOrganizationUser,
   });

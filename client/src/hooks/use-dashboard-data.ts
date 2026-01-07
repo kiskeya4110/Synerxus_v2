@@ -433,7 +433,8 @@ export function usePendingApprovals(userId: string | number | null) {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`/api/pending-approvals?userId=${userId}`, { headers });
+      // Authentication is handled via Bearer token, no need to send userId in query
+      const response = await fetch('/api/pending-approvals', { headers });
       if (!response.ok) return { pendingActivities: [], pendingImpacts: [], totalPending: 0 };
       return response.json();
     },

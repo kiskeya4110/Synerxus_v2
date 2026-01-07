@@ -7,4 +7,4 @@ vite.config.ts.*
 
 # User uploads (should not be committed)
 uploads/
-!uploads/.gitkeep
+!uploads/.gitkeep.env

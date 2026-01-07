@@ -5,6 +5,8 @@ import { fromZodError } from "zod-validation-error";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "../task-matching-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
+import { sendInvitationEmail } from "../email-digest-service";
+import { notifyNewAssignment } from "../notification-service";
 
 export const miscRouter = Router();
 
@@ -761,6 +763,10 @@ miscRouter.get("/ai/explain", async (req, res) => {
 /**
  * Send a single volunteer invitation
  * POST /invitations/send
+ *
+ * Flow:
+ * 1. If user with email exists and is a volunteer -> create project_assignment with status='pending'
+ * 2. If user doesn't exist -> send invitation email to join the platform
  */
 miscRouter.post("/invitations/send", async (req, res) => {
   try {
@@ -770,26 +776,100 @@ miscRouter.post("/invitations/send", async (req, res) => {
       return res.status(400).json({ error: "Valid email address is required" });
     }
 
-    // In a real implementation, this would:
-    // 1. Check if user with email already exists
-    // 2. Create invitation record in database
-    // 3. Send email via email service (SendGrid, AWS SES, etc.)
-    // 4. Return invitation details
+    if (!organizationId) {
+      return res.status(400).json({ error: "Organization ID is required" });
+    }
 
-    // For now, return success response
-    console.log(`Invitation sent to ${email} as ${role} for organization ${organizationId}`);
+    // Get organization details
+    const organization = await storage.getOrganization(parseInt(organizationId));
+    if (!organization) {
+      return res.status(404).json({ error: "Organization not found" });
+    }
+
+    // Check if user with this email already exists
+    const existingUser = await storage.getUserByEmail(email);
+
+    let invitationResult: any = {
+      email,
+      role: role || 'volunteer',
+      projectId: projectId ? parseInt(projectId) : null,
+      organizationId: parseInt(organizationId),
+      sentAt: new Date().toISOString(),
+      status: "pending",
+      isExistingUser: false
+    };
+
+    if (existingUser && existingUser.userType === 'volunteer') {
+      // Existing volunteer - create project assignment if projectId provided
+      if (projectId) {
+        try {
+          const assignment = await storage.createProjectAssignment({
+            volunteerId: existingUser.id,
+            projectId: parseInt(projectId),
+            hoursCommitted: 10,
+            status: "pending"
+          });
+
+          // Send notification to volunteer
+          await notifyNewAssignment(existingUser.id, parseInt(projectId), parseInt(organizationId));
+
+          invitationResult.isExistingUser = true;
+          invitationResult.assignmentId = assignment.id;
+          invitationResult.volunteerId = existingUser.id;
+
+          console.log(`[Invitation] Created project assignment for existing volunteer ${email} (ID: ${existingUser.id})`);
+        } catch (err: any) {
+          // Handle duplicate assignment
+          if (err.name === 'DuplicateAssignmentError') {
+            return res.status(409).json({
+              error: "This volunteer already has an invitation or assignment to this project",
+              message: err.message
+            });
+          }
+          throw err;
+        }
+      } else {
+        // No project specified - just create a volunteer-organization relationship
+        invitationResult.isExistingUser = true;
+        invitationResult.volunteerId = existingUser.id;
+        console.log(`[Invitation] Volunteer ${email} already exists, no project assignment created`);
+      }
+    } else {
+      // New user or non-volunteer - send invitation email
+      const project = projectId ? await storage.getProject(parseInt(projectId)) : null;
+      const appUrl = process.env.APP_URL || 'https://synerxus.replit.dev';
+
+      try {
+        const emailResult = await sendInvitationEmail({
+          recipientEmail: email,
+          organizationName: organization.name,
+          role: role || 'volunteer',
+          projectName: project?.name,
+          message: message,
+          invitationLink: `${appUrl}/register?org=${organizationId}&role=volunteer`
+        });
+
+        invitationResult.emailSent = emailResult.success;
+        invitationResult.emailMessageId = emailResult.messageId;
+
+        if (emailResult.success) {
+          console.log(`[Invitation] Email sent to new user ${email} for ${organization.name}`);
+        } else {
+          console.log(`[Invitation] Email failed for ${email}: ${emailResult.error}`);
+        }
+      } catch (emailErr) {
+        console.error(`[Invitation] Email error for ${email}:`, emailErr);
+        invitationResult.emailSent = false;
+        invitationResult.emailError = 'Failed to send email';
+      }
+    }
 
     res.status(200).json({
       success: true,
-      message: `Invitation sent to ${email}`,
-      invitation: {
-        email,
-        role,
-        projectId,
-        organizationId,
-        sentAt: new Date().toISOString(),
-        status: "pending"
-      }
+      message: existingUser?.userType === 'volunteer'
+        ? `Invitation sent to existing volunteer ${email}`
+        : `Invitation email sent to ${email}`,
+      invitation: invitationResult
     });
   } catch (error) {
     console.error("Error sending invitation:", error);
@@ -831,5 +911,65 @@ miscRouter.post("/invitations/bulk-import", async (req, res) => {
   } catch (error) {
     console.error("Error importing volunteers:", error);
     res.status(500).json({ error: "Failed to import volunteers" });
+  }
+});
+
+/**
+ * Get pending volunteer invitations for an organization
+ * GET /invitations/pending
+ * Query params: organizationId (required)
+ */
+miscRouter.get("/invitations/pending", async (req, res) => {
+  try {
+    const { organizationId } = req.query;
+
+    if (!organizationId) {
+      return res.status(400).json({ error: "Organization ID is required" });
+    }
+
+    const orgId = parseInt(organizationId as string);
+
+    // Get all projects for this organization
+    const projects = await storage.listProjectsByOrganization(orgId);
+    const projectIds = projects.map((p: any) => p.id);
+
+    if (projectIds.length === 0) {
+      return res.json({ invitations: [], total: 0 });
+    }
+
+    // Get pending project assignments for these projects
+    const allAssignments = await storage.listProjectAssignmentsByProjectIds(projectIds);
+    const pendingAssignments = allAssignments.filter((a: any) => a.status === 'pending');
+
+    // Enrich with volunteer and project details
+    const enrichedInvitations = await Promise.all(
+      pendingAssignments.map(async (assignment: any) => {
+        const volunteer = await storage.getUser(assignment.volunteerId);
+        const project = projects.find((p: any) => p.id === assignment.projectId);
+
+        return {
+          id: assignment.id,
+          volunteerId: assignment.volunteerId,
+          volunteerName: volunteer?.displayName || volunteer?.email || 'Unknown',
+          volunteerEmail: volunteer?.email || '',
+          volunteerAvatar: volunteer?.avatar,
+          projectId: assignment.projectId,
+          projectName: project?.name || 'Unknown Project',
+          role: assignment.role || 'volunteer',
+          status: assignment.status,
+          hoursCommitted: assignment.hoursCommitted,
+          createdAt: assignment.createdAt,
+          assignedAt: assignment.assignedAt
+        };
+      })
+    );
+
+    res.json({
+      invitations: enrichedInvitations,
+      total: enrichedInvitations.length
+    });
+  } catch (error) {
+    console.error("Error fetching pending invitations:", error);
+    res.status(500).json({ error: "Failed to fetch pending invitations" });
   }
 });

@@ -4,20 +4,20 @@ import nodemailer from "nodemailer";
 
 // Email configuration from environment variables
 const EMAIL_CONFIG = {
-  provider: process.env.EMAIL_PROVIDER || "mock", // 'smtp', 'sendgrid', 'mock'
+  provider: process.env.EMAIL_PROVIDER || (process.env.SMTP_USER ? "smtp" : "mock"), // Auto-detect if SMTP credentials exist
   smtp: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: parseInt(process.env.SMTP_PORT || "587", 10),
     secure: process.env.SMTP_SECURE === "true",
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      user: process.env.SMTP_USER || process.env.EMAIL_USER, // Support both var names
+      pass: process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD,
     },
   },
   sendgrid: {
     apiKey: process.env.SENDGRID_API_KEY,
   },
-  from: process.env.EMAIL_FROM || "noreply@synerxus.com",
+  from: process.env.EMAIL_FROM || "hello@synerxus.com",
 };
 
 // Create email transporter based on configuration
@@ -744,6 +744,161 @@ async function sendImpactApprovalNotification(
   }
 }
 
+// ==================== Volunteer Invitation Emails ====================
+
+interface InvitationEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  organizationName: string;
+  role: string;
+  projectName?: string;
+  message?: string;
+  invitationLink: string;
+}
+
+// Generate HTML template for volunteer invitation
+function generateInvitationEmailTemplate(data: InvitationEmailData): string {
+  const roleDisplay = data.role === 'volunteer' ? 'Volunteer' :
+                      data.role === 'project-lead' ? 'Project Lead' :
+                      data.role === 'coordinator' ? 'Coordinator' : data.role;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 40px 30px; border-radius: 12px 12px 0 0; text-align: center; }
+          .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+          .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 16px; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+          .invite-box { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 25px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #3b82f6; }
+          .invite-box h3 { margin: 0 0 10px 0; color: #1e40af; font-size: 18px; }
+          .invite-detail { display: flex; margin: 8px 0; font-size: 14px; }
+          .invite-label { color: #6b7280; min-width: 100px; }
+          .invite-value { color: #111827; font-weight: 500; }
+          .message-box { background: #fefce8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #eab308; }
+          .message-box p { margin: 0; font-style: italic; color: #713f12; }
+          .button { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 25px 0; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+          .button:hover { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+          .features { margin: 25px 0; }
+          .feature { display: flex; align-items: flex-start; margin: 12px 0; }
+          .feature-icon { width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; }
+          .feature-text { font-size: 14px; color: #4b5563; }
+          .footer { background: #f9fafb; padding: 25px; border-radius: 0 0 12px 12px; font-size: 12px; color: #6b7280; text-align: center; border: 1px solid #e5e7eb; border-top: none; }
+          .footer a { color: #3b82f6; text-decoration: none; }
+          .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="logo">Synerxus</div>
+            <h1>You're Invited!</h1>
+            <p>Join us in making a global impact</p>
+          </div>
+
+          <div class="content">
+            <p>Hi${data.recipientName ? ` ${data.recipientName}` : ''},</p>
+            <p><strong>${data.organizationName}</strong> has invited you to join their team on Synerxus as a <strong>${roleDisplay}</strong>.</p>
+
+            <div class="invite-box">
+              <h3>Invitation Details</h3>
+              <div class="invite-detail">
+                <span class="invite-label">Organization:</span>
+                <span class="invite-value">${data.organizationName}</span>
+              </div>
+              <div class="invite-detail">
+                <span class="invite-label">Role:</span>
+                <span class="invite-value">${roleDisplay}</span>
+              </div>
+              ${data.projectName ? `
+              <div class="invite-detail">
+                <span class="invite-label">Project:</span>
+                <span class="invite-value">${data.projectName}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            ${data.message ? `
+            <div class="message-box">
+              <p>"${data.message}"</p>
+            </div>
+            ` : ''}
+
+            <div class="features">
+              <div class="feature">
+                <span class="feature-icon">📊</span>
+                <span class="feature-text">Track your volunteer hours and measure your real-world impact</span>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">🌍</span>
+                <span class="feature-text">Contribute to UN Sustainable Development Goals</span>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">🤝</span>
+                <span class="feature-text">Connect with organizations making a difference globally</span>
+              </div>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="${data.invitationLink}" class="button">Accept Invitation</a>
+            </div>
+
+            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${data.invitationLink}" style="color: #3b82f6; word-break: break-all;">${data.invitationLink}</a>
+            </p>
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0 0 10px 0;"><strong>Synerxus</strong> - Connect. Manage. Impact Globally.</p>
+            <p style="margin: 0;">This invitation was sent to ${data.recipientEmail}</p>
+            <p style="margin: 10px 0 0 0;">
+              <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}">Visit Synerxus</a> |
+              <a href="mailto:hello@synerxus.com">Contact Support</a>
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+// Send volunteer invitation email
+async function sendInvitationEmail(data: InvitationEmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const htmlContent = generateInvitationEmailTemplate(data);
+    const roleDisplay = data.role === 'volunteer' ? 'Volunteer' :
+                        data.role === 'project-lead' ? 'Project Lead' :
+                        data.role === 'coordinator' ? 'Coordinator' : data.role;
+
+    const mailOptions = {
+      from: `"Synerxus" <${process.env.EMAIL_FROM || 'hello@synerxus.com'}>`,
+      to: data.recipientEmail,
+      subject: `${data.organizationName} invited you to join as ${roleDisplay} on Synerxus`,
+      html: htmlContent,
+      text: `Hi${data.recipientName ? ` ${data.recipientName}` : ''},
+
+${data.organizationName} has invited you to join their team on Synerxus as a ${roleDisplay}.
+
+${data.projectName ? `Project: ${data.projectName}\n` : ''}${data.message ? `Message: "${data.message}"\n` : ''}
+Accept your invitation here: ${data.invitationLink}
+
+Synerxus - Connect. Manage. Impact Globally.
+`,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    logger.info(`[Invitation] Email sent to ${data.recipientEmail} for ${data.organizationName}`);
+    return { success: true, messageId: result.messageId };
+  } catch (error: any) {
+    logger.error(`[Invitation] Failed to send email to ${data.recipientEmail}:`, error);
+    return { success: false, error: error.message || 'Failed to send email' };
+  }
+}
+
 export {
   sendWeeklyDigest,
   sendWeeklyDigestsToAll,
@@ -753,4 +908,6 @@ export {
   sendApprovalNotification,
   sendActivityApprovalNotification,
   sendImpactApprovalNotification,
+  sendInvitationEmail,
+  type InvitationEmailData,
 };

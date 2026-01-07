@@ -263,7 +263,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
     { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
     // Admin dashboard - only shown for admin users
-    ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin-dashboard", isAdmin: true }] : []),
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin/dashboard", isAdmin: true }] : []),
   ];
 
   return (

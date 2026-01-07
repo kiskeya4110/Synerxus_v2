@@ -43,7 +43,7 @@ import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProje
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
 import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
-import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "./email-digest-service";
+import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest, sendInvitationEmail } from "./email-digest-service";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
@@ -8473,36 +8473,100 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   // POST /api/invitations/send - Send single volunteer invitation
   app.post("/api/invitations/send", async (req, res) => {
     try {
-      const { email, role, projectId, message, organizationId } = req.body;
+      const { email, role, projectId, message, organizationId, recipientName } = req.body;
 
       if (!email || !email.includes("@")) {
         return res.status(400).json({ error: "Valid email address is required" });
       }
 
-      // In a real implementation, this would:
-      // 1. Check if user with email already exists
-      // 2. Create invitation record in database
-      // 3. Send email via email service (SendGrid, AWS SES, etc.)
-      // 4. Return invitation details
+      if (!organizationId) {
+        return res.status(400).json({ error: "Organization ID is required" });
+      }
 
-      // For now, return success response
-      console.log(`Invitation sent to ${email} as ${role} for organization ${organizationId}`);
+      // Get organization details
+      const organization = await storage.getOrganization(organizationId);
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Get project name if projectId is provided
+      let projectName: string | undefined;
+      if (projectId) {
+        const project = await storage.getProject(projectId);
+        projectName = project?.name;
+      }
+
+      // Generate invitation link - directs to signup page with pre-filled data
+      const baseUrl = process.env.APP_URL || 'https://synerxus.replit.dev';
+      const invitationParams = new URLSearchParams({
+        email: email,
+        role: role || 'volunteer',
+        org: organizationId.toString(),
+        invited: 'true'
+      });
+      const invitationLink = `${baseUrl}/signup?${invitationParams.toString()}`;
+
+      // Send the invitation email
+      const emailResult = await sendInvitationEmail({
+        recipientEmail: email,
+        recipientName: recipientName,
+        organizationName: organization.name,
+        role: role || 'volunteer',
+        projectName: projectName,
+        message: message,
+        invitationLink: invitationLink
+      });
+
+      if (!emailResult.success) {
+        console.error(`Failed to send invitation email to ${email}:`, emailResult.error);
+        return res.status(500).json({
+          error: "Failed to send invitation email",
+          details: emailResult.error
+        });
+      }
+
+      console.log(`Invitation email sent to ${email} as ${role} for organization ${organization.name}`);
 
       res.status(200).json({
         success: true,
         message: `Invitation sent to ${email}`,
         invitation: {
           email,
-          role,
+          role: role || 'volunteer',
           projectId,
+          projectName,
           organizationId,
+          organizationName: organization.name,
           sentAt: new Date().toISOString(),
-          status: "pending"
+          status: "pending",
+          messageId: emailResult.messageId
         }
       });
     } catch (error) {
       console.error("Error sending invitation:", error);
       res.status(500).json({ error: "Failed to send invitation" });
+    }
+  });
+
+  // GET /api/email/status - Check email configuration status (admin only)
+  app.get("/api/email/status", async (req, res) => {
+    try {
+      const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+      const smtpPass = process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD;
+      const emailFrom = process.env.EMAIL_FROM;
+
+      res.json({
+        configured: !!(smtpUser && smtpPass),
+        smtpUser: smtpUser ? `${smtpUser.substring(0, 3)}***` : null,
+        smtpPasswordSet: !!smtpPass,
+        emailFrom: emailFrom || 'hello@synerxus.com (default)',
+        provider: smtpUser ? 'smtp' : 'mock',
+        message: smtpUser && smtpPass
+          ? 'Email is configured and ready to send'
+          : 'Email credentials not configured - using mock mode (no emails sent)'
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check email status" });
     }
   });
 
@@ -8541,6 +8605,188 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // ==================== ADMIN DASHBOARD ROUTES ====================
+
+  // GET /api/admin/stats/enhanced - Get enhanced platform statistics with trends
+  app.get("/api/admin/stats/enhanced", async (req, res) => {
+    try {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+      // Current totals
+      const [
+        userCount,
+        volunteerCount,
+        organizationCount,
+        projectCount,
+        opportunityCount,
+        applicationCount,
+        activityLogCount,
+        totalHoursResult
+      ] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(users),
+        db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.userType, 'volunteer')),
+        db.select({ count: sql<number>`count(*)` }).from(organizations),
+        db.select({ count: sql<number>`count(*)` }).from(projects),
+        db.select({ count: sql<number>`count(*)` }).from(opportunities),
+        db.select({ count: sql<number>`count(*)` }).from(applications),
+        db.select({ count: sql<number>`count(*)` }).from(volunteerActivities),
+        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities)
+      ]);
+
+      // This week vs last week comparisons
+      const [
+        usersThisWeek,
+        usersLastWeek,
+        orgsThisWeek,
+        orgsLastWeek,
+        projectsThisWeek,
+        projectsLastWeek,
+        applicationsThisWeek,
+        applicationsLastWeek,
+        hoursThisWeek,
+        hoursLastWeek
+      ] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(users).where(sql`${users.createdAt} >= ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(users).where(sql`${users.createdAt} >= ${fourteenDaysAgo} AND ${users.createdAt} < ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(organizations).where(sql`${organizations.createdAt} >= ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(organizations).where(sql`${organizations.createdAt} >= ${fourteenDaysAgo} AND ${organizations.createdAt} < ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(projects).where(sql`${projects.createdAt} >= ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(projects).where(sql`${projects.createdAt} >= ${fourteenDaysAgo} AND ${projects.createdAt} < ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(applications).where(sql`${applications.appliedAt} >= ${sevenDaysAgo}`),
+        db.select({ count: sql<number>`count(*)` }).from(applications).where(sql`${applications.appliedAt} >= ${fourteenDaysAgo} AND ${applications.appliedAt} < ${sevenDaysAgo}`),
+        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities).where(sql`${volunteerActivities.createdAt} >= ${sevenDaysAgo}`),
+        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities).where(sql`${volunteerActivities.createdAt} >= ${fourteenDaysAgo} AND ${volunteerActivities.createdAt} < ${sevenDaysAgo}`)
+      ]);
+
+      // Monthly trend data (last 6 months)
+      const monthlyTrends = await db.select({
+        month: sql<string>`TO_CHAR(${users.createdAt}, 'YYYY-MM')`,
+        count: sql<number>`count(*)`
+      })
+        .from(users)
+        .where(sql`${users.createdAt} >= ${new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)}`)
+        .groupBy(sql`TO_CHAR(${users.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`TO_CHAR(${users.createdAt}, 'YYYY-MM')`);
+
+      // Activity trend data (last 30 days, grouped by day)
+      const activityTrends = await db.select({
+        day: sql<string>`TO_CHAR(${volunteerActivities.createdAt}, 'YYYY-MM-DD')`,
+        count: sql<number>`count(*)`,
+        hours: sql<number>`COALESCE(SUM(hours), 0)`
+      })
+        .from(volunteerActivities)
+        .where(sql`${volunteerActivities.createdAt} >= ${thirtyDaysAgo}`)
+        .groupBy(sql`TO_CHAR(${volunteerActivities.createdAt}, 'YYYY-MM-DD')`)
+        .orderBy(sql`TO_CHAR(${volunteerActivities.createdAt}, 'YYYY-MM-DD')`);
+
+      // Pending items (action items)
+      const [
+        pendingOrgs,
+        pendingApplications,
+        unverifiedHours
+      ] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(organizations).where(eq(organizations.approvalStatus, 'pending')),
+        db.select({ count: sql<number>`count(*)` }).from(applications).where(eq(applications.status, 'pending')),
+        db.select({ count: sql<number>`count(*)` }).from(volunteerActivities).where(eq(volunteerActivities.verificationStatus, 'pending'))
+      ]);
+
+      // Active projects and verified hours
+      const [
+        activeProjects,
+        verifiedHoursResult
+      ] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(projects).where(eq(projects.status, 'active')),
+        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities).where(eq(volunteerActivities.verificationStatus, 'verified'))
+      ]);
+
+      // Calculate growth rates
+      const calculateGrowth = (current: number, previous: number): number => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return Math.round(((current - previous) / previous) * 100);
+      };
+
+      const thisWeekUsers = Number(usersThisWeek[0]?.count || 0);
+      const lastWeekUsers = Number(usersLastWeek[0]?.count || 0);
+      const thisWeekOrgs = Number(orgsThisWeek[0]?.count || 0);
+      const lastWeekOrgs = Number(orgsLastWeek[0]?.count || 0);
+      const thisWeekProjects = Number(projectsThisWeek[0]?.count || 0);
+      const lastWeekProjects = Number(projectsLastWeek[0]?.count || 0);
+      const thisWeekApps = Number(applicationsThisWeek[0]?.count || 0);
+      const lastWeekApps = Number(applicationsLastWeek[0]?.count || 0);
+      const thisWeekHrs = Number(hoursThisWeek[0]?.total || 0);
+      const lastWeekHrs = Number(hoursLastWeek[0]?.total || 0);
+
+      res.json({
+        // Current totals
+        totals: {
+          users: Number(userCount[0]?.count || 0),
+          volunteers: Number(volunteerCount[0]?.count || 0),
+          organizations: Number(organizationCount[0]?.count || 0),
+          projects: Number(projectCount[0]?.count || 0),
+          activeProjects: Number(activeProjects[0]?.count || 0),
+          opportunities: Number(opportunityCount[0]?.count || 0),
+          applications: Number(applicationCount[0]?.count || 0),
+          activities: Number(activityLogCount[0]?.count || 0),
+          totalHours: Number(totalHoursResult[0]?.total || 0),
+          verifiedHours: Number(verifiedHoursResult[0]?.total || 0)
+        },
+        // This week stats
+        thisWeek: {
+          users: thisWeekUsers,
+          organizations: thisWeekOrgs,
+          projects: thisWeekProjects,
+          applications: thisWeekApps,
+          hours: thisWeekHrs
+        },
+        // Last week stats (for comparison)
+        lastWeek: {
+          users: lastWeekUsers,
+          organizations: lastWeekOrgs,
+          projects: lastWeekProjects,
+          applications: lastWeekApps,
+          hours: lastWeekHrs
+        },
+        // Growth rates (week-over-week percentage)
+        growth: {
+          users: calculateGrowth(thisWeekUsers, lastWeekUsers),
+          organizations: calculateGrowth(thisWeekOrgs, lastWeekOrgs),
+          projects: calculateGrowth(thisWeekProjects, lastWeekProjects),
+          applications: calculateGrowth(thisWeekApps, lastWeekApps),
+          hours: calculateGrowth(thisWeekHrs, lastWeekHrs)
+        },
+        // Action items requiring attention
+        actionItems: {
+          pendingApprovals: Number(pendingOrgs[0]?.count || 0),
+          pendingApplications: Number(pendingApplications[0]?.count || 0),
+          unverifiedHours: Number(unverifiedHours[0]?.count || 0)
+        },
+        // Trend data for sparklines
+        trends: {
+          userSignups: monthlyTrends.map(t => ({ month: t.month, count: Number(t.count) })),
+          activityByDay: activityTrends.map(t => ({ day: t.day, count: Number(t.count), hours: Number(t.hours) }))
+        },
+        // Engagement metrics
+        engagement: {
+          applicationRate: Number(userCount[0]?.count || 0) > 0
+            ? Math.round((Number(applicationCount[0]?.count || 0) / Number(volunteerCount[0]?.count || 1)) * 100)
+            : 0,
+          avgHoursPerVolunteer: Number(volunteerCount[0]?.count || 0) > 0
+            ? Math.round((Number(totalHoursResult[0]?.total || 0) / Number(volunteerCount[0]?.count || 1)) * 10) / 10
+            : 0,
+          verificationRate: Number(activityLogCount[0]?.count || 0) > 0
+            ? Math.round((Number(verifiedHoursResult[0]?.total || 0) / Number(totalHoursResult[0]?.total || 1)) * 100)
+            : 0
+        },
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching enhanced admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch enhanced admin stats" });
+    }
+  });
 
   // GET /api/admin/stats - Get platform-wide statistics
   app.get("/api/admin/stats", async (req, res) => {

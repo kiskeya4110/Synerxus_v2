@@ -4,7 +4,7 @@ import {
   Menu, X, Home, Settings, MessageCircle, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
   Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy,
-  Target, Heart, FileText, Users, FolderOpen, RefreshCw
+  Target, Heart, FileText, Users, FolderOpen, RefreshCw, Shield
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -262,6 +262,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     { icon: BookOpen, label: "Stories", path: "/stories" },
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
     { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
+    // Admin dashboard - only shown for admin users
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin-dashboard", isAdmin: true }] : []),
   ];
 
   return (
@@ -371,43 +373,54 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
             {/* Menu Items - Compact */}
             <div className="flex-1 overflow-y-auto py-1.5">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    if (item.action) {
-                      item.action();
-                    } else if (item.path) {
-                      setMenuOpen(false);
-                      navigate(item.path);
-                    }
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left ${
-                    item.highlight
-                      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
-                  data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    item.highlight
-                      ? 'bg-emerald-100 dark:bg-emerald-900/40'
-                      : 'bg-slate-100 dark:bg-slate-800'
-                  }`}>
-                    <item.icon className={`w-4 h-4 ${
-                      item.highlight
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-600 dark:text-slate-400'
+              {menuItems.map((item, index) => {
+                const isAdminItem = (item as any).isAdmin;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (item.action) {
+                        item.action();
+                      } else if (item.path) {
+                        setMenuOpen(false);
+                        navigate(item.path);
+                      }
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left ${
+                      isAdminItem
+                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+                        : item.highlight
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                    data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isAdminItem
+                        ? 'bg-purple-100 dark:bg-purple-900/40'
+                        : item.highlight
+                        ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                        : 'bg-slate-100 dark:bg-slate-800'
+                    }`}>
+                      <item.icon className={`w-4 h-4 ${
+                        isAdminItem
+                          ? 'text-purple-600 dark:text-purple-400'
+                          : item.highlight
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-600 dark:text-slate-400'
+                      }`} />
+                    </div>
+                    <span className="font-medium text-sm flex-1">{item.label}</span>
+                    <ChevronRight className={`w-4 h-4 ${
+                      isAdminItem
+                        ? 'text-purple-400'
+                        : item.highlight
+                        ? 'text-emerald-400'
+                        : 'text-slate-400 dark:text-slate-500'
                     }`} />
-                  </div>
-                  <span className="font-medium text-sm flex-1">{item.label}</span>
-                  <ChevronRight className={`w-4 h-4 ${
-                    item.highlight
-                      ? 'text-emerald-400'
-                      : 'text-slate-400 dark:text-slate-500'
-                  }`} />
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Logout Button - Compact */}

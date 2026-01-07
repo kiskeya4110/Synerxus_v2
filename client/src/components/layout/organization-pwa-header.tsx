@@ -5,13 +5,13 @@ import {
   FolderOpen, Users, Target, BarChart3,
   MessageSquare, Home, Bell, Trophy, X,
   TrendingUp, Award, Lightbulb, Flame, Settings,
-  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight
+  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, Shield
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
-import type { Notification } from "@shared/schema";
+import type { Notification, User as UserType } from "@shared/schema";
 
 interface OrganizationPWAHeaderProps {
   organizationName?: string;
@@ -38,6 +38,17 @@ export default function OrganizationPWAHeader({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const queryClient = useQueryClient();
   const userId = localStorage.getItem('currentUserId');
+
+  // Fetch current user to check admin status
+  const { data: currentUser } = useQuery<UserType>({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId
+  });
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<Notification[]>({
@@ -230,6 +241,13 @@ export default function OrganizationPWAHeader({
         { icon: Settings, label: "Profile & Settings", desc: "Update organization profile", action: () => navigate('/organization-profile-settings') },
       ]
     },
+    // Admin section - only shown for admin users
+    ...(currentUser?.isAdmin ? [{
+      title: "ADMIN",
+      items: [
+        { icon: Shield, label: "Admin Dashboard", desc: "Platform management", action: () => navigate('/admin-dashboard'), isAdmin: true },
+      ]
+    }] : []),
   ];
 
   return (
@@ -354,28 +372,37 @@ export default function OrganizationPWAHeader({
                     {section.title}
                   </p>
                   {/* Section Items */}
-                  {section.items.map((item, itemIndex) => (
-                    <button
-                      key={itemIndex}
-                      onClick={() => { setShowMenu(false); item.action(); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 active:bg-slate-100"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-slate-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-800">{item.label}</span>
-                          {(item as any).hot && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-bold bg-orange-500 text-white rounded uppercase">
-                              Hot
-                            </span>
-                          )}
+                  {section.items.map((item, itemIndex) => {
+                    const isAdminItem = (item as any).isAdmin;
+                    return (
+                      <button
+                        key={itemIndex}
+                        onClick={() => { setShowMenu(false); item.action(); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                          isAdminItem
+                            ? 'hover:bg-purple-50 active:bg-purple-100'
+                            : 'hover:bg-slate-50 active:bg-slate-100'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isAdminItem ? 'bg-purple-100' : 'bg-slate-100'
+                        }`}>
+                          <item.icon className={`w-5 h-5 ${isAdminItem ? 'text-purple-600' : 'text-slate-600'}`} />
                         </div>
-                        <p className="text-xs text-slate-500 truncate">{item.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-semibold ${isAdminItem ? 'text-purple-700' : 'text-slate-800'}`}>{item.label}</span>
+                            {(item as any).hot && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-orange-500 text-white rounded uppercase">
+                                Hot
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs truncate ${isAdminItem ? 'text-purple-500' : 'text-slate-500'}`}>{item.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
 

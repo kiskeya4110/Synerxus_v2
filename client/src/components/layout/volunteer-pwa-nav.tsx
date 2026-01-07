@@ -1,16 +1,30 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Home, Briefcase, Sparkles, MoreHorizontal, X, BarChart3, MessageCircle, BookOpen, ClipboardList, User, Settings, Award } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Home, Briefcase, Sparkles, MoreHorizontal, X, BarChart3, MessageCircle, BookOpen, ClipboardList, User, Settings, Award, Shield } from "lucide-react";
 
 interface VolunteerPWANavProps {
   userId?: string;
   activeTab?: 'home' | 'projects' | 'potentials' | 'impacts' | 'messages' | 'more';
 }
 
-export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavProps) {
+export default function VolunteerPWANav({ userId: propUserId, activeTab }: VolunteerPWANavProps) {
   const [location, navigate] = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [showMore, setShowMore] = useState(false);
+
+  const userId = propUserId || localStorage.getItem('currentUserId');
+
+  // Fetch current user to check admin status
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId
+  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -74,6 +88,8 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
     { icon: BookOpen, label: 'Stories', path: '/stories' },
     { icon: Award, label: 'Achievements', path: '/achievements' },
     { icon: User, label: 'Profile & Settings', path: '/volunteer-profile-settings' },
+    // Admin dashboard - only shown for admin users (filtered in render)
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin-dashboard', isAdmin: true }] : []),
   ];
 
   return (
@@ -138,12 +154,18 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
                     setShowMore(false);
                     navigate(item.path);
                   }}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors ${
+                    (item as any).isAdmin
+                      ? 'bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
+                      : 'bg-slate-50 hover:bg-slate-100'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-slate-600" />
+                  <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${
+                    (item as any).isAdmin ? 'bg-purple-100' : 'bg-white'
+                  }`}>
+                    <item.icon className={`w-6 h-6 ${(item as any).isAdmin ? 'text-purple-600' : 'text-slate-600'}`} />
                   </div>
-                  <span className="text-xs font-medium text-slate-700 text-center">{item.label}</span>
+                  <span className={`text-xs font-medium text-center ${(item as any).isAdmin ? 'text-purple-700' : 'text-slate-700'}`}>{item.label}</span>
                 </button>
               ))}
             </div>

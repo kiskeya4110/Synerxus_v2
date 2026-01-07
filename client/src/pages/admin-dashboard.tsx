@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Users, Building2, FolderOpen, Briefcase, Activity, Clock,
-  Server, Database, Cpu, HardDrive, Search, Filter, RefreshCw,
-  CheckCircle, XCircle, AlertCircle, TrendingUp, UserPlus, Shield, MapPin
+  Server, Database, Cpu, HardDrive, Search, RefreshCw,
+  CheckCircle, XCircle, AlertCircle, TrendingUp, TrendingDown,
+  UserPlus, Shield, MapPin, Bell, ArrowUpRight, ArrowDownRight,
+  Zap, Target, BarChart3, PieChart, FileCheck, UserCheck,
+  ClipboardList, AlertTriangle, ChevronRight, Eye
 } from "lucide-react";
 
 // Leaflet imports for map
@@ -24,6 +27,7 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
 });
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +40,56 @@ import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow, format } from "date-fns";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
-interface AdminStats {
-  totalUsers: number;
-  totalVolunteers: number;
-  totalOrganizations: number;
-  totalProjects: number;
-  totalOpportunities: number;
-  totalApplications: number;
-  totalActivityLogs: number;
-  recentSignups: number;
-  pendingApprovals: number;
+// Types
+interface EnhancedStats {
+  totals: {
+    users: number;
+    volunteers: number;
+    organizations: number;
+    projects: number;
+    activeProjects: number;
+    opportunities: number;
+    applications: number;
+    activities: number;
+    totalHours: number;
+    verifiedHours: number;
+  };
+  thisWeek: {
+    users: number;
+    organizations: number;
+    projects: number;
+    applications: number;
+    hours: number;
+  };
+  lastWeek: {
+    users: number;
+    organizations: number;
+    projects: number;
+    applications: number;
+    hours: number;
+  };
+  growth: {
+    users: number;
+    organizations: number;
+    projects: number;
+    applications: number;
+    hours: number;
+  };
+  actionItems: {
+    pendingApprovals: number;
+    pendingApplications: number;
+    unverifiedHours: number;
+  };
+  trends: {
+    userSignups: { month: string; count: number }[];
+    activityByDay: { day: string; count: number; hours: number }[];
+  };
+  engagement: {
+    applicationRate: number;
+    avgHoursPerVolunteer: number;
+    verificationRate: number;
+  };
+  updatedAt: string;
 }
 
 interface AdminUser {
@@ -130,36 +174,218 @@ interface LocationsData {
   };
 }
 
+// Mini Sparkline Component
+function Sparkline({ data, color = "#3b82f6", height = 32 }: { data: number[]; color?: string; height?: number }) {
+  if (!data || data.length === 0) return null;
+
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+  const width = 80;
+  const points = data.map((value, index) => {
+    const x = (index / (data.length - 1 || 1)) * width;
+    const y = height - ((value - min) / range) * (height - 4) - 2;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
+}
+
+// Trend Indicator Component
+function TrendIndicator({ value, suffix = "%" }: { value: number; suffix?: string }) {
+  if (value === 0) {
+    return <span className="text-xs text-gray-500">No change</span>;
+  }
+
+  const isPositive = value > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+      {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      {Math.abs(value)}{suffix}
+    </span>
+  );
+}
+
+// Hero KPI Card Component
+function HeroKpiCard({
+  title,
+  value,
+  subtitle,
+  trend,
+  trendLabel,
+  icon: Icon,
+  color,
+  sparklineData,
+  onClick
+}: {
+  title: string;
+  value: number | string;
+  subtitle?: string;
+  trend?: number;
+  trendLabel?: string;
+  icon: any;
+  color: string;
+  sparklineData?: number[];
+  onClick?: () => void;
+}) {
+  const colorClasses: Record<string, { bg: string; text: string; light: string }> = {
+    blue: { bg: "bg-blue-500", text: "text-blue-600", light: "bg-blue-50" },
+    green: { bg: "bg-green-500", text: "text-green-600", light: "bg-green-50" },
+    purple: { bg: "bg-purple-500", text: "text-purple-600", light: "bg-purple-50" },
+    amber: { bg: "bg-amber-500", text: "text-amber-600", light: "bg-amber-50" },
+    red: { bg: "bg-red-500", text: "text-red-600", light: "bg-red-50" },
+    indigo: { bg: "bg-indigo-500", text: "text-indigo-600", light: "bg-indigo-50" },
+    teal: { bg: "bg-teal-500", text: "text-teal-600", light: "bg-teal-50" },
+  };
+
+  const colors = colorClasses[color] || colorClasses.blue;
+
+  return (
+    <Card
+      className={`relative overflow-hidden transition-all hover:shadow-lg ${onClick ? 'cursor-pointer hover:border-gray-300' : ''}`}
+      onClick={onClick}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
+            <p className="text-2xl font-bold mt-1">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+            {trend !== undefined && (
+              <div className="mt-2 flex items-center gap-2">
+                <TrendIndicator value={trend} />
+                {trendLabel && <span className="text-xs text-gray-400">{trendLabel}</span>}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className={`p-2 rounded-lg ${colors.light}`}>
+              <Icon className={`h-5 w-5 ${colors.text}`} />
+            </div>
+            {sparklineData && sparklineData.length > 1 && (
+              <Sparkline data={sparklineData} color={colors.text.replace('text-', '').includes('blue') ? '#3b82f6' : colors.text.includes('green') ? '#22c55e' : '#8b5cf6'} />
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Action Item Card Component
+function ActionItemCard({
+  title,
+  count,
+  description,
+  icon: Icon,
+  color,
+  onClick
+}: {
+  title: string;
+  count: number;
+  description: string;
+  icon: any;
+  color: string;
+  onClick?: () => void;
+}) {
+  if (count === 0) return null;
+
+  const colorClasses: Record<string, string> = {
+    red: "border-l-red-500 bg-red-50",
+    amber: "border-l-amber-500 bg-amber-50",
+    blue: "border-l-blue-500 bg-blue-50",
+  };
+
+  return (
+    <div
+      className={`border-l-4 rounded-r-lg p-3 ${colorClasses[color] || colorClasses.amber} cursor-pointer hover:shadow-md transition-shadow`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Icon className={`h-5 w-5 ${color === 'red' ? 'text-red-600' : color === 'amber' ? 'text-amber-600' : 'text-blue-600'}`} />
+          <div>
+            <p className="font-medium text-sm">{title}</p>
+            <p className="text-xs text-gray-600">{description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="font-bold">{count}</Badge>
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Engagement Metric Card
+function EngagementCard({
+  title,
+  value,
+  max,
+  suffix,
+  icon: Icon,
+  color
+}: {
+  title: string;
+  value: number;
+  max?: number;
+  suffix?: string;
+  icon: any;
+  color: string;
+}) {
+  const colorClasses: Record<string, { bar: string; text: string }> = {
+    blue: { bar: "bg-blue-500", text: "text-blue-600" },
+    green: { bar: "bg-green-500", text: "text-green-600" },
+    purple: { bar: "bg-purple-500", text: "text-purple-600" },
+  };
+  const colors = colorClasses[color] || colorClasses.blue;
+
+  return (
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className={`h-4 w-4 ${colors.text}`} />
+        <span className="text-sm text-gray-600">{title}</span>
+      </div>
+      <p className="text-xl font-bold">{value}{suffix}</p>
+      {max !== undefined && (
+        <Progress value={(value / max) * 100} className={`h-1.5 mt-2 ${colors.bar}`} />
+      )}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [userTypeFilter, setUserTypeFilter] = useState("all");
   const [orgStatusFilter, setOrgStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("overview");
+  const queryClient = useQueryClient();
 
   const userId = localStorage.getItem("currentUserId");
 
-  // Check if user is admin (basic check - should be enhanced with proper auth)
-  const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me", userId],
+  // Fetch enhanced stats
+  const { data: enhancedStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<EnhancedStats>({
+    queryKey: ["/api/admin/stats/enhanced"],
     queryFn: async () => {
-      if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
-    },
-    enabled: !!userId
-  });
-
-  // Fetch admin stats
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<AdminStats>({
-    queryKey: ["/api/admin/stats"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/stats");
+      const response = await fetch("/api/admin/stats/enhanced");
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
-    }
+    },
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   // Fetch users with pagination
@@ -206,7 +432,7 @@ export default function AdminDashboard() {
       if (!response.ok) throw new Error("Failed to fetch system info");
       return response.json();
     },
-    refetchInterval: 10000 // Refresh every 10 seconds
+    refetchInterval: 10000
   });
 
   // Fetch locations for map
@@ -219,7 +445,6 @@ export default function AdminDashboard() {
     }
   });
 
-  // Map filter state
   const [mapFilter, setMapFilter] = useState<'all' | 'organizations' | 'projects' | 'volunteers'>('all');
 
   const handleRefreshAll = () => {
@@ -230,6 +455,22 @@ export default function AdminDashboard() {
     refetchOrgs();
     refetchSystem();
   };
+
+  // Prepare sparkline data from trends
+  const userSparklineData = useMemo(() => {
+    return enhancedStats?.trends?.userSignups?.map(t => t.count) || [];
+  }, [enhancedStats]);
+
+  const activitySparklineData = useMemo(() => {
+    return enhancedStats?.trends?.activityByDay?.slice(-14).map(t => t.count) || [];
+  }, [enhancedStats]);
+
+  const hoursSparklineData = useMemo(() => {
+    return enhancedStats?.trends?.activityByDay?.slice(-14).map(t => t.hours) || [];
+  }, [enhancedStats]);
+
+  // Total action items (only org approvals - admin's responsibility)
+  const totalActionItems = enhancedStats?.actionItems?.pendingApprovals || 0;
 
   const getUserTypeBadge = (userType: string | null, clickable = true) => {
     const handleClick = clickable ? (type: string) => {
@@ -313,7 +554,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -323,10 +564,28 @@ export default function AdminDashboard() {
                   <Shield className="h-5 w-5" />
                   Admin Dashboard
                 </h1>
-                <p className="text-sm text-slate-300">Platform Management & Monitoring</p>
+                <p className="text-sm text-slate-300">Platform Management & Analytics</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Pending Org Approvals Indicator */}
+              {totalActionItems > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setOrgStatusFilter("pending"); setActiveTab("organizations"); }}
+                  className="border-amber-500 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  {totalActionItems} Org{totalActionItems !== 1 ? 's' : ''} Pending Approval
+                </Button>
+              )}
+              {/* Last Updated */}
+              {enhancedStats?.updatedAt && (
+                <span className="text-xs text-slate-400 hidden md:block">
+                  Updated {formatDistanceToNow(new Date(enhancedStats.updatedAt), { addSuffix: true })}
+                </span>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -334,7 +593,7 @@ export default function AdminDashboard() {
                 className="border-slate-600 text-slate-900 hover:bg-slate-700 hover:text-white"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh All
+                Refresh
               </Button>
               <Button
                 variant="ghost"
@@ -350,97 +609,13 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Overview - Clickable cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow hover:border-blue-300"
-            onClick={() => setActiveTab("users")}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
-                  <p className="text-xs text-gray-500">Total Users</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow hover:border-green-300"
-            onClick={() => setActiveTab("organizations")}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Building2 className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats?.totalOrganizations || 0}</p>
-                  <p className="text-xs text-gray-500">Organizations</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow hover:border-purple-300"
-            onClick={() => setActiveTab("system")}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FolderOpen className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats?.totalProjects || 0}</p>
-                  <p className="text-xs text-gray-500">Projects</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow hover:border-amber-300"
-            onClick={() => { setActiveTab("users"); setUserTypeFilter("all"); }}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <UserPlus className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats?.recentSignups || 0}</p>
-                  <p className="text-xs text-gray-500">New (7 days)</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow hover:border-red-300"
-            onClick={() => { setActiveTab("organizations"); setOrgStatusFilter("pending"); }}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats?.pendingApprovals || 0}</p>
-                  <p className="text-xs text-gray-500">Pending</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-white shadow-sm">
+            <TabsTrigger value="overview" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -459,9 +634,246 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="locations" className="gap-2">
               <MapPin className="h-4 w-4" />
-              Locations
+              Map
             </TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab - Main Dashboard */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Action Items Section - Organization Approvals Only */}
+            {(enhancedStats?.actionItems?.pendingApprovals || 0) > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Action Required
+                </h2>
+                <div className="max-w-md">
+                  <ActionItemCard
+                    title="Pending Org Approvals"
+                    count={enhancedStats?.actionItems?.pendingApprovals || 0}
+                    description="New organizations waiting for review"
+                    icon={Building2}
+                    color="red"
+                    onClick={() => { setOrgStatusFilter("pending"); setActiveTab("organizations"); }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Hero KPIs - Primary Metrics */}
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-500" />
+                Key Performance Indicators
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <HeroKpiCard
+                  title="Total Users"
+                  value={enhancedStats?.totals?.users || 0}
+                  subtitle={`${enhancedStats?.totals?.volunteers || 0} volunteers`}
+                  trend={enhancedStats?.growth?.users}
+                  trendLabel="vs last week"
+                  icon={Users}
+                  color="blue"
+                  sparklineData={userSparklineData}
+                  onClick={() => setActiveTab("users")}
+                />
+                <HeroKpiCard
+                  title="Organizations"
+                  value={enhancedStats?.totals?.organizations || 0}
+                  subtitle={`${enhancedStats?.thisWeek?.organizations || 0} this week`}
+                  trend={enhancedStats?.growth?.organizations}
+                  trendLabel="vs last week"
+                  icon={Building2}
+                  color="green"
+                  onClick={() => setActiveTab("organizations")}
+                />
+                <HeroKpiCard
+                  title="Active Projects"
+                  value={enhancedStats?.totals?.activeProjects || 0}
+                  subtitle={`${enhancedStats?.totals?.projects || 0} total`}
+                  trend={enhancedStats?.growth?.projects}
+                  trendLabel="vs last week"
+                  icon={FolderOpen}
+                  color="purple"
+                />
+                <HeroKpiCard
+                  title="Total Hours"
+                  value={enhancedStats?.totals?.totalHours || 0}
+                  subtitle={`${enhancedStats?.totals?.verifiedHours || 0} verified`}
+                  trend={enhancedStats?.growth?.hours}
+                  trendLabel="vs last week"
+                  icon={Clock}
+                  color="amber"
+                  sparklineData={hoursSparklineData}
+                />
+              </div>
+            </div>
+
+            {/* Secondary Metrics Row */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <HeroKpiCard
+                title="Opportunities"
+                value={enhancedStats?.totals?.opportunities || 0}
+                icon={Briefcase}
+                color="indigo"
+              />
+              <HeroKpiCard
+                title="Applications"
+                value={enhancedStats?.totals?.applications || 0}
+                subtitle={`${enhancedStats?.thisWeek?.applications || 0} this week`}
+                trend={enhancedStats?.growth?.applications}
+                trendLabel="vs last week"
+                icon={ClipboardList}
+                color="teal"
+              />
+              <HeroKpiCard
+                title="Activity Logs"
+                value={enhancedStats?.totals?.activities || 0}
+                icon={Activity}
+                color="purple"
+                sparklineData={activitySparklineData}
+                onClick={() => setActiveTab("activity")}
+              />
+              <HeroKpiCard
+                title="New This Week"
+                value={enhancedStats?.thisWeek?.users || 0}
+                subtitle="user signups"
+                icon={UserPlus}
+                color="green"
+              />
+            </div>
+
+            {/* Engagement Metrics */}
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Zap className="h-5 w-5 text-purple-500" />
+                Engagement Metrics
+              </h2>
+              <div className="grid gap-4 md:grid-cols-3">
+                <EngagementCard
+                  title="Application Rate"
+                  value={enhancedStats?.engagement?.applicationRate || 0}
+                  max={100}
+                  suffix="%"
+                  icon={Target}
+                  color="blue"
+                />
+                <EngagementCard
+                  title="Avg Hours/Volunteer"
+                  value={enhancedStats?.engagement?.avgHoursPerVolunteer || 0}
+                  suffix=" hrs"
+                  icon={Clock}
+                  color="green"
+                />
+                <EngagementCard
+                  title="Verification Rate"
+                  value={enhancedStats?.engagement?.verificationRate || 0}
+                  max={100}
+                  suffix="%"
+                  icon={CheckCircle}
+                  color="purple"
+                />
+              </div>
+            </div>
+
+            {/* Quick Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Recent Activity Summary */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[200px]">
+                    {activityLoading ? (
+                      <div className="text-center py-4 text-gray-500">Loading...</div>
+                    ) : activity.slice(0, 5).length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">No recent activity</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {activity.slice(0, 5).map((log) => (
+                          <div key={log.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                            <div className="p-1.5 bg-blue-100 rounded-full">
+                              <Activity className="h-3 w-3 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{log.volunteerName}</p>
+                              <p className="text-xs text-gray-500 truncate">{log.projectName}</p>
+                            </div>
+                            <span className="text-xs text-gray-400 whitespace-nowrap">
+                              {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => setActiveTab("activity")}
+                  >
+                    View All Activity <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Pending Organizations */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Pending Organizations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[200px]">
+                    {orgsLoading ? (
+                      <div className="text-center py-4 text-gray-500">Loading...</div>
+                    ) : organizations.filter(o => o.approvalStatus === 'pending').length === 0 ? (
+                      <div className="text-center py-4 text-gray-500 flex flex-col items-center">
+                        <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
+                        <p>All caught up!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {organizations.filter(o => o.approvalStatus === 'pending').slice(0, 5).map((org) => (
+                          <div key={org.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={org.logo || undefined} />
+                              <AvatarFallback className="bg-green-100">
+                                <Building2 className="h-4 w-4 text-green-600" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{org.name}</p>
+                              <p className="text-xs text-gray-500">{org.projectCount} projects</p>
+                            </div>
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              Pending
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => { setOrgStatusFilter("pending"); setActiveTab("organizations"); }}
+                  >
+                    Review All <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users">
@@ -595,16 +1007,16 @@ export default function AdminDashboard() {
                               <p className="font-medium text-sm">
                                 {log.volunteerName}
                                 <span className="text-gray-500 font-normal">
-                                  {" "}logged {log.activityType}
+                                  {" "}logged activity
                                 </span>
                               </p>
                               <p className="text-xs text-gray-500">
-                                {log.projectName} • {log.hoursLogged ? `${log.hoursLogged}h` : "N/A"}
+                                {log.projectName} {log.hoursLogged ? `• ${log.hoursLogged}h` : ""}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {log.status && getStatusBadge(log.status)}
+                            {log.status && getStatusBadge(log.status, false)}
                             <span className="text-xs text-gray-400">
                               {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                             </span>
@@ -653,8 +1065,7 @@ export default function AdminDashboard() {
                       organizations.filter(org => orgStatusFilter === 'all' || org.approvalStatus === orgStatusFilter).map((org) => (
                         <div
                           key={org.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/organizations`)}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <Avatar className="h-12 w-12 rounded-lg">
@@ -679,23 +1090,24 @@ export default function AdminDashboard() {
                               <p className="text-lg font-bold text-green-600">{org.projectCount}</p>
                               <p className="text-xs text-gray-500">Projects</p>
                             </div>
-                            {getStatusBadge(org.approvalStatus)}
-                            {/* Approval buttons for pending organizations */}
+                            {getStatusBadge(org.approvalStatus, false)}
                             {org.approvalStatus === 'pending' && (
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
                                   variant="default"
                                   className="bg-green-600 hover:bg-green-700"
-                                  onClick={async () => {
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     try {
-                                      const response = await fetch(`/api/admin/organizations/${org.id}/approval`, {
+                                      const response = await fetch(`/api/organizations/${org.id}/approval`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ userId: parseInt(userId || '0'), status: 'approved' })
                                       });
                                       if (response.ok) {
                                         refetchOrgs();
+                                        refetchStats();
                                       }
                                     } catch (err) {
                                       console.error('Error approving organization:', err);
@@ -708,15 +1120,17 @@ export default function AdminDashboard() {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={async () => {
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     try {
-                                      const response = await fetch(`/api/admin/organizations/${org.id}/approval`, {
+                                      const response = await fetch(`/api/organizations/${org.id}/approval`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ userId: parseInt(userId || '0'), status: 'rejected' })
                                       });
                                       if (response.ok) {
                                         refetchOrgs();
+                                        refetchStats();
                                       }
                                     } catch (err) {
                                       console.error('Error rejecting organization:', err);
@@ -837,29 +1251,29 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Quick Stats
+                    Platform Stats
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                       <Briefcase className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                      <p className="text-2xl font-bold text-blue-600">{stats?.totalOpportunities || 0}</p>
+                      <p className="text-2xl font-bold text-blue-600">{enhancedStats?.totals?.opportunities || 0}</p>
                       <p className="text-sm text-gray-600">Opportunities</p>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                      <p className="text-2xl font-bold text-green-600">{stats?.totalApplications || 0}</p>
+                      <p className="text-2xl font-bold text-green-600">{enhancedStats?.totals?.applications || 0}</p>
                       <p className="text-sm text-gray-600">Applications</p>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg">
                       <Activity className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                      <p className="text-2xl font-bold text-purple-600">{stats?.totalActivityLogs || 0}</p>
+                      <p className="text-2xl font-bold text-purple-600">{enhancedStats?.totals?.activities || 0}</p>
                       <p className="text-sm text-gray-600">Activity Logs</p>
                     </div>
                     <div className="text-center p-4 bg-amber-50 rounded-lg">
                       <Users className="h-8 w-8 mx-auto mb-2 text-amber-600" />
-                      <p className="text-2xl font-bold text-amber-600">{stats?.totalVolunteers || 0}</p>
+                      <p className="text-2xl font-bold text-amber-600">{enhancedStats?.totals?.volunteers || 0}</p>
                       <p className="text-sm text-gray-600">Volunteers</p>
                     </div>
                   </div>
@@ -898,7 +1312,7 @@ export default function AdminDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Summary Stats - Clickable to filter map */}
+                {/* Summary Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div
                     className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
@@ -963,7 +1377,7 @@ export default function AdminDashboard() {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
                       />
 
-                      {/* Organization Markers (Blue) */}
+                      {/* Organization Markers */}
                       {(mapFilter === 'all' || mapFilter === 'organizations') && locationsData?.organizations?.map((loc) => {
                         const orgIcon = L.divIcon({
                           html: `<div style="
@@ -1003,7 +1417,7 @@ export default function AdminDashboard() {
                         );
                       })}
 
-                      {/* Project Markers (Green) */}
+                      {/* Project Markers */}
                       {(mapFilter === 'all' || mapFilter === 'projects') && locationsData?.projects?.map((loc) => {
                         const projectIcon = L.divIcon({
                           html: `<div style="
@@ -1043,7 +1457,7 @@ export default function AdminDashboard() {
                         );
                       })}
 
-                      {/* Volunteer Markers (Purple) */}
+                      {/* Volunteer Markers */}
                       {(mapFilter === 'all' || mapFilter === 'volunteers') && locationsData?.volunteers?.map((loc) => {
                         const volunteerIcon = L.divIcon({
                           html: `<div style="

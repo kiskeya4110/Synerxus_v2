@@ -1725,6 +1725,39 @@ export default function CSRDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Quick Navigation to Tabs */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Explore More</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => startTransition(() => setMobileTab('employees'))}
+                    className="flex items-center gap-2 p-3 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 active:scale-[0.98] transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-slate-900 text-xs font-semibold">Employee Engagement</div>
+                      <div className="text-slate-500 text-[9px]">Team activity & stats</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-emerald-400 ml-auto" />
+                  </button>
+                  <button
+                    onClick={() => startTransition(() => setMobileTab('sdgs'))}
+                    className="flex items-center gap-2 p-3 bg-white rounded-lg border border-teal-200 hover:bg-teal-50 hover:border-teal-300 active:scale-[0.98] transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-slate-900 text-xs font-semibold">SDG Alignment</div>
+                      <div className="text-slate-500 text-[9px]">UN Goals tracking</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-teal-400 ml-auto" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

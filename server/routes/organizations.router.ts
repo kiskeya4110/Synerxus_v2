@@ -6,6 +6,28 @@ import { cache, CACHE_TTL } from "../cache";
 
 export const organizationsRouter = Router();
 
+// Preapproved organization emails that don't require approval
+// Must match the list in users.router.ts
+const PREAPPROVED_EMAILS = [
+  'idream@operationidream.org',
+  'kmumba@operationidream.org',
+  'asniabarazar07@gmail.com',
+  'auldridgechibbwalu@yahoo.co.uk',
+  'impactamexicoac@gmail.com',
+  'info@impactamexico.org',
+  'thinamaphosa@gmail.com',
+  'brown.director@yestrust.org.zw',
+  'susan.madodo@youngafrica.org',
+  'josephine.millioni@youngafrica.org',
+  'emezil97@gmail.com',
+  'mabspro34@gmail.com',
+  'mackenroodlacour@gmail.com',
+].map(email => email.toLowerCase());
+
+function isPreapprovedEmail(email: string): boolean {
+  return PREAPPROVED_EMAILS.includes(email.toLowerCase());
+}
+
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
 
@@ -146,12 +168,17 @@ organizationsRouter.post("/", async (req: Request, res: Response) => {
     const contactEmail = orgData.contactEmail?.toLowerCase().trim();
 
     if (contactEmail) {
-      // Get pre-approved emails from platform settings
-      const preApprovedSetting = await storage.getPlatformSetting("pre_approved_org_emails");
-      if (preApprovedSetting?.value) {
-        const preApprovedEmails = preApprovedSetting.value.split(",").map((e: string) => e.toLowerCase().trim());
-        if (preApprovedEmails.includes(contactEmail)) {
-          approvalStatus = "approved";
+      // First check hardcoded preapproved list
+      if (isPreapprovedEmail(contactEmail)) {
+        approvalStatus = "approved";
+      } else {
+        // Also check platform settings for additional preapproved emails
+        const preApprovedSetting = await storage.getPlatformSetting("pre_approved_org_emails");
+        if (preApprovedSetting?.value) {
+          const preApprovedEmails = preApprovedSetting.value.split(",").map((e: string) => e.toLowerCase().trim());
+          if (preApprovedEmails.includes(contactEmail)) {
+            approvalStatus = "approved";
+          }
         }
       }
     }

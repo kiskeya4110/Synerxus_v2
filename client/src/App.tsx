@@ -103,29 +103,42 @@ function RootRedirectRoute() {
     const isAuthenticated = user || currentUserId;
 
     if (isAuthenticated) {
-      // Check if user has completed intake
+      const userId = localStorage.getItem('currentUserId');
+      const userType = localStorage.getItem('userType');
+      const isNewSignup = localStorage.getItem('isNewSignup') === 'true';
+      const profileComplete = localStorage.getItem('profileComplete') === 'true';
+
+      if (!userId) {
+        setLocation('/landing');
+        return;
+      }
+
+      // FAST PATH: If profile is marked complete and NOT a new signup, go directly to dashboard
+      // This avoids unnecessary API calls for returning users
+      if (profileComplete && !isNewSignup) {
+        if (userType === 'corporate-partner') {
+          setLocation('/csr-dashboard');
+        } else if (userType === 'organization') {
+          setLocation('/organization-dashboard');
+        } else {
+          setLocation('/volunteer-dashboard');
+        }
+        return;
+      }
+
+      // SIGNUP PATH: If this is a new signup, redirect to profile settings
+      if (isNewSignup) {
+        let settingsPath = '/volunteer-profile-settings';
+        if (userType === 'organization') settingsPath = '/organization-profile-settings';
+        else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
+        setLocation(settingsPath);
+        return;
+      }
+
+      // FALLBACK: For users without flags set (legacy or edge cases), check API
+      // This ensures backwards compatibility
       const checkIntakeAndRedirect = async () => {
-        const userId = localStorage.getItem('currentUserId');
-        let userType = localStorage.getItem('userType');
-        
         try {
-          if (!userId) {
-            setLocation('/landing');
-            return;
-          }
-
-          // Fetch user from /api/users to get the latest userType from database
-          const userResponse = await fetch(`/api/users?id=${userId}`);
-          if (userResponse.ok) {
-            const users = await userResponse.json();
-            const currentUser = users.find((u: any) => u.id === parseInt(userId!));
-            if (currentUser?.userType) {
-              userType = currentUser.userType as string;
-              // Update localStorage with fresh data from database
-              localStorage.setItem('userType', userType);
-            }
-          }
-
           if (!userType) {
             setLocation('/landing');
             return;
@@ -140,11 +153,11 @@ function RootRedirectRoute() {
           } else if (userType === 'corporate-partner') {
             endpoint = `/api/corporate-partners?userId=${userId}`;
           }
-          
+
           const response = await fetch(endpoint);
 
           if (!response.ok) {
-            // If no profile exists, go to settings page (consolidated form)
+            // If no profile exists, go to settings page (new user without flags)
             let settingsPath = '/volunteer-profile-settings';
             if (userType === 'organization') settingsPath = '/organization-profile-settings';
             else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
@@ -159,34 +172,32 @@ function RootRedirectRoute() {
           }
 
           const jsonData = await response.json();
-          // For organization endpoint, response is an array of organizations
           const data = Array.isArray(jsonData) ? jsonData[0] : jsonData;
 
           // Check if intake is complete
           let isIntakeComplete = false;
           if (userType === 'volunteer') {
-            // Consider intake complete if onboardingCompleted is true OR if they have a volunteer name set
-            // This ensures users who have filled their profile are not redirected back to settings
             const volunteerProfile = data?.volunteerProfile;
             isIntakeComplete = volunteerProfile?.onboardingCompleted === true ||
               !!(volunteerProfile?.volunteer_name || volunteerProfile?.volunteerName);
           } else if (userType === 'organization') {
-            // For organizations, check if organization exists with a name
-            // If organization record exists, they've completed basic setup - go to dashboard
             isIntakeComplete = !!data?.id && !!data?.name;
           } else if (userType === 'corporate-partner') {
-            // Consider intake complete if onboardingCompleted is true OR if they have company name set
             isIntakeComplete = data?.onboardingCompleted === true || !!data?.companyName;
           }
-          
+
+          // Set profileComplete flag for future visits
+          if (isIntakeComplete) {
+            localStorage.setItem('profileComplete', 'true');
+            localStorage.removeItem('isNewSignup');
+          }
+
           if (!isIntakeComplete) {
-            // Redirect to settings page if profile not complete (consolidated form)
             let settingsPath = '/volunteer-profile-settings';
             if (userType === 'organization') settingsPath = '/organization-profile-settings';
             else if (userType === 'corporate-partner') settingsPath = '/corporate-partner-profile-settings';
             setLocation(settingsPath);
           } else {
-            // Intake complete, go to appropriate dashboard based on user type
             if (userType === 'corporate-partner') {
               setLocation('/csr-dashboard');
             } else if (userType === 'organization') {
@@ -197,7 +208,8 @@ function RootRedirectRoute() {
           }
         } catch (error) {
           console.error('Error checking intake status:', error);
-          // Fallback to appropriate dashboard based on current userType
+          // Fallback to dashboard - assume profile is complete for better UX
+          localStorage.setItem('profileComplete', 'true');
           const defaultDashboard = userType === 'corporate-partner' ? '/csr-dashboard' : userType === 'organization' ? '/organization-dashboard' : '/volunteer-dashboard';
           setLocation(defaultDashboard);
         }

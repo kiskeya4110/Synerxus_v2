@@ -442,6 +442,10 @@ export default function OrganizationProfileSettings() {
         description: "Your organization profile has been created successfully.",
       });
 
+      // Mark profile as complete - prevents redirect back to settings on future logins
+      localStorage.setItem('profileComplete', 'true');
+      localStorage.removeItem('isNewSignup');
+
       // Redirect to organization dashboard after successful save
       setTimeout(() => setLocation("/organization-dashboard"), 500);
     },
@@ -501,6 +505,10 @@ export default function OrganizationProfileSettings() {
         title: "Profile updated!",
         description: "Your organization profile has been updated successfully.",
       });
+
+      // Mark profile as complete - prevents redirect back to settings on future logins
+      localStorage.setItem('profileComplete', 'true');
+      localStorage.removeItem('isNewSignup');
 
       // Redirect to organization dashboard after successful save
       setTimeout(() => setLocation("/organization-dashboard"), 500);

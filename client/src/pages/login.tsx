@@ -157,7 +157,19 @@ export default function Login() {
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
-        
+
+        // Check if this is a new registration (register tab) or existing login
+        const isNewRegistration = activeTab === 'register' && dbUser.isNewUser;
+        if (isNewRegistration) {
+          // New signup via Google - will need to complete profile
+          localStorage.setItem('isNewSignup', 'true');
+          localStorage.removeItem('profileComplete');
+        } else {
+          // Returning user - go directly to dashboard
+          localStorage.removeItem('isNewSignup');
+          localStorage.setItem('profileComplete', 'true');
+        }
+
         // Store remember me preference
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
@@ -165,14 +177,33 @@ export default function Login() {
         } else {
           localStorage.removeItem('rememberMe');
         }
-        
-        // Determine redirect based on profile completion
-        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
-        setLocation(redirectPath);
-        
+
+        // Redirect based on whether this is new signup or returning user
+        const userTypeForRedirect = dbUser.userType || userType || 'volunteer';
+        if (isNewRegistration) {
+          // New users go to profile settings
+          if (userTypeForRedirect === 'volunteer') {
+            setLocation('/volunteer-profile-settings');
+          } else if (userTypeForRedirect === 'organization') {
+            setLocation('/organization-profile-settings');
+          } else if (userTypeForRedirect === 'corporate-partner') {
+            setLocation('/corporate-partner-profile-settings');
+          } else {
+            setLocation('/dashboard');
+          }
+        } else {
+          // Returning users go directly to dashboard
+          let dashboardPath = '/volunteer-dashboard';
+          if (userTypeForRedirect === 'organization') dashboardPath = '/organization-dashboard';
+          else if (userTypeForRedirect === 'corporate-partner') dashboardPath = '/csr-dashboard';
+          setLocation(dashboardPath);
+        }
+
         toast({
-          title: "Welcome!",
-          description: "You have successfully signed in with Google.",
+          title: isNewRegistration ? "Account created" : "Welcome back!",
+          description: isNewRegistration
+            ? "Please complete your profile settings to get started."
+            : "You have successfully signed in with Google.",
         });
       }
     } catch (error) {
@@ -220,11 +251,16 @@ export default function Login() {
         if (!response.ok) {
           throw new Error('Failed to sync with backend');
         }
-        
+
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
-        
+
+        // For returning users (login, not signup), mark profile as complete
+        // and ensure they go directly to dashboard without intake redirect
+        localStorage.removeItem('isNewSignup');
+        localStorage.setItem('profileComplete', 'true');
+
         // Store remember me preference
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
@@ -232,11 +268,14 @@ export default function Login() {
         } else {
           localStorage.removeItem('rememberMe');
         }
-        
-        // Determine redirect based on profile completion
-        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
-        setLocation(redirectPath);
-        
+
+        // Returning users go directly to their dashboard
+        const userTypeForRedirect = dbUser.userType || userType || 'volunteer';
+        let dashboardPath = '/volunteer-dashboard';
+        if (userTypeForRedirect === 'organization') dashboardPath = '/organization-dashboard';
+        else if (userTypeForRedirect === 'corporate-partner') dashboardPath = '/csr-dashboard';
+        setLocation(dashboardPath);
+
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
@@ -349,6 +388,11 @@ export default function Login() {
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', userType || 'volunteer');
+
+        // Mark this as a new signup - profile settings will be shown
+        // This flag is cleared after profile is completed
+        localStorage.setItem('isNewSignup', 'true');
+        localStorage.removeItem('profileComplete'); // Clear any stale profile complete flag
 
         // Store organization name in localStorage for intake form to pre-fill (prevents asking twice)
         if ((userType === 'organization' || userType === 'corporate-partner') && organizationName) {

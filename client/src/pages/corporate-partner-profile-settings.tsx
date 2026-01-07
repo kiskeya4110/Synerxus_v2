@@ -243,6 +243,11 @@ export default function CorporatePartnerProfileSettings() {
         title: "Success!",
         description: "Your corporate partner profile has been saved."
       });
+
+      // Mark profile as complete - prevents redirect back to settings on future logins
+      localStorage.setItem('profileComplete', 'true');
+      localStorage.removeItem('isNewSignup');
+
       // Redirect to CSR Dashboard after successful save
       setTimeout(() => navigate("/csr-dashboard"), 500);
     },

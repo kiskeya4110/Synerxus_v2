@@ -1203,7 +1203,11 @@ export default function VolunteerProfileSettings() {
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
-      
+
+      // Mark profile as complete - prevents redirect back to settings on future logins
+      localStorage.setItem('profileComplete', 'true');
+      localStorage.removeItem('isNewSignup');
+
       // Redirect to volunteer dashboard after successful save
       setTimeout(() => {
         const navigate = (window as any).__wouter_setLocation || (() => window.location.href = '/volunteer-dashboard');

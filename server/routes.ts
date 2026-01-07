@@ -8570,6 +8570,125 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // GET /api/email/preview/invitation - Preview invitation email template
+  app.get("/api/email/preview/invitation", async (req, res) => {
+    const sampleData = {
+      recipientName: req.query.name as string || "Jane Smith",
+      organizationName: req.query.org as string || "Green Future Alliance",
+      role: req.query.role as string || "Project Lead",
+      projectName: req.query.project as string || "Solar Village Initiative",
+      message: req.query.message as string || "We are excited to invite you to join our team and make a difference in communities around the world!",
+      recipientEmail: req.query.email as string || "volunteer@example.com",
+      invitationLink: `${process.env.APP_URL || 'https://synerxus.replit.dev'}/signup?email=volunteer@example.com&role=volunteer&org=1&invited=true`
+    };
+
+    const roleDisplay = sampleData.role === 'volunteer' ? 'Volunteer' :
+                        sampleData.role === 'project-lead' ? 'Project Lead' :
+                        sampleData.role === 'coordinator' ? 'Coordinator' : sampleData.role;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background: #f3f4f6; }
+            .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 40px 30px; border-radius: 12px 12px 0 0; text-align: center; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 16px; }
+            .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+            .invite-box { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 25px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #3b82f6; }
+            .invite-box h3 { margin: 0 0 10px 0; color: #1e40af; font-size: 18px; }
+            .invite-detail { display: flex; margin: 8px 0; font-size: 14px; }
+            .invite-label { color: #6b7280; min-width: 100px; }
+            .invite-value { color: #111827; font-weight: 500; }
+            .message-box { background: #fefce8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #eab308; }
+            .message-box p { margin: 0; font-style: italic; color: #713f12; }
+            .button { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 25px 0; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+            .features { margin: 25px 0; }
+            .feature { display: flex; align-items: flex-start; margin: 12px 0; }
+            .feature-icon { width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; }
+            .feature-text { font-size: 14px; color: #4b5563; }
+            .footer { background: #f9fafb; padding: 25px; border-radius: 0 0 12px 12px; font-size: 12px; color: #6b7280; text-align: center; border: 1px solid #e5e7eb; border-top: none; }
+            .footer a { color: #3b82f6; text-decoration: none; }
+            .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+            .preview-banner { background: #fef3c7; padding: 10px 20px; text-align: center; font-size: 12px; color: #92400e; border-bottom: 1px solid #fcd34d; }
+          </style>
+        </head>
+        <body>
+          <div class="preview-banner">
+            <strong>EMAIL PREVIEW</strong> - This is a preview of the invitation email template
+          </div>
+          <div class="container">
+            <div class="header">
+              <img src="${process.env.APP_URL || 'https://synerxus.replit.dev'}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" onerror="this.style.display='none'" />
+              <h1>You're Invited!</h1>
+              <p style="font-size: 14px; opacity: 0.9; margin-top: 8px;">Connect. Manage. Impact Globally.</p>
+            </div>
+            <div class="content">
+              <p>Hi${sampleData.recipientName ? ` ${sampleData.recipientName}` : ''},</p>
+              <p><strong>${sampleData.organizationName}</strong> has invited you to join their team on Synerxus as a <strong>${roleDisplay}</strong>.</p>
+              <div class="invite-box">
+                <h3>Invitation Details</h3>
+                <div class="invite-detail">
+                  <span class="invite-label">Organization:</span>
+                  <span class="invite-value">${sampleData.organizationName}</span>
+                </div>
+                <div class="invite-detail">
+                  <span class="invite-label">Role:</span>
+                  <span class="invite-value">${roleDisplay}</span>
+                </div>
+                ${sampleData.projectName ? `
+                <div class="invite-detail">
+                  <span class="invite-label">Project:</span>
+                  <span class="invite-value">${sampleData.projectName}</span>
+                </div>
+                ` : ''}
+              </div>
+              ${sampleData.message ? `
+              <div class="message-box">
+                <p>"${sampleData.message}"</p>
+              </div>
+              ` : ''}
+              <div class="features">
+                <div class="feature">
+                  <span class="feature-icon">📊</span>
+                  <span class="feature-text">Track your volunteer hours and measure your real-world impact</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">🌍</span>
+                  <span class="feature-text">Contribute to UN Sustainable Development Goals</span>
+                </div>
+                <div class="feature">
+                  <span class="feature-icon">🤝</span>
+                  <span class="feature-text">Connect with organizations making a difference globally</span>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <a href="${sampleData.invitationLink}" class="button">Accept Invitation</a>
+              </div>
+              <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${sampleData.invitationLink}" style="color: #3b82f6; word-break: break-all;">${sampleData.invitationLink}</a>
+              </p>
+            </div>
+            <div class="footer">
+              <p style="margin: 0 0 10px 0;"><strong>Synerxus</strong> - Connect. Manage. Impact Globally.</p>
+              <p style="margin: 0;">This invitation was sent to ${sampleData.recipientEmail}</p>
+              <p style="margin: 10px 0 0 0;">
+                <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}">Visit Synerxus</a> |
+                <a href="mailto:hello@synerxus.com">Contact Support</a>
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  });
+
   // POST /api/invitations/bulk-import - Bulk import volunteers from CSV
   app.post("/api/invitations/bulk-import", async (req, res) => {
     try {

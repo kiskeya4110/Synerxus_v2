@@ -794,9 +794,9 @@ function generateInvitationEmailTemplate(data: InvitationEmailData): string {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">Synerxus</div>
+            <img src="${process.env.APP_URL || 'https://synerxus.replit.dev'}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" />
             <h1>You're Invited!</h1>
-            <p>Join us in making a global impact</p>
+            <p style="font-size: 14px; opacity: 0.9; margin-top: 8px;">Connect. Manage. Impact Globally.</p>
           </div>
 
           <div class="content">

@@ -1260,6 +1260,7 @@ export default function VolunteerProfileSettings() {
         matchingPriorities: data.matchingPriorities,
         experienceLevel: data.experienceLevel,
         profilePhotoUrl: profilePhotoUrl,
+        onboardingCompleted: true, // Mark profile as complete when saved
       };
 
       // Add timeout protection - 15 seconds max

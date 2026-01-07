@@ -210,7 +210,8 @@ export default function CorporatePartnerProfileSettings() {
       const payload = {
         ...data,
         primarySdgs: sdgsToSave,
-        logoUrl: logoUrl // Use logoUrl to match database field name
+        logoUrl: logoUrl, // Use logoUrl to match database field name
+        onboardingCompleted: true // Mark profile as complete when saved
       };
 
       // If profile exists, update it; otherwise create new one

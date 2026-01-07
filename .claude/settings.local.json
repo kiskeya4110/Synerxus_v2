@@ -108,7 +108,18 @@
       "Bash(host:*)",
       "Bash(fi)",
       "Bash(git check-ignore:*)",
-      "WebFetch(domain:2adbd4b0-88ea-440c-8428-e64a7324739e-00-2x14x6bqvth13.janeway.replit.dev)"
+      "WebFetch(domain:2adbd4b0-88ea-440c-8428-e64a7324739e-00-2x14x6bqvth13.janeway.replit.dev)",
+      "Bash(printenv:*)",
+      "Bash(client/public/favicon*.png)",
+      "Bash(client/public/favicon.svg )",
+      "Bash(client/public/icon-maskable*.png)",
+      "Bash(client/public/icon-maskable.svg )",
+      "Bash(client/src/lib/format-utils.ts )",
+      "Bash(client/src/__tests__/format-utils.test.tsx )",
+      "Bash(client/src/pages/volunteer-dashboard.tsx )",
+      "Bash(client/src/components/volunteer/mobile-pwa-view.tsx )",
+      "Bash(client/src/pages/organization-profile-settings.tsx )",
+      "Bash(server/aiu-service.ts)"
     ],
     "deny": [],
     "ask": []

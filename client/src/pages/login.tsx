@@ -434,7 +434,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#FDF8F3' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <a href="/" className="inline-block hover:opacity-80 transition-opacity mb-4">

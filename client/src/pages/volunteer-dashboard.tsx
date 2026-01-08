@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
 import { formatDecimal } from "@/lib/format-utils";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar, MapPin, Lightbulb, Heart, CheckCircle2, Eye } from "lucide-react";
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -1710,16 +1710,59 @@ export default function Dashboard() {
                                 lng = coords.lng;
                               }
                               const isCompleted = project.status?.toLowerCase() === 'completed';
+                              const pinColor = isCompleted
+                                ? { primary: '#1d4ed8', secondary: '#3b82f6', gradient: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)' }
+                                : { primary: '#15803d', secondary: '#22c55e', gradient: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)' };
+
+                              // High-contrast flag pin icon for volunteer projects
+                              const projectIcon = L.divIcon({
+                                html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                                  <!-- Flag Pin Shape -->
+                                  <div style="
+                                    background: ${pinColor.gradient};
+                                    width: 28px;
+                                    height: 36px;
+                                    clip-path: polygon(50% 100%, 0% 30%, 0% 0%, 100% 0%, 100% 30%);
+                                    border: none;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                                    display: flex;
+                                    align-items: flex-start;
+                                    justify-content: center;
+                                    padding-top: 5px;
+                                  ">
+                                    <span style="color: white; font-size: 12px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${isCompleted ? '✓' : '📍'}</span>
+                                  </div>
+                                  <!-- Location Label -->
+                                  <div style="
+                                    position: absolute;
+                                    top: 40px;
+                                    left: 50%;
+                                    transform: translateX(-50%);
+                                    background: ${pinColor.gradient};
+                                    color: white;
+                                    padding: 3px 8px;
+                                    border-radius: 4px;
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    white-space: nowrap;
+                                    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                                    border: 2px solid rgba(255,255,255,0.8);
+                                    max-width: 120px;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                                  ">${project.name?.substring(0, 15) || 'Project'}${project.name?.length > 15 ? '...' : ''}</div>
+                                </div>`,
+                                className: 'custom-marker volunteer-project-flag',
+                                iconSize: [36, 60],
+                                iconAnchor: [18, 36],
+                              });
+
                               return (
-                                <CircleMarker
+                                <Marker
                                   key={project.id || idx}
-                                  center={[lat, lng]}
-                                  radius={Math.max(6, Math.min(14, (project.hours || 10) / 5))}
-                                  fillColor={isCompleted ? '#3B82F6' : '#10B981'}
-                                  fillOpacity={0.7}
-                                  stroke={true}
-                                  color="#fff"
-                                  weight={2}
+                                  position={[lat, lng]}
+                                  icon={projectIcon}
                                 >
                                   <Popup>
                                     <div className="text-sm min-w-[180px]">
@@ -1735,7 +1778,7 @@ export default function Dashboard() {
                                       </div>
                                     </div>
                                   </Popup>
-                                </CircleMarker>
+                                </Marker>
                               );
                             })}
                           </MapContainer>

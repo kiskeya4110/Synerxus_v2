@@ -4844,14 +4844,66 @@ const ProjectMapComponent = memo(function ProjectMapComponent({ projectLocations
       {projectLocations?.map((project) => {
         const coords = getCoordinatesFromLocation(project.location);
         if (!coords) return null;
+
+        // High-contrast flag pin icon for projects
+        const projectIcon = L.divIcon({
+          html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+            <!-- Flag Pin Shape -->
+            <div style="
+              background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+              width: 32px;
+              height: 42px;
+              clip-path: polygon(50% 100%, 0% 30%, 0% 0%, 100% 0%, 100% 30%);
+              border: none;
+              box-shadow: 0 4px 12px rgba(21, 128, 61, 0.6), 0 2px 4px rgba(0,0,0,0.4);
+              display: flex;
+              align-items: flex-start;
+              justify-content: center;
+              padding-top: 6px;
+            ">
+              <span style="color: white; font-size: 16px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">📍</span>
+            </div>
+            <!-- Location Label -->
+            <div style="
+              position: absolute;
+              top: 46px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: linear-gradient(135deg, #166534 0%, #16a34a 100%);
+              color: white;
+              padding: 4px 10px;
+              border-radius: 4px;
+              font-size: 11px;
+              font-weight: 700;
+              white-space: nowrap;
+              box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+              border: 2px solid rgba(255,255,255,0.8);
+              max-width: 140px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            ">${project.name?.substring(0, 18) || 'Project'}${project.name?.length > 18 ? '...' : ''}</div>
+          </div>`,
+          className: 'custom-marker project-flag-marker',
+          iconSize: [44, 70],
+          iconAnchor: [22, 42],
+        });
+
         return (
-          <Marker key={project.id} position={[coords.lat, coords.lng]}>
+          <Marker key={project.id} position={[coords.lat, coords.lng]} icon={projectIcon}>
             <Popup>
-              <strong>{project.name}</strong>
-              <br />
-              Status: {project.status}
-              <br />
-              SDGs: {project.sdgGoals.join(', ') || 'None'}
+              <div style={{ minWidth: '180px' }}>
+                <p style={{ fontWeight: 600, margin: '0 0 4px 0', color: '#22c55e' }}>{project.name}</p>
+                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                  <strong>Status:</strong> {project.status}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                  <strong>Location:</strong> {project.location}
+                </p>
+                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
+                  <strong>SDGs:</strong> {project.sdgGoals.join(', ') || 'None'}
+                </p>
+              </div>
             </Popup>
           </Marker>
         );

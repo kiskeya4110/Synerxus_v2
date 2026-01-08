@@ -1431,25 +1431,49 @@ export default function AdminDashboard() {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
                       />
 
-                      {/* Organization Markers */}
+                      {/* Organization Markers - High Contrast Flag Pins */}
                       {(mapFilter === 'all' || mapFilter === 'organizations') && locationsData?.organizations?.map((loc) => {
                         const orgIcon = L.divIcon({
-                          html: `<div style="
-                            background: #3b82f6;
-                            width: 28px;
-                            height: 28px;
-                            border-radius: 50%;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                          ">
-                            <span style="color: white; font-size: 12px; font-weight: bold;">O</span>
+                          html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                            <!-- Flag Pin Shape -->
+                            <div style="
+                              background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+                              width: 32px;
+                              height: 42px;
+                              clip-path: polygon(50% 100%, 0% 30%, 0% 0%, 100% 0%, 100% 30%);
+                              border: none;
+                              box-shadow: 0 4px 12px rgba(29, 78, 216, 0.6), 0 2px 4px rgba(0,0,0,0.4);
+                              display: flex;
+                              align-items: flex-start;
+                              justify-content: center;
+                              padding-top: 6px;
+                            ">
+                              <span style="color: white; font-size: 16px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">🏢</span>
+                            </div>
+                            <!-- Location Label -->
+                            <div style="
+                              position: absolute;
+                              top: 46px;
+                              left: 50%;
+                              transform: translateX(-50%);
+                              background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+                              color: white;
+                              padding: 4px 10px;
+                              border-radius: 4px;
+                              font-size: 11px;
+                              font-weight: 700;
+                              white-space: nowrap;
+                              box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                              border: 2px solid rgba(255,255,255,0.8);
+                              max-width: 140px;
+                              overflow: hidden;
+                              text-overflow: ellipsis;
+                              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                            ">${loc.name?.substring(0, 18) || 'Organization'}${loc.name?.length > 18 ? '...' : ''}</div>
                           </div>`,
-                          className: 'custom-marker',
-                          iconSize: [28, 28],
-                          iconAnchor: [14, 14],
+                          className: 'custom-marker org-flag-marker',
+                          iconSize: [44, 70],
+                          iconAnchor: [22, 42],
                         });
                         return (
                           <Marker key={`org-${loc.id}`} position={[loc.lat, loc.lng]} icon={orgIcon}>
@@ -1471,25 +1495,49 @@ export default function AdminDashboard() {
                         );
                       })}
 
-                      {/* Project Markers */}
+                      {/* Project Markers - High Contrast Flag Pins */}
                       {(mapFilter === 'all' || mapFilter === 'projects') && locationsData?.projects?.map((loc) => {
                         const projectIcon = L.divIcon({
-                          html: `<div style="
-                            background: #22c55e;
-                            width: 28px;
-                            height: 28px;
-                            border-radius: 50%;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                          ">
-                            <span style="color: white; font-size: 12px; font-weight: bold;">P</span>
+                          html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                            <!-- Flag Pin Shape -->
+                            <div style="
+                              background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+                              width: 32px;
+                              height: 42px;
+                              clip-path: polygon(50% 100%, 0% 30%, 0% 0%, 100% 0%, 100% 30%);
+                              border: none;
+                              box-shadow: 0 4px 12px rgba(21, 128, 61, 0.6), 0 2px 4px rgba(0,0,0,0.4);
+                              display: flex;
+                              align-items: flex-start;
+                              justify-content: center;
+                              padding-top: 6px;
+                            ">
+                              <span style="color: white; font-size: 16px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">📍</span>
+                            </div>
+                            <!-- Location Label -->
+                            <div style="
+                              position: absolute;
+                              top: 46px;
+                              left: 50%;
+                              transform: translateX(-50%);
+                              background: linear-gradient(135deg, #166534 0%, #16a34a 100%);
+                              color: white;
+                              padding: 4px 10px;
+                              border-radius: 4px;
+                              font-size: 11px;
+                              font-weight: 700;
+                              white-space: nowrap;
+                              box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                              border: 2px solid rgba(255,255,255,0.8);
+                              max-width: 140px;
+                              overflow: hidden;
+                              text-overflow: ellipsis;
+                              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                            ">${loc.name?.substring(0, 18) || 'Project'}${loc.name?.length > 18 ? '...' : ''}</div>
                           </div>`,
-                          className: 'custom-marker',
-                          iconSize: [28, 28],
-                          iconAnchor: [14, 14],
+                          className: 'custom-marker project-flag-marker',
+                          iconSize: [44, 70],
+                          iconAnchor: [22, 42],
                         });
                         return (
                           <Marker key={`proj-${loc.id}`} position={[loc.lat, loc.lng]} icon={projectIcon}>
@@ -1511,25 +1559,46 @@ export default function AdminDashboard() {
                         );
                       })}
 
-                      {/* Volunteer Markers */}
+                      {/* Volunteer Markers - High Contrast */}
                       {(mapFilter === 'all' || mapFilter === 'volunteers') && locationsData?.volunteers?.map((loc) => {
+                        const size = Math.min(32 + (loc.count || 1) * 3, 56);
                         const volunteerIcon = L.divIcon({
-                          html: `<div style="
-                            background: #a855f7;
-                            width: ${Math.min(28 + (loc.count || 1) * 2, 48)}px;
-                            height: ${Math.min(28 + (loc.count || 1) * 2, 48)}px;
-                            border-radius: 50%;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                          ">
-                            <span style="color: white; font-size: 11px; font-weight: bold;">${loc.count || 1}</span>
+                          html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                            <!-- Volunteer Badge -->
+                            <div style="
+                              background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                              width: ${size}px;
+                              height: ${size}px;
+                              border-radius: 50%;
+                              border: 4px solid white;
+                              box-shadow: 0 4px 12px rgba(124, 58, 237, 0.6), 0 2px 4px rgba(0,0,0,0.4);
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                            ">
+                              <span style="color: white; font-size: ${Math.max(14, size / 3)}px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${loc.count || 1}</span>
+                            </div>
+                            <!-- Location Label -->
+                            <div style="
+                              position: absolute;
+                              top: ${size + 4}px;
+                              left: 50%;
+                              transform: translateX(-50%);
+                              background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+                              color: white;
+                              padding: 3px 8px;
+                              border-radius: 4px;
+                              font-size: 10px;
+                              font-weight: 700;
+                              white-space: nowrap;
+                              box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                              border: 2px solid rgba(255,255,255,0.8);
+                              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                            ">${loc.count || 1} volunteer${(loc.count || 1) > 1 ? 's' : ''}</div>
                           </div>`,
-                          className: 'custom-marker',
-                          iconSize: [Math.min(28 + (loc.count || 1) * 2, 48), Math.min(28 + (loc.count || 1) * 2, 48)],
-                          iconAnchor: [Math.min(14 + (loc.count || 1), 24), Math.min(14 + (loc.count || 1), 24)],
+                          className: 'custom-marker volunteer-flag-marker',
+                          iconSize: [size + 20, size + 30],
+                          iconAnchor: [(size + 20) / 2, size / 2],
                         });
                         return (
                           <Marker key={`vol-${loc.id}`} position={[loc.lat, loc.lng]} icon={volunteerIcon}>

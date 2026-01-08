@@ -650,29 +650,12 @@ export default function OrganizationDashboardPWA() {
           }}
         />
 
-        {/* Spacer for fixed header - matches header height (py-3 = 24px + h-10 logo = 40px = ~64px) */}
-        <div className="h-[64px] flex-shrink-0" />
+        {/* Spacer for fixed header - matches header height (pb-3 = 12px + h-10 logo = 40px + safe-area-inset-top + pt = 12px) */}
+        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
         {/* Main Content - scrollable area between header and nav */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="p-4 space-y-4">
-          {/* SDG Impact Report Quick Access */}
-          <button
-            onClick={() => navigate('/impact-report')}
-            className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                <FileBarChart className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="text-white font-semibold text-sm">SDG Impact Report</p>
-                <p className="text-purple-100 text-[10px]">View your UN SDG contributions & metrics</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white" />
-          </button>
-
           {/* Pending Applications with Quick Approve/Reject */}
           {pendingApplications && pendingApplications.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-emerald-100">
@@ -1162,6 +1145,23 @@ export default function OrganizationDashboardPWA() {
                   </p>
                 </button>
               </div>
+
+              {/* SDG Impact Report Quick Access - Moved from Home tab */}
+              <button
+                onClick={() => navigate('/impact-report')}
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99] mb-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                    <FileBarChart className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-semibold text-sm">SDG Impact Report</p>
+                    <p className="text-purple-100 text-[10px]">View your UN SDG contributions & metrics</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
 
               {/* Cards View - SDGs (expandable) */}
               {sdgViewMode === 'cards' && (

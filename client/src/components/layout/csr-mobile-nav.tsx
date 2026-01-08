@@ -29,7 +29,10 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-400 border-t border-amber-300/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-400 border-t border-amber-300/30 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
+      style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -66,7 +69,10 @@ export function CSRMobileHeader({ title, companyName, showBackButton, onBack }: 
   const [, navigate] = useLocation();
 
   return (
-    <header className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+    <header
+      className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-3 pb-2 flex items-center justify-between sticky top-0 z-50 shadow-lg"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+    >
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button

@@ -30,10 +30,11 @@ export default function OrganizationPWANav({ activeTab }: OrganizationPWANavProp
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 z-50"
       style={{
         background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
         boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
       }}
     >
       <div className="flex items-center justify-around py-2 px-1 max-w-[428px] mx-auto">

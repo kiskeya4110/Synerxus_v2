@@ -79,7 +79,10 @@ export default function VolunteerBottomNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 pt-2 max-w-[428px] mx-auto z-50"
+      style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="flex justify-around items-center">
         {navItems.map((tab) => (
           <button

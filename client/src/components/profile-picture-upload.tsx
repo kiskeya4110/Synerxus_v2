@@ -36,7 +36,9 @@ export function ProfilePictureUpload({
 
   // Update internal state when prop changes (for loading existing photos)
   useEffect(() => {
+    console.log("[ProfilePictureUpload] Props changed - currentPhotoUrl:", currentPhotoUrl, "photoUrl state:", photoUrl);
     if (currentPhotoUrl && currentPhotoUrl !== photoUrl) {
+      console.log("[ProfilePictureUpload] Setting photoUrl from props:", currentPhotoUrl);
       setPhotoUrl(currentPhotoUrl);
       const path = extractStoragePath(currentPhotoUrl);
       if (path) {
@@ -44,6 +46,11 @@ export function ProfilePictureUpload({
       }
     }
   }, [currentPhotoUrl, photoUrl]);
+
+  // Debug log when photoUrl changes
+  useEffect(() => {
+    console.log("[ProfilePictureUpload] photoUrl state updated:", photoUrl);
+  }, [photoUrl]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -252,7 +259,20 @@ export function ProfilePictureUpload({
       ) : (
         <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
           {photoUrl ? (
-            <img src={photoUrl} alt={label || "Logo"} className="h-32 w-32 object-contain p-2" />
+            <img
+              src={photoUrl}
+              alt={label || "Logo"}
+              className="h-32 w-32 object-contain p-2"
+              onError={(e) => {
+                console.error("[ProfilePictureUpload] Image load error for:", photoUrl);
+                // Try with a cache-busting parameter
+                const target = e.target as HTMLImageElement;
+                if (!target.src.includes('?')) {
+                  target.src = `${photoUrl}?t=${Date.now()}`;
+                }
+              }}
+              onLoad={() => console.log("[ProfilePictureUpload] Image loaded successfully:", photoUrl)}
+            />
           ) : (
             <div className="text-center text-gray-400 dark:text-gray-500">
               <p className="text-xs font-medium">Logo Preview</p>

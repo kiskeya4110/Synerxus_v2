@@ -356,8 +356,16 @@ export default function OrganizationProfileSettings() {
           needs: existingProfile.needs || [],
           sdgFocus: existingProfile.sdgFocus || [],
         });
-        if (existingProfile.logo) {
-          setLogoUrl(existingProfile.logo);
+        // Look for logo in multiple sources (matchable profile may have empty logo)
+        const logoToUse = existingProfile.logo ||
+          matchableOrg?.logo ||
+          intakeProfile?.logoUrl ||
+          intakeProfile?.logo ||
+          orgData?.logo ||
+          "";
+        if (logoToUse) {
+          console.log("[OrgSettings] Setting logo from sources:", logoToUse);
+          setLogoUrl(logoToUse);
         }
       } else if (hasOrgProfile) {
         // Fallback to organization profile data if no matchable org found
@@ -372,8 +380,14 @@ export default function OrganizationProfileSettings() {
           needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
           sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });
-        const logoToUse = matchableOrg?.logo || intakeProfile?.logo || orgData?.logo;
+        // Look for logo in multiple sources with comprehensive fallback
+        const logoToUse = matchableOrg?.logo ||
+          intakeProfile?.logoUrl ||
+          intakeProfile?.logo ||
+          orgData?.logo ||
+          "";
         if (logoToUse) {
+          console.log("[OrgSettings] Setting logo from org profile:", logoToUse);
           setLogoUrl(logoToUse);
         }
       } else if (currentUser?.email) {

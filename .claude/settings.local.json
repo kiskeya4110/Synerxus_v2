@@ -119,7 +119,8 @@
       "Bash(client/src/pages/volunteer-dashboard.tsx )",
       "Bash(client/src/components/volunteer/mobile-pwa-view.tsx )",
       "Bash(client/src/pages/organization-profile-settings.tsx )",
-      "Bash(server/aiu-service.ts)"
+      "Bash(server/aiu-service.ts)",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": []

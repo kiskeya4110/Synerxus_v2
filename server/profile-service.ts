@@ -138,8 +138,12 @@ export async function updateVolunteerProfileWithUser(
       profileUpdates.jobTitleAtCompany = profileData.jobTitleAtCompany || null;
     }
     // Save profile photo URL to volunteer_profiles table
+    // Sync from avatar field if profilePhotoUrl not explicitly set
     if (profileData.profilePhotoUrl !== undefined) {
       profileUpdates.profilePhotoUrl = profileData.profilePhotoUrl || null;
+    } else if (profileData.avatar !== undefined) {
+      // Keep profilePhotoUrl in sync with avatar for consistent lookups
+      profileUpdates.profilePhotoUrl = profileData.avatar || null;
     }
 
     let updatedProfile: VolunteerProfile;

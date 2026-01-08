@@ -494,12 +494,16 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
         const user = (users as any[]).find((u: any) => u.id === uid);
         // Use volunteerName from profile, fallback to displayName from user, then to Employee ${uid}
         const employeeName = profile?.volunteerName || user?.displayName || `Employee ${uid}`;
+        // Get avatar from multiple sources: profile photo, user avatar, or null
+        const avatar = profile?.profilePhotoUrl || user?.avatar || null;
         return {
           userId: uid,
           employeeName, // Match frontend expectation
           name: employeeName, // Keep for backward compatibility
           hours,
-          rank: 0
+          rank: 0,
+          avatar, // Profile picture URL
+          profilePhotoUrl: avatar // Alternative field name for frontend compatibility
         };
       })
       .sort((a, b) => b.hours - a.hours)

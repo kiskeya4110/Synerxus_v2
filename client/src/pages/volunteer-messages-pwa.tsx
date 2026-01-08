@@ -503,8 +503,8 @@ export default function VolunteerMessagesPWA() {
         {/* PWA Header */}
         <PWAHeader />
 
-        {/* Spacer for fixed header */}
-        <div className="h-16 flex-shrink-0" />
+        {/* Spacer for fixed header - accounts for safe-area-inset-top */}
+        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
         {/* Thread Header - shows when viewing a conversation */}
         {selectedThread && (

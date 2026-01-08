@@ -446,7 +446,7 @@ export default function CSRDashboardPWA() {
       )}
 
       {/* PWA Header with Logo and Menu - Matching web view styling */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-3 py-2 shadow-md border-b max-w-[428px] mx-auto" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)", left: '50%', transform: 'translateX(-50%)' }}>
+      <header className="fixed top-0 left-0 right-0 z-50 px-3 pb-2 shadow-md border-b max-w-[428px] mx-auto" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)", left: '50%', transform: 'translateX(-50%)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
         <div className="flex items-center justify-between max-w-full">
           {/* Logo */}
           <button
@@ -491,8 +491,8 @@ export default function CSRDashboardPWA() {
         </div>
       </header>
 
-      {/* Spacer for fixed header - matches header height (py-2 = 16px + content ~32px = ~48px) */}
-      <div className="h-[52px] flex-shrink-0" />
+      {/* Spacer for fixed header - matches header height (pb-2 = 8px + pt = 8px + content ~36px + safe-area) */}
+      <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 52px)' }} />
 
       {/* Main Content - scrollable area between header and nav */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)", paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>

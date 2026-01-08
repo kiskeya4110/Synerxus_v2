@@ -253,12 +253,13 @@ export default function OrganizationPWAHeader({
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between w-full max-w-[428px] mx-auto"
+        className="fixed top-0 left-0 right-0 z-50 px-4 pb-3 flex items-center justify-between w-full max-w-[428px] mx-auto"
         style={{
           background: 'linear-gradient(to right, #fef9c3 0%, #fef3c7 25%, #dbeafe 50%, #bfdbfe 75%, #93c5fd 100%)',
           boxShadow: '0 4px 20px rgba(59, 130, 246, 0.25)',
           left: '50%',
-          transform: 'translateX(-50%)'
+          transform: 'translateX(-50%)',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)'
         }}
       >
         <img

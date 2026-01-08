@@ -397,8 +397,8 @@ export default function CSRMessagesPWA() {
         </div>
       )}
 
-      {/* Spacer for fixed header */}
-      <div className="h-16" />
+      {/* Spacer for fixed header - accounts for safe-area-inset-top */}
+      <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
       {/* Thread Header - shows when viewing a conversation */}
       {selectedThread && (

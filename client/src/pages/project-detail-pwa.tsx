@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp, Edit, Trash2 } from "lucide-react";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "@/components/projects/task-dialogs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
@@ -448,13 +449,26 @@ export default function ProjectDetailPWA() {
               </div>
             </div>
 
-            {/* Task List - Clickable */}
-            {projectTasks.length > 0 && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+            {/* Task List - With Organization Management */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Target className="w-4 h-4 text-emerald-500" />
                   Project Tasks
                 </h3>
+                {userType === 'organization' && projectId && (
+                  <CreateTaskDialog projectId={projectId} />
+                )}
+              </div>
+              {projectTasks.length === 0 ? (
+                <div className="text-center py-6 text-slate-500">
+                  <Target className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No tasks created yet</p>
+                  {userType === 'organization' && (
+                    <p className="text-xs mt-1">Click "Add Task" to create one</p>
+                  )}
+                </div>
+              ) : (
                 <div className="space-y-2">
                   {projectTasks.map((task: any) => {
                     const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
@@ -462,11 +476,11 @@ export default function ProjectDetailPWA() {
                     const statusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
                                       task.status?.toLowerCase() === 'in progress' ? Play : Circle;
                     const StatusIcon = statusIcon;
+                    const isOrganization = userType === 'organization';
 
                     return (
-                      <button
+                      <div
                         key={task.id}
-                        onClick={() => openTaskModal(task)}
                         className="w-full text-left bg-white border border-slate-200 rounded-lg p-3 hover:border-emerald-300 hover:shadow-sm transition-all"
                       >
                         <div className="flex items-start gap-3">
@@ -496,16 +510,28 @@ export default function ProjectDetailPWA() {
                               )}
                             </div>
                           </div>
-                          <div className="text-emerald-500">
-                            <Plus className="w-5 h-5" />
-                          </div>
+                          {/* Organization: Edit/Delete buttons */}
+                          {isOrganization ? (
+                            <div className="flex items-center gap-1">
+                              <EditTaskDialog task={task} />
+                              <DeleteTaskDialog task={task} />
+                            </div>
+                          ) : (
+                            /* Volunteer: Log time button */
+                            <button
+                              onClick={() => openTaskModal(task)}
+                              className="text-emerald-500 hover:text-emerald-600 p-1"
+                            >
+                              <Plus className="w-5 h-5" />
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Apply Button */}
             <Button
@@ -684,8 +710,8 @@ export default function ProjectDetailPWA() {
         {/* PWA Header - Standard volunteer/CSR header */}
         <PWAHeader />
 
-        {/* Spacer for fixed header */}
-        <div className="h-16 flex-shrink-0" />
+        {/* Spacer for fixed header - accounts for safe-area-inset-top */}
+        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
         {/* Project Context Header - shows project name with back button */}
         <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-3 shadow-sm border-b border-slate-200 flex-shrink-0">

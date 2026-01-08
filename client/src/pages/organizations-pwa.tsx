@@ -164,8 +164,8 @@ export default function OrganizationsPWA() {
       {/* PWA Header */}
       {renderHeader()}
 
-      {/* Spacer for fixed header */}
-      <div className="h-16 flex-shrink-0" />
+      {/* Spacer for fixed header - accounts for safe-area-inset-top */}
+      <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto pb-20">

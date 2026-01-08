@@ -11,6 +11,7 @@ import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteConfirmDialog } from "@/components/ui/dialog-factory";
+import { CreateTaskDialog, EditTaskDialog } from "@/components/projects/task-dialogs";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -779,11 +780,8 @@ export default function ProjectDetail() {
                     <CheckCircle2 className="h-5 w-5 text-slate-500" />
                     Project Tasks
                   </CardTitle>
-                  {isOrganization && (
-                    <Button size="sm" className="gap-1" data-testid="button-add-task">
-                      <Plus className="h-4 w-4" />
-                      Add Task
-                    </Button>
+                  {isOrganization && projectId && (
+                    <CreateTaskDialog projectId={projectId} />
                   )}
                 </div>
               </CardHeader>
@@ -843,14 +841,17 @@ export default function ProjectDetail() {
                         <div className="flex items-center gap-2 ml-3">
                           <StatusBadge status={task.status} />
                           {isOrganization && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteTask(task.id)}
-                              data-testid={`button-delete-task-${task.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <>
+                              <EditTaskDialog task={task as any} />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteTask(task.id)}
+                                data-testid={`button-delete-task-${task.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -1223,7 +1224,7 @@ export default function ProjectDetail() {
                   </Button>
                 </Link>
               )}
-              {canEditProject && projectAIU?.verificationStatus === 'pending' && (
+              {canEditProject && (!projectAIU?.verificationStatus || projectAIU?.verificationStatus === 'pending') && (
                 <Button
                   className="w-full justify-start gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow-md transition-all"
                   onClick={() => setActiveKpiModal('aiu')}
@@ -1433,7 +1434,7 @@ export default function ProjectDetail() {
                   )}
 
                   {/* Verification Actions for Org Admin */}
-                  {canEditProject && projectAIU?.verificationStatus === 'pending' && (
+                  {canEditProject && (!projectAIU?.verificationStatus || projectAIU?.verificationStatus === 'pending') && (
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200">
                       <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2 flex items-center gap-2">
                         <Shield className="h-4 w-4" />

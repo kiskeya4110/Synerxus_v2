@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Filter, CheckCircle2, Circle, Clock, ArrowLeft } from "lucide-react";
+import { Plus, Search, Filter, CheckCircle2, Circle, Clock, ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "@/components/projects/task-dialogs";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -33,7 +36,10 @@ export default function Tasks() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
@@ -113,6 +119,30 @@ export default function Tasks() {
                 />
               </div>
 
+              {/* Project selector for creating tasks */}
+              {(projects as any[]).length > 0 && (
+                <div className="flex gap-2 mb-3">
+                  <Select
+                    value={selectedProjectId?.toString() || ""}
+                    onValueChange={(val) => setSelectedProjectId(parseInt(val))}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(projects as any[]).map((project: any) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedProjectId && (
+                    <CreateTaskDialog projectId={selectedProjectId} />
+                  )}
+                </div>
+              )}
+
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -155,6 +185,11 @@ export default function Tasks() {
                               </span>
                             )}
                           </div>
+                        </div>
+                        {/* Edit/Delete for mobile */}
+                        <div className="flex flex-col gap-1">
+                          <EditTaskDialog task={task as any} />
+                          <DeleteTaskDialog task={task as any} />
                         </div>
                       </div>
                     </CardContent>
@@ -216,10 +251,27 @@ export default function Tasks() {
               </SelectContent>
             </Select>
 
-            <Button className="min-h-[44px]" data-testid="button-add-task">
-              <Plus className="h-5 w-5 mr-2" />
-              Add Task
-            </Button>
+            {isOrganizationUser && (projects as any[]).length > 0 && (
+              <Select
+                value={selectedProjectId?.toString() || ""}
+                onValueChange={(val) => setSelectedProjectId(parseInt(val))}
+              >
+                <SelectTrigger className="w-full sm:w-[200px] min-h-[44px]">
+                  <SelectValue placeholder="Select project for task" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(projects as any[]).map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {isOrganizationUser && selectedProjectId && (
+              <CreateTaskDialog projectId={selectedProjectId} />
+            )}
           </div>
 
           {/* Tasks List */}
@@ -271,6 +323,13 @@ export default function Tasks() {
                         </div>
                       </div>
                     </div>
+                    {/* Edit/Delete Actions for Organizations */}
+                    {isOrganizationUser && (
+                      <div className="flex items-center gap-1 ml-auto">
+                        <EditTaskDialog task={task as any} />
+                        <DeleteTaskDialog task={task as any} />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

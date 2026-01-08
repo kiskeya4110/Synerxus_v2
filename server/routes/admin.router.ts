@@ -430,6 +430,8 @@ adminRouter.post("/generate-impact-report", async (req: Request, res: Response) 
       impactFocus,
       organizationName,
       metrics,
+      storyType, // "short" for brief organization stories, "full" for detailed reports
+      reportType, // "volunteer" | "organization" | "csr"
     } = req.body;
 
     if (!projectTitle || !reportingPeriod) {
@@ -445,6 +447,64 @@ adminRouter.post("/generate-impact-report", async (req: Request, res: Response) 
         baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
       });
 
+      // Extract aggregated totals from metrics
+      const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
+      const totalHours = metrics?.totalHours || 0;
+      const projectCount = metrics?.activeProjects || metrics?.projectCount || 0;
+      const beneficiaryTotal = metrics?.totalBeneficiariesReached || metrics?.peopleImpacted || 0;
+      const sdgsAddressed = metrics?.sdgsAddressed || 0;
+      const skills = metrics?.skills || "";
+
+      // Generate short, dynamic organization impact story
+      if (storyType === "short" && reportType === "organization") {
+        const shortSystemPrompt = `You are an expert at crafting brief, impactful stories for nonprofit organizations. Write a SHORT 2-3 sentence impact story that is:
+- Concise and punchy (max 50 words)
+- Uses ONLY the metrics provided (skip any that are 0)
+- Focuses on human impact and outcomes
+- Written for the specific organization (not Synerxus platform)
+- Dynamic - adapts to whatever metrics are available
+- No headers, bullet points, or formatting - just flowing prose`;
+
+        // Build dynamic metric context (only include non-zero values)
+        const availableMetrics: string[] = [];
+        if (totalHours > 0) availableMetrics.push(`${totalHours.toLocaleString()} volunteer hours`);
+        if (beneficiaryTotal > 0) availableMetrics.push(`${beneficiaryTotal.toLocaleString()} lives impacted`);
+        if (projectCount > 0) availableMetrics.push(`${projectCount} projects`);
+        if (volunteerCount > 0) availableMetrics.push(`${volunteerCount} volunteers`);
+        if (sdgsAddressed > 0) availableMetrics.push(`${sdgsAddressed} SDGs addressed`);
+
+        const shortUserPrompt = `Write a brief 2-3 sentence impact story for ${organizationName || "this organization"} during ${reportingPeriod}.
+
+Available metrics (use only what's relevant, skip zeros):
+${availableMetrics.length > 0 ? availableMetrics.join(", ") : "No metrics available yet"}
+${csrAlignment ? `\nSDG Focus: ${csrAlignment}` : ""}
+${skills ? `\nKey skills: ${skills}` : ""}
+
+Write a short, compelling story that highlights the organization's real impact. Be specific but concise. Focus on outcomes and people helped.`;
+
+        const shortCompletion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: shortSystemPrompt },
+            { role: "user", content: shortUserPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        });
+
+        const shortStory = shortCompletion.choices[0]?.message?.content;
+        if (!shortStory) {
+          return res.status(500).json({ message: "Failed to generate story" });
+        }
+
+        return res.json({
+          report: shortStory.trim(),
+          generatedAt: new Date().toISOString(),
+          success: true,
+        });
+      }
+
+      // Full report generation (existing logic)
       const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant.
 
 MANDATORY RULES - NON-NEGOTIABLE:
@@ -456,13 +516,7 @@ MANDATORY RULES - NON-NEGOTIABLE:
 - Treat ALL beneficiary-type metrics as ONE "Total People Impacted" figure
 - Format as a professional, compelling narrative`;
 
-      // Extract aggregated totals from metrics
-      const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
-      const totalHours = metrics?.totalHours || 0;
-      const projectCount = metrics?.activeProjects || 0;
-      const beneficiaryTotal = metrics?.totalBeneficiariesReached || 0;
-
-      const userPrompt = `Generate a professional Synerxus Impact Report with ZERO metric duplication:
+      const userPrompt = `Generate a professional Impact Report for ${organizationName || "the organization"} with ZERO metric duplication:
 
 ORGANIZATION: ${organizationName}
 PROJECT: ${projectTitle}

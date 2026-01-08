@@ -55,6 +55,9 @@ export function AINarrativeSection({
         .map((id) => `SDG ${id}: ${getSDGName(id)}`)
         .join(", ");
 
+      // Use short story mode for organization impact stories
+      const isOrganization = context.reportType === "organization";
+
       const response = await fetch("/api/generate-impact-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,6 +73,8 @@ export function AINarrativeSection({
           tone: "professional",
           impactFocus: context.reportType === "csr" ? "community" : "people",
           organizationName: context.organizationName || "",
+          storyType: isOrganization ? "short" : "full",
+          reportType: context.reportType,
           metrics: {
             totalHours: context.totalHours,
             peopleImpacted: context.peopleImpacted,
@@ -140,14 +145,52 @@ export function AINarrativeSection({
 
   const isLoading = generateMutation.isPending;
 
-  // Generate a simple narrative if API fails or no AI available
-  const fallbackNarrative = `
-In ${context.period || "this period"}, ${context.volunteerName || "this volunteer"} contributed ${context.totalHours.toLocaleString()} hours across ${context.projects} projects, directly impacting ${context.peopleImpacted.toLocaleString()} lives.
+  // Generate a dynamic fallback narrative based on available metrics
+  const generateFallbackNarrative = () => {
+    const isOrganization = context.reportType === "organization";
+    const name = isOrganization
+      ? (context.organizationName || "Your organization")
+      : (context.volunteerName || "You");
+    const period = context.period || "this period";
 
-Their work aligned with ${context.sdgs.length} Sustainable Development Goals, including ${context.sdgs.slice(0, 3).map((id) => getSDGName(id)).join(", ")}${context.sdgs.length > 3 ? ` and ${context.sdgs.length - 3} more` : ""}.
+    // Build dynamic parts based on available metrics
+    const parts: string[] = [];
 
-${context.skills?.length ? `Key skills applied: ${context.skills.slice(0, 5).join(", ")}.` : ""}
-  `.trim();
+    if (context.totalHours > 0 && context.projects > 0) {
+      parts.push(`${context.totalHours.toLocaleString()} volunteer hours across ${context.projects} project${context.projects > 1 ? 's' : ''}`);
+    } else if (context.totalHours > 0) {
+      parts.push(`${context.totalHours.toLocaleString()} volunteer hours`);
+    } else if (context.projects > 0) {
+      parts.push(`${context.projects} project${context.projects > 1 ? 's' : ''}`);
+    }
+
+    if (context.peopleImpacted > 0) {
+      parts.push(`${context.peopleImpacted.toLocaleString()} lives impacted`);
+    }
+
+    if (context.sdgs.length > 0) {
+      const topSdgs = context.sdgs.slice(0, 2).map((id) => getSDGName(id)).join(" and ");
+      parts.push(`work aligned with ${topSdgs}`);
+    }
+
+    // Build the narrative
+    if (parts.length === 0) {
+      return isOrganization
+        ? `${name} is making a difference in the community. Start logging activities to see your impact story grow.`
+        : `${name} started your impact journey. Log your first activity to see your story unfold.`;
+    }
+
+    if (isOrganization) {
+      // Short, simple narrative for organizations
+      const metricsText = parts.slice(0, 2).join(" and ");
+      return `${period === "This Year" ? "This year" : `During ${period}`}, ${name} contributed ${metricsText}.${parts.length > 2 ? ` ${parts[2].charAt(0).toUpperCase() + parts[2].slice(1)}.` : ''}`;
+    } else {
+      // Slightly more detailed for volunteers
+      return `In ${period}, ${name} contributed ${parts[0]}${parts[1] ? `, directly impacting ${context.peopleImpacted.toLocaleString()} lives` : ''}.${context.sdgs.length > 0 ? ` Your ${parts[parts.length - 1]}.` : ''}`;
+    }
+  };
+
+  const fallbackNarrative = generateFallbackNarrative();
 
   const displayNarrative = narrative || (isLoading ? "" : fallbackNarrative);
 

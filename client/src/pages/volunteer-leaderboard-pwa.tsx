@@ -82,6 +82,18 @@ export default function VolunteerLeaderboardPWA() {
     enabled: !!currentUser?.organizationId,
   });
 
+  // Fetch organization profile for commonName (tag/callsign)
+  const { data: organizationProfile } = useQuery({
+    queryKey: ['/api/intake/organization-profile', currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
   // Fetch organization leaderboard
   const { data: leaderboardData = [], isLoading, refetch: refetchLeaderboard } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/organization-leaderboard", currentUser?.organizationId, leaderboardType],
@@ -170,8 +182,8 @@ export default function VolunteerLeaderboardPWA() {
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20">
-          <div className="p-4 space-y-4">
+        <main className="flex-1 overflow-y-auto pb-24">
+          <div className="p-4 space-y-4 pt-2">
           {/* Header Banner */}
           <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
             {/* Background Pattern */}
@@ -187,7 +199,7 @@ export default function VolunteerLeaderboardPWA() {
                 <div>
                   <p className="text-emerald-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Top Performers</p>
                   <h1 className="text-xl font-bold text-slate-800">Volunteer Leaderboard</h1>
-                  <p className="text-slate-600 text-xs">{organization?.name || "Organization"}</p>
+                  <p className="text-slate-600 text-xs">{organizationProfile?.commonName || organization?.name || "Organization"}</p>
                 </div>
               </div>
 
@@ -406,6 +418,9 @@ export default function VolunteerLeaderboardPWA() {
               </div>
             </div>
           </div>
+
+          {/* Bottom spacer for navigation */}
+          <div className="h-4" />
           </div>
         </main>
 

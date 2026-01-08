@@ -770,7 +770,7 @@ export default function OrganizationDashboardPWA() {
                 <div>
                   <p className="text-blue-800 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
                   <h2 className="text-xl font-bold text-slate-800">
-                    {organization?.name || 'Organization'}
+                    {organizationProfile?.commonName || organization?.name || 'Organization'}
                   </h2>
                 </div>
                 <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden relative">
@@ -780,7 +780,7 @@ export default function OrganizationDashboardPWA() {
                   {organization?.logo && (
                     <img
                       src={organization.logo}
-                      alt={organization.name || 'Organization'}
+                      alt={organizationProfile?.commonName || organization.name || 'Organization'}
                       className="w-10 h-10 object-contain absolute"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
@@ -1121,7 +1121,7 @@ export default function OrganizationDashboardPWA() {
                   <p className="text-lg font-bold text-teal-600">{dashboardData.sdgDistribution.length}</p>
                 </button>
                 <button
-                  onClick={() => navigate('/impact-report')}
+                  onClick={() => setShowVolunteerHoursModal(true)}
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">

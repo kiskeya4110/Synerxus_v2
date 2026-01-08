@@ -257,12 +257,13 @@ export default function AIInsightsModal({ isOpen, onClose, organizationId, dashb
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 pb-20"
+      className="fixed inset-0 z-[70] flex items-start justify-center p-4 pt-16 pb-24 overflow-y-auto"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-2xl bg-white shadow-2xl mb-16"
+        className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl my-auto"
+        style={{ maxHeight: 'calc(100vh - 160px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -285,7 +286,7 @@ export default function AIInsightsModal({ isOpen, onClose, organizationId, dashb
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6 space-y-6">
+        <div className="overflow-y-auto p-6 space-y-6" style={{ maxHeight: 'calc(100vh - 280px)' }}>
           {/* SDG Alignment Section */}
           <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-3">

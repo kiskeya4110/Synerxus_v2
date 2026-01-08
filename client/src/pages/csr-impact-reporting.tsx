@@ -294,7 +294,10 @@ export function CSRImpactReporting() {
   const companyName = csrDashboardData?.companyName || csrDashboardData?.partners?.[0]?.companyName || "Your Organization";
 
   const exportToCSV = async () => {
-    if (!impactData) return;
+    if (!impactData) {
+      alert("Impact data is still loading. Please wait and try again.");
+      return;
+    }
     setIsExporting(true);
     try {
       const headers = ["Metric", "Value", "Benchmark", "Status"];
@@ -349,7 +352,10 @@ export function CSRImpactReporting() {
   };
 
   const exportToPDF = async () => {
-    if (!impactData) return;
+    if (!impactData) {
+      alert("Impact data is still loading. Please wait and try again.");
+      return;
+    }
     setIsExporting(true);
 
     const pdfContent = `
@@ -837,24 +843,78 @@ export function CSRImpactReporting() {
     <CSRLayout activeNav="impact" title="Impact Analytics" subtitle="Comprehensive impact reporting and compliance tracking">
       {/* Export Buttons */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginBottom: "16px" }}>
-        <button onClick={exportToPDF} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#059669", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-pdf-button">
-          Export PDF
+        <button
+          onClick={exportToPDF}
+          disabled={isExporting || !impactData}
+          style={{
+            backgroundColor: isExporting || !impactData ? "#9ca3af" : "#059669",
+            color: "white",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            cursor: isExporting || !impactData ? "not-allowed" : "pointer",
+            fontSize: "14px",
+            fontWeight: "500",
+            opacity: isExporting || !impactData ? 0.7 : 1,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+          data-testid="export-pdf-button"
+        >
+          {isExporting ? "⏳ Exporting..." : "📄 Export PDF"}
         </button>
-        <button onClick={exportToCSV} disabled={isExporting} style={{ backgroundColor: isExporting ? "#6b7280" : "#3b82f6", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: isExporting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500", opacity: isExporting ? 0.7 : 1 }} data-testid="export-csv-button">
-          Export CSV
+        <button
+          onClick={exportToCSV}
+          disabled={isExporting || !impactData}
+          style={{
+            backgroundColor: isExporting || !impactData ? "#9ca3af" : "#3b82f6",
+            color: "white",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            cursor: isExporting || !impactData ? "not-allowed" : "pointer",
+            fontSize: "14px",
+            fontWeight: "500",
+            opacity: isExporting || !impactData ? 0.7 : 1,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+          data-testid="export-csv-button"
+        >
+          {isExporting ? "⏳ Exporting..." : "📊 Export CSV"}
         </button>
       </div>
 
       {/* Horizontal Tabs Navigation */}
-      <nav style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex", gap: "0", marginBottom: "24px", overflow: "hidden" }}>
+      <nav style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex", gap: "0", marginBottom: "24px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
         {[
           { id: "executive", label: "Executive Summary", icon: "📊" },
           { id: "impact", label: "Impact & Financials", icon: "💰" },
           { id: "compliance", label: "Compliance & Standards", icon: "✅" },
           { id: "projects", label: "Projects & Insights", icon: "🎯" }
         ].map((tab) => (
-          <button key={tab.id} onClick={() => setSelectedTab(tab.id)} style={{ padding: "16px 24px", border: "none", background: "none", cursor: "pointer", borderBottom: selectedTab === tab.id ? "3px solid #f97316" : "3px solid transparent", color: selectedTab === tab.id ? "#f97316" : "#6b7280", fontWeight: selectedTab === tab.id ? "600" : "500", fontSize: "14px", transition: "all 0.2s" }} data-testid={`tab-${tab.id}`}>
-            {tab.icon} {tab.label}
+          <button
+            key={tab.id}
+            onClick={() => setSelectedTab(tab.id)}
+            style={{
+              padding: "16px 24px",
+              border: "none",
+              background: selectedTab === tab.id ? "linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%)" : "none",
+              cursor: "pointer",
+              borderBottom: selectedTab === tab.id ? "3px solid #f97316" : "3px solid transparent",
+              color: selectedTab === tab.id ? "#ea580c" : "#6b7280",
+              fontWeight: selectedTab === tab.id ? "600" : "500",
+              fontSize: "14px",
+              transition: "all 0.2s",
+              flex: 1,
+              textAlign: "center"
+            }}
+            data-testid={`tab-${tab.id}`}
+          >
+            <span style={{ marginRight: "6px" }}>{tab.icon}</span>
+            {tab.label}
           </button>
         ))}
       </nav>
@@ -864,6 +924,9 @@ export function CSRImpactReporting() {
 
       {/* Content Area */}
       <div style={{ flex: 1 }}>
+        {/* Executive Summary Tab - Overview with Quick Stats */}
+        {selectedTab === "executive" && (
+          <>
         {/* Timeframe Selector */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -1088,12 +1151,8 @@ export function CSRImpactReporting() {
           </div>
         )}
 
-        {/* Executive Tab */}
-        {selectedTab === "executive" && (
-          <div>
-            <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#111827", marginBottom: "24px" }}>Executive Summary</h2>
-
             {/* Program Health Radar + Trend Charts */}
+            <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#111827", marginBottom: "24px" }}>Executive Summary - Detailed Analysis</h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "24px", marginBottom: "32px" }}>
               {/* Program Health Radar */}
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
@@ -1225,7 +1284,7 @@ export function CSRImpactReporting() {
                 <div style={{ fontSize: "13px", color: "#374151" }}>85% - Based on verified activity data</div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {selectedTab === "impact" && (

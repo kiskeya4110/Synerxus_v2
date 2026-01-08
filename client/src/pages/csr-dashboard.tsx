@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   Home,
+  BarChart2,
   BarChart3,
   Users,
   Briefcase,
@@ -457,6 +458,7 @@ interface CSRDashboardData {
 export default function CSRDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [location, navigate] = useLocation();
+  const searchString = useSearch(); // Track query params for tab navigation
   const { toast } = useToast();
   const userId = localStorage.getItem("currentUserId");
   const [isPending, startTransition] = useTransition();
@@ -485,9 +487,9 @@ export default function CSRDashboard() {
 
   // Handle URL query parameter changes for client-side navigation (sidebar nav)
   // This effect handles tab changes AFTER initial mount (e.g., clicking sidebar links)
-  // Uses startTransition for non-blocking tab updates to keep UI responsive
+  // Uses searchString from wouter to properly detect query param changes
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(searchString);
     const tabParam = urlParams.get('tab');
     const validTabs = ['overview', 'engagement', 'sdgs', 'leaderboard', 'recognition', 'challenges', 'geographic'];
     if (tabParam && validTabs.includes(tabParam)) {
@@ -500,7 +502,7 @@ export default function CSRDashboard() {
         setSelectedMainTab('overview');
       });
     }
-  }, [location]);
+  }, [searchString, location]);
 
   // Mobile detection and PWA tab state
   const [isMobile, setIsMobile] = useState(false);
@@ -6877,54 +6879,249 @@ export default function CSRDashboard() {
           {/* Geographic Impact Tab */}
           {selectedMainTab === "geographic" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease-in-out" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                <Globe style={{ width: "28px", height: "28px", color: "#0891b2" }} />
-                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#164e63" }}>
-                  Geographic Impact
-                </h1>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <Globe style={{ width: "28px", height: "28px", color: "#0891b2" }} />
+                  <div>
+                    <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#164e63", margin: 0 }}>
+                      Geographic Impact
+                    </h1>
+                    <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>
+                      Project locations where your employees are making a difference
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div style={{
-                background: "linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)",
-                padding: "24px",
-                borderRadius: "16px",
-                border: "1px solid rgba(8, 145, 178, 0.2)",
-              }}>
-                <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px" }}>
-                  See where your company's volunteer efforts are making a difference.
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
-                  <div style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    textAlign: "center",
-                    border: "1px solid rgba(8, 145, 178, 0.2)",
-                  }}>
-                    <MapPin style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
-                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Local</div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.6).toLocaleString()} hours</div>
+
+              {/* Stats Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
+                <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", border: "2px solid #3b82f6", textAlign: "center" }}>
+                  <MapPin style={{ width: "24px", height: "24px", color: "#3b82f6", margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e40af" }}>{filteredProjectLocations.length}</div>
+                  <div style={{ fontSize: "12px", color: "#3b82f6", fontWeight: "500" }}>Active Projects</div>
+                </div>
+                <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", border: "2px solid #22c55e", textAlign: "center" }}>
+                  <Users style={{ width: "24px", height: "24px", color: "#22c55e", margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#166534" }}>{filteredProjectLocations.reduce((sum, p) => sum + (p.employees || 0), 0)}</div>
+                  <div style={{ fontSize: "12px", color: "#22c55e", fontWeight: "500" }}>Employees Engaged</div>
+                </div>
+                <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", border: "2px solid #f59e0b", textAlign: "center" }}>
+                  <Clock style={{ width: "24px", height: "24px", color: "#f59e0b", margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#92400e" }}>{filteredProjectLocations.reduce((sum, p) => sum + (p.hours || 0), 0).toLocaleString()}</div>
+                  <div style={{ fontSize: "12px", color: "#f59e0b", fontWeight: "500" }}>Hours Contributed</div>
+                </div>
+                <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", border: "2px solid #8b5cf6", textAlign: "center" }}>
+                  <Globe style={{ width: "24px", height: "24px", color: "#8b5cf6", margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#7c3aed" }}>{new Set(filteredProjectLocations.map(p => p.region).filter(Boolean)).size}</div>
+                  <div style={{ fontSize: "12px", color: "#8b5cf6", fontWeight: "500" }}>Regions Covered</div>
+                </div>
+              </div>
+
+              {/* Map and Filters Container */}
+              <div style={{ backgroundColor: "white", borderRadius: "16px", border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                {/* Map Header with Filters */}
+                <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                    <MapPin style={{ width: "18px", height: "18px", color: "#0891b2" }} />
+                    Project Locations Map
+                  </h3>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                    <select
+                      value={selectedMapRegion}
+                      onChange={(e) => setSelectedMapRegion(e.target.value)}
+                      style={{ padding: "8px 12px", fontSize: "13px", borderRadius: "8px", border: "1px solid #d1d5db", backgroundColor: selectedMapRegion !== "all" ? "#dbeafe" : "white", color: "#374151", cursor: "pointer" }}
+                    >
+                      <option value="all">All Regions</option>
+                      {projectRegions.map((region: string) => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedMapStatus}
+                      onChange={(e) => setSelectedMapStatus(e.target.value)}
+                      style={{ padding: "8px 12px", fontSize: "13px", borderRadius: "8px", border: "1px solid #d1d5db", backgroundColor: selectedMapStatus !== "all" ? "#dbeafe" : "white", color: "#374151", cursor: "pointer" }}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="sponsored">Sponsored</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                    {(selectedMapRegion !== "all" || selectedMapStatus !== "all") && (
+                      <button
+                        onClick={() => { setSelectedMapRegion("all"); setSelectedMapStatus("all"); }}
+                        style={{ padding: "8px 12px", fontSize: "12px", borderRadius: "8px", border: "none", backgroundColor: "#fee2e2", color: "#991b1b", cursor: "pointer", fontWeight: "500" }}
+                      >
+                        Clear Filters
+                      </button>
+                    )}
                   </div>
-                  <div style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    textAlign: "center",
-                    border: "1px solid rgba(8, 145, 178, 0.2)",
-                  }}>
-                    <Building2 style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
-                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Regional</div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.3).toLocaleString()} hours</div>
+                </div>
+
+                {/* Map Legend */}
+                <div style={{ padding: "12px 20px", backgroundColor: "#f8fafc", borderBottom: "1px solid #e5e7eb", display: "flex", gap: "24px", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#374151" }}>
+                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#1e3a8a" }} />
+                    Active ({filteredProjectLocations.filter(p => p.status === "active").length})
                   </div>
-                  <div style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    textAlign: "center",
-                    border: "1px solid rgba(8, 145, 178, 0.2)",
-                  }}>
-                    <Globe style={{ width: "32px", height: "32px", color: "#0891b2", margin: "0 auto 8px" }} />
-                    <div style={{ fontSize: "24px", fontWeight: "700", color: "#0891b2" }}>Global</div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>{Math.round(displayTotalHours * 0.1).toLocaleString()} hours</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#374151" }}>
+                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#f97316" }} />
+                    Sponsored ({filteredProjectLocations.filter(p => p.status === "sponsored").length})
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#374151" }}>
+                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#22c55e" }} />
+                    Completed ({filteredProjectLocations.filter(p => p.status === "completed").length})
+                  </div>
+                </div>
+
+                {/* Map Container */}
+                <div style={{ height: "450px", position: "relative", backgroundColor: "#0f172a" }}>
+                  <LazyErrorBoundary fallback={<MapSkeleton />}>
+                    <Suspense fallback={<MapSkeleton />}>
+                      <LazyGlobalImpactMap projectLocations={filteredProjectLocations} />
+                    </Suspense>
+                  </LazyErrorBoundary>
+                </div>
+              </div>
+
+              {/* Project List Table */}
+              <div style={{ backgroundColor: "white", borderRadius: "16px", border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    Project Locations ({filteredProjectLocations.length})
+                  </h3>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8fafc" }}>
+                        <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>Project Name</th>
+                        <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>Location / Region</th>
+                        <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>Employees</th>
+                        <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>Hours</th>
+                        <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>SDGs</th>
+                        <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#374151", borderBottom: "1px solid #e5e7eb" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProjectLocations.length > 0 ? (
+                        filteredProjectLocations.map((project: any, idx: number) => (
+                          <tr key={project.id || idx} style={{ backgroundColor: idx % 2 === 0 ? "white" : "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                            <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: "500", color: "#111827" }}>{project.name}</td>
+                            <td style={{ padding: "12px 16px", fontSize: "13px", color: "#6b7280" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <MapPin style={{ width: "14px", height: "14px", color: "#9ca3af" }} />
+                                {project.region || "Unknown"}
+                              </div>
+                            </td>
+                            <td style={{ padding: "12px 16px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#166534" }}>{project.employees || 0}</td>
+                            <td style={{ padding: "12px 16px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#92400e" }}>{(project.hours || 0).toLocaleString()}</td>
+                            <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                              <div style={{ display: "flex", gap: "4px", justifyContent: "center", flexWrap: "wrap" }}>
+                                {(project.sdgs || []).slice(0, 3).map((sdg: number) => (
+                                  <span key={sdg} style={{ backgroundColor: "#dbeafe", color: "#1e40af", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "600" }}>
+                                    SDG {sdg}
+                                  </span>
+                                ))}
+                                {(project.sdgs?.length || 0) > 3 && (
+                                  <span style={{ backgroundColor: "#e5e7eb", color: "#6b7280", padding: "2px 6px", borderRadius: "4px", fontSize: "10px" }}>
+                                    +{project.sdgs.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                              <span style={{
+                                padding: "4px 10px",
+                                borderRadius: "12px",
+                                fontSize: "11px",
+                                fontWeight: "600",
+                                textTransform: "capitalize",
+                                backgroundColor: project.status === "active" ? "#dbeafe" : project.status === "sponsored" ? "#ffedd5" : "#d1fae5",
+                                color: project.status === "active" ? "#1e40af" : project.status === "sponsored" ? "#c2410c" : "#166534"
+                              }}>
+                                {project.status || "active"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#9ca3af" }}>
+                            <MapPin style={{ width: "48px", height: "48px", color: "#d1d5db", margin: "0 auto 12px" }} />
+                            <p style={{ margin: 0, fontSize: "14px" }}>No project locations found</p>
+                            <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>Projects will appear here as employees log volunteer activities</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Regional Breakdown */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+                {/* Hours by Region */}
+                <div style={{ backgroundColor: "white", borderRadius: "16px", border: "1px solid #e5e7eb", padding: "20px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <BarChart2 style={{ width: "18px", height: "18px", color: "#0891b2" }} />
+                    Hours by Region
+                  </h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {(() => {
+                      const regionHours: Record<string, number> = {};
+                      filteredProjectLocations.forEach((p: any) => {
+                        const region = p.region || "Unknown";
+                        regionHours[region] = (regionHours[region] || 0) + (p.hours || 0);
+                      });
+                      const maxHours = Math.max(...Object.values(regionHours), 1);
+                      return Object.entries(regionHours)
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 6)
+                        .map(([region, hours], idx) => (
+                          <div key={region}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "13px", color: "#374151" }}>{region}</span>
+                              <span style={{ fontSize: "13px", fontWeight: "600", color: "#0891b2" }}>{hours.toLocaleString()} hrs</span>
+                            </div>
+                            <div style={{ height: "8px", backgroundColor: "#e5e7eb", borderRadius: "4px", overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${(hours / maxHours) * 100}%`, backgroundColor: "#0891b2", borderRadius: "4px" }} />
+                            </div>
+                          </div>
+                        ));
+                    })()}
+                  </div>
+                </div>
+
+                {/* Employees by Region */}
+                <div style={{ backgroundColor: "white", borderRadius: "16px", border: "1px solid #e5e7eb", padding: "20px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Users style={{ width: "18px", height: "18px", color: "#22c55e" }} />
+                    Employees by Region
+                  </h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {(() => {
+                      const regionEmployees: Record<string, number> = {};
+                      filteredProjectLocations.forEach((p: any) => {
+                        const region = p.region || "Unknown";
+                        regionEmployees[region] = (regionEmployees[region] || 0) + (p.employees || 0);
+                      });
+                      const maxEmployees = Math.max(...Object.values(regionEmployees), 1);
+                      return Object.entries(regionEmployees)
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 6)
+                        .map(([region, employees], idx) => (
+                          <div key={region}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "13px", color: "#374151" }}>{region}</span>
+                              <span style={{ fontSize: "13px", fontWeight: "600", color: "#22c55e" }}>{employees} employees</span>
+                            </div>
+                            <div style={{ height: "8px", backgroundColor: "#e5e7eb", borderRadius: "4px", overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${(employees / maxEmployees) * 100}%`, backgroundColor: "#22c55e", borderRadius: "4px" }} />
+                            </div>
+                          </div>
+                        ));
+                    })()}
                   </div>
                 </div>
               </div>

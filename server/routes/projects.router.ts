@@ -473,7 +473,7 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
       .orderBy(desc(projectAiuSettings.createdAt))
       .limit(1);
 
-    // Update AIU settings verification status if they exist
+    // Update or create AIU settings with verification status
     if (aiuSettings) {
       await db
         .update(projectAiuSettings)
@@ -482,6 +482,18 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
           updatedAt: new Date(),
         })
         .where(eq(projectAiuSettings.id, aiuSettings.id));
+    } else {
+      // Create new AIU settings record if none exists
+      await db.insert(projectAiuSettings).values({
+        projectId,
+        verificationStatus: status,
+        sdgIndicator: `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`,
+        kpiBefore: 0,
+        kpiAfter: 0.05,
+        attributionFactor: 0.2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     }
 
     // If lives touched was adjusted, update the project

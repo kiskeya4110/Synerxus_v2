@@ -6,8 +6,9 @@ import { authRateLimiter } from "../middleware/security";
 
 export const usersRouter = Router();
 
-// Preapproved organization emails that don't require invitation codes
+// Preapproved emails that don't require invitation codes
 const PREAPPROVED_EMAILS = [
+  // Organizations
   'idream@operationidream.org',
   'kmumba@operationidream.org',
   'asniabarazar07@gmail.com',
@@ -21,6 +22,10 @@ const PREAPPROVED_EMAILS = [
   'emezil97@gmail.com',
   'mabspro34@gmail.com',
   'mackenroodlacour@gmail.com',
+  // Pre-approved Volunteers
+  'hpare79@gmail.com',
+  'kamzizfr@gmail.com',
+  'alraski@hotmail.com',
 ].map(email => email.toLowerCase());
 
 function isPreapprovedEmail(email: string): boolean {

@@ -526,6 +526,95 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
       notes
     );
 
+    // **CSR Dashboard Integration**: Update employer engagement when AIU is verified
+    // This ensures verified impact flows to CSR corporate dashboards
+    if (status === 'verified' && projectAIU?.volunteers?.length) {
+      try {
+        for (const volunteerData of projectAIU.volunteers) {
+          if (!volunteerData.volunteerId) continue;
+
+          const volunteerProfile = await storage.getVolunteerProfileByUserId(volunteerData.volunteerId);
+          const volunteerUser = await storage.getUser(volunteerData.volunteerId);
+
+          // Find all employer IDs linked to this volunteer (both methods)
+          const linkedEmployerIds = new Set<number>();
+
+          // Method 1: Direct link via volunteerProfile.employerId
+          if (volunteerProfile?.employerId) {
+            const employerIdNum = typeof volunteerProfile.employerId === 'string'
+              ? parseInt(volunteerProfile.employerId)
+              : volunteerProfile.employerId;
+            if (!isNaN(employerIdNum)) {
+              linkedEmployerIds.add(employerIdNum);
+            }
+          }
+
+          // Method 2: Explicit link via volunteerEmployerLinks table
+          if (volunteerProfile?.id) {
+            const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+            const volunteerLinks = employerLinks.filter((link: any) =>
+              link.volunteerId === volunteerProfile.id &&
+              link.verificationStatus !== 'rejected'
+            );
+            volunteerLinks.forEach((link: any) => {
+              if (link.partnerId) {
+                linkedEmployerIds.add(link.partnerId);
+              }
+            });
+          }
+
+          // Create verified output for AIU impact for ALL linked employers
+          if (linkedEmployerIds.size > 0 && volunteerUser?.email) {
+            const allEngagements = (await storage.listEmployeeEngagement()) || [];
+
+            for (const employerIdNum of linkedEmployerIds) {
+              // Ensure employee engagement record exists
+              const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
+                e?.partnerId === employerIdNum &&
+                e?.employeeEmail === volunteerUser.email
+              );
+
+              if (!existing) {
+                // Create employee engagement record if doesn't exist
+                await storage.createEmployeeEngagement({
+                  partnerId: employerIdNum,
+                  employeeEmail: volunteerUser.email,
+                  employeeName: volunteerProfile?.volunteerName || volunteerUser.displayName,
+                  projectId: projectId,
+                  hoursVolunteered: volunteerData.hours || 0,
+                  engagementType: 'vto'
+                });
+              }
+
+              // Create Verified Output for AIU - provides audit trail for CSR
+              await storage.createVerifiedOutput({
+                activityId: null,
+                partnerId: employerIdNum,
+                projectId: projectId,
+                outputType: 'aiu',
+                outputValue: volunteerData.aiu || 0,
+                verificationStatus: 'verified',
+                verifiedBy: user.id,
+                verifiedAt: new Date(),
+                auditTrail: {
+                  action: 'aiu_verified',
+                  description: `AIU verified for ${volunteerUser.displayName || volunteerUser.email}: ${volunteerData.aiu} AIU units`,
+                  timestamp: new Date().toISOString(),
+                  projectName: project.name,
+                  totalProjectAiu: projectAIU?.totalAiu || 0
+                }
+              });
+
+              console.log(`[CSR] Created AIU verified output for ${volunteerUser.email} at employer ${employerIdNum}: ${volunteerData.aiu} AIU`);
+            }
+          }
+        }
+      } catch (csrErr) {
+        console.error("Error updating CSR data for verified AIU:", csrErr);
+        // Non-critical, don't fail the verification
+      }
+    }
+
     // Broadcast update
     broadcastUpdate("aiu_verification", {
       projectId,

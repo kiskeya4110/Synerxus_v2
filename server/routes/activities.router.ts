@@ -935,16 +935,40 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
 
     // **CSR Dashboard Integration**: Create verified output record for approved impacts
     // This ensures impact data flows to CSR dashboards for reporting
+    // Check BOTH linking methods: volunteerProfile.employerId AND volunteerEmployerLinks table
     if (impact.userId && impact.projectId && impact.value) {
       try {
         const volunteerProfile = await storage.getVolunteerProfileByUserId(impact.userId);
 
+        // Find all employer IDs linked to this volunteer (both methods)
+        const linkedEmployerIds = new Set<number>();
+
+        // Method 1: Direct link via volunteerProfile.employerId
         if (volunteerProfile?.employerId) {
           const employerIdNum = typeof volunteerProfile.employerId === 'string'
             ? parseInt(volunteerProfile.employerId)
             : volunteerProfile.employerId;
+          if (!isNaN(employerIdNum)) {
+            linkedEmployerIds.add(employerIdNum);
+          }
+        }
 
-          // Create a verified output record for CSR audit trail
+        // Method 2: Explicit link via volunteerEmployerLinks table
+        if (volunteerProfile?.id) {
+          const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+          const volunteerLinks = employerLinks.filter((link: any) =>
+            link.volunteerId === volunteerProfile.id &&
+            link.verificationStatus !== 'rejected'
+          );
+          volunteerLinks.forEach((link: any) => {
+            if (link.partnerId) {
+              linkedEmployerIds.add(link.partnerId);
+            }
+          });
+        }
+
+        // Create verified output records for ALL linked employers
+        for (const employerIdNum of linkedEmployerIds) {
           await storage.createVerifiedOutput({
             activityId: null, // This is an impact, not an activity
             partnerId: employerIdNum,
@@ -962,7 +986,7 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
             }
           });
 
-          console.log(`[CSR] Created verified output for impact ${impactId} from volunteer ${impact.userId}`);
+          console.log(`[CSR] Created verified output for impact ${impactId} from volunteer ${impact.userId} at employer ${employerIdNum}`);
         }
       } catch (csrErr) {
         console.error("Error creating CSR verified output:", csrErr);

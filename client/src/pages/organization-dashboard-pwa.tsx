@@ -1146,23 +1146,6 @@ export default function OrganizationDashboardPWA() {
                 </button>
               </div>
 
-              {/* SDG Impact Report Quick Access - Moved from Home tab */}
-              <button
-                onClick={() => navigate('/impact-report')}
-                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99] mb-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                    <FileBarChart className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-white font-semibold text-sm">SDG Impact Report</p>
-                    <p className="text-purple-100 text-[10px]">View your UN SDG contributions & metrics</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-white" />
-              </button>
-
               {/* Cards View - SDGs (expandable) */}
               {sdgViewMode === 'cards' && (
                 <div className="space-y-2">

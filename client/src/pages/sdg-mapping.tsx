@@ -20,7 +20,7 @@ import Footer from "@/components/layout/footer";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle, Users, Clock, Globe, Award } from "lucide-react";
+import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle, Users, Clock, Globe, Award, FileBarChart, ChevronRight } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
 import { getSDGName, getSDGColor, suggestSDGsFromText, SDG_GOALS } from "@shared/sdg-goals";
@@ -929,6 +929,23 @@ export default function SDGMapping() {
               </CardContent>
             </Card>
           </div>
+
+          {/* SDG Impact Report Quick Access */}
+          <button
+            onClick={() => navigate('/impact-report')}
+            className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99] mb-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                <FileBarChart className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-semibold text-sm">SDG Impact Report</p>
+                <p className="text-purple-100 text-[10px]">View your UN SDG contributions & metrics</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white" />
+          </button>
 
           {/* SDG Focus Summary - Horizontal scroll */}
           <Card className="mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">

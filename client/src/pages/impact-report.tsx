@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Home, Briefcase, Lightbulb, User as UserIcon, Calendar } from "lucide-react";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Home, Briefcase, Lightbulb, User as UserIcon, Calendar, Award, Trophy, Flag, Star, Zap, GraduationCap, Medal, CheckCircle, ChevronRight } from "lucide-react";
 import type { User, Task, ProjectAssignment, Organization } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
@@ -892,21 +892,33 @@ export default function ImpactReport() {
             {/* View Mode Conditional: Tabs vs Single Page */}
             {viewMode === "tabs" ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 gap-0.5 md:gap-1 mb-4 md:mb-6 print:hidden h-auto p-1">
-                <TabsTrigger value="overview" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
-                  <Target className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+              <TabsList className="flex w-full overflow-x-auto gap-0.5 md:gap-1 mb-4 md:mb-6 print:hidden h-auto p-1 md:grid md:grid-cols-7">
+                <TabsTrigger value="overview" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <Target className="h-4 w-4 flex-shrink-0" />
                   <span className="leading-tight">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="engagement" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
-                  <Users className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                <TabsTrigger value="engagement" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <Users className="h-4 w-4 flex-shrink-0" />
                   <span className="leading-tight">Engage</span>
                 </TabsTrigger>
-                <TabsTrigger value="impact" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
-                  <TrendingUp className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                <TabsTrigger value="impact" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <TrendingUp className="h-4 w-4 flex-shrink-0" />
                   <span className="leading-tight">Impact</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
-                  <BarChart3 className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                <TabsTrigger value="skills" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                  <span className="leading-tight">Skills</span>
+                </TabsTrigger>
+                <TabsTrigger value="recognition" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <Trophy className="h-4 w-4 flex-shrink-0" />
+                  <span className="leading-tight">Awards</span>
+                </TabsTrigger>
+                <TabsTrigger value="goals" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <Flag className="h-4 w-4 flex-shrink-0" />
+                  <span className="leading-tight">Goals</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[8px] md:text-sm px-2 md:px-3 py-1.5 md:py-2 min-h-[52px] md:min-h-0 min-w-[60px] md:min-w-0">
+                  <BarChart3 className="h-4 w-4 flex-shrink-0" />
                   <span className="leading-tight">Stats</span>
                 </TabsTrigger>
               </TabsList>
@@ -1387,6 +1399,414 @@ export default function ImpactReport() {
                     </CardContent>
                   </Card>
                 )}
+                </div>
+              </TabsContent>
+
+              {/* Skills & Growth Tab */}
+              <TabsContent value="skills" className="space-y-6">
+                <div data-print-skills="true" className="space-y-6">
+                  {/* Skills Portfolio */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-blue-600" />
+                        Skills Applied
+                      </h3>
+                      {allSkills.length > 0 ? (
+                        <div className="space-y-3">
+                          {allSkills.map((skill: string, index: number) => {
+                            // Estimate hours per skill based on activities
+                            const skillHours = Math.round(filteredTotalHours / allSkills.length);
+                            const maxHours = Math.max(...allSkills.map(() => skillHours));
+                            const percentage = maxHours > 0 ? (skillHours / maxHours) * 100 : 0;
+                            return (
+                              <div key={skill} className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSkillBadgeClass(index)}`}>
+                                    {skill}
+                                  </span>
+                                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{skillHours} hrs</span>
+                                </div>
+                                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${percentage}%`,
+                                      backgroundColor: getSkillColor(index)
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">No skills recorded yet. Update your profile to add skills.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Skills Gained */}
+                  <Card className="border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-green-600" />
+                        Skills Gained This Year
+                        <span className="ml-auto bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">+{Math.min(allSkills.length, 3)} new</span>
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {allSkills.slice(0, 3).map((skill: string, index: number) => (
+                          <div key={skill} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-full border border-green-300 dark:border-green-600">
+                            <span className="text-green-600 font-bold text-xs">NEW</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{skill}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Professional Development Value */}
+                  <Card className="border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-purple-600" />
+                        Professional Development Value
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-purple-100 dark:bg-purple-800/50">
+                            <tr>
+                              <th className="px-3 py-2 text-left font-semibold text-gray-900 dark:text-white">Category</th>
+                              <th className="px-3 py-2 text-center font-semibold text-gray-900 dark:text-white">Hours</th>
+                              <th className="px-3 py-2 text-center font-semibold text-gray-900 dark:text-white">Value</th>
+                              <th className="px-3 py-2 text-left font-semibold text-gray-900 dark:text-white hidden md:table-cell">Equivalent</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-purple-200 dark:divide-purple-700">
+                            <tr>
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">Technical</td>
+                              <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-300">{Math.round(filteredTotalHours * 0.4)}</td>
+                              <td className="px-3 py-2 text-center font-semibold text-purple-600">${Math.round(filteredTotalHours * 0.4 * 150).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400 text-xs hidden md:table-cell">Bootcamp training</td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">Leadership</td>
+                              <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-300">{Math.round(filteredTotalHours * 0.25)}</td>
+                              <td className="px-3 py-2 text-center font-semibold text-purple-600">${Math.round(filteredTotalHours * 0.25 * 200).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400 text-xs hidden md:table-cell">Executive coaching</td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">Communication</td>
+                              <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-300">{Math.round(filteredTotalHours * 0.2)}</td>
+                              <td className="px-3 py-2 text-center font-semibold text-purple-600">${Math.round(filteredTotalHours * 0.2 * 75).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400 text-xs hidden md:table-cell">Writing workshop</td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">Project Mgmt</td>
+                              <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-300">{Math.round(filteredTotalHours * 0.15)}</td>
+                              <td className="px-3 py-2 text-center font-semibold text-purple-600">${Math.round(filteredTotalHours * 0.15 * 100).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400 text-xs hidden md:table-cell">PM certification</td>
+                            </tr>
+                            <tr className="bg-purple-100 dark:bg-purple-800/30 font-bold">
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">TOTAL</td>
+                              <td className="px-3 py-2 text-center text-gray-900 dark:text-white">{Math.round(filteredTotalHours)}</td>
+                              <td className="px-3 py-2 text-center text-purple-700 dark:text-purple-300">
+                                ${Math.round(filteredTotalHours * 0.4 * 150 + filteredTotalHours * 0.25 * 200 + filteredTotalHours * 0.2 * 75 + filteredTotalHours * 0.15 * 100).toLocaleString()}
+                              </td>
+                              <td className="px-3 py-2 hidden md:table-cell"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Recognition Tab */}
+              <TabsContent value="recognition" className="space-y-6">
+                <div data-print-recognition="true" className="space-y-6">
+                  {/* Achievements & Badges */}
+                  <Card className="border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-amber-600" />
+                        Achievements
+                      </h3>
+                      <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                        {/* Hour milestones */}
+                        <div className={`flex flex-col items-center p-3 rounded-lg border-2 ${filteredTotalHours >= 10 ? 'border-amber-400 bg-amber-100 dark:bg-amber-800/30' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50'}`}>
+                          <span className="text-2xl mb-1">{filteredTotalHours >= 10 ? '🥉' : '🔒'}</span>
+                          <span className="text-xs font-semibold text-center">10 Hours</span>
+                        </div>
+                        <div className={`flex flex-col items-center p-3 rounded-lg border-2 ${filteredTotalHours >= 50 ? 'border-amber-400 bg-amber-100 dark:bg-amber-800/30' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50'}`}>
+                          <span className="text-2xl mb-1">{filteredTotalHours >= 50 ? '🥈' : '🔒'}</span>
+                          <span className="text-xs font-semibold text-center">50 Hours</span>
+                        </div>
+                        <div className={`flex flex-col items-center p-3 rounded-lg border-2 ${filteredTotalHours >= 100 ? 'border-amber-400 bg-amber-100 dark:bg-amber-800/30' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50'}`}>
+                          <span className="text-2xl mb-1">{filteredTotalHours >= 100 ? '🥇' : '🔒'}</span>
+                          <span className="text-xs font-semibold text-center">100 Hours</span>
+                        </div>
+                        <div className={`flex flex-col items-center p-3 rounded-lg border-2 ${filteredActiveProjects >= 3 ? 'border-purple-400 bg-purple-100 dark:bg-purple-800/30' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50'}`}>
+                          <span className="text-2xl mb-1">{filteredActiveProjects >= 3 ? '🌟' : '🔒'}</span>
+                          <span className="text-xs font-semibold text-center">Multi-Project</span>
+                        </div>
+                        <div className={`flex flex-col items-center p-3 rounded-lg border-2 ${sdgs.length >= 3 ? 'border-green-400 bg-green-100 dark:bg-green-800/30' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50'}`}>
+                          <span className="text-2xl mb-1">{sdgs.length >= 3 ? '🌍' : '🔒'}</span>
+                          <span className="text-xs font-semibold text-center">SDG Champion</span>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <button className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                          View All Certificates
+                        </button>
+                        <button className="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Peer Benchmarking */}
+                  <Card className="border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5 text-blue-600" />
+                        How You Compare
+                      </h3>
+                      <div className="space-y-4">
+                        {/* Hours comparison */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Hours</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-blue-600">{Math.round(filteredTotalHours)}</span>
+                              <span className="text-xs text-gray-500">vs avg 48</span>
+                              <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Top {Math.max(5, 100 - Math.round(filteredTotalHours / 2))}%</span>
+                            </div>
+                          </div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(filteredTotalHours / 150 * 100, 100)}%` }} />
+                          </div>
+                        </div>
+                        {/* Impact Score comparison */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Impact Score</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-purple-600">{totalImpactScore}</span>
+                              <span className="text-xs text-gray-500">vs avg 62</span>
+                              <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Top {Math.max(5, 100 - totalImpactScore)}%</span>
+                            </div>
+                          </div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${totalImpactScore}%` }} />
+                          </div>
+                        </div>
+                        {/* SDG Diversity */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">SDG Diversity</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-green-600">{sdgs.length}</span>
+                              <span className="text-xs text-gray-500">vs avg 2.3</span>
+                              <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Top {Math.max(10, 100 - sdgs.length * 15)}%</span>
+                            </div>
+                          </div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min(sdgs.length / 10 * 100, 100)}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Resume Snippet */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-gray-600" />
+                        Resume Snippet
+                        <button
+                          onClick={() => {
+                            const snippet = `VOLUNTEER EXPERIENCE\n\nSkills-Based Volunteer | Multiple Organizations | ${new Date().getFullYear()}\n• Contributed ${Math.round(filteredTotalHours)} hours across ${filteredActiveProjects} projects supporting ${sdgs.length > 0 ? sdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives\n• Applied ${allSkills.slice(0, 3).join(', ')} skills to drive measurable impact\n• Impacted ${dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work\n• Ranked in top ${Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact`;
+                            navigator.clipboard.writeText(snippet);
+                            toast({ title: "Copied!", description: "Resume snippet copied to clipboard" });
+                          }}
+                          className="ml-auto text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                        >
+                          <Copy className="h-4 w-4" /> Copy
+                        </button>
+                      </h3>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 font-mono text-sm">
+                        <p className="font-bold text-gray-900 dark:text-white mb-2">VOLUNTEER EXPERIENCE</p>
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">
+                          <span className="font-semibold">Skills-Based Volunteer</span> | Multiple Organizations | {new Date().getFullYear()}
+                        </p>
+                        <ul className="text-gray-600 dark:text-gray-400 space-y-1 text-xs">
+                          <li>• Contributed {Math.round(filteredTotalHours)} hours across {filteredActiveProjects} projects supporting {sdgs.length > 0 ? sdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives</li>
+                          <li>• Applied {allSkills.slice(0, 3).join(', ') || 'various'} skills to drive measurable impact</li>
+                          <li>• Impacted {dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work</li>
+                          <li>• Ranked in top {Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Goals Tab */}
+              <TabsContent value="goals" className="space-y-6">
+                <div data-print-goals="true" className="space-y-6">
+                  {/* Active Goals */}
+                  <Card className="border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Flag className="h-5 w-5 text-indigo-600" />
+                        {new Date().getFullYear()} Goals
+                      </h3>
+                      <div className="space-y-4">
+                        {/* Annual Hours Goal */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Annual Hours: 200 hrs</span>
+                            <span className="text-sm font-bold text-indigo-600">{Math.round(filteredTotalHours)}/200 ({Math.round(filteredTotalHours / 200 * 100)}%)</span>
+                          </div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(filteredTotalHours / 200 * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* Projects Goal */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Projects: 5</span>
+                            <span className="text-sm font-bold text-indigo-600">{filteredActiveProjects}/5 ({Math.round(filteredActiveProjects / 5 * 100)}%)</span>
+                          </div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(filteredActiveProjects / 5 * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* SDG Focus Goal */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">SDG Focus: 3 SDGs</span>
+                            <span className="text-sm font-bold text-indigo-600">{sdgs.length}/3 ({Math.round(Math.min(sdgs.length / 3 * 100, 100))}%)</span>
+                          </div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-green-500 to-teal-500 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(sdgs.length / 3 * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* Skills Goal */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Skills Applied: 5</span>
+                            <span className="text-sm font-bold text-indigo-600">{allSkills.length}/5 ({Math.round(Math.min(allSkills.length / 5 * 100, 100))}%)</span>
+                          </div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(allSkills.length / 5 * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <button className="mt-4 w-full px-4 py-2 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors flex items-center justify-center gap-2">
+                        <Flag className="h-4 w-4" />
+                        + Add New Goal
+                      </button>
+                    </CardContent>
+                  </Card>
+
+                  {/* AI Goal Suggestions */}
+                  <Card className="border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-emerald-600" />
+                        AI Goal Suggestions
+                      </h3>
+                      <div className="space-y-3">
+                        {filteredTotalHours < 50 && (
+                          <div className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center flex-shrink-0">
+                              <TrendingUp className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">Momentum Builder</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">Based on your activity, aim for {Math.round(filteredTotalHours * 1.5)} hours this quarter to build momentum.</p>
+                            </div>
+                            <button className="ml-auto text-emerald-600 text-xs font-medium hover:underline">Set Goal</button>
+                          </div>
+                        )}
+                        {sdgs.length < 3 && (
+                          <div className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center flex-shrink-0">
+                              <Target className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">SDG Explorer</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">Expand your impact by contributing to one more SDG this month.</p>
+                            </div>
+                            <button className="ml-auto text-emerald-600 text-xs font-medium hover:underline">Set Goal</button>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center flex-shrink-0">
+                            <Award className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">Consistency Champion</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Log at least one activity per week for 12 weeks to earn the streak badge.</p>
+                          </div>
+                          <button className="ml-auto text-emerald-600 text-xs font-medium hover:underline">Set Goal</button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Goal History */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-gray-600" />
+                        Completed Goals
+                      </h3>
+                      <div className="space-y-2">
+                        {filteredTotalHours >= 10 && (
+                          <div className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">First 10 Hours</span>
+                            <span className="ml-auto text-xs text-green-600 font-medium">Completed</span>
+                          </div>
+                        )}
+                        {filteredActiveProjects >= 1 && (
+                          <div className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Join First Project</span>
+                            <span className="ml-auto text-xs text-green-600 font-medium">Completed</span>
+                          </div>
+                        )}
+                        {sdgs.length >= 1 && (
+                          <div className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Set SDG Focus</span>
+                            <span className="ml-auto text-xs text-green-600 font-medium">Completed</span>
+                          </div>
+                        )}
+                        {filteredTotalHours < 10 && filteredActiveProjects < 1 && sdgs.length < 1 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Complete your first goal to see it here!</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 

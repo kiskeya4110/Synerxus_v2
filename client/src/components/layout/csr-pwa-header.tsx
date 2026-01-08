@@ -211,8 +211,8 @@ export default function CSRPWAHeader({
             <img
               src={logoUrl}
               alt="Synerxus"
-              className="h-8 w-auto"
-              style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
+              className="h-8 w-auto object-contain"
+              style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))", objectFit: 'contain', maxWidth: '150px' }}
             />
           </button>
 

@@ -277,12 +277,13 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           {/* Logo - Site approved logo */}
           <button
             onClick={() => navigate('/landing')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0"
           >
             <img
               src={logoUrl}
               alt="Synerxus"
               className="h-10 w-auto object-contain"
+              style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '160px' }}
             />
           </button>
 

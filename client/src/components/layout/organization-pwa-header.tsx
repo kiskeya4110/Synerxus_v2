@@ -265,7 +265,8 @@ export default function OrganizationPWAHeader({
         <img
           src={logoUrl}
           alt="Synerxus"
-          className="h-10 object-contain cursor-pointer flex-shrink-0"
+          className="h-10 w-auto object-contain cursor-pointer flex-shrink-0"
+          style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '160px' }}
           onClick={() => navigate('/landing')}
         />
 

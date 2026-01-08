@@ -95,25 +95,35 @@ export function ProjectCoverUpload({
   };
 
   const uploadImage = async (file: File) => {
+    // Store old path to delete AFTER successful upload (prevents data loss on upload failure)
+    const oldStoragePath = storagePath;
+
     try {
       setIsUploading(true);
 
-      // Delete old cover if exists
-      if (storagePath) {
-        try {
-          await deleteFile(storagePath);
-        } catch (delErr) {
-          console.warn("Could not delete old cover:", delErr);
-        }
-      }
-
-      // Upload new cover with timeout
+      // Upload new cover first (before deleting old one)
+      console.log("[ProjectCoverUpload] Uploading cover for project:", projectId);
       const uploadPromise = uploadProjectCover(file, projectId);
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Upload timeout. Please try again.")), 30000)
       );
 
       const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+
+      if (!result || !result.url) {
+        throw new Error("Upload failed - no URL returned");
+      }
+
+      // Upload succeeded - now safe to delete old cover
+      if (oldStoragePath) {
+        try {
+          console.log("[ProjectCoverUpload] Deleting old cover:", oldStoragePath);
+          await deleteFile(oldStoragePath);
+        } catch (delErr) {
+          // Non-critical: old file cleanup failed, but new upload succeeded
+          console.warn("[ProjectCoverUpload] Could not delete old cover:", delErr);
+        }
+      }
 
       setCoverUrl(result.url);
       setStoragePath(result.path);
@@ -124,7 +134,7 @@ export function ProjectCoverUpload({
         description: "Project cover image has been updated."
       });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error("[ProjectCoverUpload] Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload cover. Please try again.",

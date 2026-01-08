@@ -35,6 +35,24 @@ const upload = multer({
   },
 });
 
+// Multer error handling middleware
+function handleMulterError(err: any, req: Request, res: Response, next: Function) {
+  if (err instanceof multer.MulterError) {
+    // Multer-specific errors
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        message: `File too large. Maximum size is ${IMAGE_CONFIG.MAX_FILE_SIZE / (1024 * 1024)}MB`
+      });
+    }
+    return res.status(400).json({ message: `Upload error: ${err.message}` });
+  } else if (err) {
+    // Other errors (including file validation errors)
+    logger.error("[Storage] Upload error:", err);
+    return res.status(400).json({ message: err.message || "File upload failed" });
+  }
+  next();
+}
+
 /**
  * POST /upload - File upload endpoint with image processing
  *
@@ -61,7 +79,7 @@ const upload = multer({
  *   - isOptimized: boolean - Whether image was optimized
  *   - message: string - Success message
  */
-storageRouter.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
+storageRouter.post("/upload", upload.single("file"), handleMulterError, async (req: Request, res: Response) => {
   try {
     const pathParam = req.query.path as string;
 
@@ -72,15 +90,21 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
     // Security: Require authentication for uploads
     if (!req.user) {
       logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}`);
-      return res.status(401).json({ message: "Authentication required for file uploads" });
+      return res.status(401).json({
+        message: "Authentication required for file uploads. Please sign in again.",
+        code: "AUTH_REQUIRED"
+      });
     }
+
+    logger.info(`[Storage] Upload request from user ${req.user.id} for path: ${pathParam}`);
 
     // Parse options from query
     const imageType = (req.query.imageType as ImageType) || "profile";
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+    // Use authenticated user's ID by default for proper file ownership tracking
+    const userId = req.query.userId ? parseInt(req.query.userId as string) : req.user.id;
     const organizationId = req.query.organizationId
       ? parseInt(req.query.organizationId as string)
-      : undefined;
+      : req.user.organizationId || undefined;
     const generateThumbnail = req.query.generateThumbnail !== "false";
 
     // Security: Validate user ownership - users can only upload for themselves
@@ -90,7 +114,7 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
     }
 
     // Security: Validate organization ownership - users can only upload for their own organization
-    if (organizationId && req.user.organizationId !== organizationId) {
+    if (organizationId && req.user.organizationId && req.user.organizationId !== organizationId) {
       logger.warn(`[Storage] User ${req.user.id} (org: ${req.user.organizationId}) attempted upload for org ${organizationId}`);
       return res.status(403).json({ message: "Cannot upload files for other organizations" });
     }
@@ -108,6 +132,8 @@ storageRouter.post("/upload", upload.single("file"), async (req: Request, res: R
         organizationId,
         generateThumbnail,
       };
+
+      logger.info(`[Storage] Processing ${imageType} image for user ${userId}`);
 
       const processed = await processImage(req.file.buffer, options);
 
@@ -171,16 +197,24 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
     }
 
     // Security: Validate the file belongs to the user/org
-    // Files are stored with user/org identifiers in path (e.g., profiles/profile-123-xxx.jpg)
+    // Files are stored with user/org identifiers in path
+    // Format: profiles/profile-u{userId}-{timestamp}-{random}.jpg or profile-o{orgId}-{timestamp}-{random}.jpg
     const pathLower = filePath.toLowerCase();
     const isOwnFile =
-      pathLower.includes(`-${req.user.id}-`) ||
-      (req.user.organizationId && pathLower.includes(`org-${req.user.organizationId}`));
+      pathLower.includes(`-u${req.user.id}-`) ||  // User ID format: -u123-
+      pathLower.includes(`-${req.user.id}-`) ||   // Legacy format: -123-
+      pathLower.includes(`/${req.user.id}-`) ||   // Path-based format: /123-
+      (req.user.organizationId && (
+        pathLower.includes(`-o${req.user.organizationId}-`) ||  // Org ID format: -o456-
+        pathLower.includes(`org-${req.user.organizationId}`)     // Legacy org format
+      ));
 
     if (!isOwnFile) {
-      logger.warn(`[Storage] User ${req.user.id} attempted to delete file: ${filePath}`);
+      logger.warn(`[Storage] User ${req.user.id} attempted to delete file they don't own: ${filePath}`);
       return res.status(403).json({ message: "Cannot delete files belonging to other users" });
     }
+
+    logger.info(`[Storage] User ${req.user.id} deleting file: ${filePath}`);
 
     const deleted = await deleteImage(filePath);
 

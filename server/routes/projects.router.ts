@@ -567,7 +567,7 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
           if (linkedEmployerIds.size > 0 && volunteerUser?.email) {
             const allEngagements = (await storage.listEmployeeEngagement()) || [];
 
-            for (const employerIdNum of linkedEmployerIds) {
+            for (const employerIdNum of Array.from(linkedEmployerIds)) {
               // Ensure employee engagement record exists
               const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
                 e?.partnerId === employerIdNum &&

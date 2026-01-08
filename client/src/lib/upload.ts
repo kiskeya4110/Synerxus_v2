@@ -14,25 +14,37 @@ async function getAuthToken(): Promise<string | null> {
     const user = auth.currentUser;
     if (user) {
       // Get fresh ID token (Firebase automatically refreshes expired tokens)
-      return await user.getIdToken();
+      // Force refresh to ensure token is not expired
+      const token = await user.getIdToken(true);
+      console.log('[Upload] Got Firebase auth token for user:', user.email);
+      return token;
     } else {
+      console.log('[Upload] No current user, waiting for auth state...');
       // If no current user, wait briefly for auth state to initialize
       // This handles race conditions where upload is triggered before auth state is ready
       return new Promise((resolve) => {
         const unsubscribe = auth.onAuthStateChanged((authUser) => {
           unsubscribe();
           if (authUser) {
-            authUser.getIdToken().then(resolve).catch(() => resolve(null));
+            console.log('[Upload] Auth state resolved, getting token for:', authUser.email);
+            authUser.getIdToken(true).then(resolve).catch((err) => {
+              console.error('[Upload] Failed to get token after auth state change:', err);
+              resolve(null);
+            });
           } else {
+            console.log('[Upload] No user after auth state change');
             resolve(null);
           }
         });
-        // Timeout after 2 seconds
-        setTimeout(() => resolve(null), 2000);
+        // Timeout after 3 seconds (increased from 2)
+        setTimeout(() => {
+          console.log('[Upload] Auth token timeout - no user authenticated');
+          resolve(null);
+        }, 3000);
       });
     }
   } catch (error) {
-    console.error("Error getting auth token:", error);
+    console.error("[Upload] Error getting auth token:", error);
   }
   return null;
 }
@@ -46,6 +58,8 @@ async function getAuthToken(): Promise<string | null> {
  */
 export async function uploadFile(file: File, path: string, imageType?: string): Promise<UploadResult> {
   try {
+    console.log('[Upload] Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type);
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -55,10 +69,14 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
     }
 
     // Get Firebase ID token for secure authentication
+    console.log('[Upload] Getting auth token...');
     const token = await getAuthToken();
     if (!token) {
+      console.error('[Upload] No auth token available');
       throw new Error('Authentication required. Please sign in again and try uploading.');
     }
+    console.log('[Upload] Auth token obtained, proceeding with upload...');
+
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`,
     };
@@ -70,18 +88,38 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
       credentials: 'include',
     });
 
+    console.log('[Upload] Response status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `Upload failed: ${response.statusText}`);
+      let errorMessage = `Upload failed: ${response.statusText}`;
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+        console.error('[Upload] Server error:', error);
+      } catch (e) {
+        console.error('[Upload] Could not parse error response');
+      }
+
+      // Provide more specific error messages
+      if (response.status === 401) {
+        throw new Error('Session expired. Please refresh the page and try again.');
+      } else if (response.status === 403) {
+        throw new Error('You do not have permission to upload this file.');
+      } else if (response.status === 400) {
+        throw new Error(errorMessage);
+      }
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
+    console.log('[Upload] Upload successful:', result.url);
+
     return {
       url: result.url,
       path: result.path,
     };
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('[Upload] Error uploading file:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
   }
 }

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Target, AlertTriangle, Lightbulb, TrendingUp, Sparkles, Users, Clock, FolderOpen, Award, ChevronRight, CheckCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AIInsight {
   id: string;
@@ -38,6 +39,7 @@ interface AIInsightsModalProps {
   isOpen: boolean;
   onClose: () => void;
   organizationId: number;
+  userId?: number;
   dashboardData?: any;
   orgProfile?: any;
 }
@@ -234,23 +236,97 @@ const priorityColors = {
   low: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-100 text-green-700' },
 };
 
-export default function AIInsightsModal({ isOpen, onClose, organizationId, dashboardData, orgProfile }: AIInsightsModalProps) {
+export default function AIInsightsModal({ isOpen, onClose, organizationId, userId, dashboardData, orgProfile }: AIInsightsModalProps) {
   const { toast } = useToast();
   const [isApplying, setIsApplying] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const queryClient = useQueryClient();
 
   // Generate insights from available data
   const insights = generateInsights(dashboardData, orgProfile);
 
+  // Mutation to apply all recommendations
+  const applyRecommendationsMutation = useMutation({
+    mutationFn: async () => {
+      // Gather all recommendations to apply
+      const allRecommendations = [
+        ...insights.challenges.map(c => ({ ...c, category: 'challenge' })),
+        ...insights.recommendations.map(r => ({ ...r, category: 'recommendation' })),
+        ...insights.opportunities.map(o => ({ ...o, category: 'opportunity' })),
+      ];
+
+      // Get userId from localStorage if not provided
+      const effectiveUserId = userId || parseInt(localStorage.getItem('currentUserId') || '0');
+
+      return apiRequest("POST", "/api/ai-recommendations/bulk-apply", {
+        organizationId,
+        userId: effectiveUserId,
+        recommendations: allRecommendations,
+        metrics: insights.metrics,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-recommendations', organizationId] });
+      toast({
+        title: "Recommendations Applied!",
+        description: "Your preferences have been saved. We'll tailor future suggestions based on your choices.",
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to apply recommendations",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to dismiss insights
+  const dismissInsightsMutation = useMutation({
+    mutationFn: async () => {
+      const effectiveUserId = userId || parseInt(localStorage.getItem('currentUserId') || '0');
+
+      return apiRequest("POST", "/api/ai-recommendations/dismiss", {
+        organizationId,
+        userId: effectiveUserId,
+        recommendationId: 'session_dismiss',
+        category: 'session',
+        title: 'Session Dismissed',
+        description: 'User dismissed all insights for this session',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-recommendations', organizationId] });
+      toast({
+        title: "Insights Dismissed",
+        description: "You can view these recommendations again anytime from the AI Insights panel.",
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      // Still close on error, just show warning
+      console.error("Error dismissing insights:", error);
+      onClose();
+    },
+  });
+
   const handleApplyRecommendations = async () => {
     setIsApplying(true);
-    // Simulate applying recommendations
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsApplying(false);
-    toast({
-      title: "Recommendations Applied!",
-      description: "We've noted your preferences and will tailor future suggestions.",
-    });
-    onClose();
+    try {
+      await applyRecommendationsMutation.mutateAsync();
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleDismiss = async () => {
+    setIsDismissing(true);
+    try {
+      await dismissInsightsMutation.mutateAsync();
+    } finally {
+      setIsDismissing(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -487,14 +563,22 @@ export default function AIInsightsModal({ isOpen, onClose, organizationId, dashb
           <Button
             variant="outline"
             className="flex-1"
-            onClick={onClose}
+            onClick={handleDismiss}
+            disabled={isDismissing}
           >
-            Dismiss
+            {isDismissing ? (
+              <>
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                Dismissing...
+              </>
+            ) : (
+              "Dismiss"
+            )}
           </Button>
           <Button
             className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
             onClick={handleApplyRecommendations}
-            disabled={isApplying}
+            disabled={isApplying || isDismissing}
           >
             {isApplying ? (
               <>

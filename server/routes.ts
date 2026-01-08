@@ -73,6 +73,7 @@ import { aiuRouter } from "./routes/aiu.router";
 import { invitationCodesRouter } from "./routes/invitation-codes.router";
 import { calculateOrganizationAIU } from "./aiu-service";
 import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
+import { aiRecommendationsRouter } from "./routes/ai-recommendations.router";
 import uptimeMonitor from "./services/uptime-monitor";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
@@ -381,6 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
   app.use("/api", storiesRouter); // Handles /stories and story likes
+  app.use("/api", aiRecommendationsRouter); // Handles /ai-recommendations for Apply/Dismiss AI insights
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime
   app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform
 

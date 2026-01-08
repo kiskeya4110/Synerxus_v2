@@ -1555,6 +1555,44 @@ export type StoryLike = typeof storyLikes.$inferSelect;
 export type InsertStoryLike = z.infer<typeof insertStoryLikeSchema>;
 
 // =====================================================
+// AI Recommendations Schema
+// =====================================================
+
+// AI Recommendations - Track accepted/dismissed AI insights for organizations
+export const aiRecommendations = pgTable("ai_recommendations", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(), // Who made the decision
+  recommendationId: text("recommendation_id").notNull(), // Unique ID from generated insights (e.g., 'rec1', 'ch1', 'opp1')
+  recommendationType: text("recommendation_type").notNull(), // 'challenge', 'recommendation', 'opportunity'
+  title: text("title").notNull(),
+  description: text("description"),
+  relatedSDGs: integer("related_sdgs").array(),
+  priority: text("priority"), // 'high', 'medium', 'low'
+  projectedImpact: text("projected_impact"),
+  actionLabel: text("action_label"),
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'dismissed', 'implemented'
+  acceptedAt: timestamp("accepted_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  implementedAt: timestamp("implemented_at"),
+  implementationNotes: text("implementation_notes"),
+  metrics: jsonb("metrics"), // Store any metrics snapshot at time of decision
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schema for AI recommendations
+export const insertAIRecommendationSchema = createInsertSchema(aiRecommendations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for AI recommendations
+export type AIRecommendation = typeof aiRecommendations.$inferSelect;
+export type InsertAIRecommendation = z.infer<typeof insertAIRecommendationSchema>;
+
+// =====================================================
 // Claude Code Conversations Schema
 // =====================================================
 

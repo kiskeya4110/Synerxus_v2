@@ -178,6 +178,25 @@ export default function OrganizationImpactReport() {
     enabled: !!currentUser?.organizationId,
   });
 
+  // Fetch organization profile for common name (public-facing name)
+  const { data: orgProfile } = useQuery<any>({
+    queryKey: ["/api/profile/organization", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(
+        `/api/profile/organization/${currentUser.organizationId}`,
+      );
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
+  // Get the best display name for the organization:
+  // 1. Common name from profile (public-facing name)
+  // 2. Organization name from main record
+  // 3. Fallback to "Your Organization"
+  const displayOrganizationName = orgProfile?.commonName || organization?.name || "Your Organization";
+
   // Fetch all users (needed for volunteer names in impact leader)
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
@@ -509,7 +528,7 @@ export default function OrganizationImpactReport() {
     setTimeout(() => {
       const opt = {
         margin: 10,
-        filename: `Organization_Impact_Report_${organization?.name || "Report"}_${new Date().getTime()}.pdf`,
+        filename: `Organization_Impact_Report_${displayOrganizationName.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
@@ -525,7 +544,7 @@ export default function OrganizationImpactReport() {
   };
 
   const handleShareSocial = (platform: "twitter" | "linkedin" | "facebook") => {
-    const text = `Check out ${organization?.name || "our"} Impact Report! We've served ${beneficiariesServed.toLocaleString()} beneficiaries and mobilized ${activeVolunteers} volunteers.`;
+    const text = `Check out ${displayOrganizationName} Impact Report! We've served ${beneficiariesServed.toLocaleString()} beneficiaries and mobilized ${activeVolunteers} volunteers.`;
     const url = shareUrl;
     const encodedUrl = encodeURIComponent(url);
     const encodedText = encodeURIComponent(text);
@@ -1194,7 +1213,7 @@ export default function OrganizationImpactReport() {
                 </div>
 
                 <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1 print:text-2xl">
-                  {organization?.name || "Your Organization"}
+                  {displayOrganizationName}
                 </p>
 
                 <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
@@ -1546,7 +1565,7 @@ export default function OrganizationImpactReport() {
                       sdgs: Array.from(sdgHoursMap.keys()),
                       projects: totalProjects,
                       reportType: "organization",
-                      organizationName: organization?.name,
+                      organizationName: displayOrganizationName,
                     }}
                     title="Executive Summary"
                   />

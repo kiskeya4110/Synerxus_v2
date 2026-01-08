@@ -700,18 +700,44 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
 
     // **CSR Dashboard KPI Tracking**: Update employee engagement when activity is approved
     // This ensures verified hours flow to CSR corporate dashboards
+    // Check BOTH linking methods: volunteerProfile.employerId AND volunteerEmployerLinks table
     if (activity.userId && activity.hours) {
       try {
         const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
+        const user = await storage.getUser(activity.userId);
 
+        // Find all employer IDs linked to this volunteer (both methods)
+        const linkedEmployerIds = new Set<number>();
+
+        // Method 1: Direct link via volunteerProfile.employerId
         if (volunteerProfile?.employerId) {
-          const user = await storage.getUser(activity.userId);
-          if (user?.email) {
-            const allEngagements = (await storage.listEmployeeEngagement()) || [];
-            const employerIdNum = typeof volunteerProfile.employerId === 'string'
-              ? parseInt(volunteerProfile.employerId)
-              : volunteerProfile.employerId;
+          const employerIdNum = typeof volunteerProfile.employerId === 'string'
+            ? parseInt(volunteerProfile.employerId)
+            : volunteerProfile.employerId;
+          if (!isNaN(employerIdNum)) {
+            linkedEmployerIds.add(employerIdNum);
+          }
+        }
 
+        // Method 2: Explicit link via volunteerEmployerLinks table
+        if (volunteerProfile?.id) {
+          const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+          const volunteerLinks = employerLinks.filter((link: any) =>
+            link.volunteerId === volunteerProfile.id &&
+            link.verificationStatus !== 'rejected'
+          );
+          volunteerLinks.forEach((link: any) => {
+            if (link.partnerId) {
+              linkedEmployerIds.add(link.partnerId);
+            }
+          });
+        }
+
+        // Update employee engagement for ALL linked employers
+        if (linkedEmployerIds.size > 0 && user?.email) {
+          const allEngagements = (await storage.listEmployeeEngagement()) || [];
+
+          for (const employerIdNum of linkedEmployerIds) {
             const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
               e?.partnerId === employerIdNum &&
               e?.employeeEmail === user.email
@@ -728,7 +754,7 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
               await storage.createEmployeeEngagement({
                 partnerId: employerIdNum,
                 employeeEmail: user.email,
-                employeeName: volunteerProfile.volunteerName || user.displayName,
+                employeeName: volunteerProfile?.volunteerName || user.displayName,
                 projectId: activity.projectId,
                 hoursVolunteered: activity.hours,
                 engagementType: 'vto'
@@ -778,8 +804,15 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
               }
             }
 
-            console.log(`[CSR] Updated employee engagement for ${user.email} with ${activity.hours}h verified hours`);
+            console.log(`[CSR] Updated employee engagement for ${user.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
           }
+        }
+
+        // **Update Volunteer Profile Metrics**: Track total verified hours on volunteer's profile
+        if (volunteerProfile?.id) {
+          // Note: If you want to track total hours on volunteer profile, add a totalVerifiedHours field
+          // For now, we ensure the leaderboard stats are updated via the existing activity records
+          console.log(`[Volunteer] Activity ${activityId} approved for volunteer profile ${volunteerProfile.id}`);
         }
       } catch (csrErr) {
         console.error("Error updating CSR employee engagement:", csrErr);

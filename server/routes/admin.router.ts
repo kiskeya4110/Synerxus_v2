@@ -820,3 +820,344 @@ adminRouter.post("/organizations/:orgId/approval", async (req: Request, res: Res
     res.status(500).json({ message: "Failed to update organization approval" });
   }
 });
+
+// ===== VOLUNTEER-EMPLOYER LINKING UTILITIES =====
+
+/**
+ * GET /admin/diagnose-volunteer-employer
+ * Diagnose volunteer-employer linking issues
+ * Query params:
+ *   - volunteerName: Name to search for (partial match)
+ *   - volunteerEmail: Email to search for
+ *   - employerName: Employer/CSR partner name to search for
+ */
+adminRouter.get("/admin/diagnose-volunteer-employer", async (req: Request, res: Response) => {
+  try {
+    const { volunteerName, volunteerEmail, employerName } = req.query;
+
+    const users = await storage.listUsers();
+    const volunteerProfiles = await storage.listVolunteerProfiles();
+    const csrPartners = await storage.listCSRPartners?.() || [];
+    const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+    const activities = await storage.listVolunteerActivities();
+    const engagements = await storage.listEmployeeEngagement?.() || [];
+
+    // Find volunteer
+    let matchedUsers: any[] = [];
+    let matchedProfiles: any[] = [];
+
+    if (volunteerName) {
+      const searchName = (volunteerName as string).toLowerCase();
+      matchedUsers = users.filter((u: any) =>
+        u.displayName?.toLowerCase().includes(searchName) ||
+        u.email?.toLowerCase().includes(searchName)
+      );
+      matchedProfiles = volunteerProfiles.filter((vp: any) =>
+        vp.volunteerName?.toLowerCase().includes(searchName)
+      );
+    }
+
+    if (volunteerEmail) {
+      const searchEmail = (volunteerEmail as string).toLowerCase();
+      matchedUsers = users.filter((u: any) =>
+        u.email?.toLowerCase() === searchEmail
+      );
+    }
+
+    // Find employer
+    let matchedEmployers: any[] = [];
+    if (employerName) {
+      const searchEmployer = (employerName as string).toLowerCase();
+      matchedEmployers = csrPartners.filter((p: any) =>
+        p.companyName?.toLowerCase().includes(searchEmployer)
+      );
+    }
+
+    // Compile diagnostic info
+    const diagnostics: any[] = [];
+
+    for (const user of matchedUsers) {
+      const profile = volunteerProfiles.find((vp: any) => vp.userId === user.id);
+      const userActivities = activities.filter((a: any) => a.userId === user.id);
+      const approvedActivities = userActivities.filter((a: any) =>
+        a.verificationStatus?.toLowerCase() === 'approved' ||
+        a.verificationStatus?.toLowerCase() === 'verified'
+      );
+
+      // Check employer linkage
+      let linkedEmployers: any[] = [];
+
+      // Method 1: Direct link via employerId
+      if (profile?.employerId) {
+        const employer = csrPartners.find((p: any) => p.id === profile.employerId);
+        if (employer) {
+          linkedEmployers.push({
+            method: 'volunteerProfile.employerId',
+            partnerId: profile.employerId,
+            companyName: employer.companyName,
+            status: 'active'
+          });
+        }
+      }
+
+      // Method 2: Via volunteerEmployerLinks
+      if (profile?.id) {
+        const links = employerLinks.filter((l: any) => l.volunteerId === profile.id);
+        links.forEach((link: any) => {
+          const employer = csrPartners.find((p: any) => p.id === link.partnerId);
+          linkedEmployers.push({
+            method: 'volunteerEmployerLinks',
+            partnerId: link.partnerId,
+            companyName: employer?.companyName || 'Unknown',
+            status: link.verificationStatus,
+            linkId: link.id
+          });
+        });
+      }
+
+      // Check engagement records
+      const userEngagements = engagements.filter((e: any) =>
+        e.employeeEmail?.toLowerCase() === user.email?.toLowerCase()
+      );
+
+      diagnostics.push({
+        user: {
+          id: user.id,
+          displayName: user.displayName,
+          email: user.email,
+          userType: user.userType
+        },
+        volunteerProfile: profile ? {
+          id: profile.id,
+          volunteerName: profile.volunteerName,
+          employerId: profile.employerId,
+          departmentName: profile.departmentName
+        } : null,
+        linkedEmployers,
+        activities: {
+          total: userActivities.length,
+          approved: approvedActivities.length,
+          totalHours: approvedActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
+        },
+        engagementRecords: userEngagements.map((e: any) => ({
+          partnerId: e.partnerId,
+          companyName: csrPartners.find((p: any) => p.id === e.partnerId)?.companyName,
+          hoursVolunteered: e.hoursVolunteered
+        })),
+        issues: []
+      });
+
+      // Identify issues
+      const diag = diagnostics[diagnostics.length - 1];
+      if (!profile) {
+        diag.issues.push('No volunteer profile found');
+      }
+      if (linkedEmployers.length === 0) {
+        diag.issues.push('Not linked to any employer');
+      }
+      if (approvedActivities.length > 0 && userEngagements.length === 0) {
+        diag.issues.push('Has approved activities but no engagement records - data not flowing to employer');
+      }
+    }
+
+    res.json({
+      matchedEmployers: matchedEmployers.map((p: any) => ({
+        id: p.id,
+        companyName: p.companyName,
+        employeeCount: p.employeeCount
+      })),
+      diagnostics
+    });
+  } catch (err) {
+    console.error("Error diagnosing volunteer-employer link:", err);
+    res.status(500).json({ message: "Failed to diagnose volunteer-employer link" });
+  }
+});
+
+/**
+ * POST /admin/link-volunteer-employer
+ * Link a volunteer to an employer (CSR partner)
+ * Body:
+ *   - volunteerId: Volunteer profile ID
+ *   - partnerId: CSR partner ID
+ *   - method: 'profile' (set employerId) or 'link' (create volunteerEmployerLink)
+ */
+adminRouter.post("/admin/link-volunteer-employer", async (req: Request, res: Response) => {
+  try {
+    const { volunteerId, userId, partnerId, method = 'profile' } = req.body;
+
+    if (!partnerId) {
+      return res.status(400).json({ message: "partnerId is required" });
+    }
+
+    // Find the volunteer profile
+    let profile;
+    if (volunteerId) {
+      profile = await storage.getVolunteerProfile(volunteerId);
+    } else if (userId) {
+      profile = await storage.getVolunteerProfileByUserId(userId);
+    }
+
+    if (!profile) {
+      return res.status(404).json({ message: "Volunteer profile not found" });
+    }
+
+    // Verify CSR partner exists
+    const csrPartners = await storage.listCSRPartners?.() || [];
+    const partner = csrPartners.find((p: any) => p.id === partnerId);
+    if (!partner) {
+      return res.status(404).json({ message: "CSR partner not found" });
+    }
+
+    if (method === 'profile') {
+      // Method 1: Update volunteerProfile.employerId
+      await storage.updateVolunteerProfile(profile.id, {
+        employerId: partnerId
+      });
+
+      res.json({
+        success: true,
+        message: `Volunteer ${profile.volunteerName || profile.id} linked to ${partner.companyName} via profile.employerId`,
+        profile: { id: profile.id, employerId: partnerId }
+      });
+    } else if (method === 'link') {
+      // Method 2: Create volunteerEmployerLink
+      const newLink = await storage.createVolunteerEmployerLink?.({
+        volunteerId: profile.id,
+        partnerId: partnerId,
+        verificationStatus: 'verified',
+        verifiedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: `Volunteer ${profile.volunteerName || profile.id} linked to ${partner.companyName} via volunteerEmployerLinks`,
+        link: newLink
+      });
+    } else {
+      return res.status(400).json({ message: "Invalid method. Use 'profile' or 'link'" });
+    }
+  } catch (err) {
+    console.error("Error linking volunteer to employer:", err);
+    res.status(500).json({ message: "Failed to link volunteer to employer" });
+  }
+});
+
+/**
+ * POST /admin/backfill-employer-engagement
+ * Backfill employee engagement records for approved activities
+ * This fixes data for volunteers whose activities were approved before they were linked to an employer
+ * Body:
+ *   - userId: User ID to backfill (optional - if not provided, backfills all)
+ *   - partnerId: Only backfill for this employer (optional)
+ */
+adminRouter.post("/admin/backfill-employer-engagement", async (req: Request, res: Response) => {
+  try {
+    const { userId, partnerId } = req.body;
+
+    const users = await storage.listUsers();
+    const volunteerProfiles = await storage.listVolunteerProfiles();
+    const activities = await storage.listVolunteerActivities();
+    const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+    const engagements = await storage.listEmployeeEngagement?.() || [];
+    const csrPartners = await storage.listCSRPartners?.() || [];
+
+    let backfillCount = 0;
+    const results: any[] = [];
+
+    // Filter users if userId provided
+    const targetUsers = userId
+      ? users.filter((u: any) => u.id === userId)
+      : users;
+
+    for (const user of targetUsers) {
+      const profile = volunteerProfiles.find((vp: any) => vp.userId === user.id);
+      if (!profile) continue;
+
+      // Get linked employer IDs (both methods)
+      const linkedEmployerIds = new Set<number>();
+
+      if (profile.employerId) {
+        linkedEmployerIds.add(profile.employerId);
+      }
+
+      const profileLinks = employerLinks.filter((l: any) =>
+        l.volunteerId === profile.id && l.verificationStatus !== 'rejected'
+      );
+      profileLinks.forEach((link: any) => {
+        if (link.partnerId) linkedEmployerIds.add(link.partnerId);
+      });
+
+      if (linkedEmployerIds.size === 0) continue;
+
+      // Filter by partnerId if specified
+      const targetEmployers = partnerId
+        ? Array.from(linkedEmployerIds).filter(id => id === partnerId)
+        : Array.from(linkedEmployerIds);
+
+      if (targetEmployers.length === 0) continue;
+
+      // Get approved activities
+      const approvedActivities = activities.filter((a: any) =>
+        a.userId === user.id &&
+        (a.verificationStatus?.toLowerCase() === 'approved' ||
+         a.verificationStatus?.toLowerCase() === 'verified')
+      );
+
+      if (approvedActivities.length === 0) continue;
+
+      const totalHours = approvedActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+      for (const employerId of targetEmployers) {
+        // Check existing engagement
+        const existing = engagements.find((e: any) =>
+          e.partnerId === employerId && e.employeeEmail === user.email
+        );
+
+        const partner = csrPartners.find((p: any) => p.id === employerId);
+
+        if (existing) {
+          // Update if hours are different
+          if (existing.hoursVolunteered !== totalHours) {
+            await storage.updateEmployeeEngagement(existing.id, {
+              hoursVolunteered: totalHours
+            });
+            results.push({
+              user: user.displayName || user.email,
+              employer: partner?.companyName || employerId,
+              action: 'updated',
+              previousHours: existing.hoursVolunteered,
+              newHours: totalHours
+            });
+            backfillCount++;
+          }
+        } else {
+          // Create new engagement record
+          await storage.createEmployeeEngagement({
+            partnerId: employerId,
+            employeeEmail: user.email,
+            employeeName: profile.volunteerName || user.displayName,
+            hoursVolunteered: totalHours,
+            engagementType: 'vto'
+          });
+          results.push({
+            user: user.displayName || user.email,
+            employer: partner?.companyName || employerId,
+            action: 'created',
+            hours: totalHours
+          });
+          backfillCount++;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Backfilled ${backfillCount} employee engagement records`,
+      results
+    });
+  } catch (err) {
+    console.error("Error backfilling employer engagement:", err);
+    res.status(500).json({ message: "Failed to backfill employer engagement" });
+  }
+});

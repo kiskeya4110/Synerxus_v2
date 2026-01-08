@@ -765,6 +765,7 @@ export default function Overview() {
           isOpen={showAIInsightsModal}
           onClose={() => setShowAIInsightsModal(false)}
           organizationId={currentUser?.organizationId || 0}
+          userId={currentUser?.id}
           dashboardData={dashboardData}
           orgProfile={orgProfile}
         />
@@ -978,6 +979,7 @@ export default function Overview() {
         isOpen={showAIInsightsModal}
         onClose={() => setShowAIInsightsModal(false)}
         organizationId={currentUser?.organizationId || 0}
+        userId={currentUser?.id}
         dashboardData={dashboardData}
         orgProfile={orgProfile}
       />

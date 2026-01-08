@@ -125,7 +125,10 @@ import {
   type InvitationCodeUsage,
   type InsertInvitationCodeUsage,
   type PlatformSetting,
-  type InsertPlatformSetting
+  type InsertPlatformSetting,
+  aiRecommendations,
+  type AIRecommendation,
+  type InsertAIRecommendation
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -433,6 +436,14 @@ export interface IStorage {
   createInvitationTemplate(template: InsertInvitationTemplate): Promise<InvitationTemplate>;
   updateInvitationTemplate(id: number, template: Partial<InsertInvitationTemplate>): Promise<InvitationTemplate | undefined>;
   deleteInvitationTemplate(id: number): Promise<boolean>;
+
+  // AI Recommendations operations
+  listAIRecommendations(organizationId: number): Promise<AIRecommendation[]>;
+  getAIRecommendation(id: number): Promise<AIRecommendation | undefined>;
+  getAIRecommendationByRecId(organizationId: number, recommendationId: string): Promise<AIRecommendation | undefined>;
+  createAIRecommendation(recommendation: InsertAIRecommendation): Promise<AIRecommendation>;
+  updateAIRecommendation(id: number, recommendation: Partial<InsertAIRecommendation>): Promise<AIRecommendation | undefined>;
+  deleteAIRecommendation(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2061,6 +2072,46 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
     return setting.value === "true";
+  }
+
+  // ==================== AI Recommendations ====================
+
+  async listAIRecommendations(organizationId: number): Promise<AIRecommendation[]> {
+    return db.select().from(aiRecommendations)
+      .where(eq(aiRecommendations.organizationId, organizationId))
+      .orderBy(desc(aiRecommendations.createdAt));
+  }
+
+  async getAIRecommendation(id: number): Promise<AIRecommendation | undefined> {
+    const [result] = await db.select().from(aiRecommendations).where(eq(aiRecommendations.id, id));
+    return result || undefined;
+  }
+
+  async getAIRecommendationByRecId(organizationId: number, recommendationId: string): Promise<AIRecommendation | undefined> {
+    const [result] = await db.select().from(aiRecommendations)
+      .where(and(
+        eq(aiRecommendations.organizationId, organizationId),
+        eq(aiRecommendations.recommendationId, recommendationId)
+      ));
+    return result || undefined;
+  }
+
+  async createAIRecommendation(recommendation: InsertAIRecommendation): Promise<AIRecommendation> {
+    const [result] = await db.insert(aiRecommendations).values(recommendation).returning();
+    return result;
+  }
+
+  async updateAIRecommendation(id: number, recommendation: Partial<InsertAIRecommendation>): Promise<AIRecommendation | undefined> {
+    const [result] = await db.update(aiRecommendations)
+      .set({ ...recommendation, updatedAt: new Date() })
+      .where(eq(aiRecommendations.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async deleteAIRecommendation(id: number): Promise<boolean> {
+    await db.delete(aiRecommendations).where(eq(aiRecommendations.id, id));
+    return true;
   }
 }
 

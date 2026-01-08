@@ -503,12 +503,79 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
           hours,
           rank: 0,
           avatar, // Profile picture URL
-          profilePhotoUrl: avatar // Alternative field name for frontend compatibility
+          profilePhotoUrl: avatar, // Alternative field name for frontend compatibility
+          department: profile?.departmentName || 'Not Specified',
+          jobTitle: profile?.jobTitleAtCompany || profile?.professionalTitle || null
         };
       })
       .sort((a, b) => b.hours - a.hours)
       .slice(0, 10)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+    // Department breakdown - aggregate metrics by department
+    const departmentMetrics: Record<string, {
+      employees: Set<number>;
+      hours: number;
+      projects: Set<number>;
+      topVolunteer: { name: string; hours: number } | null;
+    }> = {};
+
+    filteredEmployeeActivities.forEach((activity: any) => {
+      const profile = volunteerProfiles.find((vp: any) => vp.userId === activity.userId);
+      const department = profile?.departmentName || 'Not Specified';
+
+      if (!departmentMetrics[department]) {
+        departmentMetrics[department] = {
+          employees: new Set(),
+          hours: 0,
+          projects: new Set(),
+          topVolunteer: null
+        };
+      }
+
+      departmentMetrics[department].employees.add(activity.userId);
+      departmentMetrics[department].hours += activity.hours || 0;
+      if (activity.projectId) {
+        departmentMetrics[department].projects.add(activity.projectId);
+      }
+    });
+
+    // Calculate department breakdown with top volunteer per department
+    const departmentBreakdown = Object.entries(departmentMetrics)
+      .map(([department, metrics]) => {
+        // Find top volunteer in this department
+        const deptEmployeeHours: Record<number, number> = {};
+        filteredEmployeeActivities.forEach((activity: any) => {
+          const profile = volunteerProfiles.find((vp: any) => vp.userId === activity.userId);
+          if ((profile?.departmentName || 'Not Specified') === department) {
+            deptEmployeeHours[activity.userId] = (deptEmployeeHours[activity.userId] || 0) + (activity.hours || 0);
+          }
+        });
+
+        const topVolunteerId = Object.entries(deptEmployeeHours)
+          .sort((a, b) => b[1] - a[1])[0];
+
+        let topVolunteer = null;
+        if (topVolunteerId) {
+          const uid = parseInt(topVolunteerId[0]);
+          const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+          const user = (users as any[]).find((u: any) => u.id === uid);
+          topVolunteer = {
+            name: profile?.volunteerName || user?.displayName || `Employee ${uid}`,
+            hours: topVolunteerId[1]
+          };
+        }
+
+        return {
+          department,
+          employeeCount: metrics.employees.size,
+          totalHours: metrics.hours,
+          projectsContributed: metrics.projects.size,
+          averageHoursPerEmployee: metrics.employees.size > 0 ? Math.round(metrics.hours / metrics.employees.size) : 0,
+          topVolunteer
+        };
+      })
+      .sort((a, b) => b.totalHours - a.totalHours);
 
     // Active challenges
     const activeChallenges = partnerChallenges
@@ -749,7 +816,11 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
         engagementRate: employeeUserIds.size > 0 ? Math.round((activeEmployees / employeeUserIds.size) * 100) : 0,
         topPerformer: topPerformer?.name || 'N/A',
         topPerformerHours: topPerformer?.hours || 0,
-        newThisMonth: 0
+        topPerformerDepartment: topPerformer?.department || 'N/A',
+        newThisMonth: 0,
+        departmentsActive: departmentBreakdown.filter((d: any) => d.employeeCount > 0).length,
+        topDepartment: departmentBreakdown[0]?.department || 'N/A',
+        topDepartmentHours: departmentBreakdown[0]?.totalHours || 0
       },
       projects: {
         total: Object.keys(projectBreakdown).length,
@@ -794,6 +865,7 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       topSdgs,
       topProjects,
       leaderboard,
+      departmentBreakdown, // Employee metrics by department
       challenges: activeChallenges,
       projectLocations,
       kpiBreakdown,

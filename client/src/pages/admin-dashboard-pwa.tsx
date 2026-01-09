@@ -637,9 +637,9 @@ export default function AdminDashboardPWA() {
                   {locationsData?.organizations?.map((org) => {
                     const orgIcon = L.divIcon({
                       className: '',
-                      html: `<svg width="22" height="22" viewBox="0 0 24 24" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5"/></svg>`,
-                      iconSize: [22, 22],
-                      iconAnchor: [11, 11],
+                      html: `<div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px; max-width: 24px; max-height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="24" height="24" viewBox="0 0 24 24" style="flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5"/></svg></div>`,
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
                     });
                     return (
                       <Marker
@@ -665,11 +665,11 @@ export default function AdminDashboardPWA() {
                   {locationsData?.projects?.map((project) => {
                     const projectIcon = L.divIcon({
                       className: '',
-                      html: `<div style="width: 28px; height: 28px; background: #10b981; border-radius: 50%; border: 3px solid #064e3b; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      html: `<div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px; max-width: 24px; max-height: 24px; background: #10b981; border-radius: 50%; border: 2px solid #064e3b; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1" style="flex-shrink: 0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                       </div>`,
-                      iconSize: [28, 28],
-                      iconAnchor: [14, 14],
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
                     });
                     return (
                       <Marker
@@ -696,8 +696,8 @@ export default function AdminDashboardPWA() {
                   {locationsData?.volunteers?.map((vol) => {
                     const volIcon = L.divIcon({
                       className: '',
-                      html: `<div style="width: 22px; height: 22px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
-                        <span style="color: white; font-size: 9px; font-weight: bold;">${vol.count || 1}</span>
+                      html: `<div style="width: 22px; height: 22px; min-width: 22px; min-height: 22px; max-width: 22px; max-height: 22px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <span style="color: white; font-size: 9px; font-weight: bold; flex-shrink: 0;">${vol.count || 1}</span>
                       </div>`,
                       iconSize: [22, 22],
                       iconAnchor: [11, 11],
@@ -726,15 +726,15 @@ export default function AdminDashboardPWA() {
               {/* Map Legend */}
               <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
                 <span className="flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" strokeWidth="1.5"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" strokeWidth="1.5"/></svg>
                   Orgs
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-emerald-800 shadow"></span>
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-800 shadow" style={{ flexShrink: 0 }}></span>
                   Projects
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 border border-white shadow"></span>
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 border border-white shadow" style={{ flexShrink: 0 }}></span>
                   Volunteers
                 </span>
               </div>

@@ -47,8 +47,14 @@ export function ProfilePictureUpload({
   }, [currentPhotoUrl]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[ProfilePictureUpload] handleFileSelect triggered');
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('[ProfilePictureUpload] No file selected');
+      return;
+    }
+
+    console.log('[ProfilePictureUpload] File selected:', file.name, file.type, file.size);
 
     // Reset input
     if (fileInputRef.current) {
@@ -57,39 +63,51 @@ export function ProfilePictureUpload({
 
     // Validate
     if (!userId) {
-      toast({ title: "Upload failed", description: "User ID is required.", variant: "destructive" });
+      console.error('[ProfilePictureUpload] No userId at file select time');
+      toast({ title: "Upload failed", description: "User ID is required. Please refresh the page.", variant: "destructive" });
       return;
     }
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
+      console.error('[ProfilePictureUpload] Invalid file type:', file.type);
       toast({ title: "Invalid file type", description: "Please upload a JPG, PNG, WebP, or GIF image.", variant: "destructive" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
+      console.error('[ProfilePictureUpload] File too large:', file.size);
       toast({ title: "File too large", description: "Please upload an image smaller than 5MB.", variant: "destructive" });
       return;
     }
 
     if (enableCrop) {
+      console.log('[ProfilePictureUpload] Opening cropper...');
       // Read file and show cropper
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         if (dataUrl) {
+          console.log('[ProfilePictureUpload] Image loaded for cropping, dataUrl length:', dataUrl.length);
           setPendingImage(dataUrl);
           setPendingFile(file);
           setShowCropper(true);
         }
       };
+      reader.onerror = (e) => {
+        console.error('[ProfilePictureUpload] FileReader error:', e);
+        toast({ title: "Error", description: "Failed to read image file.", variant: "destructive" });
+      };
       reader.readAsDataURL(file);
     } else {
+      console.log('[ProfilePictureUpload] Uploading directly (no crop)');
       await uploadImage(file);
     }
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
+    console.log('[ProfilePictureUpload] handleCropComplete called, blob size:', croppedBlob.size, 'type:', croppedBlob.type);
+
     const isPng = croppedBlob.type === 'image/png';
     const extension = isPng ? 'png' : 'jpg';
 
@@ -98,6 +116,8 @@ export function ProfilePictureUpload({
       `cropped-image.${extension}`,
       { type: isPng ? 'image/png' : 'image/jpeg' }
     );
+
+    console.log('[ProfilePictureUpload] Created cropped file:', croppedFile.name, croppedFile.size);
 
     setPendingImage("");
     setPendingFile(null);
@@ -113,19 +133,27 @@ export function ProfilePictureUpload({
   };
 
   const uploadImage = async (file: File) => {
-    if (!userId) return;
+    console.log('[ProfilePictureUpload] uploadImage called, userId:', userId, 'file:', file.name, file.size);
+
+    if (!userId) {
+      console.error('[ProfilePictureUpload] No userId provided');
+      toast({ title: "Upload failed", description: "User ID is required. Please refresh the page.", variant: "destructive" });
+      return;
+    }
 
     const oldPath = storagePath;
 
     try {
       setIsUploading(true);
+      console.log('[ProfilePictureUpload] Starting upload...');
 
       const result = await uploadProfilePhoto(file, userId, userType);
+      console.log('[ProfilePictureUpload] Upload result:', result);
 
       if (result?.url) {
         // Delete old photo after successful upload
         if (oldPath) {
-          try { await deleteFile(oldPath); } catch (e) { /* ignore */ }
+          try { await deleteFile(oldPath); } catch (e) { console.log('[ProfilePictureUpload] Failed to delete old file:', e); }
         }
 
         // Update state with new URL and increment version for cache busting
@@ -135,11 +163,14 @@ export function ProfilePictureUpload({
         onPhotoChange(result.url);
 
         toast({ title: "Photo uploaded", description: "Your photo has been updated." });
+        console.log('[ProfilePictureUpload] Upload complete, new URL:', result.url);
       } else {
-        throw new Error("No URL returned");
+        console.error('[ProfilePictureUpload] No URL in result:', result);
+        throw new Error("No URL returned from upload");
       }
     } catch (error: any) {
-      toast({ title: "Upload failed", description: error.message || "Failed to upload photo.", variant: "destructive" });
+      console.error('[ProfilePictureUpload] Upload error:', error);
+      toast({ title: "Upload failed", description: error.message || "Failed to upload photo. Please try again.", variant: "destructive" });
     } finally {
       setIsUploading(false);
     }

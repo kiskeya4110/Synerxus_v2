@@ -471,7 +471,7 @@ export default function AdminDashboard() {
     }
   });
 
-  const [mapFilter, setMapFilter] = useState<'all' | 'organizations' | 'projects' | 'volunteers'>('all');
+  const [mapFilter, setMapFilter] = useState<'all' | 'organizations' | 'projects'>('all');
 
   const handleRefreshAll = () => {
     refetchStats();
@@ -1481,7 +1481,7 @@ export default function AdminDashboard() {
                   <div>
                     <CardTitle>Global Locations Map</CardTitle>
                     <CardDescription>
-                      View organizations, projects, and volunteers on the map
+                      View organizations and projects on the map
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
@@ -1493,7 +1493,6 @@ export default function AdminDashboard() {
                         <SelectItem value="all">All Locations</SelectItem>
                         <SelectItem value="organizations">Organizations</SelectItem>
                         <SelectItem value="projects">Projects</SelectItem>
-                        <SelectItem value="volunteers">Volunteers</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="sm" onClick={() => refetchLocations()}>
@@ -1504,7 +1503,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 {/* Summary Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   <div
                     className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
                       mapFilter === 'organizations' ? 'bg-blue-200 ring-2 ring-blue-400' : 'bg-blue-50 hover:bg-blue-100'
@@ -1527,23 +1526,13 @@ export default function AdminDashboard() {
                   </div>
                   <div
                     className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
-                      mapFilter === 'volunteers' ? 'bg-purple-200 ring-2 ring-purple-400' : 'bg-purple-50 hover:bg-purple-100'
-                    }`}
-                    onClick={() => setMapFilter(mapFilter === 'volunteers' ? 'all' : 'volunteers')}
-                  >
-                    <MapPin className="h-6 w-6 mx-auto mb-1 text-purple-600" />
-                    <p className="text-xl font-bold text-purple-600">{locationsData?.summary?.totalVolunteerLocations || 0}</p>
-                    <p className="text-xs text-gray-600">Volunteer Locations</p>
-                  </div>
-                  <div
-                    className={`text-center p-3 rounded-lg cursor-pointer transition-all ${
                       mapFilter === 'all' ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-amber-50 hover:bg-amber-100'
                     }`}
                     onClick={() => setMapFilter('all')}
                   >
-                    <Users className="h-6 w-6 mx-auto mb-1 text-amber-600" />
-                    <p className="text-xl font-bold text-amber-600">{locationsData?.summary?.totalVolunteers || 0}</p>
-                    <p className="text-xs text-gray-600">Show All</p>
+                    <MapPin className="h-6 w-6 mx-auto mb-1 text-amber-600" />
+                    <p className="text-xl font-bold text-amber-600">{(locationsData?.summary?.totalOrganizations || 0) + (locationsData?.summary?.totalProjects || 0)}</p>
+                    <p className="text-xs text-gray-600">All Locations</p>
                   </div>
                 </div>
 
@@ -1697,60 +1686,6 @@ export default function AdminDashboard() {
                         );
                       })}
 
-                      {/* Volunteer Markers - High Contrast */}
-                      {(mapFilter === 'all' || mapFilter === 'volunteers') && locationsData?.volunteers?.map((loc) => {
-                        const size = Math.min(32 + (loc.count || 1) * 3, 56);
-                        const volunteerIcon = L.divIcon({
-                          html: `<div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-                            <!-- Volunteer Badge -->
-                            <div style="
-                              background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-                              width: ${size}px;
-                              height: ${size}px;
-                              border-radius: 50%;
-                              border: 4px solid white;
-                              box-shadow: 0 4px 12px rgba(124, 58, 237, 0.6), 0 2px 4px rgba(0,0,0,0.4);
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                            ">
-                              <span style="color: white; font-size: ${Math.max(14, size / 3)}px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${loc.count || 1}</span>
-                            </div>
-                            <!-- Location Label -->
-                            <div style="
-                              position: absolute;
-                              top: ${size + 4}px;
-                              left: 50%;
-                              transform: translateX(-50%);
-                              background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
-                              color: white;
-                              padding: 3px 8px;
-                              border-radius: 4px;
-                              font-size: 10px;
-                              font-weight: 700;
-                              white-space: nowrap;
-                              box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-                              border: 2px solid rgba(255,255,255,0.8);
-                              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                            ">${loc.count || 1} volunteer${(loc.count || 1) > 1 ? 's' : ''}</div>
-                          </div>`,
-                          className: '',
-                          iconSize: [size + 20, size + 30],
-                          iconAnchor: [(size + 20) / 2, size / 2],
-                        });
-                        return (
-                          <Marker key={`vol-${loc.id}`} position={[loc.lat, loc.lng]} icon={volunteerIcon}>
-                            <Popup>
-                              <div style={{ minWidth: '180px' }}>
-                                <p style={{ fontWeight: 600, margin: '0 0 4px 0', color: '#a855f7' }}>{loc.name}</p>
-                                <p style={{ margin: '2px 0', fontSize: '12px', color: '#666' }}>
-                                  <strong>Location:</strong> {loc.location}
-                                </p>
-                              </div>
-                            </Popup>
-                          </Marker>
-                        );
-                      })}
                     </MapContainer>
                   )}
                 </div>
@@ -1764,10 +1699,6 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full bg-green-500"></div>
                     <span className="text-sm text-gray-600">Projects</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-purple-500"></div>
-                    <span className="text-sm text-gray-600">Volunteers</span>
                   </div>
                 </div>
               </CardContent>

@@ -692,34 +692,6 @@ export default function AdminDashboardPWA() {
                     );
                   })}
 
-                  {/* Volunteer Location Markers */}
-                  {locationsData?.volunteers?.map((vol) => {
-                    const volIcon = L.divIcon({
-                      className: '',
-                      html: `<div style="width: 22px; height: 22px; min-width: 22px; min-height: 22px; max-width: 22px; max-height: 22px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <span style="color: white; font-size: 9px; font-weight: bold; flex-shrink: 0;">${vol.count || 1}</span>
-                      </div>`,
-                      iconSize: [22, 22],
-                      iconAnchor: [11, 11],
-                    });
-                    return (
-                      <Marker
-                        key={`vol-${vol.id}`}
-                        position={[vol.lat, vol.lng]}
-                        icon={volIcon}
-                      >
-                        <Popup>
-                          <div className="text-xs">
-                            <div className="font-semibold text-blue-700">{vol.count} Volunteer{(vol.count || 1) > 1 ? 's' : ''}</div>
-                            <div className="text-slate-500 flex items-center gap-1 mt-1">
-                              <MapPin className="w-3 h-3" />
-                              {vol.location}
-                            </div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
                 </MapContainer>
               </div>
 
@@ -727,15 +699,11 @@ export default function AdminDashboardPWA() {
               <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
                 <span className="flex items-center gap-1">
                   <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" strokeWidth="1.5"/></svg>
-                  Orgs
+                  Organizations
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-800 shadow" style={{ flexShrink: 0 }}></span>
                   Projects
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 border border-white shadow" style={{ flexShrink: 0 }}></span>
-                  Volunteers
                 </span>
               </div>
             </div>

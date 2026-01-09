@@ -636,7 +636,7 @@ export default function AdminDashboardPWA() {
                   {/* Organization Markers - High contrast stars */}
                   {locationsData?.organizations?.map((org) => {
                     const orgIcon = L.divIcon({
-                      className: 'custom-marker',
+                      className: '',
                       html: `<svg width="22" height="22" viewBox="0 0 24 24" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5"/></svg>`,
                       iconSize: [22, 22],
                       iconAnchor: [11, 11],
@@ -664,18 +664,19 @@ export default function AdminDashboardPWA() {
                   {/* Project Markers */}
                   {locationsData?.projects?.map((project) => {
                     const projectIcon = L.divIcon({
-                      className: 'custom-marker',
-                      html: `<div style="width: 24px; height: 24px; background: linear-gradient(135deg, #065f46, #064e3b); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      className: '',
+                      html: `<div style="width: 28px; height: 28px; background: #10b981; border-radius: 50%; border: 3px solid #064e3b; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                       </div>`,
-                      iconSize: [24, 24],
-                      iconAnchor: [12, 12],
+                      iconSize: [28, 28],
+                      iconAnchor: [14, 14],
                     });
                     return (
                       <Marker
                         key={`project-${project.id}`}
                         position={[project.lat, project.lng]}
                         icon={projectIcon}
+                        zIndexOffset={1000}
                       >
                         <Popup>
                           <div className="text-xs">
@@ -694,7 +695,7 @@ export default function AdminDashboardPWA() {
                   {/* Volunteer Location Markers */}
                   {locationsData?.volunteers?.map((vol) => {
                     const volIcon = L.divIcon({
-                      className: 'custom-marker',
+                      className: '',
                       html: `<div style="width: 22px; height: 22px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
                         <span style="color: white; font-size: 9px; font-weight: bold;">${vol.count || 1}</span>
                       </div>`,
@@ -729,7 +730,7 @@ export default function AdminDashboardPWA() {
                   Orgs
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-800 to-emerald-950 border border-white shadow"></span>
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-emerald-800 shadow"></span>
                   Projects
                 </span>
                 <span className="flex items-center gap-1">

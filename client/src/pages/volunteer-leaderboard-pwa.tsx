@@ -181,9 +181,12 @@ export default function VolunteerLeaderboardPWA() {
           isRefreshing={isRefreshing}
         />
 
+        {/* Spacer for fixed header - matches header height */}
+        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pb-24">
-          <div className="p-4 space-y-4 pt-2">
+          <div className="p-4 space-y-4">
           {/* Header Banner */}
           <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
             {/* Background Pattern */}

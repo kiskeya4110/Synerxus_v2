@@ -135,6 +135,65 @@ export default function AdminDashboardPWA() {
     enabled: !!userId || !!firebaseUser
   });
 
+  const isAdmin = currentUser?.isAdmin === true;
+
+  // Fetch enhanced stats - only when user is admin
+  const { data: enhancedStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<EnhancedStats>({
+    queryKey: ["/api/admin/stats/enhanced"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/stats/enhanced");
+      if (!response.ok) throw new Error("Failed to fetch stats");
+      return response.json();
+    },
+    refetchInterval: 30000,
+    enabled: isAdmin
+  });
+
+  // Fetch users - only when user is admin
+  const { data: usersData, refetch: refetchUsers } = useQuery({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/users?limit=50");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
+    enabled: isAdmin
+  });
+
+  // Fetch organizations - only when user is admin
+  const { data: organizations = [], refetch: refetchOrgs } = useQuery<Organization[]>({
+    queryKey: ["/api/admin/organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/organizations");
+      if (!response.ok) throw new Error("Failed to fetch organizations");
+      return response.json();
+    },
+    enabled: isAdmin
+  });
+
+  // Fetch activity - only when user is admin
+  const { data: activity = [], refetch: refetchActivity } = useQuery<ActivityLog[]>({
+    queryKey: ["/api/admin/activity"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/activity?limit=30");
+      if (!response.ok) throw new Error("Failed to fetch activity");
+      return response.json();
+    },
+    enabled: isAdmin
+  });
+
+  // Fetch system info - only when user is admin
+  const { data: systemInfo, refetch: refetchSystem } = useQuery<SystemInfo>({
+    queryKey: ["/api/admin/system"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/system");
+      if (!response.ok) throw new Error("Failed to fetch system info");
+      return response.json();
+    },
+    refetchInterval: 10000,
+    enabled: isAdmin
+  });
+
   // Show loading while checking admin status
   if (userLoading) {
     return (
@@ -148,7 +207,7 @@ export default function AdminDashboardPWA() {
   }
 
   // Check admin access using database user
-  if (!currentUser?.isAdmin) {
+  if (!isAdmin) {
     return (
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
@@ -165,58 +224,6 @@ export default function AdminDashboardPWA() {
       </div>
     );
   }
-
-  // Fetch enhanced stats
-  const { data: enhancedStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<EnhancedStats>({
-    queryKey: ["/api/admin/stats/enhanced"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/stats/enhanced");
-      if (!response.ok) throw new Error("Failed to fetch stats");
-      return response.json();
-    },
-    refetchInterval: 30000
-  });
-
-  // Fetch users
-  const { data: usersData, refetch: refetchUsers } = useQuery({
-    queryKey: ["/api/admin/users"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/users?limit=50");
-      if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
-    }
-  });
-
-  // Fetch organizations
-  const { data: organizations = [], refetch: refetchOrgs } = useQuery<Organization[]>({
-    queryKey: ["/api/admin/organizations"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/organizations");
-      if (!response.ok) throw new Error("Failed to fetch organizations");
-      return response.json();
-    }
-  });
-
-  // Fetch activity
-  const { data: activity = [], refetch: refetchActivity } = useQuery<ActivityLog[]>({
-    queryKey: ["/api/admin/activity"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/activity?limit=30");
-      if (!response.ok) throw new Error("Failed to fetch activity");
-      return response.json();
-    }
-  });
-
-  // Fetch system info
-  const { data: systemInfo, refetch: refetchSystem } = useQuery<SystemInfo>({
-    queryKey: ["/api/admin/system"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/system");
-      if (!response.ok) throw new Error("Failed to fetch system info");
-      return response.json();
-    },
-    refetchInterval: 10000
-  });
 
   const handleRefreshAll = () => {
     refetchStats();

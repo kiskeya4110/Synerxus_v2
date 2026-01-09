@@ -633,15 +633,15 @@ export default function AdminDashboardPWA() {
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                   />
 
-                  {/* Organization Markers */}
+                  {/* Organization Markers - High contrast stars */}
                   {locationsData?.organizations?.map((org) => {
                     const orgIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="width: 28px; height: 28px; background: linear-gradient(135deg, #581c87, #4c1d95); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+                      html: `<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; border: 3px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#1e293b" stroke="#1e293b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                       </div>`,
-                      iconSize: [28, 28],
-                      iconAnchor: [14, 14],
+                      iconSize: [32, 32],
+                      iconAnchor: [16, 16],
                     });
                     return (
                       <Marker
@@ -727,8 +727,10 @@ export default function AdminDashboardPWA() {
               {/* Map Legend */}
               <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-900 to-purple-950 border border-white shadow"></span>
-                  Organizations
+                  <span className="w-4 h-4 flex items-center justify-center">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#1e293b" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </span>
+                  Orgs
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-800 to-emerald-950 border border-white shadow"></span>

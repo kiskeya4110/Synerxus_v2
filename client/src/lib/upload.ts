@@ -81,12 +81,27 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
       'Authorization': `Bearer ${token}`,
     };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: formData,
-      headers,
-      credentials: 'include',
-    });
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers,
+        credentials: 'include',
+        signal: controller.signal,
+      });
+    } catch (fetchError: any) {
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Upload timed out. Please check your connection and try again.');
+      }
+      throw new Error('Network error. Please check your connection and try again.');
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     console.log('[Upload] Response status:', response.status);
 

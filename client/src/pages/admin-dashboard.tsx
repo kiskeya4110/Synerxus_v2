@@ -1277,12 +1277,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-4">
                             <div className="text-center min-w-[100px]">
                               <p className="text-sm font-medium text-gray-700">
-                                {org.city || org.country
-                                  ? [org.city, org.country].filter(Boolean).join(', ')
+                                {org.country
+                                  ? org.country
                                   : <span className="text-gray-400 italic">Not specified</span>
                                 }
                               </p>
-                              <p className="text-xs text-gray-500">Location</p>
+                              <p className="text-xs text-gray-500">Country</p>
                             </div>
                             <div className="text-center">
                               <p className="text-lg font-bold text-blue-600">{org.memberCount}</p>

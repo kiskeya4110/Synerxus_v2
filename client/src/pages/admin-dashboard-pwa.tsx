@@ -781,10 +781,7 @@ export default function AdminDashboardPWA() {
                       <div className="flex-1 min-w-0">
                         <div className="text-slate-900 text-sm font-medium truncate">{org.name}</div>
                         <div className="text-slate-500 text-xs truncate">
-                          {org.city || org.country
-                            ? [org.city, org.country].filter(Boolean).join(', ')
-                            : org.contactEmail || 'No location'
-                          }
+                          {org.country || org.contactEmail || 'Country not specified'}
                         </div>
                       </div>
                       <button
@@ -817,10 +814,7 @@ export default function AdminDashboardPWA() {
                   <div className="flex-1 min-w-0">
                     <div className="text-slate-900 text-sm font-medium truncate">{org.name}</div>
                     <div className="text-slate-500 text-xs">
-                      {org.city || org.country
-                        ? [org.city, org.country].filter(Boolean).join(', ')
-                        : 'Location not specified'
-                      }
+                      {org.country || 'Country not specified'}
                     </div>
                     <div className="text-slate-400 text-xs">{org.memberCount} members - {org.projectCount} projects</div>
                   </div>

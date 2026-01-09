@@ -454,7 +454,7 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
 
     // Create team invitation record for tracking
     await storage.createTeamInvitation({
-      organizationMemberId: member?.id || 0, // 0 if user doesn't exist yet
+      organizationMemberId: member?.id || undefined, // undefined/null if user doesn't exist yet
       organizationId: orgId,
       inviterId: invitedBy,
       inviteeId: user?.id || null,
@@ -668,6 +668,59 @@ organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req:
   } catch (err) {
     console.error("Error accepting invitation:", err);
     res.status(500).json({ message: "Failed to accept invitation" });
+  }
+});
+
+// POST /api/team-invitations/:token/decline - Decline invitation via token
+organizationsRouter.post("/team-invitations/by-token/:token/decline", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { userId } = req.body;
+
+    const invitation = await storage.getTeamInvitationByToken(token);
+
+    if (!invitation) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+
+    if (invitation.status === "accepted") {
+      return res.status(400).json({ message: "Invitation already accepted" });
+    }
+
+    if (invitation.status === "declined") {
+      return res.status(400).json({ message: "Invitation already declined" });
+    }
+
+    // Update invitation status to declined
+    await storage.updateTeamInvitation(invitation.id, {
+      status: "declined",
+      respondedAt: new Date(),
+      inviteeId: userId ? parseInt(userId) : undefined
+    });
+
+    // If there's an associated organization member record with "invited" status, remove it
+    if (invitation.organizationMemberId) {
+      const member = await storage.getOrganizationMember(invitation.organizationMemberId);
+      if (member && member.status === "invited") {
+        await storage.deleteOrganizationMember(invitation.organizationMemberId);
+      }
+    }
+
+    const organization = await storage.getOrganization(invitation.organizationId);
+
+    broadcastUpdate("organization_invitation_declined", {
+      organizationId: invitation.organizationId,
+      invitationId: invitation.id
+    });
+
+    res.json({
+      success: true,
+      message: "Invitation declined",
+      organization: organization ? { id: organization.id, name: organization.name } : null
+    });
+  } catch (err) {
+    console.error("Error declining invitation:", err);
+    res.status(500).json({ message: "Failed to decline invitation" });
   }
 });
 

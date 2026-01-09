@@ -68,6 +68,36 @@ export default function JoinTeamPage() {
     },
   });
 
+  // Decline invitation mutation
+  const declineMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/organizations/team-invitations/by-token/${token}/decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userId ? parseInt(userId) : undefined }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to decline invitation");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Invitation Declined",
+        description: `You've declined the invitation from ${data.organization?.name || "the organization"}.`,
+      });
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const invitation = invitationData?.invitation;
   const organization = invitationData?.organization;
 
@@ -236,12 +266,23 @@ export default function JoinTeamPage() {
                     )}
                   </Button>
                   <Button
-                    onClick={() => navigate("/")}
+                    onClick={() => declineMutation.mutate()}
+                    disabled={declineMutation.isPending}
                     variant="outline"
                     className="w-full"
                     size="lg"
                   >
-                    Decline
+                    {declineMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        Declining...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 mr-2" />
+                        Decline Invitation
+                      </>
+                    )}
                   </Button>
                 </>
               ) : (

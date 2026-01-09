@@ -1683,7 +1683,7 @@ export type InsertClaudeBookmark = z.infer<typeof insertClaudeBookmarkSchema>;
 // Team Invitation Communications - Track invitations sent via email or direct message
 export const teamInvitations = pgTable("team_invitations", {
   id: serial("id").primaryKey(),
-  organizationMemberId: integer("organization_member_id").references(() => organizationMembers.id).notNull(),
+  organizationMemberId: integer("organization_member_id").references(() => organizationMembers.id), // Nullable - only set when user exists at invite time
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   inviterId: integer("inviter_id").references(() => users.id).notNull(),
   inviteeId: integer("invitee_id").references(() => users.id), // Null if inviting by email only (user doesn't exist yet)

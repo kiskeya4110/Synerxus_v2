@@ -9104,6 +9104,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         description: organizations.description,
         logo: organizations.logo,
         contactEmail: organizations.contactEmail,
+        city: organizations.city,
+        country: organizations.country,
         approvalStatus: organizations.approvalStatus,
         createdAt: organizations.createdAt
       })

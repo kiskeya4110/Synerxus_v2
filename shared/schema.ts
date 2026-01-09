@@ -72,6 +72,8 @@ export const organizations = pgTable("organizations", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   address: text("address"),
+  city: text("city"),
+  country: text("country"),
   primarySdgs: integer("primary_sdgs").array(), // Organization's selected primary SDG focus areas
   needs: text("needs").array(), // Organization's volunteer needs
   goals: text("goals"), // Organization's goals/mission beyond just mission statement

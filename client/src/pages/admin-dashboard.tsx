@@ -126,6 +126,8 @@ interface Organization {
   description: string | null;
   logo: string | null;
   contactEmail: string | null;
+  city: string | null;
+  country: string | null;
   approvalStatus: string | null;
   createdAt: string;
   memberCount: number;
@@ -1273,6 +1275,15 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
+                            <div className="text-center min-w-[100px]">
+                              <p className="text-sm font-medium text-gray-700">
+                                {org.city || org.country
+                                  ? [org.city, org.country].filter(Boolean).join(', ')
+                                  : <span className="text-gray-400 italic">Not specified</span>
+                                }
+                              </p>
+                              <p className="text-xs text-gray-500">Location</p>
+                            </div>
                             <div className="text-center">
                               <p className="text-lg font-bold text-blue-600">{org.memberCount}</p>
                               <p className="text-xs text-gray-500">Members</p>

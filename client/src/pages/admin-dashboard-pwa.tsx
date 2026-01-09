@@ -70,6 +70,8 @@ interface Organization {
   description: string | null;
   logo: string | null;
   contactEmail: string | null;
+  city: string | null;
+  country: string | null;
   approvalStatus: string | null;
   createdAt: string;
   memberCount: number;
@@ -778,7 +780,12 @@ export default function AdminDashboardPWA() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-slate-900 text-sm font-medium truncate">{org.name}</div>
-                        <div className="text-slate-500 text-xs truncate">{org.contactEmail}</div>
+                        <div className="text-slate-500 text-xs truncate">
+                          {org.city || org.country
+                            ? [org.city, org.country].filter(Boolean).join(', ')
+                            : org.contactEmail || 'No location'
+                          }
+                        </div>
                       </div>
                       <button
                         onClick={() => setSelectedOrg(org)}
@@ -809,7 +816,13 @@ export default function AdminDashboardPWA() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="text-slate-900 text-sm font-medium truncate">{org.name}</div>
-                    <div className="text-slate-500 text-xs">{org.memberCount} members - {org.projectCount} projects</div>
+                    <div className="text-slate-500 text-xs">
+                      {org.city || org.country
+                        ? [org.city, org.country].filter(Boolean).join(', ')
+                        : 'Location not specified'
+                      }
+                    </div>
+                    <div className="text-slate-400 text-xs">{org.memberCount} members - {org.projectCount} projects</div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                     org.approvalStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :

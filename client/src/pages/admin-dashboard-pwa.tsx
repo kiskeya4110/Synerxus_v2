@@ -637,11 +637,9 @@ export default function AdminDashboardPWA() {
                   {locationsData?.organizations?.map((org) => {
                     const orgIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; border: 3px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#1e293b" stroke="#1e293b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      </div>`,
-                      iconSize: [32, 32],
-                      iconAnchor: [16, 16],
+                      html: `<svg width="22" height="22" viewBox="0 0 24 24" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5"/></svg>`,
+                      iconSize: [22, 22],
+                      iconAnchor: [11, 11],
                     });
                     return (
                       <Marker
@@ -727,9 +725,7 @@ export default function AdminDashboardPWA() {
               {/* Map Legend */}
               <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-4 h-4 flex items-center justify-center">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#1e293b" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  </span>
+                  <svg width="12" height="12" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#1e293b" strokeWidth="1.5"/></svg>
                   Orgs
                 </span>
                 <span className="flex items-center gap-1">

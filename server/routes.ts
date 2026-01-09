@@ -9185,6 +9185,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
         // Common locations mapping
         const locationMap: Record<string, { lat: number; lng: number }> = {
+          // Cities
           'new york': { lat: 40.7128, lng: -74.0060 },
           'los angeles': { lat: 34.0522, lng: -118.2437 },
           'chicago': { lat: 41.8781, lng: -87.6298 },
@@ -9213,6 +9214,39 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           'amsterdam': { lat: 52.3676, lng: 4.9041 },
           'madrid': { lat: 40.4168, lng: -3.7038 },
           'rome': { lat: 41.9028, lng: 12.4964 },
+          'manila': { lat: 14.5995, lng: 120.9842 },
+          'hanoi': { lat: 21.0285, lng: 105.8542 },
+          'jakarta': { lat: -6.2088, lng: 106.8456 },
+          // African countries
+          'kenya': { lat: -1.2921, lng: 36.8219 },
+          'tanzania': { lat: -6.3690, lng: 34.8888 },
+          'uganda': { lat: 1.3733, lng: 32.2903 },
+          'zambia': { lat: -13.1339, lng: 27.8493 },
+          'zimbabwe': { lat: -19.0154, lng: 29.1549 },
+          'south africa': { lat: -30.5595, lng: 22.9375 },
+          'nigeria': { lat: 9.0820, lng: 8.6753 },
+          'ghana': { lat: 7.9465, lng: -1.0232 },
+          'ethiopia': { lat: 9.1450, lng: 40.4897 },
+          'rwanda': { lat: -1.9403, lng: 29.8739 },
+          'malawi': { lat: -13.2543, lng: 34.3015 },
+          'mozambique': { lat: -18.6657, lng: 35.5296 },
+          // Asian countries
+          'philippines': { lat: 12.8797, lng: 121.7740 },
+          'vietnam': { lat: 14.0583, lng: 108.2772 },
+          'indonesia': { lat: -0.7893, lng: 113.9213 },
+          'india': { lat: 20.5937, lng: 78.9629 },
+          'thailand': { lat: 15.8700, lng: 100.9925 },
+          'malaysia': { lat: 4.2105, lng: 101.9758 },
+          'cambodia': { lat: 12.5657, lng: 104.9910 },
+          'myanmar': { lat: 21.9162, lng: 95.9560 },
+          // Americas
+          'mexico': { lat: 23.6345, lng: -102.5528 },
+          'brazil': { lat: -14.2350, lng: -51.9253 },
+          'haiti': { lat: 18.9712, lng: -72.2852 },
+          'colombia': { lat: 4.5709, lng: -74.2973 },
+          'peru': { lat: -9.1900, lng: -75.0152 },
+          'guatemala': { lat: 15.7835, lng: -90.2308 },
+          // Remote/Virtual
           'remote': { lat: 0, lng: 0 },
           'virtual': { lat: 0, lng: 0 },
         };

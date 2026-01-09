@@ -7,9 +7,11 @@ import {
   CheckCircle, XCircle, AlertCircle, TrendingUp, TrendingDown,
   UserPlus, Shield, MapPin, Bell, ArrowUpRight, ArrowDownRight,
   Zap, Target, BarChart3, PieChart, FileCheck, UserCheck,
-  ClipboardList, AlertTriangle, ChevronRight, Eye, ArrowLeft, Menu
+  ClipboardList, AlertTriangle, ChevronRight, Eye, ArrowLeft, Menu,
+  LogOut, X, Home, Settings
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 
 // Leaflet imports for map
 import L from "leaflet";
@@ -375,10 +377,31 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { user: firebaseUser, signOut } = useAuth();
 
   const userId = localStorage.getItem("currentUserId");
+
+  // Fetch current user for profile display
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId || !!firebaseUser
+  });
+
+  const handleLogout = async () => {
+    setProfileMenuOpen(false);
+    await signOut();
+    navigate('/');
+  };
+
+  const userInitial = (currentUser?.displayName || currentUser?.username || 'A').charAt(0).toUpperCase();
 
   // Fetch enhanced stats
   const { data: enhancedStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<EnhancedStats>({
@@ -566,71 +589,185 @@ export default function AdminDashboard() {
 
   return (
     <div className={`${isMobile ? 'fixed inset-0 flex flex-col overflow-hidden' : 'min-h-screen'} bg-gray-50`}>
-      {/* Header */}
-      <div className={`bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white ${isMobile ? 'flex-shrink-0' : ''}`}>
-        <div className={`${isMobile ? 'px-3 py-3' : 'max-w-7xl mx-auto px-4 py-4'}`}>
+      {/* Header - Colorful gradient style */}
+      <header className={`bg-gradient-to-r from-purple-600 via-indigo-500 to-amber-400 ${isMobile ? 'flex-shrink-0' : ''}`}>
+        <div className={`${isMobile ? 'px-3 py-3' : 'max-w-7xl mx-auto px-6 py-4'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 md:gap-4">
+            {/* Left: Logo and Title */}
+            <div className="flex items-center gap-3 md:gap-4">
               {isMobile && (
                 <button
                   onClick={() => window.history.back()}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                  className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4 text-white" />
                 </button>
               )}
-              <img src={logoUrl} alt="Synerxus" className={`${isMobile ? 'h-6' : 'h-8'}`} />
-              <div>
-                <h1 className={`${isMobile ? 'text-sm' : 'text-xl'} font-bold flex items-center gap-1 md:gap-2`}>
-                  <Shield className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
-                  Admin Dashboard
-                </h1>
-                {!isMobile && <p className="text-sm text-slate-300">Platform Management & Analytics</p>}
+              <button
+                onClick={() => navigate('/volunteer-dashboard')}
+                className="flex items-center hover:opacity-90 transition-opacity"
+              >
+                <img
+                  src={logoUrl}
+                  alt="Synerxus"
+                  className={`${isMobile ? 'h-8' : 'h-10'} w-auto object-contain`}
+                  style={{ maxWidth: isMobile ? '100px' : '140px' }}
+                />
+              </button>
+
+              {/* Admin Badge */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full">
+                <Shield className="w-4 h-4 text-white" />
+                <span className="text-white text-sm font-semibold">Admin</span>
               </div>
             </div>
+
+            {/* Right: Actions */}
             <div className="flex items-center gap-2 md:gap-3">
-              {/* Pending Org Approvals Indicator - Mobile shows count only */}
+              {/* Pending Approvals Notification */}
               {totalActionItems > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => { setOrgStatusFilter("pending"); setActiveTab("organizations"); }}
-                  className={`border-amber-500 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 ${isMobile ? 'px-2 py-1 text-xs' : ''}`}
+                  className="relative w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all shadow-sm"
                 >
-                  <Bell className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} ${isMobile ? '' : 'mr-2'}`} />
-                  {!isMobile && `${totalActionItems} Org${totalActionItems !== 1 ? 's' : ''} Pending`}
-                  {isMobile && totalActionItems}
-                </Button>
+                  <Bell className="w-5 h-5 text-white" />
+                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-lg">
+                    {totalActionItems > 9 ? '9+' : totalActionItems}
+                  </span>
+                </button>
               )}
-              {/* Last Updated - Hidden on mobile */}
+
+              {/* Last Updated - Desktop only */}
               {enhancedStats?.updatedAt && !isMobile && (
-                <span className="text-xs text-slate-400 hidden md:block">
+                <span className="text-xs text-white/70 hidden lg:block px-3 py-1 bg-white/10 rounded-full">
                   Updated {formatDistanceToNow(new Date(enhancedStats.updatedAt), { addSuffix: true })}
                 </span>
               )}
-              <Button
-                variant="outline"
-                size="sm"
+
+              {/* Refresh Button */}
+              <button
                 onClick={handleRefreshAll}
-                className={`border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white ${isMobile ? 'px-2 py-1' : ''}`}
+                className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all shadow-sm"
+                title="Refresh data"
               >
-                <RefreshCw className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 mr-2'}`} />
-                {!isMobile && 'Refresh'}
-              </Button>
-              {!isMobile && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dashboard")}
-                  className="text-slate-300 hover:text-white"
-                >
-                  Back to App
-                </Button>
-              )}
+                <RefreshCw className="w-5 h-5 text-white" />
+              </button>
+
+              {/* Profile/Menu Button */}
+              <button
+                onClick={() => setProfileMenuOpen(true)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all shadow-sm"
+              >
+                <Avatar className="h-8 w-8 border-2 border-white/40 shadow-sm">
+                  <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName || 'Admin'} />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white text-sm font-semibold">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <Menu className="w-5 h-5 text-white" />
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      {/* Slide-out Profile Menu */}
+      {profileMenuOpen && (
+        <div className="fixed inset-0 z-[100] flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setProfileMenuOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <div className="relative ml-auto w-[320px] max-w-[85%] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            {/* Menu Header */}
+            <div className="bg-gradient-to-br from-purple-700 via-indigo-600 to-purple-700 px-5 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/70 text-xs font-medium flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5" /> Admin Menu
+                </span>
+                <button
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              {/* User Info */}
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12 border-2 border-white/30 shadow-lg">
+                  <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName || 'Admin'} />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-lg font-semibold">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-base truncate">
+                    {currentUser?.displayName || currentUser?.username || 'Admin'}
+                  </p>
+                  <p className="text-white/60 text-sm truncate">
+                    {currentUser?.email || ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="flex-1 overflow-y-auto py-2">
+              {[
+                { icon: Home, label: "Dashboard", action: () => { setProfileMenuOpen(false); setActiveTab('overview'); } },
+                { icon: Users, label: "Users", action: () => { setProfileMenuOpen(false); setActiveTab('users'); } },
+                { icon: Building2, label: "Organizations", action: () => { setProfileMenuOpen(false); setActiveTab('organizations'); } },
+                { icon: Activity, label: "Activity", action: () => { setProfileMenuOpen(false); setActiveTab('activity'); } },
+                { icon: Server, label: "System", action: () => { setProfileMenuOpen(false); setActiveTab('system'); } },
+                { icon: MapPin, label: "Map", action: () => { setProfileMenuOpen(false); setActiveTab('locations'); } },
+                { icon: BarChart3, label: "Analytics", path: "/admin/dashboard" },
+                { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
+              ].map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else if (item.path) {
+                      setProfileMenuOpen(false);
+                      navigate(item.path);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left text-slate-700 hover:bg-slate-50"
+                >
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-100">
+                    <item.icon className="w-4.5 h-4.5 text-slate-600" />
+                  </div>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              ))}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="border-t border-slate-200 p-4">
+              <button
+                onClick={() => { setProfileMenuOpen(false); navigate('/volunteer-dashboard'); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-200 transition-colors mb-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to App</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className={`${isMobile ? 'flex-1 overflow-y-auto' : 'max-w-7xl mx-auto px-4 py-6'}`} style={isMobile ? { paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' } : {}}>

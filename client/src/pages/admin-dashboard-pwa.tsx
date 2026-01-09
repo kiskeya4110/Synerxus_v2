@@ -115,14 +115,39 @@ function TrendIndicator({ value }: { value: number }) {
 
 export default function AdminDashboardPWA() {
   const [, navigate] = useLocation();
-  const { user: currentUser } = useAuth();
+  const { user: firebaseUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'orgs' | 'activity' | 'system'>('overview');
   const [showMenu, setShowMenu] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const queryClient = useQueryClient();
 
-  // Check admin access
+  const userId = localStorage.getItem('currentUserId');
+
+  // Fetch current user from database to check admin status
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId || !!firebaseUser
+  });
+
+  // Show loading while checking admin status
+  if (userLoading) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <RefreshCw className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-400 text-sm">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check admin access using database user
   if (!currentUser?.isAdmin) {
     return (
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">

@@ -159,10 +159,12 @@ export async function optionalAuthMiddleware(
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      
+      logger.debug(`[OptionalAuth] Processing Bearer token (length: ${token.length})`);
+
       // First try to verify as our own JWT token
       const jwtDecoded = verifyToken(token);
       if (jwtDecoded?.userId) {
+        logger.debug(`[OptionalAuth] JWT verified, userId: ${jwtDecoded.userId}`);
         const user = await storage.getUser(jwtDecoded.userId);
         if (user) {
           req.user = {
@@ -173,11 +175,14 @@ export async function optionalAuthMiddleware(
             firebaseUid: user.firebaseUid,
           };
           req.userId = user.id;
+          logger.debug(`[OptionalAuth] User attached: ${user.id} (${user.email})`);
         }
       } else {
         // Try to verify as Firebase ID token (cryptographically signed)
+        logger.debug(`[OptionalAuth] JWT failed, trying Firebase token verification`);
         const firebaseDecoded = await verifyFirebaseIdToken(token);
         if (firebaseDecoded?.uid) {
+          logger.debug(`[OptionalAuth] Firebase token verified, uid: ${firebaseDecoded.uid}`);
           // Efficient indexed query instead of fetching all users
           const user = await storage.getUserByFirebaseUid(firebaseDecoded.uid);
           if (user) {
@@ -189,9 +194,16 @@ export async function optionalAuthMiddleware(
               firebaseUid: user.firebaseUid,
             };
             req.userId = user.id;
+            logger.debug(`[OptionalAuth] Firebase user attached: ${user.id} (${user.email})`);
+          } else {
+            logger.warn(`[OptionalAuth] Firebase user not found in DB for uid: ${firebaseDecoded.uid}`);
           }
+        } else {
+          logger.warn(`[OptionalAuth] Both JWT and Firebase token verification failed`);
         }
       }
+    } else if (authHeader) {
+      logger.debug(`[OptionalAuth] Non-Bearer auth header present: ${authHeader.substring(0, 20)}...`);
     }
 
     // SECURITY: Legacy x-user-id and x-firebase-uid header authentication REMOVED
@@ -200,6 +212,7 @@ export async function optionalAuthMiddleware(
     next();
   } catch (error) {
     // Don't fail on optional auth errors
+    logger.error(`[OptionalAuth] Error during authentication:`, error);
     next();
   }
 }

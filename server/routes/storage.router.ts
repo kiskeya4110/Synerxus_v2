@@ -82,21 +82,25 @@ function handleMulterError(err: any, req: Request, res: Response, next: Function
 storageRouter.post("/upload", upload.single("file"), handleMulterError, async (req: Request, res: Response) => {
   try {
     const pathParam = req.query.path as string;
+    const authHeader = req.headers.authorization;
+
+    logger.info(`[Storage] Upload attempt - path: ${pathParam}, hasAuth: ${!!authHeader}, hasFile: ${!!req.file}`);
 
     if (!pathParam) {
+      logger.warn(`[Storage] Upload rejected: missing path parameter`);
       return res.status(400).json({ message: "path is required" });
     }
 
     // Security: Require authentication for uploads
     if (!req.user) {
-      logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}`);
+      logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}, authHeader: ${authHeader ? 'present' : 'missing'}`);
       return res.status(401).json({
         message: "Authentication required for file uploads. Please sign in again.",
         code: "AUTH_REQUIRED"
       });
     }
 
-    logger.info(`[Storage] Upload request from user ${req.user.id} for path: ${pathParam}`);
+    logger.info(`[Storage] Upload request from user ${req.user.id} (${req.user.email}) for path: ${pathParam}, fileSize: ${req.file?.size || 0}`);
 
     // Parse options from query
     const imageType = (req.query.imageType as ImageType) || "profile";

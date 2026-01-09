@@ -272,8 +272,14 @@ export function ImageCropper({
 
   // Generate cropped image
   const handleCrop = useCallback(() => {
+    console.log("[ImageCropper] handleCrop called");
     const img = imageRef.current;
-    if (!img) return;
+    if (!img) {
+      console.error("[ImageCropper] No image reference!");
+      return;
+    }
+
+    console.log("[ImageCropper] Creating crop canvas, img size:", img.width, "x", img.height);
 
     // Create output canvas
     const outputCanvas = document.createElement("canvas");
@@ -284,7 +290,10 @@ export function ImageCropper({
     outputCanvas.height = canvasHeight;
     const ctx = outputCanvas.getContext("2d");
 
-    if (!ctx) return;
+    if (!ctx) {
+      console.error("[ImageCropper] Failed to get canvas context!");
+      return;
+    }
 
     // For round crops, apply circular clip FIRST before drawing
     if (cropShape === "round") {
@@ -319,14 +328,20 @@ export function ImageCropper({
     );
 
     // Convert to blob - use PNG for round crops to preserve transparency
+    const mimeType = cropShape === "round" ? "image/png" : "image/jpeg";
+    console.log("[ImageCropper] Converting canvas to blob, mimeType:", mimeType);
+
     outputCanvas.toBlob(
       (blob) => {
         if (blob) {
+          console.log("[ImageCropper] Blob created, size:", blob.size, "type:", blob.type);
           onCropComplete(blob);
           handleClose();
+        } else {
+          console.error("[ImageCropper] Failed to create blob!");
         }
       },
-      cropShape === "round" ? "image/png" : "image/jpeg",
+      mimeType,
       0.9
     );
   }, [zoom, rotation, position, cropWidth, cropHeight, aspectRatio, cropShape, onCropComplete]);

@@ -143,6 +143,8 @@ export function ProfilePictureUpload({
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
+    console.log("[ProfilePictureUpload] handleCropComplete called, blob size:", croppedBlob.size, "type:", croppedBlob.type);
+
     // Determine file extension based on blob type
     const isPng = croppedBlob.type === 'image/png';
     const extension = isPng ? 'png' : 'jpg';
@@ -154,6 +156,8 @@ export function ProfilePictureUpload({
       pendingFile?.name?.replace(/\.\w+$/, `.${extension}`) || `cropped-image.${extension}`,
       { type: mimeType }
     );
+
+    console.log("[ProfilePictureUpload] Created file:", croppedFile.name, croppedFile.size, "bytes");
 
     // Clean up pending state (data URLs don't need revoking)
     setPendingImage("");
@@ -217,18 +221,22 @@ export function ProfilePictureUpload({
         }
       }
 
-      console.log("[ProfilePictureUpload] Upload complete, setting photoUrl to:", result.url);
-      setPhotoUrl(result.url);
-      setStoragePath(result.path);
-      onPhotoChange(result.url);
+      const newUrl = result.url;
+      console.log("[ProfilePictureUpload] Upload SUCCESS! URL:", newUrl);
 
-      // Force a re-render by updating state
-      console.log("[ProfilePictureUpload] photoUrl state should now be:", result.url);
+      // Update all state
+      setPhotoUrl(newUrl);
+      setStoragePath(result.path || '');
+
+      // Notify parent component
+      onPhotoChange(newUrl);
 
       toast({
         title: "Photo uploaded",
         description: "Your profile picture has been updated."
       });
+
+      console.log("[ProfilePictureUpload] State updated, photoUrl should now render:", newUrl);
     } catch (error: any) {
       console.error("[ProfilePictureUpload] Upload error:", error);
       toast({
@@ -264,45 +272,40 @@ export function ProfilePictureUpload({
     }
   };
 
-  // Debug render
-  console.log("[ProfilePictureUpload] RENDER - type:", type, "photoUrl:", photoUrl?.slice(0, 50), "isUploading:", isUploading);
+  // Ensure URL is properly formatted
+  const displayUrl = photoUrl ? (photoUrl.startsWith('http') ? photoUrl : photoUrl) : '';
 
   return (
     <div className="flex flex-col items-center space-y-4">
       {type === 'avatar' ? (
         <Avatar className="h-32 w-32">
-          <AvatarImage src={photoUrl} alt={label || "Profile picture"} />
+          {displayUrl ? (
+            <AvatarImage src={displayUrl} alt={label || "Profile picture"} />
+          ) : null}
           <AvatarFallback className="text-2xl">
             <User className="h-12 w-12" />
           </AvatarFallback>
         </Avatar>
       ) : (
-        <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 relative">
-          {photoUrl ? (
-            <>
-              <img
-                src={photoUrl}
-                alt={label || "Logo"}
-                className="h-32 w-32 object-contain p-2"
-                onError={(e) => {
-                  console.error("[ProfilePictureUpload] Image load error for:", photoUrl);
-                  // Try with a cache-busting parameter
-                  const target = e.target as HTMLImageElement;
-                  if (!target.src.includes('?')) {
-                    target.src = `${photoUrl}?t=${Date.now()}`;
-                  }
-                }}
-                onLoad={() => console.log("[ProfilePictureUpload] Image loaded successfully:", photoUrl)}
-              />
-              {/* Debug overlay - shows URL */}
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] p-1 truncate">
-                {photoUrl.slice(-30)}
-              </div>
-            </>
+        <div
+          className="relative overflow-hidden rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"
+          style={{ width: 128, height: 128 }}
+        >
+          {displayUrl ? (
+            <img
+              key={displayUrl}
+              src={displayUrl}
+              alt={label || "Logo"}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                // Hide broken image
+                target.style.display = 'none';
+              }}
+            />
           ) : (
-            <div className="text-center text-gray-400 dark:text-gray-500">
-              <p className="text-xs font-medium">Logo Preview</p>
-              <p className="text-[8px]">(no URL)</p>
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <span className="text-xs">No Logo</span>
             </div>
           )}
         </div>

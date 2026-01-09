@@ -28,20 +28,30 @@ const AvatarImage = React.forwardRef<
 
   // Reset error state when src changes
   React.useEffect(() => {
+    console.log('[AvatarImage] src changed to:', src);
     setError(false);
   }, [src]);
 
   if (error || !src) {
+    console.log('[AvatarImage] Not rendering image - error:', error, 'src:', src);
     return null;
   }
+
+  console.log('[AvatarImage] Rendering image with src:', src);
 
   return (
     <AvatarPrimitive.Image
       ref={ref}
       src={src}
       className={cn("aspect-square h-full w-full object-cover", className)}
-      onError={() => setError(true)}
-      onLoad={() => setError(false)}
+      onError={() => {
+        console.error('[AvatarImage] Image load error for:', src);
+        setError(true);
+      }}
+      onLoad={() => {
+        console.log('[AvatarImage] Image loaded successfully:', src);
+        setError(false);
+      }}
       loading="lazy"
       {...props}
     />

@@ -31,6 +31,7 @@ export function ProfilePictureUpload({
   const [showCropper, setShowCropper] = useState(false);
   const [pendingImage, setPendingImage] = useState<string>("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [imageVersion, setImageVersion] = useState(0); // Cache busting for browser
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -89,6 +90,9 @@ export function ProfilePictureUpload({
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
+    console.log('[ProfilePictureUpload] handleCropComplete called');
+    console.log('[ProfilePictureUpload] Cropped blob:', croppedBlob.type, croppedBlob.size, 'bytes');
+
     const isPng = croppedBlob.type === 'image/png';
     const extension = isPng ? 'png' : 'jpg';
 
@@ -97,6 +101,8 @@ export function ProfilePictureUpload({
       `cropped-image.${extension}`,
       { type: isPng ? 'image/png' : 'image/jpeg' }
     );
+
+    console.log('[ProfilePictureUpload] Created file:', croppedFile.name, croppedFile.type, croppedFile.size, 'bytes');
 
     setPendingImage("");
     setPendingFile(null);
@@ -112,30 +118,43 @@ export function ProfilePictureUpload({
   };
 
   const uploadImage = async (file: File) => {
-    if (!userId) return;
+    console.log('[ProfilePictureUpload] uploadImage called, file:', file.name, file.size, file.type);
+    if (!userId) {
+      console.error('[ProfilePictureUpload] No userId provided');
+      return;
+    }
 
     const oldPath = storagePath;
 
     try {
       setIsUploading(true);
+      console.log('[ProfilePictureUpload] Starting upload for userId:', userId, 'userType:', userType);
 
       const result = await uploadProfilePhoto(file, userId, userType);
+      console.log('[ProfilePictureUpload] Upload result:', result);
 
       if (result?.url) {
+        console.log('[ProfilePictureUpload] Setting photoUrl to:', result.url);
+
         // Delete old photo after successful upload
         if (oldPath) {
           try { await deleteFile(oldPath); } catch (e) { /* ignore */ }
         }
 
+        // Update state with new URL and increment version for cache busting
         setPhotoUrl(result.url);
         setStoragePath(result.path || '');
+        setImageVersion(v => v + 1); // Force browser to fetch fresh image
         onPhotoChange(result.url);
 
+        console.log('[ProfilePictureUpload] State updated, photoUrl should now be:', result.url);
         toast({ title: "Photo uploaded", description: "Your photo has been updated." });
       } else {
+        console.error('[ProfilePictureUpload] No URL in result:', result);
         throw new Error("No URL returned");
       }
     } catch (error: any) {
+      console.error('[ProfilePictureUpload] Upload error:', error);
       toast({ title: "Upload failed", description: error.message || "Failed to upload photo.", variant: "destructive" });
     } finally {
       setIsUploading(false);
@@ -156,22 +175,31 @@ export function ProfilePictureUpload({
     }
   };
 
+  // Generate cache-busted image URL to ensure browser fetches fresh image
+  const imgSrc = photoUrl ? `${photoUrl}${photoUrl.includes('?') ? '&' : '?'}v=${imageVersion}` : '';
+
+  // Debug log on every render
+  console.log('[ProfilePictureUpload] Rendering with photoUrl:', photoUrl, 'imgSrc:', imgSrc, 'version:', imageVersion, 'type:', type);
+
   return (
     <div className="flex flex-col items-center space-y-4">
       {type === 'avatar' ? (
         <Avatar className="h-32 w-32">
-          {photoUrl && <AvatarImage src={photoUrl} alt={label || "Profile picture"} />}
+          {imgSrc && <AvatarImage src={imgSrc} alt={label || "Profile picture"} key={imgSrc} />}
           <AvatarFallback className="text-2xl">
             <User className="h-12 w-12" />
           </AvatarFallback>
         </Avatar>
       ) : (
         <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 overflow-hidden">
-          {photoUrl ? (
+          {imgSrc ? (
             <img
-              src={photoUrl}
+              key={imgSrc}
+              src={imgSrc}
               alt={label || "Logo"}
               className="max-h-full max-w-full object-contain"
+              onLoad={() => console.log('[ProfilePictureUpload] Image loaded successfully:', imgSrc)}
+              onError={(e) => console.error('[ProfilePictureUpload] Image failed to load:', imgSrc, e)}
             />
           ) : (
             <div className="text-center text-gray-400">

@@ -22,6 +22,10 @@ import {
   sendActivityApprovalNotification,
   sendImpactApprovalNotification,
 } from "../email-digest-service";
+import {
+  notifyPendingImpact,
+  notifyPendingActivity,
+} from "../notification-service";
 
 export const activitiesRouter = Router();
 
@@ -221,6 +225,22 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
     // **CSR Dashboard KPI Tracking**: Note - Employee engagement hours are now updated
     // only when hours are APPROVED (not at creation time). This ensures only verified
     // hours flow to CSR corporate dashboards. See POST /volunteer-activities/:id/approve
+
+    // Notify organization about pending activity approval
+    // Default verificationStatus from schema is 'pending'
+    if (activity.projectId && activity.userId) {
+      try {
+        await notifyPendingActivity(
+          activity.id,
+          activity.projectId,
+          activity.userId,
+          activity.hours || 0
+        );
+      } catch (notifyErr) {
+        console.error("Error sending pending activity notification:", notifyErr);
+        // Don't fail activity creation if notification fails
+      }
+    }
 
     broadcastUpdate("volunteer_activity_created", activity);
     res.status(201).json(activity);
@@ -514,6 +534,22 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
       } catch (aiuErr) {
         console.error("Error updating AIU settings:", aiuErr);
         // Don't fail impact creation if AIU update fails
+      }
+    }
+
+    // Notify organization about pending impact approval
+    if (impact.verificationStatus === 'pending' && impact.projectId && impact.userId) {
+      try {
+        await notifyPendingImpact(
+          impact.id,
+          impact.projectId,
+          impact.userId,
+          impact.metricId,
+          impact.value
+        );
+      } catch (notifyErr) {
+        console.error("Error sending pending impact notification:", notifyErr);
+        // Don't fail impact creation if notification fails
       }
     }
 

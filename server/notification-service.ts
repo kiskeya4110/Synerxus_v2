@@ -435,3 +435,122 @@ export async function notifyProjectVolunteersAiuVerification(
     console.error("Error notifying project volunteers about AIU verification:", error);
   }
 }
+
+/**
+ * Notify organization users when a volunteer submits an impact for approval
+ * This ensures organizations are aware of pending impacts that need review
+ */
+export async function notifyPendingImpact(
+  impactId: number,
+  projectId: number,
+  volunteerId: number,
+  metricId?: number | null,
+  value?: number,
+  projectName?: string
+): Promise<void> {
+  try {
+    // Get project to find organization
+    const project = await storage.getProject(projectId);
+    if (!project || !project.organizationId) {
+      console.log("[Notification] No organization found for project:", projectId);
+      return;
+    }
+
+    // Get volunteer name
+    const volunteer = await storage.getUser(volunteerId);
+    const volunteerName = volunteer?.displayName || volunteer?.username || "A volunteer";
+
+    // Get metric name if available
+    let metricName = "impact";
+    if (metricId) {
+      const metric = await storage.getImpactMetric(metricId);
+      if (metric) {
+        metricName = metric.name || "impact";
+      }
+    }
+
+    // Get organization users to notify
+    const orgUsers = await storage.listUsersByOrganization(project.organizationId);
+    if (!orgUsers || orgUsers.length === 0) {
+      console.log("[Notification] No organization users found to notify for org:", project.organizationId);
+      return;
+    }
+
+    const usedProjectName = projectName || project.name || "a project";
+
+    // Create notification for each organization user
+    for (const orgUser of orgUsers) {
+      const notification: InsertNotification = {
+        userId: orgUser.id,
+        type: "pending_approval",
+        title: "Impact Awaiting Approval",
+        message: `${volunteerName} submitted ${value || 0} ${metricName} for "${usedProjectName}". Review and approve to add this to their verified impact record.`,
+        relatedEntityType: "project_impact",
+        relatedEntityId: impactId,
+        relatedUserId: volunteerId,
+        ...(project.sdgGoals && project.sdgGoals.length > 0 && { sdgGoals: project.sdgGoals }),
+        read: false,
+      };
+
+      await storage.createNotification(notification);
+    }
+
+    console.log(`[Notification] Pending impact notification sent to ${orgUsers.length} organization users`);
+  } catch (error) {
+    console.error("Error creating pending impact notification:", error);
+  }
+}
+
+/**
+ * Notify organization users when a volunteer submits hours for approval
+ */
+export async function notifyPendingActivity(
+  activityId: number,
+  projectId: number,
+  volunteerId: number,
+  hours: number,
+  projectName?: string
+): Promise<void> {
+  try {
+    // Get project to find organization
+    const project = await storage.getProject(projectId);
+    if (!project || !project.organizationId) {
+      console.log("[Notification] No organization found for project:", projectId);
+      return;
+    }
+
+    // Get volunteer name
+    const volunteer = await storage.getUser(volunteerId);
+    const volunteerName = volunteer?.displayName || volunteer?.username || "A volunteer";
+
+    // Get organization users to notify
+    const orgUsers = await storage.listUsersByOrganization(project.organizationId);
+    if (!orgUsers || orgUsers.length === 0) {
+      console.log("[Notification] No organization users found to notify for org:", project.organizationId);
+      return;
+    }
+
+    const usedProjectName = projectName || project.name || "a project";
+
+    // Create notification for each organization user
+    for (const orgUser of orgUsers) {
+      const notification: InsertNotification = {
+        userId: orgUser.id,
+        type: "pending_approval",
+        title: "Hours Awaiting Approval",
+        message: `${volunteerName} logged ${hours} hours for "${usedProjectName}". Review and approve to add this to their verified activity record.`,
+        relatedEntityType: "volunteer_activity",
+        relatedEntityId: activityId,
+        relatedUserId: volunteerId,
+        ...(project.sdgGoals && project.sdgGoals.length > 0 && { sdgGoals: project.sdgGoals }),
+        read: false,
+      };
+
+      await storage.createNotification(notification);
+    }
+
+    console.log(`[Notification] Pending activity notification sent to ${orgUsers.length} organization users`);
+  } catch (error) {
+    console.error("Error creating pending activity notification:", error);
+  }
+}

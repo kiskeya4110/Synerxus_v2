@@ -90,9 +90,6 @@ export function ProfilePictureUpload({
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
-    console.log('[ProfilePictureUpload] handleCropComplete called');
-    console.log('[ProfilePictureUpload] Cropped blob:', croppedBlob.type, croppedBlob.size, 'bytes');
-
     const isPng = croppedBlob.type === 'image/png';
     const extension = isPng ? 'png' : 'jpg';
 
@@ -101,8 +98,6 @@ export function ProfilePictureUpload({
       `cropped-image.${extension}`,
       { type: isPng ? 'image/png' : 'image/jpeg' }
     );
-
-    console.log('[ProfilePictureUpload] Created file:', croppedFile.name, croppedFile.type, croppedFile.size, 'bytes');
 
     setPendingImage("");
     setPendingFile(null);
@@ -118,24 +113,16 @@ export function ProfilePictureUpload({
   };
 
   const uploadImage = async (file: File) => {
-    console.log('[ProfilePictureUpload] uploadImage called, file:', file.name, file.size, file.type);
-    if (!userId) {
-      console.error('[ProfilePictureUpload] No userId provided');
-      return;
-    }
+    if (!userId) return;
 
     const oldPath = storagePath;
 
     try {
       setIsUploading(true);
-      console.log('[ProfilePictureUpload] Starting upload for userId:', userId, 'userType:', userType);
 
       const result = await uploadProfilePhoto(file, userId, userType);
-      console.log('[ProfilePictureUpload] Upload result:', result);
 
       if (result?.url) {
-        console.log('[ProfilePictureUpload] Setting photoUrl to:', result.url);
-
         // Delete old photo after successful upload
         if (oldPath) {
           try { await deleteFile(oldPath); } catch (e) { /* ignore */ }
@@ -147,14 +134,11 @@ export function ProfilePictureUpload({
         setImageVersion(v => v + 1); // Force browser to fetch fresh image
         onPhotoChange(result.url);
 
-        console.log('[ProfilePictureUpload] State updated, photoUrl should now be:', result.url);
         toast({ title: "Photo uploaded", description: "Your photo has been updated." });
       } else {
-        console.error('[ProfilePictureUpload] No URL in result:', result);
         throw new Error("No URL returned");
       }
     } catch (error: any) {
-      console.error('[ProfilePictureUpload] Upload error:', error);
       toast({ title: "Upload failed", description: error.message || "Failed to upload photo.", variant: "destructive" });
     } finally {
       setIsUploading(false);
@@ -178,9 +162,6 @@ export function ProfilePictureUpload({
   // Generate cache-busted image URL to ensure browser fetches fresh image
   const imgSrc = photoUrl ? `${photoUrl}${photoUrl.includes('?') ? '&' : '?'}v=${imageVersion}` : '';
 
-  // Debug log on every render
-  console.log('[ProfilePictureUpload] Rendering with photoUrl:', photoUrl, 'imgSrc:', imgSrc, 'version:', imageVersion, 'type:', type);
-
   return (
     <div className="flex flex-col items-center space-y-4">
       {type === 'avatar' ? (
@@ -198,8 +179,6 @@ export function ProfilePictureUpload({
               src={imgSrc}
               alt={label || "Logo"}
               className="max-h-full max-w-full object-contain"
-              onLoad={() => console.log('[ProfilePictureUpload] Image loaded successfully:', imgSrc)}
-              onError={(e) => console.error('[ProfilePictureUpload] Image failed to load:', imgSrc, e)}
             />
           ) : (
             <div className="text-center text-gray-400">

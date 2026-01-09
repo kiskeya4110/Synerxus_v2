@@ -1,17 +1,18 @@
-import { useState, useMemo, startTransition } from "react";
+import { useState, startTransition } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Users, Building2, Activity, Clock,
-  Server, RefreshCw, CheckCircle, XCircle, AlertCircle,
-  TrendingUp, TrendingDown, Shield, Bell,
+  Server, RefreshCw, CheckCircle, AlertCircle,
+  Shield, Bell, MapPin, LogOut,
   ArrowUpRight, ArrowDownRight, BarChart3, ChevronRight,
-  ArrowLeft, Home, Settings, UserCheck, Briefcase,
-  Eye, Menu, X, Database, Cpu, Zap
+  Home, Settings, UserCheck, Briefcase,
+  Menu, X, Database, Cpu, Zap, Globe, Target
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Types
 interface EnhancedStats {
@@ -115,9 +116,10 @@ function TrendIndicator({ value }: { value: number }) {
 
 export default function AdminDashboardPWA() {
   const [, navigate] = useLocation();
-  const { user: firebaseUser } = useAuth();
+  const { user: firebaseUser, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'orgs' | 'activity' | 'system'>('overview');
-  const [showMenu, setShowMenu] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const queryClient = useQueryClient();
@@ -225,17 +227,43 @@ export default function AdminDashboardPWA() {
     );
   }
 
-  const handleRefreshAll = () => {
-    refetchStats();
-    refetchUsers();
-    refetchOrgs();
-    refetchActivity();
-    refetchSystem();
+  const handleRefreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchStats(),
+        refetchUsers(),
+        refetchOrgs(),
+        refetchActivity(),
+        refetchSystem(),
+      ]);
+    } catch (error) {
+      console.error('Refresh error:', error);
+    }
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate('/');
   };
 
   const users = usersData?.users || [];
   const totalActionItems = (enhancedStats?.actionItems?.pendingApprovals || 0);
   const pendingOrgs = organizations.filter(o => o.approvalStatus === 'pending');
+  const userInitial = (currentUser?.displayName || currentUser?.username || 'A').charAt(0).toUpperCase();
+
+  // Menu items for admin
+  const menuItems = [
+    { icon: Home, label: "Dashboard", action: () => { setMenuOpen(false); setActiveTab('overview'); } },
+    { icon: Users, label: "Users", action: () => { setMenuOpen(false); setActiveTab('users'); } },
+    { icon: Building2, label: "Organizations", action: () => { setMenuOpen(false); setActiveTab('orgs'); } },
+    { icon: Activity, label: "Activity", action: () => { setMenuOpen(false); setActiveTab('activity'); } },
+    { icon: Server, label: "System", action: () => { setMenuOpen(false); setActiveTab('system'); } },
+    { icon: BarChart3, label: "Analytics", path: "/admin/dashboard" },
+    { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
+  ];
 
   // Tab items for bottom nav
   const tabItems = [
@@ -248,47 +276,154 @@ export default function AdminDashboardPWA() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-slate-100 max-w-[428px] mx-auto">
-      {/* Header */}
-      <header
-        className="flex-shrink-0 px-4 py-3 flex items-center justify-between"
-        style={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)',
-          paddingTop: 'max(12px, env(safe-area-inset-top))'
-        }}
-      >
-        <div className="flex items-center gap-3">
+      {/* Header - Volunteer-style sky blue to amber gradient */}
+      <header className="flex-shrink-0 bg-gradient-to-r from-purple-500 via-indigo-400 to-amber-300">
+        {/* Safe area padding for notched devices */}
+        <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
+
+        <div className="px-4 py-3 flex items-center justify-between">
+          {/* Logo */}
           <button
-            onClick={() => window.history.back()}
-            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+            onClick={() => navigate('/volunteer-dashboard')}
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0"
           >
-            <ArrowLeft className="h-4 w-4 text-white" />
+            <img
+              src={logoUrl}
+              alt="Synerxus"
+              className="h-10 w-auto object-contain"
+              style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '140px' }}
+            />
           </button>
-          <img src={logoUrl} alt="Synerxus" className="h-6" />
-          <div>
-            <h1 className="text-white text-sm font-bold flex items-center gap-1.5">
-              <Shield className="h-4 w-4 text-amber-400" />
-              Admin Dashboard
-            </h1>
+
+          {/* Admin Badge */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-white/30 rounded-full">
+            <Shield className="w-4 h-4 text-purple-800" />
+            <span className="text-purple-900 text-xs font-semibold">Admin</span>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            {/* Pending approvals badge */}
+            {totalActionItems > 0 && (
+              <button
+                onClick={() => startTransition(() => setActiveTab('orgs'))}
+                className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm"
+              >
+                <Bell className="w-5 h-5 text-slate-700" />
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                  {totalActionItems > 9 ? '9+' : totalActionItems}
+                </span>
+              </button>
+            )}
+
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshing}
+              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50"
+              aria-label="Refresh data"
+            >
+              <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Profile/Menu Button */}
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm"
+            >
+              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm">
+                <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName || 'Admin'} />
+                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-sm font-semibold">
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
+              <Menu className="w-5 h-5 text-slate-700" />
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {totalActionItems > 0 && (
-            <button
-              onClick={() => startTransition(() => setActiveTab('orgs'))}
-              className="px-2 py-1 bg-amber-500/20 border border-amber-500/50 rounded-lg flex items-center gap-1"
-            >
-              <Bell className="h-3 w-3 text-amber-400" />
-              <span className="text-amber-300 text-xs font-medium">{totalActionItems}</span>
-            </button>
-          )}
-          <button
-            onClick={handleRefreshAll}
-            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
-          >
-            <RefreshCw className="h-4 w-4 text-white" />
-          </button>
-        </div>
       </header>
+
+      {/* Slide-out Menu */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-[100] flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMenuOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <div className="relative ml-auto w-[75%] max-w-[280px] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            {/* Menu Header */}
+            <div className="bg-gradient-to-br from-purple-900 via-indigo-800 to-purple-900 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/60 text-xs font-medium flex items-center gap-1">
+                  <Shield className="w-3 h-3" /> Admin Menu
+                </span>
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              {/* User Info */}
+              <div className="flex items-center gap-2.5">
+                <Avatar className="h-10 w-10 border-2 border-white/30 shadow-lg">
+                  <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName || 'Admin'} />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-base font-semibold">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">
+                    {currentUser?.displayName || currentUser?.username || 'Admin'}
+                  </p>
+                  <p className="text-white/60 text-xs truncate">
+                    {currentUser?.email || ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="flex-1 overflow-y-auto py-1.5">
+              {menuItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else if (item.path) {
+                      setMenuOpen(false);
+                      navigate(item.path);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left text-slate-700 hover:bg-slate-50"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100">
+                    <item.icon className="w-4 h-4 text-slate-600" />
+                  </div>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              ))}
+            </div>
+
+            {/* Logout Button */}
+            <div className="border-t border-slate-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-50 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">

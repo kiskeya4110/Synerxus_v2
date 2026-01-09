@@ -1558,6 +1558,7 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <MapContainer
+                      key="admin-locations-map"
                       center={[20, 0]}
                       zoom={2}
                       style={{ width: "100%", height: "100%" }}
@@ -1608,7 +1609,7 @@ export default function AdminDashboard() {
                               text-shadow: 0 1px 2px rgba(0,0,0,0.3);
                             ">${loc.name?.substring(0, 18) || 'Organization'}${loc.name?.length > 18 ? '...' : ''}</div>
                           </div>`,
-                          className: 'custom-marker org-flag-marker',
+                          className: '',
                           iconSize: [44, 70],
                           iconAnchor: [22, 42],
                         });
@@ -1672,7 +1673,7 @@ export default function AdminDashboard() {
                               text-shadow: 0 1px 2px rgba(0,0,0,0.3);
                             ">${loc.name?.substring(0, 18) || 'Project'}${loc.name?.length > 18 ? '...' : ''}</div>
                           </div>`,
-                          className: 'custom-marker project-flag-marker',
+                          className: '',
                           iconSize: [44, 70],
                           iconAnchor: [22, 42],
                         });
@@ -1733,7 +1734,7 @@ export default function AdminDashboard() {
                               text-shadow: 0 1px 2px rgba(0,0,0,0.3);
                             ">${loc.count || 1} volunteer${(loc.count || 1) > 1 ? 's' : ''}</div>
                           </div>`,
-                          className: 'custom-marker volunteer-flag-marker',
+                          className: '',
                           iconSize: [size + 20, size + 30],
                           iconAnchor: [(size + 20) / 2, size / 2],
                         });

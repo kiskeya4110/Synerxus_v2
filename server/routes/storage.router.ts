@@ -11,7 +11,9 @@ import {
   type ImageUploadOptions,
 } from "../services/image-service";
 import { IMAGE_CONFIG, type ImageType } from "../../shared/constants";
-import { optionalAuthMiddleware } from "../middleware/auth";
+import { optionalAuthMiddleware, verifyToken } from "../middleware/auth";
+import { verifyFirebaseIdToken } from "../lib/firebase-admin";
+import { storage } from "../storage";
 import { logger } from "../logger";
 
 export const storageRouter = Router();
@@ -92,6 +94,54 @@ storageRouter.post("/upload", upload.single("file"), handleMulterError, async (r
     }
 
     // Security: Require authentication for uploads
+    // If middleware didn't set user, try direct token verification as fallback
+    if (!req.user && authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      logger.info(`[Storage] Attempting direct token verification for upload`);
+
+      // Try JWT first
+      const jwtDecoded = verifyToken(token);
+      if (jwtDecoded?.userId) {
+        const user = await storage.getUser(jwtDecoded.userId);
+        if (user) {
+          req.user = {
+            id: user.id,
+            email: user.email,
+            userType: user.userType || "volunteer",
+            organizationId: user.organizationId,
+            firebaseUid: user.firebaseUid,
+          };
+          logger.info(`[Storage] Direct JWT verification succeeded for user: ${user.id}`);
+        }
+      }
+
+      // Try Firebase if JWT failed
+      if (!req.user) {
+        try {
+          const firebaseDecoded = await verifyFirebaseIdToken(token);
+          if (firebaseDecoded?.uid) {
+            const user = await storage.getUserByFirebaseUid(firebaseDecoded.uid);
+            if (user) {
+              req.user = {
+                id: user.id,
+                email: user.email,
+                userType: user.userType || "volunteer",
+                organizationId: user.organizationId,
+                firebaseUid: user.firebaseUid,
+              };
+              logger.info(`[Storage] Direct Firebase verification succeeded for user: ${user.id}`);
+            } else {
+              logger.warn(`[Storage] Firebase token valid but user not found in DB, uid: ${firebaseDecoded.uid}`);
+            }
+          } else {
+            logger.warn(`[Storage] Firebase token verification returned null`);
+          }
+        } catch (firebaseError) {
+          logger.error(`[Storage] Firebase verification error:`, firebaseError);
+        }
+      }
+    }
+
     if (!req.user) {
       logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}, authHeader: ${authHeader ? 'present' : 'missing'}`);
       return res.status(401).json({

@@ -351,6 +351,11 @@ export function ImageCropper({
     setPosition({ x: 0, y: 0 });
   };
 
+  // Debug log when dialog state changes
+  useEffect(() => {
+    console.log("[ImageCropper] Dialog state - isOpen:", isOpen, "imageSrc length:", imageSrc?.length, "imageLoaded:", imageLoaded);
+  }, [isOpen, imageSrc, imageLoaded]);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">

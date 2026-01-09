@@ -54,7 +54,12 @@ export function ProfilePictureUpload({
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    console.log("[ProfilePictureUpload] handleFileSelect called, file:", file?.name);
+
+    if (!file) {
+      console.log("[ProfilePictureUpload] No file selected");
+      return;
+    }
 
     // Reset the input so the same file can be selected again
     if (fileInputRef.current) {
@@ -63,6 +68,7 @@ export function ProfilePictureUpload({
 
     // Validate userId early
     if (!userId) {
+      console.error("[ProfilePictureUpload] No userId");
       toast({
         title: "Upload failed",
         description: "User ID is required. Please ensure you're logged in.",
@@ -74,6 +80,7 @@ export function ProfilePictureUpload({
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
+      console.error("[ProfilePictureUpload] Invalid file type:", file.type);
       toast({
         title: "Invalid file type",
         description: "Please upload a JPG, PNG, WebP, or GIF image.",
@@ -85,6 +92,7 @@ export function ProfilePictureUpload({
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
+      console.error("[ProfilePictureUpload] File too large:", file.size);
       toast({
         title: "File too large",
         description: "Please upload an image smaller than 5MB.",
@@ -93,20 +101,24 @@ export function ProfilePictureUpload({
       return;
     }
 
+    console.log("[ProfilePictureUpload] File validated, enableCrop:", enableCrop);
+
     // Show cropper for profile photos
     if (enableCrop) {
-      console.log("[ProfilePictureUpload] File details:", file.name, file.type, file.size);
+      console.log("[ProfilePictureUpload] Reading file for cropper...");
 
       // Use FileReader to create a data URL (more reliable than blob URL)
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
-        console.log("[ProfilePictureUpload] Created data URL for cropper, length:", dataUrl?.length);
+        console.log("[ProfilePictureUpload] FileReader success, dataUrl length:", dataUrl?.length);
         if (dataUrl) {
+          console.log("[ProfilePictureUpload] Setting showCropper=true");
           setPendingImage(dataUrl);
           setPendingFile(file);
           setShowCropper(true);
         } else {
+          console.error("[ProfilePictureUpload] No dataUrl returned");
           toast({
             title: "Error loading image",
             description: "Failed to read the image file. Please try again.",
@@ -114,8 +126,8 @@ export function ProfilePictureUpload({
           });
         }
       };
-      reader.onerror = () => {
-        console.error("[ProfilePictureUpload] FileReader error");
+      reader.onerror = (err) => {
+        console.error("[ProfilePictureUpload] FileReader error:", err);
         toast({
           title: "Error loading image",
           description: "Failed to read the image file. Please try again.",
@@ -125,6 +137,7 @@ export function ProfilePictureUpload({
       reader.readAsDataURL(file);
     } else {
       // Upload directly without cropping
+      console.log("[ProfilePictureUpload] Uploading directly (no crop)");
       await uploadImage(file);
     }
   };

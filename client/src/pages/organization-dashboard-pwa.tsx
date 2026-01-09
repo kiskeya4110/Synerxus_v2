@@ -1827,64 +1827,40 @@ export default function OrganizationDashboardPWA() {
 
                 return (
                   <div className="space-y-4">
-                    {/* Stats Grid - Interactive */}
+                    {/* Stats Grid - Display Only */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
-                      <button
-                        onClick={() => {
-                          setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
-                        }}
-                        className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100 hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
-                      >
+                      <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
                         <Clock className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
                         <p className="text-lg font-bold text-emerald-700">
                           {sdgData?.hours?.toLocaleString() || 0}
                         </p>
                         <p className="text-[10px] text-emerald-600 font-medium">Contributing Hours</p>
                         <p className="text-[8px] text-slate-400 mt-0.5">from projects involving this SDG</p>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
-                        }}
-                        className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
-                      >
+                      </div>
+                      <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
                         <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
                         <p className="text-lg font-bold text-blue-700">
                           {Math.round(sdgData?.dedicatedHours || 0)}
                         </p>
                         <p className="text-[10px] text-blue-600 font-medium">Dedicated Hours</p>
                         <p className="text-[8px] text-slate-400 mt-0.5">proportionally allocated</p>
-                      </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedSdgGoal(null);
-                          navigate('/projects');
-                        }}
-                        className="bg-slate-50 rounded-xl p-3 text-center hover:bg-slate-100 hover:shadow-sm transition-all active:scale-[0.98]"
-                      >
+                      <div className="bg-slate-50 rounded-xl p-3 text-center">
                         <FolderOpen className="w-5 h-5 mx-auto text-slate-400 mb-1" />
                         <p className="text-lg font-bold text-slate-800">
                           {sdgData?.projects || 0}
                         </p>
                         <p className="text-[10px] text-slate-500">Projects</p>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSdgGoal(null);
-                          navigate('/organization-team');
-                        }}
-                        className="bg-slate-50 rounded-xl p-3 text-center hover:bg-slate-100 hover:shadow-sm transition-all active:scale-[0.98]"
-                      >
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3 text-center">
                         <Users className="w-5 h-5 mx-auto text-slate-400 mb-1" />
                         <p className="text-lg font-bold text-slate-800">
                           {sdgData?.volunteers || 0}
                         </p>
                         <p className="text-[10px] text-slate-500">Volunteers</p>
-                      </button>
+                      </div>
                     </div>
 
                     {/* Contribution Progress */}
@@ -1973,12 +1949,12 @@ export default function OrganizationDashboardPWA() {
                       <button
                         onClick={() => {
                           setSelectedSdgGoal(null);
-                          navigate('/organization-impact-report');
+                          navigate('/projects');
                         }}
                         className="flex-1 py-3 text-white rounded-xl text-sm font-medium transition-colors"
                         style={{ backgroundColor: getSDGColor(selectedSdgGoal) }}
                       >
-                        View Impact
+                        View Projects
                       </button>
                     </div>
                   </div>

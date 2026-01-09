@@ -13,6 +13,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // Types
 interface EnhancedStats {
@@ -100,6 +103,30 @@ interface SystemInfo {
   };
   nodeVersion: string;
   platform: string;
+}
+
+interface LocationData {
+  id: number | string;
+  name: string;
+  type: 'organization' | 'project' | 'volunteers';
+  location: string;
+  lat: number;
+  lng: number;
+  status?: string;
+  count?: number;
+  organizationId?: number;
+}
+
+interface LocationsResponse {
+  organizations: LocationData[];
+  projects: LocationData[];
+  volunteers: LocationData[];
+  summary: {
+    totalOrganizations: number;
+    totalProjects: number;
+    totalVolunteerLocations: number;
+    totalVolunteers: number;
+  };
 }
 
 // Trend Indicator Component
@@ -194,6 +221,18 @@ export default function AdminDashboardPWA() {
     },
     refetchInterval: 10000,
     enabled: isAdmin
+  });
+
+  // Fetch locations for map - only when user is admin
+  const { data: locationsData } = useQuery<LocationsResponse>({
+    queryKey: ["/api/admin/locations"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/locations");
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    },
+    enabled: isAdmin,
+    staleTime: 60000
   });
 
   // Show loading while checking admin status
@@ -587,6 +626,147 @@ export default function AdminDashboardPWA() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Global Map - Organizations & Projects */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between p-3 border-b border-slate-100">
+                <h3 className="text-slate-900 text-sm font-semibold flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-500" />
+                  Global Presence
+                </h3>
+                <div className="flex items-center gap-3 text-[10px]">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                    Orgs ({locationsData?.summary?.totalOrganizations || 0})
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Projects ({locationsData?.summary?.totalProjects || 0})
+                  </span>
+                </div>
+              </div>
+              <div className="h-[200px] relative">
+                <MapContainer
+                  key="admin-global-map"
+                  center={[10, 20]}
+                  zoom={1}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={false}
+                  dragging={true}
+                  zoomControl={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  />
+
+                  {/* Organization Markers */}
+                  {locationsData?.organizations?.map((org) => {
+                    const orgIcon = L.divIcon({
+                      className: 'custom-marker',
+                      html: `<div style="width: 24px; height: 24px; background: linear-gradient(135deg, #9333ea, #7c3aed); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+                      </div>`,
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
+                    });
+                    return (
+                      <Marker
+                        key={`org-${org.id}`}
+                        position={[org.lat, org.lng]}
+                        icon={orgIcon}
+                      >
+                        <Popup>
+                          <div className="text-xs">
+                            <div className="font-semibold text-purple-700">{org.name}</div>
+                            <div className="text-slate-500 flex items-center gap-1 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              {org.location}
+                            </div>
+                            <div className="text-slate-400 mt-1 capitalize">{org.status}</div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+
+                  {/* Project Markers */}
+                  {locationsData?.projects?.map((project) => {
+                    const projectIcon = L.divIcon({
+                      className: 'custom-marker',
+                      html: `<div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      </div>`,
+                      iconSize: [20, 20],
+                      iconAnchor: [10, 10],
+                    });
+                    return (
+                      <Marker
+                        key={`project-${project.id}`}
+                        position={[project.lat, project.lng]}
+                        icon={projectIcon}
+                      >
+                        <Popup>
+                          <div className="text-xs">
+                            <div className="font-semibold text-emerald-700">{project.name}</div>
+                            <div className="text-slate-500 flex items-center gap-1 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              {project.location}
+                            </div>
+                            <div className="text-slate-400 mt-1 capitalize">{project.status}</div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+
+                  {/* Volunteer Location Markers */}
+                  {locationsData?.volunteers?.map((vol) => {
+                    const volIcon = L.divIcon({
+                      className: 'custom-marker',
+                      html: `<div style="width: 18px; height: 18px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center;">
+                        <span style="color: white; font-size: 8px; font-weight: bold;">${vol.count || 1}</span>
+                      </div>`,
+                      iconSize: [18, 18],
+                      iconAnchor: [9, 9],
+                    });
+                    return (
+                      <Marker
+                        key={`vol-${vol.id}`}
+                        position={[vol.lat, vol.lng]}
+                        icon={volIcon}
+                      >
+                        <Popup>
+                          <div className="text-xs">
+                            <div className="font-semibold text-blue-700">{vol.count} Volunteer{(vol.count || 1) > 1 ? 's' : ''}</div>
+                            <div className="text-slate-500 flex items-center gap-1 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              {vol.location}
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MapContainer>
+              </div>
+
+              {/* Map Legend */}
+              <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-500 to-purple-700"></span>
+                  Organizations
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700"></span>
+                  Projects
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-500 to-blue-700"></span>
+                  Volunteers
+                </span>
               </div>
             </div>
           </div>

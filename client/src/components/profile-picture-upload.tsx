@@ -31,8 +31,14 @@ export function ProfilePictureUpload({
   const [showCropper, setShowCropper] = useState(false);
   const [pendingImage, setPendingImage] = useState<string>("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [renderKey, setRenderKey] = useState(0); // Force re-render
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Log component mount and props
+  useEffect(() => {
+    console.log("[ProfilePictureUpload] Component mounted/updated - userId:", userId, "type:", type, "currentPhotoUrl:", currentPhotoUrl);
+  }, [userId, type, currentPhotoUrl]);
 
   // Update internal state when prop changes (for loading existing photos)
   useEffect(() => {
@@ -224,9 +230,10 @@ export function ProfilePictureUpload({
       const newUrl = result.url;
       console.log("[ProfilePictureUpload] Upload SUCCESS! URL:", newUrl);
 
-      // Update all state
+      // Update all state and force re-render
       setPhotoUrl(newUrl);
       setStoragePath(result.path || '');
+      setRenderKey(prev => prev + 1); // Force component to re-render
 
       // Notify parent component
       onPhotoChange(newUrl);
@@ -236,7 +243,10 @@ export function ProfilePictureUpload({
         description: "Your profile picture has been updated."
       });
 
-      console.log("[ProfilePictureUpload] State updated, photoUrl should now render:", newUrl);
+      // Log final state
+      setTimeout(() => {
+        console.log("[ProfilePictureUpload] After state update, checking photoUrl...");
+      }, 100);
     } catch (error: any) {
       console.error("[ProfilePictureUpload] Upload error:", error);
       toast({
@@ -272,15 +282,18 @@ export function ProfilePictureUpload({
     }
   };
 
-  // Ensure URL is properly formatted
-  const displayUrl = photoUrl ? (photoUrl.startsWith('http') ? photoUrl : photoUrl) : '';
+  // Ensure URL is properly formatted - add cache buster for fresh images
+  const displayUrl = photoUrl || '';
+  const imgSrc = displayUrl ? `${displayUrl}${displayUrl.includes('?') ? '&' : '?'}v=${renderKey}` : '';
+
+  console.log("[ProfilePictureUpload] Rendering preview - displayUrl:", displayUrl, "imgSrc:", imgSrc);
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4" key={`upload-${renderKey}`}>
       {type === 'avatar' ? (
         <Avatar className="h-32 w-32">
-          {displayUrl ? (
-            <AvatarImage src={displayUrl} alt={label || "Profile picture"} />
+          {imgSrc ? (
+            <AvatarImage src={imgSrc} alt={label || "Profile picture"} key={imgSrc} />
           ) : null}
           <AvatarFallback className="text-2xl">
             <User className="h-12 w-12" />
@@ -291,15 +304,16 @@ export function ProfilePictureUpload({
           className="relative overflow-hidden rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"
           style={{ width: 128, height: 128 }}
         >
-          {displayUrl ? (
+          {imgSrc ? (
             <img
-              key={displayUrl}
-              src={displayUrl}
+              key={imgSrc}
+              src={imgSrc}
               alt={label || "Logo"}
               style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }}
+              onLoad={() => console.log("[ProfilePictureUpload] Image loaded!")}
               onError={(e) => {
+                console.error("[ProfilePictureUpload] Image failed to load:", imgSrc);
                 const target = e.target as HTMLImageElement;
-                // Hide broken image
                 target.style.display = 'none';
               }}
             />

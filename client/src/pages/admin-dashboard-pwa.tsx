@@ -637,11 +637,11 @@ export default function AdminDashboardPWA() {
                   {locationsData?.organizations?.map((org) => {
                     const orgIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="width: 24px; height: 24px; background: linear-gradient(135deg, #9333ea, #7c3aed); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+                      html: `<div style="width: 28px; height: 28px; background: linear-gradient(135deg, #581c87, #4c1d95); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
                       </div>`,
-                      iconSize: [24, 24],
-                      iconAnchor: [12, 12],
+                      iconSize: [28, 28],
+                      iconAnchor: [14, 14],
                     });
                     return (
                       <Marker
@@ -667,11 +667,11 @@ export default function AdminDashboardPWA() {
                   {locationsData?.projects?.map((project) => {
                     const projectIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center;">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      html: `<div style="width: 24px; height: 24px; background: linear-gradient(135deg, #065f46, #064e3b); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                       </div>`,
-                      iconSize: [20, 20],
-                      iconAnchor: [10, 10],
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
                     });
                     return (
                       <Marker
@@ -697,11 +697,11 @@ export default function AdminDashboardPWA() {
                   {locationsData?.volunteers?.map((vol) => {
                     const volIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="width: 18px; height: 18px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center;">
-                        <span style="color: white; font-size: 8px; font-weight: bold;">${vol.count || 1}</span>
+                      html: `<div style="width: 22px; height: 22px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                        <span style="color: white; font-size: 9px; font-weight: bold;">${vol.count || 1}</span>
                       </div>`,
-                      iconSize: [18, 18],
-                      iconAnchor: [9, 9],
+                      iconSize: [22, 22],
+                      iconAnchor: [11, 11],
                     });
                     return (
                       <Marker
@@ -727,15 +727,15 @@ export default function AdminDashboardPWA() {
               {/* Map Legend */}
               <div className="p-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-500 to-purple-700"></span>
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-900 to-purple-950 border border-white shadow"></span>
                   Organizations
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700"></span>
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-800 to-emerald-950 border border-white shadow"></span>
                   Projects
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-500 to-blue-700"></span>
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 border border-white shadow"></span>
                   Volunteers
                 </span>
               </div>

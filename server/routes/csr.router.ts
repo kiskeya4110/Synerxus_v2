@@ -143,15 +143,18 @@ async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>>
   const employeeUserIds = new Set<number>();
 
   // Method 1: Direct link via volunteerProfiles.employerId
+  // Use Number() conversion to handle string/number type mismatches from database
   volunteerProfiles.forEach((vp: any) => {
-    if (vp.employerId === partnerId) {
+    const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+    if (vpEmployerId === partnerId) {
       employeeUserIds.add(vp.userId);
     }
   });
 
   // Method 2: Explicit link via volunteerEmployerLinks table
   employerLinks.forEach((link: any) => {
-    if (link.partnerId === partnerId && link.verificationStatus !== 'rejected') {
+    const linkPartnerId = link.partnerId ? Number(link.partnerId) : null;
+    if (linkPartnerId === partnerId && link.verificationStatus !== 'rejected') {
       // Get the userId from the volunteer profile
       const profile = volunteerProfiles.find((vp: any) => vp.id === link.volunteerId);
       if (profile?.userId) {

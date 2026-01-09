@@ -1075,17 +1075,18 @@ adminRouter.post("/admin/backfill-employer-engagement", async (req: Request, res
       if (!profile) continue;
 
       // Get linked employer IDs (both methods)
+      // Use Number() conversion to handle string/number type mismatches from database
       const linkedEmployerIds = new Set<number>();
 
       if (profile.employerId) {
-        linkedEmployerIds.add(profile.employerId);
+        linkedEmployerIds.add(Number(profile.employerId));
       }
 
       const profileLinks = employerLinks.filter((l: any) =>
         l.volunteerId === profile.id && l.verificationStatus !== 'rejected'
       );
       profileLinks.forEach((link: any) => {
-        if (link.partnerId) linkedEmployerIds.add(link.partnerId);
+        if (link.partnerId) linkedEmployerIds.add(Number(link.partnerId));
       });
 
       if (linkedEmployerIds.size === 0) continue;

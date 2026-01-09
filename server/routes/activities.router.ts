@@ -764,7 +764,11 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
           );
           volunteerLinks.forEach((link: any) => {
             if (link.partnerId) {
-              linkedEmployerIds.add(link.partnerId);
+              // Use Number() to handle string/number type mismatches
+              const partnerIdNum = Number(link.partnerId);
+              if (!isNaN(partnerIdNum)) {
+                linkedEmployerIds.add(partnerIdNum);
+              }
             }
           });
         }
@@ -998,7 +1002,11 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
           );
           volunteerLinks.forEach((link: any) => {
             if (link.partnerId) {
-              linkedEmployerIds.add(link.partnerId);
+              // Use Number() to handle string/number type mismatches
+              const partnerIdNum = Number(link.partnerId);
+              if (!isNaN(partnerIdNum)) {
+                linkedEmployerIds.add(partnerIdNum);
+              }
             }
           });
         }

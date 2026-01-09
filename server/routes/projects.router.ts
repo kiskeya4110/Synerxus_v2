@@ -558,7 +558,11 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
             );
             volunteerLinks.forEach((link: any) => {
               if (link.partnerId) {
-                linkedEmployerIds.add(link.partnerId);
+                // Use Number() to handle string/number type mismatches
+                const partnerIdNum = Number(link.partnerId);
+                if (!isNaN(partnerIdNum)) {
+                  linkedEmployerIds.add(partnerIdNum);
+                }
               }
             });
           }

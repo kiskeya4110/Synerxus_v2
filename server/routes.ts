@@ -6552,7 +6552,11 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       console.log('[CSR DEBUG] employeesFromUsersResult:', JSON.stringify(employeesFromUsersResult));
       const employeesFromUsers = employeesFromUsersResult.rows || [];
       console.log('[CSR DEBUG] employeesFromUsers:', JSON.stringify(employeesFromUsers));
-      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => vp.employerId === userPartner.id);
+      // Use Number() conversion to handle string/number type mismatches from database
+      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => {
+        const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+        return vpEmployerId === userPartner.id;
+      });
 
       // Combine both sources of employee user IDs
       const employeeUserIds = new Set([
@@ -7114,7 +7118,11 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         `SELECT id, display_name FROM users WHERE employer_id = ${userPartner.id}`
       );
       const employeesFromUsers = employeesFromUsersResult.rows || [];
-      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => vp.employerId === userPartner.id);
+      // Use Number() conversion to handle string/number type mismatches from database
+      const employeesFromProfiles = volunteerProfiles.filter((vp: any) => {
+        const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+        return vpEmployerId === userPartner.id;
+      });
       const employeeUserIds = new Set([
         ...employeesFromUsers.map((u: any) => u.id),
         ...employeesFromProfiles.map((vp: any) => vp.userId)
@@ -7168,9 +7176,13 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const volunteerActivities = await storage.listVolunteerActivities?.() || [];
       const users = await storage.listUsers?.() || [];
 
+      // Use Number() conversion to handle string/number type mismatches from database
       const employeeUserIds = new Set(
         volunteerProfiles
-          .filter((vp: any) => vp.employerId === userPartner.id)
+          .filter((vp: any) => {
+            const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+            return vpEmployerId === userPartner.id;
+          })
           .map((vp: any) => vp.userId)
       );
 
@@ -7182,7 +7194,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       });
 
       let employees: any[] = [];
-      
+
       if (stage === 0) {
         // All employees
         employees = Array.from(employeeUserIds).map((uid: any) => {
@@ -7239,9 +7251,13 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const volunteerActivities = await storage.listVolunteerActivities?.() || [];
       const users = await storage.listUsers?.() || [];
 
+      // Use Number() conversion to handle string/number type mismatches from database
       const employeeUserIds = new Set(
         volunteerProfiles
-          .filter((vp: any) => vp.employerId === userPartner.id)
+          .filter((vp: any) => {
+            const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+            return vpEmployerId === userPartner.id;
+          })
           .map((vp: any) => vp.userId)
       );
 
@@ -7373,9 +7389,13 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const projects = await storage.listProjects?.() || [];
       const users = await storage.listUsers?.() || [];
 
+      // Use Number() conversion to handle string/number type mismatches from database
       const employeeUserIds = new Set(
         volunteerProfiles
-          .filter((vp: any) => vp.employerId === userPartner.id)
+          .filter((vp: any) => {
+            const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
+            return vpEmployerId === userPartner.id;
+          })
           .map((vp: any) => vp.userId)
       );
 

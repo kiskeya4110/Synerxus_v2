@@ -11,8 +11,8 @@ export const IMAGE_CONFIG = {
   // Maximum file size in bytes (5MB)
   MAX_FILE_SIZE: 5 * 1024 * 1024,
 
-  // Minimum file size in bytes (1KB - reject tiny/corrupted files)
-  MIN_FILE_SIZE: 1024,
+  // Minimum file size in bytes (100 bytes - very small to allow cropped images)
+  MIN_FILE_SIZE: 100,
 
   // Allowed MIME types
   ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const,

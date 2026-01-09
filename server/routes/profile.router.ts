@@ -148,8 +148,8 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
       return res.status(403).json({ message: "User is not an organization" });
     }
 
-    const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
-    console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name });
+    const { profilePhotoUrl, name, mission, needs, sdgFocus, location, city, country, bio, displayName, website, contactEmail } = req.body;
+    console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country });
 
     // Create organization if it doesn't exist (outside transaction - one-time setup)
     let organizationId = user.organizationId;
@@ -188,6 +188,8 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
         if (sdgFocus !== undefined) orgUpdates.primarySdgs = sdgFocus;
         if (needs !== undefined) orgUpdates.needs = needs;
         if (mission !== undefined) orgUpdates.goals = mission;
+        if (city !== undefined) orgUpdates.city = city;
+        if (country !== undefined) orgUpdates.country = country;
 
         console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
 

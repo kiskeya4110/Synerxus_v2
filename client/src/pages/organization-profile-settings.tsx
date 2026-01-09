@@ -52,7 +52,9 @@ const formSchema = insertMatchableOrganizationSchema.extend({
   email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Organization name is required"),
   mission: z.string().min(10, "Mission statement must be at least 10 characters"),
-  location: z.string().min(1, "Location is required"),
+  location: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  country: z.string().min(1, "Country is required"),
   needs: z.array(z.string()).min(1, "At least one volunteer need is required"),
   sdgFocus: z.array(z.number()).min(1, "At least one SDG focus area is required"),
 });
@@ -327,6 +329,8 @@ export default function OrganizationProfileSettings() {
       name: "",
       mission: "",
       location: "",
+      city: "",
+      country: "",
       needs: [],
       sdgFocus: [],
     },
@@ -353,6 +357,8 @@ export default function OrganizationProfileSettings() {
           name: existingProfile.name || "",
           mission: existingProfile.mission || "",
           location: existingProfile.location || "",
+          city: existingProfile.city || orgData?.city || "",
+          country: existingProfile.country || orgData?.country || "",
           needs: existingProfile.needs || [],
           sdgFocus: existingProfile.sdgFocus || [],
         });
@@ -377,6 +383,8 @@ export default function OrganizationProfileSettings() {
           name: matchableOrg?.name || intakeProfile?.organizationName || orgData?.name || currentUser?.displayName || "",
           mission: matchableOrg?.mission || intakeProfile?.missionStatement || orgData?.goals || "",
           location: matchableOrg?.location || intakeProfile?.organizationLocation || orgData?.address || "",
+          city: matchableOrg?.city || orgData?.city || "",
+          country: matchableOrg?.country || orgData?.country || "",
           needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
           sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });
@@ -397,6 +405,8 @@ export default function OrganizationProfileSettings() {
           name: currentUser.displayName || "",
           mission: "",
           location: "",
+          city: "",
+          country: "",
           needs: [],
           sdgFocus: [],
         });
@@ -427,7 +437,7 @@ export default function OrganizationProfileSettings() {
           timeoutPromise
         ]) as any;
 
-        // Also update the user profile tables (users, organizations) to save logo
+        // Also update the user profile tables (users, organizations) to save logo and location
         if (currentUser?.id) {
           await apiRequest("PATCH", `/api/profile/organization?userId=${currentUser.id}`, {
             profilePhotoUrl: logoUrl,
@@ -436,6 +446,8 @@ export default function OrganizationProfileSettings() {
             needs: data.needs,
             sdgFocus: data.sdgFocus,
             location: data.location,
+            city: data.city,
+            country: data.country,
           });
         }
 
@@ -492,7 +504,7 @@ export default function OrganizationProfileSettings() {
           timeoutPromise
         ]) as any;
 
-        // Also update the user profile tables (users, organizations) to save logo
+        // Also update the user profile tables (users, organizations) to save logo and location
         if (currentUser?.id) {
           await apiRequest("PATCH", `/api/profile/organization?userId=${currentUser.id}`, {
             profilePhotoUrl: logoUrl,
@@ -501,6 +513,8 @@ export default function OrganizationProfileSettings() {
             needs: data.needs,
             sdgFocus: data.sdgFocus,
             location: data.location,
+            city: data.city,
+            country: data.country,
           });
         }
 
@@ -786,30 +800,52 @@ export default function OrganizationProfileSettings() {
                 )}
               />
 
-              {/* Location */}
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Location
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., San Francisco, USA"
-                        {...field}
-                        data-testid="input-org-location"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Your primary location helps match you with local volunteers
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Location - City and Country */}
+              <div className="space-y-4">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Location
+                </Label>
+                <p className="text-sm text-muted-foreground -mt-2">
+                  Your primary location helps match you with local volunteers
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., San Francisco"
+                            {...field}
+                            data-testid="input-org-city"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., United States"
+                            {...field}
+                            data-testid="input-org-country"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               {/* Volunteer Needs */}
               <div className="space-y-2">

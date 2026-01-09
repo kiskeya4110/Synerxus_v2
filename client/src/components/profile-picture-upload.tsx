@@ -217,9 +217,13 @@ export function ProfilePictureUpload({
         }
       }
 
+      console.log("[ProfilePictureUpload] Upload complete, setting photoUrl to:", result.url);
       setPhotoUrl(result.url);
       setStoragePath(result.path);
       onPhotoChange(result.url);
+
+      // Force a re-render by updating state
+      console.log("[ProfilePictureUpload] photoUrl state should now be:", result.url);
 
       toast({
         title: "Photo uploaded",
@@ -260,6 +264,9 @@ export function ProfilePictureUpload({
     }
   };
 
+  // Debug render
+  console.log("[ProfilePictureUpload] RENDER - type:", type, "photoUrl:", photoUrl?.slice(0, 50), "isUploading:", isUploading);
+
   return (
     <div className="flex flex-col items-center space-y-4">
       {type === 'avatar' ? (
@@ -270,25 +277,32 @@ export function ProfilePictureUpload({
           </AvatarFallback>
         </Avatar>
       ) : (
-        <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 relative">
           {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={label || "Logo"}
-              className="h-32 w-32 object-contain p-2"
-              onError={(e) => {
-                console.error("[ProfilePictureUpload] Image load error for:", photoUrl);
-                // Try with a cache-busting parameter
-                const target = e.target as HTMLImageElement;
-                if (!target.src.includes('?')) {
-                  target.src = `${photoUrl}?t=${Date.now()}`;
-                }
-              }}
-              onLoad={() => console.log("[ProfilePictureUpload] Image loaded successfully:", photoUrl)}
-            />
+            <>
+              <img
+                src={photoUrl}
+                alt={label || "Logo"}
+                className="h-32 w-32 object-contain p-2"
+                onError={(e) => {
+                  console.error("[ProfilePictureUpload] Image load error for:", photoUrl);
+                  // Try with a cache-busting parameter
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('?')) {
+                    target.src = `${photoUrl}?t=${Date.now()}`;
+                  }
+                }}
+                onLoad={() => console.log("[ProfilePictureUpload] Image loaded successfully:", photoUrl)}
+              />
+              {/* Debug overlay - shows URL */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] p-1 truncate">
+                {photoUrl.slice(-30)}
+              </div>
+            </>
           ) : (
             <div className="text-center text-gray-400 dark:text-gray-500">
               <p className="text-xs font-medium">Logo Preview</p>
+              <p className="text-[8px]">(no URL)</p>
             </div>
           )}
         </div>

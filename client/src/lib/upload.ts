@@ -57,9 +57,8 @@ async function getAuthToken(): Promise<string | null> {
  * @returns Promise with the download URL and storage path
  */
 export async function uploadFile(file: File, path: string, imageType?: string): Promise<UploadResult> {
-  try {
-    console.log('[Upload] Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type);
-
+  // Helper function to perform the upload with a given token
+  async function performUpload(token: string): Promise<Response> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -68,56 +67,88 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
       url += `&imageType=${encodeURIComponent(imageType)}`;
     }
 
-    // Get Firebase ID token for secure authentication
-    console.log('[Upload] Getting auth token...');
-    const token = await getAuthToken();
-    if (!token) {
-      console.error('[Upload] No auth token available');
-      throw new Error('Authentication required. Please sign in again and try uploading.');
-    }
-    console.log('[Upload] Auth token obtained, proceeding with upload...');
-
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`,
     };
 
-    // Create abort controller for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    let response: Response;
     try {
-      response = await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         body: formData,
         headers,
         credentials: 'include',
         signal: controller.signal,
       });
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  try {
+    console.log('[Upload] Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type);
+
+    // Get Firebase ID token for secure authentication
+    console.log('[Upload] Getting auth token...');
+    let token = await getAuthToken();
+    if (!token) {
+      console.error('[Upload] No auth token available');
+      throw new Error('Authentication required. Please sign in again and try uploading.');
+    }
+    console.log('[Upload] Auth token obtained, proceeding with upload...');
+
+    let response: Response;
+    try {
+      response = await performUpload(token);
     } catch (fetchError: any) {
       if (fetchError.name === 'AbortError') {
         throw new Error('Upload timed out. Please check your connection and try again.');
       }
       throw new Error('Network error. Please check your connection and try again.');
-    } finally {
-      clearTimeout(timeoutId);
+    }
+
+    // If we get a 401, try once more with a fresh token
+    if (response.status === 401) {
+      console.log('[Upload] Got 401, trying to refresh token and retry...');
+
+      // Force a fresh token by signing out and back in, or just get a fresh one
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          // Force token refresh
+          token = await user.getIdToken(true);
+          console.log('[Upload] Got fresh token, retrying upload...');
+
+          response = await performUpload(token);
+          console.log('[Upload] Retry response status:', response.status);
+        } catch (refreshError) {
+          console.error('[Upload] Failed to refresh token:', refreshError);
+        }
+      }
     }
 
     console.log('[Upload] Response status:', response.status);
 
     if (!response.ok) {
       let errorMessage = `Upload failed: ${response.statusText}`;
+      let serverError: any = null;
       try {
-        const error = await response.json();
-        errorMessage = error.message || errorMessage;
-        console.error('[Upload] Server error:', error);
+        serverError = await response.json();
+        errorMessage = serverError.message || errorMessage;
+        console.error('[Upload] Server error:', serverError);
       } catch (e) {
         console.error('[Upload] Could not parse error response');
       }
 
-      // Provide more specific error messages
+      // For 401 errors, show the actual server message which is more helpful
       if (response.status === 401) {
-        throw new Error('Session expired. Please refresh the page and try again.');
+        // Log additional debug info
+        console.error('[Upload] Auth failed - token was present but rejected');
+        console.error('[Upload] Server response:', serverError);
+        throw new Error(errorMessage || 'Authentication failed. Please sign out and sign back in.');
       } else if (response.status === 403) {
         throw new Error('You do not have permission to upload this file.');
       } else if (response.status === 400) {

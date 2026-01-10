@@ -389,8 +389,8 @@ export default function OrganizationTeamPage() {
 
           {/* Viewing Member Modal - Reuse existing logic */}
           {viewingMember && (
-            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setViewingMember(null)}>
-              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[200]" onClick={() => setViewingMember(null)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+80px)]" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-lg">
                     {viewingMember.user?.avatar ? (
@@ -451,8 +451,8 @@ export default function OrganizationTeamPage() {
 
           {/* Invite Modal - Simplified for mobile */}
           {showInviteModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setShowInviteModal(false)}>
-              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[200]" onClick={() => setShowInviteModal(false)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+80px)]" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Invite Team Member</h3>
 
                 <div className="space-y-3 mb-4">
@@ -504,8 +504,8 @@ export default function OrganizationTeamPage() {
 
           {/* Invite Link Success Modal - Mobile */}
           {inviteLinkResult && (
-            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setInviteLinkResult(null)}>
-              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[200]" onClick={() => setInviteLinkResult(null)}>
+              <div className="bg-white rounded-t-2xl w-full max-w-[428px] p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+80px)]" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2 mb-3">
                   <Check className="h-5 w-5 text-green-600" />
                   <h3 className="text-lg font-semibold text-slate-900">Invitation Created</h3>

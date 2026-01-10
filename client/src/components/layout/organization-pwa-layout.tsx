@@ -71,7 +71,7 @@ export default function OrganizationPWALayout({
         <main
           className="flex-1 overflow-y-auto overflow-x-hidden"
           style={{
-            paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
+            paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
           }}
         >
           {children}

@@ -654,7 +654,7 @@ export default function OrganizationDashboardPWA() {
         <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
         {/* Main Content - scrollable area between header and nav */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="p-4 space-y-4">
           {/* Pending Applications with Quick Approve/Reject */}
           {pendingApplications && pendingApplications.length > 0 && (

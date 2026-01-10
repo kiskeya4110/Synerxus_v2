@@ -120,7 +120,8 @@
       "Bash(client/src/components/volunteer/mobile-pwa-view.tsx )",
       "Bash(client/src/pages/organization-profile-settings.tsx )",
       "Bash(server/aiu-service.ts)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(node scripts/generate-favicons.cjs:*)"
     ],
     "deny": [],
     "ask": []

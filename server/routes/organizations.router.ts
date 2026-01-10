@@ -118,6 +118,8 @@ organizationsRouter.get("/public-stats", async (req: Request, res: Response) => 
           logo: org.logo,
           website: org.website,
           contactEmail: org.contactEmail,
+          city: org.city,
+          country: org.country,
           stats: {
             projectCount: orgProjects.length,
             volunteerCount: uniqueVolunteerIds.size,

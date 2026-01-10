@@ -35,6 +35,8 @@ interface OrganizationWithStats {
   logo: string;
   website: string;
   contactEmail: string;
+  city: string | null;
+  country: string | null;
   stats: OrganizationStats;
   profile: {
     location: string;
@@ -241,10 +243,10 @@ export default function OrganizationsPWA() {
                           <span className="text-xs font-bold text-purple-600">{org.stats.impactScore}</span>
                         </div>
                       </div>
-                      {org.profile?.location && (
+                      {(org.country || org.profile?.location) && (
                         <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                           <MapPin className="h-3 w-3" />
-                          <span className="truncate">{org.profile.location}</span>
+                          <span className="truncate">{org.country || org.profile?.location}</span>
                         </div>
                       )}
                       <p className="text-xs text-gray-600 mt-1 line-clamp-2">
@@ -380,10 +382,10 @@ export default function OrganizationsPWA() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <DialogTitle className="text-lg">{selectedOrg.name}</DialogTitle>
-                    {selectedOrg.profile?.location && (
+                    {(selectedOrg.country || selectedOrg.profile?.location) && (
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="h-3 w-3" />
-                        {selectedOrg.profile.location}
+                        {selectedOrg.country || selectedOrg.profile?.location}
                       </p>
                     )}
                   </div>

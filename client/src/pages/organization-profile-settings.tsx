@@ -352,13 +352,14 @@ export default function OrganizationProfileSettings() {
 
       if (hasMatchableProfile) {
         // Existing matchable organization profile - populate form with all data
+        // Note: city/country come from organizations table (orgData), not matchable_organizations
         form.reset({
           email: existingProfile.email || currentUser?.email || "",
           name: existingProfile.name || "",
           mission: existingProfile.mission || "",
           location: existingProfile.location || "",
-          city: existingProfile.city || orgData?.city || "",
-          country: existingProfile.country || orgData?.country || "",
+          city: orgData?.city || "",
+          country: orgData?.country || "",
           needs: existingProfile.needs || [],
           sdgFocus: existingProfile.sdgFocus || [],
         });
@@ -383,8 +384,8 @@ export default function OrganizationProfileSettings() {
           name: matchableOrg?.name || intakeProfile?.organizationName || orgData?.name || currentUser?.displayName || "",
           mission: matchableOrg?.mission || intakeProfile?.missionStatement || orgData?.goals || "",
           location: matchableOrg?.location || intakeProfile?.organizationLocation || orgData?.address || "",
-          city: matchableOrg?.city || orgData?.city || "",
-          country: matchableOrg?.country || orgData?.country || "",
+          city: orgData?.city || "",
+          country: orgData?.country || "",
           needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
           sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });

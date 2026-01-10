@@ -35,6 +35,8 @@ interface OrganizationWithStats {
   logo: string;
   website: string;
   contactEmail: string;
+  city: string | null;
+  country: string | null;
   stats: OrganizationStats;
   profile: {
     location: string;
@@ -159,10 +161,10 @@ export default function Organizations() {
                 >
                   {org.name}
                 </CardTitle>
-                {org.profile?.location && (
+                {(org.country || org.profile?.location) && (
                   <div className="flex items-center gap-1 text-sm text-gray-500">
                     <MapPin className="h-3 w-3" />
-                    <span>{org.profile.location}</span>
+                    <span>{org.country || org.profile?.location}</span>
                   </div>
                 )}
               </div>
@@ -410,10 +412,10 @@ export default function Organizations() {
                       </Avatar>
                       <div className="flex-1">
                         <DialogTitle className="text-xl">{selectedOrg.name}</DialogTitle>
-                        {selectedOrg.profile?.location && (
+                        {(selectedOrg.country || selectedOrg.profile?.location) && (
                           <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                             <MapPin className="h-4 w-4" />
-                            {selectedOrg.profile.location}
+                            {selectedOrg.country || selectedOrg.profile?.location}
                           </p>
                         )}
                       </div>
@@ -650,17 +652,17 @@ export default function Organizations() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle 
+                        <CardTitle
                           className="text-xl mb-1 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => setSelectedOrg(org)}
                           data-testid={`org-name-${org.id}`}
                         >
                           {org.name}
                         </CardTitle>
-                        {org.profile?.location && (
+                        {(org.country || org.profile?.location) && (
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <MapPin className="h-3 w-3" />
-                            <span>{org.profile.location}</span>
+                            <span>{org.country || org.profile?.location}</span>
                           </div>
                         )}
                       </div>
@@ -856,14 +858,14 @@ export default function Organizations() {
                   </Avatar>
                   <div className="flex-1">
                     <DialogTitle className="text-xl">{selectedOrg.name}</DialogTitle>
-                    {selectedOrg.profile?.location && (
+                    {(selectedOrg.country || selectedOrg.profile?.location) && (
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="h-4 w-4" />
-                        {selectedOrg.profile.location}
+                        {selectedOrg.country || selectedOrg.profile?.location}
                       </p>
                     )}
                   </div>
-                  <div 
+                  <div
                     className="flex items-center gap-1 bg-purple-50 px-3 py-1 rounded-full"
                     title="Impact Score"
                   >

@@ -60,6 +60,8 @@ interface Organization {
   contactEmail: string | null;
   contactPhone: string | null;
   address: string | null;
+  city: string | null;
+  country: string | null;
   primarySdgs: number[] | null;
   needs: string[] | null;
   goals: string | null;
@@ -532,10 +534,12 @@ function OrganizationCard({
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
-              {organization.address && (
+              {(organization.country || organization.address) && (
                 <span className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  {organization.address}
+                  {organization.country
+                    ? (organization.city ? `${organization.city}, ${organization.country}` : organization.country)
+                    : organization.address}
                 </span>
               )}
             </div>

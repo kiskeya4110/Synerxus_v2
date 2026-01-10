@@ -97,22 +97,26 @@ storageRouter.post("/upload", upload.single("file"), handleMulterError, async (r
     // If middleware didn't set user, try direct token verification as fallback
     if (!req.user && authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      logger.info(`[Storage] Attempting direct token verification for upload`);
+      logger.info(`[Storage] Attempting direct token verification for upload. Token length: ${token.length}`);
 
       // Try JWT first
-      const jwtDecoded = verifyToken(token);
-      if (jwtDecoded?.userId) {
-        const user = await storage.getUser(jwtDecoded.userId);
-        if (user) {
-          req.user = {
-            id: user.id,
-            email: user.email,
-            userType: user.userType || "volunteer",
-            organizationId: user.organizationId,
-            firebaseUid: user.firebaseUid,
-          };
-          logger.info(`[Storage] Direct JWT verification succeeded for user: ${user.id}`);
+      try {
+        const jwtDecoded = verifyToken(token);
+        if (jwtDecoded?.userId) {
+          const user = await storage.getUser(jwtDecoded.userId);
+          if (user) {
+            req.user = {
+              id: user.id,
+              email: user.email,
+              userType: user.userType || "volunteer",
+              organizationId: user.organizationId,
+              firebaseUid: user.firebaseUid,
+            };
+            logger.info(`[Storage] Direct JWT verification succeeded for user: ${user.id}`);
+          }
         }
+      } catch (jwtErr) {
+        logger.debug("[Storage] Direct JWT verification failed, trying Firebase");
       }
 
       // Try Firebase if JWT failed

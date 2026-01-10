@@ -242,8 +242,7 @@ export function ProfilePictureUpload({
 
         {/* Upload overlay on hover */}
         {status === 'idle' && (
-          <button
-            type="button"
+          <div
             onClick={handleButtonClick}
             className={cn(
               "absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
@@ -251,7 +250,7 @@ export function ProfilePictureUpload({
             )}
           >
             <Camera className="h-8 w-8 text-white" />
-          </button>
+          </div>
         )}
 
         {/* Status overlay */}

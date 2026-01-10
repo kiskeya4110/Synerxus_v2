@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 import { logger } from "../logger";
 
 let firebaseApp: admin.app.App | null = null;
@@ -20,6 +20,12 @@ function initializeFirebaseAdmin(): admin.app.App | null {
   }
 
   try {
+    // Check if app is already initialized by checking apps array
+    if (admin.apps.length > 0) {
+      firebaseApp = admin.apps[0];
+      return firebaseApp;
+    }
+
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert({
         projectId,

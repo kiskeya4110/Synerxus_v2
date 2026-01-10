@@ -121,7 +121,9 @@
       "Bash(client/src/pages/organization-profile-settings.tsx )",
       "Bash(server/aiu-service.ts)",
       "Bash(node --check:*)",
-      "Bash(node scripts/generate-favicons.cjs:*)"
+      "Bash(node scripts/generate-favicons.cjs:*)",
+      "Bash(npx vite build:*)",
+      "Bash(env)"
     ],
     "deny": [],
     "ask": []

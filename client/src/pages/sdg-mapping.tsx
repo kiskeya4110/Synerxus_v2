@@ -521,7 +521,7 @@ export default function SDGMapping() {
   // Empty state when organization hasn't selected SDGs in Settings
   if (sdgData.length === 0) {
     return (
-      <div className="h-screen overflow-y-auto pb-24">
+      <div className="h-screen overflow-y-auto pb-36">
         <OrganizationHeader activeTab="sdgs" />
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
           <div className="mb-4 sm:mb-6">
@@ -765,7 +765,7 @@ export default function SDGMapping() {
 
     return (
       <OrganizationPWALayout activeTab="sdgs">
-        <div className="p-4 pb-24">
+        <div className="p-4 pb-36">
           {/* Header with filter */}
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -1227,7 +1227,7 @@ export default function SDGMapping() {
         <PWAHeader />
 
         {/* Spacer for fixed header */}
-        <div className="pt-20 pb-24">
+        <div className="pt-20 pb-36">
         <div className="p-4">
           {/* Page Title */}
           <div className="mb-4">
@@ -1486,7 +1486,7 @@ export default function SDGMapping() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto pb-24">
+    <div className="h-screen overflow-y-auto pb-36">
       <OfflineBanner />
       <OrganizationHeader activeTab="sdgs" />
       <OrganizationWelcomeBanner pageTitle="SDG Mapping" />

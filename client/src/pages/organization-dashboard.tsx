@@ -907,7 +907,7 @@ export default function OrganizationDashboard() {
       />}
 
       {/* Main Content */}
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '16px 24px 140px 24px' : '16px 24px' }} className="md:p-6">
         {/* Filters Section - Desktop Only */}
         <div className="hidden md:flex" style={{ flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -1276,7 +1276,7 @@ export default function OrganizationDashboard() {
         </div>
 
         {/* Mobile Quick Actions */}
-        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', position: 'relative', zIndex: 10 }}>
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', marginBottom: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', position: 'relative', zIndex: 10 }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '8px', paddingLeft: '4px' }}>Quick Actions</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
             <button

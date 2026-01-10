@@ -489,7 +489,7 @@ export default function Projects() {
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
       {isOrganization && <OrganizationWelcomeBanner pageTitle="Projects & Tasks" />}
-      <div className={`h-screen overflow-y-auto ${isVolunteer && isMobile ? 'pt-20 pb-24' : 'pb-24'}`} style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
+      <div className={`h-screen overflow-y-auto ${isVolunteer && isMobile ? 'pt-20 pb-36' : 'pb-36'}`} style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>

@@ -360,7 +360,7 @@ export default function OrganizationLeaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: '80px' }}>
+    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: '140px' }}>
       {/* Header */}
       <OrganizationHeader activeTab="volunteers" />
       <OrganizationWelcomeBanner pageTitle="Volunteer Leaderboard" />

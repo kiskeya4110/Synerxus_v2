@@ -518,7 +518,7 @@ export default function ProjectDetail() {
       {/* Volunteer Desktop Navigation */}
       <VolunteerNav />
 
-      <div className="min-h-full pb-24 md:pb-0">
+      <div className="min-h-full pb-36 md:pb-0">
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
       {/* Hero Section */}

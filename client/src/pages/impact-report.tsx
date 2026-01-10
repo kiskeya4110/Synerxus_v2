@@ -624,7 +624,7 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''}`}>
+    <div className={`min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''} ${isOrganization && isMobile ? 'pb-36' : ''}`}>
       {/* Desktop Volunteer Navigation */}
       {isVolunteer && !isMobile && <VolunteerNav />}
       {/* PWA Header for mobile volunteer users */}

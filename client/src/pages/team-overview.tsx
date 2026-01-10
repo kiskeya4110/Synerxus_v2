@@ -36,6 +36,7 @@ import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Logo from "@/components/ui/logo";
 
 interface MLInsight {
@@ -109,6 +110,7 @@ export default function TeamOverview() {
     enabled: !!userId
   });
   const isOrganization = currentUser?.userType === 'organization';
+  const isMobile = useIsMobile();
 
   // SDG Filter State - support multiple selection
   const [selectedSDGs, setSelectedSDGs] = useState<number[]>([]);
@@ -281,7 +283,7 @@ export default function TeamOverview() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto px-6 py-8 max-w-7xl mx-auto w-full">
+      <main className={`flex-1 overflow-y-auto px-6 py-8 max-w-7xl mx-auto w-full ${isMobile ? 'pb-36' : ''}`}>
         {/* Real-time KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard

@@ -339,7 +339,7 @@ export default function Profile() {
     <div className={isVolunteer ? "bg-[#f8f9fa] min-h-screen" : ""}>
       {isOrganization && <OrganizationHeader activeTab="profile" />}
       {isVolunteer && <VolunteerNav />}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: isMobile && isOrganization ? '24px 24px 140px 24px' : '24px' }}>
       <div className="space-y-6">
         {/* Header Section */}
         <Card>

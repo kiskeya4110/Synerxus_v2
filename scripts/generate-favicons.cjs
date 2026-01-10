@@ -6,7 +6,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const sourceImage = path.resolve('client/public/synerxus-logo.png');
+const sourceImage = path.resolve('client/src/assets/synerxus-logo-new.png');
 const outputDir = path.resolve('client/public');
 
 // Background color matching the app theme
@@ -28,7 +28,7 @@ const maskableIcons = [
 ];
 
 async function generateFavicons() {
-  console.log('🎨 Generating favicons from synerxus-logo.png...\n');
+  console.log('🎨 Generating favicons from synerxus-logo-new.png (approved solid design)...\n');
 
   // Get source image info
   const metadata = await sharp(sourceImage).metadata();

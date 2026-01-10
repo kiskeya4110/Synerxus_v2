@@ -360,7 +360,7 @@ export default function OrganizationTeamPage() {
 
           {/* Pending Invitations */}
           {pendingMembers.length > 0 && (
-            <Card>
+            <Card className="mb-4">
               <CardHeader className="pb-2 pt-3 px-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-500" />
@@ -376,9 +376,14 @@ export default function OrganizationTeamPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 truncate">{member.user?.email || "Pending"}</p>
-                        <p className="text-[10px] text-slate-500">
-                          Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border bg-amber-50 text-amber-700 border-amber-200 uppercase">
+                            {member.role}
+                          </span>
+                          <p className="text-[10px] text-slate-500">
+                            Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -386,6 +391,9 @@ export default function OrganizationTeamPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Spacer to prevent bottom nav obstruction */}
+          <div className="h-10" />
 
           {/* Viewing Member Modal - Reuse existing logic */}
           {viewingMember && (

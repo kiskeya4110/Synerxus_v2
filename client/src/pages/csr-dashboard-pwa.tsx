@@ -1143,7 +1143,7 @@ export default function CSRDashboardPWA() {
                         <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-indigo-100">
                           <h4 className="text-xs font-semibold text-slate-700 mb-1 text-center">Committed vs Actual SDGs</h4>
                           <p className="text-[9px] text-slate-500 text-center mb-2">
-                            {committedSDGs.length} committed • {alignedSDGs.length} with activity • {(csrData.sdgMetrics || []).reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0).toLocaleString()}h total
+                            {committedSDGs.length} committed • {alignedSDGs.length} with activity • {(csrData.sdgMetrics || []).filter((m: any) => committedSDGs.includes(m.sdg)).reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0).toLocaleString()}h committed
                           </p>
                           <div className="h-40">
                             <ResponsiveContainer width="100%" height="100%">
@@ -2124,9 +2124,16 @@ function ActionButton({ icon: Icon, label, color, onClick }: { icon: any; label:
 function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | undefined; onSelectSDG: (sdg: number) => void }) {
   const sdgMetrics = csrData?.sdgMetrics || [];
   const activeSdgs = sdgMetrics.filter(m => m.totalHours > 0);
-  const totalHours = sdgMetrics.reduce((sum, m) => sum + (m.totalHours || 0), 0);
   const committedSDGs = csrData?.primarySdgs || [];
   const projectLocations = csrData?.projectLocations || [];
+
+  // Calculate hours only from committed SDGs to match web dashboard
+  const committedSDGHours = sdgMetrics
+    .filter(m => committedSDGs.includes(m.sdg))
+    .reduce((sum, m) => sum + (m.totalHours || 0), 0);
+
+  // Total hours across all SDGs (including non-committed)
+  const totalAllSDGHours = sdgMetrics.reduce((sum, m) => sum + (m.totalHours || 0), 0);
 
   // Radar data for committed vs actual SDGs
   const radarData = committedSDGs.length > 0
@@ -2175,8 +2182,11 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
           <p className="text-[10px] text-indigo-600 font-medium">Committed / Active SDGs</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
-          <p className="text-2xl font-bold text-emerald-700">{totalHours.toLocaleString()}</p>
-          <p className="text-[10px] text-emerald-600 font-medium">Total Hours</p>
+          <p className="text-2xl font-bold text-emerald-700">{committedSDGHours.toLocaleString()}</p>
+          <p className="text-[10px] text-emerald-600 font-medium">Committed SDG Hours</p>
+          {totalAllSDGHours > committedSDGHours && (
+            <p className="text-[8px] text-slate-400 mt-0.5">{totalAllSDGHours.toLocaleString()}h total (all SDGs)</p>
+          )}
         </div>
       </div>
 

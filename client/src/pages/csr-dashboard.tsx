@@ -507,7 +507,7 @@ export default function CSRDashboard() {
   // Mobile detection and PWA tab state
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarMenuOpen, setIsSidebarMenuOpen] = useState(false);
-  const [mobileTab, setMobileTab] = useState<'overview' | 'employees' | 'sdgs' | 'reports' | 'settings'>('overview');
+  const [mobileTab, setMobileTab] = useState<'overview' | 'employees' | 'sdgs' | 'reports' | 'settings' | 'geographic'>('overview');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -525,11 +525,24 @@ export default function CSRDashboard() {
   // Check for stored tab from navigation (e.g., from CSRMobileNav or other pages)
   useEffect(() => {
     const storedTab = sessionStorage.getItem('csrMobileTab');
-    if (storedTab && ['overview', 'employees', 'sdgs', 'reports', 'settings'].includes(storedTab)) {
+    if (storedTab && ['overview', 'employees', 'sdgs', 'reports', 'settings', 'geographic'].includes(storedTab)) {
       setMobileTab(storedTab as typeof mobileTab);
       sessionStorage.removeItem('csrMobileTab'); // Clear after reading
     }
   }, []);
+
+  // Sync URL tab parameter with mobileTab on mobile
+  useEffect(() => {
+    if (isMobile) {
+      const urlParams = new URLSearchParams(searchString);
+      const tabParam = urlParams.get('tab');
+      if (tabParam === 'geographic') {
+        startTransition(() => {
+          setMobileTab('geographic');
+        });
+      }
+    }
+  }, [searchString, isMobile]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -1423,7 +1436,7 @@ export default function CSRDashboard() {
       items: [
         { icon: BarChart3, label: "Impact Reports", desc: "View detailed reports", action: () => { setMobileTab('reports'); setShowMobileMenu(false); } },
         { icon: Download, label: "Export Data", desc: "Download CSV/PDF reports", action: () => navigate('/csr-reports-exports') },
-        { icon: Globe, label: "Geographic Impact", desc: "Map view of activities", action: () => { setMobileTab('overview'); setShowMobileMenu(false); } },
+        { icon: Globe, label: "Geographic Impact", desc: "Map view of activities", action: () => { setMobileTab('geographic'); setShowMobileMenu(false); } },
       ]
     },
     {
@@ -2340,6 +2353,119 @@ export default function CSRDashboard() {
                     <div className="text-slate-900 text-sm font-semibold">{adminName}</div>
                     <div className="text-slate-600 text-[10px]">{user?.email}</div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mobileTab === 'geographic' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-cyan-700" />
+                <h1 className="text-slate-900 text-base font-bold">Geographic Impact</h1>
+              </div>
+              <p className="text-slate-600 text-xs">Project locations where your employees are making a difference</p>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-300">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MapPin className="w-3.5 h-3.5 text-blue-700" />
+                    <span className="text-blue-700 text-[10px] font-medium">Active Projects</span>
+                  </div>
+                  <div className="text-slate-900 text-xl font-bold">{filteredProjectLocations.length}</div>
+                </div>
+                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-300">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Users className="w-3.5 h-3.5 text-emerald-700" />
+                    <span className="text-emerald-700 text-[10px] font-medium">Employees</span>
+                  </div>
+                  <div className="text-slate-900 text-xl font-bold">{filteredProjectLocations.reduce((sum, p) => sum + (p.employees || 0), 0)}</div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3 border border-amber-300">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-700" />
+                    <span className="text-amber-700 text-[10px] font-medium">Hours</span>
+                  </div>
+                  <div className="text-slate-900 text-xl font-bold">{filteredProjectLocations.reduce((sum, p) => sum + (p.hours || 0), 0).toLocaleString()}</div>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-300">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Globe className="w-3.5 h-3.5 text-purple-700" />
+                    <span className="text-purple-700 text-[10px] font-medium">Regions</span>
+                  </div>
+                  <div className="text-slate-900 text-xl font-bold">{new Set(filteredProjectLocations.map(p => p.region).filter(Boolean)).size}</div>
+                </div>
+              </div>
+
+              {/* Map Container */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="p-3 border-b border-slate-200 flex items-center justify-between">
+                  <h3 className="text-slate-900 text-sm font-semibold flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-cyan-600" />
+                    Project Map
+                  </h3>
+                  {/* Legend */}
+                  <div className="flex gap-2 text-[9px]">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-800"></span>Active</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500"></span>Sponsored</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span>Done</span>
+                  </div>
+                </div>
+                <div className="h-[280px] bg-slate-900 relative">
+                  <LazyErrorBoundary fallback={<div className="h-full flex items-center justify-center text-slate-400 text-sm">Map loading...</div>}>
+                    <Suspense fallback={<div className="h-full flex items-center justify-center text-slate-400 text-sm">Loading map...</div>}>
+                      <LazyGlobalImpactMap projectLocations={filteredProjectLocations} />
+                    </Suspense>
+                  </LazyErrorBoundary>
+                </div>
+              </div>
+
+              {/* Project List */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="p-3 border-b border-slate-200">
+                  <h3 className="text-slate-900 text-sm font-semibold">Project Locations ({filteredProjectLocations.length})</h3>
+                </div>
+                <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                  {filteredProjectLocations.length > 0 ? (
+                    filteredProjectLocations.map((project: any, idx: number) => (
+                      <div key={project.id || idx} className="p-3 hover:bg-slate-50">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-slate-900 text-sm font-medium truncate">{project.name}</div>
+                            <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {project.region || "Unknown"}
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-2">
+                            <div className="text-emerald-700 text-xs font-semibold">{project.employees || 0} employees</div>
+                            <div className="text-amber-700 text-[10px]">{(project.hours || 0).toLocaleString()} hrs</div>
+                          </div>
+                        </div>
+                        {project.sdgs && project.sdgs.length > 0 && (
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            {project.sdgs.slice(0, 4).map((sdg: number) => (
+                              <span key={sdg} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-[9px] font-semibold">
+                                SDG {sdg}
+                              </span>
+                            ))}
+                            {project.sdgs.length > 4 && (
+                              <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px]">
+                                +{project.sdgs.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center">
+                      <MapPin className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-500 text-sm">No project locations found</p>
+                      <p className="text-slate-400 text-xs mt-1">Projects will appear as employees log volunteer activities</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

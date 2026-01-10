@@ -35,9 +35,9 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
 
   return (
     <>
-      <div className="h-14 md:hidden" />
+      <div className="h-16 md:hidden" />
       <nav
-        className="fixed bottom-0 left-0 right-0 h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-[1000] md:hidden"
+        className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden"
         style={{
           background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
           boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
@@ -58,7 +58,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '6px 12px',
+                  padding: '10px 14px',
                   borderRadius: '12px',
                   background: active
                     ? 'linear-gradient(135deg, #14532d 0%, #166534 100%)'
@@ -69,10 +69,11 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                   transform: 'translateY(-8px)',
                   transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
                   minWidth: '60px',
+                  minHeight: '48px',
                 }}
               >
                 <item.icon size={20} style={{ color: '#ffffff' }} />
-                <span style={{ fontSize: '8px', fontWeight: '600', color: '#ffffff', letterSpacing: '0.3px' }}>
+                <span style={{ fontSize: '10px', fontWeight: '600', color: '#ffffff', letterSpacing: '0.3px' }}>
                   {item.label}
                 </span>
               </button>
@@ -89,19 +90,20 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '2px',
-                padding: '4px 6px',
+                padding: '6px 8px',
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 color: active ? '#1e293b' : '#64748b',
                 transition: 'all 0.2s ease',
-                minWidth: '48px',
+                minWidth: '52px',
+                minHeight: '48px',
                 borderRadius: '8px',
               }}
             >
               <div
                 style={{
-                  padding: '6px',
+                  padding: '8px',
                   borderRadius: '8px',
                   backgroundColor: active ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
                   transition: 'all 0.2s ease',
@@ -110,9 +112,9 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                   justifyContent: 'center',
                 }}
               >
-                <item.icon size={18} strokeWidth={2} style={{ color: active ? '#059669' : '#64748b' }} />
+                <item.icon size={20} strokeWidth={2} style={{ color: active ? '#059669' : '#64748b' }} />
               </div>
-              <span style={{ fontSize: '9px', fontWeight: active ? '600' : '500', letterSpacing: '0.2px' }}>
+              <span style={{ fontSize: '10px', fontWeight: active ? '600' : '500', letterSpacing: '0.2px' }}>
                 {item.label}
               </span>
             </button>

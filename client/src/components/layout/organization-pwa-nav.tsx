@@ -71,13 +71,13 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
             <button
               key={item.id}
               onClick={() => item.action ? item.action() : navigate(item.path!)}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
+              className="flex flex-col items-center gap-0.5 min-w-[52px] min-h-[48px] py-2"
               data-testid={`nav-org-${item.id}`}
             >
-              <div className={`p-1.5 rounded-lg ${isActive ? 'bg-emerald-100' : ''}`}>
-                <item.icon className={`w-[18px] h-[18px] ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
+              <div className={`p-2 rounded-lg ${isActive ? 'bg-emerald-100' : ''}`}>
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
               </div>
-              <span className={`text-[9px] font-medium ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-500'}`}>
+              <span className={`text-[10px] font-medium ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-500'}`}>
                 {item.label}
               </span>
             </button>

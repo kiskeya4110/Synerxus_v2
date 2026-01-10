@@ -465,7 +465,7 @@ export default function CSRDashboard() {
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedAdminTab, setSelectedAdminTab] = useState<
-    "reviews" | "insights" | "flagged"
+    "reviews" | "insights" | "flagged" | "pendingVerification"
   >("reviews");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [selectedFunnelStage, setSelectedFunnelStage] = useState<number | null>(
@@ -6451,6 +6451,8 @@ export default function CSRDashboard() {
                           display: "flex",
                           gap: "16px",
                           marginBottom: "8px",
+                          flexWrap: "wrap",
+                          justifyContent: "center",
                         }}
                       >
                         <div style={{ textAlign: "center" }}>
@@ -6495,7 +6497,38 @@ export default function CSRDashboard() {
                             Flagged
                           </div>
                         </div>
+                        {adminActionsData.pendingVerification && adminActionsData.pendingVerification.count > 0 && (
+                          <div style={{ textAlign: "center" }}>
+                            <div
+                              style={{
+                                fontSize: "18px",
+                                fontWeight: "bold",
+                                color: "#3b82f6",
+                              }}
+                            >
+                              {adminActionsData.pendingVerification.totalPendingHours}h
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              Pending
+                            </div>
+                          </div>
+                        )}
                       </div>
+                      {adminActionsData.pendingVerification && adminActionsData.pendingVerification.count > 0 && (
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            color: "#3b82f6",
+                            textAlign: "center",
+                            padding: "6px 8px",
+                            background: "#eff6ff",
+                            borderRadius: "6px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {adminActionsData.pendingVerification.totalPendingHours} hours awaiting org verification
+                        </div>
+                      )}
                       <div
                         style={{
                           fontSize: "12px",
@@ -9331,9 +9364,10 @@ export default function CSRDashboard() {
                 marginBottom: "20px",
                 borderBottom: "1px solid #e5e7eb",
                 paddingBottom: "12px",
+                flexWrap: "wrap",
               }}
             >
-              {["reviews", "insights", "flagged"].map((tab) => (
+              {["reviews", "insights", "flagged", "pendingVerification"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => startTransition(() => setSelectedAdminTab(tab as any))}
@@ -9349,8 +9383,10 @@ export default function CSRDashboard() {
                     fontSize: "14px",
                   }}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)} (
-                  {adminActionsData?.[tab]?.count || 0})
+                  {tab === "pendingVerification" ? "Pending Hours" : tab.charAt(0).toUpperCase() + tab.slice(1)} (
+                  {tab === "pendingVerification"
+                    ? `${adminActionsData?.pendingVerification?.totalPendingHours || 0}h`
+                    : adminActionsData?.[tab]?.count || 0})
                 </button>
               ))}
             </div>
@@ -9547,6 +9583,94 @@ export default function CSRDashboard() {
                       }}
                     >
                       No flagged items
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedAdminTab === "pendingVerification" && (
+                <div>
+                  {adminActionsData?.pendingVerification?.items &&
+                  adminActionsData.pendingVerification.items.length > 0 ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: "12px",
+                          backgroundColor: "#eff6ff",
+                          borderRadius: "8px",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <div style={{ fontSize: "14px", color: "#1e40af", fontWeight: "600" }}>
+                          {adminActionsData.pendingVerification.totalPendingHours} hours awaiting organization verification
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                          These employee hours need to be approved by the respective organizations before they appear in your KPIs.
+                        </div>
+                      </div>
+                      {adminActionsData.pendingVerification.items.map(
+                        (item: any, idx: number) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: "12px",
+                              backgroundColor: "#f0f9ff",
+                              borderRadius: "6px",
+                              borderLeft: "4px solid #3b82f6",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontWeight: "600",
+                                color: "#1e40af",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {item.organizationName}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                color: "#6b7280",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {item.description}
+                            </div>
+                            {item.employees && item.employees.length > 0 && (
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#059669",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                Employees: {item.employees.slice(0, 3).join(", ")}{item.employees.length > 3 ? ` +${item.employees.length - 3} more` : ""}
+                              </div>
+                            )}
+                            <div style={{ fontSize: "11px", color: "#9ca3af" }}>
+                              Priority: {item.severity === "high" ? "High" : item.severity === "medium" ? "Medium" : "Low"}
+                            </div>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "24px",
+                        color: "#9ca3af",
+                        fontSize: "14px",
+                      }}
+                    >
+                      All employee hours have been verified!
                     </div>
                   )}
                 </div>

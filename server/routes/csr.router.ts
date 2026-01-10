@@ -1174,6 +1174,53 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
       }
     });
 
+    // Pending Verification: Employee hours awaiting organization approval
+    // This enables seamless visibility for CSR partners into their employees' pending KPIs
+    const pendingVerification: any[] = [];
+    const projects = await storage.listProjects?.() || [];
+    const organizations = await storage.listOrganizations?.() || [];
+
+    // Get all pending activities from linked employees
+    const pendingActivities = volunteerActivities.filter((a: any) => {
+      if (!employeeUserIds.has(a.userId)) return false;
+      const status = a.verificationStatus?.toLowerCase();
+      return status === 'pending' || status === 'self_reported' || !status;
+    });
+
+    // Group pending activities by organization for clearer visibility
+    const orgPendingMap: Record<number, { hours: number; activities: any[] }> = {};
+    pendingActivities.forEach((activity: any) => {
+      const project = projects.find((p: any) => p.id === activity.projectId);
+      const orgId = project?.organizationId;
+      if (orgId) {
+        if (!orgPendingMap[orgId]) {
+          orgPendingMap[orgId] = { hours: 0, activities: [] };
+        }
+        orgPendingMap[orgId].hours += activity.hours || 0;
+        orgPendingMap[orgId].activities.push(activity);
+      }
+    });
+
+    // Build pending verification items
+    Object.entries(orgPendingMap).forEach(([orgIdStr, data]) => {
+      const orgId = parseInt(orgIdStr);
+      const org = organizations.find((o: any) => o.id === orgId);
+      pendingVerification.push({
+        type: 'pending_hours',
+        title: 'Hours Awaiting Approval',
+        description: `${data.hours} hours from ${data.activities.length} activit${data.activities.length === 1 ? 'y' : 'ies'} at ${org?.name || 'Unknown Organization'}`,
+        severity: data.hours >= 10 ? 'high' : data.hours >= 4 ? 'medium' : 'low',
+        organizationId: orgId,
+        organizationName: org?.name || 'Unknown',
+        totalHours: data.hours,
+        activityCount: data.activities.length,
+        employees: [...new Set(data.activities.map((a: any) => a.userId))].map((uid: any) => {
+          const user = users.find((u: any) => u.id === uid);
+          return user?.displayName || 'Unknown';
+        })
+      });
+    });
+
     res.json({
       reviews: {
         count: reviews.length,
@@ -1187,7 +1234,12 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
         count: flagged.length,
         items: flagged.slice(0, 3)
       },
-      totalActions: reviews.length + insights.length + flagged.length
+      pendingVerification: {
+        count: pendingVerification.length,
+        totalPendingHours: pendingActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0),
+        items: pendingVerification.slice(0, 5)
+      },
+      totalActions: reviews.length + insights.length + flagged.length + pendingVerification.length
     });
   } catch (err) {
     console.error("Error fetching pending actions:", err);

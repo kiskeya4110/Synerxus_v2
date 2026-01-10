@@ -554,7 +554,7 @@ export default function SDGMapping() {
 
   // Mobile organization PWA view - Enhanced with better KPIs
   if (isOrganizationForLayout && isMobile) {
-    // Calculate mobile-specific metrics
+    // Calculate mobile-specific metrics using project-filtered data
     const activeProjectsCount = filteredProjects.filter((p: any) =>
       p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
     ).length;
@@ -569,8 +569,9 @@ export default function SDGMapping() {
     const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
     const orgImpacts = (projectImpacts as any[]).filter((pi: any) => orgProjectIds.has(pi.projectId));
 
-    // Check if a specific project filter is applied
+    // Check if project filter is applied
     const isFiltered = selectedProjectFilter !== 'all';
+    const selectedProjectName = organizationProjects.find((p: any) => p.id.toString() === selectedProjectFilter)?.name || '';
 
     // When filtered, compute metrics from filteredProjects only; otherwise use dashboard data
     const totalVolunteers = isFiltered
@@ -586,7 +587,7 @@ export default function SDGMapping() {
       : (dashboardData?.keyMetrics?.peopleImpacted ||
          orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0));
 
-    // SDGs addressed: when filtered, count unique SDGs from filtered projects
+    // SDGs addressed: when filtered by project, count unique SDGs from that project
     const filteredSdgs = new Set<number>();
     filteredProjects.forEach((p: any) => {
       if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
@@ -601,19 +602,20 @@ export default function SDGMapping() {
       : (dashboardData?.keyMetrics?.aiuEarned ||
          filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0));
 
-    // Get projects for selected SDG
+    // Get projects for the selected SDG detail card (when clicking on an SDG icon)
     const selectedSDGProjects = selectedSDG
       ? filteredProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG))
-      : [];
+      : filteredProjects;
 
-    // Mobile stats dialog handler
+    // Mobile stats dialog handler - uses project-filtered data
     const handleMobileStatsClick = (type: string) => {
       let title = '';
       let items: any[] = [];
+      const filterLabel = isFiltered ? ` (${selectedProjectName})` : '';
 
       switch (type) {
         case 'projects':
-          title = 'All Projects';
+          title = `All Projects${filterLabel}`;
           items = filteredProjects.map((p: any) => ({
             label: p.name,
             value: p.status || 'No Status',
@@ -622,7 +624,7 @@ export default function SDGMapping() {
           }));
           break;
         case 'active':
-          title = 'Active Projects';
+          title = `Active Projects${filterLabel}`;
           items = filteredProjects
             .filter((p: any) => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress')
             .map((p: any) => ({
@@ -633,7 +635,7 @@ export default function SDGMapping() {
             }));
           break;
         case 'completed':
-          title = 'Completed Projects';
+          title = `Completed Projects${filterLabel}`;
           items = filteredProjects
             .filter((p: any) => p.status?.toLowerCase() === 'completed')
             .map((p: any) => ({
@@ -644,7 +646,7 @@ export default function SDGMapping() {
             }));
           break;
         case 'progress':
-          title = 'Project Progress';
+          title = `Project Progress${filterLabel}`;
           items = filteredProjects
             .sort((a: any, b: any) => (b.completionPercentage || 0) - (a.completionPercentage || 0))
             .map((p: any) => ({
@@ -655,7 +657,7 @@ export default function SDGMapping() {
             }));
           break;
         case 'volunteers':
-          title = isFiltered ? 'Project Volunteers' : 'Active Volunteers';
+          title = isFiltered ? `Project Volunteers${filterLabel}` : 'Active Volunteers';
           // When filtered, show project-based volunteer data
           if (isFiltered) {
             items = filteredProjects
@@ -691,7 +693,7 @@ export default function SDGMapping() {
           }
           break;
         case 'hours':
-          title = isFiltered ? 'Project Hours' : 'Hours Breakdown';
+          title = isFiltered ? `Project Hours${filterLabel}` : 'Hours Breakdown';
           // When filtered, show project-based hours data
           if (isFiltered) {
             items = filteredProjects
@@ -728,7 +730,7 @@ export default function SDGMapping() {
           }
           break;
         case 'beneficiaries':
-          title = isFiltered ? 'Project Beneficiaries' : 'People Reached by Project';
+          title = isFiltered ? `Project Beneficiaries${filterLabel}` : 'People Reached by Project';
           const projectImpactMap = new Map<number, number>();
           orgImpacts.forEach((impact: any) => {
             const current = projectImpactMap.get(impact.projectId) || 0;
@@ -745,7 +747,7 @@ export default function SDGMapping() {
             .sort((a: any, b: any) => parseInt(b.value.replace(/,/g, '')) - parseInt(a.value.replace(/,/g, '')));
           break;
         case 'sdgs':
-          title = isFiltered ? 'Project SDG Coverage' : 'SDG Coverage';
+          title = isFiltered ? `Project SDG Coverage${filterLabel}` : 'SDG Coverage';
           // When filtered, show only SDGs from filtered projects
           const sdgsToShow = isFiltered
             ? Array.from(filteredSdgs).sort((a, b) => a - b)
@@ -761,7 +763,7 @@ export default function SDGMapping() {
           });
           break;
         case 'aiu':
-          title = isFiltered ? 'Project AIU' : 'AIU Breakdown';
+          title = isFiltered ? `Project AIU${filterLabel}` : 'AIU Breakdown';
           // When filtered, use filteredProjects; otherwise use dashboard data
           if (isFiltered) {
             items = filteredProjects
@@ -830,28 +832,57 @@ export default function SDGMapping() {
     return (
       <OrganizationPWALayout activeTab="sdgs">
         <div className="p-4 pb-36">
-          {/* Header with filter */}
-          <div className="flex items-center justify-between mb-4">
+          {/* Header with filters */}
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-xl font-bold">SDG Mapping</h1>
               <p className="text-xs text-gray-500">Track UN Goals alignment</p>
             </div>
-            {organizationProjects.length > 1 && (
-              <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+            <div className="flex gap-2">
+              {/* Project Filter Dropdown */}
+              <Select
+                value={selectedProjectFilter}
+                onValueChange={setSelectedProjectFilter}
+              >
                 <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue placeholder="All" />
+                  <Filter className="h-3 w-3 mr-1" />
+                  <SelectValue placeholder="All Projects" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All ({organizationProjects.length})</SelectItem>
-                  {organizationProjects.map((project: any) => (
-                    <SelectItem key={project.id} value={project.id.toString()} className="text-xs">
-                      {project.name.length > 20 ? project.name.substring(0, 20) + '...' : project.name}
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {organizationProjects && organizationProjects.length > 0 ? (
+                    organizationProjects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id.toString()} className="text-xs">
+                        {project.name?.substring(0, 20) || `Project ${project.id}`}{project.name?.length > 20 ? '...' : ''}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled className="text-xs text-gray-400">
+                      No projects available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
-            )}
+            </div>
           </div>
+
+          {/* Active filter indicator */}
+          {selectedProjectFilter !== 'all' && (
+            <div className="flex items-center justify-between mb-3 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-blue-800">
+                  Filtering: {organizationProjects.find((p: any) => p.id.toString() === selectedProjectFilter)?.name || 'Selected Project'}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedProjectFilter('all')}
+                className="text-xs text-blue-600 font-medium hover:text-blue-800"
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
           {/* KPI Cards Grid - Enhanced 3x2 with more metrics - All Interactive */}
           <div className="grid grid-cols-3 gap-2 mb-3">
@@ -865,7 +896,7 @@ export default function SDGMapping() {
                     <FolderOpen className="h-3.5 w-3.5 text-white" />
                   </div>
                   <p className="text-xl font-bold text-blue-700">{filteredProjects.length}</p>
-                  <p className="text-[9px] text-blue-600 font-medium">Projects</p>
+                  <p className="text-[9px] text-blue-600 font-medium">{isFiltered ? 'Filtered' : 'Projects'}</p>
                 </div>
               </CardContent>
             </Card>

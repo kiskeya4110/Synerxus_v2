@@ -534,14 +534,13 @@ export default function OrganizationDashboard() {
   }
 
   const { data: organizationAIU } = useQuery<OrganizationAIUSummary | null>({
-    queryKey: ['/api/aiu/organization', currentUser?.organizationId, projectFilter, timePeriod, sdgFilter],
+    queryKey: ['/api/aiu/organization', currentUser?.organizationId, projectFilter, timePeriod],
     queryFn: async () => {
       if (!currentUser?.organizationId) return null;
-      // Build query params to match dashboard filters
+      // Build query params to match dashboard filters (SDG filtering is done client-side)
       const params = new URLSearchParams();
       if (projectFilter && projectFilter !== 'all') params.append('projectId', projectFilter);
       if (timePeriod && timePeriod !== 'all') params.append('timePeriod', timePeriod);
-      if (sdgFilter) params.append('sdgGoal', sdgFilter);
       const queryString = params.toString();
       const url = `/api/aiu/organization/${currentUser.organizationId}${queryString ? '?' + queryString : ''}`;
       const response = await fetch(url);
@@ -712,7 +711,7 @@ export default function OrganizationDashboard() {
       activeProjects: Math.min(filteredProjectCount, metrics.activeProjects),
       sdgsAddressed: filteredSDGDistribution.length,
     };
-  }, [selectedSDGFilters.length, filteredSDGDistribution, metrics]);
+  }, [selectedSDGFilters, filteredSDGDistribution, metrics]);
 
   // Display metrics - switches between filtered and unfiltered
   const displayMetrics = useMemo(() => filteredMetrics, [filteredMetrics]);

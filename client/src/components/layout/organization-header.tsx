@@ -66,9 +66,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const userId = localStorage.getItem('currentUserId');
 
-  // Don't render web header on PWA routes - organization PWA pages have their own OrganizationPWAHeader
+  // Don't render web header on PWA routes or mobile devices
   const isPwaRoute = location.endsWith('/pwa');
-  if (isPwaRoute) {
+  const isMobile = window.innerWidth <= 768;
+  if (isPwaRoute || isMobile) {
     return null;
   }
 

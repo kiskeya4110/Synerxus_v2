@@ -50,6 +50,12 @@ export default function OrganizationWelcomeBanner({ className = "", pageTitle = 
   const organizationName = organization?.name || organizationProfile?.organizationName || currentUser?.displayName || "Organization";
   const logoUrl = organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar;
 
+  // Don't render on mobile devices
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    return null;
+  }
+
   return (
     <div className={`hidden md:block ${className}`} style={{ padding: '16px 24px 0 24px' }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>

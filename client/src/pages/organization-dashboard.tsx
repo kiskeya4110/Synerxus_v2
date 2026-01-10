@@ -167,7 +167,9 @@ export default function OrganizationDashboard() {
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
-  const [sdgFilter, setSdgFilter] = useState('');
+  // Multi-select SDG filtering (like CSR Dashboard pattern)
+  const [selectedSDGFilters, setSelectedSDGFilters] = useState<number[]>([]);
+  const [showAllSDGs, setShowAllSDGs] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu' | 'volunteers' | 'tasks' | 'engagement' | 'team' | 'impact' | 'verification' | null>(null);
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
@@ -195,12 +197,12 @@ export default function OrganizationDashboard() {
   const isOrganizationUser = userType === 'organization';
 
   const { data: dashboardData, isLoading, isFetching, refetch: refetchDashboard } = useQuery<DashboardData>({
-    queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod, sdgFilter],
+    queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod],
     queryFn: async () => {
       const params = new URLSearchParams({ userId: userId || '' });
       if (projectFilter !== 'all') params.append('projectId', projectFilter);
       if (timePeriod !== 'all') params.append('timePeriod', timePeriod);
-      if (sdgFilter) params.append('sdgGoal', sdgFilter);
+      // SDG filtering is now done client-side for multi-select support
       const response = await fetch(`/api/organization/dashboard?${params}`);
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
       return response.json();
@@ -636,6 +638,93 @@ export default function OrganizationDashboard() {
     [dashboardData?.sdgDistribution]
   );
 
+  // ===== SDG FILTERING LOGIC (CSR Dashboard Pattern) =====
+  // Get organization's committed SDGs
+  const committedSDGs = useMemo(() =>
+    organizationProfile?.primarySdgs || organizationProfile?.sdgGoals || [],
+    [organizationProfile?.primarySdgs, organizationProfile?.sdgGoals]
+  );
+
+  // Determine which SDGs to display for filtering (committed or all 17)
+  const displayedSDGsForFilters = useMemo(() => {
+    if (showAllSDGs) {
+      return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    }
+    // Show committed SDGs if available, otherwise show SDGs with data
+    if (committedSDGs.length > 0) {
+      return committedSDGs;
+    }
+    // Fallback to SDGs that have data
+    return dashboardData?.sdgDistribution?.map(s => s.goal) || [];
+  }, [showAllSDGs, committedSDGs, dashboardData?.sdgDistribution]);
+
+  // Filter function - matches if any selected SDG is in the array (OR logic)
+  const matchesSDGFilter = useCallback((sdgs: number[] | undefined) => {
+    if (selectedSDGFilters.length === 0) return true;
+    if (!sdgs || sdgs.length === 0) return false;
+    return selectedSDGFilters.some(filter => sdgs.includes(filter));
+  }, [selectedSDGFilters]);
+
+  // Toggle SDG filter selection
+  const toggleSDGFilter = useCallback((sdgNumber: number) => {
+    setSelectedSDGFilters(prev =>
+      prev.includes(sdgNumber)
+        ? prev.filter(s => s !== sdgNumber)
+        : [...prev, sdgNumber]
+    );
+  }, []);
+
+  // Clear all SDG filters
+  const clearSDGFilters = useCallback(() => {
+    setSelectedSDGFilters([]);
+  }, []);
+
+  // Filtered SDG distribution based on selected filters
+  const filteredSDGDistribution = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? (dashboardData?.sdgDistribution || []).filter(s => selectedSDGFilters.includes(s.goal))
+      : dashboardData?.sdgDistribution || [],
+    [dashboardData?.sdgDistribution, selectedSDGFilters]
+  );
+
+  // Filtered projects based on SDG selection
+  const filteredProjects = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? (dashboardData?.projects || []).filter(p => matchesSDGFilter(p.sdgGoals))
+      : dashboardData?.projects || [],
+    [dashboardData?.projects, selectedSDGFilters, matchesSDGFilter]
+  );
+
+  // Filtered KPIs - calculate from filtered SDG distribution
+  const filteredMetrics = useMemo(() => {
+    if (selectedSDGFilters.length === 0) {
+      return metrics; // Return unfiltered metrics
+    }
+    // Calculate filtered values from SDG distribution
+    const filteredHours = filteredSDGDistribution.reduce((sum, s) => sum + (s.hours || 0), 0);
+    const filteredVolunteers = filteredSDGDistribution.reduce((sum, s) => sum + (s.volunteers || 0), 0);
+    const filteredProjectCount = filteredSDGDistribution.reduce((sum, s) => sum + (s.projects || 0), 0);
+
+    return {
+      ...metrics,
+      totalHours: filteredHours,
+      activeVolunteers: Math.min(filteredVolunteers, metrics.activeVolunteers), // Don't exceed actual volunteers
+      activeProjects: Math.min(filteredProjectCount, metrics.activeProjects),
+      sdgsAddressed: filteredSDGDistribution.length,
+    };
+  }, [selectedSDGFilters.length, filteredSDGDistribution, metrics]);
+
+  // Display metrics - switches between filtered and unfiltered
+  const displayMetrics = useMemo(() => filteredMetrics, [filteredMetrics]);
+
+  // Filtered chart data
+  const displayChartData = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? sdgChartData.filter(item => selectedSDGFilters.includes(item.goal))
+      : sdgChartData,
+    [sdgChartData, selectedSDGFilters]
+  );
+
   // Task metrics
   const taskMetrics = useMemo(() => {
     const tasks = tasksData || dashboardData?.pendingTasks || [];
@@ -891,14 +980,14 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Mobile Metrics Grid - Industry KPIs */}
-      {metrics && <MobileMetricsGrid
-        activeProjects={metrics.activeProjects}
-        totalProjects={metrics.totalProjects || (metrics.activeProjects + (metrics.completedProjects || 0))}
+      {displayMetrics && <MobileMetricsGrid
+        activeProjects={displayMetrics.activeProjects}
+        totalProjects={metrics.totalProjects || (displayMetrics.activeProjects + (metrics.completedProjects || 0))}
         completedProjects={metrics.completedProjects || 0}
-        totalHours={metrics.totalHours}
-        sdgsAddressed={metrics.sdgsAddressed}
-        aiuEarned={metrics.aiuEarned}
-        activeVolunteers={metrics.activeVolunteers || 0}
+        totalHours={displayMetrics.totalHours}
+        sdgsAddressed={displayMetrics.sdgsAddressed}
+        aiuEarned={displayMetrics.aiuEarned}
+        activeVolunteers={displayMetrics.activeVolunteers || 0}
         livesImpacted={metrics.livesTouched || metrics.peopleImpacted || 0}
         onActiveProjectsClick={() => setActiveModal('projects')}
         onTotalHoursClick={() => setActiveModal('hours')}
@@ -978,34 +1067,7 @@ export default function OrganizationDashboard() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>SDG:</label>
-              <select
-                value={sdgFilter}
-                onChange={(e) => setSdgFilter(e.target.value)}
-                data-testid="filter-sdg"
-                style={{
-                  padding: '8px 32px 8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  appearance: 'none',
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 10px center',
-                }}
-              >
-                <option value="">All SDGs</option>
-                {/* Show only organization's selected/committed SDGs */}
-                {(organizationProfile?.sdgGoals || dashboardData?.sdgDistribution?.map((s: any) => s.goal) || []).map((sdg: number) => (
-                  <option key={sdg} value={sdg.toString()}>SDG {sdg}: {getSDGName(sdg)}</option>
-                ))}
-              </select>
-            </div>
           </div>
-
           {/* Right side buttons */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button
@@ -1052,6 +1114,119 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
+        {/* SDG Multi-Select Filter Chips */}
+        <div className="hidden md:block" style={{ marginBottom: '16px', padding: '16px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
+                <Target size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                Filter by SDG Goals
+              </span>
+              {selectedSDGFilters.length > 0 && (
+                <span style={{ fontSize: '12px', color: '#166534', backgroundColor: '#f0fdf4', padding: '4px 10px', borderRadius: '9999px', fontWeight: '600' }}>
+                  {selectedSDGFilters.length} selected
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {selectedSDGFilters.length > 0 && (
+                <button
+                  onClick={clearSDGFilters}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    color: '#dc2626',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <X size={14} />
+                  Clear
+                </button>
+              )}
+              <button
+                onClick={() => setShowAllSDGs(!showAllSDGs)}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  color: showAllSDGs ? '#166534' : '#6b7280',
+                  backgroundColor: showAllSDGs ? '#f0fdf4' : '#f9fafb',
+                  border: `1px solid ${showAllSDGs ? '#166534' : '#e5e7eb'}`,
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                {showAllSDGs ? 'Show Committed Only' : 'Show All 17 SDGs'}
+              </button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {displayedSDGsForFilters.map((sdgNum: number) => {
+              const isSelected = selectedSDGFilters.includes(sdgNum);
+              const sdgData = dashboardData?.sdgDistribution?.find(s => s.goal === sdgNum);
+              const hasData = sdgData && sdgData.hours > 0;
+              return (
+                <button
+                  key={sdgNum}
+                  onClick={() => toggleSDGFilter(sdgNum)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    backgroundColor: isSelected ? getSDGColor(sdgNum) : (hasData ? '#f9fafb' : '#f3f4f6'),
+                    color: isSelected ? 'white' : (hasData ? '#374151' : '#9ca3af'),
+                    border: `2px solid ${isSelected ? getSDGColor(sdgNum) : (hasData ? '#e5e7eb' : '#e5e7eb')}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: isSelected ? '600' : '500',
+                    transition: 'all 0.2s',
+                    opacity: hasData ? 1 : 0.7
+                  }}
+                >
+                  <span style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '4px',
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : getSDGColor(sdgNum),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: '700'
+                  }}>
+                    {sdgNum}
+                  </span>
+                  <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {getSDGName(sdgNum)}
+                  </span>
+                  {hasData && (
+                    <span style={{
+                      fontSize: '10px',
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.3)' : '#f0fdf4',
+                      color: isSelected ? 'white' : '#166534',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      {sdgData.hours}h
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Mobile Team & Engagement Card - Complementary metrics */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -1077,7 +1252,7 @@ export default function OrganizationDashboard() {
                 <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Active Volunteers</p>
                 <ChevronRight size={12} style={{ color: '#0ea5e9' }} />
               </div>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#0369a1', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#0369a1', margin: 0 }}>{displayMetrics.activeVolunteers || 0}</p>
             </button>
             <button
               onClick={() => navigate('/projects')}
@@ -1089,7 +1264,7 @@ export default function OrganizationDashboard() {
                 <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Avg Hours/Volunteer</p>
                 <ChevronRight size={12} style={{ color: '#22c55e' }} />
               </div>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{displayMetrics.activeVolunteers > 0 ? Math.round(displayMetrics.totalHours / displayMetrics.activeVolunteers) : 0}</p>
             </button>
             <button
               onClick={() => navigate('/impact-report')}
@@ -1152,7 +1327,7 @@ export default function OrganizationDashboard() {
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
                 >
                   <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
-                    {metrics.totalHours.toLocaleString()}
+                    {displayMetrics.totalHours.toLocaleString()}
                   </p>
                   <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Volunteer Hours</p>
                 </button>
@@ -1172,7 +1347,7 @@ export default function OrganizationDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {[...dashboardData.sdgDistribution].sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0)).slice(0, 4).map((sdg: any, idx: number) => {
                   // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
-                  const actualTotalHours = metrics.totalHours || 1;
+                  const actualTotalHours = displayMetrics.totalHours || 1;
                   const percent = actualTotalHours > 0 ? Math.round((sdg.hours / actualTotalHours) * 100) : 0;
                   return (
                     <button
@@ -1451,8 +1626,8 @@ export default function OrganizationDashboard() {
         <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <MetricCard
             icon={<Users size={24} />}
-            label="Volunteers"
-            value={metrics.activeVolunteers || dashboardData?.volunteerSummaries?.length || 0}
+            label={selectedSDGFilters.length > 0 ? "Volunteers (Filtered)" : "Volunteers"}
+            value={displayMetrics.activeVolunteers || dashboardData?.volunteerSummaries?.length || 0}
             color="#166534"
             testId="metric-volunteers"
             onClick={() => setActiveModal('team')}
@@ -1460,8 +1635,8 @@ export default function OrganizationDashboard() {
           />
           <MetricCard
             icon={<Clock size={24} />}
-            label="Hours Logged"
-            value={metrics.totalHours}
+            label={selectedSDGFilters.length > 0 ? "Hours (Filtered)" : "Hours Logged"}
+            value={displayMetrics.totalHours}
             color="#1e40af"
             testId="metric-total-hours"
             onClick={() => setActiveModal('hours')}
@@ -1479,7 +1654,7 @@ export default function OrganizationDashboard() {
           <MetricCard
             icon={<Zap size={24} />}
             label="AIUs Earned"
-            value={typeof metrics.aiuEarned === 'number' ? formatDecimal(metrics.aiuEarned) : metrics.aiuEarned}
+            value={typeof displayMetrics.aiuEarned === 'number' ? formatDecimal(displayMetrics.aiuEarned) : displayMetrics.aiuEarned}
             color="#10b981"
             testId="metric-aiu"
             onClick={() => setActiveModal('aiu')}
@@ -1572,7 +1747,7 @@ export default function OrganizationDashboard() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
               <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                <p style={{ fontSize: '18px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#166534', margin: 0 }}>{displayMetrics.activeVolunteers || 0}</p>
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Active</p>
               </div>
               <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
@@ -1745,7 +1920,7 @@ export default function OrganizationDashboard() {
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                 data-testid="metric-active-volunteers"
               >
-                <p style={{ fontSize: '28px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#166534', margin: 0 }}>{displayMetrics.activeVolunteers || 0}</p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Active Volunteers</p>
                 <p style={{ fontSize: '10px', color: '#166534', margin: '4px 0 0 0', opacity: 0.7 }}>Click to view →</p>
               </button>
@@ -1770,7 +1945,7 @@ export default function OrganizationDashboard() {
                 data-testid="metric-avg-per-project"
               >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#d97706', margin: 0 }}>
-                  {Math.round((dashboardData?.volunteerSummaries?.length || 0) / Math.max(1, metrics.activeProjects))}
+                  {Math.round((dashboardData?.volunteerSummaries?.length || 0) / Math.max(1, displayMetrics.activeProjects))}
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg per Project</p>
                 <p style={{ fontSize: '10px', color: '#d97706', margin: '4px 0 0 0', opacity: 0.7 }}>View projects →</p>
@@ -1796,8 +1971,8 @@ export default function OrganizationDashboard() {
                 data-testid="metric-avg-hours"
               >
                 <p style={{ fontSize: '28px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
-                  {metrics.totalHours > 0 && dashboardData?.volunteerSummaries?.length
-                    ? Math.round(metrics.totalHours / dashboardData.volunteerSummaries.length)
+                  {displayMetrics.totalHours > 0 && dashboardData?.volunteerSummaries?.length
+                    ? Math.round(displayMetrics.totalHours / dashboardData.volunteerSummaries.length)
                     : 0}h
                 </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg Hours/Vol</p>

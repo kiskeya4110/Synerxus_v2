@@ -190,6 +190,8 @@ export default function OrganizationDashboardPWA() {
   const [selectedSdgGoal, setSelectedSdgGoal] = useState<number | null>(null);
   const [sdgViewMode, setSdgViewMode] = useState<'chart' | 'cards'>('cards');
   const [showAllSdgs, setShowAllSdgs] = useState(false);
+  // Multi-select SDG filtering (like CSR Dashboard pattern)
+  const [selectedSDGFilters, setSelectedSDGFilters] = useState<number[]>([]);
   const [showVolunteerProfileModal, setShowVolunteerProfileModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<OrganizationVolunteer | null>(null);
   const aiuModalRef = useRef<HTMLDivElement>(null);
@@ -509,6 +511,71 @@ export default function OrganizationDashboardPWA() {
     return Math.round(total / dashboardData.projects.length);
   }, [dashboardData?.projects]);
 
+  // ===== SDG FILTERING LOGIC (CSR Dashboard Pattern) =====
+  // Determine which SDGs to display for filtering (committed or all 17)
+  const displayedSDGsForFilters = useMemo(() => {
+    if (showAllSdgs) {
+      return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    }
+    // Show committed SDGs if available, otherwise show SDGs with data
+    if (committedSdgs.length > 0) {
+      return committedSdgs;
+    }
+    // Fallback to SDGs that have data
+    return dashboardData?.sdgDistribution?.map(s => s.goal) || [];
+  }, [showAllSdgs, committedSdgs, dashboardData?.sdgDistribution]);
+
+  // Filter function - matches if any selected SDG is in the array (OR logic)
+  const matchesSDGFilter = useCallback((sdgs: number[] | undefined) => {
+    if (selectedSDGFilters.length === 0) return true;
+    if (!sdgs || sdgs.length === 0) return false;
+    return selectedSDGFilters.some(filter => sdgs.includes(filter));
+  }, [selectedSDGFilters]);
+
+  // Toggle SDG filter selection
+  const toggleSDGFilter = useCallback((sdgNumber: number) => {
+    setSelectedSDGFilters(prev =>
+      prev.includes(sdgNumber)
+        ? prev.filter(s => s !== sdgNumber)
+        : [...prev, sdgNumber]
+    );
+  }, []);
+
+  // Clear all SDG filters
+  const clearSDGFilters = useCallback(() => {
+    setSelectedSDGFilters([]);
+  }, []);
+
+  // Filtered SDG distribution based on selected filters
+  const filteredSDGDistribution = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? (dashboardData?.sdgDistribution || []).filter(s => selectedSDGFilters.includes(s.goal))
+      : dashboardData?.sdgDistribution || [],
+    [dashboardData?.sdgDistribution, selectedSDGFilters]
+  );
+
+  // Filtered KPIs - calculate from filtered SDG distribution
+  const filteredMetrics = useMemo(() => {
+    if (selectedSDGFilters.length === 0) {
+      return metrics; // Return unfiltered metrics
+    }
+    // Calculate filtered values from SDG distribution
+    const filteredHours = filteredSDGDistribution.reduce((sum, s) => sum + (s.hours || 0), 0);
+    const filteredVolunteers = filteredSDGDistribution.reduce((sum, s) => sum + (s.volunteers || 0), 0);
+    const filteredProjectCount = filteredSDGDistribution.reduce((sum, s) => sum + (s.projects || 0), 0);
+
+    return {
+      ...metrics,
+      totalHours: filteredHours,
+      activeVolunteers: Math.min(filteredVolunteers, metrics.activeVolunteers), // Don't exceed actual volunteers
+      activeProjects: Math.min(filteredProjectCount, metrics.activeProjects),
+      sdgsAddressed: filteredSDGDistribution.length,
+    };
+  }, [selectedSDGFilters.length, filteredSDGDistribution, metrics]);
+
+  // Display metrics - switches between filtered and unfiltered
+  const displayMetrics = useMemo(() => filteredMetrics, [filteredMetrics]);
+
   // Handle refresh with cache bypass and project recalculation
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -637,16 +704,16 @@ export default function OrganizationDashboardPWA() {
           </div>
         )}
 
-        {/* Shared Header with Refresh Button */}
+        {/* Shared Header with Refresh Button - uses filtered metrics */}
         <OrganizationPWAHeader
           onRefresh={handleRefresh}
           isRefreshing={refreshing}
           metrics={{
-            activeProjects: metrics.activeProjects,
-            activeVolunteers: metrics.activeVolunteers,
+            activeProjects: displayMetrics.activeProjects,
+            activeVolunteers: displayMetrics.activeVolunteers,
             totalAiu: totalAiu,
-            totalHours: metrics.totalHours,
-            sdgsAddressed: metrics.sdgsAddressed,
+            totalHours: displayMetrics.totalHours,
+            sdgsAddressed: displayMetrics.sdgsAddressed,
           }}
         />
 
@@ -794,14 +861,14 @@ export default function OrganizationDashboardPWA() {
                   onClick={() => setShowVolunteerHoursModal(true)}
                   className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
                 >
-                  <p className="text-xl font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
-                  <p className="text-[9px] text-blue-800 font-medium">Hours</p>
+                  <p className="text-xl font-bold text-slate-800">{displayMetrics.totalHours.toLocaleString()}</p>
+                  <p className="text-[9px] text-blue-800 font-medium">{selectedSDGFilters.length > 0 ? 'Filtered Hours' : 'Hours'}</p>
                 </button>
                 <button
                   onClick={() => navigate('/projects')}
                   className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center hover:bg-white/60 active:scale-[0.97] transition-all"
                 >
-                  <p className="text-xl font-bold text-slate-800">{metrics.activeProjects}</p>
+                  <p className="text-xl font-bold text-slate-800">{displayMetrics.activeProjects}</p>
                   <p className="text-[9px] text-blue-800 font-medium">Projects</p>
                 </button>
                 <button
@@ -828,10 +895,10 @@ export default function OrganizationDashboardPWA() {
                   SROI
                 </span>
               </div>
-              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? formatDecimal(metrics.totalHours * 34.79 / 1000) : 0}K</p>
+              <p className="text-2xl font-bold text-slate-800">${displayMetrics.totalHours > 0 ? formatDecimal(displayMetrics.totalHours * 34.79 / 1000) : 0}K</p>
               <p className="text-[10px] text-slate-600">Economic Value</p>
               <div className="mt-2 pt-2 border-t border-emerald-400/30 text-[9px] text-slate-600">
-                {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 34.79, 1)) : '0.0'}:1 social return
+                {totalPeopleImpacted > 0 ? formatDecimal((totalPeopleImpacted * 50) / Math.max(displayMetrics.totalHours * 34.79, 1)) : '0.0'}:1 social return
               </div>
             </button>
 
@@ -843,13 +910,13 @@ export default function OrganizationDashboardPWA() {
               <div className="flex items-center justify-between mb-2">
                 <Users className="w-5 h-5 text-blue-700" />
                 <span className="text-[9px] bg-blue-600/20 text-blue-800 px-1.5 py-0.5 rounded-full font-medium">
-                  {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}h avg
+                  {displayMetrics.activeVolunteers > 0 ? Math.round(displayMetrics.totalHours / displayMetrics.activeVolunteers) : 0}h avg
                 </span>
               </div>
-              <p className="text-2xl font-bold text-slate-800">{metrics.activeVolunteers}</p>
-              <p className="text-[10px] text-slate-600">Active Volunteers</p>
+              <p className="text-2xl font-bold text-slate-800">{displayMetrics.activeVolunteers}</p>
+              <p className="text-[10px] text-slate-600">{selectedSDGFilters.length > 0 ? 'Filtered Volunteers' : 'Active Volunteers'}</p>
               <div className="mt-2 pt-2 border-t border-blue-400/30 text-[9px] text-slate-600">
-                {metrics.totalHours.toLocaleString()} total hours
+                {displayMetrics.totalHours.toLocaleString()} total hours
               </div>
             </button>
           </div>
@@ -863,7 +930,7 @@ export default function OrganizationDashboardPWA() {
             >
               <Heart className="w-4 h-4 text-rose-500 mb-1" />
               <p className="text-lg font-bold text-slate-800">
-                {metrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / metrics.totalHours) : 0}
+                {displayMetrics.totalHours > 0 ? formatDecimal(totalPeopleImpacted / displayMetrics.totalHours) : 0}
               </p>
               <p className="text-[9px] text-slate-500">Impact ROI</p>
             </button>
@@ -894,8 +961,8 @@ export default function OrganizationDashboardPWA() {
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-blue-300 transition-all active:scale-[0.98]"
             >
               <Clock className="w-4 h-4 text-blue-500 mb-1" />
-              <p className="text-lg font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
-              <p className="text-[9px] text-slate-500">Total Hours</p>
+              <p className="text-lg font-bold text-slate-800">{displayMetrics.totalHours.toLocaleString()}</p>
+              <p className="text-[9px] text-slate-500">{selectedSDGFilters.length > 0 ? 'Filtered Hours' : 'Total Hours'}</p>
             </button>
           </div>
 
@@ -1034,7 +1101,7 @@ export default function OrganizationDashboardPWA() {
                 className="p-2.5 bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl text-left hover:shadow-md transition-all active:scale-[0.98] border border-sky-100"
               >
                 <Users className="w-4 h-4 text-sky-600 mb-1" />
-                <p className="text-lg font-bold text-sky-700">{metrics.activeVolunteers || 0}</p>
+                <p className="text-lg font-bold text-sky-700">{displayMetrics.activeVolunteers || 0}</p>
                 <p className="text-[9px] text-sky-600">Volunteers</p>
               </button>
               {/* Avg Hours/Volunteer - Clickable */}
@@ -1044,7 +1111,7 @@ export default function OrganizationDashboardPWA() {
               >
                 <Clock className="w-4 h-4 text-emerald-600 mb-1" />
                 <p className="text-lg font-bold text-emerald-700">
-                  {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}
+                  {displayMetrics.activeVolunteers > 0 ? Math.round(displayMetrics.totalHours / displayMetrics.activeVolunteers) : 0}
                 </p>
                 <p className="text-[9px] text-emerald-600">Avg Hrs</p>
               </button>
@@ -1076,60 +1143,78 @@ export default function OrganizationDashboardPWA() {
           {/* SDG Impact Distribution */}
           {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
             <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 border border-slate-200 shadow-lg">
-              {/* Header with toggle */}
+              {/* Header with toggle and filter indicator */}
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
-                    <Globe className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
+                      <Globe className="w-4 h-4 text-white" />
+                    </div>
+                    SDG Impact Distribution
+                  </h3>
+                  {selectedSDGFilters.length > 0 && (
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">
+                      {selectedSDGFilters.length} filtered
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedSDGFilters.length > 0 && (
+                    <button
+                      onClick={clearSDGFilters}
+                      className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-medium rounded-lg border border-red-200 flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Clear
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setSdgViewMode('cards')}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
+                        sdgViewMode === 'cards'
+                          ? 'bg-white text-emerald-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <Layers className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => setSdgViewMode('chart')}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
+                        sdgViewMode === 'chart'
+                          ? 'bg-white text-emerald-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <BarChart3 className="w-3 h-3" />
+                    </button>
                   </div>
-                  SDG Impact Distribution
-                </h3>
-                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
-                  <button
-                    onClick={() => setSdgViewMode('cards')}
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
-                      sdgViewMode === 'cards'
-                        ? 'bg-white text-emerald-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    <Layers className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => setSdgViewMode('chart')}
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
-                      sdgViewMode === 'chart'
-                        ? 'bg-white text-emerald-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    <BarChart3 className="w-3 h-3" />
-                  </button>
                 </div>
               </div>
 
-              {/* Summary Stats Row - Interactive */}
+              {/* Summary Stats Row - Interactive (uses filtered metrics) */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <button
                   onClick={() => navigate('/sdg-mapping')}
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-teal-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[10px] text-slate-500 font-medium">Total SDGs</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{selectedSDGFilters.length > 0 ? 'Filtered SDGs' : 'Total SDGs'}</p>
                     <ChevronRight className="w-3 h-3 text-teal-400" />
                   </div>
-                  <p className="text-lg font-bold text-teal-600">{dashboardData.sdgDistribution.length}</p>
+                  <p className="text-lg font-bold text-teal-600">{selectedSDGFilters.length > 0 ? filteredSDGDistribution.length : dashboardData.sdgDistribution.length}</p>
                 </button>
                 <button
                   onClick={() => setShowVolunteerHoursModal(true)}
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[10px] text-slate-500 font-medium">Volunteer Hours</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{selectedSDGFilters.length > 0 ? 'Filtered Hours' : 'Volunteer Hours'}</p>
                     <ChevronRight className="w-3 h-3 text-emerald-400" />
                   </div>
                   <p className="text-lg font-bold text-emerald-600">
-                    {metrics.totalHours.toLocaleString()}
+                    {displayMetrics.totalHours.toLocaleString()}
                   </p>
                 </button>
                 <button
@@ -1137,40 +1222,55 @@ export default function OrganizationDashboardPWA() {
                   className="bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[10px] text-slate-500 font-medium">Projects</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{selectedSDGFilters.length > 0 ? 'Filtered Projects' : 'Projects'}</p>
                     <ChevronRight className="w-3 h-3 text-blue-400" />
                   </div>
                   <p className="text-lg font-bold text-blue-600">
-                    {dashboardData.sdgDistribution.reduce((sum, s) => sum + (s.projects || 0), 0)}
+                    {selectedSDGFilters.length > 0
+                      ? filteredSDGDistribution.reduce((sum, s) => sum + (s.projects || 0), 0)
+                      : dashboardData.sdgDistribution.reduce((sum, s) => sum + (s.projects || 0), 0)}
                   </p>
                 </button>
               </div>
 
-              {/* Cards View - SDGs (expandable) */}
+              {/* Cards View - SDGs (expandable) - Tap to filter, shows selection state */}
               {sdgViewMode === 'cards' && (
                 <div className="space-y-2">
                   {(showAllSdgs ? dashboardData.sdgDistribution : dashboardData.sdgDistribution.slice(0, 4)).map((sdg, index) => {
-                    // Use actual volunteer hours as denominator to show what % of total effort touched this SDG
-                    const actualTotalHours = metrics.totalHours || 1;
+                    // Use display metrics for filtered percentage calculation
+                    const actualTotalHours = displayMetrics.totalHours || 1;
                     const percentage = actualTotalHours > 0 ? Math.round((sdg.hours / actualTotalHours) * 100) : 0;
                     const isTopSDG = index === 0;
+                    const isSelected = selectedSDGFilters.includes(sdg.goal);
 
                     return (
                       <button
                         key={sdg.goal}
-                        onClick={() => setSelectedSdgGoal(sdg.goal)}
+                        onClick={() => toggleSDGFilter(sdg.goal)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-[0.98] ${
-                          isTopSDG
-                            ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md'
-                            : 'bg-white border border-slate-100 hover:border-slate-200 shadow-sm'
+                          isSelected
+                            ? 'bg-gradient-to-r from-emerald-100 to-teal-100 border-2 shadow-md'
+                            : isTopSDG
+                              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md'
+                              : 'bg-white border border-slate-100 hover:border-slate-200 shadow-sm'
                         }`}
+                        style={{
+                          borderColor: isSelected ? getSDGColor(sdg.goal) : undefined
+                        }}
                       >
-                        {/* SDG Number Badge */}
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0"
-                          style={{ backgroundColor: getSDGColor(sdg.goal) }}
-                        >
-                          {sdg.goal}
+                        {/* SDG Number Badge with selection indicator */}
+                        <div className="relative">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0"
+                            style={{ backgroundColor: getSDGColor(sdg.goal) }}
+                          >
+                            {sdg.goal}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm border border-emerald-400">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            </div>
+                          )}
                         </div>
 
                         {/* SDG Info */}
@@ -1179,9 +1279,14 @@ export default function OrganizationDashboardPWA() {
                             <p className="text-xs font-semibold text-slate-800 truncate">
                               {getSDGName(sdg.goal)}
                             </p>
-                            {isTopSDG && (
+                            {isTopSDG && !isSelected && (
                               <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[8px] font-bold rounded-full">
                                 TOP
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="px-1.5 py-0.5 bg-teal-500 text-white text-[8px] font-bold rounded-full">
+                                FILTERED
                               </span>
                             )}
                           </div>

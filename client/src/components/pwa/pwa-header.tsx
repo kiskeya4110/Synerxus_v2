@@ -269,7 +269,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   return (
     <>
       {/* Main Header - Sky blue to light gold gradient */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-sky-400 via-sky-300 to-amber-200">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-sky-400 via-sky-300 to-amber-200">
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
@@ -277,12 +277,13 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           {/* Logo - Site approved logo */}
           <button
             onClick={() => navigate('/landing')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0 touch-manipulation cursor-pointer"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <img
               src={logoUrl}
               alt="Synerxus"
-              className="h-10 w-auto object-contain"
+              className="h-10 w-auto object-contain pointer-events-none"
               style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '160px' }}
             />
           </button>
@@ -293,20 +294,22 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50"
+              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-5 h-5 text-slate-700 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
             </button>
 
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm"
+              className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-5 h-5 text-slate-700" />
+              <Bell className="w-5 h-5 text-slate-700 pointer-events-none" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -315,16 +318,17 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             {/* Profile/Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-menu"
             >
-              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm">
+              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm pointer-events-none">
                 <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-semibold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <Menu className="w-5 h-5 text-slate-700" />
+              <Menu className="w-5 h-5 text-slate-700 pointer-events-none" />
             </button>
           </div>
         </div>

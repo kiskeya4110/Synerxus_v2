@@ -199,7 +199,7 @@ export default function CSRPWAHeader({
     <>
       {/* Header */}
       <header
-        className="sticky top-0 z-50 px-3 py-2 shadow-md border-b"
+        className="sticky top-0 z-40 px-3 py-2 shadow-md border-b"
         style={{
           background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
           borderColor: "rgba(16, 185, 129, 0.2)",
@@ -207,11 +207,15 @@ export default function CSRPWAHeader({
       >
         <div className="flex items-center justify-between max-w-full">
           {/* Logo */}
-          <button onClick={() => navigate("/landing")} className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => navigate("/landing")}
+            className="flex items-center gap-1.5 flex-shrink-0 touch-manipulation active:opacity-70"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
             <img
               src={logoUrl}
               alt="Synerxus"
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto object-contain pointer-events-none"
               style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))", objectFit: 'contain', maxWidth: '150px' }}
             />
           </button>
@@ -223,20 +227,22 @@ export default function CSRPWAHeader({
               <button
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100"
+                className="w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation active:scale-95"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <RefreshCw className={`w-4 h-4 text-emerald-600 ${refreshing ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-4 h-4 text-emerald-600 pointer-events-none ${refreshing ? "animate-spin" : ""}`} />
               </button>
             )}
 
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 cursor-pointer"
+              className="relative w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 cursor-pointer touch-manipulation active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-4 h-4 text-emerald-600" />
+              <Bell className="w-4 h-4 text-emerald-600 pointer-events-none" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -245,7 +251,8 @@ export default function CSRPWAHeader({
             {/* Company Logo & Menu */}
             <button
               onClick={() => setShowMenu(true)}
-              className="flex items-center gap-2 flex-shrink-0"
+              className="flex items-center gap-2 flex-shrink-0 touch-manipulation active:opacity-70"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {companyLogo ? (
                 <img

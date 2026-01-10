@@ -352,22 +352,24 @@ export default function CSRMessagesPWA() {
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-amber-50 to-slate-100 pb-4 max-w-[428px] mx-auto">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between max-w-[428px] mx-auto">
+      <header className="fixed top-0 left-0 right-0 z-40 w-full bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between max-w-[428px] mx-auto">
         <div className="flex items-center gap-2">
           <img
             src={logoUrl}
             alt="Synerxus"
-            className="h-10 object-contain cursor-pointer"
+            className="h-10 object-contain cursor-pointer touch-manipulation"
             onClick={() => navigate('/csr-dashboard')}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           />
         </div>
 
         <button
           onClick={() => setMenuOpen(true)}
-          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
+          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all touch-manipulation cursor-pointer active:scale-95"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-pwa-menu"
         >
-          <MoreVertical className="w-5 h-5 text-slate-700" />
+          <MoreVertical className="w-5 h-5 text-slate-700 pointer-events-none" />
         </button>
       </header>
 
@@ -398,7 +400,7 @@ export default function CSRMessagesPWA() {
       )}
 
       {/* Spacer for fixed header - accounts for safe-area-inset-top */}
-      <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+      <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 72px)' }} />
 
       {/* Thread Header - shows when viewing a conversation */}
       {selectedThread && (

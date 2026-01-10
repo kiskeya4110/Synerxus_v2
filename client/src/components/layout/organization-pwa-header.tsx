@@ -253,7 +253,7 @@ export default function OrganizationPWAHeader({
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-50 px-4 pb-3 flex items-center justify-between w-full max-w-[428px] mx-auto"
+        className="fixed top-0 left-0 right-0 z-40 px-4 pb-3 flex items-center justify-between w-full max-w-[428px] mx-auto"
         style={{
           background: 'linear-gradient(to right, #fef9c3 0%, #fef3c7 25%, #dbeafe 50%, #bfdbfe 75%, #93c5fd 100%)',
           boxShadow: '0 4px 20px rgba(59, 130, 246, 0.25)',
@@ -276,22 +276,24 @@ export default function OrganizationPWAHeader({
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all disabled:opacity-50"
+              className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Refresh"
             >
-              <RefreshCw className={`w-5 h-5 text-slate-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-5 h-5 text-slate-700 pointer-events-none ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           )}
 
           {/* Notifications Button */}
           <button
             onClick={() => setNotificationsOpen(true)}
-            className="relative w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all cursor-pointer"
+            className="relative w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all touch-manipulation cursor-pointer active:scale-95"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label="Notifications"
           >
-            <Bell className="w-5 h-5 text-slate-700" />
+            <Bell className="w-5 h-5 text-slate-700 pointer-events-none" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -300,10 +302,11 @@ export default function OrganizationPWAHeader({
           {/* Menu Button */}
           <button
             onClick={() => setShowMenu(true)}
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
+            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all touch-manipulation cursor-pointer active:scale-95"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label="Menu"
           >
-            <MoreVertical className="w-5 h-5 text-slate-700" />
+            <MoreVertical className="w-5 h-5 text-slate-700 pointer-events-none" />
           </button>
         </div>
       </header>

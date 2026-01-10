@@ -571,7 +571,7 @@ export default function OrganizationDashboardPWA() {
       activeProjects: Math.min(filteredProjectCount, metrics.activeProjects),
       sdgsAddressed: filteredSDGDistribution.length,
     };
-  }, [selectedSDGFilters.length, filteredSDGDistribution, metrics]);
+  }, [selectedSDGFilters, filteredSDGDistribution, metrics]);
 
   // Display metrics - switches between filtered and unfiltered
   const displayMetrics = useMemo(() => filteredMetrics, [filteredMetrics]);
@@ -1740,7 +1740,7 @@ export default function OrganizationDashboardPWA() {
 
         {/* Bottom Navigation Tray - Off-white to Light Yellow Gradient */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]"
+          className="fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)]"
           style={{
             background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
             boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
@@ -1750,59 +1750,64 @@ export default function OrganizationDashboardPWA() {
             {/* Home - Active */}
             <button
               onClick={() => navigate('/organization-dashboard/pwa')}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="p-1.5 rounded-lg bg-emerald-100">
-                <Home className="w-[18px] h-[18px] text-emerald-600" />
+              <div className="p-1.5 rounded-lg bg-emerald-100 pointer-events-none">
+                <Home className="w-[18px] h-[18px] text-emerald-600 pointer-events-none" />
               </div>
-              <span className="text-[9px] font-semibold text-slate-800">Home</span>
+              <span className="text-[9px] font-semibold text-slate-800 pointer-events-none">Home</span>
             </button>
 
             {/* Projects */}
             <button
               onClick={() => navigate('/projects')}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="p-1.5 rounded-lg">
-                <FolderOpen className="w-[18px] h-[18px] text-slate-500" />
+              <div className="p-1.5 rounded-lg pointer-events-none">
+                <FolderOpen className="w-[18px] h-[18px] text-slate-500 pointer-events-none" />
               </div>
-              <span className="text-[9px] font-medium text-slate-500">Projects</span>
+              <span className="text-[9px] font-medium text-slate-500 pointer-events-none">Projects</span>
             </button>
 
             {/* Potential - Center Green Button */}
             <button
               onClick={() => navigate('/overview')}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl -translate-y-2"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl -translate-y-2 touch-manipulation cursor-pointer active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #166534 0%, #22c55e 100%)',
                 boxShadow: '0 2px 12px rgba(22, 101, 52, 0.5)',
                 minWidth: '60px',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <Lightbulb className="w-5 h-5 text-white" />
-              <span className="text-[8px] font-semibold text-white tracking-wide">Potential</span>
+              <Lightbulb className="w-5 h-5 text-white pointer-events-none" />
+              <span className="text-[8px] font-semibold text-white tracking-wide pointer-events-none">Potential</span>
             </button>
 
             {/* Volunteers */}
             <button
               onClick={() => navigate('/volunteers')}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="p-1.5 rounded-lg">
-                <Users className="w-[18px] h-[18px] text-slate-500" />
+              <div className="p-1.5 rounded-lg pointer-events-none">
+                <Users className="w-[18px] h-[18px] text-slate-500 pointer-events-none" />
               </div>
-              <span className="text-[9px] font-medium text-slate-500">Volunteers</span>
+              <span className="text-[9px] font-medium text-slate-500 pointer-events-none">Volunteers</span>
             </button>
 
             {/* SDGs */}
             <button
               onClick={() => navigate('/sdg-mapping')}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="p-1.5 rounded-lg">
-                <Target className="w-[18px] h-[18px] text-slate-500" />
+              <div className="p-1.5 rounded-lg pointer-events-none">
+                <Target className="w-[18px] h-[18px] text-slate-500 pointer-events-none" />
               </div>
-              <span className="text-[9px] font-medium text-slate-500">SDGs</span>
+              <span className="text-[9px] font-medium text-slate-500 pointer-events-none">SDGs</span>
             </button>
           </div>
         </nav>

@@ -4860,47 +4860,52 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
         Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 pt-2 z-50 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex justify-around items-center max-w-[428px] mx-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-home"
           >
-            <Home className={`w-5 h-5 mb-0.5 ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">Home</span>
+            <Home className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium pointer-events-none">Home</span>
           </button>
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'projects' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'projects' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-projects"
           >
-            <Briefcase className={`w-5 h-5 mb-0.5 ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">Projects</span>
+            <Briefcase className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium pointer-events-none">Projects</span>
           </button>
           <button
             onClick={() => setActiveTab('potential')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'potential' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'potential' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-potentials"
           >
-            <Sparkles className={`w-5 h-5 mb-0.5 ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">Potentials</span>
+            <Sparkles className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium pointer-events-none">Potentials</span>
           </button>
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'messages' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'messages' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-messages"
           >
-            <MessageCircle className={`w-5 h-5 mb-0.5 ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">Messages</span>
+            <MessageCircle className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium pointer-events-none">Messages</span>
           </button>
           <button
             onClick={() => setActiveTab('more')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'more' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'more' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-more"
           >
-            <MoreHorizontal className={`w-5 h-5 mb-0.5 ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">More</span>
+            <MoreHorizontal className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium pointer-events-none">More</span>
           </button>
         </div>
       </nav>

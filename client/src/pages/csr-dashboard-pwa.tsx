@@ -446,14 +446,14 @@ export default function CSRDashboardPWA() {
       )}
 
       {/* PWA Header with Logo and Menu - Matching web view styling */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-3 pb-2 shadow-md border-b max-w-[428px] mx-auto" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)", left: '50%', transform: 'translateX(-50%)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
+      <header className="fixed top-0 left-0 right-0 z-40 px-3 pb-2 shadow-md border-b max-w-[428px] mx-auto" style={{ background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)", borderColor: "rgba(16, 185, 129, 0.2)", left: '50%', transform: 'translateX(-50%)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
         <div className="flex items-center justify-between max-w-full">
           {/* Logo */}
           <button
             onClick={() => navigate('/landing')}
-            className="flex items-center gap-1.5 flex-shrink-0"
+            className="flex items-center gap-1.5 flex-shrink-0 active:opacity-70 touch-manipulation"
           >
-            <img src={logoUrl} alt="Synerxus" className="h-8 w-auto" style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
+            <img src={logoUrl} alt="Synerxus" className="h-8 w-auto pointer-events-none" style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
           </button>
 
           {/* Company Logo & Name */}
@@ -491,8 +491,8 @@ export default function CSRDashboardPWA() {
         </div>
       </header>
 
-      {/* Spacer for fixed header - matches header height (pb-2 = 8px + pt = 8px + content ~36px + safe-area) */}
-      <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 52px)' }} />
+      {/* Spacer for fixed header - matches header height (pb-2 = 8px + pt = 8px + content ~40px + safe-area + shadow buffer) */}
+      <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 72px)' }} />
 
       {/* Main Content - scrollable area between header and nav */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: "linear-gradient(180deg, #fffdf9 0%, #fefbf6 50%, #fdf8f2 100%)", paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
@@ -503,9 +503,10 @@ export default function CSRDashboardPWA() {
             {pendingApplications && pendingApplications.length > 0 && (
               <button
                 onClick={() => navigate('/applications')}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pointer-events-none">
                   <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
                     <Bell className="w-5 h-5 text-white" />
                   </div>
@@ -516,7 +517,7 @@ export default function CSRDashboardPWA() {
                     <p className="text-emerald-100 text-[10px]">Volunteers waiting for approval</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-white" />
+                <ChevronRight className="w-5 h-5 text-white pointer-events-none" />
               </button>
             )}
 
@@ -550,24 +551,26 @@ export default function CSRDashboardPWA() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => startTransition(() => setSelectedKPI('hours'))}
-                className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 pointer-events-none">
                   <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow">
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-emerald-600" />
                 </div>
-                <p className="text-2xl font-bold text-emerald-800">{(metrics?.totalHours || 0).toLocaleString()}</p>
-                <p className="text-xs text-emerald-700 font-medium">Volunteer Hours</p>
-                <p className="text-[10px] text-emerald-600 mt-0.5">${(metrics?.economicValue || 0).toLocaleString()} value</p>
+                <p className="text-2xl font-bold text-emerald-800 pointer-events-none">{(metrics?.totalHours || 0).toLocaleString()}</p>
+                <p className="text-xs text-emerald-700 font-medium pointer-events-none">Volunteer Hours</p>
+                <p className="text-[10px] text-emerald-600 mt-0.5 pointer-events-none">${(metrics?.economicValue || 0).toLocaleString()} value</p>
               </button>
 
               <button
                 onClick={() => startTransition(() => setSelectedKPI('employees'))}
-                className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 pointer-events-none">
                   <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow">
                     <Users className="w-5 h-5 text-white" />
                   </div>
@@ -575,16 +578,17 @@ export default function CSRDashboardPWA() {
                     {metrics?.engagementRate || 0}%
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-blue-800">{metrics?.activeEmployees || 0}</p>
-                <p className="text-xs text-blue-700 font-medium">Active Volunteers</p>
-                <p className="text-[10px] text-blue-600 mt-0.5">Engagement rate</p>
+                <p className="text-2xl font-bold text-blue-800 pointer-events-none">{metrics?.activeEmployees || 0}</p>
+                <p className="text-xs text-blue-700 font-medium pointer-events-none">Active Volunteers</p>
+                <p className="text-[10px] text-blue-600 mt-0.5 pointer-events-none">Engagement rate</p>
               </button>
 
               <button
                 onClick={() => startTransition(() => setSelectedKPI('projects'))}
-                className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 pointer-events-none">
                   <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center shadow">
                     <Briefcase className="w-5 h-5 text-white" />
                   </div>
@@ -592,16 +596,17 @@ export default function CSRDashboardPWA() {
                     {metrics?.activeProjects || 0} active
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-purple-800">{metrics?.projectsCompleted || 0}</p>
-                <p className="text-xs text-purple-700 font-medium">Total Projects</p>
-                <p className="text-[10px] text-purple-600 mt-0.5">{metrics?.regionsServed || 0} regions served</p>
+                <p className="text-2xl font-bold text-purple-800 pointer-events-none">{metrics?.projectsCompleted || 0}</p>
+                <p className="text-xs text-purple-700 font-medium pointer-events-none">Total Projects</p>
+                <p className="text-[10px] text-purple-600 mt-0.5 pointer-events-none">{metrics?.regionsServed || 0} regions served</p>
               </button>
 
               <button
                 onClick={() => startTransition(() => setSelectedKPI('aiu'))}
-                className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl p-4 border border-amber-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl p-4 border border-amber-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 pointer-events-none">
                   <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow">
                     <Zap className="w-5 h-5 text-white" />
                   </div>
@@ -609,11 +614,11 @@ export default function CSRDashboardPWA() {
                     Verified
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-amber-800">
+                <p className="text-2xl font-bold text-amber-800 pointer-events-none">
                   {formatDecimal(typeof metrics?.aiuEarned === 'number' ? metrics.aiuEarned : 0)}
                 </p>
-                <p className="text-xs text-amber-700 font-medium">AIU Earned</p>
-                <p className="text-[10px] text-amber-600 mt-0.5">Attributable Impact Units</p>
+                <p className="text-xs text-amber-700 font-medium pointer-events-none">AIU Earned</p>
+                <p className="text-[10px] text-amber-600 mt-0.5 pointer-events-none">Attributable Impact Units</p>
               </button>
             </div>
 
@@ -942,8 +947,7 @@ export default function CSRDashboardPWA() {
                     <span className="text-[9px] text-slate-600 font-medium">Volunteer ROI</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-emerald-700">{Math.round(((csrData?.totalHours || 0) * 34.79) / 1000)}K</span>
-                    <span className="text-[8px] text-emerald-600">USD value</span>
+                    <span className="text-lg font-bold text-emerald-700">${Math.round((metrics?.totalHours || csrData?.totalHours || 0) * 34.79).toLocaleString()}</span>
                   </div>
                   <div className="text-[8px] text-slate-500 mt-0.5">@$34.79/hr market rate</div>
                 </div>
@@ -957,9 +961,9 @@ export default function CSRDashboardPWA() {
                     <span className="text-[9px] text-slate-600 font-medium">Engagement Rate</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-blue-700">{csrData?.kpiBreakdown?.employees?.engagementRate || Math.round(((csrData?.activeEmployees || 0) / Math.max(csrData?.kpiBreakdown?.employees?.totalRoster || (csrData?.activeEmployees || 1), 1)) * 100)}%</span>
+                    <span className="text-lg font-bold text-blue-700">{metrics?.engagementRate || csrData?.kpiBreakdown?.employees?.engagementRate || 0}%</span>
                   </div>
-                  <div className="text-[8px] text-slate-500 mt-0.5">of total workforce</div>
+                  <div className="text-[8px] text-slate-500 mt-0.5">{metrics?.activeEmployees || 0} of {csrData?.kpiBreakdown?.employees?.totalRoster || metrics?.activeEmployees || 0} employees</div>
                 </div>
 
                 {/* Avg Hours/Employee */}
@@ -971,36 +975,37 @@ export default function CSRDashboardPWA() {
                     <span className="text-[9px] text-slate-600 font-medium">Hrs/Employee</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-violet-700">{formatDecimal((csrData?.activeEmployees || 0) > 0 ? (csrData?.totalHours || 0) / (csrData?.activeEmployees || 1) : 0)}</span>
+                    <span className="text-lg font-bold text-violet-700">{formatDecimal(metrics?.avgHoursPerEmployee || csrData?.kpiBreakdown?.hours?.averagePerEmployee || 0)}</span>
                     <span className="text-[8px] text-violet-600">avg</span>
                   </div>
                   <div className="text-[8px] text-slate-500 mt-0.5">industry avg: 8.5h</div>
                 </div>
 
-                {/* Impact Velocity */}
+                {/* Active SDGs */}
                 <div className="bg-white rounded-lg p-3 border border-amber-100 shadow-sm">
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
-                      <Zap className="w-3 h-3 text-amber-600" />
+                      <Target className="w-3 h-3 text-amber-600" />
                     </div>
-                    <span className="text-[9px] text-slate-600 font-medium">Impact Velocity</span>
+                    <span className="text-[9px] text-slate-600 font-medium">SDG Coverage</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-amber-700">+{Math.max(5, Math.round((csrData?.activeEmployees || 0) * 0.2))}%</span>
+                    <span className="text-lg font-bold text-amber-700">{metrics?.activeSdgs || csrData?.kpiBreakdown?.sdg?.activeCommitments || 0}</span>
+                    <span className="text-[8px] text-amber-600">goals</span>
                   </div>
-                  <div className="text-[8px] text-slate-500 mt-0.5">month-over-month</div>
+                  <div className="text-[8px] text-slate-500 mt-0.5">UN SDGs addressed</div>
                 </div>
               </div>
 
-              {/* Retention & Satisfaction Row */}
+              {/* Key Metrics Row */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white rounded-lg p-2.5 border border-teal-100 text-center">
-                  <div className="text-lg font-bold text-teal-700">{Math.min(95, 60 + Math.round((csrData?.activeEmployees || 0) * 2))}%</div>
-                  <div className="text-[8px] text-teal-600 font-medium">Retention</div>
+                  <div className="text-lg font-bold text-teal-700">{metrics?.activeProjects || csrData?.kpiBreakdown?.projects?.activeProjects || 0}</div>
+                  <div className="text-[8px] text-teal-600 font-medium">Active Projects</div>
                 </div>
                 <div className="bg-white rounded-lg p-2.5 border border-pink-100 text-center">
-                  <div className="text-lg font-bold text-pink-700">4.{Math.min(9, 2 + Math.floor((csrData?.activeEmployees || 0) / 5))}</div>
-                  <div className="text-[8px] text-pink-600 font-medium">Satisfaction</div>
+                  <div className="text-lg font-bold text-pink-700">{metrics?.beneficiaries?.toLocaleString() || csrData?.kpiBreakdown?.projects?.beneficiariesReached?.toLocaleString() || 0}</div>
+                  <div className="text-[8px] text-pink-600 font-medium">Beneficiaries</div>
                 </div>
                 <div className="bg-white rounded-lg p-2.5 border border-indigo-100 text-center">
                   <div className="text-lg font-bold text-indigo-700">{formatDecimal(csrData?.totalImpact || 0)}</div>
@@ -1914,51 +1919,57 @@ export default function CSRDashboardPWA() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => navigate('/csr-messages/pwa')}
-                className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <MessageCircle className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">Messages</p>
-                <p className="text-cyan-100 text-[10px]">Contact partners</p>
+                <MessageCircle className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">Messages</p>
+                <p className="text-cyan-100 text-[10px] pointer-events-none">Contact partners</p>
               </button>
               <button
                 onClick={() => setShowMapModal(true)}
-                className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <Globe className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">Global Map</p>
-                <p className="text-emerald-100 text-[10px]">View project locations</p>
+                <Globe className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">Global Map</p>
+                <p className="text-emerald-100 text-[10px] pointer-events-none">View project locations</p>
               </button>
               <button
                 onClick={() => navigate('/csr-reports-exports')}
-                className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <FileText className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">Generate Report</p>
-                <p className="text-blue-100 text-[10px]">Export ESG data</p>
+                <FileText className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">Generate Report</p>
+                <p className="text-blue-100 text-[10px] pointer-events-none">Export ESG data</p>
               </button>
               <button
                 onClick={() => startTransition(() => setActiveTab('insights'))}
-                className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <Sparkles className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">AI Insights</p>
-                <p className="text-purple-100 text-[10px]">Smart recommendations</p>
+                <Sparkles className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">AI Insights</p>
+                <p className="text-purple-100 text-[10px] pointer-events-none">Smart recommendations</p>
               </button>
               <button
                 onClick={() => navigate('/projects')}
-                className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <Briefcase className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">View Projects</p>
-                <p className="text-amber-100 text-[10px]">{metrics?.projectsCompleted || 0} total projects</p>
+                <Briefcase className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">View Projects</p>
+                <p className="text-amber-100 text-[10px] pointer-events-none">{metrics?.projectsCompleted || 0} total projects</p>
               </button>
               <button
                 onClick={() => navigate('/csr-impacts')}
-                className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98] touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <Shield className="w-6 h-6 text-white mb-2" />
-                <p className="text-white font-semibold text-sm">Impact Report</p>
-                <p className="text-teal-100 text-[10px]">Compliance & metrics</p>
+                <Shield className="w-6 h-6 text-white mb-2 pointer-events-none" />
+                <p className="text-white font-semibold text-sm pointer-events-none">Impact Report</p>
+                <p className="text-teal-100 text-[10px] pointer-events-none">Compliance & metrics</p>
               </button>
             </div>
           </div>
@@ -2070,19 +2081,20 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
   return (
     <button
       onClick={onClick}
-      className={`${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform shadow-sm hover:shadow-md`}
+      className={`${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform shadow-sm hover:shadow-md touch-manipulation cursor-pointer`}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <div className="flex items-center justify-between mb-1">
-        <Icon className={`w-4 h-4 ${c.text}`} />
+        <Icon className={`w-4 h-4 ${c.text} pointer-events-none`} />
         {trend && trend !== 'neutral' && (
           <span className={trend === 'up' ? 'text-emerald-700' : 'text-red-600'}>
-            {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {trend === 'up' ? <ArrowUpRight className="w-3 h-3 pointer-events-none" /> : <ArrowDownRight className="w-3 h-3 pointer-events-none" />}
           </span>
         )}
       </div>
-      <p className="text-xl font-bold text-slate-900">{displayValue}</p>
-      <p className="text-[10px] text-slate-800 font-medium truncate">{title}</p>
-      <p className="text-[9px] text-slate-600 truncate">{subtitle}</p>
+      <p className="text-xl font-bold text-slate-900 pointer-events-none">{displayValue}</p>
+      <p className="text-[10px] text-slate-800 font-medium truncate pointer-events-none">{title}</p>
+      <p className="text-[9px] text-slate-600 truncate pointer-events-none">{subtitle}</p>
     </button>
   );
 }
@@ -2090,19 +2102,20 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
 // Action Button Component
 function ActionButton({ icon: Icon, label, color, onClick }: { icon: any; label: string; color: string; onClick: () => void }) {
   const colors: Record<string, string> = {
-    emerald: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300',
-    blue: 'bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300',
-    purple: 'bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300',
-    amber: 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300',
+    emerald: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 active:bg-emerald-300 border border-emerald-300',
+    blue: 'bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 border border-blue-300',
+    purple: 'bg-purple-100 text-purple-800 hover:bg-purple-200 active:bg-purple-300 border border-purple-300',
+    amber: 'bg-amber-100 text-amber-800 hover:bg-amber-200 active:bg-amber-300 border border-amber-300',
   };
 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm ${colors[color]}`}
+      className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm touch-manipulation cursor-pointer ${colors[color]}`}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <Icon className="w-4 h-4" />
-      <span>{label}</span>
+      <Icon className="w-4 h-4 pointer-events-none" />
+      <span className="pointer-events-none">{label}</span>
     </button>
   );
 }

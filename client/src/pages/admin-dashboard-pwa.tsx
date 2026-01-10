@@ -326,12 +326,13 @@ export default function AdminDashboardPWA() {
           {/* Logo */}
           <button
             onClick={() => navigate('/volunteer-dashboard')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0 touch-manipulation cursor-pointer"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <img
               src={logoUrl}
               alt="Synerxus"
-              className="h-10 w-auto object-contain"
+              className="h-10 w-auto object-contain pointer-events-none"
               style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '140px' }}
             />
           </button>
@@ -348,10 +349,11 @@ export default function AdminDashboardPWA() {
             {totalActionItems > 0 && (
               <button
                 onClick={() => startTransition(() => setActiveTab('orgs'))}
-                className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm"
+                className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <Bell className="w-5 h-5 text-slate-700" />
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                <Bell className="w-5 h-5 text-slate-700 pointer-events-none" />
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {totalActionItems > 9 ? '9+' : totalActionItems}
                 </span>
               </button>
@@ -361,24 +363,26 @@ export default function AdminDashboardPWA() {
             <button
               onClick={handleRefreshAll}
               disabled={refreshing}
-              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50"
+              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-5 h-5 text-slate-700 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
             </button>
 
             {/* Profile/Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm">
+              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm pointer-events-none">
                 <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName || 'Admin'} />
                 <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-sm font-semibold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <Menu className="w-5 h-5 text-slate-700" />
+              <Menu className="w-5 h-5 text-slate-700 pointer-events-none" />
             </button>
           </div>
         </div>
@@ -939,7 +943,7 @@ export default function AdminDashboardPWA() {
 
       {/* Bottom Navigation */}
       <nav
-        className="fixed bottom-0 left-0 right-0 border-t border-slate-200 px-2 py-2 max-w-[428px] mx-auto z-50 bg-white"
+        className="fixed bottom-0 left-0 right-0 border-t border-slate-200 px-2 py-2 max-w-[428px] mx-auto z-40 bg-white"
         style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
       >
         <div className="flex justify-around items-center">
@@ -949,12 +953,13 @@ export default function AdminDashboardPWA() {
               <button
                 key={tab.id}
                 onClick={() => startTransition(() => setActiveTab(tab.id as any))}
-                className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
+                className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive ? 'text-slate-900' : 'text-slate-500'
                 }`}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <tab.icon className={`w-5 h-5 mb-0.5 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
-                <span className="text-[10px] font-medium">{tab.label}</span>
+                <tab.icon className={`w-5 h-5 mb-0.5 pointer-events-none ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
+                <span className="text-[10px] font-medium pointer-events-none">{tab.label}</span>
               </button>
             );
           })}

@@ -56,7 +56,7 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   return (
     <>
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50"
+      className="fixed bottom-0 left-0 right-0 z-40"
       style={{
         background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
         boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
@@ -71,13 +71,14 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
             <button
               key={item.id}
               onClick={() => item.action ? item.action() : navigate(item.path!)}
-              className="flex flex-col items-center gap-0.5 min-w-[52px] min-h-[48px] py-2"
+              className="flex flex-col items-center gap-0.5 min-w-[52px] min-h-[48px] py-2 touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid={`nav-org-${item.id}`}
             >
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-emerald-100' : ''}`}>
-                <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
+              <div className={`p-2 rounded-lg pointer-events-none ${isActive ? 'bg-emerald-100' : ''}`}>
+                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
               </div>
-              <span className={`text-[10px] font-medium ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-500'}`}>
+              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-500'}`}>
                 {item.label}
               </span>
             </button>
@@ -107,9 +108,10 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
             <h3 className="text-lg font-semibold text-slate-800">More Options</h3>
             <button
               onClick={() => setShowMore(false)}
-              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <X className="w-4 h-4 text-slate-600" />
+              <X className="w-4 h-4 text-slate-600 pointer-events-none" />
             </button>
           </div>
 
@@ -122,18 +124,19 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
                   setShowMore(false);
                   navigate(item.path);
                 }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors ${
+                className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 ${
                   (item as any).isAdmin
                     ? 'bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
                     : 'bg-slate-50 hover:bg-slate-100'
                 }`}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none ${
                   (item as any).isAdmin ? 'bg-purple-100' : 'bg-white'
                 }`}>
-                  <item.icon className={`w-6 h-6 ${(item as any).isAdmin ? 'text-purple-600' : 'text-slate-600'}`} />
+                  <item.icon className={`w-6 h-6 pointer-events-none ${(item as any).isAdmin ? 'text-purple-600' : 'text-slate-600'}`} />
                 </div>
-                <span className={`text-xs font-medium text-center ${(item as any).isAdmin ? 'text-purple-700' : 'text-slate-700'}`}>{item.label}</span>
+                <span className={`text-xs font-medium text-center pointer-events-none ${(item as any).isAdmin ? 'text-purple-700' : 'text-slate-700'}`}>{item.label}</span>
               </button>
             ))}
           </div>

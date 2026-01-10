@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   UsersRound, UserPlus, Shield, ShieldCheck, Settings, Trash2,
-  Mail, Check, X, ChevronDown, Edit2, Building2, Briefcase, MessageSquare,
+  Mail, Check, X, ChevronDown, ChevronRight, Edit2, Building2, Briefcase, MessageSquare,
   Phone, MoreVertical, Clock, Calendar, Eye, Send, Copy, RefreshCw, ArrowLeft
 } from "lucide-react";
 
@@ -271,129 +271,139 @@ export default function OrganizationTeamPage() {
   if (isMobile && isOrganizationForLayout) {
     return (
       <OrganizationPWALayout activeTab="home">
-        <div className="p-4">
-          {/* Back Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/organization-dashboard/pwa')}
-            className="mb-3 -ml-2"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
+        <div className="p-4 bg-slate-50/50 min-h-full">
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  <UsersRound className="h-6 w-6 text-indigo-600" />
+                  Team
+                </h1>
+                <p className="text-sm text-slate-500 mt-1">
+                  Manage members & permissions
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <UsersRound className="h-6 w-6" />
+              </div>
+            </div>
 
-          {/* Header */}
-          <div className="mb-4">
-            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <UsersRound className="h-5 w-5 text-indigo-600" />
-              Team Management
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Manage team members and permissions
-            </p>
+            {/* Invite Button */}
+            {canManageMembers && (
+              <Button
+                onClick={() => setShowInviteModal(true)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 h-11 rounded-xl shadow-md shadow-indigo-100 transition-all active:scale-[0.98]"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite Team Member
+              </Button>
+            )}
           </div>
 
-          {/* Invite Button */}
-          {canManageMembers && (
-            <Button
-              onClick={() => setShowInviteModal(true)}
-              className="w-full mb-4 bg-indigo-600 hover:bg-indigo-700"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Invite Team Member
-            </Button>
-          )}
+          <div className="space-y-6">
+            {/* Active Members */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                  Active Members
+                  <span className="ml-1 text-slate-400 font-medium">({activeMembers.length})</span>
+                </h2>
+              </div>
 
-          {/* Active Members */}
-          <Card className="mb-4">
-            <CardHeader className="pb-2 pt-3 px-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <UsersRound className="w-4 h-4 text-indigo-500" />
-                Active Members ({activeMembers.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-3">
               {isLoading ? (
-                <div className="p-4 text-center text-slate-500 text-sm">Loading...</div>
+                <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
+                  <RefreshCw className="h-8 w-8 mx-auto text-indigo-300 animate-spin mb-2" />
+                  <p className="text-sm text-slate-500">Loading team members...</p>
+                </div>
               ) : activeMembers.length === 0 ? (
-                <div className="p-4 text-center text-slate-500 text-sm">
-                  <UsersRound className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-                  <p>No team members yet</p>
+                <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
+                  <UsersRound className="h-10 w-10 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500 font-medium">No team members yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Start by inviting your first member</p>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="grid gap-3">
                   {activeMembers.map((member) => {
                     const badge = ROLE_BADGES[member.role] || ROLE_BADGES.member;
                     const Icon = badge.icon;
                     return (
                       <div
                         key={member.id}
-                        className="px-3 py-2.5 flex items-center gap-3 hover:bg-slate-50"
+                        className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-100 shadow-sm active:bg-slate-50 transition-colors"
                         onClick={() => setViewingMember(member)}
                       >
-                        <div className="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm flex-shrink-0">
+                        <div className="h-12 w-12 rounded-full ring-2 ring-indigo-50 flex-shrink-0 overflow-hidden">
                           {member.user?.avatar ? (
-                            <img src={member.user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+                            <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            member.user?.displayName?.charAt(0) || "?"
+                            <div className="h-full w-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                              {member.user?.displayName?.charAt(0) || "?"}
+                            </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{member.user?.displayName || "Unknown"}</p>
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border ${badge.color}`}>
+                          <p className="text-base font-bold text-slate-900 truncate">{member.user?.displayName || "Unknown"}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${badge.color}`}>
                               <Icon className="h-2.5 w-2.5" />
                               {member.role}
                             </span>
-                            {member.title && <span className="text-[10px] text-slate-500 truncate">{member.title}</span>}
+                            {member.title && (
+                              <span className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1">
+                                <div className="w-1 h-1 bg-slate-300 rounded-full" />
+                                {member.title}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <ChevronDown className="h-4 w-4 text-slate-400 rotate-[-90deg]" />
+                        <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                          <ChevronRight className="h-5 w-5" />
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Pending Invitations */}
-          {pendingMembers.length > 0 && (
-            <Card className="mb-4">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
-                  Pending Invitations ({pendingMembers.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-3">
-                <div className="divide-y divide-slate-100">
+            {/* Pending Invitations */}
+            {pendingMembers.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-1 h-4 bg-amber-500 rounded-full" />
+                    Pending Invitations
+                    <span className="ml-1 text-slate-400 font-medium">({pendingMembers.length})</span>
+                  </h2>
+                </div>
+                <div className="grid gap-3">
                   {pendingMembers.map((member) => (
-                    <div key={member.id} className="px-3 py-2.5 flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                        <Mail className="h-4 w-4" />
+                    <div key={member.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-100 shadow-sm border-l-4 border-l-amber-400">
+                      <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
+                        <Mail className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{member.user?.email || "Pending"}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border bg-amber-50 text-amber-700 border-amber-200 uppercase">
+                        <p className="text-sm font-bold text-slate-800 truncate">{member.user?.email || "Pending"}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border bg-amber-50 text-amber-700 border-amber-200">
                             {member.role}
                           </span>
-                          <p className="text-[10px] text-slate-500">
-                            Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
+                          <p className="text-[10px] text-slate-500 font-medium">
+                            Sent {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : "recently"}
                           </p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Spacer to prevent bottom nav obstruction */}
-          <div className="h-10" />
+          <div className="h-24" />
 
           {/* Viewing Member Modal - Reuse existing logic */}
           {viewingMember && (

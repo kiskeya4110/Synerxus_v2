@@ -565,22 +565,41 @@ export default function SDGMapping() {
       ? Math.round(filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / filteredProjects.length)
       : 0;
 
-    // Use dashboard data for accurate totals, fall back to project-level data
-    const totalVolunteers = dashboardData?.keyMetrics?.activeVolunteers ||
-      filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0);
-    const totalHours = dashboardData?.keyMetrics?.totalHours ||
-      filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0);
-
     // Calculate additional impact metrics
     const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
     const orgImpacts = (projectImpacts as any[]).filter((pi: any) => orgProjectIds.has(pi.projectId));
-    const totalBeneficiaries = dashboardData?.keyMetrics?.peopleImpacted ||
-      orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0);
-    const sdgsAddressed = dashboardData?.keyMetrics?.sdgsAddressed || organizationSDGs.length;
 
-    // Calculate total AIU from dashboard or projects
-    const totalAIU = dashboardData?.keyMetrics?.aiuEarned ||
-      filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0);
+    // Check if a specific project filter is applied
+    const isFiltered = selectedProjectFilter !== 'all';
+
+    // When filtered, compute metrics from filteredProjects only; otherwise use dashboard data
+    const totalVolunteers = isFiltered
+      ? filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0)
+      : (dashboardData?.keyMetrics?.activeVolunteers ||
+         filteredProjects.reduce((sum: number, p: any) => sum + (p.volunteerCount || 0), 0));
+    const totalHours = isFiltered
+      ? filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0)
+      : (dashboardData?.keyMetrics?.totalHours ||
+         filteredProjects.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0));
+    const totalBeneficiaries = isFiltered
+      ? orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0)
+      : (dashboardData?.keyMetrics?.peopleImpacted ||
+         orgImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0));
+
+    // SDGs addressed: when filtered, count unique SDGs from filtered projects
+    const filteredSdgs = new Set<number>();
+    filteredProjects.forEach((p: any) => {
+      if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+        p.sdgGoals.forEach((sdg: number) => filteredSdgs.add(sdg));
+      }
+    });
+    const sdgsAddressed = isFiltered ? filteredSdgs.size : (dashboardData?.keyMetrics?.sdgsAddressed || organizationSDGs.length);
+
+    // Calculate total AIU from filtered projects or dashboard
+    const totalAIU = isFiltered
+      ? filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0)
+      : (dashboardData?.keyMetrics?.aiuEarned ||
+         filteredProjects.reduce((sum: number, p: any) => sum + (p.aiuEarned || p.totalAiu || 0), 0));
 
     // Get projects for selected SDG
     const selectedSDGProjects = selectedSDG
@@ -636,9 +655,20 @@ export default function SDGMapping() {
             }));
           break;
         case 'volunteers':
-          title = 'Active Volunteers';
-          // Use volunteer summaries from dashboard if available
-          if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+          title = isFiltered ? 'Project Volunteers' : 'Active Volunteers';
+          // When filtered, show project-based volunteer data
+          if (isFiltered) {
+            items = filteredProjects
+              .filter((p: any) => (p.volunteerCount || 0) > 0)
+              .sort((a: any, b: any) => (b.volunteerCount || 0) - (a.volunteerCount || 0))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${p.volunteerCount || 0} volunteers`,
+                subValue: `${p.totalHours || 0} hours`,
+                id: p.id
+              }));
+          } else if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+            // Use volunteer summaries from dashboard when not filtered
             items = dashboardData.volunteerSummaries
               .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
               .map((v: any) => ({
@@ -661,9 +691,20 @@ export default function SDGMapping() {
           }
           break;
         case 'hours':
-          title = 'Hours Breakdown';
-          // Use volunteer summaries for hours breakdown if available
-          if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+          title = isFiltered ? 'Project Hours' : 'Hours Breakdown';
+          // When filtered, show project-based hours data
+          if (isFiltered) {
+            items = filteredProjects
+              .filter((p: any) => (p.totalHours || 0) > 0)
+              .sort((a: any, b: any) => (b.totalHours || 0) - (a.totalHours || 0))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${(p.totalHours || 0).toLocaleString()} hours`,
+                subValue: `${p.volunteerCount || 0} volunteers`,
+                id: p.id
+              }));
+          } else if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+            // Use volunteer summaries for hours breakdown when not filtered
             items = dashboardData.volunteerSummaries
               .filter((v: any) => (v.hours || 0) > 0)
               .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
@@ -687,7 +728,7 @@ export default function SDGMapping() {
           }
           break;
         case 'beneficiaries':
-          title = 'People Reached by Project';
+          title = isFiltered ? 'Project Beneficiaries' : 'People Reached by Project';
           const projectImpactMap = new Map<number, number>();
           orgImpacts.forEach((impact: any) => {
             const current = projectImpactMap.get(impact.projectId) || 0;
@@ -704,8 +745,12 @@ export default function SDGMapping() {
             .sort((a: any, b: any) => parseInt(b.value.replace(/,/g, '')) - parseInt(a.value.replace(/,/g, '')));
           break;
         case 'sdgs':
-          title = 'SDG Coverage';
-          items = organizationSDGs.map((sdgNum: number) => {
+          title = isFiltered ? 'Project SDG Coverage' : 'SDG Coverage';
+          // When filtered, show only SDGs from filtered projects
+          const sdgsToShow = isFiltered
+            ? Array.from(filteredSdgs).sort((a, b) => a - b)
+            : organizationSDGs;
+          items = sdgsToShow.map((sdgNum: number) => {
             const projectCount = filteredProjects.filter((p: any) => p.sdgGoals?.includes(sdgNum)).length;
             return {
               label: `SDG ${sdgNum}: ${SDG_METADATA[sdgNum]?.title || 'Unknown'}`,
@@ -716,9 +761,28 @@ export default function SDGMapping() {
           });
           break;
         case 'aiu':
-          title = 'AIU Breakdown';
-          // Use dashboard projects data which has AIU calculated
-          if (dashboardData?.projects && dashboardData.projects.length > 0) {
+          title = isFiltered ? 'Project AIU' : 'AIU Breakdown';
+          // When filtered, use filteredProjects; otherwise use dashboard data
+          if (isFiltered) {
+            items = filteredProjects
+              .filter((p: any) => (p.aiuEarned || p.totalAiu || 0) > 0)
+              .sort((a: any, b: any) => ((b.aiuEarned || b.totalAiu || 0)) - ((a.aiuEarned || a.totalAiu || 0)))
+              .map((p: any) => ({
+                label: p.name,
+                value: `${(p.aiuEarned || p.totalAiu || 0).toLocaleString()} AIU`,
+                subValue: `${p.totalHours || 0} hours • ${p.sdgGoals?.length || 0} SDGs`,
+                id: p.id
+              }));
+            // If no AIU data, show summary
+            if (items.length === 0) {
+              items = [
+                { label: 'Total AIU Earned', value: `${totalAIU.toLocaleString()} AIU`, subValue: 'For filtered project(s)', isHighlight: true },
+                { label: 'Volunteer Hours', value: `${totalHours.toLocaleString()} hrs`, subValue: 'Time investment factor' },
+                { label: 'SDGs Addressed', value: `${sdgsAddressed} goals`, subValue: 'UN Sustainable Development Goals alignment' },
+                { label: 'People Reached', value: `${totalBeneficiaries.toLocaleString()}`, subValue: 'Direct beneficiaries impacted' },
+              ];
+            }
+          } else if (dashboardData?.projects && dashboardData.projects.length > 0) {
             items = dashboardData.projects
               .filter((p: any) => (p.aiuEarned || 0) > 0)
               .sort((a: any, b: any) => (b.aiuEarned || 0) - (a.aiuEarned || 0))
@@ -748,9 +812,9 @@ export default function SDGMapping() {
           }
           break;
         case 'impact':
-          title = 'Overall Impact Summary';
+          title = isFiltered ? 'Filtered Impact Summary' : 'Overall Impact Summary';
           items = [
-            { label: 'Total Volunteers', value: totalVolunteers.toLocaleString(), subValue: 'Across all projects' },
+            { label: 'Total Volunteers', value: totalVolunteers.toLocaleString(), subValue: isFiltered ? 'For filtered project(s)' : 'Across all projects' },
             { label: 'Total Hours', value: totalHours.toLocaleString(), subValue: 'Hours contributed' },
             { label: 'People Reached', value: totalBeneficiaries.toLocaleString(), subValue: 'Direct beneficiaries' },
             { label: 'SDGs Addressed', value: `${sdgsAddressed}/17`, subValue: 'UN Goals aligned' },

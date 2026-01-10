@@ -26,6 +26,7 @@ const PREAPPROVED_EMAILS = [
   'hpare79@gmail.com',
   'kamzizfr@gmail.com',
   'alraski@hotmail.com',
+  'johnmarrely@gmail.com',
 ].map(email => email.toLowerCase());
 
 function isPreapprovedEmail(email: string): boolean {

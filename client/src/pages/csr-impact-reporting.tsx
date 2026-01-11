@@ -1458,27 +1458,123 @@ export function CSRImpactReporting() {
         {selectedTab === "projects" && (
           <div>
             <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#111827", marginBottom: "24px" }}>Projects & Performance</h2>
-            
+
+            {/* Project Summary Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px", marginBottom: "24px" }}>
+              <div style={{ backgroundColor: "#eff6ff", padding: "16px", borderRadius: "10px", border: "1px solid #bfdbfe" }}>
+                <div style={{ fontSize: "12px", color: "#1e40af", marginBottom: "4px" }}>Total Projects</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a" }}>{impactData?.projectMetrics?.length || 0}</div>
+              </div>
+              <div style={{ backgroundColor: "#f0fdf4", padding: "16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                <div style={{ fontSize: "12px", color: "#166534", marginBottom: "4px" }}>Total Project Hours</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669" }}>{impactData?.projectMetrics?.reduce((sum: number, p: any) => sum + (p.hours || 0), 0) || 0}h</div>
+              </div>
+              <div style={{ backgroundColor: "#fef3c7", padding: "16px", borderRadius: "10px", border: "1px solid #fde68a" }}>
+                <div style={{ fontSize: "12px", color: "#92400e", marginBottom: "4px" }}>Avg Hours/Project</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#b45309" }}>{Math.round((impactData?.projectMetrics?.reduce((sum: number, p: any) => sum + (p.hours || 0), 0) || 0) / Math.max(impactData?.projectMetrics?.length || 1, 1))}h</div>
+              </div>
+              <div style={{ backgroundColor: "#faf5ff", padding: "16px", borderRadius: "10px", border: "1px solid #e9d5ff" }}>
+                <div style={{ fontSize: "12px", color: "#6b21a8", marginBottom: "4px" }}>Total Volunteers</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#7c3aed" }}>{impactData?.projectMetrics?.reduce((sum: number, p: any) => sum + (p.employees || 0), 0) || 0}</div>
+              </div>
+              <div style={{ backgroundColor: "#fef2f2", padding: "16px", borderRadius: "10px", border: "1px solid #fecaca" }}>
+                <div style={{ fontSize: "12px", color: "#991b1b", marginBottom: "4px" }}>Active Projects</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#dc2626" }}>{impactData?.projectMetrics?.filter((p: any) => p.status === 'active').length || 0}</div>
+              </div>
+            </div>
+
+            {/* Project Hours Distribution Chart */}
+            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "24px" }}>
+              <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>Hours by Project</h4>
+              <div style={{ height: "250px" }}>
+                <Suspense fallback={<ChartSkeleton height="h-[250px]" />}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LazyBarChart data={impactData?.projectMetrics?.slice(0, 10) || []} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}h`} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+                      <Tooltip formatter={(value: any) => [`${value} hours`, 'Hours']} />
+                      <Bar dataKey="hours" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                    </LazyBarChart>
+                  </ResponsiveContainer>
+                </Suspense>
+              </div>
+            </div>
+
+            {/* Project Status Breakdown */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>Project Status Distribution</h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {['active', 'completed', 'sponsored', 'pending'].map((status) => {
+                    const count = impactData?.projectMetrics?.filter((p: any) => p.status === status).length || 0;
+                    const total = impactData?.projectMetrics?.length || 1;
+                    const percentage = Math.round((count / total) * 100);
+                    const colors: Record<string, { bg: string; bar: string; text: string }> = {
+                      active: { bg: '#d1fae5', bar: '#059669', text: '#166534' },
+                      completed: { bg: '#dbeafe', bar: '#3b82f6', text: '#1e40af' },
+                      sponsored: { bg: '#fef3c7', bar: '#f59e0b', text: '#92400e' },
+                      pending: { bg: '#f3f4f6', bar: '#6b7280', text: '#374151' }
+                    };
+                    return (
+                      <div key={status}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: "500", color: colors[status]?.text || '#374151', textTransform: "capitalize" }}>{status}</span>
+                          <span style={{ fontSize: "12px", fontWeight: "600", color: colors[status]?.text || '#374151' }}>{count} ({percentage}%)</span>
+                        </div>
+                        <div style={{ height: "8px", backgroundColor: "#f3f4f6", borderRadius: "4px", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${percentage}%`, backgroundColor: colors[status]?.bar || '#6b7280', borderRadius: "4px" }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>Top Performing Projects</h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {impactData?.projectMetrics?.slice(0, 5).map((project: any, idx: number) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", backgroundColor: idx === 0 ? "#fef3c7" : "#f9fafb", borderRadius: "8px" }}>
+                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: idx === 0 ? "#f59e0b" : "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold", color: idx === 0 ? "white" : "#6b7280" }}>
+                        {idx + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "500", color: "#111827" }}>{project.name}</div>
+                        <div style={{ fontSize: "11px", color: "#6b7280" }}>{project.employees} volunteers</div>
+                      </div>
+                      <div style={{ fontSize: "14px", fontWeight: "bold", color: "#059669" }}>{project.hours}h</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Portfolio</h3>
             <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", overflowX: "auto", marginBottom: "32px" }}>
               {impactData?.projectMetrics && impactData.projectMetrics.length > 0 ? (
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f3f4f6" }}>
+                      <th style={{ padding: "12px", textAlign: "left", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Rank</th>
                       <th style={{ padding: "12px", textAlign: "left", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Project</th>
                       <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Hours</th>
                       <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Employees</th>
+                      <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Avg Hrs/Person</th>
+                      <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Economic Value</th>
                       <th style={{ padding: "12px", textAlign: "center", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {impactData.projectMetrics.map((project: any, idx: number) => (
                       <tr key={idx} style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: idx % 2 === 0 ? "#f9fafb" : "white" }}>
+                        <td style={{ padding: "12px", color: "#6b7280", fontWeight: "500" }}>#{idx + 1}</td>
                         <td style={{ padding: "12px", color: "#111827", fontWeight: "500" }}>{project.name}</td>
                         <td style={{ padding: "12px", textAlign: "right", color: "#059669", fontWeight: "600" }}>{project.hours} hrs</td>
                         <td style={{ padding: "12px", textAlign: "right", color: "#374151" }}>{project.employees}</td>
+                        <td style={{ padding: "12px", textAlign: "right", color: "#6b7280" }}>{project.employees > 0 ? Math.round(project.hours / project.employees) : 0} hrs</td>
+                        <td style={{ padding: "12px", textAlign: "right", color: "#b45309", fontWeight: "500" }}>${Math.round(project.hours * 34.79).toLocaleString()}</td>
                         <td style={{ padding: "12px", textAlign: "center" }}>
-                          <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: "12px", backgroundColor: project.status === "active" ? "#d1fae5" : "#dbeafe", color: project.status === "active" ? "#059669" : "#3b82f6", fontSize: "12px", fontWeight: "600", textTransform: "capitalize" }}>
+                          <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: "12px", backgroundColor: project.status === "active" ? "#d1fae5" : project.status === "completed" ? "#dbeafe" : "#fef3c7", color: project.status === "active" ? "#059669" : project.status === "completed" ? "#3b82f6" : "#b45309", fontSize: "12px", fontWeight: "600", textTransform: "capitalize" }}>
                             {project.status}
                           </span>
                         </td>

@@ -321,6 +321,8 @@ export default function ImpactReport() {
     : safeProjectAssignments.filter(a => a.status === 'active').length;
   const allSkills = volunteerProfile?.skills || [];
   const sdgs = volunteerProfile?.preferredSdgs || [];
+  // Actual SDGs where impact was contributed (from AIU data)
+  const contributedSdgs = aiuSummary?.sdgsContributed || [];
   const assignmentsCount = safeProjectAssignments.length;
 
   // Use optimized impact score from backend calculator (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
@@ -1629,7 +1631,7 @@ export default function ImpactReport() {
                         Resume Snippet
                         <button
                           onClick={() => {
-                            const snippet = `VOLUNTEER EXPERIENCE\n\nSkills-Based Volunteer | Multiple Organizations | ${new Date().getFullYear()}\n• Contributed ${Math.round(filteredTotalHours)} hours across ${filteredActiveProjects} projects supporting ${sdgs.length > 0 ? sdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives\n• Applied ${allSkills.slice(0, 3).join(', ')} skills to drive measurable impact\n• Impacted ${dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work\n• Ranked in top ${Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact`;
+                            const snippet = `VOLUNTEER EXPERIENCE\n\nSkills-Based Volunteer | Multiple Organizations | ${new Date().getFullYear()}\n• Contributed ${Math.round(filteredTotalHours)} hours across ${filteredActiveProjects} projects supporting ${contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives\n• Advanced ${contributedSdgs.length} UN Sustainable Development Goals through volunteer work\n• Applied ${allSkills.slice(0, 3).join(', ')} skills to drive measurable impact\n• Impacted ${dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work\n• Ranked in top ${Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact`;
                             navigator.clipboard.writeText(snippet);
                             toast({ title: "Copied!", description: "Resume snippet copied to clipboard" });
                           }}
@@ -1644,7 +1646,8 @@ export default function ImpactReport() {
                           <span className="font-semibold">Skills-Based Volunteer</span> | Multiple Organizations | {new Date().getFullYear()}
                         </p>
                         <ul className="text-gray-600 dark:text-gray-400 space-y-1 text-xs">
-                          <li>• Contributed {Math.round(filteredTotalHours)} hours across {filteredActiveProjects} projects supporting {sdgs.length > 0 ? sdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives</li>
+                          <li>• Contributed {Math.round(filteredTotalHours)} hours across {filteredActiveProjects} projects supporting {contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives</li>
+                          <li>• Advanced {contributedSdgs.length} UN Sustainable Development Goal{contributedSdgs.length !== 1 ? 's' : ''} through volunteer work</li>
                           <li>• Applied {allSkills.slice(0, 3).join(', ') || 'various'} skills to drive measurable impact</li>
                           <li>• Impacted {dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work</li>
                           <li>• Ranked in top {Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact</li>

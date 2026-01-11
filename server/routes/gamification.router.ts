@@ -221,53 +221,59 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
       : [];
 
     // Build leaderboard for all identified volunteers
-    const leaderboardData = volunteerIdsArray.map((volunteerId) => {
-      const user = allUsers.find((u: any) => u.id === volunteerId);
-      if (!user) return null;
+    const leaderboardData = await Promise.all(
+      volunteerIdsArray.map(async (volunteerId) => {
+        const user = allUsers.find((u: any) => u.id === volunteerId);
+        if (!user) return null;
 
-      // Get activities for this volunteer (both on org projects and all their activities)
-      const userActivities = allActivities.filter((a: any) => a.userId === volunteerId);
-      const orgProjectActivities = userActivities.filter((a: any) => orgProjectIdSet.has(a.projectId));
+        // Get activities for this volunteer (both on org projects and all their activities)
+        const userActivities = allActivities.filter((a: any) => a.userId === volunteerId);
+        const orgProjectActivities = userActivities.filter((a: any) => orgProjectIdSet.has(a.projectId));
 
-      // Get assignments for this volunteer on org projects
-      const userAssignments = allAssignments.filter((a: any) =>
-        a.volunteerId === volunteerId && orgProjectIdSet.has(a.projectId)
-      );
+        // Get assignments for this volunteer on org projects
+        const userAssignments = allAssignments.filter((a: any) =>
+          a.volunteerId === volunteerId && orgProjectIdSet.has(a.projectId)
+        );
 
-      // Get impacts logged by this volunteer on org projects (using userId field from schema)
-      const userImpacts = allImpacts.filter((i: any) =>
-        i.userId === volunteerId && orgProjectIdSet.has(i.projectId)
-      );
+        // Get impacts logged by this volunteer on org projects (using userId field from schema)
+        const userImpacts = allImpacts.filter((i: any) =>
+          i.userId === volunteerId && orgProjectIdSet.has(i.projectId)
+        );
 
-      const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
-      const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
+        const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
+        const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
-      // Use 'hours' field (correct field name from schema) - count hours from org project activities
-      const totalHours = orgProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        // Use 'hours' field (correct field name from schema) - count hours from org project activities
+        const totalHours = orgProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
 
-      // Calculate weekly streak based on recent activity
-      const weeklyActivities = orgProjectActivities.filter((a: any) => {
-        const actDate = new Date(a.date);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return actDate >= weekAgo;
-      });
+        // Calculate weekly streak based on recent activity
+        const weeklyActivities = orgProjectActivities.filter((a: any) => {
+          const actDate = new Date(a.date);
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return actDate >= weekAgo;
+        });
 
-      return {
-        userId: volunteerId,
-        displayName: user.displayName || user.email || `Volunteer ${volunteerId}`,
-        totalHours: Math.round(totalHours),
-        tasksCompleted: userAssignments.length,
-        projectsCompleted: uniqueProjects.size,
-        impactsLogged: userImpacts.length,
-        weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
-        maxStreak: 52,
-        totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (userAssignments.length * 5)),
-        badgesEarned: 0,
-      };
-    }).filter(Boolean);
+        // Get actual badge count for this volunteer
+        const badgesEarned = await storage.countUserBadges(volunteerId);
 
-    const sorted = leaderboardData.sort((a: any, b: any) => {
+        return {
+          userId: volunteerId,
+          displayName: user.displayName || user.email || `Volunteer ${volunteerId}`,
+          totalHours: Math.round(totalHours),
+          tasksCompleted: userAssignments.length,
+          projectsCompleted: uniqueProjects.size,
+          impactsLogged: userImpacts.length,
+          weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
+          maxStreak: 52,
+          totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (userAssignments.length * 5)),
+          badgesEarned,
+        };
+      })
+    );
+    const filteredLeaderboardData = leaderboardData.filter(Boolean);
+
+    const sorted = filteredLeaderboardData.sort((a: any, b: any) => {
       if (type === "hours") return b.totalHours - a.totalHours;
       if (type === "impacts") return b.impactsLogged - a.impactsLogged;
       if (type === "tasks") return b.tasksCompleted - a.tasksCompleted;
@@ -337,13 +343,15 @@ gamificationRouter.get("/user-badges", async (req: Request, res: Response) => {
 /**
  * POST /badges/:badgeId/award
  *
- * Manually award a badge to a user (admin function).
+ * Manually award a badge to a user (admin/manager function).
+ * Requires the requesting user to be an admin, organization, or corporate-partner.
  *
  * Path Parameters:
  * - badgeId: The ID of the badge to award
  *
  * Body Parameters:
  * - userId (required): The ID of the user to award the badge to
+ * - awardedByUserId (required): The ID of the user performing the award (for auth)
  *
  * Returns:
  * - The created user badge record
@@ -351,13 +359,31 @@ gamificationRouter.get("/user-badges", async (req: Request, res: Response) => {
 gamificationRouter.post("/badges/:badgeId/award", async (req: Request, res: Response) => {
   try {
     const badgeId = parseInt(req.params.badgeId);
-    const { userId } = req.body;
+    const { userId, awardedByUserId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: "userId required in request body" });
     }
 
+    if (!awardedByUserId) {
+      return res.status(400).json({ message: "awardedByUserId required in request body" });
+    }
+
+    // Verify the awarding user has permission (admin, organization, or corporate-partner)
+    const awardingUser = await storage.getUser(parseInt(awardedByUserId));
+    if (!awardingUser) {
+      return res.status(403).json({ message: "Unauthorized: awarding user not found" });
+    }
+
+    const allowedUserTypes = ['admin', 'organization', 'corporate-partner'];
+    if (!allowedUserTypes.includes(awardingUser.userType || '')) {
+      return res.status(403).json({
+        message: "Unauthorized: only admins, organizations, and corporate partners can award badges"
+      });
+    }
+
     const userBadge = await awardBadgeManually(parseInt(userId), badgeId);
+    console.log(`[Badge] Badge ${badgeId} awarded to user ${userId} by ${awardingUser.userType} (user ${awardedByUserId})`);
     return res.json({ success: true, userBadge });
   } catch (err: any) {
     console.error("Error awarding badge:", err);

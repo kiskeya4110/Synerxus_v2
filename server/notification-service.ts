@@ -554,3 +554,38 @@ export async function notifyPendingActivity(
     console.error("Error creating pending activity notification:", error);
   }
 }
+
+/**
+ * Notify a user that they have earned a badge
+ */
+export async function notifyBadgeEarned(
+  userId: number,
+  badgeId: number,
+  badgeName: string,
+  badgeIcon: string | null,
+  badgeTier: string | null
+): Promise<void> {
+  try {
+    const tierEmoji = {
+      bronze: "🥉",
+      silver: "🥈",
+      gold: "🥇",
+      platinum: "💎"
+    }[badgeTier || "bronze"] || "🏅";
+
+    const notification: InsertNotification = {
+      userId,
+      type: "badge_earned",
+      title: `${tierEmoji} Badge Earned!`,
+      message: `Congratulations! You've earned the "${badgeName}" badge. ${badgeIcon || "🎉"} Keep up the great work!`,
+      relatedEntityType: "badge",
+      relatedEntityId: badgeId,
+      read: false,
+    };
+
+    await storage.createNotification(notification);
+    console.log(`[Notification] Badge earned notification sent to user ${userId} for badge "${badgeName}"`);
+  } catch (error) {
+    console.error("Error creating badge earned notification:", error);
+  }
+}

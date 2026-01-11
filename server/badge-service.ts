@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import type { Badge, UserBadge, InsertBadge } from "@shared/schema";
+import { notifyBadgeEarned } from "./notification-service";
 
 // Default badges to seed into the database
 const DEFAULT_BADGES: InsertBadge[] = [
@@ -279,6 +280,11 @@ export async function checkAndAwardBadges(userId: number): Promise<Badge[]> {
         });
         newlyAwardedBadges.push(badge);
         console.log(`[Badge] Awarded "${badge.name}" to user ${userId}`);
+
+        // Send notification to user about earned badge
+        notifyBadgeEarned(userId, badge.id, badge.name, badge.icon, badge.tier).catch(err => {
+          console.error(`[Badge] Failed to send notification for badge ${badge.id}:`, err);
+        });
       } catch (error: any) {
         // Handle unique constraint violation (badge already exists)
         if (error.code === '23505') {
@@ -354,6 +360,12 @@ export async function awardBadgeManually(
   });
 
   console.log(`[Badge] Manually awarded "${badge.name}" to user ${userId}`);
+
+  // Send notification to user about earned badge
+  notifyBadgeEarned(userId, badge.id, badge.name, badge.icon, badge.tier).catch(err => {
+    console.error(`[Badge] Failed to send notification for manual award:`, err);
+  });
+
   return userBadge;
 }
 

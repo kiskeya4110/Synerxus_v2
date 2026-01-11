@@ -6,6 +6,7 @@ import { getOnboardingSteps } from "@shared/onboarding-steps";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
+import { useBadgeCelebration } from "@/hooks/use-badge-celebration";
 
 // Core pages - lazy loaded for smaller initial bundle
 const Landing = lazy(() => import("@/pages/landing"));
@@ -241,13 +242,17 @@ function RootRedirectRoute() {
 // Inner app component that uses A/B testing context
 function AppWithOnboarding() {
   const abTesting = useABTesting();
-  
+
   // Get the onboarding variant to determine step count
   const onboardingVariant = abTesting.getVariant('onboarding-flow');
   const stepCount = onboardingVariant?.config?.stepCount || 'full';
 
   // Determine user type from localStorage
   const userType = localStorage.getItem('userType') as 'volunteer' | 'organization' | 'corporate-partner' || 'volunteer';
+
+  // Badge celebration - shows toast when user earns a new badge
+  const currentUserId = localStorage.getItem('currentUserId');
+  useBadgeCelebration(currentUserId ? parseInt(currentUserId, 10) : null);
 
   // Get onboarding steps based on user type and A/B variant
   const steps = useMemo(() => {

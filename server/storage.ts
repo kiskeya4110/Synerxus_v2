@@ -128,7 +128,13 @@ import {
   type InsertPlatformSetting,
   aiRecommendations,
   type AIRecommendation,
-  type InsertAIRecommendation
+  type InsertAIRecommendation,
+  badges,
+  userBadges,
+  type Badge,
+  type InsertBadge,
+  type UserBadge,
+  type InsertUserBadge
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -444,6 +450,20 @@ export interface IStorage {
   createAIRecommendation(recommendation: InsertAIRecommendation): Promise<AIRecommendation>;
   updateAIRecommendation(id: number, recommendation: Partial<InsertAIRecommendation>): Promise<AIRecommendation | undefined>;
   deleteAIRecommendation(id: number): Promise<boolean>;
+
+  // Badge operations
+  getBadge(id: number): Promise<Badge | undefined>;
+  listBadges(): Promise<Badge[]>;
+  listActiveBadges(): Promise<Badge[]>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  updateBadge(id: number, badge: Partial<InsertBadge>): Promise<Badge | undefined>;
+
+  // User Badge operations
+  getUserBadge(userId: number, badgeId: number): Promise<UserBadge | undefined>;
+  listUserBadges(userId: number): Promise<UserBadge[]>;
+  createUserBadge(userBadge: InsertUserBadge): Promise<UserBadge>;
+  updateUserBadge(id: number, userBadge: Partial<InsertUserBadge>): Promise<UserBadge | undefined>;
+  countUserBadges(userId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2112,6 +2132,73 @@ export class DatabaseStorage implements IStorage {
   async deleteAIRecommendation(id: number): Promise<boolean> {
     await db.delete(aiRecommendations).where(eq(aiRecommendations.id, id));
     return true;
+  }
+
+  // ==================== Badge Operations ====================
+
+  async getBadge(id: number): Promise<Badge | undefined> {
+    const [result] = await db.select().from(badges).where(eq(badges.id, id));
+    return result || undefined;
+  }
+
+  async listBadges(): Promise<Badge[]> {
+    return db.select().from(badges).orderBy(asc(badges.displayOrder));
+  }
+
+  async listActiveBadges(): Promise<Badge[]> {
+    return db.select().from(badges)
+      .where(eq(badges.isActive, true))
+      .orderBy(asc(badges.displayOrder));
+  }
+
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [result] = await db.insert(badges).values(badge).returning();
+    return result;
+  }
+
+  async updateBadge(id: number, badge: Partial<InsertBadge>): Promise<Badge | undefined> {
+    const [result] = await db.update(badges)
+      .set({ ...badge, updatedAt: new Date() })
+      .where(eq(badges.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  // ==================== User Badge Operations ====================
+
+  async getUserBadge(userId: number, badgeId: number): Promise<UserBadge | undefined> {
+    const [result] = await db.select().from(userBadges)
+      .where(and(
+        eq(userBadges.userId, userId),
+        eq(userBadges.badgeId, badgeId)
+      ));
+    return result || undefined;
+  }
+
+  async listUserBadges(userId: number): Promise<UserBadge[]> {
+    return db.select().from(userBadges)
+      .where(eq(userBadges.userId, userId))
+      .orderBy(desc(userBadges.earnedAt));
+  }
+
+  async createUserBadge(userBadge: InsertUserBadge): Promise<UserBadge> {
+    const [result] = await db.insert(userBadges).values(userBadge).returning();
+    return result;
+  }
+
+  async updateUserBadge(id: number, userBadge: Partial<InsertUserBadge>): Promise<UserBadge | undefined> {
+    const [result] = await db.update(userBadges)
+      .set(userBadge)
+      .where(eq(userBadges.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async countUserBadges(userId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(userBadges)
+      .where(eq(userBadges.userId, userId));
+    return Number(result[0]?.count || 0);
   }
 }
 

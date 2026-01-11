@@ -18,6 +18,7 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
 } from "../middleware/auth";
+import { checkAndAwardBadges } from "../badge-service";
 import {
   sendActivityApprovalNotification,
   sendImpactApprovalNotification,
@@ -865,6 +866,13 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
       console.error("Failed to send approval notification:", err);
     });
 
+    // Check and award badges after activity approval (non-blocking)
+    if (activity.userId) {
+      checkAndAwardBadges(activity.userId).catch(err => {
+        console.error("Failed to check badges:", err);
+      });
+    }
+
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
@@ -1042,6 +1050,13 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
     sendImpactApprovalNotification(impactId, 'approved', reviewerId).catch(err => {
       console.error("Failed to send impact approval notification:", err);
     });
+
+    // Check and award badges after impact approval (non-blocking)
+    if (impact.userId) {
+      checkAndAwardBadges(impact.userId).catch(err => {
+        console.error("Failed to check badges:", err);
+      });
+    }
 
     broadcastUpdate("impact_approved", updatedImpact);
     res.json(updatedImpact);

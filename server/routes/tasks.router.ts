@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertTaskSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership, calculateProjectProgress } from "./utils";
 import { notifyTaskAssigned } from "../notification-service";
+import { checkAndAwardBadges } from "../badge-service";
 
 export const tasksRouter = Router();
 
@@ -244,6 +245,13 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       const updatedProject = await storage.getProject(updatedTask.projectId);
       if (updatedProject) {
         broadcastUpdate("project_updated", updatedProject);
+      }
+
+      // Check and award badges when task is completed (non-blocking)
+      if (taskData.status === 'completed' && updatedTask.assigneeId) {
+        checkAndAwardBadges(updatedTask.assigneeId).catch(err => {
+          console.error("Failed to check badges:", err);
+        });
       }
     }
 

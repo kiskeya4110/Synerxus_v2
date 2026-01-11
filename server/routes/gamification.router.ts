@@ -1,7 +1,15 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
+import {
+  getUserBadgesWithProgress,
+  awardBadgeManually,
+  seedDefaultBadges
+} from "../badge-service";
 
 export const gamificationRouter = Router();
+
+// Seed default badges on router initialization
+seedDefaultBadges().catch(err => console.error("[Badge] Error seeding badges:", err));
 
 // ==================== Leaderboard Routes ====================
 
@@ -48,6 +56,9 @@ gamificationRouter.get("/leaderboard-stats", async (req: Request, res: Response)
       return actDate >= weekAgo;
     });
 
+    // Get actual badge count
+    const badgesEarned = await storage.countUserBadges(userId);
+
     return res.json({
       userId,
       totalHours: Math.round(totalHours),
@@ -57,7 +68,7 @@ gamificationRouter.get("/leaderboard-stats", async (req: Request, res: Response)
       weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
       maxStreak: 52,
       totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (assignments.length * 5)),
-      badgesEarned: 0,
+      badgesEarned,
       lastActivityDate: activities.length > 0 ? activities[activities.length - 1].date : null,
     });
   } catch (err) {
@@ -111,6 +122,9 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
             return actDate >= weekAgo;
           });
 
+          // Get actual badge count
+          const badgesEarned = await storage.countUserBadges(user.id);
+
           return {
             userId: user.id,
             displayName: user.displayName || user.email,
@@ -121,7 +135,7 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
             weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
             maxStreak: 52,
             totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (userAssignments.length * 5)),
-            badgesEarned: 0,
+            badgesEarned,
           };
         })
     );
@@ -271,16 +285,34 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
 // ==================== Badge Routes ====================
 
 /**
+ * GET /badges
+ *
+ * Retrieves all available badges in the system.
+ *
+ * Returns:
+ * - Array of badge definitions with tier, threshold, and conditions
+ */
+gamificationRouter.get("/badges", async (req: Request, res: Response) => {
+  try {
+    const badges = await storage.listActiveBadges();
+    return res.json(badges);
+  } catch (err) {
+    console.error("Error fetching badges:", err);
+    res.status(500).json({ message: "Error fetching badges" });
+  }
+});
+
+/**
  * GET /user-badges
  *
- * Retrieves all badges earned by a specific user.
- * Currently returns an empty array as badge system is not fully implemented.
+ * Retrieves all badges for a specific user with progress information.
+ * Shows earned badges and progress towards unearned badges.
  *
  * Query Parameters:
  * - userId (required): The ID of the user to get badges for
  *
  * Returns:
- * - Array of user badges (currently empty)
+ * - Array of badges with earned status and progress percentage
  */
 gamificationRouter.get("/user-badges", async (req: Request, res: Response) => {
   try {
@@ -294,10 +326,42 @@ gamificationRouter.get("/user-badges", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json([]);
+    const badgesWithProgress = await getUserBadgesWithProgress(userId);
+    return res.json(badgesWithProgress);
   } catch (err) {
     console.error("Error fetching user badges:", err);
     res.status(500).json({ message: "Error fetching badges" });
+  }
+});
+
+/**
+ * POST /badges/:badgeId/award
+ *
+ * Manually award a badge to a user (admin function).
+ *
+ * Path Parameters:
+ * - badgeId: The ID of the badge to award
+ *
+ * Body Parameters:
+ * - userId (required): The ID of the user to award the badge to
+ *
+ * Returns:
+ * - The created user badge record
+ */
+gamificationRouter.post("/badges/:badgeId/award", async (req: Request, res: Response) => {
+  try {
+    const badgeId = parseInt(req.params.badgeId);
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId required in request body" });
+    }
+
+    const userBadge = await awardBadgeManually(parseInt(userId), badgeId);
+    return res.json({ success: true, userBadge });
+  } catch (err: any) {
+    console.error("Error awarding badge:", err);
+    res.status(400).json({ message: err.message || "Error awarding badge" });
   }
 });
 

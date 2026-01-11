@@ -40,6 +40,7 @@ import MobilePWAView from "@/components/volunteer/mobile-pwa-view";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
+import ContributionBadges from "@/components/dashboard/contribution-badges";
 import Footer from "@/components/layout/footer";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
@@ -3083,6 +3084,13 @@ export default function Dashboard() {
           applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
           hoursByProject={dashboardData.hoursByProject || []}
         />
+      )}
+
+      {/* Contribution Badges - Only for volunteers */}
+      {dashboardType === 'volunteer' && (
+        <div className="mt-6">
+          <ContributionBadges userId={userId} />
+        </div>
       )}
 
       {/* Impact Reports & Stories - Only for organizations */}

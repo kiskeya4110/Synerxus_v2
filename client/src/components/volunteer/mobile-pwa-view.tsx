@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreHorizontal } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
+import ContributionBadges from "@/components/dashboard/contribution-badges";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { formatDecimal } from "@/lib/format-utils";
@@ -1722,6 +1723,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <Sparkles className="w-5 h-5" />
                 Discover More Opportunities
               </Button>
+            </div>
+
+            {/* Contribution Badges Section */}
+            <div className="px-4">
+              <ContributionBadges userId={userId} />
             </div>
           </div>
         )}

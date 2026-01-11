@@ -2366,39 +2366,39 @@ export default function CSRDashboard() {
               </div>
               <p className="text-slate-600 text-xs">Project locations where your employees are making a difference</p>
 
-              {/* Stats Cards - Static for now */}
+              {/* Stats Cards - Connected to real data */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-300">
                   <div className="flex items-center gap-1.5 mb-1">
                     <MapPin className="w-3.5 h-3.5 text-blue-700" />
                     <span className="text-blue-700 text-[10px] font-medium">Active Projects</span>
                   </div>
-                  <div className="text-slate-900 text-xl font-bold">0</div>
+                  <div className="text-slate-900 text-xl font-bold">{displayProjectsCompleted}</div>
                 </div>
                 <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-300">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Users className="w-3.5 h-3.5 text-emerald-700" />
                     <span className="text-emerald-700 text-[10px] font-medium">Employees</span>
                   </div>
-                  <div className="text-slate-900 text-xl font-bold">0</div>
+                  <div className="text-slate-900 text-xl font-bold">{displayActiveEmployees}</div>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-3 border border-amber-300">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Clock className="w-3.5 h-3.5 text-amber-700" />
                     <span className="text-amber-700 text-[10px] font-medium">Hours</span>
                   </div>
-                  <div className="text-slate-900 text-xl font-bold">0</div>
+                  <div className="text-slate-900 text-xl font-bold">{displayTotalHours.toLocaleString()}</div>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3 border border-purple-300">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Globe className="w-3.5 h-3.5 text-purple-700" />
                     <span className="text-purple-700 text-[10px] font-medium">Regions</span>
                   </div>
-                  <div className="text-slate-900 text-xl font-bold">0</div>
+                  <div className="text-slate-900 text-xl font-bold">{projectRegions.length}</div>
                 </div>
               </div>
 
-              {/* Map Placeholder */}
+              {/* Interactive Map */}
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-3 border-b border-slate-200">
                   <h3 className="text-slate-900 text-sm font-semibold flex items-center gap-1.5">
@@ -2406,22 +2406,67 @@ export default function CSRDashboard() {
                     Project Map
                   </h3>
                 </div>
-                <div className="h-[200px] bg-gradient-to-br from-slate-700 to-slate-900 relative flex items-center justify-center">
-                  <div className="text-center text-slate-300">
-                    <Globe className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Map view coming soon</p>
-                  </div>
+                <div className="h-[250px]">
+                  <LazyErrorBoundary fallback={<MapSkeleton />}>
+                    <Suspense fallback={<MapSkeleton />}>
+                      <LazyGlobalImpactMap projectLocations={filteredProjectLocations} />
+                    </Suspense>
+                  </LazyErrorBoundary>
                 </div>
               </div>
 
-              {/* Project List Placeholder */}
+              {/* Project List - Connected to real data */}
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-3 border-b border-slate-200">
                   <h3 className="text-slate-900 text-sm font-semibold">Project Locations</h3>
                 </div>
-                <div className="p-4 text-center text-slate-400 text-sm">
-                  No project locations found
-                </div>
+                {filteredProjectLocations.length > 0 ? (
+                  <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                    {filteredProjectLocations.slice(0, 10).map((project: any, idx: number) => (
+                      <div key={project.id || idx} className="p-3 hover:bg-slate-50">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-cyan-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-900 text-sm truncate">{project.name || project.projectName || 'Unnamed Project'}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">{project.region || project.location || 'Unknown Region'}</div>
+                            {project.sdgGoals && project.sdgGoals.length > 0 && (
+                              <div className="flex gap-1 mt-1.5 flex-wrap">
+                                {project.sdgGoals.slice(0, 3).map((sdg: number) => (
+                                  <span key={sdg} className="text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: getSDGColor(sdg) }}>
+                                    SDG {sdg}
+                                  </span>
+                                ))}
+                                {project.sdgGoals.length > 3 && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-medium">
+                                    +{project.sdgGoals.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {project.status && (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                              project.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                              project.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>
+                              {project.status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {filteredProjectLocations.length > 10 && (
+                      <div className="p-3 text-center text-slate-500 text-xs">
+                        +{filteredProjectLocations.length - 10} more projects
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-slate-400 text-sm">
+                    No project locations found
+                  </div>
+                )}
               </div>
             </div>
           )}

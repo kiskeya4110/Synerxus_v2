@@ -30,6 +30,48 @@ import { exec } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
 import { initializeEnv } from "./utils/env";
 import { setupSwagger } from "./swagger";
+import { storage } from "./storage";
+
+// Data fix: Ensure organization users have proper display names
+async function fixOrganizationDisplayNames() {
+  try {
+    const users = await storage.listUsers();
+    const organizations = await storage.listOrganizations();
+
+    // Create a map of organization ID to name
+    const orgNameMap = new Map<number, string>();
+    for (const org of organizations) {
+      if (org.id && org.name) {
+        orgNameMap.set(org.id, org.name);
+      }
+    }
+
+    // Find organization users with potentially incorrect displayNames
+    for (const user of users) {
+      if (user.userType === 'organization' && user.organizationId) {
+        const orgName = orgNameMap.get(user.organizationId);
+        if (orgName) {
+          // Check if displayName looks like it was derived from email (common patterns)
+          const emailPrefix = user.email?.split('@')[0]?.toLowerCase();
+          const currentName = user.displayName?.toLowerCase();
+
+          // Update if displayName matches email prefix or is generic
+          if (currentName === emailPrefix ||
+              currentName === 'admin' ||
+              currentName === 'contact' ||
+              currentName?.includes('admin') ||
+              !user.displayName) {
+            await storage.updateUser(user.id, { displayName: orgName });
+            logger.info(`[DataFix] Updated displayName for user ${user.id} (${user.email}) to "${orgName}"`);
+          }
+        }
+      }
+    }
+    logger.info('[DataFix] Organization display names check complete');
+  } catch (err) {
+    logger.error('[DataFix] Error fixing organization display names:', err);
+  }
+}
 
 // Server PID for debugging
 const serverPid = process.pid;
@@ -402,6 +444,11 @@ app.use((req, res, next) => {
   } catch (err) {
     logger.error('Failed to initialize cache warming:', err);
   }
+
+  // Fix organization user display names (deferred to avoid blocking startup)
+  setImmediate(() => {
+    fixOrganizationDisplayNames();
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

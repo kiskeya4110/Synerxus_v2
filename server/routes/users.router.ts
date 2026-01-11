@@ -202,11 +202,15 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       organizationId = organization.id;
     }
 
+    // For organization users, prefer organizationName over email prefix for displayName
+    const effectiveDisplayName = displayName ||
+      ((userType === 'organization' || userType === 'corporate-partner') && organizationName ? organizationName : email.split('@')[0]);
+
     const userData = {
       firebaseUid,
       username,
       email,
-      displayName: displayName || email.split('@')[0],
+      displayName: effectiveDisplayName,
       userType,
       organizationId,
     };

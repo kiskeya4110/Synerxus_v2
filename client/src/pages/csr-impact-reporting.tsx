@@ -920,7 +920,7 @@ export function CSRImpactReporting() {
       </nav>
 
       {/* KPI Detail Modal */}
-      <KPIDetailModal />
+      {KPIDetailModal()}
 
       {/* Content Area */}
       <div style={{ flex: 1 }}>

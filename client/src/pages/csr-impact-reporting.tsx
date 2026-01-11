@@ -1300,7 +1300,37 @@ export function CSRImpactReporting() {
         {selectedTab === "impact" && (
           <div>
             <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#111827", marginBottom: "24px" }}>Impact & Financial Analysis</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "32px" }}>
+
+            {/* Financial Summary Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px", marginBottom: "24px" }}>
+              <div style={{ backgroundColor: "#eff6ff", padding: "14px", borderRadius: "10px", border: "1px solid #bfdbfe", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#1e40af", marginBottom: "4px" }}>Total Value</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#1e3a8a" }}>${Math.round((impactData?.financialMetrics.volunteerHourValue || 0) / 1000)}K</div>
+              </div>
+              <div style={{ backgroundColor: "#f0fdf4", padding: "14px", borderRadius: "10px", border: "1px solid #bbf7d0", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#166534", marginBottom: "4px" }}>Net Savings</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#059669" }}>${Math.round(((impactData?.financialMetrics.estimatedCostIfPaidStaff || 0) - (impactData?.financialMetrics.programCost || 0)) / 1000)}K</div>
+              </div>
+              <div style={{ backgroundColor: "#fef3c7", padding: "14px", borderRadius: "10px", border: "1px solid #fde68a", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#92400e", marginBottom: "4px" }}>ROI</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#b45309" }}>{impactData?.financialMetrics.roi || 0}%</div>
+              </div>
+              <div style={{ backgroundColor: "#faf5ff", padding: "14px", borderRadius: "10px", border: "1px solid #e9d5ff", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#6b21a8", marginBottom: "4px" }}>$/Hour</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#7c3aed" }}>$34.79</div>
+              </div>
+              <div style={{ backgroundColor: "#fef2f2", padding: "14px", borderRadius: "10px", border: "1px solid #fecaca", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#991b1b", marginBottom: "4px" }}>$/Beneficiary</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#dc2626" }}>${impactData?.financialMetrics.costPerBeneficiary || 0}</div>
+              </div>
+              <div style={{ backgroundColor: "#ecfdf5", padding: "14px", borderRadius: "10px", border: "1px solid #a7f3d0", textAlign: "center" }}>
+                <div style={{ fontSize: "11px", color: "#047857", marginBottom: "4px" }}>SROI Ratio</div>
+                <div style={{ fontSize: "22px", fontWeight: "bold", color: "#059669" }}>{sroiData.ratio}:1</div>
+              </div>
+            </div>
+
+            {/* Main Impact Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "24px" }}>
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "2px solid #10b981" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#166534", marginBottom: "16px" }}>Beneficiary Reach</h3>
                 <div style={{ marginBottom: "16px" }}>
@@ -1310,6 +1340,10 @@ export function CSRImpactReporting() {
                 <div style={{ borderTop: "1px solid #bbf7d0", paddingTop: "12px" }}>
                   <div style={{ fontSize: "12px", color: "#166534", marginBottom: "4px" }}>Indirect</div>
                   <div style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>{impactData?.impactMetrics.indirectBeneficiaries || 0}</div>
+                </div>
+                <div style={{ borderTop: "1px solid #bbf7d0", paddingTop: "12px", marginTop: "12px" }}>
+                  <div style={{ fontSize: "12px", color: "#166534", marginBottom: "4px" }}>Total Impact</div>
+                  <div style={{ fontSize: "20px", fontWeight: "bold", color: "#047857" }}>{impactData?.impactMetrics.estimatedLivesTouched || 0}</div>
                 </div>
               </div>
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
@@ -1322,6 +1356,10 @@ export function CSRImpactReporting() {
                   <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>Per Hour</div>
                   <div style={{ fontSize: "24px", fontWeight: "bold", color: "#7c3aed" }}>{impactData?.impactMetrics.impactPerHour || 0}</div>
                 </div>
+                <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: "12px", marginTop: "12px" }}>
+                  <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>Per Employee</div>
+                  <div style={{ fontSize: "20px", fontWeight: "bold", color: "#6d28d9" }}>{Math.round((impactData?.impactMetrics.estimatedLivesTouched || 0) / Math.max(impactData?.engagementMetrics.activeEmployees || 1, 1))}</div>
+                </div>
               </div>
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#92400e", marginBottom: "16px" }}>Financial Impact</h3>
@@ -1333,11 +1371,75 @@ export function CSRImpactReporting() {
                   <div style={{ fontSize: "12px", color: "#92400e", marginBottom: "4px" }}>If Paid Staff</div>
                   <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>${Math.round((impactData?.financialMetrics.estimatedCostIfPaidStaff || 0) / 1000)}K</div>
                 </div>
+                <div style={{ borderTop: "1px solid #fde68a", paddingTop: "12px", marginTop: "12px" }}>
+                  <div style={{ fontSize: "12px", color: "#92400e", marginBottom: "4px" }}>Value Multiplier</div>
+                  <div style={{ fontSize: "20px", fontWeight: "bold", color: "#a16207" }}>{((impactData?.financialMetrics.volunteerHourValue || 0) / Math.max(impactData?.financialMetrics.programCost || 1, 1)).toFixed(1)}x</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Value Comparison Chart */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>Value Creation Breakdown</h4>
+                <div style={{ height: "200px" }}>
+                  <Suspense fallback={<ChartSkeleton height="h-[200px]" />}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LazyBarChart data={[
+                        { name: 'Program Cost', value: impactData?.financialMetrics.programCost || 0, fill: '#ef4444' },
+                        { name: 'Volunteer Value', value: impactData?.financialMetrics.volunteerHourValue || 0, fill: '#3b82f6' },
+                        { name: 'Market Rate', value: impactData?.financialMetrics.estimatedCostIfPaidStaff || 0, fill: '#10b981' },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${Math.round(v / 1000)}K`} />
+                        <Tooltip formatter={(value: any) => [`$${Math.round(value).toLocaleString()}`, 'Amount']} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {[
+                            { name: 'Program Cost', fill: '#ef4444' },
+                            { name: 'Volunteer Value', fill: '#3b82f6' },
+                            { name: 'Market Rate', fill: '#10b981' },
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </LazyBarChart>
+                    </ResponsiveContainer>
+                  </Suspense>
+                </div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>Impact Distribution</h4>
+                <div style={{ height: "200px" }}>
+                  <Suspense fallback={<ChartSkeleton height="h-[200px]" />}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LazyPieChart>
+                        <Pie
+                          data={[
+                            { name: 'Direct', value: impactData?.impactMetrics.directBeneficiaries || 0 },
+                            { name: 'Indirect', value: impactData?.impactMetrics.indirectBeneficiaries || 0 },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          <Cell fill="#059669" />
+                          <Cell fill="#10b981" />
+                        </Pie>
+                        <Tooltip formatter={(value: any) => [value.toLocaleString(), 'Beneficiaries']} />
+                      </LazyPieChart>
+                    </ResponsiveContainer>
+                  </Suspense>
+                </div>
               </div>
             </div>
 
             <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>ROI & Cost Analysis</h3>
-            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "24px" }}>
               <div>
                 <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>ROI</div>
                 <div style={{ fontSize: "36px", fontWeight: "bold", color: (impactData?.financialMetrics.roi || 0) >= 200 ? "#059669" : "#f59e0b" }}>{impactData?.financialMetrics.roi || 0}%</div>
@@ -1352,6 +1454,48 @@ export function CSRImpactReporting() {
                 <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>Program Cost</div>
                 <div style={{ fontSize: "36px", fontWeight: "bold", color: "#f59e0b" }}>${Math.round((impactData?.financialMetrics.programCost || 0) / 1000)}K</div>
                 <div style={{ fontSize: "12px", color: "#9ca3af" }}>Total Investment</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>Cost per Hour</div>
+                <div style={{ fontSize: "36px", fontWeight: "bold", color: "#7c3aed" }}>${Math.round((impactData?.financialMetrics.programCost || 0) / Math.max(impactData?.engagementMetrics.totalHours || 1, 1))}</div>
+                <div style={{ fontSize: "12px", color: "#9ca3af" }}>Investment Efficiency</div>
+              </div>
+            </div>
+
+            {/* Benchmark Comparison */}
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Industry Benchmark Comparison</h3>
+            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {[
+                  { label: 'Participation Rate', current: impactData?.engagementMetrics.participationRate || 0, benchmark: 35, unit: '%' },
+                  { label: 'Avg Hours/Employee', current: impactData?.engagementMetrics.avgHoursPerEmployee || 0, benchmark: 40, unit: 'hrs' },
+                  { label: 'ROI', current: impactData?.financialMetrics.roi || 0, benchmark: 300, unit: '%' },
+                  { label: 'Cost per Beneficiary', current: impactData?.financialMetrics.costPerBeneficiary || 0, benchmark: 25, unit: '$', inverse: true },
+                ].map((item: any) => {
+                  const percentage = item.inverse
+                    ? Math.min((item.benchmark / Math.max(item.current, 1)) * 100, 100)
+                    : Math.min((item.current / item.benchmark) * 100, 100);
+                  const isGood = item.inverse ? item.current <= item.benchmark : item.current >= item.benchmark;
+                  return (
+                    <div key={item.label}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>{item.label}</span>
+                        <div style={{ display: "flex", gap: "16px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "600", color: isGood ? "#059669" : "#f59e0b" }}>
+                            You: {item.unit === '$' ? `$${item.current}` : `${item.current}${item.unit}`}
+                          </span>
+                          <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+                            Benchmark: {item.unit === '$' ? `$${item.benchmark}` : `${item.benchmark}${item.unit}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ height: "10px", backgroundColor: "#f3f4f6", borderRadius: "5px", overflow: "hidden", position: "relative" }}>
+                        <div style={{ position: "absolute", left: "0", top: "0", height: "100%", width: `${percentage}%`, backgroundColor: isGood ? "#059669" : "#f59e0b", borderRadius: "5px", transition: "width 0.5s" }} />
+                        <div style={{ position: "absolute", left: "calc(100% - 2px)", top: "-2px", height: "14px", width: "4px", backgroundColor: "#374151", borderRadius: "2px" }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

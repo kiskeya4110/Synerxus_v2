@@ -975,13 +975,23 @@ export function CSRImpactReporting() {
         </div>
 
         {/* Interactive Quick Stats - Click to view details */}
-        <div style={{ marginBottom: "24px", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px" }}>
+        <div style={{ marginBottom: "12px", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px" }}>
           <InteractiveKPICard id="hours" label="Total Hours" value={impactData?.engagementMetrics.totalHours || 0} unit="hrs" icon="⏱️" color="#1e3a8a" trend="up" trendValue="+12%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="employees" label="Employees" value={impactData?.engagementMetrics.activeEmployees || 0} unit="active" icon="👥" color="#059669" trend="up" trendValue="+8%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="aiu" label="AIUs Earned" value={impactData?.impactMetrics.estimatedLivesTouched || 0} unit="impact" icon="📊" color="#8b5cf6" trend="up" trendValue="+15%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="roi" label="ROI" value={`${impactData?.financialMetrics.roi || 0}%`} unit="return" icon="📈" color="#059669" trend="up" trendValue="+5%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="esg" label="ESG Rating" value={Math.round(esGRating)} unit="/ 100" icon="✨" color="#f97316" trend="up" trendValue="+3" onClick={setShowDetailModal} />
           <InteractiveKPICard id="sroi" label="SROI" value={`${sroiData.ratio}:1`} unit="ratio" icon="💎" color={sroiData.color} trend="up" trendValue="+0.3" onClick={setShowDetailModal} />
+        </div>
+
+        {/* Additional KPIs Row */}
+        <div style={{ marginBottom: "24px", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px" }}>
+          <InteractiveKPICard id="projects" label="Projects" value={impactData?.projectMetrics?.length || 0} unit="active" icon="📁" color="#0891b2" trend="up" trendValue="+3" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="avgHours" label="Avg Hrs/Employee" value={impactData?.engagementMetrics.avgHoursPerEmployee || 0} unit="hrs" icon="⏰" color="#4f46e5" trend="up" trendValue="+2" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="participation" label="Participation" value={`${impactData?.engagementMetrics.participationRate || 0}%`} unit="rate" icon="📈" color="#0d9488" trend="up" trendValue="+5%" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="economic" label="Economic Value" value={`$${Math.round((impactData?.financialMetrics.volunteerHourValue || 0) / 1000)}K`} unit="value" icon="💵" color="#ca8a04" trend="up" trendValue="+8%" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="sdgCoverage" label="SDG Coverage" value={impactData?.sdgMetrics?.length || 0} unit="/ 17" icon="🎯" color="#7c3aed" trend="up" trendValue="+2" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="beneficiaries" label="Beneficiaries" value={impactData?.impactMetrics.directBeneficiaries || 0} unit="direct" icon="🤝" color="#dc2626" trend="up" trendValue="+10%" onClick={setShowDetailModal} />
         </div>
 
         {/* Alert Banner for Below-Benchmark Metrics */}
@@ -1380,16 +1390,67 @@ export function CSRImpactReporting() {
               </div>
             </div>
 
-            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px", marginTop: "32px" }}>SDG Alignment</h3>
-            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {impactData?.sdgMetrics?.sort((a: any, b: any) => a.goal - b.goal).slice(0, 9).map((sdg: any) => (
-                <div key={sdg.goal} style={{ padding: "12px", backgroundColor: "#f3f4f6", borderRadius: "8px", border: "1px solid #e5e7eb" }}>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px", fontWeight: "600" }}>SDG {sdg.goal}: {getSDGName(sdg.goal)}</div>
-                  <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "6px" }}>{getSDGFullName(sdg.goal)}</div>
-                  <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "2px" }}>{sdg.hours}h</div>
-                  <div style={{ fontSize: "11px", color: "#059669", fontWeight: "600" }}>{sdg.percentage}%</div>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px", marginTop: "32px" }}>SDG Alignment Overview</h3>
+
+            {/* SDG Summary Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
+              <div style={{ backgroundColor: "#f0fdf4", padding: "16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                <div style={{ fontSize: "12px", color: "#166534", marginBottom: "4px" }}>SDGs Covered</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669" }}>{impactData?.sdgMetrics?.length || 0}<span style={{ fontSize: "14px", color: "#6b7280" }}>/17</span></div>
+              </div>
+              <div style={{ backgroundColor: "#eff6ff", padding: "16px", borderRadius: "10px", border: "1px solid #bfdbfe" }}>
+                <div style={{ fontSize: "12px", color: "#1e40af", marginBottom: "4px" }}>Top SDG Focus</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a" }}>SDG {impactData?.sdgMetrics?.[0]?.goal || '-'}</div>
+              </div>
+              <div style={{ backgroundColor: "#fef3c7", padding: "16px", borderRadius: "10px", border: "1px solid #fde68a" }}>
+                <div style={{ fontSize: "12px", color: "#92400e", marginBottom: "4px" }}>Total SDG Hours</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#b45309" }}>{impactData?.sdgMetrics?.reduce((sum: number, s: any) => sum + (s.hours || 0), 0) || 0}h</div>
+              </div>
+              <div style={{ backgroundColor: "#faf5ff", padding: "16px", borderRadius: "10px", border: "1px solid #e9d5ff" }}>
+                <div style={{ fontSize: "12px", color: "#6b21a8", marginBottom: "4px" }}>Avg Hours/SDG</div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#7c3aed" }}>{Math.round((impactData?.sdgMetrics?.reduce((sum: number, s: any) => sum + (s.hours || 0), 0) || 0) / Math.max(impactData?.sdgMetrics?.length || 1, 1))}h</div>
+              </div>
+            </div>
+
+            {/* SDG Distribution Bar Chart */}
+            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "24px" }}>
+              <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px" }}>SDG Hours Distribution</h4>
+              <div style={{ height: "200px" }}>
+                <Suspense fallback={<ChartSkeleton height="h-[200px]" />}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LazyBarChart data={impactData?.sdgMetrics?.sort((a: any, b: any) => a.goal - b.goal) || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="goal" tick={{ fontSize: 11 }} tickFormatter={(v) => `SDG ${v}`} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}h`} />
+                      <Tooltip formatter={(value: any) => [`${value} hours`, 'Hours']} labelFormatter={(label) => `SDG ${label}: ${getSDGName(label)}`} />
+                      <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </LazyBarChart>
+                  </ResponsiveContainer>
+                </Suspense>
+              </div>
+            </div>
+
+            {/* All SDGs Grid */}
+            <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "12px" }}>All Active SDGs</h4>
+            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+              {impactData?.sdgMetrics?.sort((a: any, b: any) => b.hours - a.hours).map((sdg: any) => (
+                <div key={sdg.goal} style={{ padding: "12px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: `${Math.min(sdg.percentage * 2, 100)}%`, backgroundColor: "#dbeafe", opacity: 0.5 }} />
+                  <div style={{ position: "relative" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <span style={{ fontSize: "20px", fontWeight: "bold", color: "#1e3a8a" }}>SDG {sdg.goal}</span>
+                      <span style={{ fontSize: "11px", fontWeight: "600", color: "#059669", backgroundColor: "#d1fae5", padding: "2px 8px", borderRadius: "12px" }}>{sdg.percentage}%</span>
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "8px", fontWeight: "500" }}>{getSDGName(sdg.goal)}</div>
+                    <div style={{ fontSize: "18px", fontWeight: "bold", color: "#374151" }}>{sdg.hours}<span style={{ fontSize: "12px", fontWeight: "normal", color: "#9ca3af" }}> hrs</span></div>
+                  </div>
                 </div>
               ))}
+              {(!impactData?.sdgMetrics || impactData.sdgMetrics.length === 0) && (
+                <div style={{ gridColumn: "span 4", textAlign: "center", padding: "40px", color: "#9ca3af" }}>
+                  No SDG data available yet. Start logging volunteer activities to see SDG alignment.
+                </div>
+              )}
             </div>
           </div>
         )}

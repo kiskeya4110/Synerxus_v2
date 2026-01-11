@@ -2366,6 +2366,32 @@ export default function CSRDashboard() {
               </div>
               <p className="text-slate-600 text-xs">Project locations where your employees are making a difference</p>
 
+              {/* Region Filter */}
+              <div className="flex gap-2">
+                <select
+                  value={selectedMapRegion}
+                  onChange={(e) => startTransition(() => setSelectedMapRegion(e.target.value))}
+                  className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 cursor-pointer"
+                  style={{ backgroundColor: selectedMapRegion !== "all" ? "#dbeafe" : "white" }}
+                >
+                  <option value="all">All Regions</option>
+                  {projectRegions.map((region: string) => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMapStatus}
+                  onChange={(e) => startTransition(() => setSelectedMapStatus(e.target.value))}
+                  className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 cursor-pointer"
+                  style={{ backgroundColor: selectedMapStatus !== "all" ? "#dbeafe" : "white" }}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="sponsored">Sponsored</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
               {/* Stats Cards - Connected to real data */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-300">

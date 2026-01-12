@@ -240,11 +240,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     const projectsCompleted = safeProjects.filter((p: any) =>
       (Number(p?.completionPercentage) >= 100) || p?.status?.toLowerCase() === 'completed'
     ).length;
-    const activeProjects = safeProjects.filter((p: any) => {
+    // Use pre-computed activeProjects from API (server already filters correctly)
+    // Fall back to local computation only if API value is not available
+    const computedActiveProjects = safeProjects.filter((p: any) => {
       const status = p?.status?.toLowerCase() || '';
       return status === 'active' || status === 'in progress' || status === 'in-progress';
     }).length;
-    const totalProjects = safeProjects.length;
+    const activeProjects = Number(dashboardData?.activeProjects) || computedActiveProjects;
+    // Use pre-computed totalProjects from API, fall back to array length
+    const totalProjects = Number(dashboardData?.totalProjects) || safeProjects.length;
     const livesImpacted = Number(dashboardData?.totalPeopleImpacted) ||
       safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesImpacted) || Number(p?.livesTouched) || 0), 0);
     const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
@@ -255,7 +259,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
     // SDG Contributions: Calculate from actual project data using shared utility
     const contributedSdgs = extractSdgsFromProjects(safeProjects);
-    const sdgsContributed = contributedSdgs.length;
+    // Use API's sdgsAddressed if available, fall back to computed value
+    const sdgsContributed = Number(dashboardData?.sdgsAddressed) || contributedSdgs.length;
 
     // SDG Comparison: Find alignment/differences using shared utility
     const sdgComparison = compareSdgArrays(committedSdgs, contributedSdgs);
@@ -467,8 +472,25 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       }
     }
 
+    // Final fallback: Use preferredSdgs from volunteer profile if no project data available
+    if (result.length === 0 && volunteerProfile?.preferredSdgs) {
+      const preferredSdgs = filterValidSdgs(volunteerProfile.preferredSdgs);
+      if (preferredSdgs.length > 0) {
+        return preferredSdgs
+          .map(sdg => ({
+            sdg,
+            name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+            value: 1, // Minimal value to indicate interest
+            projectCount: 0, // No actual project work yet
+            color: SDG_COLORS[sdg] || '#6B7280'
+          }))
+          .sort((a, b) => a.sdg - b.sdg)
+          .slice(0, 8);
+      }
+    }
+
     return result;
-  }, [projects, volunteerActivities]);
+  }, [projects, volunteerActivities, volunteerProfile]);
 
   // Calculate AIU per SDG from aiuSummary projects
   const aiuPerSdg = useMemo(() => {

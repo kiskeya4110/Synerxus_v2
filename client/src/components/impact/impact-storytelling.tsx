@@ -112,10 +112,23 @@ export default function ImpactStorytelling({
         return `${m.label} increased by ${change} ${m.unit} (${percentChange}%)`;
       }).join(", ");
       
-      // Construct the generated story
-      const story = `${storyIntro}we've made ${toneAdjective} progress in ${focusPhrase} through the ${project.name} project in ${project.location}.\n\n
-In just ${getTimeFrame(project.date)}, we've achieved significant impact: ${metrics}.\n\n
-${getImpactStatement(project.metrics, focus)}.\n\n
+      // Get current date for the report
+      const reportDate = new Date();
+      const formattedReportDate = reportDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const projectStartDate = new Date(project.date);
+      const formattedProjectStart = projectStartDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long'
+      });
+
+      // Construct the generated story with current report date
+      const story = `Impact Report - ${formattedReportDate}\n\n${storyIntro}we've made ${toneAdjective} progress in ${focusPhrase} through the ${project.name} project in ${project.location}.\n\n
+Since ${formattedProjectStart} (${getTimeFrame(project.date)}), we've achieved significant impact: ${metrics}.\n\n
+As of ${formattedReportDate}, ${getImpactStatement(project.metrics, focus).toLowerCase()}.\n\n
 ${getCallToAction(audience, tone)}
 ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
       
@@ -157,13 +170,15 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
     const element = document.createElement("a");
     const file = new Blob([story.generatedStory], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    element.download = `${story.title.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.txt`;
+    // Use the story's report date for the filename
+    const storyDate = new Date(story.date).toISOString().split("T")[0];
+    element.download = `${story.title.replace(/\s+/g, "-")}-Report-${storyDate}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
     toast({
       title: "Story downloaded",
-      description: "Your impact story has been downloaded",
+      description: `Impact report from ${new Date(story.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} downloaded`,
     });
   };
 
@@ -399,8 +414,12 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
                     <div>
                       <CardTitle>{story.title}</CardTitle>
                       <CardDescription>
-                        Created {new Date(story.date).toLocaleDateString()} • 
-                        For {story.audience.charAt(0).toUpperCase() + story.audience.slice(1)} • 
+                        Report from {new Date(story.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })} •
+                        For {story.audience.charAt(0).toUpperCase() + story.audience.slice(1)} •
                         {story.tone.charAt(0).toUpperCase() + story.tone.slice(1)} tone
                       </CardDescription>
                     </div>

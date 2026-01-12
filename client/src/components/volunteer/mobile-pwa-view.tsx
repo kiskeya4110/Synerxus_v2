@@ -529,7 +529,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const filteredSdgDistribution = useMemo(() => {
     if (timeFilter === 'all') return sdgDistribution;
 
-    const safeProjects = Array.isArray(projects) ? projects : [];
+    const safeProjects = Array.isArray(dashboardData?.projects) ? dashboardData.projects : [];
 
     // Aggregate hours per SDG from filtered activities
     const sdgHours: { [key: number]: number } = {};
@@ -577,7 +577,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     }
 
     return result;
-  }, [timeFilter, projects, filteredActivities, sdgDistribution]);
+  }, [timeFilter, dashboardData, filteredActivities, sdgDistribution]);
 
   // FACT-BASED AI Smart Summary Generator
   // Generates insights based ONLY on actual data - no hallucinations or false claims

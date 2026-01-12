@@ -238,11 +238,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     const pendingHours = totalHours - verifiedHours;
 
     const projectsCompleted = safeProjects.filter((p: any) =>
-      (Number(p?.completionPercentage) >= 100) || p?.status === 'Completed'
+      (Number(p?.completionPercentage) >= 100) || p?.status?.toLowerCase() === 'completed'
     ).length;
-    const activeProjects = safeProjects.filter((p: any) =>
-      p?.status === 'Active' || p?.status === 'In Progress'
-    ).length;
+    const activeProjects = safeProjects.filter((p: any) => {
+      const status = p?.status?.toLowerCase() || '';
+      return status === 'active' || status === 'in progress' || status === 'in-progress';
+    }).length;
     const totalProjects = safeProjects.length;
     const livesImpacted = Number(dashboardData?.totalPeopleImpacted) ||
       safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesImpacted) || Number(p?.livesTouched) || 0), 0);
@@ -430,7 +431,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       });
     }
 
-    return Object.entries(sdgHours)
+    const result = Object.entries(sdgHours)
       .map(([sdg, hours]) => ({
         sdg: parseInt(sdg),
         name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
@@ -441,6 +442,31 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       .filter(item => item.projectCount > 0) // Only show SDGs with actual projects
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
+
+    // Fallback: If no SDG data from projects, use SDGs extracted from projects even without hours
+    if (result.length === 0 && safeProjects.length > 0) {
+      const allProjectSdgs = new Set<number>();
+      safeProjects.forEach((p: any) => {
+        if (Array.isArray(p?.sdgGoals)) {
+          p.sdgGoals.filter(isValidSdg).forEach((sdg: number) => allProjectSdgs.add(sdg));
+        }
+      });
+
+      if (allProjectSdgs.size > 0) {
+        return Array.from(allProjectSdgs)
+          .map(sdg => ({
+            sdg,
+            name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+            value: 1, // Minimal value to show in chart
+            projectCount: 1,
+            color: SDG_COLORS[sdg] || '#6B7280'
+          }))
+          .sort((a, b) => a.sdg - b.sdg)
+          .slice(0, 8);
+      }
+    }
+
+    return result;
   }, [projects, volunteerActivities]);
 
   // Calculate AIU per SDG from aiuSummary projects
@@ -509,7 +535,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       }
     });
 
-    return Object.entries(sdgHours)
+    const result = Object.entries(sdgHours)
       .map(([sdg, hours]) => ({
         sdg: parseInt(sdg),
         name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
@@ -520,6 +546,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       .filter(item => item.projectCount > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
+
+    // Fallback: If no filtered data, use all-time sdgDistribution
+    if (result.length === 0 && sdgDistribution.length > 0) {
+      return sdgDistribution;
+    }
+
+    return result;
   }, [timeFilter, projects, filteredActivities, sdgDistribution]);
 
   // FACT-BASED AI Smart Summary Generator
@@ -4223,7 +4256,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <div className="space-y-2">
                     {projects
-                      .filter((p: any) => p.status === 'Active' || p.status === 'In Progress')
+                      .filter((p: any) => {
+                        const status = p.status?.toLowerCase() || '';
+                        return status === 'active' || status === 'in progress' || status === 'in-progress';
+                      })
                       .map((project: any) => (
                         <div
                           key={project.id}

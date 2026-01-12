@@ -379,8 +379,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   // SDG Distribution data with real metrics (hours per SDG)
   // Uses enriched project data from dashboard (totalHoursLogged) as primary source
   const sdgDistribution = useMemo(() => {
-    const safeProjects = Array.isArray(projects) ? projects : [];
-    const safeActivities = Array.isArray(volunteerActivities) ? volunteerActivities : [];
+    // Use dashboardData?.projects directly to ensure we get fresh data when API responds
+    const safeProjects = Array.isArray(dashboardData?.projects) ? dashboardData.projects : [];
+    const safeActivities = Array.isArray(dashboardData?.activities) ? dashboardData.activities : [];
 
     // Aggregate hours per SDG from projects and activities
     const sdgHours: { [key: number]: number } = {};
@@ -490,7 +491,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     }
 
     return result;
-  }, [projects, volunteerActivities, volunteerProfile]);
+  }, [dashboardData, volunteerProfile]);
 
   // Calculate AIU per SDG from aiuSummary projects
   const aiuPerSdg = useMemo(() => {

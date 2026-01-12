@@ -778,7 +778,7 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
         if (linkedEmployerIds.size > 0 && user?.email) {
           const allEngagements = (await storage.listEmployeeEngagement()) || [];
 
-          for (const employerIdNum of linkedEmployerIds) {
+          for (const employerIdNum of Array.from(linkedEmployerIds)) {
             const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
               e?.partnerId === employerIdNum &&
               e?.employeeEmail === user.email
@@ -1020,7 +1020,7 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
         }
 
         // Create verified output records for ALL linked employers
-        for (const employerIdNum of linkedEmployerIds) {
+        for (const employerIdNum of Array.from(linkedEmployerIds)) {
           await storage.createVerifiedOutput({
             activityId: null, // This is an impact, not an activity
             partnerId: employerIdNum,

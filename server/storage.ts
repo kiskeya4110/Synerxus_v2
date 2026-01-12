@@ -186,6 +186,7 @@ export interface IStorage {
   updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
   listProjects(): Promise<Project[]>;
   listProjectsByOrganization(organizationId: number): Promise<Project[]>;
+  getProjectsByIds(projectIds: number[]): Promise<Project[]>;
 
   // Task operations
   getTask(id: number): Promise<Task | undefined>;
@@ -693,6 +694,12 @@ export class DatabaseStorage implements IStorage {
 
   async listProjectsByOrganization(organizationId: number): Promise<Project[]> {
     return await db.select().from(projects).where(eq(projects.organizationId, organizationId));
+  }
+
+  // OPTIMIZATION: Batch fetch projects by IDs
+  async getProjectsByIds(projectIds: number[]): Promise<Project[]> {
+    if (projectIds.length === 0) return [];
+    return await db.select().from(projects).where(inArray(projects.id, projectIds));
   }
 
   // Task operations

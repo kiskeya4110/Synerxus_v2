@@ -1214,7 +1214,7 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
         organizationName: org?.name || 'Unknown',
         totalHours: data.hours,
         activityCount: data.activities.length,
-        employees: [...new Set(data.activities.map((a: any) => a.userId))].map((uid: any) => {
+        employees: Array.from(new Set(data.activities.map((a: any) => a.userId))).map((uid: any) => {
           const user = users.find((u: any) => u.id === uid);
           return user?.displayName || 'Unknown';
         })

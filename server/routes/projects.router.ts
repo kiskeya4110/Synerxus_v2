@@ -488,6 +488,8 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
         projectId,
         verificationStatus: status,
         sdgIndicator: `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`,
+        kpiName: 'People Impacted',
+        kpiUnit: 'people',
         kpiBefore: 0,
         kpiAfter: 0.05,
         attributionFactor: 0.2,

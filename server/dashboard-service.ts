@@ -1510,6 +1510,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 /**
  * Get SDG contributions overview for an organization
  * Returns aggregated data for each SDG including hours, volunteers, and projects
+ *
+ * OPTIMIZED: Uses targeted queries instead of fetching all data
  */
 export async function getSDGContributionsForOrganization(userId: number) {
   try {
@@ -1522,17 +1524,15 @@ export async function getSDGContributionsForOrganization(userId: number) {
     // Use organizationId if available, otherwise use userId
     const organizationId = user.organizationId || userId;
 
-    // Fetch organization's data
-    const allProjects = await storage.listProjects();
-    const allActivities = await storage.listVolunteerActivities();
-    const allUsers = await storage.listUsers();
-
-    // Filter to only this organization's projects
-    const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
+    // OPTIMIZATION: Use targeted queries instead of fetching ALL data
+    const organizationProjects = await storage.listProjectsByOrganization(organizationId);
     const organizationProjectIds = new Set(organizationProjects.map(p => p.id));
+    const projectIdArray = Array.from(organizationProjectIds);
 
-    // Filter activities to only those on organization's projects
-    const organizationActivities = allActivities.filter(a => a.projectId && organizationProjectIds.has(a.projectId));
+    // OPTIMIZATION: Batch fetch only activities for this organization's projects
+    const organizationActivities = projectIdArray.length > 0
+      ? await storage.listVolunteerActivitiesByProjectIds(projectIdArray)
+      : [];
 
     // Initialize SDG data for all 17 SDGs
     const sdgContributions = Array.from({ length: 17 }, (_, i) => {

@@ -354,6 +354,45 @@ export default function Dashboard() {
     };
   }, [selectedProject, dashboardData]);
 
+  // Enrich projects with SDG data from multiple sources for SDGChart
+  // Ensures SDG chart has data even when project sdgGoals are not set
+  const enrichedProjectsForSdgChart = useMemo(() => {
+    const projects = filteredData.projects || [];
+
+    // Check if any projects have valid sdgGoals
+    const hasValidSdgData = projects.some((p: any) =>
+      p.sdgGoals && Array.isArray(p.sdgGoals) && p.sdgGoals.length > 0
+    );
+
+    // If projects have SDG data, use them as-is
+    if (hasValidSdgData) {
+      return projects;
+    }
+
+    // Fallback: Use contributed SDGs from AIU summary or volunteer profile
+    const fallbackSdgs = aiuSummary?.sdgsContributed ||
+                         dashboardData?.volunteerProfile?.preferredSdgs || [];
+
+    if (fallbackSdgs.length === 0) {
+      return projects; // No fallback available
+    }
+
+    // Enrich projects without sdgGoals with fallback SDGs
+    // Distribute SDGs across projects proportionally
+    return projects.map((project: any, index: number) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
+        return project; // Keep existing sdgGoals
+      }
+
+      // Assign SDGs from fallback list (round-robin distribution)
+      const assignedSdgs = fallbackSdgs.slice(0, Math.min(3, fallbackSdgs.length));
+      return {
+        ...project,
+        sdgGoals: assignedSdgs,
+      };
+    });
+  }, [filteredData.projects, aiuSummary?.sdgsContributed, dashboardData?.volunteerProfile?.preferredSdgs]);
+
   // Filter monthly impact data by time period AND project
   const filteredMonthlyImpactData = useMemo(() => {
     let monthlyData = dashboardData?.monthlyImpactData || [];
@@ -1621,7 +1660,7 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <SDGChart projects={filteredData.projects || []} />
+                  <SDGChart projects={enrichedProjectsForSdgChart || []} />
                 </CardContent>
               </Card>
 
@@ -2953,8 +2992,8 @@ export default function Dashboard() {
             />
           </CardContent>
         </Card>
-        <SDGChart 
-          projects={filteredData.projects}
+        <SDGChart
+          projects={enrichedProjectsForSdgChart || []}
           organizationSdgs={
             currentUser?.userType === 'organization' 
               ? dashboardData?.organizationPrimarySdgs 

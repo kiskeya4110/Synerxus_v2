@@ -318,12 +318,26 @@ export default function ImpactReport() {
   const totalTasks = tasks.length;
   const activeProjects = dashboardData?.activeProjects !== undefined
     ? dashboardData.activeProjects
-    : safeProjectAssignments.filter(a => a.status === 'active').length;
+    : safeProjectAssignments.filter(a => {
+        const status = a.status?.toLowerCase() || '';
+        return status === 'active' || status === 'in progress' || status === 'in-progress' || status === 'pending';
+      }).length;
   const allSkills = volunteerProfile?.skills || [];
-  const sdgs = volunteerProfile?.preferredSdgs || [];
   // Actual SDGs where impact was contributed (from AIU data)
   const contributedSdgs = aiuSummary?.sdgsContributed || [];
+  // Extract SDGs from actual project assignments as the primary source
+  const projectSdgs = Array.from(new Set(
+    safeProjectAssignments
+      .flatMap((pa: any) => pa.project?.sdgGoals || [])
+      .filter((sdg: number) => typeof sdg === 'number' && sdg >= 1 && sdg <= 17)
+  )).sort((a, b) => a - b);
+  // Use project SDGs first, fall back to contributed SDGs from AIU, then profile preferences
+  const sdgs = projectSdgs.length > 0
+    ? projectSdgs
+    : (contributedSdgs.length > 0 ? contributedSdgs : (volunteerProfile?.preferredSdgs || []));
   const assignmentsCount = safeProjectAssignments.length;
+  // Total projects count (for resume snippet - includes completed projects)
+  const totalProjectsCount = safeProjectAssignments.length;
 
   // Use optimized impact score from backend calculator (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
   const totalImpactScore = dashboardData?.impactScore ?? 0;
@@ -486,9 +500,10 @@ export default function ImpactReport() {
   
   // Show ALL assigned projects in the KPI (not just those with filtered activities)
   // The time filter should affect hours, not the project count
-  const filteredActiveProjects = safeProjectAssignments.filter(pa =>
-    pa.status === 'active' || pa.status === 'Active' || pa.status === 'In Progress'
-  ).length;
+  const filteredActiveProjects = safeProjectAssignments.filter(pa => {
+    const status = pa.status?.toLowerCase() || '';
+    return status === 'active' || status === 'in progress' || status === 'in-progress' || status === 'pending';
+  }).length;
   
   // Calculate filtered tasks score (count completed tasks only, not filtered by time since completion is a point-in-time event)
   // But for consistency, we calculate tasks separately
@@ -497,6 +512,56 @@ export default function ImpactReport() {
   // Use backend-calculated impact score from dashboard for consistency with impact-visualization
   // This ensures the same metric appears the same everywhere
   const filteredImpactScore = dashboardData?.impactScore !== undefined ? dashboardData.impactScore : 0;
+
+  // Calculate hours per SDG from project assignments and activities
+  const getHoursPerSDG = (sdgId: number): number => {
+    // Get projects that have this SDG
+    const sdgProjects = safeProjectAssignments.filter((pa: any) =>
+      pa.project?.sdgGoals?.includes(sdgId)
+    );
+
+    if (sdgProjects.length === 0) return 0;
+
+    // Get project IDs for this SDG
+    const sdgProjectIds = sdgProjects.map((pa: any) => pa.projectId);
+
+    // Calculate hours from activities linked to these projects
+    const projectHours = filteredActivities
+      .filter((a: any) => sdgProjectIds.includes(a.projectId))
+      .reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+    // If we have project-linked hours, use them
+    if (projectHours > 0) return projectHours;
+
+    // Fallback: distribute total hours proportionally across SDGs
+    const totalSdgCount = sdgs.length || 1;
+    return filteredTotalHours / totalSdgCount;
+  };
+
+  // Calculate hours per skill from activities (avoid random data)
+  const getHoursPerSkill = (skillName: string, skillIndex: number, totalSkills: number): number => {
+    // Try to find activities that mention this skill
+    const skillActivities = filteredActivities.filter((a: any) =>
+      a.skillsUsed?.includes(skillName) || a.description?.toLowerCase().includes(skillName.toLowerCase())
+    );
+
+    if (skillActivities.length > 0) {
+      return skillActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+    }
+
+    // Fallback: distribute hours evenly across skills (deterministic, not random)
+    return Math.round(filteredTotalHours / Math.max(totalSkills, 1));
+  };
+
+  // Get projects count per skill (deterministic)
+  const getProjectsPerSkill = (skillName: string): number => {
+    // Count projects where this skill might be used
+    const skillProjects = safeProjectAssignments.filter((pa: any) =>
+      pa.project?.requiredSkills?.includes(skillName) ||
+      pa.role?.toLowerCase().includes(skillName.toLowerCase())
+    );
+    return Math.max(skillProjects.length, 1);
+  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -1201,7 +1266,7 @@ export default function ImpactReport() {
                           hours: a.hours || 0,
                           count: 1,
                         }))}
-                        period={timeFilter === "year" ? "1y" : timeFilter === "quarter" ? "6m" : "1y"}
+                        period={timeFilter === "year" ? "1y" : timeFilter === "quarter" ? "3m" : timeFilter === "month" ? "3m" : "1y"}
                         title="Contribution Activity"
                         showTooltip={true}
                       />
@@ -1213,14 +1278,14 @@ export default function ImpactReport() {
                     <SkillsPortfolio
                       skills={allSkills.map((skill: string, index: number) => ({
                         name: skill,
-                        hours: Math.round(filteredTotalHours / Math.max(allSkills.length, 1) * (1 + Math.random() * 0.5)),
-                        projects: Math.floor(Math.random() * 3) + 1,
+                        hours: getHoursPerSkill(skill, index, allSkills.length),
+                        projects: getProjectsPerSkill(skill),
                         isNew: index >= allSkills.length - 2 && allSkills.length > 2,
                       }))}
                       maxSkills={8}
                       title="Skills Applied"
                       showValue={true}
-                      hourlyRate={150}
+                      hourlyRate={25}
                     />
 
                     {/* Engagement Metrics */}
@@ -1350,10 +1415,8 @@ export default function ImpactReport() {
                       <div className="flex flex-wrap gap-2">
                         {[...sdgs].sort((a, b) => a - b).map((sdgId: number) => {
                           const title = SDG_TITLES[sdgId];
-                          // Calculate hours for this SDG from activities
-                          const sdgHours = filteredActivities
-                            .filter((a: any) => a.sdgGoals?.includes(sdgId))
-                            .reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+                          // Calculate hours for this SDG from project assignments
+                          const sdgHours = getHoursPerSDG(sdgId);
                           const sdgProjects = safeProjectAssignments.filter((pa: any) =>
                             pa.project?.sdgGoals?.includes(sdgId)
                           ).length;
@@ -1631,7 +1694,7 @@ export default function ImpactReport() {
                         Resume Snippet
                         <button
                           onClick={() => {
-                            const snippet = `VOLUNTEER EXPERIENCE\n\nSkills-Based Volunteer | Multiple Organizations | ${new Date().getFullYear()}\n• Contributed ${Math.round(filteredTotalHours)} hours across ${filteredActiveProjects} projects supporting ${contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives\n• Advanced ${contributedSdgs.length} UN Sustainable Development Goals through volunteer work\n• Applied ${allSkills.slice(0, 3).join(', ')} skills to drive measurable impact\n• Impacted ${dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work\n• Ranked in top ${Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact`;
+                            const snippet = `VOLUNTEER EXPERIENCE\n\nSkills-Based Volunteer | Multiple Organizations | ${new Date().getFullYear()}\n• Contributed ${Math.round(filteredTotalHours)} hours across ${totalProjectsCount} projects supporting ${contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives\n• Advanced ${contributedSdgs.length} UN Sustainable Development Goals through volunteer work\n• Applied ${allSkills.slice(0, 3).join(', ')} skills to drive measurable impact\n• Impacted ${dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work\n• Ranked in top ${Math.max(5, 100 - Math.round(filteredTotalHours / 2))}% of volunteers for impact`;
                             navigator.clipboard.writeText(snippet);
                             toast({ title: "Copied!", description: "Resume snippet copied to clipboard" });
                           }}
@@ -1646,7 +1709,7 @@ export default function ImpactReport() {
                           <span className="font-semibold">Skills-Based Volunteer</span> | Multiple Organizations | {new Date().getFullYear()}
                         </p>
                         <ul className="text-gray-600 dark:text-gray-400 space-y-1 text-xs">
-                          <li>• Contributed {Math.round(filteredTotalHours)} hours across {filteredActiveProjects} projects supporting {contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives</li>
+                          <li>• Contributed {Math.round(filteredTotalHours)} hours across {totalProjectsCount} project{totalProjectsCount !== 1 ? 's' : ''} supporting {contributedSdgs.length > 0 ? contributedSdgs.slice(0, 2).map((s: number) => SDG_TITLES[s]).join(' and ') : 'community'} initiatives</li>
                           <li>• Advanced {contributedSdgs.length} UN Sustainable Development Goal{contributedSdgs.length !== 1 ? 's' : ''} through volunteer work</li>
                           <li>• Applied {allSkills.slice(0, 3).join(', ') || 'various'} skills to drive measurable impact</li>
                           <li>• Impacted {dashboardData?.totalPeopleImpacted || 0}+ beneficiaries through volunteer work</li>
@@ -1851,8 +1914,9 @@ export default function ImpactReport() {
                             { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
                           ].map((row) => {
                             const achieved = Math.round((row.actual / row.target) * 100);
-                            const status = achieved >= 100 ? '✓ On Target' : achieved >= 75 ? '⚠ At Risk' : '✗ Behind';
-                            const statusColor = achieved >= 100 ? 'text-green-600 dark:text-green-400' : achieved >= 75 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            // Improved thresholds: 100%+ = On Target, 60-99% = On Track, 40-59% = At Risk, <40% = Behind
+                            const status = achieved >= 100 ? '✓ On Target' : achieved >= 60 ? '→ On Track' : achieved >= 40 ? '⚠ At Risk' : '✗ Behind';
+                            const statusColor = achieved >= 100 ? 'text-green-600 dark:text-green-400' : achieved >= 60 ? 'text-blue-600 dark:text-blue-400' : achieved >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
                             return (
                               <tr key={row.kpi} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-4 py-2 text-gray-900 dark:text-white">{row.kpi}</td>
@@ -2741,7 +2805,11 @@ export default function ImpactReport() {
                 <div key={idx} className="p-2 bg-gray-50 rounded text-sm">
                   <div className="flex justify-between items-center">
                     <span className="font-medium truncate flex-1">{pa.project?.name || 'Project'}</span>
-                    <Badge variant={pa.status === 'active' ? 'default' : 'secondary'} className="text-xs ml-2">
+                    <Badge variant={
+                      ['active', 'in progress', 'in-progress', 'pending'].includes(pa.status?.toLowerCase() || '')
+                        ? 'default'
+                        : 'secondary'
+                    } className="text-xs ml-2">
                       {pa.status || 'pending'}
                     </Badge>
                   </div>

@@ -2712,9 +2712,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           />
                           <Bar
                             dataKey="value"
-                            radius={[4, 4, 0, 0]}
+                            radius={[0, 4, 4, 0]}
                             onClick={(data) => setShowSdgModal(data.sdg)}
                             cursor="pointer"
+                            minPointSize={5}
+                            barSize={20}
                           >
                             {filteredSdgDistribution.slice(0, 4).map((entry, index) => (
                               <Cell key={`bar-${index}`} fill={entry.color} />

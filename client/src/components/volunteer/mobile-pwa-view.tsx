@@ -389,43 +389,44 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       }
     });
 
-    safeActivities.forEach((activity: any) => {
-      const projectId = activity?.projectId;
-      const hours = Number(activity?.hours) || 0;
+    // Primary source: Use totalHoursLogged from enriched project data (server-calculated hours)
+    // This is more reliable than activity-based calculation
+    safeProjects.forEach((p: any) => {
+      const sdgGoals = filterValidSdgs(p?.sdgGoals || []);
+      // Use real hours from project data (totalHoursLogged comes from server)
+      const projectHours = Number(p?.totalHoursLogged) || Number(p?.totalHours) || 0;
 
-      if (projectId && projectSdgMap[projectId] && hours > 0) {
-        const sdgs = projectSdgMap[projectId];
-        const hoursPerSdg = hours / sdgs.length;
-
-        sdgs.forEach((sdg: number) => {
+      if (sdgGoals.length > 0 && projectHours > 0) {
+        const hoursPerSdg = projectHours / sdgGoals.length;
+        sdgGoals.forEach((sdg: number) => {
           sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
           if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-          sdgProjects[sdg].add(projectId);
+          sdgProjects[sdg].add(p.id);
+        });
+      } else if (sdgGoals.length > 0) {
+        // Even if no hours, track projects per SDG
+        sdgGoals.forEach((sdg: number) => {
+          if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+          sdgProjects[sdg].add(p.id);
+          if (sdgHours[sdg] === undefined) sdgHours[sdg] = 0;
         });
       }
     });
 
-    // If no activities, use totalHoursLogged from enriched project data (real server-calculated hours)
-    if (Object.keys(sdgHours).length === 0) {
-      safeProjects.forEach((p: any) => {
-        const sdgGoals = filterValidSdgs(p?.sdgGoals || []);
-        // Use real hours from project data (totalHoursLogged comes from server)
-        const projectHours = Number(p?.totalHoursLogged) || Number(p?.totalHours) || 0;
+    // Fallback: If no project hours, try to calculate from activities
+    if (Object.keys(sdgHours).length === 0 || Object.values(sdgHours).every(h => h === 0)) {
+      safeActivities.forEach((activity: any) => {
+        const projectId = activity?.projectId;
+        const hours = Number(activity?.hours) || 0;
 
-        if (sdgGoals.length > 0 && projectHours > 0) {
-          const hoursPerSdg = projectHours / sdgGoals.length;
-          sdgGoals.forEach((sdg: number) => {
+        if (projectId && projectSdgMap[projectId] && hours > 0) {
+          const sdgs = projectSdgMap[projectId];
+          const hoursPerSdg = hours / sdgs.length;
+
+          sdgs.forEach((sdg: number) => {
             sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
             if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-            sdgProjects[sdg].add(p.id);
-          });
-        } else if (sdgGoals.length > 0) {
-          // Even if no hours, track projects per SDG (but don't inflate hours)
-          sdgGoals.forEach((sdg: number) => {
-            if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-            sdgProjects[sdg].add(p.id);
-            // Only initialize if not already present
-            if (sdgHours[sdg] === undefined) sdgHours[sdg] = 0;
+            sdgProjects[sdg].add(projectId);
           });
         }
       });

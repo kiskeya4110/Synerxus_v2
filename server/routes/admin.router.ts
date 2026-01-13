@@ -457,13 +457,15 @@ adminRouter.post("/generate-impact-report", async (req: Request, res: Response) 
 
       // Generate short, dynamic organization impact story
       if (storyType === "short" && reportType === "organization") {
+        const todayDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
         const shortSystemPrompt = `You are an expert at crafting brief, impactful stories for nonprofit organizations. Write a SHORT 2-3 sentence impact story that is:
 - Concise and punchy (max 50 words)
 - Uses ONLY the metrics provided (skip any that are 0)
 - Focuses on human impact and outcomes
 - Written for the specific organization (not Synerxus platform)
 - Dynamic - adapts to whatever metrics are available
-- No headers, bullet points, or formatting - just flowing prose`;
+- No headers, bullet points, or formatting - just flowing prose
+- IMPORTANT: Today's date is ${todayDate} - use current/recent timeframes, not outdated dates`;
 
         // Build dynamic metric context (only include non-zero values)
         const availableMetrics: string[] = [];
@@ -505,29 +507,46 @@ Write a short, compelling story that highlights the organization's real impact. 
       }
 
       // Full report generation (existing logic)
-      const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant.
+      const currentDate = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      const isVolunteerReport = reportType === "volunteer";
+
+      const systemPrompt = `You are an expert impact report writer for nonprofit organizations and volunteers. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant.
+
+TODAY'S DATE: ${currentDate}
+REPORT TYPE: ${isVolunteerReport ? "Individual Volunteer Impact Report" : "Organization Impact Report"}
 
 MANDATORY RULES - NON-NEGOTIABLE:
+- USE THE CURRENT DATE PROVIDED ABOVE - Never use outdated dates like "October 2023"
+- The report date MUST be ${currentDate}
 - EACH METRIC APPEARS EXACTLY ONCE - NO EXCEPTIONS
 - NEVER list the same metric multiple times
 - SUM all similar metrics into a single total (not separate line items)
-- Example: DO NOT say "Students Educated: 35" then "Students Educated: 35" again
-- Example DO: "Students Educated: 70" (if there were two instances of 35)
-- Treat ALL beneficiary-type metrics as ONE "Total People Impacted" figure
+- For volunteer reports: Focus on the individual's personal contribution and impact
 - Format as a professional, compelling narrative`;
 
-      const userPrompt = `Generate a professional Impact Report for ${organizationName || "the organization"} with ZERO metric duplication:
+      const reportSubject = isVolunteerReport
+        ? (projectTitle || "Volunteer's Impact Report")
+        : (organizationName || "the organization");
 
-ORGANIZATION: ${organizationName}
-PROJECT: ${projectTitle}
+      const userPrompt = `Generate a professional Impact Report for ${reportSubject} with ZERO metric duplication:
+
+REPORT DATE: ${currentDate} (USE THIS DATE - NOT ANY OTHER DATE)
+REPORT TYPE: ${isVolunteerReport ? "Individual Volunteer" : "Organization"}
+${isVolunteerReport ? `VOLUNTEER: ${projectTitle?.replace("'s Impact", "") || "Volunteer"}` : `ORGANIZATION: ${organizationName}`}
+PROJECT/TITLE: ${projectTitle}
 REPORTING PERIOD: ${reportingPeriod}
 LOCATIONS: ${locationsServed}
 
 MASTER METRICS (these are the ONLY numbers to reference, each once):
-- Volunteers: ${volunteerCount}
-- Hours: ${totalHours}
+${isVolunteerReport ? `- Hours Contributed: ${totalHours}` : `- Volunteers: ${volunteerCount}\n- Hours: ${totalHours}`}
 - Projects: ${projectCount}
 - Total People Impacted: ${beneficiaryTotal}
+${sdgsAddressed > 0 ? `- SDGs Addressed: ${sdgsAddressed}` : ""}
+${skills ? `- Skills Applied: ${skills}` : ""}
 
 IMPACT STORY (already deduplicated):
 ${cleanStories}
@@ -537,14 +556,17 @@ CSR/ESG: ${csrAlignment}
 Target: ${targetAudience} | Tone: ${tone} | Focus: ${impactFocus}
 
 REPORT FORMAT:
-1. Header (Organization, Date)
+1. Header (${isVolunteerReport ? "Volunteer Name" : "Organization"}, Date: ${currentDate})
 2. Executive Summary (use the master metrics ONCE each)
 3. Key Achievements (reference master metrics, no duplication)
 4. Impact Story (from deduplicated story above)
 5. CSR/ESG Alignment
 6. Next Steps
 
-CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY appear once in the entire report. If similar metrics exist, combine them into totals.`;
+CRITICAL REMINDERS:
+- Report Date MUST be: ${currentDate}
+- If you reference any metric, it must ONLY appear once in the entire report
+- For volunteer reports, celebrate personal contribution and growth`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",

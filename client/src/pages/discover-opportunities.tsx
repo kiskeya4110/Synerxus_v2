@@ -393,8 +393,8 @@ export default function DiscoverOpportunities() {
             </div>
           )}
 
-          {/* Top Matches */}
-          {topMatches.length > 0 && (
+          {/* Top Matches - Only show for volunteers */}
+          {isVolunteer && topMatches.length > 0 && (
             <div>
               <h2 className="text-slate-800 text-lg font-semibold mb-3 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
@@ -496,27 +496,41 @@ export default function DiscoverOpportunities() {
                       className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
                       onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                     >
-                      {/* Match Score Header */}
-                      <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
-                        <div className="flex items-center gap-3 text-white">
-                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <span className="text-base font-bold">{matchScore}%</span>
+                      {/* Match Score Header - Only for volunteers */}
+                      {isVolunteer ? (
+                        <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
+                          <div className="flex items-center gap-3 text-white">
+                            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                              <span className="text-base font-bold">{matchScore}%</span>
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold block">
+                                {matchScore >= 80 ? 'Excellent Match' :
+                                 matchScore >= 60 ? 'Good Match' :
+                                 matchScore >= 40 ? 'Fair Match' : 'Explore'}
+                              </span>
+                              <span className="text-xs text-white/80">Compatibility Score</span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-sm font-semibold block">
-                              {matchScore >= 80 ? 'Excellent Match' :
-                               matchScore >= 60 ? 'Good Match' :
-                               matchScore >= 40 ? 'Fair Match' : 'Explore'}
-                            </span>
-                            <span className="text-xs text-white/80">Compatibility Score</span>
+                          {hasApplied(opp.id) && (
+                            <Badge className="bg-white/20 text-white text-xs border-0 rounded-full px-3">
+                              Applied
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-gradient-to-r from-slate-600 to-slate-700 px-4 py-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-white">
+                            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                              <Briefcase className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold block">Volunteer Opportunity</span>
+                              <span className="text-xs text-white/80">View Details</span>
+                            </div>
                           </div>
                         </div>
-                        {hasApplied(opp.id) && (
-                          <Badge className="bg-white/20 text-white text-xs border-0 rounded-full px-3">
-                            Applied
-                          </Badge>
-                        )}
-                      </div>
+                      )}
 
                       <div className="p-4">
                         {/* Title & Organization */}
@@ -557,8 +571,8 @@ export default function DiscoverOpportunities() {
                           </div>
                         )}
 
-                        {/* Match Reasons */}
-                        {opp.matchReasons && opp.matchReasons.length > 0 && (
+                        {/* Match Reasons - Only show for volunteers */}
+                        {isVolunteer && opp.matchReasons && opp.matchReasons.length > 0 && (
                           <div className="bg-blue-50 rounded-xl p-3 mb-3">
                             <p className="text-blue-700 text-xs font-semibold mb-1 flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" />

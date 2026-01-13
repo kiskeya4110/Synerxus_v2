@@ -176,8 +176,8 @@ export default function OpportunityDetailPWA() {
         <Briefcase className="h-20 w-20 text-white opacity-20" />
       </div>
 
-      {/* Match Score Badge */}
-      {opportunity.matchScore && (
+      {/* Match Score Badge - Only show for volunteers */}
+      {isVolunteer && opportunity.matchScore && (
         <div className="px-4 -mt-8 relative z-10 mb-4">
           <div className="bg-white rounded-lg shadow-md px-4 py-3 inline-flex items-center gap-2 border border-emerald-100">
             <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
@@ -220,32 +220,57 @@ export default function OpportunityDetailPWA() {
                 )}
               </div>
 
-              {/* Right: Why Good Match */}
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 space-y-2 border border-emerald-100">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-emerald-500" />
-                  <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+              {/* Right: Match Analysis (volunteers) or Skills Required (organizations) */}
+              {isVolunteer ? (
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 space-y-2 border border-emerald-100">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                    <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+                  </div>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
+                      <p>
+                        Your profile skills in <span className="font-semibold text-emerald-700">{opportunity.requiredSkills[0]}</span> align with the core needs.
+                      </p>
+                    )}
+                    {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
+                      <p>
+                        You have expressed interest in <span className="font-semibold text-emerald-700">"{SDG_NAMES[opportunity.sdgGoals[0]] || "Impact"}"</span> and related areas.
+                      </p>
+                    )}
+                    <button
+                      onClick={() => setShowMatchAnalysis(true)}
+                      className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-xs mt-2 transition-colors"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      View AI Analysis →
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-2 text-xs text-slate-700">
-                  {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
-                    <p>
-                      Your profile skills in <span className="font-semibold text-emerald-700">{opportunity.requiredSkills[0]}</span> align with the core needs.
-                    </p>
-                  )}
-                  {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
-                    <p>
-                      You have expressed interest in <span className="font-semibold text-emerald-700">"{SDG_NAMES[opportunity.sdgGoals[0]] || "Impact"}"</span> and related areas.
-                    </p>
-                  )}
-                  <button
-                    onClick={() => setShowMatchAnalysis(true)}
-                    className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-xs mt-2 transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    View AI Analysis →
-                  </button>
+              ) : (
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-3 space-y-2 border border-slate-200">
+                  <div className="flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-slate-600" />
+                    <h3 className="font-semibold text-slate-900 text-sm">Skills Required</h3>
+                  </div>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {opportunity.requiredSkills.map((skill: string, idx: number) => (
+                          <span key={idx} className="bg-slate-200 px-2 py-0.5 rounded text-slate-700">{skill}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-500">No specific skills listed</p>
+                    )}
+                    {opportunity.experienceLevel && (
+                      <p className="text-slate-600 mt-1">
+                        Experience: <span className="font-medium">{opportunity.experienceLevel}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Expected Tasks */}
@@ -311,13 +336,15 @@ export default function OpportunityDetailPWA() {
       )}
       </div>
 
-      {/* AI Match Analysis Modal */}
-      <MatchAnalysisModal
-        isOpen={showMatchAnalysis}
-        onClose={() => setShowMatchAnalysis(false)}
-        opportunityId={opportunityId!}
-        projectName={opportunity.title}
-      />
+      {/* AI Match Analysis Modal - Only for volunteers */}
+      {isVolunteer && (
+        <MatchAnalysisModal
+          isOpen={showMatchAnalysis}
+          onClose={() => setShowMatchAnalysis(false)}
+          opportunityId={opportunityId!}
+          projectName={opportunity.title}
+        />
+      )}
 
       {/* Bottom Navigation - User Type Aware */}
       {renderNav()}

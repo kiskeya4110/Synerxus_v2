@@ -9,6 +9,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { calculateVolunteerAIU } from "../aiu-service";
+import { queueMiddleware } from "../request-queue";
 
 export const csrRouter = Router();
 
@@ -218,7 +219,7 @@ csrRouter.get("/csr/diagnostic", async (req: Request, res: Response) => {
  * Get CSR Dashboard Summary with engagement metrics, SDG progress, and challenges
  * Supports both corporate admin and employee users
  */
-csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
+csrRouter.get("/csr/dashboard", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
     const startDateStr = req.query.startDate as string;
@@ -1428,7 +1429,7 @@ csrRouter.get("/csr/notifications", async (req: Request, res: Response) => {
  * CSR Impact Reporting - Comprehensive KPI metrics
  * Returns engagement, impact, financial, SDG, and compliance metrics
  */
-csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
     if (!userId) return res.status(400).json({ error: "User ID required" });
@@ -1590,7 +1591,7 @@ csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
  * GET /csr/impact-reporting/export/csv
  * Export CSR Impact Report as CSV file
  */
-csrRouter.get("/csr/impact-reporting/export/csv", async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/csv", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
     if (!userId || isNaN(userId)) return res.status(400).json({ error: "Valid User ID required" });
@@ -1675,7 +1676,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", async (req: Request, res: Resp
  * GET /csr/impact-reporting/export/pdf
  * Export CSR Impact Report as PDF (HTML format for browser printing)
  */
-csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/pdf", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
     const reportTitle = (req.query.title as string) || "CSR Impact Report";
@@ -2273,7 +2274,7 @@ csrRouter.get("/csr/verified-outputs", async (req: Request, res: Response) => {
  * GET /employee-engagement/summary
  * Get Employee Engagement Summary for CSR Partner
  */
-csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/summary", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const { userId } = req.query;
     if (!userId) {

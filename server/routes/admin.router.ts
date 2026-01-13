@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { extractUserId } from "./utils";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "../email-digest-service";
 import OpenAI from "openai";
+import { queueMiddleware } from "../request-queue";
 
 export const adminRouter = Router();
 
@@ -417,7 +418,7 @@ function deduplicateMetrics(text: string): string {
  * Accepts project details, metrics, and preferences
  * Returns a formatted report ready for stakeholders
  */
-adminRouter.post("/generate-impact-report", async (req: Request, res: Response) => {
+adminRouter.post("/generate-impact-report", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const {
       projectTitle,
@@ -608,7 +609,7 @@ CRITICAL REMINDERS:
  * Send weekly digest email to authenticated user
  * Requires authentication
  */
-adminRouter.post("/email-digest/send", async (req: Request, res: Response) => {
+adminRouter.post("/email-digest/send", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = await extractUserId(req);
     if (!userId) {
@@ -638,7 +639,7 @@ adminRouter.post("/email-digest/send", async (req: Request, res: Response) => {
  * Send weekly digests to all users
  * Only organization managers can use this endpoint
  */
-adminRouter.post("/email-digest/send-all", async (req: Request, res: Response) => {
+adminRouter.post("/email-digest/send-all", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = await extractUserId(req);
     if (!userId) {
@@ -666,7 +667,7 @@ adminRouter.post("/email-digest/send-all", async (req: Request, res: Response) =
  * Send weekly digest to an organization
  * Users can only send digests for their own organization
  */
-adminRouter.post("/email-digest/organization/:organizationId", async (req: Request, res: Response) => {
+adminRouter.post("/email-digest/organization/:organizationId", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = await extractUserId(req);
     if (!userId) {
@@ -1073,7 +1074,7 @@ adminRouter.post("/admin/link-volunteer-employer", async (req: Request, res: Res
  *   - userId: User ID to backfill (optional - if not provided, backfills all)
  *   - partnerId: Only backfill for this employer (optional)
  */
-adminRouter.post("/admin/backfill-employer-engagement", async (req: Request, res: Response) => {
+adminRouter.post("/admin/backfill-employer-engagement", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const { userId, partnerId } = req.body;
 

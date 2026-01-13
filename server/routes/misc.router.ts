@@ -7,6 +7,7 @@ import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { sendInvitationEmail } from "../email-digest-service";
 import { notifyNewAssignment } from "../notification-service";
+import { queueMiddleware } from "../request-queue";
 
 export const miscRouter = Router();
 
@@ -256,7 +257,7 @@ miscRouter.get("/sdgs", (req, res) => {
  * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
  * GET /tasks/:taskId/recommended-volunteers
  */
-miscRouter.get("/tasks/:taskId/recommended-volunteers", async (req, res) => {
+miscRouter.get("/tasks/:taskId/recommended-volunteers", queueMiddleware('heavy'), async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     const limit = parseInt(req.query.limit as string || "10");
@@ -348,7 +349,7 @@ miscRouter.get("/tasks/:taskId/recommended-volunteers", async (req, res) => {
  * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
  * GET /projects/:projectId/recommended-volunteers
  */
-miscRouter.get("/projects/:projectId/recommended-volunteers", async (req, res) => {
+miscRouter.get("/projects/:projectId/recommended-volunteers", queueMiddleware('heavy'), async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const limit = parseInt(req.query.limit as string || "10");
@@ -700,7 +701,7 @@ miscRouter.post("/notifications/:id/read", async (req, res) => {
  * Simulate volunteer matching using Python AI backend
  * POST /volunteers/:id/simulate-match
  */
-miscRouter.post("/volunteers/:id/simulate-match", async (req, res) => {
+miscRouter.post("/volunteers/:id/simulate-match", queueMiddleware('heavy'), async (req, res) => {
   try {
     const { id } = req.params;
     const topN = req.query.top_n || 3;

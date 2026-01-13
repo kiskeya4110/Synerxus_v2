@@ -123,7 +123,8 @@
       "Bash(node --check:*)",
       "Bash(node scripts/generate-favicons.cjs:*)",
       "Bash(npx vite build:*)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(PORT=3000 npm run dev:*)"
     ],
     "deny": [],
     "ask": []

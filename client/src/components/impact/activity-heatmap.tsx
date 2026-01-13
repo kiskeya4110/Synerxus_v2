@@ -6,6 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Calendar, TrendingUp, Clock, Activity } from "lucide-react";
 
 interface ActivityData {
   date: string; // ISO date string (YYYY-MM-DD)
@@ -19,6 +21,8 @@ interface ActivityHeatmapProps {
   showTooltip?: boolean;
   period?: "3m" | "6m" | "1y";
   title?: string;
+  showPeriodSelector?: boolean;
+  showMonthlyBreakdown?: boolean;
 }
 
 // Default green color scale (GitHub-style)
@@ -45,9 +49,12 @@ export function ActivityHeatmap({
   activities,
   colorScale = DEFAULT_COLORS,
   showTooltip = true,
-  period = "1y",
+  period: initialPeriod = "1y",
   title = "Activity",
+  showPeriodSelector = true,
+  showMonthlyBreakdown = true,
 }: ActivityHeatmapProps) {
+  const [period, setPeriod] = useState<"3m" | "6m" | "1y">(initialPeriod);
   const [hoveredCell, setHoveredCell] = useState<{
     date: string;
     hours: number;
@@ -166,19 +173,120 @@ export function ActivityHeatmap({
     return { totalHours, totalActivities, activeDays };
   }, [activityMap]);
 
+  // Calculate monthly breakdown
+  const monthlyBreakdown = useMemo(() => {
+    const breakdown: { month: string; year: number; hours: number; activities: number; days: number }[] = [];
+    const monthMap = new Map<string, { hours: number; activities: number; days: number }>();
+
+    gridData.forEach((cell) => {
+      if (cell.hours > 0 || cell.count > 0) {
+        const monthKey = `${cell.date.getFullYear()}-${cell.date.getMonth()}`;
+        const existing = monthMap.get(monthKey);
+        if (existing) {
+          existing.hours += cell.hours;
+          existing.activities += cell.count;
+          existing.days += 1;
+        } else {
+          monthMap.set(monthKey, {
+            hours: cell.hours,
+            activities: cell.count,
+            days: 1,
+          });
+        }
+      }
+    });
+
+    monthMap.forEach((data, key) => {
+      const [year, month] = key.split("-").map(Number);
+      breakdown.push({
+        month: MONTHS[month],
+        year,
+        ...data,
+      });
+    });
+
+    // Sort by date (newest first)
+    return breakdown.sort((a, b) => {
+      const aIdx = MONTHS.indexOf(a.month) + a.year * 12;
+      const bIdx = MONTHS.indexOf(b.month) + b.year * 12;
+      return bIdx - aIdx;
+    }).slice(0, 6); // Show last 6 months max
+  }, [gridData]);
+
+  // Calculate streaks
+  const streaks = useMemo(() => {
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    const sortedDates = [...gridData].sort((a, b) =>
+      new Date(b.dateStr).getTime() - new Date(a.dateStr).getTime()
+    );
+
+    // Calculate current streak (from today backwards)
+    for (const cell of sortedDates) {
+      if (cell.hours > 0) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    // Calculate longest streak
+    gridData.forEach((cell) => {
+      if (cell.hours > 0) {
+        tempStreak++;
+        if (tempStreak > longestStreak) longestStreak = tempStreak;
+      } else {
+        tempStreak = 0;
+      }
+    });
+
+    return { currentStreak, longestStreak };
+  }, [gridData]);
+
   const cellSize = 12;
   const cellGap = 3;
   const dayLabelWidth = 30;
 
   return (
     <div className="w-full">
-      {/* Header with title and stats */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{title}</h3>
-        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-          <span>{totals.totalHours.toFixed(1)} hours</span>
-          <span>{totals.totalActivities} activities</span>
-          <span>{totals.activeDays} active days</span>
+      {/* Header with title, period selector, and stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Activity className="h-5 w-5 text-green-600" />
+            {title}
+          </h3>
+          {showPeriodSelector && (
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+              {(["3m", "6m", "1y"] as const).map((p) => (
+                <Button
+                  key={p}
+                  variant={period === p ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setPeriod(p)}
+                  className="h-6 px-2 text-xs"
+                >
+                  {p === "3m" ? "3 Mo" : p === "6m" ? "6 Mo" : "1 Year"}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <span className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+            <Clock className="h-3 w-3" />
+            {totals.totalHours.toFixed(1)}h logged
+          </span>
+          <span className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
+            <Calendar className="h-3 w-3" />
+            {totals.activeDays} active days
+          </span>
+          <span className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
+            <TrendingUp className="h-3 w-3" />
+            {streaks.currentStreak} day streak
+          </span>
         </div>
       </div>
 
@@ -285,6 +393,56 @@ export function ActivityHeatmap({
           </div>
         </div>
       </div>
+
+      {/* Monthly Breakdown */}
+      {showMonthlyBreakdown && monthlyBreakdown.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Monthly Breakdown
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            {monthlyBreakdown.map((m, i) => (
+              <div
+                key={`${m.month}-${m.year}`}
+                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 text-center border border-gray-200 dark:border-gray-700"
+              >
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {m.month} {m.year !== new Date().getFullYear() && m.year}
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white mt-0.5">
+                  {m.hours.toFixed(1)}h
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {m.activities} {m.activities === 1 ? "activity" : "activities"}
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400">
+                  {m.days} {m.days === 1 ? "day" : "days"} active
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Streak and Stats Summary */}
+      {totals.activeDays > 0 && (
+        <div className="mt-4 flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+            <span className="font-medium">Best streak:</span>
+            <span className="text-purple-600 dark:text-purple-400 font-bold">{streaks.longestStreak} days</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+            <span className="font-medium">Avg per active day:</span>
+            <span className="text-blue-600 dark:text-blue-400 font-bold">
+              {(totals.totalHours / totals.activeDays).toFixed(1)}h
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+            <span className="font-medium">Total activities:</span>
+            <span className="text-green-600 dark:text-green-400 font-bold">{totals.totalActivities}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1266,7 +1266,7 @@ export default function ImpactReport() {
                           hours: a.hours || 0,
                           count: 1,
                         }))}
-                        period={timeFilter === "year" ? "1y" : timeFilter === "quarter" ? "3m" : timeFilter === "month" ? "3m" : "1y"}
+                        period={timeFilter === "year" ? "1y" : timeFilter === "quarter" ? "6m" : timeFilter === "month" ? "3m" : "1y"}
                         title="Contribution Activity"
                         showTooltip={true}
                       />
@@ -2125,6 +2125,70 @@ export default function ImpactReport() {
                   </div>
                 </div>
 
+                {/* Impact Score Gauge */}
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                      <ImpactScoreGauge
+                        score={filteredImpactScore}
+                        size="sm"
+                        showBreakdown={true}
+                        breakdown={[
+                          { label: "Hours", value: Math.min((filteredTotalHours / 500) * 100, 100), weight: 35, color: "#3b82f6" },
+                          { label: "People Impacted", value: Math.min(((dashboardData?.totalPeopleImpacted || 0) / 100) * 100, 100), weight: 30, color: "#10b981" },
+                          { label: "Tasks Completed", value: tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0, weight: 20, color: "#f59e0b" },
+                          { label: "SDG Alignment", value: Math.min((sdgs.length / 5) * 100, 100), weight: 10, color: "#8b5cf6" },
+                          { label: "Skill Match", value: Math.min((allSkills.length / 10) * 100, 100), weight: 5, color: "#ec4899" },
+                        ]}
+                        variant="volunteer"
+                        title="Impact Score"
+                      />
+                      <div className="flex-1 space-y-3">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Impact Score Summary
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Your impact score of <span className="font-bold text-blue-600">{filteredImpactScore}</span> reflects your overall volunteer contribution based on hours logged, tasks completed, project engagement, and skills applied.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded">
+                            <span className="text-gray-600 dark:text-gray-400">Hours:</span>
+                            <span className="ml-1 font-bold text-blue-600">{Math.round(filteredTotalHours)}h</span>
+                          </div>
+                          <div className="bg-green-50 dark:bg-green-900/30 p-2 rounded">
+                            <span className="text-gray-600 dark:text-gray-400">Tasks:</span>
+                            <span className="ml-1 font-bold text-green-600">{filteredTasksCompleted}/{tasks.length}</span>
+                          </div>
+                          <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded">
+                            <span className="text-gray-600 dark:text-gray-400">Projects:</span>
+                            <span className="ml-1 font-bold text-purple-600">{filteredActiveProjects}</span>
+                          </div>
+                          <div className="bg-orange-50 dark:bg-orange-900/30 p-2 rounded">
+                            <span className="text-gray-600 dark:text-gray-400">Skills:</span>
+                            <span className="ml-1 font-bold text-orange-600">{allSkills.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* AI-Generated Impact Narrative */}
+                <AINarrativeSection
+                  context={{
+                    totalHours: filteredTotalHours,
+                    peopleImpacted: dashboardData?.totalPeopleImpacted || 0,
+                    sdgs: sdgs,
+                    projects: filteredActiveProjects,
+                    reportType: "volunteer",
+                    volunteerName: currentUser?.displayName || currentUser?.username,
+                    period: timeFilter === "all" ? "All Time" : timeFilter === "year" ? "This Year" : timeFilter === "quarter" ? "This Quarter" : "This Month",
+                    skills: allSkills.slice(0, 5),
+                  }}
+                  title="Your Impact Story"
+                  showActions={true}
+                />
+
                 {/* Charts Grid - from Overview Tab */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Monthly Hours Trend */}
@@ -2211,6 +2275,37 @@ export default function ImpactReport() {
                   <Users className="h-6 w-6 text-green-600" />
                   Engagement
                 </h2>
+
+                {/* Activity Heatmap - GitHub Style */}
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <ActivityHeatmap
+                      activities={filteredActivities.map((a: any) => ({
+                        date: a.date,
+                        hours: a.hours || 0,
+                        count: 1,
+                      }))}
+                      period={timeFilter === "year" ? "1y" : timeFilter === "quarter" ? "6m" : timeFilter === "month" ? "3m" : "1y"}
+                      title="Contribution Activity"
+                      showTooltip={true}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Skills Portfolio */}
+                <SkillsPortfolio
+                  skills={allSkills.map((skill: string, index: number) => ({
+                    name: skill,
+                    hours: getHoursPerSkill(skill, index, allSkills.length),
+                    projects: getProjectsPerSkill(skill),
+                    isNew: index >= allSkills.length - 2 && allSkills.length > 2,
+                  }))}
+                  maxSkills={8}
+                  title="Skills Applied"
+                  showValue={true}
+                  hourlyRate={25}
+                />
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Skills Assessment */}
                   <Card className="border border-gray-200 dark:border-gray-700">

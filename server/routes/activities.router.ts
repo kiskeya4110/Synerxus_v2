@@ -449,6 +449,97 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
       }
     }
 
+    // **CSR Integration for Auto-Approved Activities**
+    // When admin logs and auto-approves, create verified_outputs and update employee engagement
+    if (autoApprove && targetUserId && activity.hours) {
+      try {
+        const volunteerProfile = await storage.getVolunteerProfileByUserId(targetUserId);
+        const volunteer = await storage.getUser(targetUserId);
+
+        // Find all employer IDs linked to this volunteer
+        const linkedEmployerIds = new Set<number>();
+
+        // Method 1: Direct link via volunteerProfile.employerId
+        if (volunteerProfile?.employerId) {
+          const employerIdNum = typeof volunteerProfile.employerId === 'string'
+            ? parseInt(volunteerProfile.employerId)
+            : volunteerProfile.employerId;
+          if (!isNaN(employerIdNum)) {
+            linkedEmployerIds.add(employerIdNum);
+          }
+        }
+
+        // Method 2: Explicit link via volunteerEmployerLinks table
+        if (volunteerProfile?.id) {
+          const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+          const volunteerLinks = employerLinks.filter((link: any) =>
+            link.volunteerId === volunteerProfile.id &&
+            link.verificationStatus !== 'rejected'
+          );
+          volunteerLinks.forEach((link: any) => {
+            if (link.partnerId) {
+              const partnerIdNum = Number(link.partnerId);
+              if (!isNaN(partnerIdNum)) {
+                linkedEmployerIds.add(partnerIdNum);
+              }
+            }
+          });
+        }
+
+        // Update employee engagement and create verified outputs for all linked employers
+        if (linkedEmployerIds.size > 0 && volunteer?.email) {
+          const allEngagements = (await storage.listEmployeeEngagement()) || [];
+
+          for (const employerIdNum of Array.from(linkedEmployerIds)) {
+            const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
+              e?.partnerId === employerIdNum &&
+              e?.employeeEmail === volunteer.email
+            );
+
+            if (existing) {
+              await storage.updateEmployeeEngagement(existing.id, {
+                hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
+                projectId: activity.projectId
+              });
+            } else {
+              await storage.createEmployeeEngagement({
+                partnerId: employerIdNum,
+                employeeEmail: volunteer.email,
+                employeeName: volunteerProfile?.volunteerName || volunteer.displayName,
+                projectId: activity.projectId,
+                hoursVolunteered: activity.hours,
+                engagementType: 'vto'
+              });
+            }
+
+            // Create verified output for audit trail
+            await storage.createVerifiedOutput({
+              activityId: activity.id,
+              partnerId: employerIdNum,
+              projectId: activity.projectId || 0,
+              outputType: 'hours',
+              outputValue: activity.hours,
+              verificationStatus: 'verified',
+              verifiedBy: user.id,
+              verifiedAt: new Date(),
+              auditTrail: {
+                action: 'hours_admin_approved',
+                description: `Admin-logged hours approved: ${activity.hours}h for ${volunteer.displayName || volunteer.email}`,
+                timestamp: new Date().toISOString(),
+                reviewerId: user.id,
+                loggedByType: 'admin'
+              }
+            });
+
+            console.log(`[CSR] Admin-logged activity: Updated employee engagement for ${volunteer.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
+          }
+        }
+      } catch (csrErr) {
+        console.error("Error updating CSR integration for admin-logged activity:", csrErr);
+        // Non-critical, don't fail the creation
+      }
+    }
+
     broadcastUpdate("volunteer_activity_created", activity);
     res.status(201).json({
       ...activity,

@@ -418,8 +418,11 @@ const VolunteerSpotlightSection = () => {
     }
   }, [spotlight]);
 
-  // Format impact message from stats
-  const getImpactMessage = (stats: any) => {
+  const current = displayData || spotlight;
+  const isOrganization = current?.type === 'organization';
+
+  // Format impact message from stats (for volunteers)
+  const getVolunteerImpactMessage = (stats: any) => {
     if (!stats) return "Making a difference every day!";
     const hours = stats.thisWeekHours || 0;
     const impacts = stats.thisWeekImpacts || 0;
@@ -433,30 +436,59 @@ const VolunteerSpotlightSection = () => {
     return "Dedicated to making a positive impact";
   };
 
-  // Get skills display
-  const getSkillsBadges = (profile: any) => {
-    const skills = profile?.skills || [];
-    return skills.slice(0, 3);
+  // Format impact message for organizations
+  const getOrganizationImpactMessage = (stats: any, profile: any) => {
+    const projects = stats?.projectCount || 0;
+    const sdgs = stats?.sdgCount || 0;
+    if (projects > 0 && sdgs > 0) {
+      return `${projects} active project${projects > 1 ? 's' : ''} aligned with ${sdgs} UN Sustainable Development Goal${sdgs > 1 ? 's' : ''}`;
+    } else if (projects > 0) {
+      return `${projects} active project${projects > 1 ? 's' : ''} creating community impact`;
+    } else if (sdgs > 0) {
+      return `Focused on ${sdgs} UN Sustainable Development Goal${sdgs > 1 ? 's' : ''}`;
+    }
+    return "Creating sustainable community impact";
   };
 
-  const current = displayData || spotlight;
+  // Get skills/needs display
+  const getBadges = (profile: any, isOrg: boolean) => {
+    if (isOrg) {
+      return (profile?.volunteerNeeds || profile?.focusAreas || []).slice(0, 3);
+    }
+    return (profile?.skills || []).slice(0, 3);
+  };
+
+  // SDG names for display
+  const sdgNames: { [key: number]: string } = {
+    1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
+    5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
+    9: "Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
+    12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
+    15: "Life on Land", 16: "Peace & Justice", 17: "Partnerships"
+  };
 
   return (
-    <section className="bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50 py-12 sm:py-16 md:py-20 border-y border-slate-200">
+    <section className={`py-12 sm:py-16 md:py-20 border-y border-slate-200 ${isOrganization
+      ? 'bg-gradient-to-br from-emerald-50 via-slate-50 to-teal-50'
+      : 'bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50'
+    }`}>
       <div className="container mx-auto px-[8%] sm:px-[15%]">
         <div className="max-w-4xl mx-auto">
-          {/* Section Title */}
+          {/* Section Title - changes based on type */}
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
-              ⭐ Volunteer Spotlight
+              {isOrganization ? '🏢 Organization Spotlight' : '⭐ Volunteer Spotlight'}
             </h2>
             <p className="text-sm sm:text-base text-slate-600 font-medium">
-              Celebrating the impact of volunteers like you
+              {isOrganization
+                ? 'Highlighting organizations making a difference'
+                : 'Celebrating the impact of volunteers like you'
+              }
             </p>
           </div>
 
           {/* Spotlight Card */}
-          <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99]' : 'opacity-100 scale-100'}`}>
+          <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border ${isOrganization ? 'border-emerald-200' : 'border-slate-200'} hover:shadow-xl transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99]' : 'opacity-100 scale-100'}`}>
             {isLoading && !current ? (
               <div className="p-6 sm:p-8 space-y-4">
                 <Skeleton className="h-8 w-3/4" />
@@ -465,30 +497,46 @@ const VolunteerSpotlightSection = () => {
               </div>
             ) : current ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-                {/* Spotlight Photo */}
-                <div className="md:col-span-1 bg-gradient-to-br from-blue-900/10 to-amber-600/10 flex items-center justify-center min-h-64 md:min-h-auto relative overflow-hidden">
+                {/* Spotlight Photo/Logo */}
+                <div className={`md:col-span-1 flex items-center justify-center min-h-64 md:min-h-auto relative overflow-hidden ${isOrganization
+                  ? 'bg-gradient-to-br from-emerald-900/10 to-teal-600/10'
+                  : 'bg-gradient-to-br from-blue-900/10 to-amber-600/10'
+                }`}>
                   {current.user?.avatar ? (
                     <img
                       src={current.user.avatar}
                       alt={current.user.displayName}
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover ${isOrganization ? 'p-8 object-contain' : ''}`}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center space-y-3 p-6">
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-900 to-amber-600 flex items-center justify-center shadow-lg">
+                      <div className={`w-24 h-24 ${isOrganization ? 'rounded-xl' : 'rounded-full'} flex items-center justify-center shadow-lg ${isOrganization
+                        ? 'bg-gradient-to-br from-emerald-600 to-teal-700'
+                        : 'bg-gradient-to-br from-blue-900 to-amber-600'
+                      }`}>
                         <span className="text-white text-4xl font-bold">
-                          {current.user?.displayName?.charAt(0).toUpperCase() || '✨'}
+                          {current.user?.displayName?.charAt(0).toUpperCase() || (isOrganization ? '🏢' : '✨')}
                         </span>
                       </div>
                       <p className="text-slate-700 font-semibold text-center text-lg">
-                        {current.user?.displayName || 'Volunteer Hero'}
+                        {current.user?.displayName || (isOrganization ? 'Featured Organization' : 'Volunteer Hero')}
                       </p>
-                      {/* Skills badges */}
-                      {getSkillsBadges(current.profile).length > 0 && (
+                      {/* Type indicator */}
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isOrganization
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {isOrganization ? (current.profile?.organizationType || 'Organization') : 'Volunteer'}
+                      </span>
+                      {/* Skills/Needs badges */}
+                      {getBadges(current.profile, isOrganization).length > 0 && (
                         <div className="flex flex-wrap gap-1 justify-center mt-2">
-                          {getSkillsBadges(current.profile).map((skill: string, idx: number) => (
-                            <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                              {skill}
+                          {getBadges(current.profile, isOrganization).map((item: string, idx: number) => (
+                            <span key={idx} className={`text-xs px-2 py-0.5 rounded-full ${isOrganization
+                              ? 'bg-teal-100 text-teal-800'
+                              : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {item}
                             </span>
                           ))}
                         </div>
@@ -501,29 +549,72 @@ const VolunteerSpotlightSection = () => {
                 <div className="md:col-span-2 p-6 sm:p-8 flex flex-col justify-between">
                   <div className="space-y-4 sm:space-y-6">
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                          {current.user?.displayName || 'Featured Volunteer'}
+                          {current.user?.displayName || (isOrganization ? 'Featured Organization' : 'Featured Volunteer')}
                         </h3>
-                        <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
-                          This Week's Star
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isOrganization
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {isOrganization ? 'Featured Partner' : "This Week's Star"}
                         </span>
                       </div>
+
+                      {/* Organization-specific info */}
+                      {isOrganization && current.profile?.location && (
+                        <p className="text-sm text-slate-500 mb-2">📍 {current.profile.location}</p>
+                      )}
+
+                      {/* Story/Mission */}
                       <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
-                        {current.story || "Dedicated to making a positive impact in their community through volunteering."}
+                        {current.story || (isOrganization
+                          ? "Dedicated to creating positive change in communities through sustainable programs."
+                          : "Dedicated to making a positive impact in their community through volunteering."
+                        )}
                       </p>
                     </div>
 
-                    {/* Impact Stats */}
-                    <div className="bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg p-4 border border-blue-200">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">This Week's Impact</p>
-                      <p className="text-base sm:text-lg font-bold text-blue-900">
-                        {getImpactMessage(current.stats)}
+                    {/* Impact Stats - Different for volunteers vs organizations */}
+                    <div className={`rounded-lg p-4 border ${isOrganization
+                      ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
+                      : 'bg-gradient-to-r from-blue-50 to-amber-50 border-blue-200'
+                    }`}>
+                      <p className={`text-sm font-semibold mb-1 ${isOrganization ? 'text-emerald-900' : 'text-blue-900'}`}>
+                        {isOrganization ? 'Organization Impact' : "This Week's Impact"}
+                      </p>
+                      <p className={`text-base sm:text-lg font-bold ${isOrganization ? 'text-emerald-900' : 'text-blue-900'}`}>
+                        {isOrganization
+                          ? getOrganizationImpactMessage(current.stats, current.profile)
+                          : getVolunteerImpactMessage(current.stats)
+                        }
                       </p>
                     </div>
 
-                    {/* Interests */}
-                    {current.profile?.interests && current.profile.interests.length > 0 && (
+                    {/* Organization: SDGs and Focus Areas */}
+                    {isOrganization && current.profile?.primarySdgs && current.profile.primarySdgs.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-slate-500 font-medium">SDG Focus:</span>
+                        {current.profile.primarySdgs.slice(0, 4).map((sdg: number, idx: number) => (
+                          <span key={idx} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                            SDG {sdg}: {sdgNames[sdg] || 'Goal'}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Organization: Target Beneficiaries */}
+                    {isOrganization && current.profile?.targetBeneficiaries && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-slate-500 font-medium">Serving:</span>
+                        <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                          {current.profile.targetBeneficiaries}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Volunteer: Interests */}
+                    {!isOrganization && current.profile?.interests && current.profile.interests.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         <span className="text-xs text-slate-500 font-medium">Interests:</span>
                         {current.profile.interests.slice(0, 4).map((interest: string, idx: number) => (
@@ -533,13 +624,28 @@ const VolunteerSpotlightSection = () => {
                         ))}
                       </div>
                     )}
+
+                    {/* Volunteer: Location and Experience */}
+                    {!isOrganization && (current.profile?.location || current.profile?.yearsOfExperience) && (
+                      <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                        {current.profile?.location && (
+                          <span>📍 {current.profile.location}</span>
+                        )}
+                        {current.profile?.yearsOfExperience && (
+                          <span>🎯 {current.profile.yearsOfExperience}+ years experience</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* CTA Button */}
+                  {/* CTA Button - Different for org vs volunteer */}
                   <div className="mt-6 pt-4 border-t border-slate-200">
-                    <Link href="/login" className="block">
-                      <Button className="w-full bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-base rounded-lg" data-testid="button-volunteer-spotlight-cta">
-                        Start Your Volunteer Journey
+                    <Link href={isOrganization ? "/organizations" : "/login"} className="block">
+                      <Button className={`w-full font-semibold text-sm sm:text-base rounded-lg ${isOrganization
+                        ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                        : 'bg-blue-900 hover:bg-blue-950 text-white'
+                      }`} data-testid="button-spotlight-cta">
+                        {isOrganization ? 'Explore Organizations' : 'Start Your Volunteer Journey'}
                       </Button>
                     </Link>
                   </div>
@@ -548,7 +654,7 @@ const VolunteerSpotlightSection = () => {
             ) : (
               <div className="p-8 text-center">
                 <p className="text-slate-600 text-base">
-                  Be the next volunteer spotlight! Join our community and make an impact.
+                  Be the next spotlight! Join our community and make an impact.
                 </p>
                 <Link href="/login" className="block mt-6">
                   <Button className="mx-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold">

@@ -267,22 +267,6 @@ export default function OrganizationPWAHeader({
         }}
       >
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Organization Logo */}
-          {organizationLogo && (
-            <div
-              className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-blue-200/50 shadow-sm cursor-pointer"
-              onClick={() => navigate('/organization-dashboard/pwa')}
-            >
-              <img
-                src={organizationLogo}
-                alt={organizationName || 'Organization'}
-                className="w-[80%] h-[80%] object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
-          )}
           {/* Synerxus Logo */}
           <img
             src={logoUrl}

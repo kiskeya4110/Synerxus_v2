@@ -248,37 +248,12 @@ export default function CSRPWAHeader({
               )}
             </button>
 
-            {/* Company Logo & Menu */}
+            {/* Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
               className="flex items-center gap-2 flex-shrink-0 touch-manipulation active:opacity-70"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              {companyLogo ? (
-                <img
-                  src={companyLogo}
-                  alt={companyName}
-                  className="h-8 w-8 rounded-lg object-contain bg-white shadow-sm border border-emerald-100 flex-shrink-0 p-0.5"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                  }}
-                />
-              ) : userAvatar ? (
-                <img
-                  src={userAvatar}
-                  alt={companyName}
-                  className="h-8 w-8 rounded-lg object-cover bg-white shadow-sm border border-emerald-100 flex-shrink-0"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                  }}
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                  <span className="text-white text-sm font-bold">{companyName.charAt(0)}</span>
-                </div>
-              )}
               <Menu className="w-5 h-5 text-emerald-700" />
             </button>
           </div>

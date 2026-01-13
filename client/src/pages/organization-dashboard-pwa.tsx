@@ -850,7 +850,7 @@ export default function OrganizationDashboardPWA() {
                     <img
                       src={organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo}
                       alt={organizationProfile?.commonName || organization?.name || 'Organization'}
-                      className="w-12 h-12 object-cover absolute rounded-lg"
+                      className="w-[80%] h-[80%] object-contain absolute"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

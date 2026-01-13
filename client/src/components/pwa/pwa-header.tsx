@@ -251,11 +251,20 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
   const userInitial = (currentUser?.displayName || currentUser?.username || 'U').charAt(0).toUpperCase();
 
+  // Determine active menu item from current URL
+  const currentPath = window.location.pathname + window.location.search;
+  const getIsActive = (path: string) => {
+    if (path === '/volunteer-dashboard?tab=dashboard') {
+      return currentPath === '/volunteer-dashboard?tab=dashboard' || currentPath === '/volunteer-dashboard';
+    }
+    return currentPath.includes(path);
+  };
+
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/volunteer-dashboard" },
+    { icon: Home, label: "Dashboard", path: "/volunteer-dashboard?tab=dashboard" },
     { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects" },
     { icon: Sparkles, label: "Discover", path: "/discover-opportunities/pwa" },
-    { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, highlight: true },
+    { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, isLogActivity: true },
     { icon: BarChart3, label: "My Impact", path: "/impact-report" },
     { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
     { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
@@ -380,6 +389,9 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             <div className="flex-1 overflow-y-auto py-1.5">
               {menuItems.map((item, index) => {
                 const isAdminItem = (item as any).isAdmin;
+                const isLogActivity = (item as any).isLogActivity;
+                // Check if this menu item is active (highlight the current page)
+                const isActive = item.path ? getIsActive(item.path) : (isLogActivity && currentPath.includes('log-activity'));
                 return (
                   <button
                     key={index}
@@ -394,8 +406,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                     className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left ${
                       isAdminItem
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-                        : item.highlight
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                        : isActive
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                         : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                     data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -403,15 +415,15 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       isAdminItem
                         ? 'bg-purple-100 dark:bg-purple-900/40'
-                        : item.highlight
-                        ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                        : isActive
+                        ? 'bg-blue-100 dark:bg-blue-900/40'
                         : 'bg-slate-100 dark:bg-slate-800'
                     }`}>
                       <item.icon className={`w-4 h-4 ${
                         isAdminItem
                           ? 'text-purple-600 dark:text-purple-400'
-                          : item.highlight
-                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : isActive
+                          ? 'text-blue-600 dark:text-blue-400'
                           : 'text-slate-600 dark:text-slate-400'
                       }`} />
                     </div>
@@ -419,8 +431,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                     <ChevronRight className={`w-4 h-4 ${
                       isAdminItem
                         ? 'text-purple-400'
-                        : item.highlight
-                        ? 'text-emerald-400'
+                        : isActive
+                        ? 'text-blue-400'
                         : 'text-slate-400 dark:text-slate-500'
                     }`} />
                   </button>

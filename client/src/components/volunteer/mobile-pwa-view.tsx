@@ -97,7 +97,7 @@ function formatNumber(value: number | string | undefined | null): string {
 }
 
 export default function MobilePWAView({ userId, user, dashboardData, initialActiveTab }: MobilePWAViewProps) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { signOut } = useAuth();
@@ -133,6 +133,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Sync activeTab with URL changes (for menu navigation)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get('tab');
+    if (tab && ['dashboard', 'projects', 'log-activity', 'potential', 'impacts', 'stories', 'more', 'profile', 'messages'].includes(tab)) {
+      setActiveTab(tab as TabType);
+    }
+  }, [location]); // Re-run when location changes
 
   // Handle logout using proper auth signOut
   const handleLogout = async () => {
@@ -3326,7 +3335,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             {/* Profile Header */}
             <div className="text-center py-4">
               <Avatar className="w-20 h-20 mx-auto border-4 border-amber-400">
-                <AvatarImage src={user?.profilePicture} />
+                <AvatarImage src={volunteerProfile?.profilePhotoUrl || user?.avatar} />
                 <AvatarFallback className="bg-[#16213e] text-white text-2xl">
                   {(volunteerProfile?.volunteer_name || user?.displayName || 'V').charAt(0)}
                 </AvatarFallback>

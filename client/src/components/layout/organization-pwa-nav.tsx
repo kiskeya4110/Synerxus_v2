@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Home, FolderOpen, Users, Target, MoreHorizontal, X, Shield, MessageCircle, Settings, BarChart3 } from "lucide-react";
+import { Home, FolderOpen, Users, Target, MoreHorizontal, X, Shield, MessageCircle, Settings, BarChart3, ClipboardList } from "lucide-react";
 
 interface OrganizationPWANavProps {
   activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard' | 'more';
@@ -46,6 +46,7 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   ];
 
   const moreMenuItems = [
+    { icon: ClipboardList, label: 'Log Hours', path: '/log-volunteer-hours' },
     { icon: BarChart3, label: 'Impact Reports', path: '/organization-impact-report' },
     { icon: MessageCircle, label: 'Messages', path: '/organization-messages/pwa' },
     { icon: Settings, label: 'Settings', path: '/organization-profile-settings' },

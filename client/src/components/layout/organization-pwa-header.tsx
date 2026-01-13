@@ -5,7 +5,7 @@ import {
   FolderOpen, Users, Target, BarChart3,
   MessageSquare, Home, Bell, Trophy, X,
   TrendingUp, Award, Lightbulb, Flame, Settings,
-  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, Shield, UserPlus
+  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, Shield, UserPlus, ClipboardList
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -230,6 +230,7 @@ export default function OrganizationPWAHeader({
     {
       title: "TEAM & ENGAGEMENT",
       items: [
+        { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours'), hot: true },
         { icon: Users, label: "Volunteers", desc: "Your team members", action: () => navigate('/volunteers') },
         { icon: UserPlus, label: "Team Management", desc: "Invite staff & volunteers", action: () => navigate('/organization-team') },
         { icon: Lightbulb, label: "Stories", desc: "Impact storytelling", action: () => navigate('/impact-storytelling') },

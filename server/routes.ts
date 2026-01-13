@@ -74,6 +74,7 @@ import { invitationCodesRouter } from "./routes/invitation-codes.router";
 import { calculateOrganizationAIU } from "./aiu-service";
 import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
 import { aiRecommendationsRouter } from "./routes/ai-recommendations.router";
+import { externalVolunteersRouter } from "./routes/external-volunteers.router";
 import uptimeMonitor from "./services/uptime-monitor";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
@@ -385,6 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", aiRecommendationsRouter); // Handles /ai-recommendations for Apply/Dismiss AI insights
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime
   app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform
+  app.use("/api", externalVolunteersRouter); // Handles /external-volunteers for org admin volunteer logging
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.

@@ -102,7 +102,19 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
             return (
               <button
                 key={item.id}
-                onClick={() => item.action ? item.action() : navigate(item.path!)}
+                onClick={() => {
+                  if (item.action) {
+                    item.action();
+                  } else if (item.path) {
+                    // For volunteer-dashboard with query params, use direct navigation
+                    if (item.path.startsWith('/volunteer-dashboard?')) {
+                      window.history.pushState({}, '', item.path);
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    } else {
+                      navigate(item.path);
+                    }
+                  }
+                }}
                 className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive
                     ? 'text-blue-600 bg-blue-50'
@@ -154,7 +166,13 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                   key={index}
                   onClick={() => {
                     setShowMore(false);
-                    navigate(item.path);
+                    // For volunteer-dashboard with query params, use direct navigation
+                    if (item.path.startsWith('/volunteer-dashboard?')) {
+                      window.history.pushState({}, '', item.path);
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    } else {
+                      navigate(item.path);
+                    }
                   }}
                   className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 ${
                     (item as any).isAdmin

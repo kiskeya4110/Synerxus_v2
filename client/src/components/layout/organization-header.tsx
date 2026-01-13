@@ -47,6 +47,7 @@ const NAV_TABS = [
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
+  { id: 'log-hours', label: 'Log Hours', icon: ClipboardList, path: '/log-volunteer-hours' },
   { id: 'team', label: 'Team', icon: UsersRound, path: '/organization-team' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
   { id: 'create', label: 'Create', icon: Plus, path: null },

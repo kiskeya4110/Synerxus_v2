@@ -135,12 +135,45 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   }, []);
 
   // Sync activeTab with URL changes (for menu navigation)
+  // Note: wouter's location only includes pathname, not query params
+  // So we need to listen for all navigation events including query param changes
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const tab = searchParams.get('tab');
-    if (tab && ['dashboard', 'projects', 'log-activity', 'potential', 'impacts', 'stories', 'more', 'profile', 'messages'].includes(tab)) {
-      setActiveTab(tab as TabType);
-    }
+    const syncTabFromUrl = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tab = searchParams.get('tab');
+      if (tab && ['dashboard', 'projects', 'log-activity', 'potential', 'impacts', 'stories', 'more', 'profile', 'messages'].includes(tab)) {
+        setActiveTab(tab as TabType);
+      } else if (window.location.pathname === '/volunteer-dashboard' && !tab) {
+        // Default to dashboard tab when no tab specified
+        setActiveTab('dashboard');
+      }
+    };
+
+    // Sync on mount and location change
+    syncTabFromUrl();
+
+    // Listen for popstate (browser back/forward)
+    window.addEventListener('popstate', syncTabFromUrl);
+
+    // Listen for custom navigation events (for wouter navigation with query params)
+    // This handles cases where wouter navigates but pathname stays the same
+    const handleNavigation = () => syncTabFromUrl();
+    window.addEventListener('locationchange', handleNavigation);
+
+    // Also use MutationObserver approach as fallback for URL changes
+    let lastUrl = window.location.href;
+    const urlCheckInterval = setInterval(() => {
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        syncTabFromUrl();
+      }
+    }, 100);
+
+    return () => {
+      window.removeEventListener('popstate', syncTabFromUrl);
+      window.removeEventListener('locationchange', handleNavigation);
+      clearInterval(urlCheckInterval);
+    };
   }, [location]); // Re-run when location changes
 
   // Handle logout using proper auth signOut

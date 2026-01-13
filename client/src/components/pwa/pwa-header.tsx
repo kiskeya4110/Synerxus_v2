@@ -400,7 +400,14 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                         item.action();
                       } else if (item.path) {
                         setMenuOpen(false);
-                        navigate(item.path);
+                        // For volunteer-dashboard with query params, use direct navigation
+                        // to ensure the tab change is properly detected
+                        if (item.path.startsWith('/volunteer-dashboard?')) {
+                          window.history.pushState({}, '', item.path);
+                          window.dispatchEvent(new PopStateEvent('popstate'));
+                        } else {
+                          navigate(item.path);
+                        }
                       }
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left ${

@@ -66,6 +66,7 @@ const OrganizationMessages = lazy(() => import("@/pages/organization-messages"))
 const OrganizationMessagesPWA = lazy(() => import("@/pages/organization-messages-pwa"));
 const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa"));
 const OrganizationTeam = lazy(() => import("@/pages/organization-team"));
+const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));
 const VolunteerMessages = lazy(() => import("@/pages/volunteer-messages"));
 const VolunteerMessagesPWA = lazy(() => import("@/pages/volunteer-messages-pwa"));
 const CSRMessagesPWA = lazy(() => import("@/pages/csr-messages-pwa"));
@@ -281,6 +282,7 @@ function AppWithOnboarding() {
           <Route path="/organization-my-work" component={MyWork} />
           <Route path="/organization-messages" component={OrganizationMessages} />
           <Route path="/organization-team" component={OrganizationTeam} />
+          <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
           <Route path="/overview" component={Overview} />
           <Route path="/volunteers" component={Volunteers} />
           <Route path="/invitation-codes" component={InvitationCodes} />

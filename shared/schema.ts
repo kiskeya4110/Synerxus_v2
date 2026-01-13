@@ -201,6 +201,10 @@ export const volunteerActivities = pgTable("volunteer_activities", {
   evidenceUrls: text("evidence_urls").array(), // URLs for photo/geo evidence
   dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
   isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate
+  // Admin logging support - allows org admins to log hours on behalf of volunteers
+  externalVolunteerId: integer("external_volunteer_id"), // FK to external_volunteers for non-registered volunteers
+  loggedBy: integer("logged_by"), // User ID of admin who logged this (null if self-logged)
+  loggedByType: text("logged_by_type").default("self"), // "self" | "admin" | "system"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -234,6 +238,10 @@ export const projectImpacts = pgTable("project_impacts", {
   verificationStatus: text("verification_status").default("pending"), // pending, approved, rejected
   dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
   isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate
+  // Admin logging support - allows org admins to log impacts on behalf of volunteers
+  externalVolunteerId: integer("external_volunteer_id"), // FK to external_volunteers for non-registered volunteers
+  loggedBy: integer("logged_by"), // User ID of admin who logged this (null if self-logged)
+  loggedByType: text("logged_by_type").default("self"), // "self" | "admin" | "system"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -652,6 +660,22 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// External Volunteers - Volunteers not registered on the platform
+// Used when organization admins log hours for people who aren't system users
+export const externalVolunteers = pgTable("external_volunteers", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  fullName: text("full_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  notes: text("notes"),
+  source: text("source"), // event, referral, walk-in, etc.
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Organization Profiles - Extended organization information
 export const organizationProfiles = pgTable("organization_profiles", {
   id: serial("id").primaryKey(),
@@ -896,6 +920,12 @@ export const insertVolunteerActivitySchema = createInsertSchema(volunteerActivit
   .extend({
     date: z.coerce.date(),
   });
+
+export const insertExternalVolunteerSchema = createInsertSchema(externalVolunteers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
 
 export const insertImpactMetricSchema = createInsertSchema(impactMetrics).omit({
   id: true,
@@ -1238,6 +1268,9 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 
 export type VolunteerActivity = typeof volunteerActivities.$inferSelect;
 export type InsertVolunteerActivity = z.infer<typeof insertVolunteerActivitySchema>;
+
+export type ExternalVolunteer = typeof externalVolunteers.$inferSelect;
+export type InsertExternalVolunteer = z.infer<typeof insertExternalVolunteerSchema>;
 
 export type ImpactMetric = typeof impactMetrics.$inferSelect;
 export type InsertImpactMetric = z.infer<typeof insertImpactMetricSchema>;

@@ -4,8 +4,10 @@ import {
   insertVolunteerActivitySchema,
   insertImpactMetricSchema,
   insertProjectImpactSchema,
+  insertExternalVolunteerSchema,
   type VolunteerActivity,
   type ProjectImpact,
+  type ExternalVolunteer,
 } from "@shared/schema";
 import {
   handleValidationError,
@@ -246,6 +248,214 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
     broadcastUpdate("volunteer_activity_created", activity);
     res.status(201).json(activity);
   } catch (err) {
+    const error = handleValidationError(err);
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+/**
+ * POST /admin/volunteer-activities - Admin logs activity on behalf of a volunteer
+ * Allows organization admins to log hours for registered or external volunteers
+ *
+ * Body: {
+ *   volunteerType: "registered" | "external",
+ *   userId?: number,           // For registered volunteers
+ *   externalVolunteerId?: number, // For existing external volunteers
+ *   newExternalVolunteer?: {   // To create new external volunteer inline
+ *     fullName: string,
+ *     email?: string,
+ *     phone?: string,
+ *     notes?: string,
+ *     source?: string
+ *   },
+ *   projectId: number,
+ *   taskId?: number,
+ *   hours: number,
+ *   date: string,
+ *   description?: string,
+ *   skillsApplied?: string[],
+ *   outcomes?: string,
+ *   evidenceUrls?: string[],
+ *   autoApprove?: boolean (default: true)
+ * }
+ */
+activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    // Only organization users can log activities on behalf of others
+    if (user.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can log activities for volunteers" });
+    }
+
+    // Get user's organization
+    const userOrg = await storage.getOrganizationByUserId(user.id);
+    if (!userOrg) {
+      return res.status(403).json({ message: "Organization not found" });
+    }
+
+    const {
+      volunteerType,
+      userId,
+      externalVolunteerId,
+      newExternalVolunteer,
+      projectId,
+      taskId,
+      hours,
+      date,
+      description,
+      skillsApplied,
+      outcomes,
+      evidenceUrls,
+      autoApprove = true // Default to auto-approve for admin-logged activities
+    } = req.body;
+
+    // Validate required fields
+    if (!projectId) {
+      return res.status(400).json({ message: "projectId is required" });
+    }
+    if (!hours || hours <= 0) {
+      return res.status(400).json({ message: "hours must be a positive number" });
+    }
+    if (!date) {
+      return res.status(400).json({ message: "date is required" });
+    }
+
+    // Verify the project belongs to the user's organization
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    if (project.organizationId !== userOrg.id) {
+      return res.status(403).json({ message: "Project does not belong to your organization" });
+    }
+
+    let targetUserId: number | undefined;
+    let targetExternalVolunteerId: number | undefined;
+
+    if (volunteerType === 'registered') {
+      // Logging for a registered volunteer
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required for registered volunteers" });
+      }
+      targetUserId = userId;
+
+      // Verify the volunteer exists
+      const volunteer = await storage.getUser(userId);
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer user not found" });
+      }
+    } else if (volunteerType === 'external') {
+      // Logging for an external volunteer
+      if (externalVolunteerId) {
+        // Using existing external volunteer
+        const extVol = await storage.getExternalVolunteer(externalVolunteerId);
+        if (!extVol) {
+          return res.status(404).json({ message: "External volunteer not found" });
+        }
+        if (extVol.organizationId !== userOrg.id) {
+          return res.status(403).json({ message: "External volunteer does not belong to your organization" });
+        }
+        targetExternalVolunteerId = externalVolunteerId;
+      } else if (newExternalVolunteer && newExternalVolunteer.fullName) {
+        // Create new external volunteer inline
+        const newExtVol = await storage.createExternalVolunteer({
+          organizationId: userOrg.id,
+          fullName: newExternalVolunteer.fullName,
+          email: newExternalVolunteer.email,
+          phone: newExternalVolunteer.phone,
+          notes: newExternalVolunteer.notes,
+          source: newExternalVolunteer.source || 'admin-logged',
+          createdBy: user.id
+        });
+        targetExternalVolunteerId = newExtVol.id;
+      } else {
+        return res.status(400).json({ message: "Either externalVolunteerId or newExternalVolunteer.fullName is required for external volunteers" });
+      }
+    } else {
+      return res.status(400).json({ message: "volunteerType must be 'registered' or 'external'" });
+    }
+
+    // Create the activity
+    const activityData: any = {
+      userId: targetUserId || null,
+      externalVolunteerId: targetExternalVolunteerId || null,
+      projectId,
+      taskId: taskId || null,
+      hours,
+      date: new Date(date),
+      description: description || null,
+      skillsApplied: skillsApplied || null,
+      outcomes: outcomes || null,
+      evidenceUrls: evidenceUrls || null,
+      loggedBy: user.id,
+      loggedByType: 'admin',
+      verificationStatus: autoApprove ? 'approved' : 'pending'
+    };
+
+    const activity = await storage.createVolunteerActivity(activityData);
+
+    // Update project hours if this is for a registered volunteer
+    if (activity.projectId && targetUserId) {
+      try {
+        // Get activities for this project-volunteer pair
+        const userActivities = await storage.listVolunteerActivitiesByUser(targetUserId);
+        const userProjectActivities = userActivities.filter(
+          (a: any) => a.projectId === activity.projectId
+        );
+        const userHoursLogged = userProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+        // Update assignment if exists
+        const assignments = await storage.listProjectAssignmentsByProject(activity.projectId);
+        const assignment = assignments.find((a: any) => a.volunteerId === targetUserId);
+
+        if (assignment) {
+          await storage.updateProjectAssignment(assignment.id, {
+            hoursCompleted: userHoursLogged,
+            status: userHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
+          });
+        }
+
+        // Update project total hours
+        const allProjectActivities = await storage.listVolunteerActivitiesByProject(activity.projectId);
+        const totalProjectHours = allProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+        const progressPercentage = await calculateProjectProgress(activity.projectId);
+        await storage.updateProject(activity.projectId, {
+          completionPercentage: progressPercentage,
+          totalHoursLogged: totalProjectHours
+        });
+      } catch (updateErr) {
+        console.error("Error updating project progress for admin-logged activity:", updateErr);
+      }
+    }
+
+    // Update project hours for external volunteer activities too
+    if (activity.projectId && targetExternalVolunteerId) {
+      try {
+        const allProjectActivities = await storage.listVolunteerActivitiesByProject(activity.projectId);
+        const totalProjectHours = allProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+        const progressPercentage = await calculateProjectProgress(activity.projectId);
+        await storage.updateProject(activity.projectId, {
+          completionPercentage: progressPercentage,
+          totalHoursLogged: totalProjectHours
+        });
+      } catch (updateErr) {
+        console.error("Error updating project progress for external volunteer activity:", updateErr);
+      }
+    }
+
+    broadcastUpdate("volunteer_activity_created", activity);
+    res.status(201).json({
+      ...activity,
+      message: autoApprove ? "Activity logged and approved" : "Activity logged and pending approval"
+    });
+  } catch (err) {
+    console.error("Error creating admin-logged activity:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

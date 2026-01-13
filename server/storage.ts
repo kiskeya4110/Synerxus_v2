@@ -36,6 +36,7 @@ import {
   csrCommitmentGoals,
   volunteerStories,
   storyLikes,
+  externalVolunteers,
   type User,
   type InsertUser,
   type Organization,
@@ -134,7 +135,9 @@ import {
   type Badge,
   type InsertBadge,
   type UserBadge,
-  type InsertUserBadge
+  type InsertUserBadge,
+  type ExternalVolunteer,
+  type InsertExternalVolunteer
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -218,6 +221,14 @@ export interface IStorage {
   listVolunteerActivities(): Promise<VolunteerActivity[]>;
   listVolunteerActivitiesByUser(userId: number): Promise<VolunteerActivity[]>;
   listVolunteerActivitiesByProject(projectId: number): Promise<VolunteerActivity[]>;
+
+  // External Volunteer operations (for admin logging on behalf of non-registered volunteers)
+  getExternalVolunteer(id: number): Promise<ExternalVolunteer | undefined>;
+  createExternalVolunteer(volunteer: InsertExternalVolunteer): Promise<ExternalVolunteer>;
+  updateExternalVolunteer(id: number, volunteer: Partial<InsertExternalVolunteer>): Promise<ExternalVolunteer | undefined>;
+  listExternalVolunteersByOrganization(organizationId: number): Promise<ExternalVolunteer[]>;
+  searchExternalVolunteers(organizationId: number, query: string): Promise<ExternalVolunteer[]>;
+  listVolunteerActivitiesByExternalVolunteer(externalVolunteerId: number): Promise<VolunteerActivity[]>;
 
   // Impact Metric operations
   getImpactMetric(id: number): Promise<ImpactMetric | undefined>;
@@ -789,6 +800,59 @@ export class DatabaseStorage implements IStorage {
   async listVolunteerActivitiesByProject(projectId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
     const query = db.select().from(volunteerActivities)
       .where(eq(volunteerActivities.projectId, projectId))
+      .orderBy(desc(volunteerActivities.date));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.activities);
+  }
+
+  // External Volunteer operations (for admin logging on behalf of non-registered volunteers)
+  async getExternalVolunteer(id: number): Promise<ExternalVolunteer | undefined> {
+    const [result] = await db.select().from(externalVolunteers).where(eq(externalVolunteers.id, id));
+    return result || undefined;
+  }
+
+  async createExternalVolunteer(insertVolunteer: InsertExternalVolunteer): Promise<ExternalVolunteer> {
+    const [volunteer] = await db.insert(externalVolunteers).values(insertVolunteer).returning();
+    return volunteer;
+  }
+
+  async updateExternalVolunteer(id: number, volunteerData: Partial<InsertExternalVolunteer>): Promise<ExternalVolunteer | undefined> {
+    const [result] = await db.update(externalVolunteers)
+      .set({ ...volunteerData, updatedAt: new Date() })
+      .where(eq(externalVolunteers.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async listExternalVolunteersByOrganization(organizationId: number): Promise<ExternalVolunteer[]> {
+    return await db.select().from(externalVolunteers)
+      .where(and(
+        eq(externalVolunteers.organizationId, organizationId),
+        eq(externalVolunteers.isActive, true)
+      ))
+      .orderBy(asc(externalVolunteers.fullName));
+  }
+
+  async searchExternalVolunteers(organizationId: number, query: string): Promise<ExternalVolunteer[]> {
+    const searchPattern = `%${query.toLowerCase()}%`;
+    return await db.select().from(externalVolunteers)
+      .where(and(
+        eq(externalVolunteers.organizationId, organizationId),
+        eq(externalVolunteers.isActive, true),
+        or(
+          sql`LOWER(${externalVolunteers.fullName}) LIKE ${searchPattern}`,
+          sql`LOWER(${externalVolunteers.email}) LIKE ${searchPattern}`
+        )
+      ))
+      .orderBy(asc(externalVolunteers.fullName))
+      .limit(20);
+  }
+
+  async listVolunteerActivitiesByExternalVolunteer(externalVolunteerId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    const query = db.select().from(volunteerActivities)
+      .where(eq(volunteerActivities.externalVolunteerId, externalVolunteerId))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);

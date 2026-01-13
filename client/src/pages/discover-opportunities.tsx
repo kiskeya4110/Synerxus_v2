@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
-  ChevronDown, CheckCircle, Building2, Filter
+  ChevronDown, CheckCircle, Building2, Filter, Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

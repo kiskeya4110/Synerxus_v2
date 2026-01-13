@@ -69,6 +69,7 @@ export default function OpportunityDetailPWA() {
   // Check if user has applied for this opportunity
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType') || 'volunteer';
+  const isVolunteer = userType === 'volunteer';
   const hasApplied = applications.some((app: any) =>
     app.opportunityId === opportunityId && app.volunteerId === parseInt(userId || '0')
   );
@@ -280,19 +281,21 @@ export default function OpportunityDetailPWA() {
               </div>
             </div>
 
-            {/* Apply Button */}
-            <Button
-              onClick={() => !hasApplied && applyMutation.mutate()}
-              disabled={applyMutation.isPending || hasApplied}
-              className={`w-full ${
-                hasApplied
-                  ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600'
-              } text-white font-semibold py-3 rounded-lg`}
-              data-testid="button-apply-opportunity"
-            >
-              {hasApplied ? "Already Applied" : applyMutation.isPending ? "Applying..." : "Apply for Opportunity"}
-            </Button>
+            {/* Apply Button - Only show for volunteers */}
+            {isVolunteer && (
+              <Button
+                onClick={() => !hasApplied && applyMutation.mutate()}
+                disabled={applyMutation.isPending || hasApplied}
+                className={`w-full ${
+                  hasApplied
+                    ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600'
+                } text-white font-semibold py-3 rounded-lg`}
+                data-testid="button-apply-opportunity"
+              >
+                {hasApplied ? "Already Applied" : applyMutation.isPending ? "Applying..." : "Apply for Opportunity"}
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

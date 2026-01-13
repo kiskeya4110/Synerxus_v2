@@ -59,6 +59,17 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
     const validatedData = insertApplicationSchema.parse(req.body);
     const { opportunityId, volunteerId } = validatedData;
 
+    // Verify the user is a volunteer (organizations and corporations cannot apply)
+    const applicant = await storage.getUser(volunteerId);
+    if (!applicant) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (applicant.userType && applicant.userType !== 'volunteer') {
+      return res.status(403).json({
+        message: "Only volunteers can apply for opportunities. Organizations and corporations cannot apply."
+      });
+    }
+
     const existingApplication = await storage.findApplicationByVolunteerAndOpportunity(
       volunteerId,
       opportunityId

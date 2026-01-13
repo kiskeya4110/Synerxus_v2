@@ -452,16 +452,18 @@ export default function DiscoverOpportunities() {
                       )}
                     </div>
 
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApply(opp.id);
-                      }}
-                      disabled={hasApplied(opp.id) || applyingToId === opp.id}
-                      className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl"
-                    >
-                      {hasApplied(opp.id) ? "Already Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
-                    </Button>
+                    {isVolunteer && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApply(opp.id);
+                        }}
+                        disabled={hasApplied(opp.id) || applyingToId === opp.id}
+                        className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl"
+                      >
+                        {hasApplied(opp.id) ? "Already Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -619,16 +621,18 @@ export default function DiscoverOpportunities() {
                           >
                             View Details
                           </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApply(opp.id);
-                            }}
-                            disabled={hasApplied(opp.id) || applyingToId === opp.id}
-                            className={`flex-1 rounded-xl ${hasApplied(opp.id) ? 'bg-slate-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white font-semibold`}
-                          >
-                            {hasApplied(opp.id) ? "Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
-                          </Button>
+                          {isVolunteer && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApply(opp.id);
+                              }}
+                              disabled={hasApplied(opp.id) || applyingToId === opp.id}
+                              className={`flex-1 rounded-xl ${hasApplied(opp.id) ? 'bg-slate-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white font-semibold`}
+                            >
+                              {hasApplied(opp.id) ? "Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

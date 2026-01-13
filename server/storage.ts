@@ -138,7 +138,22 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
-import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql, count } from "drizzle-orm";
+
+// Pagination options for list methods
+export interface PaginationOptions {
+  limit?: number;
+  offset?: number;
+}
+
+// Default limits for different entity types
+export const DEFAULT_LIMITS = {
+  activities: 100,
+  notifications: 50,
+  impacts: 100,
+  applications: 50,
+  messages: 50,
+} as const;
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -746,18 +761,39 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async listVolunteerActivities(): Promise<VolunteerActivity[]> {
-    return await db.select().from(volunteerActivities);
+  async listVolunteerActivities(options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    const query = db.select().from(volunteerActivities).orderBy(desc(volunteerActivities.date));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    // Default limit for safety - prevents loading entire table
+    return await query.limit(DEFAULT_LIMITS.activities);
   }
 
-  async listVolunteerActivitiesByUser(userId: number): Promise<VolunteerActivity[]> {
-    return await db.select().from(volunteerActivities)
+  async listVolunteerActivitiesByUser(userId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    const query = db.select().from(volunteerActivities)
       .where(eq(volunteerActivities.userId, userId))
       .orderBy(desc(volunteerActivities.date));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.activities);
   }
 
-  async listVolunteerActivitiesByProject(projectId: number): Promise<VolunteerActivity[]> {
-    return await db.select().from(volunteerActivities).where(eq(volunteerActivities.projectId, projectId));
+  async countVolunteerActivitiesByUser(userId: number): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(volunteerActivities)
+      .where(eq(volunteerActivities.userId, userId));
+    return result?.count || 0;
+  }
+
+  async listVolunteerActivitiesByProject(projectId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    const query = db.select().from(volunteerActivities)
+      .where(eq(volunteerActivities.projectId, projectId))
+      .orderBy(desc(volunteerActivities.date));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.activities);
   }
 
   // Impact Metric operations
@@ -804,16 +840,32 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async listProjectImpacts(): Promise<ProjectImpact[]> {
-    return await db.select().from(projectImpacts);
+  async listProjectImpacts(options?: PaginationOptions): Promise<ProjectImpact[]> {
+    const query = db.select().from(projectImpacts).orderBy(desc(projectImpacts.id));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.impacts);
   }
 
-  async listProjectImpactsByProject(projectId: number): Promise<ProjectImpact[]> {
-    return await db.select().from(projectImpacts).where(eq(projectImpacts.projectId, projectId));
+  async listProjectImpactsByProject(projectId: number, options?: PaginationOptions): Promise<ProjectImpact[]> {
+    const query = db.select().from(projectImpacts)
+      .where(eq(projectImpacts.projectId, projectId))
+      .orderBy(desc(projectImpacts.id));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.impacts);
   }
 
-  async listProjectImpactsByMetric(metricId: number): Promise<ProjectImpact[]> {
-    return await db.select().from(projectImpacts).where(eq(projectImpacts.metricId, metricId));
+  async listProjectImpactsByMetric(metricId: number, options?: PaginationOptions): Promise<ProjectImpact[]> {
+    const query = db.select().from(projectImpacts)
+      .where(eq(projectImpacts.metricId, metricId))
+      .orderBy(desc(projectImpacts.id));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.impacts);
   }
 
   // Opportunity operations
@@ -876,16 +928,32 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async listApplications(): Promise<Application[]> {
-    return await db.select().from(applications);
+  async listApplications(options?: PaginationOptions): Promise<Application[]> {
+    const query = db.select().from(applications).orderBy(desc(applications.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.applications);
   }
 
-  async listApplicationsByOpportunity(opportunityId: number): Promise<Application[]> {
-    return await db.select().from(applications).where(eq(applications.opportunityId, opportunityId));
+  async listApplicationsByOpportunity(opportunityId: number, options?: PaginationOptions): Promise<Application[]> {
+    const query = db.select().from(applications)
+      .where(eq(applications.opportunityId, opportunityId))
+      .orderBy(desc(applications.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.applications);
   }
 
-  async listApplicationsByVolunteer(volunteerId: number): Promise<Application[]> {
-    return await db.select().from(applications).where(eq(applications.volunteerId, volunteerId));
+  async listApplicationsByVolunteer(volunteerId: number, options?: PaginationOptions): Promise<Application[]> {
+    const query = db.select().from(applications)
+      .where(eq(applications.volunteerId, volunteerId))
+      .orderBy(desc(applications.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.applications);
   }
 
   async findApplicationByVolunteerAndOpportunity(volunteerId: number, opportunityId: number): Promise<Application | undefined> {
@@ -1428,28 +1496,48 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async listMessages(): Promise<OrgMessage[]> {
-    return await db.select().from(orgMessages);
+  async listMessages(options?: PaginationOptions): Promise<OrgMessage[]> {
+    const query = db.select().from(orgMessages).orderBy(desc(orgMessages.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.messages);
   }
 
-  async listMessagesBySender(senderId: number): Promise<OrgMessage[]> {
-    return await db.select().from(orgMessages).where(eq(orgMessages.senderId, senderId));
+  async listMessagesBySender(senderId: number, options?: PaginationOptions): Promise<OrgMessage[]> {
+    const query = db.select().from(orgMessages)
+      .where(eq(orgMessages.senderId, senderId))
+      .orderBy(desc(orgMessages.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.messages);
   }
 
-  async listMessagesByReceiver(receiverId: number): Promise<OrgMessage[]> {
-    return await db.select().from(orgMessages).where(eq(orgMessages.receiverId, receiverId));
+  async listMessagesByReceiver(receiverId: number, options?: PaginationOptions): Promise<OrgMessage[]> {
+    const query = db.select().from(orgMessages)
+      .where(eq(orgMessages.receiverId, receiverId))
+      .orderBy(desc(orgMessages.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.messages);
   }
 
-  async listMessagesByThread(threadId: number): Promise<OrgMessage[]> {
-    return await db
+  async listMessagesByThread(threadId: number, options?: PaginationOptions): Promise<OrgMessage[]> {
+    const query = db
       .select()
       .from(orgMessages)
       .where(eq(orgMessages.threadId, threadId))
       .orderBy(asc(orgMessages.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.messages);
   }
 
-  async listConversation(userId1: number, userId2: number): Promise<OrgMessage[]> {
-    return await db
+  async listConversation(userId1: number, userId2: number, options?: PaginationOptions): Promise<OrgMessage[]> {
+    const query = db
       .select()
       .from(orgMessages)
       .where(
@@ -1459,6 +1547,10 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(asc(orgMessages.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.messages);
   }
 
   async markMessageAsRead(id: number): Promise<OrgMessage | undefined> {
@@ -1496,13 +1588,28 @@ export class DatabaseStorage implements IStorage {
     return newNotification;
   }
 
-  async getNotifications(userId: number): Promise<Notification[]> {
-    const { desc } = await import("drizzle-orm");
-    return await db
+  async getNotifications(userId: number, options?: PaginationOptions): Promise<Notification[]> {
+    const query = db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt));
+    if (options?.limit) {
+      return await query.limit(options.limit).offset(options.offset || 0);
+    }
+    return await query.limit(DEFAULT_LIMITS.notifications);
+  }
+
+  async countNotifications(userId: number): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(notifications)
+      .where(eq(notifications.userId, userId));
+    return result?.count || 0;
+  }
+
+  async countUnreadNotifications(userId: number): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    return result?.count || 0;
   }
 
   async markNotificationRead(notificationId: number): Promise<Notification | undefined> {

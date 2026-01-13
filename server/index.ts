@@ -205,10 +205,11 @@ app.use(compression({
 
 // Rate limiting to prevent abuse and ensure fair resource allocation
 // Configurable via environment variable for different deployment scenarios
-const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '1000', 10);
+// Default reduced to 300/min for better protection at scale (was 1000)
+const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '300', 10);
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
-  max: RATE_LIMIT_MAX, // requests per minute per IP (default 1000, production use 200)
+  max: RATE_LIMIT_MAX, // requests per minute per IP (default 300 for production safety)
   standardHeaders: true, // Return rate limit info in RateLimit-* headers
   legacyHeaders: false, // Disable X-RateLimit-* headers
   message: { error: 'Too many requests, please try again later' },

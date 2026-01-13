@@ -82,6 +82,17 @@ export default function LogVolunteerHoursPage() {
     enabled: !!userId
   });
 
+  // Fetch organization profile for logo
+  const { data: organizationProfile } = useQuery({
+    queryKey: ['/api/intake/organization-profile', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${organization.id}`);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!organization?.id
+  });
+
   // Fetch organization's projects
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects/organization", organization?.id],
@@ -260,7 +271,11 @@ export default function LogVolunteerHoursPage() {
   // Mobile/PWA layout
   if (isMobile) {
     return (
-      <OrganizationPWALayout title="Log Volunteer Hours" activeTab="log-hours">
+      <OrganizationPWALayout
+        activeTab="home"
+        organizationName={organizationProfile?.commonName || organization?.name}
+        organizationLogo={organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo}
+      >
         <div className="px-4 pb-24">
           <LogHoursForm
             volunteerType={volunteerType}

@@ -706,6 +706,8 @@ export default function OrganizationDashboardPWA() {
 
         {/* Shared Header with Refresh Button - uses filtered metrics */}
         <OrganizationPWAHeader
+          organizationName={organizationProfile?.commonName || organization?.name}
+          organizationLogo={organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo}
           onRefresh={handleRefresh}
           isRefreshing={refreshing}
           metrics={{
@@ -840,15 +842,15 @@ export default function OrganizationDashboardPWA() {
                     {organizationProfile?.commonName || organization?.name || 'Organization'}
                   </h2>
                 </div>
-                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden relative">
+                <div className="w-14 h-14 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden relative border-2 border-blue-200/50">
                   {/* Always show fallback icon */}
-                  <Briefcase className="w-6 h-6 text-blue-800 absolute" />
+                  <Briefcase className="w-7 h-7 text-blue-800 absolute" />
                   {/* Logo overlays fallback when loaded successfully */}
-                  {organization?.logo && (
+                  {(organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo) && (
                     <img
-                      src={organization.logo}
-                      alt={organizationProfile?.commonName || organization.name || 'Organization'}
-                      className="w-10 h-10 object-contain absolute"
+                      src={organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo}
+                      alt={organizationProfile?.commonName || organization?.name || 'Organization'}
+                      className="w-12 h-12 object-cover absolute rounded-lg"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

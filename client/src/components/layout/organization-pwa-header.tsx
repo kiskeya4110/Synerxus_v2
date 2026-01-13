@@ -15,6 +15,7 @@ import type { Notification, User as UserType } from "@shared/schema";
 
 interface OrganizationPWAHeaderProps {
   organizationName?: string;
+  organizationLogo?: string;
   onRefresh?: () => Promise<void>;
   isRefreshing?: boolean;
   metrics?: {
@@ -27,6 +28,8 @@ interface OrganizationPWAHeaderProps {
 }
 
 export default function OrganizationPWAHeader({
+  organizationName,
+  organizationLogo,
   onRefresh,
   isRefreshing = false,
   metrics,
@@ -263,13 +266,32 @@ export default function OrganizationPWAHeader({
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)'
         }}
       >
-        <img
-          src={logoUrl}
-          alt="Synerxus"
-          className="h-10 w-auto object-contain cursor-pointer flex-shrink-0"
-          style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '160px' }}
-          onClick={() => navigate('/landing')}
-        />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Organization Logo */}
+          {organizationLogo && (
+            <div
+              className="w-9 h-9 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-blue-200/50 shadow-sm cursor-pointer"
+              onClick={() => navigate('/organization-dashboard/pwa')}
+            >
+              <img
+                src={organizationLogo}
+                alt={organizationName || 'Organization'}
+                className="w-7 h-7 object-cover rounded"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          {/* Synerxus Logo */}
+          <img
+            src={logoUrl}
+            alt="Synerxus"
+            className="h-9 w-auto object-contain cursor-pointer flex-shrink-0"
+            style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '140px' }}
+            onClick={() => navigate('/landing')}
+          />
+        </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Refresh Button */}

@@ -22,6 +22,8 @@ import OrganizationPWANav from "./organization-pwa-nav";
 interface OrganizationPWALayoutProps {
   children: ReactNode;
   activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard';
+  organizationName?: string;
+  organizationLogo?: string;
   onRefresh?: () => Promise<void>;
   metrics?: {
     activeProjects?: number;
@@ -36,6 +38,8 @@ interface OrganizationPWALayoutProps {
 export default function OrganizationPWALayout({
   children,
   activeTab,
+  organizationName,
+  organizationLogo,
   onRefresh,
   metrics,
   hideNav = false,
@@ -59,6 +63,8 @@ export default function OrganizationPWALayout({
       <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
         {/* Shared Header */}
         <OrganizationPWAHeader
+          organizationName={organizationName}
+          organizationLogo={organizationLogo}
           onRefresh={onRefresh ? handleRefresh : undefined}
           isRefreshing={isRefreshing}
           metrics={metrics}

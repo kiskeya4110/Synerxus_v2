@@ -96,6 +96,7 @@ import sdg16 from "@assets/E_SDG_PRINT-16_1762550174914.jpg";
 import sdg17 from "@assets/E_SDG_PRINT-17_1762550174915.jpg";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 
 const SDG_ICONS: Record<number, string> = {
   1: sdg1, 2: sdg2, 3: sdg3, 4: sdg4, 5: sdg5,
@@ -822,7 +823,7 @@ export default function OrganizationDashboard() {
   // Memoized callbacks - MUST be before any early returns
   const handleQuickActionMemo = useCallback((actionId: string) => {
     if (actionId === 'create-project') {
-      navigate('/projects?create=true');
+      setShowCreateModal(true);
     } else if (actionId === 'invite-volunteer') {
       navigate('/volunteers?invite=true');
     } else if (actionId === 'create-task') {
@@ -897,6 +898,14 @@ export default function OrganizationDashboard() {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', overflowX: 'hidden', backgroundColor: '#f9fafb', zIndex: 100 }} data-testid="organization-dashboard">
+      {/* Create Project Dialog */}
+      {organization?.id && (
+        <CreateProjectDialog 
+          organizationId={organization.id} 
+          defaultOpen={showCreateModal}
+          onOpenChange={setShowCreateModal}
+        />
+      )}
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -2623,7 +2632,7 @@ export default function OrganizationDashboard() {
                 <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
                   <FolderOpen size={28} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
                   <p style={{ fontSize: '13px', marginBottom: '12px' }}>No projects yet</p>
-                  <button onClick={() => navigate('/projects?create=true')} style={{ padding: '8px 16px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Create Project</button>
+                  <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 16px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Create Project</button>
                 </div>
               )}
             </div>

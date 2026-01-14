@@ -60,7 +60,8 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: TaskFormValues) => {
-      const response = await apiRequest("POST", "/api/tasks", {
+      const id = localStorage.getItem('currentUserId');
+      const response = await apiRequest("POST", `/api/tasks?userId=${id}`, {
         ...data,
         projectId,
         assigneeId: data.assigneeId || null,
@@ -325,7 +326,8 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
 
   const editMutation = useMutation({
     mutationFn: async (data: TaskFormValues) => {
-      const response = await apiRequest("PATCH", `/api/tasks/${task.id}`, {
+      const id = localStorage.getItem('currentUserId');
+      const response = await apiRequest("PATCH", `/api/tasks/${task.id}?userId=${id}`, {
         ...data,
         assigneeId: data.assigneeId || null,
         isMilestone: !!data.isMilestone,
@@ -547,7 +549,8 @@ export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+      const id = localStorage.getItem('currentUserId');
+      await apiRequest("DELETE", `/api/tasks/${task.id}?userId=${id}`);
       return { success: true };
     },
     onSuccess: () => {

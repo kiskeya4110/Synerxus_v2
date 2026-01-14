@@ -1071,7 +1071,7 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
     try {
       setIsUploadingImage(true);
-      const result = await uploadProjectCover(file, project.id.toString());
+      const result = await uploadProjectCover(file, project.organizationId.toString());
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",

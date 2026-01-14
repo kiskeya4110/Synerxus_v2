@@ -56,13 +56,15 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: TaskFormValues) => {
-      return apiRequest("POST", "/api/tasks", {
+      const response = await apiRequest("POST", "/api/tasks", {
         ...data,
         projectId,
         assigneeId: data.assigneeId || null
       });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (savedTask) => {
+      console.log("Task created successfully:", savedTask);
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -272,12 +274,14 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
 
   const editMutation = useMutation({
     mutationFn: async (data: TaskFormValues) => {
-      return apiRequest("PATCH", `/api/tasks/${task.id}`, {
+      const response = await apiRequest("PATCH", `/api/tasks/${task.id}`, {
         ...data,
         assigneeId: data.assigneeId || null
       });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedTask) => {
+      console.log("Task updated successfully:", updatedTask);
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -447,9 +451,11 @@ export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("DELETE", `/api/tasks/${task.id}`);
+      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+      return { success: true };
     },
     onSuccess: () => {
+      console.log("Task deleted successfully:", task.id);
       // Use predicate-based invalidation to match all related queries
       queryClient.invalidateQueries({ predicate: (query) => 
         String(query.queryKey[0]).includes('/api/tasks') ||

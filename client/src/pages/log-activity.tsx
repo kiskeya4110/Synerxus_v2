@@ -30,6 +30,11 @@ export default function LogActivity() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"activity" | "impact">("activity");
 
+  // Parse URL parameters for pre-selection (from My Applications page)
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
+  const preselectedProjectId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('projectId') : null;
+  const preselectedTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+
   // Offline sync state - single instance of hook, props passed to OfflineBanner
   const storedUserIdForSync = typeof window !== 'undefined' ? parseInt(localStorage.getItem('currentUserId') || '0') : 0;
   const { 
@@ -64,6 +69,20 @@ export default function LogActivity() {
     };
     loadCachedData();
   }, [isOnline, isWeakConnection, getCachedProjects, getCachedTasks]);
+
+  // Apply URL parameters for pre-selection (from My Applications page)
+  useEffect(() => {
+    if (!urlParamsProcessed) {
+      if (preselectedProjectId && preselectedProjectId !== 'null' && preselectedProjectId !== '') {
+        setSelectedProjectId(preselectedProjectId);
+        setImpactProjectId(preselectedProjectId);
+      }
+      if (preselectedTab === 'impact') {
+        setActiveTab('impact');
+      }
+      setUrlParamsProcessed(true);
+    }
+  }, [preselectedProjectId, preselectedTab, urlParamsProcessed]);
 
   // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");

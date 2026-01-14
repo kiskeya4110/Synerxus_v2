@@ -1,5 +1,57 @@
 import { storage } from "./storage";
 import type { InsertNotification } from "@shared/schema";
+import nodemailer from "nodemailer";
+
+// Email configuration for instant notifications
+const EMAIL_CONFIG = {
+  provider: process.env.EMAIL_PROVIDER || (process.env.SMTP_USER ? "smtp" : "mock"),
+  smtp: {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER || process.env.EMAIL_USER,
+      pass: process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD,
+    },
+  },
+  sendgrid: {
+    apiKey: process.env.SENDGRID_API_KEY,
+  },
+  from: process.env.EMAIL_FROM || "hello@synerxus.com",
+};
+
+// Create email transporter
+function createEmailTransporter() {
+  if (EMAIL_CONFIG.provider === "smtp" && EMAIL_CONFIG.smtp.auth.user) {
+    return nodemailer.createTransport({
+      host: EMAIL_CONFIG.smtp.host,
+      port: EMAIL_CONFIG.smtp.port,
+      secure: EMAIL_CONFIG.smtp.secure,
+      auth: EMAIL_CONFIG.smtp.auth,
+    });
+  }
+
+  if (EMAIL_CONFIG.provider === "sendgrid" && EMAIL_CONFIG.sendgrid.apiKey) {
+    return nodemailer.createTransport({
+      host: "smtp.sendgrid.net",
+      port: 587,
+      auth: {
+        user: "apikey",
+        pass: EMAIL_CONFIG.sendgrid.apiKey,
+      },
+    });
+  }
+
+  // Mock transporter for development
+  return {
+    sendMail: async (options: any) => {
+      console.log(`[EMAIL-MOCK] To: ${options.to}, Subject: ${options.subject}`);
+      return { response: "Email queued (mock)", messageId: `mock-${Date.now()}` };
+    },
+  };
+}
+
+const emailTransporter = createEmailTransporter();
 
 export async function notifyProjectUpdate(
   projectId: number,
@@ -341,6 +393,104 @@ export async function notifyNewApplication(
     }
   } catch (error) {
     console.error("Error creating new application notification:", error);
+  }
+}
+
+/**
+ * Send instant email notification to organization when a new application is submitted
+ */
+export async function sendNewApplicationEmail(
+  opportunityId: number,
+  volunteerId: number,
+  applicationId: number,
+  matchScore?: number | null
+): Promise<void> {
+  try {
+    const opportunity = await storage.getOpportunity(opportunityId);
+    const volunteer = await storage.getUser(volunteerId);
+
+    if (!opportunity || !volunteer) {
+      console.error("[EMAIL] Opportunity or volunteer not found for application email");
+      return;
+    }
+
+    const organization = await storage.getOrganization(opportunity.organizationId);
+    if (!organization) {
+      console.error("[EMAIL] Organization not found for application email");
+      return;
+    }
+
+    // Get organization users with email addresses
+    const orgUsers = await storage.listUsersByOrganization(opportunity.organizationId);
+    const usersWithEmail = orgUsers.filter(u => u.email);
+
+    if (usersWithEmail.length === 0) {
+      console.log("[EMAIL] No organization users with email found");
+      return;
+    }
+
+    const volunteerName = volunteer.displayName || volunteer.username || "A volunteer";
+    const scoreText = matchScore ? ` with a ${matchScore}% match score` : "";
+    const reviewUrl = `${process.env.APP_URL || "https://synerxus.com"}/applications?highlight=${applicationId}`;
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">New Volunteer Application</h1>
+        </div>
+
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="font-size: 16px; margin-bottom: 20px;">
+            <strong>${volunteerName}</strong> has applied for your opportunity <strong>"${opportunity.title}"</strong>${scoreText}.
+          </p>
+
+          ${matchScore && matchScore >= 70 ? `
+          <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #059669; font-weight: 600;">
+              High Match Score: ${matchScore}%
+            </p>
+            <p style="margin: 5px 0 0 0; color: #065f46; font-size: 14px;">
+              This volunteer's skills and experience closely align with your requirements.
+            </p>
+          </div>
+          ` : ""}
+
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${reviewUrl}" style="display: inline-block; background: #10b981; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+              Review Application
+            </a>
+          </div>
+
+          <p style="font-size: 14px; color: #6b7280; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            You're receiving this email because you're a member of ${organization.name} on Synerxus.
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Send email to all organization users
+    for (const orgUser of usersWithEmail) {
+      try {
+        await emailTransporter.sendMail({
+          from: EMAIL_CONFIG.from,
+          to: orgUser.email,
+          subject: `New Application: ${volunteerName} applied for "${opportunity.title}"`,
+          html: emailHtml,
+        });
+        console.log(`[EMAIL] Application notification sent to ${orgUser.email}`);
+      } catch (emailError) {
+        console.error(`[EMAIL] Failed to send to ${orgUser.email}:`, emailError);
+      }
+    }
+  } catch (error) {
+    console.error("[EMAIL] Error sending new application email:", error);
   }
 }
 

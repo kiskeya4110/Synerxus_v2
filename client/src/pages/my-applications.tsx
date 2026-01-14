@@ -411,20 +411,35 @@ export default function MyApplicationsPage(props: MyApplicationsPageProps = {}) 
                         </div>
                       )}
 
-                      <div className="flex gap-2">
-                        <Link href={`/opportunities/${app.opportunityId}`} className="flex-1">
-                          <Button variant="outline" className="w-full">
-                            Learn More
-                            <ExternalLink className="w-4 h-4 ml-2" />
-                          </Button>
-                        </Link>
-                        {app.coverLetter && (
-                          <Link href={`#`} className="flex-shrink-0">
+                      {/* Action Buttons for Accepted Applications */}
+                      <div className="flex flex-col gap-3 pt-3 border-t">
+                        <div className="flex gap-2">
+                          <Link href={`/log-activity?projectId=${app.opportunity?.projectId || ''}&opportunityId=${app.opportunityId}`} className="flex-1">
+                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                              <Clock className="w-4 h-4 mr-2" />
+                              Log Hours
+                            </Button>
+                          </Link>
+                          <Link href={`/log-activity?projectId=${app.opportunity?.projectId || ''}&opportunityId=${app.opportunityId}&tab=impact`} className="flex-1">
+                            <Button variant="outline" className="w-full">
+                              <Target className="w-4 h-4 mr-2" />
+                              Log Impact
+                            </Button>
+                          </Link>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/opportunities/${app.opportunityId}`} className="flex-1">
+                            <Button variant="ghost" className="w-full text-muted-foreground">
+                              View Opportunity
+                              <ExternalLink className="w-4 h-4 ml-2" />
+                            </Button>
+                          </Link>
+                          {app.coverLetter && (
                             <Button variant="ghost" size="icon" title="View cover letter">
                               <FileText className="w-4 h-4" />
                             </Button>
-                          </Link>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

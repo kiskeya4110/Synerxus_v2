@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import { insertApplicationSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
-import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication } from "../notification-service";
+import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication, sendNewApplicationEmail } from "../notification-service";
 import OpenAI from "openai";
 
 export const applicationsRouter = Router();
@@ -34,6 +34,66 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
     res.json(applications);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch applications" });
+  }
+});
+
+// GET /api/applications/my-engagements - Get accepted applications with project context for a volunteer
+applicationsRouter.get("/my-engagements", async (req: Request, res: Response) => {
+  try {
+    const { volunteerId } = req.query;
+
+    if (!volunteerId) {
+      return res.status(400).json({ error: "volunteerId required" });
+    }
+
+    const applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
+    const acceptedApps = applications.filter(a => a.status === 'accepted');
+
+    const engagements = await Promise.all(acceptedApps.map(async (app) => {
+      const opportunity = await storage.getOpportunity(app.opportunityId);
+      const project = opportunity?.projectId ? await storage.getProject(opportunity.projectId) : null;
+      const organization = opportunity?.organizationId ? await storage.getOrganization(opportunity.organizationId) : null;
+
+      // Get hours logged for this project by this volunteer
+      let hoursLogged = 0;
+      let hoursApproved = 0;
+      if (project) {
+        const activities = await storage.listVolunteerActivitiesByProject(project.id);
+        const volunteerActivities = activities.filter(a => a.userId === parseInt(volunteerId as string));
+        hoursLogged = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+        hoursApproved = volunteerActivities
+          .filter(a => a.verificationStatus === 'approved')
+          .reduce((sum, a) => sum + (a.hours || 0), 0);
+      }
+
+      // Get assignment info
+      let assignment = null;
+      if (project) {
+        const assignments = await storage.listProjectAssignmentsByProject(project.id);
+        assignment = assignments.find(a => a.volunteerId === parseInt(volunteerId as string));
+      }
+
+      return {
+        applicationId: app.id,
+        opportunityId: app.opportunityId,
+        opportunityTitle: opportunity?.title,
+        projectId: project?.id,
+        projectName: project?.name,
+        organizationId: opportunity?.organizationId,
+        organizationName: organization?.name,
+        hoursCommitted: assignment?.hoursCommitted || opportunity?.ongoingHoursPerWeek || 0,
+        hoursLogged,
+        hoursApproved,
+        sdgGoals: opportunity?.sdgGoals || project?.sdgGoals,
+        acceptedAt: app.reviewedAt,
+        status: assignment?.status || 'active'
+      };
+    }));
+
+    res.json(engagements);
+  } catch (err) {
+    console.error("Error fetching engagements:", err);
+    res.status(500).json({ message: "Failed to fetch engagements" });
   }
 });
 
@@ -170,6 +230,11 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       // Log but don't fail the application if notification fails
       console.warn("Failed to send application notification:", notifyError);
     }
+
+    // Send instant email to organization (non-blocking)
+    sendNewApplicationEmail(opportunityId, volunteerId, application.id, matchScore).catch(err =>
+      console.warn("Failed to send application email:", err)
+    );
 
     broadcastUpdate("application_created", application);
     res.status(201).json(application);

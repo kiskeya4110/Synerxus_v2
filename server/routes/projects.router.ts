@@ -7,6 +7,7 @@ import { db } from "../db";
 import { eq, desc } from "drizzle-orm";
 import { notifyProjectVolunteersAiuVerification } from "../notification-service";
 import { calculateProjectAIU } from "../aiu-service";
+import { authMiddleware } from "../middleware/auth";
 
 export const projectsRouter = Router();
 
@@ -188,7 +189,7 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/projects/:id - Delete a project and its related data
-projectsRouter.delete("/:id", async (req: Request, res: Response) => {
+projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
     const user = req.user as any;

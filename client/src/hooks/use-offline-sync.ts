@@ -37,6 +37,45 @@ export function useOfflineSync(userId?: number) {
     syncError: null
   });
 
+  // Track effective online status based on connection quality if available
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+
+    const checkConnection = () => {
+      const nav = navigator as any;
+      const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+      
+      let isEffectivelyOnline = nav.onLine;
+      
+      // If we have Network Information API, consider "online" but "slow" as offline for logging
+      if (isEffectivelyOnline && connection) {
+        // downlink < 0.5 Mbps or effectiveType '2g'/'slow-2g' is "weak"
+        const isWeak = connection.downlink < 0.5 || ['slow-2g', '2g'].includes(connection.effectiveType);
+        if (isWeak) {
+          console.log('[OfflineSync] Connection detected as weak, enabling offline mode behavior');
+          // We don't force isOnline to false here to allow sync attempts, 
+          // but components can use this logic to decide whether to use offline storage
+        }
+      }
+      
+      setState(prev => ({ ...prev, isOnline: isEffectivelyOnline }));
+    };
+
+    window.addEventListener('online', checkConnection);
+    window.addEventListener('offline', checkConnection);
+    if ((navigator as any).connection) {
+      (navigator as any).connection.addEventListener('change', checkConnection);
+    }
+
+    return () => {
+      window.removeEventListener('online', checkConnection);
+      window.removeEventListener('offline', checkConnection);
+      if ((navigator as any).connection) {
+        (navigator as any).connection.removeEventListener('change', checkConnection);
+      }
+    };
+  }, []);
+
   const updatePendingCount = useCallback(async () => {
     try {
       const count = await getPendingSyncCount();

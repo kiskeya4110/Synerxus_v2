@@ -16,6 +16,9 @@ import type { Request, Response, NextFunction } from 'express';
  * Uses MD5 hash truncated to 16 chars for speed
  */
 export function generateETag(body: string | Buffer | object): string {
+  if (body === undefined || body === null) {
+    return `W/"${createHash('md5').update('').digest('hex').slice(0, 16)}"`;
+  }
   const content = typeof body === 'object' ? JSON.stringify(body) : body;
   const hash = createHash('md5').update(content).digest('hex').slice(0, 16);
   return `W/"${hash}"`;

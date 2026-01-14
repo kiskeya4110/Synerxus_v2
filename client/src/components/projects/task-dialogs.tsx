@@ -45,6 +45,15 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
     enabled: open
   });
 
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: open
+  });
+
+  const availableVolunteers = volunteers.length > 0 
+    ? volunteers.filter(v => v.userType === 'volunteer')
+    : allUsers.filter(v => v.userType === 'volunteer');
+
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -194,17 +203,17 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {loadingRecommendations ? (
-                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading recommendations...</div>
+                      {loadingRecommendations && volunteers.length === 0 ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading volunteers...</div>
                       ) : (
-                        volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
+                        availableVolunteers.map((volunteer) => (
                           <SelectItem 
                             key={volunteer.id} 
                             value={volunteer.id!.toString()}
                             data-testid={`select-volunteer-${volunteer.id}`}
                           >
                             <div className="flex items-center justify-between w-full gap-2">
-                              <span>{volunteer.username}</span>
+                              <span>{volunteer.username || volunteer.displayName}</span>
                               {volunteer.matchScore !== undefined && (
                                 <span className="text-xs text-muted-foreground font-semibold">
                                   {volunteer.matchScore}% match
@@ -450,17 +459,17 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {loadingRecommendations ? (
-                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading recommendations...</div>
+                      {loadingRecommendations && volunteers.length === 0 ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading volunteers...</div>
                       ) : (
-                        volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
+                        availableVolunteers.map((volunteer) => (
                           <SelectItem 
                             key={volunteer.id} 
                             value={volunteer.id!.toString()}
                             data-testid={`select-volunteer-${volunteer.id}`}
                           >
                             <div className="flex items-center justify-between w-full gap-2">
-                              <span>{volunteer.username}</span>
+                              <span>{volunteer.username || volunteer.displayName}</span>
                               {volunteer.matchScore !== undefined && (
                                 <span className="text-xs text-muted-foreground font-semibold">
                                   {volunteer.matchScore}% match

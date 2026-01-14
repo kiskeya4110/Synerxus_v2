@@ -217,6 +217,12 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
 
     const baseData = insertTaskSchema.partial().parse(req.body);
     
+    // Check for assignee update
+    if (req.body.assigneeId !== undefined) {
+      const assigneeId = req.body.assigneeId === null ? null : parseInt(req.body.assigneeId as string);
+      (baseData as any).assigneeId = assigneeId;
+    }
+
     // Handle milestone fields
     const taskData = {
       ...baseData,

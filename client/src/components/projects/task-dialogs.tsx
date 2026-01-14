@@ -19,7 +19,9 @@ const taskFormSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   status: z.enum(["todo", "pending", "in progress", "completed"]).default("todo"),
   dueDate: z.string().optional(),
-  assigneeId: z.number().optional()
+  assigneeId: z.number().optional(),
+  isMilestone: z.boolean().default(false),
+  milestoneWeight: z.number().min(0).max(100).default(0)
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -50,7 +52,9 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
       description: "",
       status: "todo",
       dueDate: "",
-      assigneeId: undefined
+      assigneeId: undefined,
+      isMilestone: false,
+      milestoneWeight: 0
     }
   });
 
@@ -59,7 +63,9 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
       const response = await apiRequest("POST", "/api/tasks", {
         ...data,
         projectId,
-        assigneeId: data.assigneeId || null
+        assigneeId: data.assigneeId || null,
+        isMilestone: !!data.isMilestone,
+        milestoneWeight: data.milestoneWeight || 0
       });
       return response.json();
     },
@@ -218,6 +224,49 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="isMilestone"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Mark as Milestone</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Milestones track key project progress
+                    </p>
+                  </div>
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("isMilestone") && (
+              <FormField
+                control={form.control}
+                name="milestoneWeight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Milestone Weight (0-100)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="Weight in % for progress calculation" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
@@ -268,7 +317,9 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
       description: task.description || "",
       status: (task.status as any) || "todo",
       dueDate: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : new Date(task.dueDate).toISOString().split('T')[0]) : "",
-      assigneeId: task.assigneeId || undefined
+      assigneeId: task.assigneeId || undefined,
+      isMilestone: task.isMilestone || false,
+      milestoneWeight: task.milestoneWeight || 0
     }
   });
 
@@ -276,7 +327,9 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
     mutationFn: async (data: TaskFormValues) => {
       const response = await apiRequest("PATCH", `/api/tasks/${task.id}`, {
         ...data,
-        assigneeId: data.assigneeId || null
+        assigneeId: data.assigneeId || null,
+        isMilestone: !!data.isMilestone,
+        milestoneWeight: data.milestoneWeight || 0
       });
       return response.json();
     },
@@ -426,6 +479,49 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="isMilestone"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Mark as Milestone</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Milestones track key project progress
+                    </p>
+                  </div>
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("isMilestone") && (
+              <FormField
+                control={form.control}
+                name="milestoneWeight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Milestone Weight (0-100)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="Weight in % for progress calculation" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel

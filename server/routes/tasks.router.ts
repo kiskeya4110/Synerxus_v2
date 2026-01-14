@@ -104,7 +104,10 @@ tasksRouter.get("/:id", async (req: Request, res: Response) => {
 tasksRouter.post("/", async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
-    const taskData = insertTaskSchema.parse(req.body);
+    const taskData = insertTaskSchema.extend({
+      isMilestone: z.boolean().optional(),
+      milestoneWeight: z.number().optional()
+    }).parse(req.body);
 
     if (taskData.projectId) {
       const project = await storage.getProject(taskData.projectId);
@@ -205,7 +208,10 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Not authorized to update this task" });
     }
 
-    const taskData = insertTaskSchema.partial().parse(req.body);
+    const taskData = insertTaskSchema.partial().extend({
+      isMilestone: z.boolean().optional(),
+      milestoneWeight: z.number().optional()
+    }).parse(req.body);
     const updatedTask = await storage.updateTask(taskId, taskData);
 
     if (!updatedTask) {

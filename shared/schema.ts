@@ -179,6 +179,8 @@ export const tasks = pgTable("tasks", {
   sdgGoalsOverride: integer("sdg_goals_override").array(),
   isRemoteOverride: boolean("is_remote_override"),
   locationOverride: text("location_override"),
+  isMilestone: boolean("is_milestone").default(false),
+  milestoneWeight: integer("milestone_weight").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

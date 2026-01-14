@@ -1071,7 +1071,11 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
     try {
       setIsUploadingImage(true);
-      const result = await uploadProjectCover(file, project.organizationId.toString());
+      const orgId = project.organizationId?.toString() || "";
+      if (!orgId) {
+        throw new Error("Organization ID is missing for this project");
+      }
+      const result = await uploadProjectCover(file, orgId);
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",

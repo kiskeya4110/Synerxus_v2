@@ -227,6 +227,7 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
           // Create new matchable organization if all required fields are present
           if (name && mission && needs && sdgFocus && location) {
             await tx.insert(matchableOrganizations).values({
+              id: `org_${user.email?.replace(/[@.]/g, '_') || Date.now()}`,
               email: user.email,
               name,
               profilePhotoUrl: profilePhotoUrl || null,

@@ -484,6 +484,8 @@ export default function MyWork() {
     willShowCreateProject: !!(currentUser?.organizationId),
   });
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
   // Show loading state while user data is being fetched to prevent wrong view flash
   if (isUserLoading || !currentUser) {
     return (
@@ -495,8 +497,6 @@ export default function MyWork() {
       </div>
     );
   }
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // PWA view for organization managers on mobile
   if (isOrganizationManager && isMobile) {

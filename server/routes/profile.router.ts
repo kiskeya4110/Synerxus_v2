@@ -149,7 +149,7 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
     }
 
     const { profilePhotoUrl, name, mission, needs, sdgFocus, location, city, country, bio, displayName, website, contactEmail } = req.body;
-    console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country });
+    console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country, location });
 
     // Create organization if it doesn't exist (outside transaction - one-time setup)
     let organizationId = user.organizationId;
@@ -160,6 +160,9 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
         logo: profilePhotoUrl || null,
         website: website || null,
         contactEmail: contactEmail || user.email || "",
+        city: city || null,
+        country: country || null,
+        address: location || null,
       });
       organizationId = newOrg.id;
       // Link user to the new organization
@@ -214,6 +217,8 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
           if (needs !== undefined) matchableOrgUpdates.needs = needs;
           if (sdgFocus !== undefined) matchableOrgUpdates.sdgFocus = sdgFocus;
           if (location !== undefined) matchableOrgUpdates.location = location;
+          if (city !== undefined) matchableOrgUpdates.city = city;
+          if (country !== undefined) matchableOrgUpdates.country = country;
 
           if (Object.keys(matchableOrgUpdates).length > 0) {
             await tx.update(matchableOrganizations).set(matchableOrgUpdates).where(eq(matchableOrganizations.id, existingOrg.id));
@@ -222,14 +227,15 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
           // Create new matchable organization if all required fields are present
           if (name && mission && needs && sdgFocus && location) {
             await tx.insert(matchableOrganizations).values({
-              id: `org_${user.email}`,
               email: user.email,
               name,
               profilePhotoUrl: profilePhotoUrl || null,
               mission,
               needs,
               sdgFocus,
-              location
+              location,
+              city: city || null,
+              country: country || null
             });
           }
         }

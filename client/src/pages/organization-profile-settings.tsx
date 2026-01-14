@@ -358,8 +358,8 @@ export default function OrganizationProfileSettings() {
           name: existingProfile.name || "",
           mission: existingProfile.mission || "",
           location: existingProfile.location || "",
-          city: orgData?.city || "",
-          country: orgData?.country || "",
+          city: existingProfile.city || orgData?.city || "",
+          country: existingProfile.country || orgData?.country || "",
           needs: existingProfile.needs || [],
           sdgFocus: existingProfile.sdgFocus || [],
         });
@@ -384,8 +384,8 @@ export default function OrganizationProfileSettings() {
           name: matchableOrg?.name || intakeProfile?.organizationName || orgData?.name || currentUser?.displayName || "",
           mission: matchableOrg?.mission || intakeProfile?.missionStatement || orgData?.goals || "",
           location: matchableOrg?.location || intakeProfile?.organizationLocation || orgData?.address || "",
-          city: orgData?.city || "",
-          country: orgData?.country || "",
+          city: matchableOrg?.city || orgData?.city || "",
+          country: matchableOrg?.country || orgData?.country || "",
           needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
           sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });

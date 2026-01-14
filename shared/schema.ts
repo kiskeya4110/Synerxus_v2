@@ -765,6 +765,8 @@ export const matchableOrganizations = pgTable("matchable_organizations", {
   needs: text("needs").array().notNull(),
   sdgFocus: integer("sdg_focus").array().notNull(),
   location: text("location").notNull(),
+  city: text("city"),
+  country: text("country"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

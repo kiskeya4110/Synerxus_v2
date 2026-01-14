@@ -19,6 +19,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 // Lazy-loaded pages - loaded on demand to reduce initial bundle size
 const Profile = lazy(() => import("@/pages/profile"));
 const MyWork = lazy(() => import("@/pages/my-work"));
+const MyTasks = lazy(() => import("@/pages/my-tasks"));
 const Tasks = lazy(() => import("@/pages/tasks"));
 const Projects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
@@ -340,6 +341,7 @@ function LayoutRoute() {
       <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
       {/* Work & Tasks */}
       <Route path="/my-work" component={MyWork} />
+      <Route path="/my-tasks" component={MyTasks} />
       <Route path="/log-activity" component={LogActivity} />
       <Route path="/tasks" component={Tasks} />
       {/* Intake Forms - Redirect to consolidated settings pages (volunteer moved to standalone) */}

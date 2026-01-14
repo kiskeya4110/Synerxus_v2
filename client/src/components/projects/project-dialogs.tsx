@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { uploadFile, deleteFile, extractStoragePath } from "@/lib/upload";
+import { uploadFile, deleteFile, extractStoragePath, uploadProjectCover } from "@/lib/upload";
 import type { Project } from "@shared/schema";
 import { formatDecimal } from "@/lib/format-utils";
 import { FormDescription } from "@/components/ui/form";
@@ -90,8 +90,13 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
   const { toast } = useToast();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("[CreateProject] Image upload triggered");
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("[CreateProject] No file selected");
+      return;
+    }
+    console.log("[CreateProject] File selected:", file.name, file.size, file.type);
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -115,12 +120,7 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
 
     try {
       setIsUploadingImage(true);
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      const filename = `project-${organizationId}-${timestamp}.${fileExtension}`;
-      const path = `project-covers/${filename}`;
-
-      const result = await uploadFile(file, path);
+      const result = await uploadProjectCover(file, organizationId.toString());
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",
@@ -1071,12 +1071,7 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
     try {
       setIsUploadingImage(true);
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      const filename = `project-${project.id}-${timestamp}.${fileExtension}`;
-      const path = `project-covers/${filename}`;
-
-      const result = await uploadFile(file, path);
+      const result = await uploadProjectCover(file, project.id.toString());
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",

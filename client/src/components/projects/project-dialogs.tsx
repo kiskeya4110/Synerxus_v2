@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -73,6 +73,11 @@ interface CreateProjectDialogProps {
 
 export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpenChange }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(defaultOpen);
+
+  // Update internal open state when defaultOpen prop changes
+  useEffect(() => {
+    setOpen(defaultOpen);
+  }, [defaultOpen]);
 
   // Handle external open state changes
   const handleOpenChange = (newOpen: boolean) => {

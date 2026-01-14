@@ -496,6 +496,8 @@ export default function MyWork() {
     );
   }
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
   // PWA view for organization managers on mobile
   if (isOrganizationManager && isMobile) {
     return (
@@ -505,7 +507,11 @@ export default function MyWork() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">My Work</h1>
             {currentUser?.organizationId && (
-              <CreateProjectDialog organizationId={currentUser.organizationId} />
+              <CreateProjectDialog 
+                organizationId={currentUser.organizationId} 
+                defaultOpen={showCreateModal}
+                onOpenChange={setShowCreateModal}
+              />
             )}
           </div>
 

@@ -358,8 +358,8 @@ export default function OrganizationProfileSettings() {
           name: existingProfile.name || "",
           mission: existingProfile.mission || "",
           location: existingProfile.location || "",
-          city: existingProfile.city || orgData?.city || "",
-          country: existingProfile.country || orgData?.country || "",
+          city: existingProfile.city || existingProfile.city || orgData?.city || "",
+          country: existingProfile.country || existingProfile.country || orgData?.country || "",
           needs: existingProfile.needs || [],
           sdgFocus: existingProfile.sdgFocus || [],
         });
@@ -384,8 +384,8 @@ export default function OrganizationProfileSettings() {
           name: matchableOrg?.name || intakeProfile?.organizationName || orgData?.name || currentUser?.displayName || "",
           mission: matchableOrg?.mission || intakeProfile?.missionStatement || orgData?.goals || "",
           location: matchableOrg?.location || intakeProfile?.organizationLocation || orgData?.address || "",
-          city: matchableOrg?.city || orgData?.city || "",
-          country: matchableOrg?.country || orgData?.country || "",
+          city: matchableOrg?.city || intakeProfile?.city || orgData?.city || "",
+          country: matchableOrg?.country || intakeProfile?.country || orgData?.country || "",
           needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
           sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });
@@ -801,52 +801,64 @@ export default function OrganizationProfileSettings() {
                 )}
               />
 
-              {/* Location - City and Country */}
-              <div className="space-y-4">
-                <Label className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Location
-                </Label>
-                <p className="text-sm text-muted-foreground -mt-2">
-                  Your primary location helps match you with local volunteers
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Location - City and Country */}
+                  <div className="space-y-4">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Location
+                    </Label>
+                    <p className="text-sm text-muted-foreground -mt-2">
+                      Your primary location helps match you with local volunteers
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., San Francisco"
+                                {...field}
+                                data-testid="input-org-city"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., United States"
+                                {...field}
+                                data-testid="input-org-country"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="city"
+                    name="location"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
+                      <FormItem className="hidden">
                         <FormControl>
-                          <Input
-                            placeholder="e.g., San Francisco"
-                            {...field}
-                            data-testid="input-org-city"
-                          />
+                          <Input {...field} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., United States"
-                            {...field}
-                            data-testid="input-org-country"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
 
               {/* Volunteer Needs */}
               <div className="space-y-2">

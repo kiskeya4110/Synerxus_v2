@@ -192,18 +192,46 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
 projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
-    const user = req.user as any;
+    const user = req.user;
+
+    console.log("[Projects] DELETE request for project:", projectId);
+    console.log("[Projects] User from auth:", user ? { id: user.id, orgId: user.organizationId, type: user.userType } : "NO USER");
+
+    if (!user) {
+      console.log("[Projects] No user found after auth middleware");
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
     // Get the project to verify ownership
     const project = await storage.getProject(projectId);
     if (!project) {
+      console.log("[Projects] Project not found:", projectId);
       return res.status(404).json({ message: "Project not found" });
     }
 
+    console.log("[Projects] Project found:", { id: project.id, orgId: project.organizationId });
+
     // Check if user has permission (must be from the same organization)
-    const effectiveOrgId = user?.organizationId || (req as any).session?.organizationId;
-    if (project.organizationId !== effectiveOrgId) {
+    if (project.organizationId !== user.organizationId) {
+      console.log("[Projects] Permission denied. User org:", user.organizationId, "Project org:", project.organizationId);
       return res.status(403).json({ message: "You don't have permission to delete this project" });
+    }
+
+    // Delete the related opportunity first
+    try {
+      const [existingOpportunity] = await db
+        .select()
+        .from(opportunities)
+        .where(eq(opportunities.projectId, projectId))
+        .limit(1);
+
+      if (existingOpportunity) {
+        await db.delete(opportunities).where(eq(opportunities.id, existingOpportunity.id));
+        console.log("[Projects] Deleted related opportunity:", existingOpportunity.id);
+      }
+    } catch (oppErr) {
+      console.error("[Projects] Error deleting opportunity:", oppErr);
+      // Continue with project deletion even if opportunity delete fails
     }
 
     // Delete the project (this also deletes related tasks and assignments)
@@ -214,11 +242,12 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
       broadcastUpdate("project_deleted", { id: projectId });
       res.status(200).json({ success: true, message: "Project deleted successfully" });
     } else {
+      console.log("[Projects] Failed to delete project:", projectId);
       res.status(500).json({ message: "Failed to delete project" });
     }
   } catch (err: any) {
-    console.error("[Projects] Error deleting project:", err.message);
-    res.status(500).json({ message: "Failed to delete project" });
+    console.error("[Projects] Error deleting project:", err.message, err.stack);
+    res.status(500).json({ message: "Failed to delete project", error: err.message });
   }
 });
 

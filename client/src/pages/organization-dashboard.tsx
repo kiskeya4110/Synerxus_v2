@@ -2667,11 +2667,11 @@ export default function OrganizationDashboard() {
                       Task
                     </button>
                     <button
-                      onClick={async (e) => { 
-                        e.stopPropagation(); 
+                      onClick={async (e) => {
+                        e.stopPropagation();
                         if (window.confirm(`Are you sure you want to delete "${project.name}"? This will also delete all associated tasks, assignments, and activities.`)) {
                           try {
-                            const response = await fetch(`/api/projects/${project.id}`, { method: 'DELETE' });
+                            const response = await apiRequest("DELETE", `/api/projects/${project.id}`);
                             if (response.ok) {
                               toast({ title: "Project Deleted", description: "The project has been successfully removed." });
                               queryClient.invalidateQueries({ queryKey: ["/api/dashboard/organization"] });
@@ -2680,8 +2680,8 @@ export default function OrganizationDashboard() {
                               const error = await response.json();
                               toast({ title: "Delete Failed", description: error.message || "Failed to delete project", variant: "destructive" });
                             }
-                          } catch (err) {
-                            toast({ title: "Error", description: "An error occurred while deleting the project", variant: "destructive" });
+                          } catch (err: any) {
+                            toast({ title: "Error", description: err?.message || "An error occurred while deleting the project", variant: "destructive" });
                           }
                         }
                       }}

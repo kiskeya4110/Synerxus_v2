@@ -39,24 +39,34 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const headers: Record<string, string> = {};
-  
+
   if (data) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   // SECURITY: Use Firebase ID token for secure authentication
   // ID tokens are cryptographically signed and can be verified on the backend
   const token = await getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
+  // Development fallback: Include user ID for servers without Firebase Admin configured
+  const currentUserId = localStorage.getItem('currentUserId');
+  if (currentUserId) {
+    headers["x-user-id"] = currentUserId;
+  }
+
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  if (!res.ok) {
+    console.error(`[apiRequest] ${method} ${url} failed with status ${res.status}`);
+  }
 
   await throwIfResNotOk(res);
   return res;

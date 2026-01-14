@@ -1265,13 +1265,17 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("DELETE", `/api/projects/${project.id}`);
-      return { success: true };
+      console.log("[DeleteProject] Starting delete for project:", project.id);
+      const response = await apiRequest("DELETE", `/api/projects/${project.id}`);
+      console.log("[DeleteProject] Response status:", response.status);
+      const data = await response.json();
+      console.log("[DeleteProject] Response data:", data);
+      return data;
     },
-    onSuccess: () => {
-      console.log("Project deleted successfully:", project.id);
+    onSuccess: (data) => {
+      console.log("[DeleteProject] Success:", data);
       // Use predicate-based invalidation to match all related queries
-      queryClient.invalidateQueries({ predicate: (query) => 
+      queryClient.invalidateQueries({ predicate: (query) =>
         String(query.queryKey[0]).includes('/api/projects') ||
         String(query.queryKey[0]).includes('/api/tasks') ||
         String(query.queryKey[0]).includes('/api/project-assignments') ||
@@ -1285,19 +1289,33 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
       });
       setOpen(false);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("[DeleteProject] Error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete project",
+        description: error?.message || "Failed to delete project",
         variant: "destructive"
       });
     }
   });
 
+  const handleOpenChange = (newOpen: boolean) => {
+    console.log("[DeleteProject] Dialog open state changing:", newOpen);
+    setOpen(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" data-testid={`button-delete-project-${project.id}`}>
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid={`button-delete-project-${project.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("[DeleteProject] Trash button clicked for project:", project.id);
+          }}
+        >
           <Trash2 className="h-4 w-4 text-red-600" />
         </Button>
       </DialogTrigger>

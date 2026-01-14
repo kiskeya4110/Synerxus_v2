@@ -65,7 +65,7 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
         projectId,
         assigneeId: data.assigneeId || null,
         isMilestone: !!data.isMilestone,
-        milestoneWeight: data.milestoneWeight || 0
+        milestoneWeight: data.milestoneWeight ? Number(data.milestoneWeight) : 0
       });
       return response.json();
     },
@@ -329,7 +329,7 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
         ...data,
         assigneeId: data.assigneeId || null,
         isMilestone: !!data.isMilestone,
-        milestoneWeight: data.milestoneWeight || 0
+        milestoneWeight: data.milestoneWeight ? Number(data.milestoneWeight) : 0
       });
       return response.json();
     },

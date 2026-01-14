@@ -110,8 +110,10 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
     // Handle milestone fields that may not be in the insert schema yet
     const taskData = {
       ...baseData,
-      isMilestone: req.body.isMilestone === true,
-      milestoneWeight: typeof req.body.milestoneWeight === 'number' ? req.body.milestoneWeight : 0
+      isMilestone: req.body.isMilestone === true || req.body.isMilestone === 'true',
+      milestoneWeight: typeof req.body.milestoneWeight === 'number' 
+        ? req.body.milestoneWeight 
+        : (typeof req.body.milestoneWeight === 'string' ? parseInt(req.body.milestoneWeight) : 0)
     };
 
     if (taskData.projectId) {
@@ -218,8 +220,14 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
     // Handle milestone fields
     const taskData = {
       ...baseData,
-      ...(req.body.isMilestone !== undefined && { isMilestone: req.body.isMilestone === true }),
-      ...(req.body.milestoneWeight !== undefined && { milestoneWeight: req.body.milestoneWeight })
+      ...(req.body.isMilestone !== undefined && { 
+        isMilestone: req.body.isMilestone === true || req.body.isMilestone === 'true' 
+      }),
+      ...(req.body.milestoneWeight !== undefined && { 
+        milestoneWeight: typeof req.body.milestoneWeight === 'number' 
+          ? req.body.milestoneWeight 
+          : parseInt(req.body.milestoneWeight) 
+      })
     };
     
     const updatedTask = await storage.updateTask(taskId, taskData as any);

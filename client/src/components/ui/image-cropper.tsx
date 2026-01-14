@@ -74,9 +74,14 @@ export function ImageCropper({
     imageRef.current = null;
 
     const img = new Image();
-
+    
     // Only set crossOrigin for remote URLs, not for local sources (blob: or data: URLs)
-    if (!imageSrc.startsWith('blob:') && !imageSrc.startsWith('data:')) {
+    // Use a more robust check for remote URLs
+    const isRemote = imageSrc && typeof imageSrc === 'string' && 
+                    imageSrc.startsWith('http') && 
+                    !imageSrc.includes(window.location.host);
+
+    if (isRemote) {
       img.crossOrigin = "anonymous";
     }
 

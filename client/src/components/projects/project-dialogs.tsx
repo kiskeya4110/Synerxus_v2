@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { uploadFile, deleteFile, extractStoragePath, uploadProjectCover } from "@/lib/upload";
+import { ProjectCoverUpload } from "@/components/project-cover-upload";
 import type { Project } from "@shared/schema";
 import { formatDecimal } from "@/lib/format-utils";
 import { FormDescription } from "@/components/ui/form";
@@ -360,74 +361,18 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
                 )}
               />
 
-              {/* Cover Image Upload for Marketing */}
+              {/* Cover Image Section */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Image className="h-4 w-4" />
-                  Project Cover Image (Marketing)
+                  Project Cover Image
                 </Label>
-                <p className="text-sm text-muted-foreground">
-                  Upload a cover image for marketing purposes. This will be displayed on the project page and promotional materials.
-                </p>
-                <div className="flex items-start gap-4">
-                  {coverImageUrl ? (
-                    <div className="relative">
-                      <img
-                        src={coverImageUrl}
-                        alt="Project cover"
-                        className="w-40 h-24 object-cover rounded-lg border"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                        onClick={handleRemoveImage}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="w-40 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                      <div className="text-center text-gray-400">
-                        <Image className="h-8 w-8 mx-auto mb-1" />
-                        <p className="text-xs">No image</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      data-testid="input-project-cover-image"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingImage}
-                    >
-                      {isUploadingImage ? (
-                        <span className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                          Uploading...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          {coverImageUrl ? "Change Image" : "Upload Image"}
-                        </span>
-                      )}
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Recommended: 1200x630px, max 5MB
-                    </p>
-                  </div>
-                </div>
+                <ProjectCoverUpload
+                  currentCoverUrl={coverImageUrl}
+                  onCoverChange={setCoverImageUrl}
+                  projectId={organizationId.toString()}
+                  enableCrop={true}
+                />
               </div>
             </div>
 
@@ -1071,18 +1016,20 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
     try {
       setIsUploadingImage(true);
-      const orgId = project.organizationId?.toString() || "";
+      const orgId = project.organizationId?.toString();
       if (!orgId) {
         throw new Error("Organization ID is missing for this project");
       }
+      console.log("[EditProject] Uploading cover for org:", orgId);
       const result = await uploadProjectCover(file, orgId);
+      console.log("[EditProject] Upload result:", result);
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",
         description: "Cover image has been uploaded successfully."
       });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error("[EditProject] Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload image",
@@ -1114,7 +1061,26 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       description: project.description || "",
       status: (project.status as any) || "planning",
       sdgs: project.sdgGoals?.join(", ") || "",
-      location: project.location || ""
+      location: project.location || "",
+      primarySdg: project.primarySdg?.toString() || "",
+      startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "",
+      endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "",
+      requiredSkills: project.requiredSkills?.join(", ") || "",
+      optionalSkills: project.optionalSkills?.join(", ") || "",
+      experienceLevel: (project.experienceLevel as any) || undefined,
+      engagementType: (project.engagementType as any) || undefined,
+      commitmentType: (project.commitmentType as any) || undefined,
+      ongoingHoursPerWeek: project.ongoingHoursPerWeek?.toString() || "",
+      projectTotalHours: project.projectTotalHours?.toString() || "",
+      impactMetricName: project.impactMetricName || "",
+      impactMetricUnit: project.impactMetricUnit || "",
+      completionPercentage: project.completionPercentage?.toString() || "",
+      totalHoursLogged: project.totalHoursLogged?.toString() || "",
+      totalVolunteerContribution: project.totalVolunteerContribution || 30,
+      volunteerRoles: (project.volunteerRoles as any[]) || [
+        { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
+        { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
+      ],
     }
   });
 
@@ -1124,11 +1090,26 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
         ? data.sdgs.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 17)
         : [];
 
-      const response = await apiRequest("PATCH", `/api/projects/${project.id}`, {
+      // Calculate total volunteers needed from role counts
+      const totalVolunteersNeeded = data.volunteerRoles?.reduce((sum, role) => sum + role.count, 0)
+        || (data.volunteersNeeded ? parseInt(data.volunteersNeeded) : 1);
+
+      const payload: any = {
         ...data,
         sdgGoals: sdgArray,
-        coverImage: coverImageUrl || null
-      });
+        coverImage: coverImageUrl || null,
+        volunteersNeeded: totalVolunteersNeeded,
+      };
+
+      if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
+      if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
+      if (data.primarySdg) payload.primarySdg = parseInt(data.primarySdg);
+      if (data.ongoingHoursPerWeek) payload.ongoingHoursPerWeek = parseInt(data.ongoingHoursPerWeek);
+      if (data.projectTotalHours) payload.projectTotalHours = parseInt(data.projectTotalHours);
+      if (data.completionPercentage) payload.completionPercentage = parseInt(data.completionPercentage);
+      if (data.totalHoursLogged) payload.totalHoursLogged = parseInt(data.totalHoursLogged);
+
+      const response = await apiRequest("PATCH", `/api/projects/${project.id}`, payload);
       return response.json();
     },
     onSuccess: (savedProject) => {
@@ -1251,62 +1232,12 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
                 <Image className="h-4 w-4" />
                 Project Cover Image
               </Label>
-              <div className="flex items-start gap-4">
-                {coverImageUrl ? (
-                  <div className="relative">
-                    <img
-                      src={coverImageUrl}
-                      alt="Project cover"
-                      className="w-32 h-20 object-cover rounded-lg border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                      onClick={handleRemoveImage}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-32 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                    <div className="text-center text-gray-400">
-                      <Image className="h-6 w-6 mx-auto" />
-                      <p className="text-xs">No image</p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    data-testid="input-edit-project-cover-image"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
-                  >
-                    {isUploadingImage ? (
-                      <span className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                        Uploading...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Upload className="h-4 w-4" />
-                        {coverImageUrl ? "Change" : "Upload"}
-                      </span>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <ProjectCoverUpload
+                currentCoverUrl={coverImageUrl}
+                onCoverChange={setCoverImageUrl}
+                projectId={project.id.toString()}
+                enableCrop={true}
+              />
             </div>
 
             <DialogFooter>

@@ -506,13 +506,10 @@ export default function MyWork() {
           {/* Page Title */}
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">My Work</h1>
-            {currentUser?.organizationId && (
-              <CreateProjectDialog 
-                organizationId={currentUser.organizationId} 
-                defaultOpen={showCreateModal}
-                onOpenChange={setShowCreateModal}
-              />
-            )}
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Project
+            </Button>
           </div>
 
           {/* Quick Stats */}
@@ -605,6 +602,14 @@ export default function MyWork() {
   // Desktop view (original)
   return (
     <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
+      {/* Create Project Dialog */}
+      {currentUser?.organizationId && (
+        <CreateProjectDialog 
+          organizationId={currentUser.organizationId} 
+          defaultOpen={showCreateModal}
+          onOpenChange={setShowCreateModal}
+        />
+      )}
       {/* Volunteer Desktop Navigation - only for volunteers, not organization managers */}
       {!isOrganizationManager && <VolunteerNav />}
 
@@ -904,9 +909,10 @@ export default function MyWork() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Organization Projects</h2>
-              {currentUser?.organizationId && (
-                <CreateProjectDialog organizationId={currentUser.organizationId} />
-              )}
+              <Button onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Project
+              </Button>
             </div>
             <div className="space-y-4">
               {(orgProjectsLoading || isUserLoading) ? (
@@ -919,9 +925,10 @@ export default function MyWork() {
               ) : orgProjectsError ? (
                 <Card className="p-8 text-center">
                   <p className="text-red-500 mb-4">Failed to load projects. Please try refreshing the page.</p>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
+                  <Button onClick={() => setShowCreateModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Project
+                  </Button>
                 </Card>
               ) : orgProjects.length > 0 ? (
                 orgProjects.map((project: Project) => {
@@ -966,10 +973,12 @@ export default function MyWork() {
                 })
               ) : (
                 <Card className="p-8 text-center">
+                  <FolderOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 mb-4">No projects yet. Create your first project to get started!</p>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
+                  <Button onClick={() => setShowCreateModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Project
+                  </Button>
                 </Card>
               )}
             </div>

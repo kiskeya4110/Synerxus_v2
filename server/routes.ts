@@ -3622,11 +3622,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Matchable Organization Routes ===
   app.get("/api/matchable-organizations", async (req, res) => {
     try {
+      console.log("[MatchableOrg] Fetching matchable organizations...");
       const organizations = await storage.listMatchableOrganizations();
+      console.log("[MatchableOrg] Found", organizations.length, "organizations");
       res.json(organizations);
-    } catch (err) {
-      console.error("Error fetching matchable organizations:", err);
-      res.status(500).json({ message: "Failed to fetch matchable organizations" });
+    } catch (err: any) {
+      console.error("[MatchableOrg] Error fetching matchable organizations:", err.message, err.stack);
+      res.status(500).json({ message: "Failed to fetch matchable organizations", error: err.message });
     }
   });
 

@@ -11,7 +11,8 @@ import {
   Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical, Menu as MenuIcon,
   Bell, Settings, User as UserIcon, LogOut, FileText, Award, Zap,
   Activity, Shield, ShieldCheck, Eye, ThumbsUp, Info,
-  Sparkles, CircleDot, MessageSquare, Mail, ExternalLink, Building2, FolderPlus
+  Sparkles, CircleDot, MessageSquare, Mail, ExternalLink, Building2, FolderPlus,
+  Trash2
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { formatDecimal, formatMetric } from "@/lib/format-utils";
@@ -75,6 +76,7 @@ import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OfflineBanner from "@/components/layout/offline-banner";
+import { useOfflineSync } from "@/hooks/use-offline-sync";
 import Footer from "@/components/layout/footer";
 import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -166,6 +168,39 @@ export default function OrganizationDashboard() {
     }
   }, [isMobile, userType, navigate]);
 
+  // Offline sync state - single instance of hook, props passed to OfflineBanner
+  const storedUserIdForSync = typeof window !== 'undefined' ? parseInt(localStorage.getItem('currentUserId') || '0') : 0;
+  const { 
+    isOnline, 
+    isSyncing, 
+    pendingCount, 
+    lastSyncAt, 
+    syncAll, 
+    updatePendingCount,
+    getCachedProjects,
+    getCachedTasks 
+  } = useOfflineSync(storedUserIdForSync || undefined);
+
+  // Cached offline data
+  const [cachedProjects, setCachedProjects] = useState<any[]>([]);
+  const [cachedTasks, setCachedTasks] = useState<any[]>([]);
+
+  // Load cached data when offline
+  useEffect(() => {
+    const loadCachedData = async () => {
+      if (!isOnline) {
+        try {
+          const projects = await getCachedProjects();
+          const tasks = await getCachedTasks();
+          if (projects) setCachedProjects(projects);
+          if (tasks) setCachedTasks(tasks);
+        } catch (err) {
+          console.error('[LogActivity] Failed to load cached data:', err);
+        }
+      }
+    };
+    loadCachedData();
+  }, [isOnline, getCachedProjects, getCachedTasks]);
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
   // Multi-select SDG filtering (like CSR Dashboard pattern)
@@ -907,7 +942,13 @@ export default function OrganizationDashboard() {
         />
       )}
       {/* Offline Banner */}
-      <OfflineBanner />
+      <OfflineBanner 
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+        pendingCount={pendingCount}
+        lastSyncAt={lastSyncAt}
+        onSyncNow={() => syncAll()}
+      />
       
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
@@ -2624,6 +2665,48 @@ export default function OrganizationDashboard() {
                     >
                       <Plus size={12} />
                       Task
+                    </button>
+                    <button
+                      onClick={async (e) => { 
+                        e.stopPropagation(); 
+                        if (window.confirm(`Are you sure you want to delete "${project.name}"? This will also delete all associated tasks, assignments, and activities.`)) {
+                          try {
+                            const response = await fetch(`/api/projects/${project.id}`, { method: 'DELETE' });
+                            if (response.ok) {
+                              toast({ title: "Project Deleted", description: "The project has been successfully removed." });
+                              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/organization"] });
+                              queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+                            } else {
+                              const error = await response.json();
+                              toast({ title: "Delete Failed", description: error.message || "Failed to delete project", variant: "destructive" });
+                            }
+                          } catch (err) {
+                            toast({ title: "Error", description: "An error occurred while deleting the project", variant: "destructive" });
+                          }
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+                      title="Delete project"
+                    >
+                      <Trash2 size={12} />
+                      Delete
                     </button>
                   </div>
                 </div>

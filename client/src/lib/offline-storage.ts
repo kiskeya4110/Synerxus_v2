@@ -201,7 +201,7 @@ export async function getPendingActivities(userId?: number): Promise<PendingActi
 
     request.onsuccess = () => {
       const activities = request.result as PendingActivity[];
-      resolve(activities.filter(a => a.syncStatus !== 'synced'));
+      resolve(activities.filter(a => a.syncStatus === 'pending' || a.syncStatus === 'failed'));
     };
 
     request.onerror = () => {
@@ -227,7 +227,7 @@ export async function getPendingImpacts(userId?: number): Promise<PendingImpact[
 
     request.onsuccess = () => {
       const impacts = request.result as PendingImpact[];
-      resolve(impacts.filter(i => i.syncStatus !== 'synced'));
+      resolve(impacts.filter(i => i.syncStatus === 'pending' || i.syncStatus === 'failed'));
     };
 
     request.onerror = () => {

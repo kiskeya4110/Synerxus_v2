@@ -20,6 +20,33 @@ The platform includes a rebranded landing page with an interactive SDG wheel, a 
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon. PWA implementation includes a web app manifest, a service worker for offline support with network-first caching, and meta tags for iOS/Android mobile web app support, enabling installation on devices.
 
+### Offline Mode for Activity Logging (January 2026)
+**IndexedDB-based Offline Support**: Complete offline mode implementation for volunteer activity logging in areas with limited internet access:
+- **client/src/lib/offline-storage.ts**: IndexedDB service for storing pending activities and impacts locally
+  - Stores `pendingActivities`, `pendingImpacts`, `syncQueue`, and `cachedData` in separate object stores
+  - Generates unique offline IDs with `offline_` prefix for tracking
+  - Tracks sync status: `pending`, `syncing`, `failed`
+  - Retry mechanism with max 5 retries per item
+- **client/src/hooks/use-offline-sync.ts**: React hook for managing offline state and sync queue
+  - Detects online/offline status changes via window events
+  - Auto-syncs pending items when connection is restored
+  - Periodic sync every 30 seconds when online
+  - Caches projects and tasks for offline form population
+  - Toast notifications for sync status updates
+- **client/src/components/layout/offline-banner.tsx**: Enhanced banner component
+  - Shows when offline with pending count badge
+  - Shows pending sync count when online with unsynced items
+  - "Sync Now" button for manual sync trigger
+  - Success message when all items synced
+- **public/service-worker.js**: Service worker with offline caching
+  - Static asset caching with stale-while-revalidate strategy
+  - API response caching for projects, tasks, impact metrics
+  - Background sync support via message passing
+- **client/src/pages/log-activity.tsx**: Updated to save activities offline
+  - Detects offline status via useOfflineSync hook
+  - Saves to IndexedDB when offline with success toast
+  - Automatic sync when connection restored
+
 ### Mobile PWA Dashboard (December 2025)
 **Enhanced Volunteer Mobile Dashboard**: Complete redesign with dark theme matching the social platform aesthetic:
 - **Real KPI Cards**: Total Hours Logged (blue), Projects Completed (green), Skills Applied (orange), Lives Impacted (pink) - all with real data from web view

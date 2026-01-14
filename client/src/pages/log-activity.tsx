@@ -13,12 +13,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X, WifiOff, CloudOff } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
+import OfflineBanner from "@/components/layout/offline-banner";
+import { useOfflineSync } from "@/hooks/use-offline-sync";
+import { saveActivityOffline, saveImpactOffline } from "@/lib/offline-storage";
 
 export default function LogActivity() {
   const [, setLocation] = useLocation();
@@ -26,6 +29,10 @@ export default function LogActivity() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"activity" | "impact">("activity");
+
+  // Offline sync state
+  const storedUserIdForSync = typeof window !== 'undefined' ? parseInt(localStorage.getItem('currentUserId') || '0') : 0;
+  const { isOnline, pendingCount, updatePendingCount } = useOfflineSync(storedUserIdForSync || undefined);
 
   // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -364,7 +371,7 @@ export default function LogActivity() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedProjectId || !hours || !date) {
@@ -386,10 +393,48 @@ export default function LogActivity() {
       activityType,
     };
 
+    // If offline, save locally and show success message
+    if (!isOnline) {
+      try {
+        await saveActivityOffline({
+          userId: currentUser?.id || 0,
+          projectId: parseInt(selectedProjectId),
+          taskId: selectedTaskId ? parseInt(selectedTaskId) : undefined,
+          hours: parseFloat(hours),
+          date: format(date, "yyyy-MM-dd"),
+          description: description || '',
+          skillsApplied: [],
+        });
+
+        await updatePendingCount();
+
+        toast({
+          title: "Saved Offline",
+          description: "Your activity has been saved locally and will sync when you're back online.",
+        });
+
+        // Reset form
+        setSelectedProjectId("");
+        setSelectedTaskId("");
+        setHours("");
+        setDescription("");
+        setActivityType("volunteering");
+        setDate(new Date());
+      } catch (err) {
+        console.error('[LogActivity] Failed to save offline:', err);
+        toast({
+          title: "Error",
+          description: "Failed to save activity offline. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     logActivityMutation.mutate(activityData);
   };
 
-  const handleImpactSubmit = (e: React.FormEvent) => {
+  const handleImpactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!impactProjectId || !peopleReached || !impactDate) {
@@ -415,6 +460,44 @@ export default function LogActivity() {
       role: 'lead', // Volunteer logging their own impact
     };
 
+    // If offline, save locally and show success message
+    if (!isOnline) {
+      try {
+        await saveImpactOffline({
+          userId: currentUser?.id || 0,
+          projectId: parseInt(impactProjectId),
+          taskId: impactTaskId ? parseInt(impactTaskId) : undefined,
+          metricId: livesImpactedMetricId,
+          value: parseInt(peopleReached),
+          date: new Date(impactDate).toISOString(),
+          notes: impactDescription || '',
+        });
+
+        await updatePendingCount();
+
+        toast({
+          title: "Saved Offline",
+          description: "Your impact has been saved locally and will sync when you're back online.",
+        });
+
+        // Reset form
+        setImpactProjectId("");
+        setImpactTaskId("");
+        setPeopleReached("");
+        setImpactDescription("");
+        setImpactCategory("direct");
+        setImpactDate(new Date());
+      } catch (err) {
+        console.error('[LogActivity] Failed to save impact offline:', err);
+        toast({
+          title: "Error",
+          description: "Failed to save impact offline. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     recordImpactMutation.mutate(impactData);
   };
 
@@ -422,6 +505,9 @@ export default function LogActivity() {
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-[#f8f9fa]'}`}>
+      {/* Offline Banner - shows when offline or has pending sync items */}
+      <OfflineBanner userId={currentUser?.id} />
+
       {/* Volunteer Desktop Navigation - only for volunteers */}
       {isVolunteer && <VolunteerNav />}
 

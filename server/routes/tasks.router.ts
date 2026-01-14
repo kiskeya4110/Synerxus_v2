@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { z } from "zod";
 import { storage } from "../storage";
 import { insertTaskSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership, calculateProjectProgress } from "./utils";
@@ -104,10 +105,14 @@ tasksRouter.get("/:id", async (req: Request, res: Response) => {
 tasksRouter.post("/", async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
-    const taskData = insertTaskSchema.extend({
-      isMilestone: z.boolean().optional(),
-      milestoneWeight: z.number().optional()
-    }).parse(req.body);
+    const baseData = insertTaskSchema.parse(req.body);
+    
+    // Handle milestone fields that may not be in the insert schema yet
+    const taskData = {
+      ...baseData,
+      isMilestone: req.body.isMilestone === true,
+      milestoneWeight: typeof req.body.milestoneWeight === 'number' ? req.body.milestoneWeight : 0
+    };
 
     if (taskData.projectId) {
       const project = await storage.getProject(taskData.projectId);
@@ -117,7 +122,7 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
       verifyOwnership(user, project);
     }
 
-    const task = await storage.createTask(taskData);
+    const task = await storage.createTask(taskData as any);
 
     if (task.assigneeId) {
       await notifyTaskAssigned(
@@ -208,11 +213,16 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Not authorized to update this task" });
     }
 
-    const taskData = insertTaskSchema.partial().extend({
-      isMilestone: z.boolean().optional(),
-      milestoneWeight: z.number().optional()
-    }).parse(req.body);
-    const updatedTask = await storage.updateTask(taskId, taskData);
+    const baseData = insertTaskSchema.partial().parse(req.body);
+    
+    // Handle milestone fields
+    const taskData = {
+      ...baseData,
+      ...(req.body.isMilestone !== undefined && { isMilestone: req.body.isMilestone === true }),
+      ...(req.body.milestoneWeight !== undefined && { milestoneWeight: req.body.milestoneWeight })
+    };
+    
+    const updatedTask = await storage.updateTask(taskId, taskData as any);
 
     if (!updatedTask) {
       return res.status(404).json({ message: "Task not found" });

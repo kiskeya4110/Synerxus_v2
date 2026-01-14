@@ -76,6 +76,9 @@ interface Task {
   description?: string;
   estimatedHours?: number;
   dueDate?: string;
+  isMilestone?: boolean;
+  milestoneWeight?: number;
+  assigneeId?: number;
   [key: string]: any;
 }
 
@@ -819,6 +822,12 @@ export default function ProjectDetail() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium truncate">{task.title}</h4>
+                            {task.isMilestone && (
+                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                <Target className="h-3 w-3 mr-1" />
+                                Milestone
+                              </Badge>
+                            )}
                           </div>
                           {task.description && (
                             <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{task.description}</p>
@@ -1387,7 +1396,15 @@ export default function ProjectDetail() {
                     {projectTasks.map(task => (
                       <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                         <div>
-                          <div className="font-medium">{task.title}</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {task.title}
+                            {task.isMilestone && (
+                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                <Target className="h-3 w-3 mr-1" />
+                                Milestone
+                              </Badge>
+                            )}
+                          </div>
                           {task.dueDate && <div className="text-xs text-muted-foreground">Due: {format(new Date(task.dueDate), "MMM d")}</div>}
                         </div>
                         <StatusBadge status={task.status} />

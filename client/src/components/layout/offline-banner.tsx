@@ -1,21 +1,22 @@
 import { useState, useEffect } from "react";
 import { WifiOff, CloudOff, RefreshCw, Check, Clock } from "lucide-react";
-import { useOfflineSync } from "@/hooks/use-offline-sync";
 import { Button } from "@/components/ui/button";
 
 interface OfflineBannerProps {
-  userId?: number;
+  isOnline: boolean;
+  isSyncing: boolean;
+  pendingCount: number;
+  lastSyncAt: Date | null;
+  onSyncNow: () => void;
 }
 
-export default function OfflineBanner({ userId }: OfflineBannerProps) {
-  const { 
-    isOnline, 
-    isSyncing, 
-    pendingCount, 
-    syncAll, 
-    lastSyncAt 
-  } = useOfflineSync(userId);
-
+export default function OfflineBanner({ 
+  isOnline, 
+  isSyncing, 
+  pendingCount, 
+  lastSyncAt,
+  onSyncNow 
+}: OfflineBannerProps) {
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [prevPendingCount, setPrevPendingCount] = useState(pendingCount);
 
@@ -122,7 +123,7 @@ export default function OfflineBanner({ userId }: OfflineBannerProps) {
         <Button
           size="sm"
           variant="outline"
-          onClick={() => syncAll()}
+          onClick={onSyncNow}
           disabled={isSyncing}
           style={{
             height: '28px',

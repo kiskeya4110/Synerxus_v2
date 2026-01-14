@@ -30,9 +30,39 @@ export default function LogActivity() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"activity" | "impact">("activity");
 
-  // Offline sync state
+  // Offline sync state - single instance of hook, props passed to OfflineBanner
   const storedUserIdForSync = typeof window !== 'undefined' ? parseInt(localStorage.getItem('currentUserId') || '0') : 0;
-  const { isOnline, pendingCount, updatePendingCount } = useOfflineSync(storedUserIdForSync || undefined);
+  const { 
+    isOnline, 
+    isSyncing, 
+    pendingCount, 
+    lastSyncAt, 
+    syncAll, 
+    updatePendingCount,
+    getCachedProjects,
+    getCachedTasks 
+  } = useOfflineSync(storedUserIdForSync || undefined);
+
+  // Cached offline data
+  const [cachedProjects, setCachedProjects] = useState<any[]>([]);
+  const [cachedTasks, setCachedTasks] = useState<any[]>([]);
+
+  // Load cached data when offline
+  useEffect(() => {
+    const loadCachedData = async () => {
+      if (!isOnline) {
+        try {
+          const projects = await getCachedProjects();
+          const tasks = await getCachedTasks();
+          if (projects) setCachedProjects(projects);
+          if (tasks) setCachedTasks(tasks);
+        } catch (err) {
+          console.error('[LogActivity] Failed to load cached data:', err);
+        }
+      }
+    };
+    loadCachedData();
+  }, [isOnline, getCachedProjects, getCachedTasks]);
 
   // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -108,10 +138,10 @@ export default function LogActivity() {
     },
   });
 
-  // Find the "Lives Impacted" metric ID
+  // Find the "Lives Impacted" metric ID - no fallback so offline validation works
   const livesImpactedMetricId = impactMetrics.find(
     (m: any) => m.name === "Lives Impacted" || m.category === "general"
-  )?.id || 1;
+  )?.id;
 
   // Fetch all tasks
   const { data: allTasks = [] } = useQuery<any[]>({
@@ -123,15 +153,19 @@ export default function LogActivity() {
     },
   });
 
-  // Get tasks for selected project (activity form)
-  const projectTasks = selectedProjectId
-    ? allTasks.filter((task: any) => task.projectId === parseInt(selectedProjectId))
-    : [];
+  // Get tasks for selected project (activity form) - use availableTasks which handles offline caching
+  const projectTasks = useMemo(() => {
+    if (!selectedProjectId) return [];
+    const tasks = !isOnline && cachedTasks.length > 0 ? cachedTasks : allTasks;
+    return tasks.filter((task: any) => task.projectId === parseInt(selectedProjectId));
+  }, [selectedProjectId, isOnline, cachedTasks, allTasks]);
 
   // Get tasks for impact project
-  const impactProjectTasks = impactProjectId
-    ? allTasks.filter((task: any) => task.projectId === parseInt(impactProjectId))
-    : [];
+  const impactProjectTasks = useMemo(() => {
+    if (!impactProjectId) return [];
+    const tasks = !isOnline && cachedTasks.length > 0 ? cachedTasks : allTasks;
+    return tasks.filter((task: any) => task.projectId === parseInt(impactProjectId));
+  }, [impactProjectId, isOnline, cachedTasks, allTasks]);
 
   // Get available projects - show all projects, prioritizing assigned ones
   // Get assigned project IDs for reference
@@ -142,15 +176,30 @@ export default function LogActivity() {
   );
 
   // Use all projects as primary source, but include enriched data from assignments where available
-  const availableProjects = Array.isArray(allProjects)
-    ? allProjects.map((project: any) => {
-        // Check if we have enriched data from assignments
-        const assignmentWithData = projectAssignments.find(
-          (assignment: any) => assignment.projectId === project.id && assignment.project
-        );
-        return assignmentWithData?.project || project;
-      })
-    : [];
+  // When offline, fall back to cached projects
+  const availableProjects = useMemo(() => {
+    // When offline, use cached projects if available
+    if (!isOnline && cachedProjects.length > 0) {
+      return cachedProjects;
+    }
+
+    // Online: use live data
+    if (!Array.isArray(allProjects)) return [];
+    return allProjects.map((project: any) => {
+      const assignmentWithData = projectAssignments.find(
+        (assignment: any) => assignment.projectId === project.id && assignment.project
+      );
+      return assignmentWithData?.project || project;
+    });
+  }, [isOnline, cachedProjects, allProjects, projectAssignments]);
+
+  // Available tasks - use cached when offline
+  const availableTasks = useMemo(() => {
+    if (!isOnline && cachedTasks.length > 0) {
+      return cachedTasks;
+    }
+    return allTasks;
+  }, [isOnline, cachedTasks, allTasks]);
 
   // Get the selected project for activity form to compute date restrictions
   const selectedProject = useMemo(() => {
@@ -446,6 +495,16 @@ export default function LogActivity() {
       return;
     }
 
+    // Validate metricId is available
+    if (!livesImpactedMetricId) {
+      toast({
+        title: "Loading...",
+        description: "Impact metrics are still loading. Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Format data for /api/project-impacts endpoint
     // Uses value field (lives impacted) and includes userId for tracking
     const impactData = {
@@ -461,6 +520,7 @@ export default function LogActivity() {
     };
 
     // If offline, save locally and show success message
+    // Note: metricId validation already done above
     if (!isOnline) {
       try {
         await saveImpactOffline({
@@ -506,7 +566,13 @@ export default function LogActivity() {
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-[#f8f9fa]'}`}>
       {/* Offline Banner - shows when offline or has pending sync items */}
-      <OfflineBanner userId={currentUser?.id} />
+      <OfflineBanner 
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+        pendingCount={pendingCount}
+        lastSyncAt={lastSyncAt}
+        onSyncNow={() => syncAll()}
+      />
 
       {/* Volunteer Desktop Navigation - only for volunteers */}
       {isVolunteer && <VolunteerNav />}

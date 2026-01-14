@@ -160,21 +160,27 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
 // POST /api/projects - Create new project
 projectsRouter.post("/", async (req: Request, res: Response) => {
   try {
+    console.log("[Projects] Creating project, request body:", JSON.stringify(req.body, null, 2));
     const user = await requireOrgUser(req);
+    console.log("[Projects] User authenticated:", user.id, "orgId:", user.organizationId);
     const projectData = insertProjectSchema.parse(req.body);
+    console.log("[Projects] Parsed project data:", JSON.stringify(projectData, null, 2));
 
     if (projectData.organizationId !== user.organizationId) {
+      console.log("[Projects] Organization mismatch:", projectData.organizationId, "vs", user.organizationId);
       return res.status(403).json({ message: "Resource not owned by your organization" });
     }
 
     const project = await storage.createProject(projectData);
+    console.log("[Projects] Project created successfully:", project.id, project.name);
 
     // Sync project to opportunities table - each project is discoverable as an opportunity
     await syncProjectToOpportunity(project);
 
     broadcastUpdate("project_created", project);
     res.status(201).json(project);
-  } catch (err) {
+  } catch (err: any) {
+    console.error("[Projects] Error creating project:", err.message, err.stack);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

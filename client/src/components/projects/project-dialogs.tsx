@@ -242,9 +242,14 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
         };
       }
 
-      return apiRequest("POST", "/api/projects", payload);
+      console.log("Creating project with payload:", JSON.stringify(payload, null, 2));
+      const response = await apiRequest("POST", "/api/projects", payload);
+      const result = await response.json();
+      console.log("Project creation response:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (savedProject) => {
+      console.log("Project saved successfully:", savedProject);
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Success",
@@ -254,18 +259,26 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
       form.reset();
       setCoverImageUrl(""); // Reset cover image
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Project creation failed:", error);
       toast({
         title: "Error",
-        description: "Failed to create project",
+        description: error?.message || "Failed to create project",
         variant: "destructive"
       });
     }
   });
 
   const onSubmit = (data: ProjectFormValues) => {
+    console.log("Form submitted with data:", data);
     createMutation.mutate(data);
   };
+
+  // Debug: Log form errors when they change
+  const formErrors = form.formState.errors;
+  if (Object.keys(formErrors).length > 0) {
+    console.log("Form validation errors:", formErrors);
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -1002,7 +1015,12 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-project">
+              <Button
+                type="submit"
+                disabled={createMutation.isPending}
+                data-testid="button-submit-project"
+                onClick={() => console.log("Submit button clicked, form valid:", form.formState.isValid, "errors:", form.formState.errors)}
+              >
                 {createMutation.isPending ? "Creating..." : "Create Project"}
               </Button>
             </DialogFooter>
@@ -1102,13 +1120,15 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
         ? data.sdgs.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 17)
         : [];
 
-      return apiRequest("PATCH", `/api/projects/${project.id}`, {
+      const response = await apiRequest("PATCH", `/api/projects/${project.id}`, {
         ...data,
         sdgGoals: sdgArray,
         coverImage: coverImageUrl || null
       });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (savedProject) => {
+      console.log("Project updated successfully:", savedProject);
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Success",

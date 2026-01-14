@@ -1265,9 +1265,11 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("DELETE", `/api/projects/${project.id}`);
+      await apiRequest("DELETE", `/api/projects/${project.id}`);
+      return { success: true };
     },
     onSuccess: () => {
+      console.log("Project deleted successfully:", project.id);
       // Use predicate-based invalidation to match all related queries
       queryClient.invalidateQueries({ predicate: (query) => 
         String(query.queryKey[0]).includes('/api/projects') ||

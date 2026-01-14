@@ -187,6 +187,40 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/projects/:id - Delete a project and its related data
+projectsRouter.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.id);
+    const user = req.user as any;
+
+    // Get the project to verify ownership
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Check if user has permission (must be from the same organization)
+    const effectiveOrgId = user?.organizationId || (req as any).session?.organizationId;
+    if (project.organizationId !== effectiveOrgId) {
+      return res.status(403).json({ message: "You don't have permission to delete this project" });
+    }
+
+    // Delete the project (this also deletes related tasks and assignments)
+    const deleted = await storage.deleteProject(projectId);
+
+    if (deleted) {
+      console.log("[Projects] Project deleted successfully:", projectId);
+      broadcastUpdate("project_deleted", { id: projectId });
+      res.status(200).json({ success: true, message: "Project deleted successfully" });
+    } else {
+      res.status(500).json({ message: "Failed to delete project" });
+    }
+  } catch (err: any) {
+    console.error("[Projects] Error deleting project:", err.message);
+    res.status(500).json({ message: "Failed to delete project" });
+  }
+});
+
 // GET /api/projects/:id/metrics - Get real-time project metrics including engagement
 projectsRouter.get("/:id/metrics", async (req: Request, res: Response) => {
   try {

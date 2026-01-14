@@ -43,12 +43,9 @@ function getRelativeTime(date: Date): string {
 }
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
-  { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
-  { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
-  { id: 'log-hours', label: 'Log Hours', icon: ClipboardList, path: '/log-volunteer-hours' },
-  { id: 'team', label: 'Team', icon: UsersRound, path: '/organization-team' },
+  { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
   { id: 'create', label: 'Create', icon: Plus, path: null },
 ];
@@ -784,6 +781,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-messages'); setIsProfileOpen(false); }} data-testid="menu-messages">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span>Messages</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/log-volunteer-hours'); setIsProfileOpen(false); }} data-testid="menu-log-hours">
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  <span>Log Hours</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/sdg-mapping'); setIsProfileOpen(false); }} data-testid="menu-sdgs">
                   <Target className="mr-2 h-4 w-4" />

@@ -40,17 +40,18 @@ export default function LogActivity() {
     syncAll, 
     updatePendingCount,
     getCachedProjects,
-    getCachedTasks 
+    getCachedTasks,
+    isWeakConnection
   } = useOfflineSync(storedUserIdForSync || undefined);
 
   // Cached offline data
   const [cachedProjects, setCachedProjects] = useState<any[]>([]);
   const [cachedTasks, setCachedTasks] = useState<any[]>([]);
 
-  // Load cached data when offline
+  // Load cached data when offline or connection is weak
   useEffect(() => {
     const loadCachedData = async () => {
-      if (!isOnline) {
+      if (!isOnline || isWeakConnection) {
         try {
           const projects = await getCachedProjects();
           const tasks = await getCachedTasks();
@@ -62,7 +63,7 @@ export default function LogActivity() {
       }
     };
     loadCachedData();
-  }, [isOnline, getCachedProjects, getCachedTasks]);
+  }, [isOnline, isWeakConnection, getCachedProjects, getCachedTasks]);
 
   // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -111,7 +112,7 @@ export default function LogActivity() {
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!currentUser?.id
+    enabled: !!currentUser?.id && isOnline && !isWeakConnection
   });
   // Ensure projectAssignments is always an array
   const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
@@ -125,7 +126,7 @@ export default function LogActivity() {
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && isOnline && !isWeakConnection,
   });
 
   // Fetch impact metrics to get the default "Lives Impacted" metric ID
@@ -136,6 +137,7 @@ export default function LogActivity() {
       if (!response.ok) return [];
       return response.json();
     },
+    enabled: isOnline && !isWeakConnection
   });
 
   // Find the "Lives Impacted" metric ID - no fallback so offline validation works
@@ -151,21 +153,22 @@ export default function LogActivity() {
       if (!response.ok) return [];
       return response.json();
     },
+    enabled: isOnline && !isWeakConnection
   });
 
   // Get tasks for selected project (activity form) - use availableTasks which handles offline caching
   const projectTasks = useMemo(() => {
     if (!selectedProjectId) return [];
-    const tasks = !isOnline && cachedTasks.length > 0 ? cachedTasks : allTasks;
+    const tasks = (!isOnline || isWeakConnection) && cachedTasks.length > 0 ? cachedTasks : allTasks;
     return tasks.filter((task: any) => task.projectId === parseInt(selectedProjectId));
-  }, [selectedProjectId, isOnline, cachedTasks, allTasks]);
+  }, [selectedProjectId, isOnline, isWeakConnection, cachedTasks, allTasks]);
 
   // Get tasks for impact project
   const impactProjectTasks = useMemo(() => {
     if (!impactProjectId) return [];
-    const tasks = !isOnline && cachedTasks.length > 0 ? cachedTasks : allTasks;
+    const tasks = (!isOnline || isWeakConnection) && cachedTasks.length > 0 ? cachedTasks : allTasks;
     return tasks.filter((task: any) => task.projectId === parseInt(impactProjectId));
-  }, [impactProjectId, isOnline, cachedTasks, allTasks]);
+  }, [impactProjectId, isOnline, isWeakConnection, cachedTasks, allTasks]);
 
   // Get available projects - show all projects, prioritizing assigned ones
   // Get assigned project IDs for reference
@@ -179,7 +182,7 @@ export default function LogActivity() {
   // When offline, fall back to cached projects
   const availableProjects = useMemo(() => {
     // When offline, use cached projects if available
-    if (!isOnline && cachedProjects.length > 0) {
+    if ((!isOnline || isWeakConnection) && cachedProjects.length > 0) {
       return cachedProjects;
     }
 
@@ -191,15 +194,15 @@ export default function LogActivity() {
       );
       return assignmentWithData?.project || project;
     });
-  }, [isOnline, cachedProjects, allProjects, projectAssignments]);
+  }, [isOnline, isWeakConnection, cachedProjects, allProjects, projectAssignments]);
 
   // Available tasks - use cached when offline
   const availableTasks = useMemo(() => {
-    if (!isOnline && cachedTasks.length > 0) {
+    if ((!isOnline || isWeakConnection) && cachedTasks.length > 0) {
       return cachedTasks;
     }
     return allTasks;
-  }, [isOnline, cachedTasks, allTasks]);
+  }, [isOnline, isWeakConnection, cachedTasks, allTasks]);
 
   // Get the selected project for activity form to compute date restrictions
   const selectedProject = useMemo(() => {
@@ -442,8 +445,8 @@ export default function LogActivity() {
       activityType,
     };
 
-    // If offline, save locally and show success message
-    if (!isOnline) {
+    // If offline or weak connection, save locally and show success message
+    if (!isOnline || isWeakConnection) {
       try {
         await saveActivityOffline({
           userId: currentUser?.id || 0,
@@ -458,8 +461,10 @@ export default function LogActivity() {
         await updatePendingCount();
 
         toast({
-          title: "Saved Offline",
-          description: "Your activity has been saved locally and will sync when you're back online.",
+          title: isWeakConnection ? "Saved (Low Bandwidth Mode)" : "Saved Offline",
+          description: isWeakConnection 
+            ? "Your activity was saved locally to preserve bandwidth and will sync later." 
+            : "Your activity has been saved locally and will sync when you're back online.",
         });
 
         // Reset form
@@ -496,7 +501,7 @@ export default function LogActivity() {
     }
 
     // Validate metricId is available
-    if (!livesImpactedMetricId) {
+    if (!livesImpactedMetricId && isOnline && !isWeakConnection) {
       toast({
         title: "Loading...",
         description: "Impact metrics are still loading. Please wait a moment and try again.",
@@ -519,15 +524,15 @@ export default function LogActivity() {
       role: 'lead', // Volunteer logging their own impact
     };
 
-    // If offline, save locally and show success message
+    // If offline or weak connection, save locally and show success message
     // Note: metricId validation already done above
-    if (!isOnline) {
+    if (!isOnline || isWeakConnection) {
       try {
         await saveImpactOffline({
           userId: currentUser?.id || 0,
           projectId: parseInt(impactProjectId),
           taskId: impactTaskId ? parseInt(impactTaskId) : undefined,
-          metricId: livesImpactedMetricId,
+          metricId: livesImpactedMetricId || 0,
           value: parseInt(peopleReached),
           date: new Date(impactDate).toISOString(),
           notes: impactDescription || '',
@@ -536,8 +541,10 @@ export default function LogActivity() {
         await updatePendingCount();
 
         toast({
-          title: "Saved Offline",
-          description: "Your impact has been saved locally and will sync when you're back online.",
+          title: isWeakConnection ? "Saved (Low Bandwidth Mode)" : "Saved Offline",
+          description: isWeakConnection 
+            ? "Your impact data was saved locally to preserve bandwidth and will sync later." 
+            : "Your impact has been saved locally and will sync when you're back online.",
         });
 
         // Reset form

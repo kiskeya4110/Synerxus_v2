@@ -21,6 +21,7 @@ interface OfflineSyncState {
   pendingCount: number;
   lastSyncAt: Date | null;
   syncError: string | null;
+  isWeakConnection: boolean;
 }
 
 export function useOfflineSync(userId?: number) {
@@ -34,7 +35,8 @@ export function useOfflineSync(userId?: number) {
     isSyncing: false,
     pendingCount: 0,
     lastSyncAt: null,
-    syncError: null
+    syncError: null,
+    isWeakConnection: false
   });
 
   // Track effective online status based on connection quality if available
@@ -46,19 +48,24 @@ export function useOfflineSync(userId?: number) {
       const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
       
       let isEffectivelyOnline = nav.onLine;
+      let isWeak = false;
       
-      // If we have Network Information API, consider "online" but "slow" as offline for logging
+      // If we have Network Information API, detect weak connection
       if (isEffectivelyOnline && connection) {
-        // downlink < 0.5 Mbps or effectiveType '2g'/'slow-2g' is "weak"
-        const isWeak = connection.downlink < 0.5 || ['slow-2g', '2g'].includes(connection.effectiveType);
+        // Strict "weak" definition for low bandwidth preservation
+        // downlink < 0.2 Mbps or effectiveType 'slow-2g' is "weak"
+        // This ensures standard behavior for strong signals
+        isWeak = connection.downlink < 0.2 || ['slow-2g'].includes(connection.effectiveType);
         if (isWeak) {
-          console.log('[OfflineSync] Connection detected as weak, enabling offline mode behavior');
-          // We don't force isOnline to false here to allow sync attempts, 
-          // but components can use this logic to decide whether to use offline storage
+          console.log('[OfflineSync] Connection detected as weak (Low Bandwidth Mode)');
         }
       }
       
-      setState(prev => ({ ...prev, isOnline: isEffectivelyOnline }));
+      setState(prev => ({ 
+        ...prev, 
+        isOnline: isEffectivelyOnline,
+        isWeakConnection: isWeak
+      }));
     };
 
     window.addEventListener('online', checkConnection);
@@ -66,6 +73,9 @@ export function useOfflineSync(userId?: number) {
     if ((navigator as any).connection) {
       (navigator as any).connection.addEventListener('change', checkConnection);
     }
+
+    // Initial check
+    checkConnection();
 
     return () => {
       window.removeEventListener('online', checkConnection);

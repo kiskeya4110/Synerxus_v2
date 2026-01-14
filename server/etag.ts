@@ -15,13 +15,19 @@ import type { Request, Response, NextFunction } from 'express';
  * Generate a weak ETag from response body
  * Uses MD5 hash truncated to 16 chars for speed
  */
-export function generateETag(body: string | Buffer | object): string {
+export function generateETag(body: any): string {
   if (body === undefined || body === null) {
     return `W/"${createHash('md5').update('').digest('hex').slice(0, 16)}"`;
   }
-  const content = typeof body === 'object' ? JSON.stringify(body) : body;
-  const hash = createHash('md5').update(content).digest('hex').slice(0, 16);
-  return `W/"${hash}"`;
+  
+  try {
+    const content = typeof body === 'object' ? JSON.stringify(body) : String(body);
+    const hash = createHash('md5').update(content).digest('hex').slice(0, 16);
+    return `W/"${hash}"`;
+  } catch (err) {
+    console.error('[ETag] Error generating ETag:', err);
+    return `W/"error-${Date.now().toString(16)}"`;
+  }
 }
 
 /**

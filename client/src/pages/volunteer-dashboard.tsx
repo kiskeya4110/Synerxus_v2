@@ -677,8 +677,9 @@ export default function Dashboard() {
     // Get skills count - use skillsCount from summary, fallback to volunteerProfile.skills.length
     const skillsCount = dashboardData?.skillsCount ?? dashboardData?.volunteerProfile?.skills?.length ?? 0;
 
-    // When "all" is selected or no filter, use backend KPIs directly
-    if (selectedProject === "all") {
+    // When "all" projects AND "all" time filter is selected, use backend KPIs directly
+    // Otherwise, calculate from filtered data to respect time/project filters
+    if (selectedProject === "all" && timeFilter === "all") {
       // Use totalProjects (all assigned) for volunteer dashboard, not just activeProjects
       // This gives volunteers visibility into all their project involvement
       const projectCount = dashboardData?.totalProjects ?? dashboardData?.activeProjects ?? 0;
@@ -706,7 +707,7 @@ export default function Dashboard() {
       };
     }
 
-    // When a specific project is filtered, calculate filtered KPIs
+    // When project filter OR time filter is active, calculate filtered KPIs from filteredData
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
     // Calculate verified hours from filtered activities
     const filteredVerifiedHours = filteredData.activities
@@ -723,12 +724,39 @@ export default function Dashboard() {
     const uniqueSDGsArray = extractSdgsFromProjects(filteredData.projects);
     const uniqueSDGs = new Set(uniqueSDGsArray);
 
-    // Filter AIU projects by selected project
-    const selectedProjectId = parseInt(selectedProject);
-    const filteredAiuProjects = (aiuSummary?.projects ?? []).filter(
-      (p: any) => p.projectId === selectedProjectId
-    );
+    // Filter AIU projects by selected project if specific project selected
+    let filteredAiuProjects = aiuSummary?.projects ?? [];
+    if (selectedProject !== "all") {
+      const selectedProjectId = parseInt(selectedProject);
+      filteredAiuProjects = filteredAiuProjects.filter(
+        (p: any) => p.projectId === selectedProjectId
+      );
+    }
     const filteredAiu = filteredAiuProjects.reduce((sum: number, p: any) => sum + (p.aiu || 0), 0);
+
+    // Calculate filtered impacts (people impacted) from filtered impacts data
+    const filteredPeopleImpacted = filteredData.impacts.reduce((sum: number, impact: any) => {
+      // Apply verification weighting: verified = 100%, pending = 70%
+      const status = impact.verificationStatus?.toLowerCase();
+      const multiplier = (status === 'verified' || status === 'approved') ? 1.0 : 0.7;
+      return sum + Math.round((impact.value || 0) * multiplier);
+    }, 0);
+
+    // Calculate AIU based on filtered data when time filter is active
+    // AIU formula: hours-based (0.5 AIU per hour) when we can't use the detailed AIU service
+    let calculatedAiu = filteredAiu;
+    if (timeFilter !== 'all' && filteredHours > 0) {
+      // When time filter is active, calculate AIU proportionally from filtered hours
+      // Use ratio: (filtered hours / total hours) * total AIU
+      const totalAiu = aiuSummary?.totalAiu ?? dashboardData?.totalAiuEarned ?? 0;
+      const totalHours = aiuSummary?.totalHours ?? dashboardData?.totalHours ?? 0;
+      if (totalHours > 0 && totalAiu > 0) {
+        calculatedAiu = Math.round((filteredHours / totalHours) * totalAiu * 100) / 100;
+      } else {
+        // Fallback: approximate AIU from hours (0.5 AIU per hour is reasonable estimate)
+        calculatedAiu = Math.round(filteredHours * 0.5 * 100) / 100;
+      }
+    }
 
     return {
       volunteers: dashboardData?.activeVolunteers || 0,
@@ -741,13 +769,13 @@ export default function Dashboard() {
       sdgs: uniqueSDGs.size,
       impactScore: dashboardData?.impactScore || 0,
       skills: skillsCount,
-      livesTouched: dashboardData?.totalPeopleImpacted || 0,
-      // For organizations, use server-calculated totalAiuEarned; for volunteers, use filtered AIU
-      aiuEarned: dashboardData?.totalAiuEarned ?? filteredAiu ?? 0,
+      livesTouched: filteredPeopleImpacted,
+      // Use filtered AIU when project or time filter is active
+      aiuEarned: calculatedAiu,
       aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
       aiuProjects: filteredAiuProjects,
     };
-  }, [dashboardData, filteredData, selectedProject, aiuSummary]);
+  }, [dashboardData, filteredData, selectedProject, timeFilter, aiuSummary]);
 
   // Calculate Impact Streak data
   const impactStreakData = useMemo(() => {

@@ -4779,8 +4779,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not an organization" });
       }
       
-      const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
-      console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name });
+      const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail, city, country } = req.body;
+      console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country });
       
       // Create organization if it doesn't exist
       if (!user.organizationId && name) {
@@ -4817,7 +4817,9 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         if (sdgFocus !== undefined) orgUpdates.primarySdgs = sdgFocus;
         if (needs !== undefined) orgUpdates.needs = needs;
         if (mission !== undefined) orgUpdates.goals = mission;
-        
+        if (city !== undefined) orgUpdates.city = city;
+        if (country !== undefined) orgUpdates.country = country;
+
         console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
         
         if (Object.keys(orgUpdates).length > 0) {
@@ -4839,7 +4841,9 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
             if (needs !== undefined) matchableOrgUpdates.needs = needs;
             if (sdgFocus !== undefined) matchableOrgUpdates.sdgFocus = sdgFocus;
             if (location !== undefined) matchableOrgUpdates.location = location;
-            
+            if (city !== undefined) matchableOrgUpdates.city = city;
+            if (country !== undefined) matchableOrgUpdates.country = country;
+
             await storage.updateMatchableOrganization(existingOrg.id, matchableOrgUpdates);
           } else {
             // Create new matchable organization if it doesn't exist
@@ -9271,11 +9275,38 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Process organizations
       const organizationLocations = allOrganizations
         .map((org: any) => {
-          const coords = geocodeLocation(org.address);
+          // Try address first, then city/country combination, then city alone, then country alone
+          let coords = geocodeLocation(org.address);
+          let locationDisplay = org.address;
+
+          if (!coords || (coords.lat === 0 && coords.lng === 0)) {
+            // Try city + country combination
+            if (org.city && org.country) {
+              coords = geocodeLocation(`${org.city}, ${org.country}`);
+              locationDisplay = `${org.city}, ${org.country}`;
+            }
+          }
+
+          if (!coords || (coords.lat === 0 && coords.lng === 0)) {
+            // Try city alone
+            if (org.city) {
+              coords = geocodeLocation(org.city);
+              locationDisplay = org.city;
+            }
+          }
+
+          if (!coords || (coords.lat === 0 && coords.lng === 0)) {
+            // Try country alone
+            if (org.country) {
+              coords = geocodeLocation(org.country);
+              locationDisplay = org.country;
+            }
+          }
+
           if (!coords || (coords.lat === 0 && coords.lng === 0)) return null;
           return {
             id: org.id, name: org.name, type: 'organization',
-            location: org.address, lat: coords.lat, lng: coords.lng,
+            location: locationDisplay, lat: coords.lat, lng: coords.lng,
             status: org.approvalStatus || 'pending', logo: org.logo
           };
         })

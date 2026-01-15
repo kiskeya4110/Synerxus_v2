@@ -141,7 +141,7 @@ usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
 // Apply strict rate limiting to prevent enumeration attacks
 usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { firebaseUid, email, displayName, userType, organizationName, invitationCode } = req.body;
+    const { firebaseUid, email, displayName, userType, organizationName, invitationCode, dataConsent, dataConsentDate } = req.body;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
@@ -211,7 +211,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     const effectiveDisplayName = displayName ||
       ((userType === 'organization' || userType === 'corporate-partner') && organizationName ? organizationName : email.split('@')[0]);
 
-    const userData = {
+    const userData: any = {
       firebaseUid,
       username,
       email,
@@ -219,6 +219,12 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       userType,
       organizationId,
     };
+
+    // Add privacy consent if provided (required for new registrations)
+    if (dataConsent !== undefined) {
+      userData.dataConsent = dataConsent === true;
+      userData.dataConsentDate = dataConsent === true ? (dataConsentDate ? new Date(dataConsentDate) : new Date()) : null;
+    }
 
     user = await storage.createUser(userData);
 

@@ -465,66 +465,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users/firebase-sync", async (req, res) => {
-    try {
-      const { firebaseUid, email, displayName, userType, dataConsent, dataConsentDate } = req.body;
-
-      if (!firebaseUid || !email) {
-        return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
-      }
-
-      // Check if user already exists by Firebase UID
-      let user = await storage.getUserByFirebaseUid(firebaseUid);
-
-      if (user) {
-        // User exists with this Firebase UID, return it (login case)
-        return res.json({ ...user, isNewUser: false });
-      }
-
-      // Check if user exists by email (re-linking case for migrated users)
-      user = await storage.getUserByEmail(email);
-
-      if (user) {
-        // User exists in database but needs Firebase UID updated (migration case)
-        const updatedUser = await storage.updateUser(user.id, {
-          firebaseUid,
-          displayName: displayName || user.displayName
-        });
-        console.log(`Re-linked existing user ${email} to new Firebase account`);
-        return res.json({ ...updatedUser, isNewUser: false });
-      }
-
-      // User doesn't exist at all, create new one (registration case)
-      if (!userType) {
-        return res.status(400).json({ message: "userType is required for new user registration" });
-      }
-
-      const username = email.split('@')[0] + '_' + Date.now();
-      const userData: any = {
-        firebaseUid,
-        username,
-        email,
-        displayName: displayName || email.split('@')[0],
-        userType,
-      };
-
-      // Add privacy consent if provided (required for new registrations)
-      if (dataConsent !== undefined) {
-        userData.dataConsent = dataConsent === true;
-        userData.dataConsentDate = dataConsent === true ? (dataConsentDate ? new Date(dataConsentDate) : new Date()) : null;
-        console.log(`[Consent] New user ${email} consent: ${dataConsent} at registration`);
-      }
-
-      user = await storage.createUser(userData);
-      broadcastUpdate("user_created", user);
-      // New user - return with isNewUser: true
-      res.status(201).json({ ...user, isNewUser: true });
-    } catch (err) {
-      console.error("Error syncing Firebase user:", err);
-      const error = handleValidationError(err);
-      res.status(error.status).json({ message: error.message });
-    }
-  });
+  // NOTE: /api/users/firebase-sync is handled by usersRouter (routes/users.router.ts)
+  // with rate limiting, invitation code validation, and privacy consent support
 
   app.post("/api/users", async (req, res) => {
     try {

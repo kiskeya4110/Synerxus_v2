@@ -300,11 +300,15 @@ export function securityHeaders(
 
   // Content Security Policy - Strengthened to reduce XSS attack surface
   // Note: 'unsafe-inline' for styles is kept for React's CSS-in-JS compatibility
-  // 'unsafe-eval' removed to prevent dynamic code execution attacks
+  // In development, 'unsafe-inline' and 'unsafe-eval' are needed for Vite HMR
+  const isDev = process.env.NODE_ENV !== "production";
+  
   const cspDirectives = [
     "default-src 'self'",
-    // Scripts: Remove unsafe-eval, keep trusted CDN sources
-    "script-src 'self' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com",
+    // Scripts: In dev, allow inline scripts for Vite HMR; in prod, only trusted sources
+    isDev 
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com"
+      : "script-src 'self' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com",
     // Styles: unsafe-inline needed for CSS-in-JS (React/Emotion/styled-components)
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Images: Allow data URIs for inline images and any HTTPS source
@@ -319,8 +323,8 @@ export function securityHeaders(
     "form-action 'self'",
     // Restrict base URI to prevent base tag hijacking
     "base-uri 'self'",
-    // Upgrade HTTP requests to HTTPS
-    "upgrade-insecure-requests",
+    // Upgrade HTTP requests to HTTPS (only in production)
+    ...(isDev ? [] : ["upgrade-insecure-requests"]),
   ].join("; ");
 
   res.setHeader("Content-Security-Policy", cspDirectives);

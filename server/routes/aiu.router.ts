@@ -142,7 +142,10 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
       } else if (timePeriodParam === '90d') {
         filters.startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       } else if (timePeriodParam === '1y') {
-        filters.startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+        const previousYear = new Date().getFullYear() - 1;
+        filters.startDate = new Date(previousYear, 0, 1);
+        filters.endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
       }
     } else if (startDateParam || endDateParam) {
       // Use explicit date range if provided

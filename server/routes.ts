@@ -3927,7 +3927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Apply time period filter for activities/impacts
       let startDate = new Date(0);
-      const endDate = new Date();
+      let endDate = new Date();
       if (timePeriod === '7d') {
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       } else if (timePeriod === '30d') {
@@ -3935,7 +3935,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (timePeriod === '90d') {
         startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
       } else if (timePeriod === '1y') {
-        startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+        const previousYear = new Date().getFullYear() - 1;
+        startDate = new Date(previousYear, 0, 1); // Jan 1 of previous year
+        endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999); // Dec 31 of previous year
       }
 
       // Fetch data using efficient batch queries (only for this organization's projects)
@@ -3947,22 +3950,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.listImpactMetrics(),
       ]);
 
-      // Apply time filter to tasks, activities and impacts
-      const organizationTasks = timePeriod && timePeriod !== 'all'
+      // Apply time filter to tasks, activities and impacts (only if time period specified)
+      const shouldFilterByTime = timePeriod && timePeriod !== 'all';
+
+      const organizationTasks = shouldFilterByTime
         ? allTasks.filter(t => {
-            // Filter tasks by dueDate or createdAt
             const taskDate = new Date(t.dueDate || t.createdAt);
             return taskDate >= startDate && taskDate <= endDate;
           })
         : allTasks;
-      const organizationActivities = allActivities.filter(a => {
-        const activityDate = new Date(a.date);
-        return activityDate >= startDate && activityDate <= endDate;
-      });
-      const organizationImpacts = allImpacts.filter(i => {
-        const impactDate = new Date(i.date || i.createdAt);
-        return impactDate >= startDate && impactDate <= endDate;
-      });
+
+      const organizationActivities = shouldFilterByTime
+        ? allActivities.filter(a => {
+            const activityDate = new Date(a.date);
+            return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
+          })
+        : allActivities;
+
+      const organizationImpacts = shouldFilterByTime
+        ? allImpacts.filter(i => {
+            const impactDate = new Date(i.date || i.createdAt);
+            return !isNaN(impactDate.getTime()) && impactDate >= startDate && impactDate <= endDate;
+          })
+        : allImpacts;
 
       // Get volunteers using efficient batch query
       const volunteerIds = Array.from(new Set(organizationAssignments.map(pa => pa.volunteerId)));
@@ -4010,9 +4020,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate AIU earned using the proper aiu-service
       // This aggregates all volunteer AIUs from all projects (org AIU >= sum of volunteer AIUs)
+      // Pass time filter to ensure AIUs are calculated for the selected period
       let aiuEarned = 0;
       try {
-        const orgAiuSummary = await calculateOrganizationAIU(organizationId);
+        const aiuFilters = shouldFilterByTime ? { startDate, endDate } : undefined;
+        const orgAiuSummary = await calculateOrganizationAIU(organizationId, aiuFilters);
         if (orgAiuSummary && orgAiuSummary.totalAiu > 0) {
           aiuEarned = orgAiuSummary.totalAiu;
         }
@@ -4098,15 +4110,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
       ].slice(0, 10);
 
-      // Impact Over Time (last 12 months)
-      const last12Months: string[] = [];
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        last12Months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      // Impact Over Time - generate months based on time period filter
+      const generateMonthsInRange = (trendStartDate: Date, trendEndDate: Date): string[] => {
+        const months: string[] = [];
+        const current = new Date(trendStartDate);
+        current.setDate(1); // Start from first day of month
+
+        while (current <= trendEndDate) {
+          months.push(`${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`);
+          current.setMonth(current.getMonth() + 1);
+        }
+        return months;
+      };
+
+      // Determine date range based on time period filter
+      let trendStartDate: Date;
+      let trendEndDate = new Date();
+
+      if (timePeriod === '7d') {
+        trendStartDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '30d') {
+        trendStartDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '90d') {
+        trendStartDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '1y') {
+        // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+        const previousYear = new Date().getFullYear() - 1;
+        trendStartDate = new Date(previousYear, 0, 1);
+        trendEndDate = new Date(previousYear, 11, 31);
+      } else {
+        // For 'all', show last 12 months
+        trendStartDate = new Date();
+        trendStartDate.setMonth(trendStartDate.getMonth() - 11);
       }
 
-      const impactOverTime = last12Months.map(monthKey => {
+      const monthsInRange = generateMonthsInRange(trendStartDate, trendEndDate);
+
+      const impactOverTime = monthsInRange.map(monthKey => {
         const monthActivities = organizationActivities.filter(a => {
           const activityDate = new Date(a.date);
           const activityMonth = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
@@ -4117,7 +4157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const impactMonth = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
           return impactMonth === monthKey;
         });
-        
+
         return {
           month: monthKey,
           hours: monthActivities.reduce((sum, a) => sum + a.hours, 0),
@@ -6516,7 +6556,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Parse date range for filtering - supports both timePeriod and explicit dates
       let shouldFilterByDate = !!startDateStr || !!endDateStr || (!!timePeriod && timePeriod !== 'all');
       let startDate = new Date(0);
-      const endDate = endDateStr ? new Date(endDateStr) : new Date();
+      let endDate = endDateStr ? new Date(endDateStr) : new Date();
 
       // Handle timePeriod parameter (e.g., '30d', '90d', '1y')
       if (timePeriod && timePeriod !== 'all') {
@@ -6527,7 +6567,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         } else if (timePeriod === '90d') {
           startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '1y') {
-          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+          // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+          const previousYear = new Date().getFullYear() - 1;
+          startDate = new Date(previousYear, 0, 1);
+          endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
         }
       } else if (startDateStr) {
         startDate = new Date(startDateStr);
@@ -6589,8 +6632,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Apply date filtering to employee activities (only if dates provided)
       const filteredEmployeeActivities = shouldFilterByDate
         ? allEmployeeActivities.filter((a: any) => {
-            const activityDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
-            return activityDate >= startDate && activityDate <= endDate;
+            const activityDate = new Date(a.date || a.createdAt);
+            return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
           })
         : allEmployeeActivities;
 
@@ -6998,6 +7041,63 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
 
+      // Calculate monthly trend data from actual employee activities
+      // Group activities by month to show real engagement trends
+      const monthlyTrendMap: Record<string, { hours: number; employees: Set<number> }> = {};
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Determine the date range for trend based on filter
+      let trendStartDate: Date;
+      let trendEndDate = new Date();
+
+      if (timePeriod === '30d') {
+        trendStartDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '90d') {
+        trendStartDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '1y') {
+        // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+        const previousYear = new Date().getFullYear() - 1;
+        trendStartDate = new Date(previousYear, 0, 1);
+        trendEndDate = new Date(previousYear, 11, 31);
+      } else {
+        // For 'all' or unspecified, show last 12 months
+        trendStartDate = new Date();
+        trendStartDate.setMonth(trendStartDate.getMonth() - 11);
+        trendStartDate.setDate(1);
+      }
+
+      // Initialize months with zero values
+      const currentDate = new Date(trendStartDate);
+      while (currentDate <= trendEndDate) {
+        const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+        monthlyTrendMap[monthKey] = { hours: 0, employees: new Set() };
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+
+      // Aggregate activity data by month
+      filteredEmployeeActivities.forEach((activity: any) => {
+        const activityDate = activity.date ? new Date(activity.date) : activity.createdAt ? new Date(activity.createdAt) : null;
+        if (activityDate && activityDate >= trendStartDate && activityDate <= trendEndDate) {
+          const monthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
+          if (monthlyTrendMap[monthKey]) {
+            monthlyTrendMap[monthKey].hours += activity.hours || 0;
+            monthlyTrendMap[monthKey].employees.add(activity.userId);
+          }
+        }
+      });
+
+      // Convert to array format for frontend
+      const monthlyTrend = Object.entries(monthlyTrendMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([monthKey, data]) => {
+          const [year, month] = monthKey.split('-');
+          return {
+            month: `${monthNames[parseInt(month) - 1]} ${year.slice(2)}`,
+            hours: Math.round(data.hours),
+            employees: data.employees.size
+          };
+        });
+
       res.json({
         totalPartners,
         activeEmployees,
@@ -7011,6 +7111,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         logoUrl: userPartner.logoUrl,
         sdgProgress,
         projectLocations,
+        monthlyTrend,
         partners: [{
           id: userPartner.id,
           companyName: userPartner.companyName,
@@ -7131,6 +7232,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Apply time filter if specified
       if (timePeriod && timePeriod !== 'all') {
         let startDate = new Date(0);
+        let endDate = new Date();
         if (timePeriod === '7d') {
           startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '30d') {
@@ -7138,11 +7240,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         } else if (timePeriod === '90d') {
           startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '1y') {
-          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+          // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+          const previousYear = new Date().getFullYear() - 1;
+          startDate = new Date(previousYear, 0, 1);
+          endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
         }
         volunteerActivities = volunteerActivities.filter((a: any) => {
           const activityDate = new Date(a.date || a.createdAt);
-          return activityDate >= startDate;
+          return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
         });
       }
 
@@ -7213,6 +7318,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Apply time filter if specified
       if (timePeriod && timePeriod !== 'all') {
         let startDate = new Date(0);
+        let endDate = new Date();
         if (timePeriod === '7d') {
           startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '30d') {
@@ -7220,11 +7326,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         } else if (timePeriod === '90d') {
           startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '1y') {
-          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+          // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+          const previousYear = new Date().getFullYear() - 1;
+          startDate = new Date(previousYear, 0, 1);
+          endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
         }
         volunteerActivities = volunteerActivities.filter((a: any) => {
           const activityDate = new Date(a.date || a.createdAt);
-          return activityDate >= startDate;
+          return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
         });
       }
 
@@ -7307,6 +7416,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Apply time filter if specified
       if (timePeriod && timePeriod !== 'all') {
         let startDate = new Date(0);
+        let endDate = new Date();
         if (timePeriod === '7d') {
           startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '30d') {
@@ -7314,11 +7424,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         } else if (timePeriod === '90d') {
           startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
         } else if (timePeriod === '1y') {
-          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+          // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+          const previousYear = new Date().getFullYear() - 1;
+          startDate = new Date(previousYear, 0, 1);
+          endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
         }
         volunteerActivities = volunteerActivities.filter((a: any) => {
           const activityDate = new Date(a.date || a.createdAt);
-          return activityDate >= startDate;
+          return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
         });
       }
 

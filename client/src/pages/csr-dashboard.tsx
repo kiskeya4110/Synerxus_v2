@@ -453,6 +453,11 @@ interface CSRDashboardData {
       challengesCompleted: number;
     };
   };
+  monthlyTrend?: Array<{
+    month: string;
+    hours: number;
+    employees: number;
+  }>;
 }
 
 export default function CSRDashboard() {
@@ -1145,15 +1150,15 @@ export default function CSRDashboard() {
     color: getSDGColor(metric.sdg),
   })), [displaySDGMetrics]);
 
-  // Memoize trend data
-  const mobileTrendData = useMemo(() => [
-    { month: 'Jan', hours: Math.round(displayTotalHours * 0.1), employees: Math.round(displayActiveEmployees * 0.3) },
-    { month: 'Feb', hours: Math.round(displayTotalHours * 0.2), employees: Math.round(displayActiveEmployees * 0.4) },
-    { month: 'Mar', hours: Math.round(displayTotalHours * 0.35), employees: Math.round(displayActiveEmployees * 0.5) },
-    { month: 'Apr', hours: Math.round(displayTotalHours * 0.5), employees: Math.round(displayActiveEmployees * 0.6) },
-    { month: 'May', hours: Math.round(displayTotalHours * 0.7), employees: Math.round(displayActiveEmployees * 0.8) },
-    { month: 'Jun', hours: displayTotalHours, employees: displayActiveEmployees },
-  ], [displayTotalHours, displayActiveEmployees]);
+  // Memoize trend data - use real data from backend, filtered by time period
+  const mobileTrendData = useMemo(() => {
+    // Use actual monthly trend data from backend if available
+    if (csrData?.monthlyTrend && csrData.monthlyTrend.length > 0) {
+      return csrData.monthlyTrend;
+    }
+    // Fallback to empty array if no trend data (shows empty chart instead of fake data)
+    return [];
+  }, [csrData?.monthlyTrend]);
 
   // ===== EARLY RETURNS (after all hooks) =====
 

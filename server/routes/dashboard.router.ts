@@ -99,7 +99,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
 
     // Apply time period filter for activities/impacts
     let startDate = new Date(0);
-    const endDate = new Date();
+    let endDate = new Date();
     if (timePeriod === '7d') {
       startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     } else if (timePeriod === '30d') {
@@ -107,7 +107,10 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
     } else if (timePeriod === '90d') {
       startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     } else if (timePeriod === '1y') {
-      startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+      // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+      const previousYear = new Date().getFullYear() - 1;
+      startDate = new Date(previousYear, 0, 1);
+      endDate = new Date(previousYear, 11, 31, 23, 59, 59, 999);
     }
 
     // Fetch data using efficient batch queries (only for this organization's projects)
@@ -119,22 +122,29 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       storage.listImpactMetrics(), // Impact metrics are static/cached, OK to fetch all
     ]);
 
-    // Apply time filter to tasks, activities and impacts (light in-memory filter on already-filtered data)
-    const organizationTasks = timePeriod && timePeriod !== 'all'
+    // Apply time filter to tasks, activities and impacts (only if time period specified)
+    const shouldFilterByTime = timePeriod && timePeriod !== 'all';
+
+    const organizationTasks = shouldFilterByTime
       ? allTasks.filter(t => {
-          // Filter tasks by dueDate or createdAt
           const taskDate = new Date(t.dueDate || t.createdAt);
           return taskDate >= startDate && taskDate <= endDate;
         })
       : allTasks;
-    const organizationActivities = allActivities.filter(a => {
-      const activityDate = new Date(a.date);
-      return activityDate >= startDate && activityDate <= endDate;
-    });
-    const organizationImpacts = allImpacts.filter(i => {
-      const impactDate = new Date(i.date || i.createdAt);
-      return impactDate >= startDate && impactDate <= endDate;
-    });
+
+    const organizationActivities = shouldFilterByTime
+      ? allActivities.filter(a => {
+          const activityDate = new Date(a.date);
+          return !isNaN(activityDate.getTime()) && activityDate >= startDate && activityDate <= endDate;
+        })
+      : allActivities;
+
+    const organizationImpacts = shouldFilterByTime
+      ? allImpacts.filter(i => {
+          const impactDate = new Date(i.date || i.createdAt);
+          return !isNaN(impactDate.getTime()) && impactDate >= startDate && impactDate <= endDate;
+        })
+      : allImpacts;
 
     // Get volunteers using efficient batch query
     const volunteerIds = Array.from(new Set(organizationAssignments.map(pa => pa.volunteerId)));
@@ -269,15 +279,43 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       })),
     ].slice(0, 10);
 
-    // Impact Over Time (last 12 months)
-    const last12Months: string[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      last12Months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    // Impact Over Time - generate months based on time period filter
+    const generateMonthsInRange = (trendStartDate: Date, trendEndDate: Date): string[] => {
+      const months: string[] = [];
+      const current = new Date(trendStartDate);
+      current.setDate(1); // Start from first day of month
+
+      while (current <= trendEndDate) {
+        months.push(`${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`);
+        current.setMonth(current.getMonth() + 1);
+      }
+      return months;
+    };
+
+    // Determine date range based on time period filter
+    let trendStartDate: Date;
+    let trendEndDate = new Date();
+
+    if (timePeriod === '7d') {
+      trendStartDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    } else if (timePeriod === '30d') {
+      trendStartDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    } else if (timePeriod === '90d') {
+      trendStartDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    } else if (timePeriod === '1y') {
+      // "Last year" means the previous calendar year (Jan 1 - Dec 31)
+      const previousYear = new Date().getFullYear() - 1;
+      trendStartDate = new Date(previousYear, 0, 1);
+      trendEndDate = new Date(previousYear, 11, 31);
+    } else {
+      // For 'all', show last 12 months
+      trendStartDate = new Date();
+      trendStartDate.setMonth(trendStartDate.getMonth() - 11);
     }
 
-    const impactOverTime = last12Months.map(monthKey => {
+    const monthsInRange = generateMonthsInRange(trendStartDate, trendEndDate);
+
+    const impactOverTime = monthsInRange.map(monthKey => {
       const monthActivities = organizationActivities.filter(a => {
         const activityDate = new Date(a.date);
         const activityMonth = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;

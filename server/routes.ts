@@ -42,7 +42,7 @@ import { calculateMatchScore, calculateMatchScoreAsync, findTopMatches, findTopV
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization, getVisibleProjectIdsForVolunteer } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
-import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
+import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange, setNotificationBroadcast } from "./notification-service";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest, sendInvitationEmail } from "./email-digest-service";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import OpenAI from "openai";
@@ -357,6 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setProjectAssignmentsBroadcast(broadcastUpdate);
   setActivitiesBroadcast(broadcastUpdate);
   setStoriesBroadcast(broadcastUpdate);
+  setNotificationBroadcast(broadcastUpdate);
 
   // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
   // Phases 1-6 routers: mounted at resource-specific paths

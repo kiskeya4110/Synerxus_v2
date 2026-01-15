@@ -2,6 +2,25 @@ import { storage } from "./storage";
 import type { InsertNotification } from "@shared/schema";
 import nodemailer from "nodemailer";
 
+type BroadcastFn = (type: string, data: any) => void;
+let broadcastNotification: BroadcastFn = () => {};
+
+export function setNotificationBroadcast(fn: BroadcastFn) {
+  broadcastNotification = fn;
+}
+
+async function broadcastToUser(userId: number, notification: InsertNotification) {
+  try {
+    broadcastNotification("notification", {
+      ...notification,
+      targetUserId: userId,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error broadcasting notification:", error);
+  }
+}
+
 // Email configuration for instant notifications
 const EMAIL_CONFIG = {
   provider: process.env.EMAIL_PROVIDER || (process.env.SMTP_USER ? "smtp" : "mock"),
@@ -71,6 +90,7 @@ export async function notifyProjectUpdate(
     };
 
     await storage.createNotification(notification);
+    await broadcastToUser(userId, notification);
   } catch (error) {
     console.error("Error creating project update notification:", error);
   }
@@ -102,6 +122,7 @@ export async function notifyNewAssignment(
     };
 
     await storage.createNotification(notification);
+    await broadcastToUser(volunteerId, notification);
   } catch (error) {
     console.error("Error creating assignment notification:", error);
   }
@@ -148,8 +169,39 @@ export async function notifyApplicationStatusChange(
     };
 
     await storage.createNotification(notification);
+    await broadcastToUser(volunteerId, notification);
   } catch (error) {
     console.error("Error creating application status notification:", error);
+  }
+}
+
+export async function broadcastCriticalUpdate(
+  message: string,
+  targetUserIds?: number[]
+): Promise<void> {
+  try {
+    if (targetUserIds && targetUserIds.length > 0) {
+      for (const userId of targetUserIds) {
+        const notification: InsertNotification = {
+          userId,
+          type: "system_alert",
+          title: "Critical Update",
+          message,
+          read: false,
+        };
+        await storage.createNotification(notification);
+        await broadcastToUser(userId, notification);
+      }
+    } else {
+      broadcastNotification("critical_update", {
+        type: "critical_update",
+        title: "Critical Update",
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (error) {
+    console.error("Error broadcasting critical update:", error);
   }
 }
 
@@ -181,6 +233,7 @@ export async function notifyTaskAssigned(
     }
 
     await storage.createNotification(notification);
+    await broadcastToUser(volunteerId, notification);
   } catch (error) {
     console.error("Error creating task assignment notification:", error);
   }

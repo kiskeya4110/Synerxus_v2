@@ -315,10 +315,28 @@ export default function Dashboard() {
     enabled: !!userId && currentUser?.userType === 'organization'
   });
 
-  // Filter data based on selected project
+  // Helper function to get start date based on time filter
+  const getTimeFilterStartDate = (filter: 'all' | 'month' | 'quarter' | 'year'): Date | null => {
+    if (filter === 'all') return null;
+    const now = new Date();
+    switch (filter) {
+      case 'month':
+        return new Date(now.getFullYear(), now.getMonth(), 1);
+      case 'quarter':
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        return new Date(now.getFullYear(), quarterMonth, 1);
+      case 'year':
+        return new Date(now.getFullYear(), 0, 1);
+      default:
+        return null;
+    }
+  };
+
+  // Filter data based on selected project AND time filter
   // Use dashboardData for both volunteers and organizations (it contains everything scoped to user)
   const filteredData = useMemo(() => {
     const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
+    const startDate = getTimeFilterStartDate(timeFilter);
 
     // Use dashboardData for all users - it contains properly scoped data from backend
     const sourceProjects = dashboardData?.projects || [];
@@ -326,24 +344,53 @@ export default function Dashboard() {
     const sourceActivities = dashboardData?.activities || [];
     const sourceImpacts = dashboardData?.impacts || [];
 
-    const filteredProjects = projectId 
+    // Helper to check if a date is within the time filter range
+    const isWithinTimeRange = (dateStr: string | Date | null | undefined): boolean => {
+      if (!startDate) return true; // 'all' filter
+      if (!dateStr) return false;
+      const date = new Date(dateStr);
+      return date >= startDate;
+    };
+
+    const filteredProjects = projectId
       ? sourceProjects.filter((p: any) => p.id === projectId)
       : sourceProjects;
 
-    const filteredTasks = projectId
+    let filteredTasks = projectId
       ? sourceTasks.filter((t: any) => t.projectId === projectId)
       : sourceTasks;
 
-    const filteredActivities = projectId
+    // Apply time filter to tasks
+    if (startDate) {
+      filteredTasks = filteredTasks.filter((t: any) =>
+        isWithinTimeRange(t.dueDate) || isWithinTimeRange(t.createdAt)
+      );
+    }
+
+    let filteredActivities = projectId
       ? sourceActivities.filter((a: any) => a.projectId === projectId)
       : sourceActivities;
 
-    const filteredImpacts = projectId
+    // Apply time filter to activities
+    if (startDate) {
+      filteredActivities = filteredActivities.filter((a: any) =>
+        isWithinTimeRange(a.date) || isWithinTimeRange(a.createdAt)
+      );
+    }
+
+    let filteredImpacts = projectId
       ? sourceImpacts.filter((i: any) => {
           const project = sourceProjects.find((p: any) => p.id === i.projectId);
           return project && project.id === projectId;
         })
       : sourceImpacts;
+
+    // Apply time filter to impacts
+    if (startDate) {
+      filteredImpacts = filteredImpacts.filter((i: any) =>
+        isWithinTimeRange(i.date) || isWithinTimeRange(i.createdAt)
+      );
+    }
 
     return {
       projects: filteredProjects,
@@ -352,7 +399,7 @@ export default function Dashboard() {
       impacts: filteredImpacts,
       applications: dashboardData?.applications || [], // Add applications to filteredData
     };
-  }, [selectedProject, dashboardData]);
+  }, [selectedProject, dashboardData, timeFilter]);
 
   // Enrich projects with SDG data from multiple sources for SDGChart
   // Ensures SDG chart has data even when project sdgGoals are not set

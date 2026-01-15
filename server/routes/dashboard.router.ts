@@ -119,14 +119,20 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       storage.listImpactMetrics(), // Impact metrics are static/cached, OK to fetch all
     ]);
 
-    // Apply time filter to activities and impacts (light in-memory filter on already-filtered data)
-    const organizationTasks = allTasks;
+    // Apply time filter to tasks, activities and impacts (light in-memory filter on already-filtered data)
+    const organizationTasks = timePeriod && timePeriod !== 'all'
+      ? allTasks.filter(t => {
+          // Filter tasks by dueDate or createdAt
+          const taskDate = new Date(t.dueDate || t.createdAt);
+          return taskDate >= startDate && taskDate <= endDate;
+        })
+      : allTasks;
     const organizationActivities = allActivities.filter(a => {
       const activityDate = new Date(a.date);
       return activityDate >= startDate && activityDate <= endDate;
     });
     const organizationImpacts = allImpacts.filter(i => {
-      const impactDate = new Date(i.date);
+      const impactDate = new Date(i.date || i.createdAt);
       return impactDate >= startDate && impactDate <= endDate;
     });
 

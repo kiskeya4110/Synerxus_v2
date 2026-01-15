@@ -3947,14 +3947,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.listImpactMetrics(),
       ]);
 
-      // Apply time filter to activities and impacts
-      const organizationTasks = allTasks;
+      // Apply time filter to tasks, activities and impacts
+      const organizationTasks = timePeriod && timePeriod !== 'all'
+        ? allTasks.filter(t => {
+            // Filter tasks by dueDate or createdAt
+            const taskDate = new Date(t.dueDate || t.createdAt);
+            return taskDate >= startDate && taskDate <= endDate;
+          })
+        : allTasks;
       const organizationActivities = allActivities.filter(a => {
         const activityDate = new Date(a.date);
         return activityDate >= startDate && activityDate <= endDate;
       });
       const organizationImpacts = allImpacts.filter(i => {
-        const impactDate = new Date(i.date);
+        const impactDate = new Date(i.date || i.createdAt);
         return impactDate >= startDate && impactDate <= endDate;
       });
 
@@ -6453,7 +6459,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const userId = req.query.userId as string;
       const startDateStr = req.query.startDate as string;
       const endDateStr = req.query.endDate as string;
-      
+      const timePeriod = req.query.timePeriod as string;
+
       if (!userId) {
         return res.status(400).json({ error: "userId required" });
       }
@@ -6506,10 +6513,25 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         });
       }
 
-      // Parse date range for filtering (only apply if dates are provided)
-      const shouldFilterByDate = !!startDateStr || !!endDateStr;
-      const startDate = startDateStr ? new Date(startDateStr) : new Date(0);
+      // Parse date range for filtering - supports both timePeriod and explicit dates
+      let shouldFilterByDate = !!startDateStr || !!endDateStr || (!!timePeriod && timePeriod !== 'all');
+      let startDate = new Date(0);
       const endDate = endDateStr ? new Date(endDateStr) : new Date();
+
+      // Handle timePeriod parameter (e.g., '30d', '90d', '1y')
+      if (timePeriod && timePeriod !== 'all') {
+        if (timePeriod === '7d') {
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '30d') {
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '90d') {
+          startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '1y') {
+          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        }
+      } else if (startDateStr) {
+        startDate = new Date(startDateStr);
+      }
 
       const employeeEngagement = (await storage.listEmployeeEngagement?.()) || [];
       const csrChallenges = (await storage.listCSRChallenges?.()) || [];
@@ -7097,13 +7119,32 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.get("/api/csr/engagement-funnel", async (req, res) => {
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      const timePeriod = req.query.timePeriod as string;
       if (!userId) return res.status(400).json({ error: "User ID required" });
 
       const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
       if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      let volunteerActivities = await storage.listVolunteerActivities?.() || [];
+
+      // Apply time filter if specified
+      if (timePeriod && timePeriod !== 'all') {
+        let startDate = new Date(0);
+        if (timePeriod === '7d') {
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '30d') {
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '90d') {
+          startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '1y') {
+          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        }
+        volunteerActivities = volunteerActivities.filter((a: any) => {
+          const activityDate = new Date(a.date || a.createdAt);
+          return activityDate >= startDate;
+        });
+      }
 
       // Get employee user IDs from users table using raw SQL (employer_id column)
       const employeesFromUsersResult = await db.execute(
@@ -7159,14 +7200,33 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
       const stage = req.query.stage ? parseInt(req.query.stage as string) : null;
+      const timePeriod = req.query.timePeriod as string;
       if (!userId || stage === null) return res.status(400).json({ error: "User ID and stage required" });
 
       const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
       if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      let volunteerActivities = await storage.listVolunteerActivities?.() || [];
       const users = await storage.listUsers?.() || [];
+
+      // Apply time filter if specified
+      if (timePeriod && timePeriod !== 'all') {
+        let startDate = new Date(0);
+        if (timePeriod === '7d') {
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '30d') {
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '90d') {
+          startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '1y') {
+          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        }
+        volunteerActivities = volunteerActivities.filter((a: any) => {
+          const activityDate = new Date(a.date || a.createdAt);
+          return activityDate >= startDate;
+        });
+      }
 
       // Use Number() conversion to handle string/number type mismatches from database
       const employeeUserIds = new Set(
@@ -7234,14 +7294,33 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.get("/api/csr/pending-actions", async (req, res) => {
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      const timePeriod = req.query.timePeriod as string;
       if (!userId) return res.status(400).json({ error: "User ID required" });
 
       const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
       if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      let volunteerActivities = await storage.listVolunteerActivities?.() || [];
       const users = await storage.listUsers?.() || [];
+
+      // Apply time filter if specified
+      if (timePeriod && timePeriod !== 'all') {
+        let startDate = new Date(0);
+        if (timePeriod === '7d') {
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '30d') {
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '90d') {
+          startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        } else if (timePeriod === '1y') {
+          startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        }
+        volunteerActivities = volunteerActivities.filter((a: any) => {
+          const activityDate = new Date(a.date || a.createdAt);
+          return activityDate >= startDate;
+        });
+      }
 
       // Use Number() conversion to handle string/number type mismatches from database
       const employeeUserIds = new Set(

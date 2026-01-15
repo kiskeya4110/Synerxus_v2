@@ -20,8 +20,11 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as true,
   };
 
+  // viteConfig is an async function, so we need to call it to get the config object
+  const resolvedConfig = typeof viteConfig === 'function' ? await viteConfig() : viteConfig;
+
   const vite = await createViteServer({
-    ...viteConfig,
+    ...resolvedConfig,
     configFile: false,
     customLogger: {
       ...viteLogger,

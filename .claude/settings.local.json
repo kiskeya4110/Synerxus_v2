@@ -124,7 +124,10 @@
       "Bash(node scripts/generate-favicons.cjs:*)",
       "Bash(npx vite build:*)",
       "Bash(env)",
-      "Bash(PORT=3000 npm run dev:*)"
+      "Bash(PORT=3000 npm run dev:*)",
+      "Bash(while read pid)",
+      "Bash(do kill -9 $pid)",
+      "Bash(done sleep 3 ps aux)"
     ],
     "deny": [],
     "ask": []

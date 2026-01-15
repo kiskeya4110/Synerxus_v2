@@ -8,7 +8,6 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { calculateVolunteerAIU } from "../aiu-service";
 import { queueMiddleware } from "../request-queue";
 
 export const csrRouter = Router();
@@ -334,32 +333,10 @@ csrRouter.get("/csr/dashboard", queueMiddleware('heavy'), async (req: Request, r
     const uniqueEmployees = new Set(filteredEmployeeActivities.map((a: any) => a.userId));
     const activeEmployees = uniqueEmployees.size;
 
-    // Calculate AIU impact - when time filtering is active, use hours-based calculation
-    // to ensure AIU reflects only the filtered time period
-    let totalImpact = 0;
-    try {
-      if (shouldFilterByDate) {
-        // When time filter is active, calculate AIU based on filtered hours
-        // Use standard AIU rate: approximately 0.5 AIU per volunteer hour
-        // This ensures AIU reflects only activities within the selected time period
-        totalImpact = Math.round(totalHours * 0.5 * 10) / 10;
-      } else {
-        // When no time filter, aggregate real AIU from all employee volunteers
-        const employeeUserIdsArray = Array.from(uniqueEmployees) as number[];
-        for (const employeeUserId of employeeUserIdsArray) {
-          const volunteerAIU = await calculateVolunteerAIU(employeeUserId);
-          if (volunteerAIU) {
-            totalImpact += volunteerAIU.totalAiu;
-          }
-        }
-        // Round to 1 decimal place
-        totalImpact = Math.round(totalImpact * 10) / 10;
-      }
-    } catch (aiuError) {
-      console.error("Error calculating AIU for CSR dashboard:", aiuError);
-      // Fallback to hours-based estimation if AIU calculation fails
-      totalImpact = Math.round(totalHours * 0.5 * 10) / 10;
-    }
+    // Calculate AIU impact - use consistent hours-based calculation for all time periods
+    // This ensures "All Time" shows >= any filtered time period
+    // Formula: 0.5 AIU per verified volunteer hour
+    const totalImpact = Math.round(totalHours * 0.5 * 10) / 10;
 
     // SDG Progress - Track hours by SDG goal with detailed metrics
     const sdgProgressDetailed: Record<number, {

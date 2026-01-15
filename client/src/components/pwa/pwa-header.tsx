@@ -4,7 +4,7 @@ import {
   Menu, X, Home, Settings, MessageCircle, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
   Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy,
-  Target, Heart, FileText, Users, FolderOpen, RefreshCw, Shield
+  Target, Heart, FileText, Users, FolderOpen, RefreshCw, Shield, Trash2
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -85,6 +85,28 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   const clearAllNotificationsMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    }
+  });
+
+  // Delete notification mutation (soft delete with timestamp)
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    }
+  });
+
+  // Delete all notifications mutation
+  const deleteAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' });
       return response.json();
     },
     onSuccess: () => {
@@ -487,25 +509,42 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                   <X className="w-5 h-5 text-slate-700" />
                 </button>
               </div>
-              {/* Clear All Button */}
-              {unreadCount > 0 && (
-                <button
-                  onClick={() => clearAllNotificationsMutation.mutate()}
-                  disabled={clearAllNotificationsMutation.isPending}
-                  className="mt-3 w-full py-2 px-3 bg-white/40 hover:bg-white/60 rounded-lg text-slate-700 text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {clearAllNotificationsMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Clearing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Clear All ({unreadCount})
-                    </>
+              {/* Action Buttons */}
+              {notifications.length > 0 && (
+                <div className="mt-3 flex gap-2">
+                  {/* Mark All Read Button */}
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => clearAllNotificationsMutation.mutate()}
+                      disabled={clearAllNotificationsMutation.isPending}
+                      className="flex-1 py-2 px-3 bg-white/40 hover:bg-white/60 rounded-lg text-slate-700 text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {clearAllNotificationsMutation.isPending ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Marking...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Mark Read ({unreadCount})
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
+                  {/* Delete All Button */}
+                  <button
+                    onClick={() => deleteAllNotificationsMutation.mutate()}
+                    disabled={deleteAllNotificationsMutation.isPending}
+                    className="py-2 px-3 bg-red-100/60 hover:bg-red-100 rounded-lg text-red-700 text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {deleteAllNotificationsMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -523,42 +562,58 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                   const isUnread = !notification.read;
 
                   return (
-                    <button
+                    <div
                       key={notification.id}
-                      onClick={() => handleNotificationClick(notification)}
-                      className={`w-full text-left rounded-xl p-3 border transition-colors ${
+                      className={`relative w-full rounded-xl p-3 border transition-colors ${
                         isUnread
-                          ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-100 dark:border-${color}-800 hover:bg-${color}-100 dark:hover:bg-${color}-900/30`
-                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                          ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-100 dark:border-${color}-800`
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
                       }`}
                       style={{
                         backgroundColor: isUnread ? `var(--${color}-50, #f0fdf4)` : undefined,
                       }}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
-                          <NotifIcon className="w-4 h-4 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={`font-medium text-sm ${isUnread ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
-                              {notification.title}
-                            </p>
-                            {isUnread && (
-                              <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                            )}
+                      <button
+                        onClick={() => handleNotificationClick(notification)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-start gap-3 pr-8">
+                          <div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
+                            <NotifIcon className="w-4 h-4 text-white" />
                           </div>
-                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <p className={`text-${color}-500 text-[10px] mt-1 flex items-center gap-1`}>
-                            <Clock className="w-3 h-3" />
-                            {formatTimeAgo(notification.createdAt)}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={`font-medium text-sm ${isUnread ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                                {notification.title}
+                              </p>
+                              {isUnread && (
+                                <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <p className={`text-${color}-500 text-[10px] mt-1 flex items-center gap-1`}>
+                              <Clock className="w-3 h-3" />
+                              {formatTimeAgo(notification.createdAt)}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1" />
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1" />
-                      </div>
-                    </button>
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotificationMutation.mutate(notification.id);
+                        }}
+                        disabled={deleteNotificationMutation.isPending}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                        title="Delete notification"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   );
                 })
               )}

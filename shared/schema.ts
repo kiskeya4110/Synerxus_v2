@@ -797,6 +797,9 @@ export const notifications = pgTable("notifications", {
   relatedEntityId: integer("related_entity_id"), // ID of the related entity
   sdgGoals: integer("sdg_goals").array(), // SDGs related to this notification
   read: boolean("read").default(false).notNull(),
+  readAt: timestamp("read_at"), // When the notification was marked as read
+  deleted: boolean("deleted").default(false).notNull(), // Soft delete status
+  deletedAt: timestamp("deleted_at"), // When the notification was deleted
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

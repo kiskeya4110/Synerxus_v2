@@ -383,9 +383,11 @@ export interface IStorage {
   // Notification operations
   getNotification(id: number): Promise<Notification | undefined>;
   createNotification(notification: InsertNotification): Promise<Notification>;
-  getNotifications(userId: number): Promise<Notification[]>;
+  getNotifications(userId: number, options?: { includeDeleted?: boolean }): Promise<Notification[]>;
   markNotificationRead(notificationId: number): Promise<Notification | undefined>;
   markAllNotificationsRead(userId: number): Promise<number>;
+  markNotificationDeleted(notificationId: number): Promise<Notification | undefined>;
+  markAllNotificationsDeleted(userId: number): Promise<number>;
 
   // User Data Audit Log operations
   createUserDataAuditLog(log: InsertUserDataAuditLog): Promise<UserDataAuditLog>;
@@ -1663,11 +1665,16 @@ export class DatabaseStorage implements IStorage {
     return newNotification;
   }
 
-  async getNotifications(userId: number, options?: PaginationOptions): Promise<Notification[]> {
+  async getNotifications(userId: number, options?: PaginationOptions & { includeDeleted?: boolean }): Promise<Notification[]> {
+    // By default, exclude deleted notifications to maintain status persistence
+    const whereCondition = options?.includeDeleted
+      ? eq(notifications.userId, userId)
+      : and(eq(notifications.userId, userId), eq(notifications.deleted, false));
+
     const query = db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, userId))
+      .where(whereCondition)
       .orderBy(desc(notifications.createdAt));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -1677,30 +1684,94 @@ export class DatabaseStorage implements IStorage {
 
   async countNotifications(userId: number): Promise<number> {
     const [result] = await db.select({ count: count() }).from(notifications)
-      .where(eq(notifications.userId, userId));
+      .where(and(eq(notifications.userId, userId), eq(notifications.deleted, false)));
     return result?.count || 0;
   }
 
   async countUnreadNotifications(userId: number): Promise<number> {
     const [result] = await db.select({ count: count() }).from(notifications)
-      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false),
+        eq(notifications.deleted, false)
+      ));
     return result?.count || 0;
   }
 
   async markNotificationRead(notificationId: number): Promise<Notification | undefined> {
+    // Only update if not already read (status persistence - once read, stays read)
     const [result] = await db
       .update(notifications)
-      .set({ read: true })
-      .where(eq(notifications.id, notificationId))
+      .set({
+        read: true,
+        readAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(notifications.id, notificationId),
+        eq(notifications.read, false) // Only update if currently unread
+      ))
       .returning();
-    return result || undefined;
+
+    // If no result, notification was already read or doesn't exist - return current state
+    if (!result) {
+      return this.getNotification(notificationId);
+    }
+    return result;
   }
 
   async markAllNotificationsRead(userId: number): Promise<number> {
+    // Only update unread notifications (status persistence)
     const result = await db
       .update(notifications)
-      .set({ read: true })
-      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+      .set({
+        read: true,
+        readAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false),
+        eq(notifications.deleted, false) // Don't touch deleted notifications
+      ));
+    return result.rowCount || 0;
+  }
+
+  async markNotificationDeleted(notificationId: number): Promise<Notification | undefined> {
+    // Only update if not already deleted (status persistence - once deleted, stays deleted)
+    const [result] = await db
+      .update(notifications)
+      .set({
+        deleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(notifications.id, notificationId),
+        eq(notifications.deleted, false) // Only update if currently not deleted
+      ))
+      .returning();
+
+    // If no result, notification was already deleted or doesn't exist - return current state
+    if (!result) {
+      return this.getNotification(notificationId);
+    }
+    return result;
+  }
+
+  async markAllNotificationsDeleted(userId: number): Promise<number> {
+    // Only update non-deleted notifications (status persistence)
+    const result = await db
+      .update(notifications)
+      .set({
+        deleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.deleted, false)
+      ));
     return result.rowCount || 0;
   }
 

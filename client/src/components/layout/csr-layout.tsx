@@ -1,7 +1,7 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import {
   Home,
@@ -22,6 +22,7 @@ import {
   Calendar,
   Award,
   Menu,
+  Trash2,
 } from "lucide-react";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
@@ -115,8 +116,10 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
+  const [deletedNotificationIds, setDeletedNotificationIds] = useState<Set<string>>(new Set());
   const notificationRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Click outside to close notifications and mobile menu
   useEffect(() => {
@@ -151,6 +154,35 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
       return newSet;
     });
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  // Delete a single notification
+  const deleteNotification = (id: string) => {
+    setDeletedNotificationIds(prev => {
+      const newSet = new Set(Array.from(prev));
+      newSet.add(id);
+      return newSet;
+    });
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    // Also call API to persist deletion
+    if (userId) {
+      fetch(`/api/notifications/${id}`, { method: 'DELETE' }).catch(console.error);
+    }
+  };
+
+  // Delete all notifications
+  const deleteAllNotifications = () => {
+    const allIds = notifications.map(n => n.id);
+    setDeletedNotificationIds(prev => {
+      const newSet = new Set(Array.from(prev));
+      allIds.forEach(id => newSet.add(id));
+      return newSet;
+    });
+    setNotifications([]);
+    // Also call API to persist deletion
+    if (userId) {
+      fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' }).catch(console.error);
+    }
   };
 
   const getNotificationIcon = (type: Notification["type"]) => {
@@ -484,6 +516,27 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                         Mark all read
                       </button>
                     )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={deleteAllNotifications}
+                        style={{
+                          fontSize: "12px",
+                          color: "#dc2626",
+                          background: "rgba(220, 38, 38, 0.1)",
+                          border: "none",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                        title="Delete all notifications"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowNotifications(false)}
                       style={{
@@ -572,55 +625,89 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                               <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>
                                 {notification.time}
                               </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
-                                  setShowNotifications(false);
-                                  navigate(notification.link);
-                                }}
-                                style={{
-                                  fontSize: "12px",
-                                  fontWeight: "600",
-                                  color: "#059669",
-                                  background: "rgba(16, 185, 129, 0.1)",
-                                  border: "1px solid rgba(16, 185, 129, 0.2)",
-                                  padding: "8px 14px",
-                                  borderRadius: "6px",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s ease",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "6px",
-                                  position: "relative",
-                                  zIndex: 5,
-                                  pointerEvents: "auto",
-                                  whiteSpace: "nowrap",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
-                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
-                                  e.currentTarget.style.color = "#047857";
-                                  e.currentTarget.style.transform = "translateX(2px)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
-                                  e.currentTarget.style.color = "#059669";
-                                  e.currentTarget.style.transform = "translateX(0)";
-                                }}
-                                onMouseDown={(e) => {
-                                  e.currentTarget.style.transform = "scale(0.98)";
-                                }}
-                                onMouseUp={(e) => {
-                                  e.currentTarget.style.transform = "translateX(2px)";
-                                }}
-                              >
-                                {notification.actionLabel || "View Details"}
-                                <span style={{ fontSize: "14px", transition: "transform 0.2s ease" }}>→</span>
-                              </button>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    markAsRead(notification.id);
+                                    setShowNotifications(false);
+                                    navigate(notification.link);
+                                  }}
+                                  style={{
+                                    fontSize: "12px",
+                                    fontWeight: "600",
+                                    color: "#059669",
+                                    background: "rgba(16, 185, 129, 0.1)",
+                                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                                    padding: "8px 14px",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    position: "relative",
+                                    zIndex: 5,
+                                    pointerEvents: "auto",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
+                                    e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                    e.currentTarget.style.color = "#047857";
+                                    e.currentTarget.style.transform = "translateX(2px)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                                    e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
+                                    e.currentTarget.style.color = "#059669";
+                                    e.currentTarget.style.transform = "translateX(0)";
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.currentTarget.style.transform = "scale(0.98)";
+                                  }}
+                                  onMouseUp={(e) => {
+                                    e.currentTarget.style.transform = "translateX(2px)";
+                                  }}
+                                >
+                                  {notification.actionLabel || "View Details"}
+                                  <span style={{ fontSize: "14px", transition: "transform 0.2s ease" }}>→</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    deleteNotification(notification.id);
+                                  }}
+                                  style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    borderRadius: "6px",
+                                    background: "rgba(220, 38, 38, 0.05)",
+                                    border: "1px solid rgba(220, 38, 38, 0.15)",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: "#dc2626",
+                                    transition: "all 0.2s ease",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "rgba(220, 38, 38, 0.1)";
+                                    e.currentTarget.style.borderColor = "rgba(220, 38, 38, 0.3)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "rgba(220, 38, 38, 0.05)";
+                                    e.currentTarget.style.borderColor = "rgba(220, 38, 38, 0.15)";
+                                  }}
+                                  title="Delete notification"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>

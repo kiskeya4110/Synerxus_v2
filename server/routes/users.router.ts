@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { authRateLimiter } from "../middleware/security";
+import { authMiddleware } from "../middleware/auth";
 
 export const usersRouter = Router();
 
@@ -43,24 +44,13 @@ export function setBroadcastFn(fn: BroadcastFn) {
 
 // GET /api/users - List users with access control
 // Organizations can see users in their org, CSR partners can see their employees
-usersRouter.get("/", async (req: Request, res: Response) => {
+usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userType, userId } = req.query;
+    const { userType } = req.query;
 
-    // Require authentication - get requesting user
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    const requestingUserId = parseInt(userId as string);
-    if (isNaN(requestingUserId)) {
-      return res.status(400).json({ message: "Invalid userId" });
-    }
-
-    const requestingUser = await storage.getUser(requestingUserId);
-    if (!requestingUser) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    // SECURITY: Use authenticated user from session
+    const requestingUserId = req.user!.id;
+    const requestingUser = req.user!;
 
     let users = await storage.listUsers();
 
@@ -94,15 +84,11 @@ usersRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/users/me - Get current user
-usersRouter.get("/me", async (req: Request, res: Response) => {
+// GET /api/users/me - Get current authenticated user
+usersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-    const userId = userIdParam ? parseInt(userIdParam) : 1;
-
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Return only the authenticated user's data
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -116,14 +102,33 @@ usersRouter.get("/me", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/users/:id - Get user by ID
-usersRouter.get("/:id", async (req: Request, res: Response) => {
+// GET /api/users/:id - Get user by ID with authorization
+usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.id);
     const user = await storage.getUser(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // SECURITY: Authorization check - users can view:
+    // 1. Their own profile
+    // 2. Users in their organization (if they're org users)
+    // 3. Public volunteer profiles (limited fields only)
+    const isOwnProfile = req.user!.id === userId;
+    const isSameOrganization = req.user!.organizationId &&
+      req.user!.organizationId === user.organizationId;
+
+    if (!isOwnProfile && !isSameOrganization) {
+      // Return limited public fields for other users
+      return res.json({
+        id: user.id,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        userType: user.userType,
+        // Don't expose email, firebaseUid, or other sensitive data
+      });
     }
 
     res.json(user);
@@ -245,13 +250,22 @@ usersRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/users/:id - Update user
-usersRouter.patch("/:id", async (req: Request, res: Response) => {
+// PATCH /api/users/:id - Update user with authorization
+usersRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.id);
+
+    // SECURITY: Users can only update their own profile
+    if (req.user!.id !== userId) {
+      return res.status(403).json({ message: "You can only update your own profile" });
+    }
+
     const userData = insertUserSchema.partial().parse(req.body);
 
-    const updatedUser = await storage.updateUser(userId, userData);
+    // SECURITY: Prevent privilege escalation - users cannot change these fields
+    const { userType, isAdmin, organizationId, firebaseUid, ...safeData } = userData as any;
+
+    const updatedUser = await storage.updateUser(userId, safeData);
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }

@@ -4,6 +4,7 @@ import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment }
 import { handleValidationError } from "./utils";
 import { extractUserId } from "../user-validation";
 import { findTopVolunteers } from "../matching-algorithm";
+import { authMiddleware } from "../middleware/auth";
 
 export const volunteersRouter = Router();
 
@@ -18,18 +19,10 @@ export function setBroadcastFn(fn: BroadcastFn) {
 const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || "http://localhost:8001";
 
 // GET /api/volunteers/me - Get current user's volunteer profile
-volunteersRouter.get("/me", async (req: Request, res: Response) => {
+volunteersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -60,26 +53,21 @@ volunteersRouter.get("/me", async (req: Request, res: Response) => {
 
 // GET /api/volunteers/matches - AI-matched volunteers endpoint
 // Returns volunteers matched to organization's needs with enriched match data
-volunteersRouter.get("/matches", async (req: Request, res: Response) => {
+volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string | undefined;
+    // SECURITY: Use authenticated user from session
+    const userIdNum = req.user!.id;
     const thresholdParam = req.query.threshold as string | undefined;
-
-    if (!userId) {
-      return res.status(400).json({ message: "userId query parameter is required" });
-    }
-
-    const userIdNum = parseInt(userId);
     const threshold = thresholdParam ? parseInt(thresholdParam) : 40; // Default 40% threshold
 
-    // Get authenticated user and verify they are an organization
+    // Verify the authenticated user is an organization
+    if (req.user!.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organizations can access matched volunteers" });
+    }
+
     const user = await storage.getUser(userIdNum);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.userType !== 'organization') {
-      return res.status(403).json({ message: "Only organizations can access matched volunteers" });
     }
 
     // Get the actual organization ID from the user record
@@ -252,7 +240,7 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
 });
 
 // GET /api/volunteers - List volunteers, optionally filtered by organization
-volunteersRouter.get("/", async (req: Request, res: Response) => {
+volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId = req.query.organizationId as string | undefined;
 
@@ -261,6 +249,11 @@ volunteersRouter.get("/", async (req: Request, res: Response) => {
       const orgId = parseInt(organizationId);
       if (isNaN(orgId)) {
         return res.status(400).json({ message: "Invalid organizationId" });
+      }
+
+      // SECURITY: Verify the requesting user belongs to this organization
+      if (req.user!.userType === 'organization' && req.user!.organizationId !== orgId) {
+        return res.status(403).json({ message: "You can only view volunteers for your own organization" });
       }
 
       // Get organization's projects
@@ -295,7 +288,13 @@ volunteersRouter.get("/", async (req: Request, res: Response) => {
       return res.json(volunteers);
     }
 
-    // No filter - return all volunteers
+    // SECURITY: Without org filter, only allow organization users to see all volunteers
+    // Volunteers should not be able to list other volunteers without context
+    if (req.user!.userType === 'volunteer') {
+      return res.status(403).json({ message: "Volunteers cannot list all volunteers. Use specific endpoints instead." });
+    }
+
+    // Organization or admin users can see all volunteers
     const volunteers = await storage.listVolunteers();
     res.json(volunteers);
   } catch (err) {
@@ -305,10 +304,11 @@ volunteersRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/volunteers/:id/performance - Get volunteer performance analytics
-volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => {
+volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, res: Response) => {
   try {
     const volunteerId = parseInt(req.params.id);
-    const requestingUserId = req.query.userId as string;
+    // SECURITY: Use authenticated user from session
+    const requestingUser = req.user!;
     console.log(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
 
     if (!volunteerId || isNaN(volunteerId)) {
@@ -316,32 +316,27 @@ volunteersRouter.get("/:id/performance", async (req: Request, res: Response) => 
       return res.status(400).json({ error: "Invalid volunteer ID" });
     }
 
-    // Access control: verify requesting user has permission to view this volunteer's data
-    if (requestingUserId) {
-      const requestingUser = await storage.getUser(parseInt(requestingUserId));
-      if (requestingUser) {
-        // Allow if: requesting user is the volunteer, or is an organization/CSR admin
-        const isSelf = requestingUser.id === volunteerId;
-        const isOrgAdmin = requestingUser.userType === 'organization';
-        const isCSRAdmin = requestingUser.userType === 'corporate-partner';
+    // SECURITY: Access control using authenticated user from session
+    // Allow if: requesting user is the volunteer, or is an organization/CSR admin
+    const isSelf = requestingUser.id === volunteerId;
+    const isOrgAdmin = requestingUser.userType === 'organization';
+    const isCSRAdmin = requestingUser.userType === 'corporate-partner';
 
-        // If organization, verify volunteer is assigned to their projects
-        if (!isSelf && isOrgAdmin && requestingUser.organizationId) {
-          const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
-          const orgProjects = await storage.listProjectsByOrganization(requestingUser.organizationId);
-          const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
-          const hasOrgProject = volunteerAssignments.some(a => orgProjectIds.has(a.projectId));
-          if (!hasOrgProject) {
-            console.log(`[Performance API] Org ${requestingUser.organizationId} denied - volunteer not on their projects`);
-            return res.status(403).json({ error: "You can only view performance data for volunteers assigned to your projects" });
-          }
-        }
-
-        // If neither self, org admin, or CSR admin - deny access
-        if (!isSelf && !isOrgAdmin && !isCSRAdmin) {
-          return res.status(403).json({ error: "You don't have permission to view this volunteer's performance" });
-        }
+    // If organization, verify volunteer is assigned to their projects
+    if (!isSelf && isOrgAdmin && requestingUser.organizationId) {
+      const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
+      const orgProjects = await storage.listProjectsByOrganization(requestingUser.organizationId);
+      const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+      const hasOrgProject = volunteerAssignments.some(a => orgProjectIds.has(a.projectId));
+      if (!hasOrgProject) {
+        console.log(`[Performance API] Org ${requestingUser.organizationId} denied - volunteer not on their projects`);
+        return res.status(403).json({ error: "You can only view performance data for volunteers assigned to your projects" });
       }
+    }
+
+    // If neither self, org admin, or CSR admin - deny access
+    if (!isSelf && !isOrgAdmin && !isCSRAdmin) {
+      return res.status(403).json({ error: "You don't have permission to view this volunteer's performance" });
     }
 
     let activities: VolunteerActivity[] = [];

@@ -6480,7 +6480,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // Ensure logoUrl is fetched directly from database if missing
       if (userPartner && !userPartner.logoUrl) {
-        const logoResult = await db.execute(`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
+        const logoResult = await db.execute(sql`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
         if (logoResult.rows?.[0]?.logo_url) {
           userPartner = { ...userPartner, logoUrl: logoResult.rows[0].logo_url as string };
         }
@@ -6500,7 +6500,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
           // Ensure logoUrl is fetched directly from database if missing
           if (userPartner && !userPartner.logoUrl) {
-            const logoResult = await db.execute(`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
+            const logoResult = await db.execute(sql`SELECT logo_url FROM csr_partners WHERE id = ${userPartner.id}`);
             if (logoResult.rows?.[0]?.logo_url) {
               userPartner = { ...userPartner, logoUrl: logoResult.rows[0].logo_url as string };
             }
@@ -6554,7 +6554,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Get employee user IDs (users with employer_id matching this partner)
       // Use raw SQL to get employer_id since the column was added after schema generation
       const employeesFromUsersResult = await db.execute(
-        `SELECT id, display_name, department_name, job_title_at_company FROM users WHERE employer_id = ${userPartner.id}`
+        sql`SELECT id, display_name, department_name, job_title_at_company FROM users WHERE employer_id = ${userPartner.id}`
       );
       console.log('[CSR DEBUG] userPartner.id:', userPartner.id);
       console.log('[CSR DEBUG] employeesFromUsersResult:', JSON.stringify(employeesFromUsersResult));
@@ -7123,7 +7123,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // Get employee user IDs from users table using raw SQL (employer_id column)
       const employeesFromUsersResult = await db.execute(
-        `SELECT id, display_name FROM users WHERE employer_id = ${userPartner.id}`
+        sql`SELECT id, display_name FROM users WHERE employer_id = ${userPartner.id}`
       );
       const employeesFromUsers = employeesFromUsersResult.rows || [];
       // Use Number() conversion to handle string/number type mismatches from database

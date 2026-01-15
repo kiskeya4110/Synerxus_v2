@@ -6,6 +6,7 @@ import { withTransaction } from "../db";
 import { db } from "../db";
 import { users, organizations, matchableOrganizations } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { authMiddleware } from "../middleware/auth";
 
 export const profileRouter = Router();
 
@@ -18,18 +19,10 @@ export function setBroadcastFn(fn: BroadcastFn) {
 
 // PATCH /api/profile/volunteer - Update volunteer profile
 // Updates both users table and volunteers matching table
-profileRouter.patch("/volunteer", async (req: Request, res: Response) => {
+profileRouter.patch("/volunteer", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only update their own profile
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -125,18 +118,10 @@ profileRouter.patch("/volunteer", async (req: Request, res: Response) => {
 
 // PATCH /api/profile/organization - Update organization profile
 // Updates users, organizations, and matchable_organizations tables atomically
-profileRouter.patch("/organization", async (req: Request, res: Response) => {
+profileRouter.patch("/organization", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only update their own organization profile
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -254,18 +239,10 @@ profileRouter.patch("/organization", async (req: Request, res: Response) => {
 
 // GET /api/profile/volunteer - Get volunteer profile data
 // Combines user and volunteer matching data
-profileRouter.get("/volunteer", async (req: Request, res: Response) => {
+profileRouter.get("/volunteer", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only view their own profile
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -315,18 +292,10 @@ profileRouter.get("/volunteer", async (req: Request, res: Response) => {
 
 // GET /api/profile/organization - Get organization profile data
 // Combines user, organization, and matchable organization data
-profileRouter.get("/organization", async (req: Request, res: Response) => {
+profileRouter.get("/organization", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only view their own organization profile
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
 
@@ -381,18 +350,10 @@ profileRouter.get("/organization", async (req: Request, res: Response) => {
 });
 
 // GET /api/intake/volunteer-profile - Get volunteer profile for intake
-profileRouter.get("/intake/volunteer-profile", async (req: Request, res: Response) => {
+profileRouter.get("/intake/volunteer-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only view their own intake profile
+    const userId = req.user!.id;
 
     const user = await storage.getUser(userId);
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
@@ -420,18 +381,10 @@ profileRouter.get("/intake/volunteer-profile", async (req: Request, res: Respons
 });
 
 // POST /api/intake/volunteer-profile - Create or update volunteer profile via intake
-profileRouter.post("/intake/volunteer-profile", async (req: Request, res: Response) => {
+profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only update their own intake profile
+    const userId = req.user!.id;
 
     console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
 
@@ -571,17 +524,13 @@ profileRouter.post("/intake/volunteer-profile", async (req: Request, res: Respon
 });
 
 // GET /api/intake/organization-profile - Get organization profile for intake
-profileRouter.get("/intake/organization-profile", async (req: Request, res: Response) => {
+profileRouter.get("/intake/organization-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const orgIdParam = req.query.organizationId as string;
+    // SECURITY: Use authenticated user's organization, not query parameter
+    const organizationId = req.user!.organizationId;
 
-    if (!orgIdParam) {
-      return res.status(400).json({ message: "organizationId parameter is required" });
-    }
-
-    const organizationId = parseInt(orgIdParam);
-    if (isNaN(organizationId)) {
-      return res.status(400).json({ message: "organizationId must be a valid number" });
+    if (!organizationId) {
+      return res.status(400).json({ message: "User does not belong to an organization" });
     }
 
     const profile = await storage.getOrganizationProfileByOrgId(organizationId);
@@ -593,19 +542,10 @@ profileRouter.get("/intake/organization-profile", async (req: Request, res: Resp
 });
 
 // POST /api/intake/organization-profile - Create or update organization profile via intake
-profileRouter.post("/intake/organization-profile", async (req: Request, res: Response) => {
+profileRouter.post("/intake/organization-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    // Accept both userId (preferred) and organizationId (legacy) parameters
-    const userIdParam = (req.query.userId || req.query.organizationId) as string;
-
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user ID from session - users can only update their own organization profile
+    const userId = req.user!.id;
 
     // Get the user to access their email and validate user type
     const user = await storage.getUser(userId);

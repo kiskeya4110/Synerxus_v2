@@ -66,12 +66,19 @@ export const tokenBlacklist = new TokenBlacklist();
 // Refresh Token Support
 // ============================================
 
-// JWT secret - use SESSION_SECRET as fallback in production
+// JWT secret - REQUIRED in all environments for security
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required in production");
+if (!JWT_SECRET) {
+  // SECURITY: Always require JWT_SECRET to prevent using weak hardcoded fallback
+  const errorMessage = "CRITICAL: JWT_SECRET or SESSION_SECRET environment variable is required";
+  console.error(`[SECURITY] ${errorMessage}`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(errorMessage);
+  }
+  // In development, log loud warning but generate a random secret for this session
+  console.warn("[SECURITY] Generating random JWT secret for this session - tokens will be invalid after restart");
 }
-const JWT_SECRET_VALUE = JWT_SECRET || "synerxus-dev-jwt-secret-do-not-use-in-production";
+const JWT_SECRET_VALUE = JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
 const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET_VALUE + "-refresh";
 
 interface TokenPair {
@@ -291,16 +298,32 @@ export function securityHeaders(
   // Referrer policy
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  // Content Security Policy (adjust as needed)
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://replit.com; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self' data:; " +
-      "connect-src 'self' https:;"
-  );
+  // Content Security Policy - Strengthened to reduce XSS attack surface
+  // Note: 'unsafe-inline' for styles is kept for React's CSS-in-JS compatibility
+  // 'unsafe-eval' removed to prevent dynamic code execution attacks
+  const cspDirectives = [
+    "default-src 'self'",
+    // Scripts: Remove unsafe-eval, keep trusted CDN sources
+    "script-src 'self' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com",
+    // Styles: unsafe-inline needed for CSS-in-JS (React/Emotion/styled-components)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // Images: Allow data URIs for inline images and any HTTPS source
+    "img-src 'self' data: blob: https:",
+    // Fonts: Self, data URIs, and Google Fonts
+    "font-src 'self' data: https://fonts.gstatic.com",
+    // API connections: Self and any HTTPS (for external APIs)
+    "connect-src 'self' https: wss:",
+    // Prevent clickjacking via frames
+    "frame-ancestors 'none'",
+    // Restrict form submissions to same origin
+    "form-action 'self'",
+    // Restrict base URI to prevent base tag hijacking
+    "base-uri 'self'",
+    // Upgrade HTTP requests to HTTPS
+    "upgrade-insecure-requests",
+  ].join("; ");
+
+  res.setHeader("Content-Security-Policy", cspDirectives);
 
   // Strict Transport Security (for HTTPS)
   if (process.env.NODE_ENV === "production") {

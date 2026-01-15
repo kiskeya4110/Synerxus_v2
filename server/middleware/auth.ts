@@ -20,12 +20,19 @@ declare global {
   }
 }
 
-// JWT secret - use SESSION_SECRET as fallback in production
+// JWT secret - REQUIRED in all environments for security
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required in production");
+if (!JWT_SECRET) {
+  // SECURITY: Always require JWT_SECRET to prevent using weak hardcoded fallback
+  const errorMessage = "CRITICAL: JWT_SECRET or SESSION_SECRET environment variable is required";
+  console.error(`[SECURITY] ${errorMessage}`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(errorMessage);
+  }
+  // In development, log loud warning but generate a random secret for this session
+  console.warn("[SECURITY] Generating random JWT secret for this session - tokens will be invalid after restart");
 }
-const JWT_SECRET_VALUE = JWT_SECRET || "synerxus-dev-jwt-secret-do-not-use-in-production";
+const JWT_SECRET_VALUE = JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
 // Token expiration in seconds (7 days)
 const JWT_EXPIRES_IN_SECONDS = parseInt(process.env.JWT_EXPIRES_IN_SECONDS || "604800", 10);
 
@@ -110,20 +117,12 @@ export async function authMiddleware(
       }
     }
 
-    // Development fallback: allow userId from request when token verification fails
-    // This is for development only when Firebase Admin SDK is not configured
-    if (!userId && process.env.NODE_ENV !== 'production') {
-      const fallbackUserId = (req.body as Record<string, any>)?.userId ||
-                             req.query.userId as string ||
-                             req.headers['x-user-id'] as string;
-      if (fallbackUserId) {
-        const parsedId = parseInt(fallbackUserId as string);
-        if (!isNaN(parsedId)) {
-          userId = parsedId;
-          logger.warn(`[Auth] Using development fallback userId: ${userId} - DO NOT USE IN PRODUCTION`);
-        }
-      }
-    }
+    // SECURITY: Development auth bypass REMOVED
+    // The previous fallback that allowed userId from request body/query/headers
+    // was a security vulnerability that could enable user impersonation if
+    // NODE_ENV was misconfigured. This has been removed to prevent such attacks.
+    // If you need local development without Firebase, use the JWT token system
+    // with proper authentication flow.
 
     if (!userId) {
       logger.debug(`[Auth] No valid authentication found`);

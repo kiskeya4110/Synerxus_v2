@@ -220,12 +220,12 @@ export const generalRateLimiter = rateLimit({
 });
 
 /**
- * Strict rate limiter for authentication endpoints
- * 10 requests per 15 minutes per IP
+ * Rate limiter for authentication endpoints
+ * 50 requests per 15 minutes per IP (more lenient for better UX)
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 auth requests per window
+  max: process.env.NODE_ENV === 'development' ? 100 : 50, // More lenient in development
   standardHeaders: true,
   legacyHeaders: false,
   message: {

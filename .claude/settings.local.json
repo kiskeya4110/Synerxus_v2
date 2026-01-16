@@ -127,7 +127,8 @@
       "Bash(PORT=3000 npm run dev:*)",
       "Bash(while read pid)",
       "Bash(do kill -9 $pid)",
-      "Bash(done sleep 3 ps aux)"
+      "Bash(done sleep 3 ps aux)",
+      "Bash(replit deploy:*)"
     ],
     "deny": [],
     "ask": []

@@ -52,9 +52,195 @@ const ROLE_BADGES: Record<string, { color: string; icon: typeof Shield }> = {
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: ["Full access", "Can manage all settings", "Can invite/remove members"],
   hr: ["Approve volunteer hours", "Approve applications", "View reports"],
-  manager: ["Manage projects", "Approve hours/applications", "View reports"],
+  manager: ["Manage projects", "Manage members", "Approve hours/applications", "View reports"],
   member: ["View dashboard", "View reports"],
 };
+
+// Enhanced role definitions with detailed descriptions and permissions
+const ROLE_DETAILS: Record<string, {
+  name: string;
+  description: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  hoverColor: string;
+  selectedBg: string;
+  icon: typeof Shield;
+  permissions: { name: string; enabled: boolean; description: string }[];
+}> = {
+  admin: {
+    name: "Administrator",
+    description: "Full control over the organization. Can manage all settings, team members, projects, and approvals.",
+    color: "text-purple-700",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-200",
+    hoverColor: "hover:border-purple-400 hover:bg-purple-50",
+    selectedBg: "bg-purple-100 border-purple-500 ring-2 ring-purple-200",
+    icon: ShieldCheck,
+    permissions: [
+      { name: "Approve Hours", enabled: true, description: "Review and approve volunteer time logs" },
+      { name: "Approve Applications", enabled: true, description: "Accept or reject volunteer applications" },
+      { name: "Manage Projects", enabled: true, description: "Create, edit, and archive projects" },
+      { name: "Manage Members", enabled: true, description: "Invite, edit, and remove team members" },
+      { name: "View Reports", enabled: true, description: "Access analytics and impact reports" },
+      { name: "Edit Organization", enabled: true, description: "Modify organization profile and settings" },
+    ],
+  },
+  hr: {
+    name: "HR",
+    description: "Focused on volunteer management. Can approve hours, handle applications, and view reports.",
+    color: "text-blue-700",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+    hoverColor: "hover:border-blue-400 hover:bg-blue-50",
+    selectedBg: "bg-blue-100 border-blue-500 ring-2 ring-blue-200",
+    icon: Shield,
+    permissions: [
+      { name: "Approve Hours", enabled: true, description: "Review and approve volunteer time logs" },
+      { name: "Approve Applications", enabled: true, description: "Accept or reject volunteer applications" },
+      { name: "Manage Projects", enabled: false, description: "Create, edit, and archive projects" },
+      { name: "Manage Members", enabled: false, description: "Invite, edit, and remove team members" },
+      { name: "View Reports", enabled: true, description: "Access analytics and impact reports" },
+      { name: "Edit Organization", enabled: false, description: "Modify organization profile and settings" },
+    ],
+  },
+  manager: {
+    name: "Manager",
+    description: "Project-focused role. Can manage projects, team members, approve hours and applications, and view reports.",
+    color: "text-green-700",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+    hoverColor: "hover:border-green-400 hover:bg-green-50",
+    selectedBg: "bg-green-100 border-green-500 ring-2 ring-green-200",
+    icon: Settings,
+    permissions: [
+      { name: "Approve Hours", enabled: true, description: "Review and approve volunteer time logs" },
+      { name: "Approve Applications", enabled: true, description: "Accept or reject volunteer applications" },
+      { name: "Manage Projects", enabled: true, description: "Create, edit, and archive projects" },
+      { name: "Manage Members", enabled: true, description: "Invite, edit, and remove team members" },
+      { name: "View Reports", enabled: true, description: "Access analytics and impact reports" },
+      { name: "Edit Organization", enabled: false, description: "Modify organization profile and settings" },
+    ],
+  },
+  member: {
+    name: "Member",
+    description: "Basic access for team members. Can view the dashboard and access reports.",
+    color: "text-gray-700",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+    hoverColor: "hover:border-gray-400 hover:bg-gray-50",
+    selectedBg: "bg-gray-100 border-gray-500 ring-2 ring-gray-200",
+    icon: UsersRound,
+    permissions: [
+      { name: "Approve Hours", enabled: false, description: "Review and approve volunteer time logs" },
+      { name: "Approve Applications", enabled: false, description: "Accept or reject volunteer applications" },
+      { name: "Manage Projects", enabled: false, description: "Create, edit, and archive projects" },
+      { name: "Manage Members", enabled: false, description: "Invite, edit, and remove team members" },
+      { name: "View Reports", enabled: true, description: "Access analytics and impact reports" },
+      { name: "Edit Organization", enabled: false, description: "Modify organization profile and settings" },
+    ],
+  },
+};
+
+// Interactive Role Selection Card Component
+function RoleSelectionCard({
+  role,
+  selected,
+  onSelect,
+  compact = false
+}: {
+  role: string;
+  selected: boolean;
+  onSelect: (role: string) => void;
+  compact?: boolean;
+}) {
+  const details = ROLE_DETAILS[role];
+  if (!details) return null;
+
+  const Icon = details.icon;
+  const enabledCount = details.permissions.filter(p => p.enabled).length;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(role)}
+      className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+        selected
+          ? details.selectedBg
+          : `bg-white ${details.borderColor} ${details.hoverColor}`
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`p-2 rounded-lg ${details.bgColor} ${details.color} flex-shrink-0`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <h4 className={`font-semibold ${details.color}`}>{details.name}</h4>
+            {selected && (
+              <div className={`p-1 rounded-full ${details.bgColor}`}>
+                <Check className={`h-4 w-4 ${details.color}`} />
+              </div>
+            )}
+          </div>
+          {!compact && (
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">{details.description}</p>
+          )}
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${details.bgColor} ${details.color}`}>
+              {enabledCount} of 6 permissions
+            </span>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// Role Permissions Detail Panel
+function RolePermissionsPanel({ role }: { role: string }) {
+  const details = ROLE_DETAILS[role];
+  if (!details) return null;
+
+  const Icon = details.icon;
+
+  return (
+    <div className={`rounded-xl border-2 ${details.borderColor} ${details.bgColor} p-4 transition-all duration-300`}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`p-1.5 rounded-lg bg-white ${details.color}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <h4 className={`font-semibold ${details.color}`}>{details.name} Permissions</h4>
+      </div>
+      <div className="grid grid-cols-1 gap-2">
+        {details.permissions.map((perm, i) => (
+          <div
+            key={i}
+            className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+              perm.enabled ? 'bg-white/80' : 'bg-white/40'
+            }`}
+          >
+            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+              perm.enabled
+                ? 'bg-green-100 text-green-600'
+                : 'bg-slate-100 text-slate-400'
+            }`}>
+              {perm.enabled ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${perm.enabled ? 'text-slate-800' : 'text-slate-400'}`}>
+                {perm.name}
+              </p>
+              <p className={`text-xs ${perm.enabled ? 'text-slate-500' : 'text-slate-400'}`}>
+                {perm.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const DEPARTMENTS = [
   "Human Resources",
@@ -467,13 +653,14 @@ export default function OrganizationTeamPage() {
             </div>
           )}
 
-          {/* Invite Modal - Simplified for mobile */}
+          {/* Invite Modal - Enhanced for mobile with interactive role selection */}
           {showInviteModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4" onClick={() => setShowInviteModal(false)}>
-              <div className="bg-white rounded-2xl w-full max-w-[400px] p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Invite Team Member</h3>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4 overflow-y-auto" onClick={() => setShowInviteModal(false)}>
+              <div className="bg-white rounded-2xl w-full max-w-[400px] p-5 shadow-xl my-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">Invite Team Member</h3>
+                <p className="text-xs text-slate-500 mb-4">Add a new member to your organization</p>
 
-                <div className="space-y-3 mb-4">
+                <div className="space-y-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
                     <input
@@ -481,30 +668,69 @@ export default function OrganizationTeamPage() {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="colleague@company.com"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
+
+                  {/* Interactive Role Selection - Mobile */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                    >
-                      <option value="member">Member</option>
-                      <option value="manager">Manager</option>
-                      <option value="hr">HR</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Select Role</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['admin', 'hr', 'manager', 'member'].map((role) => {
+                        const details = ROLE_DETAILS[role];
+                        if (!details) return null;
+                        const Icon = details.icon;
+                        const isSelected = inviteRole === role;
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => setInviteRole(role)}
+                            className={`p-3 rounded-xl border-2 text-left transition-all ${
+                              isSelected
+                                ? details.selectedBg
+                                : `bg-white ${details.borderColor} ${details.hoverColor}`
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded-lg ${details.bgColor} ${details.color}`}>
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <span className={`font-medium text-sm ${details.color}`}>{details.name}</span>
+                              {isSelected && (
+                                <Check className={`h-4 w-4 ml-auto ${details.color}`} />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Compact Permissions Preview - Mobile */}
+                  <div className={`rounded-xl border ${ROLE_DETAILS[inviteRole]?.borderColor} ${ROLE_DETAILS[inviteRole]?.bgColor} p-3`}>
+                    <p className={`text-xs font-semibold ${ROLE_DETAILS[inviteRole]?.color} mb-2`}>
+                      {ROLE_DETAILS[inviteRole]?.name} can:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROLE_DETAILS[inviteRole]?.permissions
+                        .filter(p => p.enabled)
+                        .map((perm, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-white/70 rounded-lg text-xs text-slate-600">
+                            <Check className="h-3 w-3 text-green-500" />
+                            {perm.name}
+                          </span>
+                        ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setShowInviteModal(false)}>
+                  <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowInviteModal(false)}>
                     Cancel
                   </Button>
                   <Button
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl"
                     onClick={() => {
                       inviteMutation.mutate({
                         email: inviteEmail,
@@ -593,27 +819,69 @@ export default function OrganizationTeamPage() {
           )}
         </div>
 
-        {/* Role Legend */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Role Permissions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(ROLE_PERMISSIONS).map(([role, permissions]) => {
-              const badge = ROLE_BADGES[role];
-              const Icon = badge?.icon || UsersRound;
+        {/* Role Legend - Interactive Overview */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Team Roles & Permissions</h3>
+              <p className="text-sm text-slate-500 mt-0.5">Understand what each role can do in your organization</p>
+            </div>
+            <div className="hidden md:flex items-center gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-2 w-2 text-green-600" />
+                </div>
+                Can access
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-slate-100 flex items-center justify-center">
+                  <X className="h-2 w-2 text-slate-400" />
+                </div>
+                No access
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {['admin', 'hr', 'manager', 'member'].map((role) => {
+              const details = ROLE_DETAILS[role];
+              if (!details) return null;
+              const Icon = details.icon;
+              const enabledCount = details.permissions.filter(p => p.enabled).length;
               return (
-                <div key={role} className="text-sm">
-                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium border ${badge?.color || ""} mb-2`}>
-                    <Icon className="h-3 w-3" />
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                <div
+                  key={role}
+                  className={`rounded-xl border-2 ${details.borderColor} ${details.bgColor} p-4 transition-all hover:shadow-md cursor-default`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`p-2 rounded-lg bg-white ${details.color} shadow-sm`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className={`font-semibold ${details.color}`}>{details.name}</h4>
+                      <p className="text-xs text-slate-500">{enabledCount}/6 permissions</p>
+                    </div>
                   </div>
-                  <ul className="text-xs text-slate-500 space-y-0.5">
-                    {permissions.map((p, i) => (
-                      <li key={i} className="flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-500" />
-                        {p}
-                      </li>
+                  <p className="text-xs text-slate-600 mb-3 leading-relaxed">{details.description}</p>
+                  <div className="space-y-1.5">
+                    {details.permissions.map((perm, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2 text-xs ${
+                          perm.enabled ? 'text-slate-700' : 'text-slate-400'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          perm.enabled ? 'bg-green-100' : 'bg-slate-100'
+                        }`}>
+                          {perm.enabled
+                            ? <Check className="h-2.5 w-2.5 text-green-600" />
+                            : <X className="h-2.5 w-2.5 text-slate-400" />
+                          }
+                        </div>
+                        <span className={perm.enabled ? 'font-medium' : ''}>{perm.name}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               );
             })}
@@ -1041,19 +1309,25 @@ export default function OrganizationTeamPage() {
                   />
                 </div>
 
+                {/* Interactive Role Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="member">Member</option>
-                    <option value="manager">Manager</option>
-                    <option value="hr">HR</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Select Role</label>
+                  <p className="text-xs text-slate-500 mb-3">Choose the appropriate role based on what this team member will do</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['admin', 'hr', 'manager', 'member'].map((role) => (
+                      <RoleSelectionCard
+                        key={role}
+                        role={role}
+                        selected={inviteRole === role}
+                        onSelect={setInviteRole}
+                        compact={true}
+                      />
+                    ))}
+                  </div>
                 </div>
+
+                {/* Role Permissions Detail */}
+                <RolePermissionsPanel role={inviteRole} />
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
@@ -1169,18 +1443,6 @@ export default function OrganizationTeamPage() {
                   />
                 </div>
 
-                {/* Role-based permissions preview */}
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-slate-600 mb-2">Permissions for {inviteRole.charAt(0).toUpperCase() + inviteRole.slice(1)}:</p>
-                  <ul className="space-y-1">
-                    {ROLE_PERMISSIONS[inviteRole]?.map((perm, i) => (
-                      <li key={i} className="text-xs text-slate-500 flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-500" />
-                        {perm}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -1237,70 +1499,128 @@ export default function OrganizationTeamPage() {
 
         {/* Edit Member Modal */}
         {editingMember && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Edit Team Member</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-2xl w-full p-6 my-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Edit Team Member</h3>
+                  <p className="text-sm text-slate-500 mt-1">Update role and details for this team member</p>
+                </div>
                 <button
                   onClick={() => setEditingMember(null)}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium">
-                    {editingMember.user?.displayName?.charAt(0) || "?"}
+              <div className="space-y-6">
+                {/* Member Info Card */}
+                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                  <div className="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xl ring-4 ring-white shadow-md">
+                    {editingMember.user?.avatar ? (
+                      <img src={editingMember.user.avatar} alt="" className="h-14 w-14 rounded-full object-cover" />
+                    ) : (
+                      editingMember.user?.displayName?.charAt(0) || "?"
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">{editingMember.user?.displayName}</p>
+                    <p className="font-semibold text-slate-900 text-lg">{editingMember.user?.displayName}</p>
                     <p className="text-sm text-slate-500">{editingMember.user?.email}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_BADGES[editingMember.role]?.color || ''}`}>
+                        Current: {editingMember.role.charAt(0).toUpperCase() + editingMember.role.slice(1)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
+                {/* Role Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                  <select
-                    value={editingMember.role}
-                    onChange={(e) => setEditingMember({ ...editingMember, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="member">Member</option>
-                    <option value="manager">Manager</option>
-                    <option value="hr">HR</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Assign Role</label>
+                  <p className="text-xs text-slate-500 mb-4">Select a role to define what this team member can do in your organization</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['admin', 'hr', 'manager', 'member'].map((role) => (
+                      <RoleSelectionCard
+                        key={role}
+                        role={role}
+                        selected={editingMember.role === role}
+                        onSelect={(newRole) => setEditingMember({ ...editingMember, role: newRole })}
+                        compact={false}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
-                  <input
-                    type="text"
-                    value={editingMember.title || ""}
-                    onChange={(e) => setEditingMember({ ...editingMember, title: e.target.value })}
-                    placeholder="e.g., HR Manager"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+                {/* Role Permissions Detail */}
+                <RolePermissionsPanel role={editingMember.role} />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                  <input
-                    type="text"
-                    value={editingMember.department || ""}
-                    onChange={(e) => setEditingMember({ ...editingMember, department: e.target.value })}
-                    placeholder="e.g., Human Resources"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                {/* Job Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
+                    <select
+                      value={editingMember.title && JOB_TITLES.includes(editingMember.title) ? editingMember.title : (editingMember.title ? "Other" : "")}
+                      onChange={(e) => {
+                        if (e.target.value === "Other") {
+                          setEditingMember({ ...editingMember, title: "" });
+                        } else {
+                          setEditingMember({ ...editingMember, title: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select a title...</option>
+                      {JOB_TITLES.map((title) => (
+                        <option key={title} value={title}>{title}</option>
+                      ))}
+                    </select>
+                    {editingMember.title && !JOB_TITLES.includes(editingMember.title) && (
+                      <input
+                        type="text"
+                        value={editingMember.title}
+                        onChange={(e) => setEditingMember({ ...editingMember, title: e.target.value })}
+                        placeholder="Enter custom title"
+                        className="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                    <select
+                      value={editingMember.department && DEPARTMENTS.includes(editingMember.department) ? editingMember.department : (editingMember.department ? "Other" : "")}
+                      onChange={(e) => {
+                        if (e.target.value === "Other") {
+                          setEditingMember({ ...editingMember, department: "" });
+                        } else {
+                          setEditingMember({ ...editingMember, department: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select a department...</option>
+                      {DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    {editingMember.department && !DEPARTMENTS.includes(editingMember.department) && (
+                      <input
+                        type="text"
+                        value={editingMember.department}
+                        onChange={(e) => setEditingMember({ ...editingMember, department: e.target.value })}
+                        placeholder="Enter custom department"
+                        className="w-full mt-2 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 mt-8 pt-6 border-t border-slate-200">
                 <button
                   onClick={() => setEditingMember(null)}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -1316,9 +1636,19 @@ export default function OrganizationTeamPage() {
                     });
                   }}
                   disabled={updateMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
                 >
-                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                  {updateMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </div>

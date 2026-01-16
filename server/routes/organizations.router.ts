@@ -385,7 +385,7 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
         canApproveHours: true,
         canApproveApplications: true,
         canManageProjects: true,
-        canManageMembers: false,
+        canManageMembers: true,
         canViewReports: true,
         canEditOrganization: false
       },
@@ -622,7 +622,7 @@ organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req:
     const defaultPermissions = {
       admin: { canApproveHours: true, canApproveApplications: true, canManageProjects: true, canManageMembers: true, canViewReports: true, canEditOrganization: true },
       hr: { canApproveHours: true, canApproveApplications: true, canManageProjects: false, canManageMembers: false, canViewReports: true, canEditOrganization: false },
-      manager: { canApproveHours: true, canApproveApplications: true, canManageProjects: true, canManageMembers: false, canViewReports: true, canEditOrganization: false },
+      manager: { canApproveHours: true, canApproveApplications: true, canManageProjects: true, canManageMembers: true, canViewReports: true, canEditOrganization: false },
       member: { canApproveHours: false, canApproveApplications: false, canManageProjects: false, canManageMembers: false, canViewReports: true, canEditOrganization: false }
     };
 

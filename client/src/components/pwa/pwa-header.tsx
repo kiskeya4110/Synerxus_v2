@@ -66,50 +66,112 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
       return response.ok ? response.json() : [];
     },
     enabled: !!userId,
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 0, // Always fetch fresh data after invalidation
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchInterval: 60000, // Refetch every minute as backup
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  // Mark notification as read mutation
+  // Mark notification as read mutation with optimistic update
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
       const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to mark as read');
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (notificationId: number) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications", userId] });
+      // Snapshot previous value
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications", userId]);
+      // Optimistically update
+      queryClient.setQueryData<Notification[]>(["/api/notifications", userId], (old) =>
+        old?.map(n => n.id === notificationId ? { ...n, read: true } : n) ?? []
+      );
+      return { previousNotifications };
+    },
+    onError: (err, notificationId, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications", userId], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
     }
   });
 
-  // Clear all notifications mutation (mark all as read)
+  // Clear all notifications mutation (mark all as read) with optimistic update
   const clearAllNotificationsMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to clear notifications');
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications", userId] });
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications", userId]);
+      queryClient.setQueryData<Notification[]>(["/api/notifications", userId], (old) =>
+        old?.map(n => ({ ...n, read: true })) ?? []
+      );
+      return { previousNotifications };
+    },
+    onError: (err, vars, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications", userId], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
     }
   });
 
-  // Delete notification mutation (soft delete with timestamp)
+  // Delete notification mutation (soft delete) with optimistic update
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: number) => {
       const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete notification');
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (notificationId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications", userId] });
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications", userId]);
+      // Optimistically remove from list
+      queryClient.setQueryData<Notification[]>(["/api/notifications", userId], (old) =>
+        old?.filter(n => n.id !== notificationId) ?? []
+      );
+      return { previousNotifications };
+    },
+    onError: (err, notificationId, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications", userId], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
     }
   });
 
-  // Delete all notifications mutation
+  // Delete all notifications mutation with optimistic update
   const deleteAllNotificationsMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete all notifications');
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications", userId] });
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications", userId]);
+      // Optimistically clear all
+      queryClient.setQueryData<Notification[]>(["/api/notifications", userId], []);
+      return { previousNotifications };
+    },
+    onError: (err, vars, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications", userId], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
     }
   });

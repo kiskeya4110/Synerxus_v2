@@ -72,7 +72,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   }
 
   // Fetch notifications for organization user
-  const { data: notifications = [] } = useQuery<any[]>({
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -81,8 +81,11 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
       if (!response.ok) return [];
       return response.json();
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 10000,
+    enabled: !!userId,
+    staleTime: 0, // Always fetch fresh data after invalidation
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchInterval: 60000, // Refetch every minute as backup
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const unreadCount = notifications.filter((n: any) => !n.read).length;

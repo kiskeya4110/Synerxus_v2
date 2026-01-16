@@ -48,7 +48,14 @@ export function usePushNotifications(options: UsePushNotificationsOptions = {}) 
       });
     }
 
-    queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    // Invalidate with userId to properly target the correct cache entry
+    // Use both with and without userId to ensure all related queries are refreshed
+    if (userId) {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", String(userId)] });
+    }
+    // Also invalidate the base key for any queries that might not include userId
+    queryClient.invalidateQueries({ queryKey: ["/api/notifications"], exact: false });
 
     if (notification.type === "task_assignment") {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -59,7 +66,7 @@ export function usePushNotifications(options: UsePushNotificationsOptions = {}) 
     if (notification.type === "application_status") {
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
     }
-  }, [showToasts, toast]);
+  }, [showToasts, toast, userId]);
 
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
     if (message.type === "notification" && message.data) {

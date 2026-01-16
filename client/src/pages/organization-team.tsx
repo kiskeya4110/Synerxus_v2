@@ -358,16 +358,38 @@ export default function OrganizationTeamPage() {
       invitationMethod?: "email" | "direct_message" | "both";
       customMessage?: string;
     }) => {
+      // Validate required fields
+      if (!organizationId) {
+        throw new Error("Organization not found. Please refresh the page.");
+      }
+      if (!userId) {
+        throw new Error("User not authenticated. Please log in again.");
+      }
+      if (!data.email || !data.email.includes("@")) {
+        throw new Error("Please enter a valid email address.");
+      }
+
+      console.log("Sending invitation:", { organizationId, userId, ...data });
+
       const res = await fetch(`/api/organizations/${organizationId}/members/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, invitedBy: parseInt(userId || "0") }),
+        body: JSON.stringify({
+          ...data,
+          invitedBy: parseInt(userId),
+          invitationMethod: data.invitationMethod || "direct_message"
+        }),
       });
+
+      const responseData = await res.json();
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to invite member");
+        console.error("Invitation failed:", responseData);
+        throw new Error(responseData.message || "Failed to invite member");
       }
-      return res.json();
+
+      console.log("Invitation success:", responseData);
+      return responseData;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
@@ -388,9 +410,13 @@ export default function OrganizationTeamPage() {
       setCustomTitle("");
       setCustomDepartment("");
 
-      toast({ title: "Invitation created", description: "Share the invite link with the team member." });
+      const successMsg = data.userExists
+        ? `Invitation sent to ${data.user?.displayName || data.user?.email}. They will see it in their notifications.`
+        : "Invite link created. Share it with the team member.";
+      toast({ title: "Invitation created!", description: successMsg });
     },
     onError: (error: Error) => {
+      console.error("Invitation error:", error);
       toast({ title: "Failed to invite", description: error.message, variant: "destructive" });
     },
   });
@@ -735,6 +761,7 @@ export default function OrganizationTeamPage() {
                       inviteMutation.mutate({
                         email: inviteEmail,
                         role: inviteRole,
+                        invitationMethod: "direct_message",
                       });
                     }}
                     disabled={!inviteEmail || inviteMutation.isPending}

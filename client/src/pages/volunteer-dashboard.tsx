@@ -2537,6 +2537,9 @@ export default function Dashboard() {
           totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
           volunteerName={currentUser?.displayName}
           sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+          verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
+          verifiedHours={kpis.verifiedHours ?? 0}
+          pendingHours={kpis.pendingHours ?? 0}
         />
         </div>
       </PageTransition>
@@ -3238,6 +3241,9 @@ export default function Dashboard() {
         totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
         volunteerName={currentUser?.displayName}
         sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+        verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
+        verifiedHours={kpis.verifiedHours ?? 0}
+        pendingHours={kpis.pendingHours ?? 0}
       />
 
       {/* KPI Detail Dialog */}

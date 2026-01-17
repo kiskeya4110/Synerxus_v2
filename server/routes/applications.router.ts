@@ -31,8 +31,47 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
       applications = await storage.listApplications();
     }
 
-    res.json(applications);
+    // Enrich applications with volunteer and opportunity data
+    const enrichedApplications = await Promise.all(
+      applications.map(async (app: any) => {
+        try {
+          const [volunteer, opportunity] = await Promise.all([
+            storage.getUser(app.volunteerId),
+            storage.getOpportunity(app.opportunityId)
+          ]);
+
+          return {
+            ...app,
+            volunteer: volunteer ? {
+              id: volunteer.id,
+              displayName: volunteer.displayName || volunteer.username,
+              username: volunteer.username,
+              email: volunteer.email,
+              avatar: volunteer.avatar
+            } : null,
+            opportunity: opportunity ? {
+              id: opportunity.id,
+              title: opportunity.title,
+              description: opportunity.description,
+              organizationId: opportunity.organizationId,
+              sdgGoals: opportunity.sdgGoals,
+              skills: opportunity.skills
+            } : null
+          };
+        } catch (enrichError) {
+          console.error(`Error enriching application ${app.id}:`, enrichError);
+          return {
+            ...app,
+            volunteer: null,
+            opportunity: null
+          };
+        }
+      })
+    );
+
+    res.json(enrichedApplications);
   } catch (err) {
+    console.error("Error fetching applications:", err);
     res.status(500).json({ message: "Failed to fetch applications" });
   }
 });

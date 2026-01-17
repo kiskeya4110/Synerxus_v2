@@ -309,8 +309,48 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
         console.warn("Failed to update volunteer-organization relationship:", relationshipError);
       }
 
-      if (opportunity.projectId) {
-        const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
+      // Ensure we have a projectId - create project from opportunity if none exists
+      let projectId = opportunity.projectId;
+
+      if (!projectId) {
+        // Auto-create a project from the opportunity so volunteers can log time/impact
+        try {
+          console.log(`[Application Review] Opportunity ${opportunity.id} has no projectId, creating project from opportunity data`);
+
+          const newProject = await storage.createProject({
+            name: opportunity.title,
+            description: opportunity.description || `Project created from opportunity: ${opportunity.title}`,
+            organizationId: opportunity.organizationId,
+            status: "active",
+            requiredSkills: opportunity.requiredSkills || [],
+            optionalSkills: opportunity.optionalSkills || [],
+            sdgGoals: opportunity.sdgGoals || [],
+            primarySdg: opportunity.primarySdg || null,
+            location: opportunity.location || null,
+            engagementType: (opportunity.engagementType as "remote" | "in-person" | "hybrid" | null) || null,
+            commitmentType: (opportunity.commitmentType as "event" | "ongoing" | "project-based" | null) || "project-based",
+            ongoingHoursPerWeek: opportunity.ongoingHoursPerWeek || null,
+            projectTotalHours: opportunity.projectTotalHours || null,
+            startDate: opportunity.startDate || null,
+            endDate: opportunity.endDate || null,
+            impactMetricName: opportunity.impactMetricName || null,
+            impactMetricUnit: opportunity.impactMetricUnit || null,
+          });
+
+          projectId = newProject.id;
+          console.log(`[Application Review] Created project ${projectId} from opportunity ${opportunity.id}`);
+
+          // Update the opportunity to link to the new project
+          await storage.updateOpportunity(opportunity.id, { projectId: newProject.id });
+          console.log(`[Application Review] Linked opportunity ${opportunity.id} to project ${projectId}`);
+        } catch (projectError) {
+          console.error(`[Application Review] Failed to create project from opportunity ${opportunity.id}:`, projectError);
+          // Don't fail the entire acceptance - volunteer is still accepted, just might not have a project yet
+        }
+      }
+
+      if (projectId) {
+        const existingAssignments = await storage.listProjectAssignmentsByProject(projectId);
         const existingAssignment = existingAssignments.find(
           (assignment: any) => assignment.volunteerId === application.volunteerId
         );
@@ -324,35 +364,48 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
             respondedAt: new Date(),
             hoursCommitted: opportunity.ongoingHoursPerWeek || 0
           });
+          console.log(`[Application Review] Updated assignment ${existingAssignment.id} to active for volunteer ${application.volunteerId}`);
         } else {
           // Create new assignment if none exists
-          await storage.createProjectAssignment({
-            projectId: opportunity.projectId,
-            volunteerId: application.volunteerId,
-            role: "Volunteer",
-            status: "active",
-            assignedAt: new Date(),
-            respondedAt: new Date(),
-            hoursCommitted: opportunity.ongoingHoursPerWeek || 0
-          });
+          try {
+            await storage.createProjectAssignment({
+              projectId: projectId,
+              volunteerId: application.volunteerId,
+              role: "Volunteer",
+              status: "active",
+              assignedAt: new Date(),
+              respondedAt: new Date(),
+              hoursCommitted: opportunity.ongoingHoursPerWeek || 0
+            });
+            console.log(`[Application Review] Created new assignment for volunteer ${application.volunteerId} on project ${projectId}`);
+          } catch (assignmentError: any) {
+            // Handle duplicate assignment error gracefully
+            if (assignmentError.message?.includes('already assigned')) {
+              console.log(`[Application Review] Volunteer ${application.volunteerId} already has an assignment on project ${projectId}`);
+            } else {
+              console.error(`[Application Review] Failed to create assignment:`, assignmentError);
+            }
+          }
         }
 
-        const project = await storage.getProject(opportunity.projectId);
+        const project = await storage.getProject(projectId);
         if (project && project.organizationId) {
           await notifyNewAssignment(
             application.volunteerId,
-            opportunity.projectId,
+            projectId,
             project.organizationId
           );
         }
 
         await storage.createVolunteerActivity({
           userId: application.volunteerId,
-          projectId: opportunity.projectId,
+          projectId: projectId,
           description: `Accepted application for ${opportunity.title}`,
           date: new Date(),
           hours: 0
         });
+      } else {
+        console.warn(`[Application Review] No project available for accepted application ${applicationId}. Volunteer may not be able to log time.`);
       }
     }
 
@@ -755,5 +808,252 @@ applicationsRouter.get("/:id/match-analysis", async (req: Request, res: Response
   } catch (err) {
     console.error("Error getting match analysis:", err);
     res.status(500).json({ message: "Failed to get match analysis" });
+  }
+});
+
+// POST /api/applications/:id/repair-assignment - Fix missing project assignment for accepted application
+// This is useful for volunteers who were accepted before the auto-project-creation fix
+applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Response) => {
+  try {
+    const applicationId = parseInt(req.params.id);
+
+    const application = await storage.getApplication(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (application.status !== 'accepted') {
+      return res.status(400).json({ message: "Only accepted applications can be repaired" });
+    }
+
+    const opportunity = await storage.getOpportunity(application.opportunityId);
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    // Check if volunteer already has an active assignment
+    let projectId = opportunity.projectId;
+
+    if (projectId) {
+      const existingAssignments = await storage.listProjectAssignmentsByProject(projectId);
+      const existingAssignment = existingAssignments.find(
+        (a: any) => a.volunteerId === application.volunteerId && (a.status === 'active' || a.status === 'pending')
+      );
+
+      if (existingAssignment) {
+        return res.json({
+          message: "Volunteer already has an assignment",
+          assignment: existingAssignment,
+          repaired: false
+        });
+      }
+    }
+
+    // If no projectId on opportunity, create a project
+    if (!projectId) {
+      console.log(`[Repair Assignment] Creating project for opportunity ${opportunity.id}`);
+
+      const newProject = await storage.createProject({
+        name: opportunity.title,
+        description: opportunity.description || `Project created from opportunity: ${opportunity.title}`,
+        organizationId: opportunity.organizationId,
+        status: "active",
+        requiredSkills: opportunity.requiredSkills || [],
+        optionalSkills: opportunity.optionalSkills || [],
+        sdgGoals: opportunity.sdgGoals || [],
+        primarySdg: opportunity.primarySdg || null,
+        location: opportunity.location || null,
+        engagementType: (opportunity.engagementType as "remote" | "in-person" | "hybrid" | null) || null,
+        commitmentType: (opportunity.commitmentType as "event" | "ongoing" | "project-based" | null) || "project-based",
+        ongoingHoursPerWeek: opportunity.ongoingHoursPerWeek || null,
+        projectTotalHours: opportunity.projectTotalHours || null,
+        startDate: opportunity.startDate || null,
+        endDate: opportunity.endDate || null,
+        impactMetricName: opportunity.impactMetricName || null,
+        impactMetricUnit: opportunity.impactMetricUnit || null,
+      });
+
+      projectId = newProject.id;
+
+      // Link opportunity to new project
+      await storage.updateOpportunity(opportunity.id, { projectId: newProject.id });
+      console.log(`[Repair Assignment] Created and linked project ${projectId} to opportunity ${opportunity.id}`);
+    }
+
+    // Create the assignment
+    try {
+      const newAssignment = await storage.createProjectAssignment({
+        projectId: projectId,
+        volunteerId: application.volunteerId,
+        role: "Volunteer",
+        status: "active",
+        assignedAt: new Date(),
+        respondedAt: new Date(),
+        hoursCommitted: opportunity.ongoingHoursPerWeek || 0
+      });
+
+      // Update volunteer-organization relationship if needed
+      await storage.upsertVolunteerOrganizationRelationship(
+        application.volunteerId,
+        opportunity.organizationId,
+        {
+          relationshipType: 'accepted',
+          isActive: true
+        }
+      );
+
+      console.log(`[Repair Assignment] Created assignment ${newAssignment.id} for volunteer ${application.volunteerId}`);
+
+      res.json({
+        message: "Assignment repaired successfully",
+        assignment: newAssignment,
+        projectId: projectId,
+        repaired: true
+      });
+    } catch (assignmentError: any) {
+      if (assignmentError.message?.includes('already assigned')) {
+        return res.json({
+          message: "Volunteer already has an assignment (possibly with different status)",
+          repaired: false
+        });
+      }
+      throw assignmentError;
+    }
+  } catch (err) {
+    console.error("Error repairing assignment:", err);
+    res.status(500).json({ message: "Failed to repair assignment" });
+  }
+});
+
+// POST /api/applications/repair-all - Fix all accepted applications missing project assignments
+applicationsRouter.post("/repair-all", async (req: Request, res: Response) => {
+  try {
+    const applications = await storage.listApplications();
+    const acceptedApplications = applications.filter(a => a.status === 'accepted');
+
+    const results = {
+      total: acceptedApplications.length,
+      repaired: 0,
+      alreadyOk: 0,
+      failed: 0,
+      details: [] as any[]
+    };
+
+    for (const application of acceptedApplications) {
+      try {
+        const opportunity = await storage.getOpportunity(application.opportunityId);
+        if (!opportunity) {
+          results.failed++;
+          results.details.push({
+            applicationId: application.id,
+            volunteerId: application.volunteerId,
+            status: 'failed',
+            reason: 'Opportunity not found'
+          });
+          continue;
+        }
+
+        let projectId = opportunity.projectId;
+
+        // Check if volunteer already has an active assignment
+        if (projectId) {
+          const assignments = await storage.listProjectAssignmentsByProject(projectId);
+          const hasActiveAssignment = assignments.some(
+            (a: any) => a.volunteerId === application.volunteerId && (a.status === 'active' || a.status === 'pending')
+          );
+
+          if (hasActiveAssignment) {
+            results.alreadyOk++;
+            results.details.push({
+              applicationId: application.id,
+              volunteerId: application.volunteerId,
+              status: 'ok',
+              reason: 'Already has assignment'
+            });
+            continue;
+          }
+        }
+
+        // Need to create project and/or assignment
+        if (!projectId) {
+          const newProject = await storage.createProject({
+            name: opportunity.title,
+            description: opportunity.description || `Project created from opportunity: ${opportunity.title}`,
+            organizationId: opportunity.organizationId,
+            status: "active",
+            requiredSkills: opportunity.requiredSkills || [],
+            optionalSkills: opportunity.optionalSkills || [],
+            sdgGoals: opportunity.sdgGoals || [],
+            primarySdg: opportunity.primarySdg || null,
+            location: opportunity.location || null,
+            engagementType: (opportunity.engagementType as "remote" | "in-person" | "hybrid" | null) || null,
+            commitmentType: (opportunity.commitmentType as "event" | "ongoing" | "project-based" | null) || "project-based",
+            ongoingHoursPerWeek: opportunity.ongoingHoursPerWeek || null,
+            projectTotalHours: opportunity.projectTotalHours || null,
+            startDate: opportunity.startDate || null,
+            endDate: opportunity.endDate || null,
+            impactMetricName: opportunity.impactMetricName || null,
+            impactMetricUnit: opportunity.impactMetricUnit || null,
+          });
+
+          projectId = newProject.id;
+          await storage.updateOpportunity(opportunity.id, { projectId: newProject.id });
+        }
+
+        // Create assignment
+        await storage.createProjectAssignment({
+          projectId: projectId!,
+          volunteerId: application.volunteerId,
+          role: "Volunteer",
+          status: "active",
+          assignedAt: new Date(),
+          respondedAt: new Date(),
+          hoursCommitted: opportunity.ongoingHoursPerWeek || 0
+        });
+
+        // Update volunteer-organization relationship
+        await storage.upsertVolunteerOrganizationRelationship(
+          application.volunteerId,
+          opportunity.organizationId,
+          {
+            relationshipType: 'accepted',
+            isActive: true
+          }
+        );
+
+        results.repaired++;
+        results.details.push({
+          applicationId: application.id,
+          volunteerId: application.volunteerId,
+          status: 'repaired',
+          projectId: projectId
+        });
+      } catch (appError: any) {
+        if (appError.message?.includes('already assigned')) {
+          results.alreadyOk++;
+          results.details.push({
+            applicationId: application.id,
+            volunteerId: application.volunteerId,
+            status: 'ok',
+            reason: 'Already assigned (different status)'
+          });
+        } else {
+          results.failed++;
+          results.details.push({
+            applicationId: application.id,
+            volunteerId: application.volunteerId,
+            status: 'failed',
+            reason: appError.message
+          });
+        }
+      }
+    }
+
+    console.log(`[Repair All] Completed: ${results.repaired} repaired, ${results.alreadyOk} already ok, ${results.failed} failed out of ${results.total} accepted applications`);
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error repairing all applications:", err);
+    res.status(500).json({ message: "Failed to repair applications" });
   }
 });

@@ -41,9 +41,18 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // High contrast text colors for accessibility
+        "text-primary": "#1E293B",     // Dark slate - high contrast on light bg
+        "text-secondary": "#475569",   // Medium slate - good contrast on light bg
+        "text-muted": "#64748B",       // Slate gray - readable muted text
+        "text-light": "#F8FAFC",       // Near white - for dark backgrounds
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

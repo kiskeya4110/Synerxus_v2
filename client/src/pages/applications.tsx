@@ -247,6 +247,15 @@ export default function ApplicationsPage() {
     });
   };
 
+  // Direct one-click accept - no dialog needed
+  const handleDirectAccept = (app: Application) => {
+    reviewMutation.mutate({
+      applicationId: app.id,
+      status: "accepted",
+      notes: ""
+    });
+  };
+
   const openReviewDialog = (app: Application, action: "accepted" | "rejected") => {
     setSelectedApplication(app);
     setReviewAction(action);
@@ -388,10 +397,11 @@ export default function ApplicationsPage() {
                         <Button
                           size="sm"
                           className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => openReviewDialog(app, "accepted")}
+                          disabled={reviewMutation.isPending}
+                          onClick={() => handleDirectAccept(app)}
                         >
                           <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Accept
+                          {reviewMutation.isPending ? "..." : "Accept"}
                         </Button>
                         <Button
                           size="sm"
@@ -540,12 +550,13 @@ export default function ApplicationsPage() {
                     </Button>
                     <Button
                       className="bg-green-600"
+                      disabled={reviewMutation.isPending}
                       onClick={() => {
                         closeProfileDialog();
-                        openReviewDialog(profileApplication, "accepted");
+                        handleDirectAccept(profileApplication);
                       }}
                     >
-                      Accept
+                      {reviewMutation.isPending ? "Accepting..." : "Accept"}
                     </Button>
                   </>
                 )}
@@ -685,11 +696,12 @@ export default function ApplicationsPage() {
                     </Button>
                     <Button
                       className="flex-1"
-                      onClick={() => openReviewDialog(app, "accepted")}
+                      disabled={reviewMutation.isPending}
+                      onClick={() => handleDirectAccept(app)}
                       data-testid={`button-accept-${app.id}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Accept
+                      {reviewMutation.isPending ? "..." : "Accept"}
                     </Button>
                     <Button
                       variant="outline"
@@ -1106,15 +1118,16 @@ export default function ApplicationsPage() {
                   Reject
                 </Button>
                 <Button
+                  disabled={reviewMutation.isPending}
                   onClick={() => {
                     closeProfileDialog();
-                    openReviewDialog(profileApplication, "accepted");
+                    handleDirectAccept(profileApplication);
                   }}
                   className="bg-green-600 hover:bg-green-700"
                   data-testid="button-approve-from-profile"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Approve
+                  {reviewMutation.isPending ? "..." : "Approve"}
                 </Button>
               </>
             )}

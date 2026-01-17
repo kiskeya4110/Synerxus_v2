@@ -10,12 +10,13 @@ export const SynerxusTheme = {
     secondary: '#00C389',         // Impact Green
     accent: '#F59E0B',            // Amber accent
 
-    // Neutrals
-    dark: '#111827',
-    darkGray: '#374151',
-    gray: '#6B7280',
-    lightGray: '#D1D5DB',
-    veryLightGray: '#F3F4F6',
+    // Neutrals - Updated for better contrast
+    dark: '#0F172A',            // Darker for better contrast
+    darkGray: '#334155',        // Slightly darker for better readability
+    gray: '#475569',            // Darker gray for better contrast (was #6B7280)
+    mediumGray: '#64748B',      // Medium gray for secondary text
+    lightGray: '#CBD5E1',       // Adjusted for better visibility
+    veryLightGray: '#F1F5F9',
     white: '#FFFFFF',
 
     // Status Colors

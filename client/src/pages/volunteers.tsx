@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare, TrendingUp, AlertCircle, Zap, AlertTriangle, CheckCheck, XCircle } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare, TrendingUp, AlertCircle, Zap, AlertTriangle, CheckCheck, XCircle, Edit2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,9 @@ export default function Volunteers() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [volunteerToInvite, setVolunteerToInvite] = useState<{ id: number; name: string } | null>(null);
   const [selectedInviteProjectId, setSelectedInviteProjectId] = useState<string>("");
+  // Role assignment state
+  const [selectedAssignmentRole, setSelectedAssignmentRole] = useState<string>("Volunteer");
+  const [editingAssignmentRole, setEditingAssignmentRole] = useState<{ assignmentId: number; role: string } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [, navigate] = useLocation();
@@ -284,36 +287,49 @@ export default function Volunteers() {
 
   // Fetch volunteer profile when selected
   const { data: volunteerProfile } = useQuery({
-    queryKey: ["/api/intake/volunteer-profile", selectedVolunteerId],
+    queryKey: ["/api/volunteers/profile", selectedVolunteerId],
     staleTime: 0,
     refetchOnMount: true,
     queryFn: async () => {
       if (!selectedVolunteerId) return null;
-      const response = await fetch(`/api/intake/volunteer-profile?userId=${selectedVolunteerId}`);
+      const response = await fetch(`/api/volunteers/profile/${selectedVolunteerId}`);
       if (!response.ok) return null;
       return response.json();
     },
     enabled: !!selectedVolunteerId && profileDialogOpen
   });
 
+  // Fetch volunteer's project assignments (includes roles)
+  const { data: volunteerAssignments = [] } = useQuery<any[]>({
+    queryKey: ["/api/project-assignments", { volunteerId: selectedVolunteerId }],
+    queryFn: async () => {
+      if (!selectedVolunteerId) return [];
+      const response = await fetch(`/api/project-assignments?volunteerId=${selectedVolunteerId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedVolunteerId && profileDialogOpen && isOrganization
+  });
+
   // Assign volunteer to project mutation (uses invite endpoint for organizations)
   const assignProjectMutation = useMutation({
-    mutationFn: async ({ volunteerId, projectId }: { volunteerId: number; projectId: number }) => {
+    mutationFn: async ({ volunteerId, projectId, role }: { volunteerId: number; projectId: number; role?: string }) => {
       return await apiRequest("POST", `/api/project-assignments/invite`, {
         volunteerId,
         projectId,
-        hoursCommitted: 10
+        hoursCommitted: 10,
+        role: role || "Volunteer"
       });
     },
     onSuccess: (_data, variables) => {
       toast({
         title: "Project Assigned",
-        description: "Volunteer will receive a notification to accept or decline this assignment",
+        description: `Volunteer assigned as ${variables.role || 'Volunteer'}. They will receive a notification.`,
       });
       // Invalidate project assignments, volunteer profile, volunteers list (including org-scoped), and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", variables.volunteerId] });
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey[0];
           return typeof key === 'string' && (
@@ -327,11 +343,43 @@ export default function Volunteers() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", variables.volunteerId] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setSelectedProjectId("");
+      setSelectedAssignmentRole("Volunteer");
     },
     onError: (error: Error) => {
       toast({
         title: "Assignment Failed",
         description: error.message || "Failed to assign volunteer to project",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update assignment role mutation
+  const updateAssignmentRoleMutation = useMutation({
+    mutationFn: async ({ assignmentId, role }: { assignmentId: number; role: string }) => {
+      return await apiRequest("PATCH", `/api/project-assignments/${assignmentId}`, { role });
+    },
+    onSuccess: (_data, variables) => {
+      toast({
+        title: "Role Updated",
+        description: `Volunteer role changed to ${variables.role}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && (
+            key.startsWith('/api/volunteers') ||
+            key.startsWith('/api/organizations')
+          );
+        }
+      });
+      setEditingAssignmentRole(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update volunteer role",
         variant: "destructive",
       });
     }
@@ -2539,33 +2587,90 @@ export default function Volunteers() {
                 </div>
               )}
 
-              {/* Assigned Projects Section */}
-              {isOrganization && selectedVolunteerData?.projects && 
-               selectedVolunteerData.projects.length > 0 && (
+              {/* Assigned Projects Section with Role Management */}
+              {isOrganization && volunteerAssignments.length > 0 && (
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
                     <Briefcase className="w-5 h-5" />
-                    Assigned Projects ({selectedVolunteerData.projects.length})
+                    Assigned Projects ({volunteerAssignments.length})
                   </h4>
                   <div className="grid gap-3">
-                    {selectedVolunteerData.projects.map((project: any) => (
-                      <Card key={project.id} className="bg-gray-50 dark:bg-gray-800">
+                    {volunteerAssignments.map((assignment: any) => (
+                      <Card key={assignment.id} className="bg-gray-50 dark:bg-gray-800">
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 <FolderKanban className="w-5 h-5 text-primary" />
                               </div>
-                              <div>
-                                <p className="font-medium">{project.name}</p>
-                                <p className="text-xs text-muted-foreground">Active assignment</p>
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{assignment.project?.name || 'Unknown Project'}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Status: {assignment.status || 'active'}
+                                </p>
                               </div>
                             </div>
-                            <Link href={`/projects/${project.id}`}>
-                              <Button variant="ghost" size="sm">
-                                View Project
-                              </Button>
-                            </Link>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {editingAssignmentRole?.assignmentId === assignment.id && editingAssignmentRole ? (
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    value={editingAssignmentRole.role}
+                                    onValueChange={(value) => setEditingAssignmentRole({ assignmentId: editingAssignmentRole.assignmentId, role: value })}
+                                  >
+                                    <SelectTrigger className="w-[140px] h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Volunteer">Volunteer</SelectItem>
+                                      <SelectItem value="Team Lead">Team Lead</SelectItem>
+                                      <SelectItem value="Project Coordinator">Project Coordinator</SelectItem>
+                                      <SelectItem value="Mentor">Mentor</SelectItem>
+                                      <SelectItem value="Specialist">Specialist</SelectItem>
+                                      <SelectItem value="Ambassador">Ambassador</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    size="sm"
+                                    className="h-8"
+                                    disabled={updateAssignmentRoleMutation.isPending}
+                                    onClick={() => {
+                                      if (editingAssignmentRole) {
+                                        updateAssignmentRoleMutation.mutate({
+                                          assignmentId: assignment.id,
+                                          role: editingAssignmentRole.role
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    {updateAssignmentRoleMutation.isPending ? "..." : "Save"}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8"
+                                    onClick={() => setEditingAssignmentRole(null)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <Badge
+                                    variant="secondary"
+                                    className="cursor-pointer hover:bg-primary/20"
+                                    onClick={() => setEditingAssignmentRole({ assignmentId: assignment.id, role: assignment.role || 'Volunteer' })}
+                                  >
+                                    {assignment.role || 'Volunteer'}
+                                    <Edit2 className="w-3 h-3 ml-1" />
+                                  </Badge>
+                                  <Link href={`/projects/${assignment.projectId}`}>
+                                    <Button variant="ghost" size="sm">
+                                      View
+                                    </Button>
+                                  </Link>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -2578,34 +2683,52 @@ export default function Volunteers() {
               {isOrganization && orgProjects.length > 0 && (
                 <div className="border-t pt-4">
                   <Label className="text-base font-semibold mb-3 block">Assign to Project</Label>
-                  <div className="flex gap-2">
-                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                      <SelectTrigger className="flex-1" data-testid="select-assign-project-volunteers">
-                        <SelectValue placeholder="Select a project..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {orgProjects.map((project: any) => (
-                          <SelectItem key={project.id} value={project.id.toString()}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      onClick={() => {
-                        if (selectedProjectId && selectedVolunteerId) {
-                          assignProjectMutation.mutate({
-                            volunteerId: selectedVolunteerId,
-                            projectId: parseInt(selectedProjectId)
-                          });
-                        }
-                      }}
-                      disabled={!selectedProjectId || assignProjectMutation.isPending}
-                      data-testid="button-assign-project-volunteers"
-                    >
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      {assignProjectMutation.isPending ? "Assigning..." : "Assign"}
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                        <SelectTrigger className="flex-1" data-testid="select-assign-project-volunteers">
+                          <SelectValue placeholder="Select a project..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orgProjects.map((project: any) => (
+                            <SelectItem key={project.id} value={project.id.toString()}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Select value={selectedAssignmentRole} onValueChange={setSelectedAssignmentRole}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select role..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Volunteer">Volunteer</SelectItem>
+                          <SelectItem value="Team Lead">Team Lead</SelectItem>
+                          <SelectItem value="Project Coordinator">Project Coordinator</SelectItem>
+                          <SelectItem value="Mentor">Mentor</SelectItem>
+                          <SelectItem value="Specialist">Specialist</SelectItem>
+                          <SelectItem value="Ambassador">Ambassador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => {
+                          if (selectedProjectId && selectedVolunteerId) {
+                            assignProjectMutation.mutate({
+                              volunteerId: selectedVolunteerId,
+                              projectId: parseInt(selectedProjectId),
+                              role: selectedAssignmentRole
+                            });
+                          }
+                        }}
+                        disabled={!selectedProjectId || assignProjectMutation.isPending}
+                        data-testid="button-assign-project-volunteers"
+                      >
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        {assignProjectMutation.isPending ? "Assigning..." : "Assign"}
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     The volunteer will receive a notification to accept or reject this assignment

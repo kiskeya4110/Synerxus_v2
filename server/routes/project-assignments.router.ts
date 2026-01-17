@@ -229,7 +229,7 @@ projectAssignmentsRouter.post("/", async (req: Request, res: Response) => {
 // Creates a pending assignment (invitation) for volunteer
 projectAssignmentsRouter.post("/invite", async (req: Request, res: Response) => {
   try {
-    const { volunteerId, projectId, hoursCommitted } = req.body;
+    const { volunteerId, projectId, hoursCommitted, role } = req.body;
 
     if (!volunteerId || !projectId) {
       return res.status(400).json({ message: "volunteerId and projectId are required" });
@@ -241,6 +241,7 @@ projectAssignmentsRouter.post("/invite", async (req: Request, res: Response) => 
       projectId: parseInt(projectId),
       hoursCommitted: hoursCommitted || 10,
       status: "pending", // Pending invitation
+      role: role || "Volunteer", // Default role is Volunteer
     };
 
     const newAssignment = await storage.createProjectAssignment(assignmentData);

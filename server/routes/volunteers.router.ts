@@ -51,6 +51,48 @@ volunteersRouter.get("/me", authMiddleware, async (req: Request, res: Response) 
   }
 });
 
+// GET /api/volunteers/profile/:userId - Get volunteer profile by user ID (for organizations)
+// Allows organizations to view volunteer profiles of their accepted volunteers
+volunteersRouter.get("/profile/:userId", async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Get volunteer profile
+    const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+
+    // Merge user.avatar into volunteerProfile.profilePhotoUrl if missing
+    const mergedProfile = volunteerProfile ? {
+      ...volunteerProfile,
+      profilePhotoUrl: volunteerProfile.profilePhotoUrl || user.avatar || null
+    } : null;
+
+    res.json({
+      user: {
+        id: user.id,
+        displayName: user.displayName,
+        email: user.email,
+        avatar: user.avatar,
+        userType: user.userType,
+        skills: user.skills,
+        createdAt: user.createdAt
+      },
+      volunteerProfile: mergedProfile
+    });
+  } catch (err) {
+    console.error("Error fetching volunteer profile:", err);
+    res.status(500).json({ message: "Failed to fetch volunteer profile" });
+  }
+});
+
 // GET /api/volunteers/matches - AI-matched volunteers endpoint
 // Returns volunteers matched to organization's needs with enriched match data
 volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Response) => {

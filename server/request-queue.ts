@@ -117,9 +117,41 @@ export function queueMiddleware(queueType: QueueType = 'standard') {
     try {
       await queue.add(async () => {
         return new Promise<void>((resolve, reject) => {
-          // Track when response finishes
-          res.on('finish', resolve);
-          res.on('error', reject);
+          let settled = false;
+
+          // Handler functions that we can remove later
+          const onFinish = () => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve();
+          };
+
+          const onError = (err: Error) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(err);
+          };
+
+          const onClose = () => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(); // Client disconnected, but not an error
+          };
+
+          // Cleanup function to remove all listeners
+          const cleanup = () => {
+            res.removeListener('finish', onFinish);
+            res.removeListener('error', onError);
+            res.removeListener('close', onClose);
+          };
+
+          // Track when response finishes, errors, or client disconnects
+          res.on('finish', onFinish);
+          res.on('error', onError);
+          res.on('close', onClose);
 
           // Pass to next middleware
           next();

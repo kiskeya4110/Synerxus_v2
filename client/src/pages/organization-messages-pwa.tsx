@@ -278,7 +278,7 @@ export default function OrganizationMessagesPWA() {
   // Mark messages as delivered when viewed by the receiver
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (messageIds: number[]) => {
-      const response = await fetch('/api/messages/mark-delivered', {
+      const response = await fetch('/api/mark-delivered', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messageIds }),

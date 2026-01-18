@@ -1,7 +1,51 @@
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { storage } from "../storage";
+
+/**
+ * Authenticated user type from auth middleware
+ */
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  userType: string;
+  organizationId?: number | null;
+  firebaseUid?: string | null;
+}
+
+/**
+ * Get authenticated user from request with null safety.
+ * Returns the user if authenticated, or sends 401 and returns null.
+ * Use this instead of req.user! to prevent crashes.
+ *
+ * @example
+ * const user = getAuthenticatedUser(req, res);
+ * if (!user) return; // Response already sent
+ * // user is now safely typed
+ */
+export function getAuthenticatedUser(req: Request, res: Response): AuthenticatedUser | null {
+  if (!req.user) {
+    res.status(401).json({
+      error: "UNAUTHORIZED",
+      message: "Authentication required. Please provide a valid token.",
+    });
+    return null;
+  }
+  return req.user as AuthenticatedUser;
+}
+
+/**
+ * Require authenticated user - throws if not authenticated.
+ * Use this when you're certain auth middleware ran but want type safety.
+ * Prefer getAuthenticatedUser() for route handlers.
+ */
+export function requireUser(req: Request): AuthenticatedUser {
+  if (!req.user) {
+    throw new Error("Authentication required - middleware may not have run");
+  }
+  return req.user as AuthenticatedUser;
+}
 
 /**
  * Detects duplicate impacts within a time window (±6 hours)

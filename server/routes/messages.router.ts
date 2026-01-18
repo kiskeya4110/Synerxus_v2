@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertOrgMessageSchema } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { notifyNewMessage, notifyThreadMessage } from "../notification-service";
 import { authMiddleware } from "../middleware/auth";
 
@@ -18,7 +18,10 @@ export function setBroadcastFn(fn: BroadcastFn) {
 messagesRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session, not query parameter
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const sentMessages = await storage.listMessagesBySender(userId);
     const receivedMessages = await storage.listMessagesByReceiver(userId);
@@ -38,7 +41,10 @@ messagesRouter.get("/conversation/:userId", authMiddleware, async (req: Request,
   try {
     const otherUserId = parseInt(req.params.userId);
     // SECURITY: Use authenticated user ID from session, not query parameter
-    const currentUserId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const currentUserId = authUser.id;
 
     if (isNaN(otherUserId)) {
       return res.status(400).json({ message: "User ID must be a valid number" });
@@ -54,10 +60,13 @@ messagesRouter.get("/conversation/:userId", authMiddleware, async (req: Request,
 // POST /api/messages - Create new message
 messagesRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const messageData = insertOrgMessageSchema.parse(req.body);
 
     // SECURITY: Ensure the sender is the authenticated user
-    if (messageData.senderId !== req.user!.id) {
+    if (messageData.senderId !== authUser.id) {
       return res.status(403).json({ message: "Cannot send messages as another user" });
     }
 
@@ -86,6 +95,9 @@ messagesRouter.post("/", authMiddleware, async (req: Request, res: Response) => 
 // PATCH /api/messages/:id/read - Mark message as read
 messagesRouter.patch("/:id/read", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const messageId = parseInt(req.params.id);
 
     // First get the message to verify ownership
@@ -95,7 +107,7 @@ messagesRouter.patch("/:id/read", authMiddleware, async (req: Request, res: Resp
     }
 
     // SECURITY: Only the receiver can mark a message as read
-    if (message.receiverId !== req.user!.id) {
+    if (message.receiverId !== authUser.id) {
       return res.status(403).json({ message: "Cannot mark other users' messages as read" });
     }
 
@@ -110,6 +122,9 @@ messagesRouter.patch("/:id/read", authMiddleware, async (req: Request, res: Resp
 // PATCH /api/messages/:id/delivered - Mark message as delivered (for live chat confirmation)
 messagesRouter.patch("/:id/delivered", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const messageId = parseInt(req.params.id);
 
     // First get the message to verify ownership
@@ -119,7 +134,7 @@ messagesRouter.patch("/:id/delivered", authMiddleware, async (req: Request, res:
     }
 
     // SECURITY: Only the receiver can mark a message as delivered
-    if (message.receiverId !== req.user!.id) {
+    if (message.receiverId !== authUser.id) {
       return res.status(403).json({ message: "Cannot mark other users' messages as delivered" });
     }
 
@@ -134,8 +149,11 @@ messagesRouter.patch("/:id/delivered", authMiddleware, async (req: Request, res:
 // POST /api/messages/mark-delivered - Mark multiple messages as delivered (batch)
 messagesRouter.post("/mark-delivered", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const { messageIds } = req.body;
-    const userId = req.user!.id;
+    const userId = authUser.id;
 
     if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
       return res.status(400).json({ message: "messageIds array is required" });
@@ -169,13 +187,16 @@ messagesRouter.post("/mark-delivered", authMiddleware, async (req: Request, res:
 // GET /api/conversation-threads/organization/:organizationId - Get threads for organization
 messagesRouter.get("/conversation-threads/organization/:organizationId", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const organizationId = parseInt(req.params.organizationId);
     if (isNaN(organizationId)) {
       return res.status(400).json({ message: "organizationId must be a valid number" });
     }
 
     // SECURITY: Verify user belongs to this organization
-    if (req.user!.organizationId !== organizationId) {
+    if (authUser.organizationId !== organizationId) {
       return res.status(403).json({ message: "Access denied. You can only view threads for your organization." });
     }
 
@@ -213,13 +234,16 @@ messagesRouter.get("/conversation-threads/organization/:organizationId", authMid
 // GET /api/conversation-threads/volunteer/:volunteerId - Get threads for volunteer
 messagesRouter.get("/conversation-threads/volunteer/:volunteerId", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const volunteerId = parseInt(req.params.volunteerId);
     if (isNaN(volunteerId)) {
       return res.status(400).json({ message: "volunteerId must be a valid number" });
     }
 
     // SECURITY: Verify user is requesting their own threads
-    if (req.user!.id !== volunteerId) {
+    if (authUser.id !== volunteerId) {
       return res.status(403).json({ message: "Access denied. You can only view your own conversation threads." });
     }
 
@@ -257,9 +281,12 @@ messagesRouter.get("/conversation-threads/volunteer/:volunteerId", authMiddlewar
 // GET /api/conversation-threads/:threadId/messages - Get messages in a thread
 messagesRouter.get("/conversation-threads/:threadId/messages", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const threadId = parseInt(req.params.threadId);
     // SECURITY: Use authenticated user ID from session
-    const requestingUserId = req.user!.id;
+    const requestingUserId = authUser.id;
 
     if (isNaN(threadId)) {
       return res.status(400).json({ message: "threadId must be a valid number" });
@@ -272,7 +299,7 @@ messagesRouter.get("/conversation-threads/:threadId/messages", authMiddleware, a
 
     // SECURITY: Verify user is part of the thread
     const isVolunteerInThread = thread.volunteerId === requestingUserId;
-    const isOrganizationMember = req.user!.organizationId === thread.organizationId;
+    const isOrganizationMember = authUser.organizationId === thread.organizationId;
 
     if (!isVolunteerInThread && !isOrganizationMember) {
       return res.status(403).json({ message: "Access denied. You are not authorized to view messages in this thread." });

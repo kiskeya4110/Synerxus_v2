@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { handleValidationError, calculateProfileCompletion } from "./utils";
+import { handleValidationError, calculateProfileCompletion, getAuthenticatedUser } from "./utils";
 import { updateVolunteerProfileWithUser, updateOrganizationProfileWithUser } from "../profile-service";
 import { withTransaction } from "../db";
 import { db } from "../db";
@@ -22,7 +22,10 @@ export function setBroadcastFn(fn: BroadcastFn) {
 profileRouter.patch("/volunteer", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only update their own profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const user = await storage.getUser(userId);
 
@@ -121,7 +124,10 @@ profileRouter.patch("/volunteer", authMiddleware, async (req: Request, res: Resp
 profileRouter.patch("/organization", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only update their own organization profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const user = await storage.getUser(userId);
 
@@ -242,7 +248,10 @@ profileRouter.patch("/organization", authMiddleware, async (req: Request, res: R
 profileRouter.get("/volunteer", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only view their own profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const user = await storage.getUser(userId);
 
@@ -295,7 +304,10 @@ profileRouter.get("/volunteer", authMiddleware, async (req: Request, res: Respon
 profileRouter.get("/organization", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only view their own organization profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const user = await storage.getUser(userId);
 
@@ -353,7 +365,10 @@ profileRouter.get("/organization", authMiddleware, async (req: Request, res: Res
 profileRouter.get("/intake/volunteer-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only view their own intake profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     const user = await storage.getUser(userId);
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
@@ -384,7 +399,10 @@ profileRouter.get("/intake/volunteer-profile", authMiddleware, async (req: Reque
 profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only update their own intake profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
 
@@ -527,7 +545,10 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
 profileRouter.get("/intake/organization-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user's organization, not query parameter
-    const organizationId = req.user!.organizationId;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const organizationId = authUser.organizationId;
 
     if (!organizationId) {
       return res.status(400).json({ message: "User does not belong to an organization" });
@@ -545,7 +566,10 @@ profileRouter.get("/intake/organization-profile", authMiddleware, async (req: Re
 profileRouter.post("/intake/organization-profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session - users can only update their own organization profile
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = authUser.id;
 
     // Get the user to access their email and validate user type
     const user = await storage.getUser(userId);

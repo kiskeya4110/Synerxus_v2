@@ -3,6 +3,39 @@ import { storage } from "../storage";
 import { insertVolunteerStorySchema, insertStoryLikeSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import multer from "multer";
+import path from "path";
+import crypto from "crypto";
+
+/**
+ * Sanitize filename to prevent path traversal attacks
+ * - Removes directory components (../, ./, etc.)
+ * - Removes null bytes and other dangerous characters
+ * - Keeps only the base filename with safe characters
+ */
+function sanitizeFilename(filename: string): string {
+  // Get only the base filename (removes any directory components)
+  const basename = path.basename(filename);
+
+  // Remove null bytes and other control characters
+  const cleaned = basename.replace(/[\x00-\x1f\x80-\x9f]/g, '');
+
+  // Only allow alphanumeric, dots, hyphens, underscores
+  const sanitized = cleaned.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+
+  // Prevent empty filename or starting with dot (hidden files)
+  if (!sanitized || sanitized.startsWith('.')) {
+    return `file_${crypto.randomBytes(8).toString('hex')}`;
+  }
+
+  // Limit filename length
+  if (sanitized.length > 100) {
+    const ext = path.extname(sanitized);
+    const name = path.basename(sanitized, ext).slice(0, 90);
+    return name + ext;
+  }
+
+  return sanitized;
+}
 
 export const storiesRouter = Router();
 
@@ -217,7 +250,9 @@ storiesRouter.post("/stories/:id/photos", upload.array("photos", 5), async (req:
     const uploadedUrls: string[] = [];
     
     for (const file of files) {
-      const fileName = `public/stories/${storyId}/${Date.now()}-${file.originalname}`;
+      // Sanitize filename to prevent path traversal attacks
+      const safeFilename = sanitizeFilename(file.originalname);
+      const fileName = `public/stories/${storyId}/${Date.now()}-${safeFilename}`;
       
       try {
         const objectStorage = await getObjectStorage();

@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { authRateLimiter } from "../middleware/security";
 import { authMiddleware } from "../middleware/auth";
 
@@ -46,11 +46,13 @@ export function setBroadcastFn(fn: BroadcastFn) {
 // Organizations can see users in their org, CSR partners can see their employees
 usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const requestingUser = getAuthenticatedUser(req, res);
+    if (!requestingUser) return;
+
     const { userType } = req.query;
 
     // SECURITY: Use authenticated user from session
-    const requestingUserId = req.user!.id;
-    const requestingUser = req.user!;
+    const requestingUserId = requestingUser.id;
 
     let users = await storage.listUsers();
 
@@ -115,6 +117,9 @@ usersRouter.get("/me", async (req: Request, res: Response) => {
 // GET /api/users/:id - Get user by ID with authorization
 usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const userId = parseInt(req.params.id);
     const user = await storage.getUser(userId);
 
@@ -126,9 +131,9 @@ usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
     // 1. Their own profile
     // 2. Users in their organization (if they're org users)
     // 3. Public volunteer profiles (limited fields only)
-    const isOwnProfile = req.user!.id === userId;
-    const isSameOrganization = req.user!.organizationId &&
-      req.user!.organizationId === user.organizationId;
+    const isOwnProfile = authUser.id === userId;
+    const isSameOrganization = authUser.organizationId &&
+      authUser.organizationId === user.organizationId;
 
     if (!isOwnProfile && !isSameOrganization) {
       // Return limited public fields for other users
@@ -269,10 +274,13 @@ usersRouter.post("/", async (req: Request, res: Response) => {
 // PATCH /api/users/:id - Update user with authorization
 usersRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const userId = parseInt(req.params.id);
 
     // SECURITY: Users can only update their own profile
-    if (req.user!.id !== userId) {
+    if (authUser.id !== userId) {
       return res.status(403).json({ message: "You can only update your own profile" });
     }
 

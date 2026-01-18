@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { extractUserId } from "../user-validation";
 import { findTopVolunteers } from "../matching-algorithm";
 import { authMiddleware } from "../middleware/auth";
@@ -22,9 +22,10 @@ const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || "http://localhost:8
 volunteersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user ID from session
-    const userId = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(authUser.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -98,12 +99,15 @@ volunteersRouter.get("/profile/:userId", async (req: Request, res: Response) => 
 volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Response) => {
   try {
     // SECURITY: Use authenticated user from session
-    const userIdNum = req.user!.id;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userIdNum = authUser.id;
     const thresholdParam = req.query.threshold as string | undefined;
     const threshold = thresholdParam ? parseInt(thresholdParam) : 40; // Default 40% threshold
 
     // Verify the authenticated user is an organization
-    if (req.user!.userType !== 'organization') {
+    if (authUser.userType !== 'organization') {
       return res.status(403).json({ message: "Only organizations can access matched volunteers" });
     }
 
@@ -284,6 +288,9 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
 // GET /api/volunteers - List volunteers, optionally filtered by organization
 volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const organizationId = req.query.organizationId as string | undefined;
 
     // If organizationId is provided, return only volunteers assigned to that organization's projects
@@ -294,7 +301,7 @@ volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) =>
       }
 
       // SECURITY: Verify the requesting user belongs to this organization
-      if (req.user!.userType === 'organization' && req.user!.organizationId !== orgId) {
+      if (authUser.userType === 'organization' && authUser.organizationId !== orgId) {
         return res.status(403).json({ message: "You can only view volunteers for your own organization" });
       }
 
@@ -332,7 +339,7 @@ volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) =>
 
     // SECURITY: Without org filter, only allow organization users to see all volunteers
     // Volunteers should not be able to list other volunteers without context
-    if (req.user!.userType === 'volunteer') {
+    if (authUser.userType === 'volunteer') {
       return res.status(403).json({ message: "Volunteers cannot list all volunteers. Use specific endpoints instead." });
     }
 
@@ -350,7 +357,8 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
   try {
     const volunteerId = parseInt(req.params.id);
     // SECURITY: Use authenticated user from session
-    const requestingUser = req.user!;
+    const requestingUser = getAuthenticatedUser(req, res);
+    if (!requestingUser) return;
     console.log(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
 
     if (!volunteerId || isNaN(volunteerId)) {

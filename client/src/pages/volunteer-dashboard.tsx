@@ -2233,9 +2233,19 @@ export default function Dashboard() {
                             <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white text-sm">
-                              {activity.hours} hours logged
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                {activity.hours} hours logged
+                              </p>
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                activity.verificationStatus === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                activity.verificationStatus === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                              }`}>
+                                {activity.verificationStatus === 'approved' ? 'Approved' :
+                                 activity.verificationStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                              </span>
+                            </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {project?.name || 'Project'} • {activity.date ? new Date(activity.date).toLocaleDateString() : 'Recently'}
                             </p>
@@ -3415,7 +3425,17 @@ export default function Dashboard() {
                             <div key={aIndex} className="p-3 bg-white dark:bg-gray-800 rounded-md border" data-testid={`activity-${index}-${aIndex}`}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium">{activity.description}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium">{activity.description}</p>
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                      activity.verificationStatus === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                      activity.verificationStatus === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    }`}>
+                                      {activity.verificationStatus === 'approved' ? 'Approved' :
+                                       activity.verificationStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                                    </span>
+                                  </div>
                                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {activity.date}
                                   </p>

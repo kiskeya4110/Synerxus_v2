@@ -3578,8 +3578,20 @@ export default function OrganizationDashboard() {
                                   <span style={{ fontWeight: '700', color: '#2563eb', fontSize: '14px' }}>{activity.hours}h</span>
                                 </td>
                                 <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                  <span style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
-                                    Pending
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '4px 10px',
+                                    backgroundColor: activity.verificationStatus === 'approved' ? '#dcfce7' :
+                                                     activity.verificationStatus === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                    color: activity.verificationStatus === 'approved' ? '#166534' :
+                                           activity.verificationStatus === 'rejected' ? '#991b1b' : '#92400e',
+                                    borderRadius: '12px',
+                                    fontSize: '11px',
+                                    fontWeight: '600'
+                                  }}>
+                                    {activity.verificationStatus === 'approved' ? 'Approved' :
+                                     activity.verificationStatus === 'rejected' ? 'Rejected' :
+                                     activity.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
                                   </span>
                                 </td>
                                 <td style={{ padding: '12px 16px' }} onClick={(e) => e.stopPropagation()}>
@@ -3701,8 +3713,20 @@ export default function OrganizationDashboard() {
                                   </span>
                                 </td>
                                 <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                  <span style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
-                                    {impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '4px 10px',
+                                    backgroundColor: impact.verificationStatus === 'approved' ? '#dcfce7' :
+                                                     impact.verificationStatus === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                    color: impact.verificationStatus === 'approved' ? '#166534' :
+                                           impact.verificationStatus === 'rejected' ? '#991b1b' : '#92400e',
+                                    borderRadius: '12px',
+                                    fontSize: '11px',
+                                    fontWeight: '600'
+                                  }}>
+                                    {impact.verificationStatus === 'approved' ? 'Approved' :
+                                     impact.verificationStatus === 'rejected' ? 'Rejected' :
+                                     impact.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
                                   </span>
                                 </td>
                                 <td style={{ padding: '12px 16px' }} onClick={(e) => e.stopPropagation()}>
@@ -4346,8 +4370,14 @@ export default function OrganizationDashboard() {
                   )}
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Verification Status</p>
-                    <span className="inline-block px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-sm">
-                      {selectedPendingItem.data.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending Verification'}
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm border ${
+                      selectedPendingItem.data.verificationStatus === 'approved' ? 'bg-green-50 text-green-700 border-green-200' :
+                      selectedPendingItem.data.verificationStatus === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {selectedPendingItem.data.verificationStatus === 'approved' ? 'Approved' :
+                       selectedPendingItem.data.verificationStatus === 'rejected' ? 'Rejected' :
+                       selectedPendingItem.data.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending Verification'}
                     </span>
                   </div>
                 </>

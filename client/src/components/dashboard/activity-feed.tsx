@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { BellIcon, Clock, User, Target, FolderKanban, Building2 } from "lucide-react";
+import { BellIcon, Clock, User, Target, FolderKanban, Building2, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { Link } from "wouter";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
 
@@ -20,6 +20,7 @@ export interface Activity {
   time: string;
   projectName?: string;
   organizationName?: string;
+  verificationStatus?: 'pending' | 'approved' | 'rejected' | 'self_reported';
 }
 
 interface ActivityFeedProps {
@@ -74,14 +75,30 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
                       </Avatar>
                     )}
                   </div>
-                  <div>
-                    <p className="text-xs leading-tight">
-                      <span className="font-medium">
-                        {activity.isSystem ? "System" : activity.user?.name}
-                      </span>
-                      <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
-                      <span className="font-medium">{activity.target}</span>
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs leading-tight">
+                        <span className="font-medium">
+                          {activity.isSystem ? "System" : activity.user?.name}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
+                        <span className="font-medium">{activity.target}</span>
+                      </p>
+                      {activity.verificationStatus && (
+                        <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          activity.verificationStatus === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          activity.verificationStatus === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        }`}>
+                          {activity.verificationStatus === 'approved' ? <CheckCircle2 className="h-2.5 w-2.5" /> :
+                           activity.verificationStatus === 'rejected' ? <XCircle className="h-2.5 w-2.5" /> :
+                           <AlertCircle className="h-2.5 w-2.5" />}
+                          {activity.verificationStatus === 'approved' ? 'Verified' :
+                           activity.verificationStatus === 'rejected' ? 'Rejected' :
+                           activity.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
                   </div>
                 </div>
@@ -174,6 +191,30 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
                     <div>
                       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Organization</p>
                       <p className="text-base font-semibold">{selectedActivity.organizationName}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedActivity.verificationStatus && (
+                  <div className="flex items-start gap-2">
+                    {selectedActivity.verificationStatus === 'approved' ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
+                    ) : selectedActivity.verificationStatus === 'rejected' ? (
+                      <XCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Verification Status</p>
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium ${
+                        selectedActivity.verificationStatus === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                        selectedActivity.verificationStatus === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      }`}>
+                        {selectedActivity.verificationStatus === 'approved' ? 'Approved' :
+                         selectedActivity.verificationStatus === 'rejected' ? 'Rejected' :
+                         selectedActivity.verificationStatus === 'self_reported' ? 'Self-Reported' : 'Pending'}
+                      </span>
                     </div>
                   </div>
                 )}

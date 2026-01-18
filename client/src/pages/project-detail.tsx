@@ -1350,14 +1350,22 @@ export default function ProjectDetail() {
                     <div className="text-4xl font-bold text-green-600">{totalHours}</div>
                     <div className="text-sm text-green-600/80">Total Hours Logged</div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-center">
                       <div className="text-xl font-bold">{project.projectTotalHours || 0}</div>
                       <div className="text-xs text-muted-foreground">Target Hours</div>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-center">
-                      <div className="text-xl font-bold">{project.projectTotalHours ? Math.round((totalHours / project.projectTotalHours) * 100) : 0}%</div>
-                      <div className="text-xs text-muted-foreground">Progress</div>
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+                      <div className="text-xl font-bold text-green-600">
+                        {projectActivities.filter(a => a.verificationStatus === 'approved').reduce((sum, a) => sum + (a.hours || 0), 0)}
+                      </div>
+                      <div className="text-xs text-green-600/80">Verified Hours</div>
+                    </div>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
+                      <div className="text-xl font-bold text-amber-600">
+                        {projectActivities.filter(a => a.verificationStatus !== 'approved').reduce((sum, a) => sum + (a.hours || 0), 0)}
+                      </div>
+                      <div className="text-xs text-amber-600/80">Pending Hours</div>
                     </div>
                   </div>
                   {projectAIU?.volunteers && (
@@ -1726,14 +1734,22 @@ export default function ProjectDetail() {
                       <div className="text-xs text-orange-600/80">Lives Impacted</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-blue-600">{Math.round(totalHours)}</div>
                       <div className="text-xs text-blue-600/80">Total Hours</div>
                     </div>
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-purple-600">{totalImpact}</div>
-                      <div className="text-xs text-purple-600/80">Impact Score</div>
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {projectImpact.filter(i => i.verificationStatus === 'approved').length}
+                      </div>
+                      <div className="text-xs text-green-600/80">Verified Impacts</div>
+                    </div>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-amber-600">
+                        {projectImpact.filter(i => i.verificationStatus !== 'approved').length}
+                      </div>
+                      <div className="text-xs text-amber-600/80">Pending</div>
                     </div>
                   </div>
 

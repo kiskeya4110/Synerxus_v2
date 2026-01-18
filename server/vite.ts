@@ -21,7 +21,10 @@ export async function setupVite(app: Express, server: Server) {
   };
 
   // viteConfig is an async function, so we need to call it to get the config object
-  const resolvedConfig = typeof viteConfig === 'function' ? await viteConfig() : viteConfig;
+  // Pass empty ConfigEnv to satisfy the type requirement
+  const resolvedConfig = typeof viteConfig === 'function'
+    ? await viteConfig({ command: 'serve', mode: 'development' })
+    : viteConfig;
 
   const vite = await createViteServer({
     ...resolvedConfig,

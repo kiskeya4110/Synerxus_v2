@@ -46,7 +46,7 @@ export default defineConfig(async () => ({
     // Code splitting for hyper-efficiency
     rollupOptions: {
       output: {
-        manualChunks(id) {
+        manualChunks(id: string) {
           // Vendor chunk splitting for better caching
           if (id.includes('node_modules')) {
             // React core - rarely changes

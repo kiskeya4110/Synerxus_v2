@@ -31,8 +31,7 @@ externalVolunteersRouter.get("/external-volunteers", authMiddleware, async (req:
 
     // Check if user belongs to this organization
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== organizationId) {
+      if (!user.organizationId || user.organizationId !== organizationId) {
         return res.status(403).json({ message: "Access denied to this organization" });
       }
     } else {
@@ -75,8 +74,7 @@ externalVolunteersRouter.get("/external-volunteers/:id", authMiddleware, async (
     }
 
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== volunteer.organizationId) {
+      if (!user.organizationId || user.organizationId !== volunteer.organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
     } else {
@@ -118,8 +116,7 @@ externalVolunteersRouter.post("/external-volunteers", authMiddleware, async (req
 
     // Verify user belongs to this organization
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== organizationId) {
+      if (!user.organizationId || user.organizationId !== organizationId) {
         return res.status(403).json({ message: "Access denied to this organization" });
       }
     } else {
@@ -158,8 +155,7 @@ externalVolunteersRouter.patch("/external-volunteers/:id", authMiddleware, async
 
     // Verify user belongs to this organization
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== existing.organizationId) {
+      if (!user.organizationId || user.organizationId !== existing.organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
     } else {
@@ -206,8 +202,7 @@ externalVolunteersRouter.delete("/external-volunteers/:id", authMiddleware, asyn
 
     // Verify user belongs to this organization
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== existing.organizationId) {
+      if (!user.organizationId || user.organizationId !== existing.organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
     } else {
@@ -246,8 +241,7 @@ externalVolunteersRouter.get("/external-volunteers/:id/activities", authMiddlewa
 
     // Verify user belongs to this organization
     if (user.userType === 'organization') {
-      const userOrg = await storage.getOrganizationByUserId(user.id);
-      if (!userOrg || userOrg.id !== existing.organizationId) {
+      if (!user.organizationId || user.organizationId !== existing.organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
     } else {

@@ -292,7 +292,10 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
     }
 
     // Get user's organization
-    const userOrg = await storage.getOrganizationByUserId(user.id);
+    if (!user.organizationId) {
+      return res.status(403).json({ message: "Organization not found" });
+    }
+    const userOrg = await storage.getOrganization(user.organizationId);
     if (!userOrg) {
       return res.status(403).json({ message: "Organization not found" });
     }

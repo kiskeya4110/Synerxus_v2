@@ -3,19 +3,19 @@ import { WifiOff, CloudOff, RefreshCw, Check, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OfflineBannerProps {
-  isOnline: boolean;
-  isSyncing: boolean;
-  pendingCount: number;
-  lastSyncAt: Date | null;
-  onSyncNow: () => void;
+  isOnline?: boolean;
+  isSyncing?: boolean;
+  pendingCount?: number;
+  lastSyncAt?: Date | null;
+  onSyncNow?: () => void;
 }
 
-export default function OfflineBanner({ 
-  isOnline, 
-  isSyncing, 
-  pendingCount, 
-  lastSyncAt,
-  onSyncNow 
+export default function OfflineBanner({
+  isOnline = true,
+  isSyncing = false,
+  pendingCount = 0,
+  lastSyncAt = null,
+  onSyncNow = () => {}
 }: OfflineBannerProps) {
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [prevPendingCount, setPrevPendingCount] = useState(pendingCount);

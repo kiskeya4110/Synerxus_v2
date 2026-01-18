@@ -736,12 +736,12 @@ export const invalidateCache = {
 };
 
 // Determine persistence path based on environment
-const getPersistPath = (): string | null => {
+const getPersistPath = (): string | undefined => {
   if (process.env.NODE_ENV === 'production') {
     return process.env.CACHE_PERSIST_PATH || '/tmp/synerxus-cache.json';
   }
   // No persistence in development to avoid stale data issues
-  return null;
+  return undefined;
 };
 
 // Export singleton instance with enhanced configuration

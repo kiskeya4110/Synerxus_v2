@@ -20,9 +20,11 @@ interface TaskWithProject extends Task {
 
 interface MyTasksProps {
   embedded?: boolean;
+  // Allow any additional props from router
+  [key: string]: any;
 }
 
-export default function MyTasks({ embedded = false }: MyTasksProps) {
+export default function MyTasks({ embedded = false, ...rest }: MyTasksProps) {
   const [activeTab, setActiveTab] = useState("tasks");
   const [taskHours, setTaskHours] = useState<{ [key: number]: string }>({});
   const [editingTask, setEditingTask] = useState<Task | null>(null);

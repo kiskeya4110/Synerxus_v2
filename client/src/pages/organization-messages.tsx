@@ -57,6 +57,8 @@ interface Message {
   createdAt: string;
   senderName?: string;
   senderAvatar?: string;
+  deliveryStatus?: 'sending' | 'sent' | 'delivered' | 'read';
+  isOptimistic?: boolean;
 }
 
 export default function OrganizationMessages() {
@@ -166,6 +168,39 @@ export default function OrganizationMessages() {
       toast({ title: "Error", description: error.message || "Failed to send message", variant: "destructive" });
     },
   });
+
+  // Mark messages as delivered when viewed by the receiver
+  const markAsDeliveredMutation = useMutation({
+    mutationFn: async (messageIds: number[]) => {
+      const response = await fetch('/api/messages/mark-delivered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageIds }),
+      });
+      if (!response.ok) throw new Error('Failed to mark messages as delivered');
+      return response.json();
+    },
+  });
+
+  // Effect to mark messages as delivered when viewing a thread
+  useEffect(() => {
+    const parsedUserId = userId ? parseInt(userId, 10) : 0;
+    if (!threadMessages?.messages || !parsedUserId) return;
+
+    // Find messages where current user is receiver and not yet delivered
+    const undeliveredMessages = threadMessages.messages.filter(
+      (msg: Message) =>
+        msg.receiverId === parsedUserId &&
+        msg.deliveryStatus !== 'delivered' &&
+        msg.deliveryStatus !== 'read' &&
+        !msg.isOptimistic
+    );
+
+    if (undeliveredMessages.length > 0) {
+      const messageIds = undeliveredMessages.map((msg: Message) => msg.id);
+      markAsDeliveredMutation.mutate(messageIds);
+    }
+  }, [threadMessages?.messages, userId]);
 
   const createThreadMutation = useMutation({
     mutationFn: async (data: { volunteerId: number; topic: string; initialMessage: string }) => {

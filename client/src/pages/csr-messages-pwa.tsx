@@ -58,6 +58,8 @@ interface Message {
   createdAt: string;
   senderName?: string;
   senderAvatar?: string;
+  deliveryStatus?: 'sending' | 'sent' | 'delivered' | 'read';
+  isOptimistic?: boolean;
 }
 
 interface Organization {
@@ -263,6 +265,38 @@ export default function CSRMessagesPWA() {
       });
     },
   });
+
+  // Mark messages as delivered when viewed by the receiver
+  const markAsDeliveredMutation = useMutation({
+    mutationFn: async (messageIds: number[]) => {
+      const response = await fetch('/api/messages/mark-delivered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageIds }),
+      });
+      if (!response.ok) throw new Error('Failed to mark messages as delivered');
+      return response.json();
+    },
+  });
+
+  // Effect to mark messages as delivered when viewing a thread
+  useEffect(() => {
+    if (!threadMessages?.messages || !parsedUserId) return;
+
+    // Find messages where current user is receiver and not yet delivered
+    const undeliveredMessages = threadMessages.messages.filter(
+      (msg: Message) =>
+        msg.receiverId === parsedUserId &&
+        msg.deliveryStatus !== 'delivered' &&
+        msg.deliveryStatus !== 'read' &&
+        !msg.isOptimistic
+    );
+
+    if (undeliveredMessages.length > 0) {
+      const messageIds = undeliveredMessages.map((msg: Message) => msg.id);
+      markAsDeliveredMutation.mutate(messageIds);
+    }
+  }, [threadMessages?.messages, parsedUserId]);
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {

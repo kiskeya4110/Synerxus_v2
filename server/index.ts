@@ -31,6 +31,45 @@ import { initErrorTracking, captureException, flushErrors } from "./services/err
 import { initializeEnv } from "./utils/env";
 import { setupSwagger } from "./swagger";
 import { storage } from "./storage";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
+
+// Database schema check: Verify critical columns exist
+async function checkDatabaseSchema() {
+  const criticalColumns = [
+    { table: 'organizations', column: 'city' },
+    { table: 'organizations', column: 'country' },
+    { table: 'matchable_organizations', column: 'city' },
+    { table: 'matchable_organizations', column: 'country' },
+  ];
+
+  const missingColumns: string[] = [];
+
+  for (const { table, column } of criticalColumns) {
+    try {
+      const result = await db.execute(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = ${table} AND column_name = ${column}
+      `);
+
+      if (!result.rows || result.rows.length === 0) {
+        missingColumns.push(`${table}.${column}`);
+      }
+    } catch (err) {
+      logger.warn(`[SchemaCheck] Error checking ${table}.${column}:`, err);
+    }
+  }
+
+  if (missingColumns.length > 0) {
+    logger.error(`[SchemaCheck] Missing columns detected: ${missingColumns.join(', ')}`);
+    logger.error('[SchemaCheck] Run "npm run db:push" to sync database schema');
+  } else {
+    logger.info('[SchemaCheck] All critical columns verified');
+  }
+
+  return missingColumns.length === 0;
+}
 
 // Data fix: Ensure organization users have proper display names
 async function fixOrganizationDisplayNames() {
@@ -446,6 +485,11 @@ app.use((req, res, next) => {
     logger.error('Failed to initialize cache warming:', err);
   }
 
+  // Check database schema for missing columns (deferred to avoid blocking startup)
+  setImmediate(async () => {
+    await checkDatabaseSchema();
+  });
+
   // Fix organization user display names (deferred to avoid blocking startup)
   setImmediate(() => {
     fixOrganizationDisplayNames();
@@ -508,7 +552,7 @@ app.use((req, res, next) => {
 
     const onError = (err: any) => {
       server.removeListener('listening', onListening);
-      
+
       if (err.code === 'EADDRINUSE') {
         if (attempt < maxRetries) {
           logger.warn(`[Server] Port ${port} in use, retrying in ${retryDelay/1000}s... (attempt ${attempt}/${maxRetries})`);
@@ -520,11 +564,19 @@ app.use((req, res, next) => {
           }
           setTimeout(() => attemptBind(attempt + 1), retryDelay);
         } else {
+          // Only capture to Sentry on final failure after all retries exhausted
+          const finalError = new Error(`Port ${port} unavailable after ${maxRetries} attempts. Check for lingering processes or TIME_WAIT state.`);
+          captureException(finalError, {
+            tags: { type: 'EADDRINUSE', port: String(port) },
+            extra: { attempts: maxRetries, pid: process.pid }
+          });
           logger.error(`[Server] Port ${port} unavailable after ${maxRetries} attempts. Exiting...`);
           process.exit(1);
         }
       } else {
-        logger.error(`[Server] Server error:`, err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error(`[Server] Server error:`, errorMessage);
+        captureException(err, { tags: { type: 'server_startup_error' } });
         process.exit(1);
       }
     };

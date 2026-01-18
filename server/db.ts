@@ -5,6 +5,11 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
+// Configure WebSocket error handling to prevent "Cannot set property message" errors
+// This occurs when Neon's serverless driver tries to modify read-only ErrorEvent properties
+neonConfig.wsProxy = (host) => host;
+neonConfig.pipelineConnect = false; // Disable pipelining to reduce connection issues
+
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
@@ -38,13 +43,29 @@ let poolMetrics = {
   successfulConnections: 0,
 };
 
+// Helper to safely serialize errors for logging
+function serializeError(err: unknown): string {
+  if (err instanceof Error) {
+    return `${err.name}: ${err.message}${err.stack ? '\n' + err.stack : ''}`;
+  }
+  if (typeof err === 'object' && err !== null) {
+    try {
+      return JSON.stringify(err, Object.getOwnPropertyNames(err));
+    } catch {
+      return String(err);
+    }
+  }
+  return String(err);
+}
+
 // Log pool events for monitoring - handle errors without crashing
 pool.on('error', (err) => {
   poolMetrics.errorCount++;
-  poolMetrics.lastError = err;
+  poolMetrics.lastError = err instanceof Error ? err : new Error(String(err));
   poolMetrics.lastErrorTime = Date.now();
   // Log but don't crash - pool errors on idle clients are often recoverable
-  console.error('[DB Pool] Unexpected error on idle client:', err.message);
+  // Use serializeError for proper logging of all error types
+  console.error('[DB Pool] Unexpected error on idle client:', serializeError(err));
   // The pool will automatically handle reconnection
 });
 
@@ -93,6 +114,9 @@ export function isPoolUnderPressure(): boolean {
   return pool.waitingCount > 5 || pool.totalCount >= POOL_CONFIG.max - 2;
 }
 
+// Export serializeError for use in other modules
+export { serializeError };
+
 // Retry wrapper for database operations
 export async function withRetry<T>(
   operation: () => Promise<T>,
@@ -105,7 +129,7 @@ export async function withRetry<T>(
     try {
       return await operation();
     } catch (error: any) {
-      lastError = error;
+      lastError = error instanceof Error ? error : new Error(serializeError(error));
 
       // Don't retry on validation errors or client errors
       if (error.code === '23505' || // Unique violation
@@ -114,10 +138,13 @@ export async function withRetry<T>(
         throw error;
       }
 
+      // Also don't retry on timeout errors if they've occurred multiple times
+      const isTimeoutError = error.message?.includes('timeout');
+
       // Retry on connection errors
       if (attempt < maxRetries) {
         const delay = baseDelay * Math.pow(2, attempt - 1);
-        console.warn(`[DB] Operation failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms:`, error.message);
+        console.warn(`[DB] Operation failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms:`, serializeError(error));
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

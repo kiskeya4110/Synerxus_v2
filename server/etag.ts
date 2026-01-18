@@ -17,11 +17,30 @@ import type { Request, Response, NextFunction } from 'express';
  */
 export function generateETag(body: any): string {
   if (body === undefined || body === null) {
-    return `W/"${createHash('md5').update('').digest('hex').slice(0, 16)}"`;
+    return `W/"${createHash('md5').update('empty').digest('hex').slice(0, 16)}"`;
   }
-  
+
   try {
-    const content = typeof body === 'object' ? JSON.stringify(body) : String(body);
+    let content: string;
+    if (typeof body === 'string') {
+      content = body;
+    } else if (typeof body === 'object') {
+      // Safely stringify, handling circular references
+      try {
+        content = JSON.stringify(body);
+      } catch (stringifyErr) {
+        // Fallback for circular references or other stringify issues
+        content = `object-${Date.now()}`;
+      }
+    } else {
+      content = String(body);
+    }
+
+    // Ensure content is never undefined/null for the hash
+    if (!content) {
+      content = 'empty';
+    }
+
     const hash = createHash('md5').update(content).digest('hex').slice(0, 16);
     return `W/"${hash}"`;
   } catch (err) {

@@ -12,31 +12,50 @@ function initializeFirebaseAdmin(): admin.app.App | null {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
+  // Validate all credentials are present and non-empty
   if (!projectId || !clientEmail || !privateKey) {
     logger.warn(
       "[FirebaseAdmin] Missing Firebase credentials. Firebase token verification disabled."
+    );
+    logger.debug(`[FirebaseAdmin] Credentials status: projectId=${!!projectId}, clientEmail=${!!clientEmail}, privateKey=${!!privateKey}`);
+    return null;
+  }
+
+  // Validate privateKey format (should start with -----BEGIN)
+  if (!privateKey.includes('-----BEGIN')) {
+    logger.warn(
+      "[FirebaseAdmin] Invalid Firebase private key format. Firebase token verification disabled."
     );
     return null;
   }
 
   try {
     // Check if app is already initialized by checking apps array
-    if (admin.apps.length > 0) {
-      firebaseApp = admin.apps[0];
+    if (admin.apps && admin.apps.length > 0) {
+      firebaseApp = admin.apps[0] || null;
       return firebaseApp;
     }
 
+    // Verify admin.credential is available before calling cert
+    if (!admin.credential || typeof admin.credential.cert !== 'function') {
+      logger.error("[FirebaseAdmin] Firebase Admin SDK credential module not available");
+      return null;
+    }
+
+    const credential = admin.credential.cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    });
+
     firebaseApp = admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
+      credential,
     });
     logger.info("[FirebaseAdmin] Firebase Admin SDK initialized successfully");
     return firebaseApp;
-  } catch (error) {
-    logger.error("[FirebaseAdmin] Failed to initialize Firebase Admin:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("[FirebaseAdmin] Failed to initialize Firebase Admin:", errorMessage);
     return null;
   }
 }

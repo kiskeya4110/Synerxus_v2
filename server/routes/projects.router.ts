@@ -709,7 +709,9 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
       livesTouched: adjustedLivesImpacted ?? project.livesTouched,
     });
   } catch (err) {
-    console.error("Error verifying AIU:", err);
+    // Properly serialize error for logging - prevents [object Object]
+    const errorMessage = err instanceof Error ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    console.error("Error verifying AIU:", errorMessage);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

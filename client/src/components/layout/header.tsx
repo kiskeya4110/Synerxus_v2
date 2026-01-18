@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +57,7 @@ export default function Header() {
   const [location, setLocation] = useLocation();
   const { toggleSidebar } = useSidebarContext();
   const userId = useCurrentUserId();
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   // Fetch current user to determine user type
   const { data: currentUser } = useQuery({
@@ -172,17 +180,20 @@ export default function Header() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to mark notification as read: ${response.statusText}`);
       }
-      
+
       // Invalidate cache to refresh notification list
       await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-      
+
+      // Close the notification panel
+      setNotificationPanelOpen(false);
+
       // Navigate based on notification type
       const notificationType = notification.type || '';
-      
+
       if (notificationType.includes('application')) {
         setLocation('/my-work#applications');
       } else if (notificationType.includes('assignment')) {
@@ -297,63 +308,99 @@ export default function Header() {
             )}
           </Button>
           
-          {/* Notifications - hidden on mobile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative hidden md:flex" data-testid="button-notifications">
+          {/* Notifications Popover - Interactive Panel */}
+          <Popover open={notificationPanelOpen} onOpenChange={setNotificationPanelOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 dark:text-gray-400 focus:outline-none relative hidden md:flex"
+                data-testid="button-notifications"
+              >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-h-7 min-w-7 h-7 w-7 flex items-center justify-center px-1 text-xs font-bold leading-none rounded-full">
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-h-5 min-w-5 h-5 w-5 flex items-center justify-center px-0 text-xs font-bold leading-none rounded-full">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={8} className="w-80 max-h-96 overflow-y-auto">
-              <div className="px-4 py-2 border-b">
-                <h3 className="font-semibold">Notifications</h3>
-                <p className="text-xs text-gray-500">{unreadCount} unread</p>
-              </div>
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    You'll receive notifications about SDG-matched partners and project updates
-                  </p>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-96 p-0" sideOffset={8}>
+              <div className="flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                  <h3 className="font-semibold">Notifications</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    {unreadCount} unread
+                  </Badge>
                 </div>
-              ) : (
-                <>
-                  {notifications.map((notification: any) => {
-                    const timeAgo = notification.createdAt ? 
-                      getRelativeTime(new Date(notification.createdAt)) : '';
-                    
-                    return (
-                      <DropdownMenuItem 
-                        key={notification.id} 
-                        className="cursor-pointer p-4 flex flex-col items-start gap-1"
-                        onClick={() => handleNotificationClick(notification)}
-                        data-testid={`notification-${notification.id}`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-medium text-sm">{notification.title}</span>
-                          {!notification.read && (
-                            <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{notification.message}</p>
-                        <span className="text-xs text-gray-500">{timeAgo}</span>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer justify-center text-sm text-primary">
-                    View all notifications
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+                <ScrollArea className="max-h-[350px]">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        You'll receive notifications about SDG-matched partners and project updates
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {notifications.slice(0, 10).map((notification: any) => {
+                        const timeAgo = notification.createdAt ?
+                          getRelativeTime(new Date(notification.createdAt)) : '';
+
+                        return (
+                          <div
+                            key={notification.id}
+                            className={`p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+                            onClick={() => handleNotificationClick(notification)}
+                            data-testid={`notification-${notification.id}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100 dark:bg-blue-900/30">
+                                <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <span className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
+                                    {notification.title}
+                                  </span>
+                                  {!notification.read && (
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-0.5">
+                                  {notification.message}
+                                </p>
+                                <span className="text-xs text-gray-400 mt-1 block">{timeAgo}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {notifications.length > 0 && (
+                  <div className="p-2 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-blue-600 dark:text-blue-400"
+                      onClick={() => {
+                        setNotificationPanelOpen(false);
+                        setLocation('/dashboard');
+                      }}
+                    >
+                      View all notifications
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           
           {/* User Menu */}
           {user && (

@@ -9025,7 +9025,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         verifiedHoursResult
       ] = await Promise.all([
         db.select({ count: sql<number>`count(*)` }).from(projects).where(eq(projects.status, 'active')),
-        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities).where(eq(volunteerActivities.verificationStatus, 'verified'))
+        db.select({ total: sql<number>`COALESCE(SUM(hours), 0)` }).from(volunteerActivities).where(eq(volunteerActivities.verificationStatus, 'approved'))
       ]);
 
       // Calculate growth rates

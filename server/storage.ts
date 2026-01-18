@@ -249,6 +249,7 @@ export interface IStorage {
 
   // Opportunity operations
   getOpportunity(id: number): Promise<any | undefined>;
+  getOpportunitiesByIds(ids: number[]): Promise<any[]>;
   createOpportunity(opportunity: any): Promise<any>;
   updateOpportunity(id: number, opportunity: Partial<any>): Promise<any | undefined>;
   listOpportunities(): Promise<any[]>;
@@ -949,6 +950,11 @@ export class DatabaseStorage implements IStorage {
   async getOpportunity(id: number): Promise<Opportunity | undefined> {
     const [result] = await db.select().from(opportunities).where(eq(opportunities.id, id));
     return result || undefined;
+  }
+
+  async getOpportunitiesByIds(ids: number[]): Promise<Opportunity[]> {
+    if (ids.length === 0) return [];
+    return await db.select().from(opportunities).where(inArray(opportunities.id, ids));
   }
 
   async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {

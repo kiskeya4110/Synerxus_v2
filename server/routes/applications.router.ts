@@ -31,43 +31,43 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
       applications = await storage.listApplications();
     }
 
-    // Enrich applications with volunteer and opportunity data
-    const enrichedApplications = await Promise.all(
-      applications.map(async (app: any) => {
-        try {
-          const [volunteer, opportunity] = await Promise.all([
-            storage.getUser(app.volunteerId),
-            storage.getOpportunity(app.opportunityId)
-          ]);
+    // Batch fetch all volunteers and opportunities to avoid N+1 queries
+    const volunteerIds = Array.from(new Set(applications.map((app: any) => app.volunteerId).filter(Boolean)));
+    const opportunityIds = Array.from(new Set(applications.map((app: any) => app.opportunityId).filter(Boolean)));
 
-          return {
-            ...app,
-            volunteer: volunteer ? {
-              id: volunteer.id,
-              displayName: volunteer.displayName || volunteer.username,
-              username: volunteer.username,
-              email: volunteer.email,
-              avatar: volunteer.avatar
-            } : null,
-            opportunity: opportunity ? {
-              id: opportunity.id,
-              title: opportunity.title,
-              description: opportunity.description,
-              organizationId: opportunity.organizationId,
-              sdgGoals: opportunity.sdgGoals,
-              skills: opportunity.skills
-            } : null
-          };
-        } catch (enrichError) {
-          console.error(`Error enriching application ${app.id}:`, enrichError);
-          return {
-            ...app,
-            volunteer: null,
-            opportunity: null
-          };
-        }
-      })
-    );
+    const [volunteers, opportunitiesData] = await Promise.all([
+      storage.getUsersByIds(volunteerIds),
+      storage.getOpportunitiesByIds(opportunityIds)
+    ]);
+
+    // Create lookup maps for O(1) access
+    const volunteerMap = new Map(volunteers.map(v => [v.id, v]));
+    const opportunityMap = new Map(opportunitiesData.map(o => [o.id, o]));
+
+    // Enrich applications using the pre-fetched data
+    const enrichedApplications = applications.map((app: any) => {
+      const volunteer = volunteerMap.get(app.volunteerId);
+      const opportunity = opportunityMap.get(app.opportunityId);
+
+      return {
+        ...app,
+        volunteer: volunteer ? {
+          id: volunteer.id,
+          displayName: volunteer.displayName || volunteer.username,
+          username: volunteer.username,
+          email: volunteer.email,
+          avatar: volunteer.avatar
+        } : null,
+        opportunity: opportunity ? {
+          id: opportunity.id,
+          title: opportunity.title,
+          description: opportunity.description,
+          organizationId: opportunity.organizationId,
+          sdgGoals: opportunity.sdgGoals,
+          skills: (opportunity as any).skills
+        } : null
+      };
+    });
 
     res.json(enrichedApplications);
   } catch (err) {
@@ -85,31 +85,77 @@ applicationsRouter.get("/my-engagements", async (req: Request, res: Response) =>
       return res.status(400).json({ error: "volunteerId required" });
     }
 
-    const applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
+    const volunteerIdNum = parseInt(volunteerId as string);
+    const applications = await storage.listApplicationsByVolunteer(volunteerIdNum);
     const acceptedApps = applications.filter(a => a.status === 'accepted');
 
-    const engagements = await Promise.all(acceptedApps.map(async (app) => {
-      const opportunity = await storage.getOpportunity(app.opportunityId);
-      const project = opportunity?.projectId ? await storage.getProject(opportunity.projectId) : null;
-      const organization = opportunity?.organizationId ? await storage.getOrganization(opportunity.organizationId) : null;
+    if (acceptedApps.length === 0) {
+      return res.json([]);
+    }
 
-      // Get hours logged for this project by this volunteer
+    // Batch fetch all opportunities
+    const opportunityIds = Array.from(new Set(acceptedApps.map(app => app.opportunityId).filter(Boolean)));
+    const opportunitiesData = await storage.getOpportunitiesByIds(opportunityIds);
+    const opportunityMap = new Map(opportunitiesData.map(o => [o.id, o]));
+
+    // Collect project and organization IDs from opportunities
+    const projectIds = Array.from(new Set(opportunitiesData.map(o => o.projectId).filter(Boolean))) as number[];
+    const organizationIds = Array.from(new Set(opportunitiesData.map(o => o.organizationId).filter(Boolean))) as number[];
+
+    // Batch fetch projects, organizations, activities, and assignments
+    const [projects, organizations, allActivities, allAssignments] = await Promise.all([
+      storage.getProjectsByIds(projectIds),
+      storage.getOrganizationsByIds(organizationIds),
+      storage.listVolunteerActivitiesByProjectIds(projectIds),
+      storage.listProjectAssignmentsByProjectIds(projectIds)
+    ]);
+
+    // Create lookup maps
+    const projectMap = new Map(projects.map(p => [p.id, p]));
+    const organizationMap = new Map(organizations.map(o => [o.id, o]));
+
+    // Group activities and assignments by project
+    const activitiesByProject = new Map<number, typeof allActivities>();
+    for (const activity of allActivities) {
+      if (activity.projectId) {
+        if (!activitiesByProject.has(activity.projectId)) {
+          activitiesByProject.set(activity.projectId, []);
+        }
+        activitiesByProject.get(activity.projectId)!.push(activity);
+      }
+    }
+
+    const assignmentsByProject = new Map<number, typeof allAssignments>();
+    for (const assignment of allAssignments) {
+      if (!assignmentsByProject.has(assignment.projectId)) {
+        assignmentsByProject.set(assignment.projectId, []);
+      }
+      assignmentsByProject.get(assignment.projectId)!.push(assignment);
+    }
+
+    // Build engagements using pre-fetched data
+    const engagements = acceptedApps.map(app => {
+      const opportunity = opportunityMap.get(app.opportunityId);
+      const project = opportunity?.projectId ? projectMap.get(opportunity.projectId) : null;
+      const organization = opportunity?.organizationId ? organizationMap.get(opportunity.organizationId) : null;
+
+      // Calculate hours from pre-fetched activities
       let hoursLogged = 0;
       let hoursApproved = 0;
       if (project) {
-        const activities = await storage.listVolunteerActivitiesByProject(project.id);
-        const volunteerActivities = activities.filter(a => a.userId === parseInt(volunteerId as string));
+        const projectActivities = activitiesByProject.get(project.id) || [];
+        const volunteerActivities = projectActivities.filter(a => a.userId === volunteerIdNum);
         hoursLogged = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
         hoursApproved = volunteerActivities
           .filter(a => a.verificationStatus === 'approved')
           .reduce((sum, a) => sum + (a.hours || 0), 0);
       }
 
-      // Get assignment info
+      // Get assignment from pre-fetched data
       let assignment = null;
       if (project) {
-        const assignments = await storage.listProjectAssignmentsByProject(project.id);
-        assignment = assignments.find(a => a.volunteerId === parseInt(volunteerId as string));
+        const projectAssignments = assignmentsByProject.get(project.id) || [];
+        assignment = projectAssignments.find(a => a.volunteerId === volunteerIdNum);
       }
 
       return {
@@ -127,7 +173,7 @@ applicationsRouter.get("/my-engagements", async (req: Request, res: Response) =>
         acceptedAt: app.reviewedAt,
         status: assignment?.status || 'active'
       };
-    }));
+    });
 
     res.json(engagements);
   } catch (err) {

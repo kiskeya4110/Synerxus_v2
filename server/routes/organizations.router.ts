@@ -233,9 +233,14 @@ organizationsRouter.get("/:id/members", async (req: Request, res: Response) => {
 
     const members = await storage.listOrganizationMembers(orgId);
 
-    // Enrich with user data
-    const enrichedMembers = await Promise.all(members.map(async (member) => {
-      const user = await storage.getUser(member.userId);
+    // Batch fetch all users to avoid N+1 queries
+    const userIds = Array.from(new Set(members.map(m => m.userId).filter(Boolean)));
+    const users = await storage.getUsersByIds(userIds);
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    // Enrich with pre-fetched user data
+    const enrichedMembers = members.map(member => {
+      const user = userMap.get(member.userId);
       return {
         ...member,
         user: user ? {
@@ -246,7 +251,7 @@ organizationsRouter.get("/:id/members", async (req: Request, res: Response) => {
           avatar: user.avatar
         } : null
       };
-    }));
+    });
 
     res.json(enrichedMembers);
   } catch (err) {

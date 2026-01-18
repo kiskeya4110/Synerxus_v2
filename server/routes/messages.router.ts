@@ -181,19 +181,28 @@ messagesRouter.get("/conversation-threads/organization/:organizationId", authMid
 
     const threads = await storage.listConversationThreadsByOrganization(organizationId);
 
-    const enrichedThreads = await Promise.all(threads.map(async (thread) => {
-      const volunteer = await storage.getUser(thread.volunteerId);
-      let project = null;
-      if (thread.projectId) {
-        project = await storage.getProject(thread.projectId);
-      }
+    // Batch fetch volunteers and projects to avoid N+1 queries
+    const volunteerIds = Array.from(new Set(threads.map(t => t.volunteerId).filter(Boolean)));
+    const projectIds = Array.from(new Set(threads.map(t => t.projectId).filter(Boolean))) as number[];
+
+    const [volunteers, projects] = await Promise.all([
+      storage.getUsersByIds(volunteerIds),
+      storage.getProjectsByIds(projectIds)
+    ]);
+
+    const volunteerMap = new Map(volunteers.map(v => [v.id, v]));
+    const projectMap = new Map(projects.map(p => [p.id, p]));
+
+    const enrichedThreads = threads.map(thread => {
+      const volunteer = volunteerMap.get(thread.volunteerId);
+      const project = thread.projectId ? projectMap.get(thread.projectId) : null;
       return {
         ...thread,
         volunteerName: volunteer?.displayName || volunteer?.username || 'Unknown Volunteer',
         volunteerAvatar: volunteer?.avatar,
         projectName: project?.name || null
       };
-    }));
+    });
 
     res.json(enrichedThreads);
   } catch (err) {
@@ -216,19 +225,28 @@ messagesRouter.get("/conversation-threads/volunteer/:volunteerId", authMiddlewar
 
     const threads = await storage.listConversationThreadsByVolunteer(volunteerId);
 
-    const enrichedThreads = await Promise.all(threads.map(async (thread) => {
-      const organization = await storage.getOrganization(thread.organizationId);
-      let project = null;
-      if (thread.projectId) {
-        project = await storage.getProject(thread.projectId);
-      }
+    // Batch fetch organizations and projects to avoid N+1 queries
+    const organizationIds = Array.from(new Set(threads.map(t => t.organizationId).filter(Boolean)));
+    const projectIds = Array.from(new Set(threads.map(t => t.projectId).filter(Boolean))) as number[];
+
+    const [organizations, projects] = await Promise.all([
+      storage.getOrganizationsByIds(organizationIds),
+      storage.getProjectsByIds(projectIds)
+    ]);
+
+    const organizationMap = new Map(organizations.map(o => [o.id, o]));
+    const projectMap = new Map(projects.map(p => [p.id, p]));
+
+    const enrichedThreads = threads.map(thread => {
+      const organization = organizationMap.get(thread.organizationId);
+      const project = thread.projectId ? projectMap.get(thread.projectId) : null;
       return {
         ...thread,
         organizationName: organization?.name || 'Unknown Organization',
         organizationLogo: organization?.logo,
         projectName: project?.name || null
       };
-    }));
+    });
 
     res.json(enrichedThreads);
   } catch (err) {
@@ -280,8 +298,13 @@ messagesRouter.get("/conversation-threads/:threadId/messages", authMiddleware, a
       }).catch(err => console.error("Failed to mark messages as delivered:", err));
     }
 
-    const enrichedMessages = await Promise.all(messages.map(async (msg) => {
-      const sender = await storage.getUser(msg.senderId);
+    // Batch fetch all senders to avoid N+1 queries
+    const senderIds = Array.from(new Set(messages.map(m => m.senderId).filter(Boolean)));
+    const senders = await storage.getUsersByIds(senderIds);
+    const senderMap = new Map(senders.map(s => [s.id, s]));
+
+    const enrichedMessages = messages.map(msg => {
+      const sender = senderMap.get(msg.senderId);
       // Update the status to 'delivered' for messages we just marked
       const isBeingDelivered = messagesToMarkDelivered.some(m => m.id === msg.id);
       return {
@@ -290,7 +313,7 @@ messagesRouter.get("/conversation-threads/:threadId/messages", authMiddleware, a
         senderName: sender?.displayName || sender?.username || 'Unknown',
         senderAvatar: sender?.avatar
       };
-    }));
+    });
 
     res.json({
       thread,

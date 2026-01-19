@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient, authenticatedFetch } from "@/lib/queryClient";
 import Layout from "@/components/layout/layout";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -47,9 +48,13 @@ interface Message {
 export default function VolunteerMessages() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user: firebaseUser, loading: authLoading } = useAuth();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
   const isMobile = useIsMobile();
+
+  // Auth is ready when not loading AND either we have a Firebase user OR no userId in localStorage
+  const isAuthReady = !authLoading && (!!firebaseUser || !userId);
 
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -75,7 +80,7 @@ export default function VolunteerMessages() {
       const data = await authenticatedFetch<ConversationThread[]>(`/api/conversation-threads/volunteer/${userId}`);
       return data || [];
     },
-    enabled: !!userId
+    enabled: isAuthReady && !!userId
   });
 
   const { data: threadMessages, isLoading: loadingMessages, refetch: refetchMessages } = useQuery({
@@ -85,7 +90,7 @@ export default function VolunteerMessages() {
       const data = await authenticatedFetch<{ thread: any; messages: any[] }>(`/api/conversation-threads/${selectedThread.id}/messages`);
       return data || { thread: null, messages: [] };
     },
-    enabled: !!selectedThread && !!userId
+    enabled: isAuthReady && !!selectedThread && !!userId
   });
 
   const sendMessageMutation = useMutation({

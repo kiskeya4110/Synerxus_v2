@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient, authenticatedFetch } from "@/lib/queryClient";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
@@ -64,9 +65,13 @@ interface Message {
 export default function OrganizationMessages() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user: firebaseUser, loading: authLoading } = useAuth();
   const userType = localStorage.getItem("userType");
   const userId = localStorage.getItem("currentUserId");
   const isMobile = useIsMobile();
+
+  // Auth is ready when not loading AND either we have a Firebase user OR no userId in localStorage
+  const isAuthReady = !authLoading && (!!firebaseUser || !userId);
 
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -91,7 +96,7 @@ export default function OrganizationMessages() {
       if (!userId) return null;
       return authenticatedFetch<{ id: number; organizationId?: number }>(`/api/users/me?userId=${userId}`);
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
   });
 
   const organizationId = currentUser?.organizationId || currentUser?.id;
@@ -108,7 +113,7 @@ export default function OrganizationMessages() {
       const data = await authenticatedFetch<ConversationThread[]>(`/api/conversation-threads/organization/${organizationId}`);
       return data || [];
     },
-    enabled: !!organizationId,
+    enabled: isAuthReady && !!organizationId,
     refetchInterval: 5000 // Poll every 5 seconds to catch new messages and threads
   });
 
@@ -119,7 +124,7 @@ export default function OrganizationMessages() {
       const data = await authenticatedFetch<{ thread: any; messages: any[] }>(`/api/conversation-threads/${selectedThread.id}/messages`);
       return data || { thread: null, messages: [] };
     },
-    enabled: !!selectedThread && !!userId,
+    enabled: isAuthReady && !!selectedThread && !!userId,
     refetchInterval: selectedThread ? 3000 : false // Poll every 3 seconds when a thread is selected
   });
 
@@ -131,7 +136,7 @@ export default function OrganizationMessages() {
       const data = await authenticatedFetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
       return data || [];
     },
-    enabled: !!organizationId && !!userId,
+    enabled: isAuthReady && !!organizationId && !!userId,
     staleTime: 30000,
   });
 

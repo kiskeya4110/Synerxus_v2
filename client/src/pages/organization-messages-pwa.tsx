@@ -66,10 +66,14 @@ export default function OrganizationMessagesPWA() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const { user: firebaseUser, loading: authLoading } = useAuth();
 
   const userType = localStorage.getItem("userType") || "";
   const userId = localStorage.getItem("currentUserId") || "";
   const parsedUserId = userId ? parseInt(userId, 10) : 0;
+
+  // Auth is ready when not loading AND either we have a Firebase user OR no userId in localStorage
+  const isAuthReady = !authLoading && (!!firebaseUser || !userId);
 
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -101,7 +105,7 @@ export default function OrganizationMessagesPWA() {
       if (!userId) return null;
       return authenticatedFetch<{ id: number; organizationId?: number }>(`/api/users/me?userId=${userId}`);
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
   });
 
   const organizationId = currentUser?.organizationId || currentUser?.id;
@@ -121,7 +125,7 @@ export default function OrganizationMessagesPWA() {
       );
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!organizationId,
+    enabled: isAuthReady && !!organizationId,
     staleTime: 30000,
     refetchInterval: 5000,
   });
@@ -136,7 +140,7 @@ export default function OrganizationMessagesPWA() {
       );
       return Array.isArray(data) ? data : [];
     },
-    enabled: showNewConversation && !!organizationId && !!userId,
+    enabled: isAuthReady && showNewConversation && !!organizationId && !!userId,
   });
 
   // Fetch thread messages
@@ -162,7 +166,7 @@ export default function OrganizationMessagesPWA() {
         return { thread: null, messages: [] };
       }
     },
-    enabled: !!selectedThread?.id && !!userId,
+    enabled: isAuthReady && !!selectedThread?.id && !!userId,
     refetchInterval: selectedThread ? 2000 : false, // Reduced for live chat feel
     staleTime: 1000, // Keep data fresh
   });
@@ -376,8 +380,8 @@ export default function OrganizationMessagesPWA() {
     return <PWALoadingSkeleton />;
   }
 
-  // Loading state
-  if (!userId) {
+  // Loading state - wait for auth to be ready
+  if (!userId || authLoading) {
     return <PWALoadingSkeleton />;
   }
 

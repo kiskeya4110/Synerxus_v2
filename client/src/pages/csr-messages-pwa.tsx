@@ -71,11 +71,14 @@ interface Organization {
 export default function CSRMessagesPWA() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { signOut, user: firebaseUser, loading: authLoading } = useAuth();
 
   const userType = localStorage.getItem("userType") || "";
   const userId = localStorage.getItem("currentUserId") || "";
   const parsedUserId = userId ? parseInt(userId, 10) : 0;
+
+  // Auth is ready when not loading AND either we have a Firebase user OR no userId in localStorage
+  const isAuthReady = !authLoading && (!!firebaseUser || !userId);
 
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -104,7 +107,7 @@ export default function CSRMessagesPWA() {
       if (!userId) return null;
       return authenticatedFetch(`/api/users/me?userId=${userId}`);
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
   });
 
   // Fetch organizations for messaging
@@ -114,6 +117,7 @@ export default function CSRMessagesPWA() {
       const data = await authenticatedFetch<Organization[]>("/api/organizations");
       return Array.isArray(data) ? data : [];
     },
+    enabled: isAuthReady,
     staleTime: 120000,
   });
 
@@ -124,7 +128,7 @@ export default function CSRMessagesPWA() {
       const data = await authenticatedFetch(`/api/projects?sponsorId=${userId}`);
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
   });
 
   // For CSR, we need to fetch threads where they might be the volunteer or connected to projects
@@ -144,7 +148,7 @@ export default function CSRMessagesPWA() {
       );
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
     staleTime: 30000,
     refetchInterval: 5000,
   });
@@ -172,7 +176,7 @@ export default function CSRMessagesPWA() {
         return { thread: null, messages: [] };
       }
     },
-    enabled: !!selectedThread?.id && !!userId,
+    enabled: isAuthReady && !!selectedThread?.id && !!userId,
     refetchInterval: selectedThread ? 3000 : false,
     staleTime: 3000,
   });
@@ -356,8 +360,8 @@ export default function CSRMessagesPWA() {
     navigate('/');
   };
 
-  // Loading state
-  if (!userId) {
+  // Loading state - wait for auth to be ready
+  if (!userId || authLoading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-b from-amber-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">

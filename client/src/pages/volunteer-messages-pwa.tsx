@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient, authenticatedFetch, authenticatedPost } from "@/lib/queryClient";
 import {
   MessageSquare,
@@ -72,11 +73,15 @@ interface Organization {
 export default function VolunteerMessagesPWA() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user: firebaseUser, loading: authLoading } = useAuth();
 
   // FIX 1: Safely parse userType and userId with fallbacks
   const userType = localStorage.getItem("userType") || "";
   const userId = localStorage.getItem("currentUserId") || "";
   const parsedUserId = userId ? parseInt(userId, 10) : 0;
+
+  // Auth is ready when not loading AND either we have a Firebase user OR no userId in localStorage
+  const isAuthReady = !authLoading && (!!firebaseUser || !userId);
 
   const [selectedThread, setSelectedThread] =
     useState<ConversationThread | null>(null);
@@ -113,7 +118,7 @@ export default function VolunteerMessagesPWA() {
       );
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!userId && !!parsedUserId,
+    enabled: isAuthReady && !!userId && !!parsedUserId,
     staleTime: 30000, // Cache for 30 seconds
     retry: 2,
   });
@@ -128,7 +133,7 @@ export default function VolunteerMessagesPWA() {
       );
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
     staleTime: 60000, // Cache for 1 minute
   });
 
@@ -140,7 +145,7 @@ export default function VolunteerMessagesPWA() {
       const data = await authenticatedFetch<any[]>(`/api/applications?volunteerId=${userId}`);
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!userId,
+    enabled: isAuthReady && !!userId,
     staleTime: 60000,
   });
 
@@ -151,6 +156,7 @@ export default function VolunteerMessagesPWA() {
       const data = await authenticatedFetch<Organization[]>("/api/organizations");
       return Array.isArray(data) ? data : [];
     },
+    enabled: isAuthReady,
     staleTime: 120000, // Cache for 2 minutes
   });
 
@@ -161,6 +167,7 @@ export default function VolunteerMessagesPWA() {
       const data = await authenticatedFetch<Project[]>("/api/projects");
       return Array.isArray(data) ? data : [];
     },
+    enabled: isAuthReady,
     staleTime: 120000,
   });
 
@@ -196,7 +203,7 @@ export default function VolunteerMessagesPWA() {
         return { thread: null, messages: [] };
       }
     },
-    enabled: !!selectedThread?.id && !!userId,
+    enabled: isAuthReady && !!selectedThread?.id && !!userId,
     refetchInterval: selectedThread ? 2000 : false, // Reduced for live chat feel
     staleTime: 1000, // Keep data fresh
   });
@@ -489,7 +496,7 @@ export default function VolunteerMessagesPWA() {
   );
 
   // FIX 20: Show loading state while checking authentication
-  if (!userId) {
+  if (!userId || authLoading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">

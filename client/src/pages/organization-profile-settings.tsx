@@ -12,6 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  PROFILE_QUERY_CONFIG,
+  cacheOrganizationProfile,
+  getCachedOrganizationProfile,
+  cacheUserProfile,
+  getCachedUserProfile
+} from "@/lib/profile-cache";
 import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@shared/schema";
 import { Loader2, Plus, X, Building2, MapPin, Target, Heart, User, Briefcase, Sliders, LogOut, Key, Copy, Trash2, Check, Mail } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -136,17 +143,21 @@ export default function OrganizationProfileSettings() {
   // Get userId from localStorage for proper data scoping
   const userId = localStorage.getItem("currentUserId");
 
-  // Fetch current user to get organization info
+  // Fetch current user to get organization info - use caching for instant loading
   const { data: currentUser, isLoading: userLoading, error: userError } = useQuery<any>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
       const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
+      const data = await response.json();
+      // Cache user data for instant loading
+      cacheUserProfile(userId, data);
+      return data;
     },
     enabled: !!userId,
-    staleTime: 0,
+    initialData: () => getCachedUserProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
   // Privacy consent state
@@ -175,7 +186,7 @@ export default function OrganizationProfileSettings() {
     setLocation('/');
   };
 
-  // Fetch existing organization profile by filtering all organizations
+  // Fetch existing organization profile by filtering all organizations - use caching
   const { data: organizations, isLoading: loadingProfile, error: profileError } = useQuery<MatchableOrganization[]>({
     queryKey: ["/api/matchable-organizations"],
     queryFn: async () => {
@@ -183,21 +194,24 @@ export default function OrganizationProfileSettings() {
       if (!response.ok) throw new Error("Failed to fetch organizations");
       return response.json();
     },
-    staleTime: 0,
-    gcTime: 0,
+    ...PROFILE_QUERY_CONFIG,
   });
 
-  // Also fetch organization profile data directly for current user
+  // Also fetch organization profile data directly for current user - use caching
   const { data: orgProfileData } = useQuery<any>({
     queryKey: ["/api/profile/organization", userId],
     queryFn: async () => {
       if (!userId) return null;
       const response = await fetch(`/api/profile/organization?userId=${userId}`);
       if (!response.ok) return null;
-      return response.json();
+      const data = await response.json();
+      // Cache organization profile for instant loading
+      cacheOrganizationProfile(userId, data);
+      return data;
     },
     enabled: !!userId,
-    staleTime: 0,
+    initialData: () => getCachedOrganizationProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
   // Fetch invitation code settings

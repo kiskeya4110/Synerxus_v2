@@ -19,6 +19,13 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  PROFILE_QUERY_CONFIG,
+  cacheVolunteerProfile,
+  getCachedVolunteerProfile,
+  cacheUserProfile,
+  getCachedUserProfile
+} from "@/lib/profile-cache";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { VolunteerSkillSection } from "@/components/forms/volunteer-skill-section";
@@ -930,7 +937,7 @@ export default function VolunteerProfileSettings() {
     setLocation('/');
   };
 
-  // Data fetching - ALWAYS use fresh user data, no caching
+  // Data fetching - Use caching with background refetch for instant loading
   const userId = localStorage.getItem("currentUserId");
   const { data: currentUser, isLoading: userLoading } = useQuery<{
     id: number;
@@ -945,10 +952,14 @@ export default function VolunteerProfileSettings() {
       if (!userId) return null;
       const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
+      const data = await response.json();
+      // Cache user data for instant loading on next visit
+      cacheUserProfile(userId, data);
+      return data;
     },
     enabled: !!userId,
-    staleTime: 0, // Always fetch fresh - never cache user data
+    initialData: () => getCachedUserProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
   // Privacy consent state
@@ -1009,11 +1020,14 @@ export default function VolunteerProfileSettings() {
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
       // API returns { user, volunteerProfile }, extract the volunteerProfile
-      return data.volunteerProfile || data;
+      const profile = data.volunteerProfile || data;
+      // Cache profile data for instant loading on next visit
+      cacheVolunteerProfile(userId, profile);
+      return profile;
     },
     enabled: !!currentUser?.id,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache the data
+    initialData: () => getCachedVolunteerProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 

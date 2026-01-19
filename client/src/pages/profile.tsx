@@ -1,5 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  PROFILE_QUERY_CONFIG,
+  PROFILE_ACTIVITY_QUERY_CONFIG,
+  cacheVolunteerProfile,
+  getCachedVolunteerProfile,
+  cacheOrganizationProfile,
+  getCachedOrganizationProfile,
+  cacheUserProfile,
+  getCachedUserProfile
+} from "@/lib/profile-cache";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -70,31 +80,44 @@ export default function Profile() {
   const isMobile = useIsMobile();
   const userId = localStorage.getItem('currentUserId');
   
-  // First, fetch basic user info to determine userType
+  // First, fetch basic user info to determine userType - use caching for instant loading
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
       const response = await fetch(url);
-      return response.json();
-    }
+      const data = await response.json();
+      // Cache user data for instant loading
+      if (id) cacheUserProfile(id, data);
+      return data;
+    },
+    initialData: () => getCachedUserProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
   
   // Fetch volunteer profile data - use intake endpoint to get weeklyAvailability
   const { data: volunteerData, isLoading: isLoadingVolunteer } = useQuery({
     queryKey: ["/api/intake/volunteer-profile", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
-    staleTime: 0, // Always refetch fresh data
-    refetchOnMount: true, // Force fresh load on component mount
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
       const url = `/api/intake/volunteer-profile?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) return null;
-      return response.json();
-    }
+      const data = await response.json();
+      // Cache profile for instant loading
+      if (data?.volunteerProfile) {
+        cacheVolunteerProfile(id, data.volunteerProfile);
+      }
+      return data;
+    },
+    initialData: () => {
+      const cached = getCachedVolunteerProfile(userId);
+      return cached ? { volunteerProfile: cached } : undefined;
+    },
+    ...PROFILE_QUERY_CONFIG,
   });
 
   // Fetch organization profile data (combines user, organization, and matchable org data)
@@ -107,36 +130,41 @@ export default function Profile() {
       const url = `/api/profile/organization?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) return null;
-      return response.json();
-    }
+      const data = await response.json();
+      // Cache organization profile for instant loading
+      if (data) cacheOrganizationProfile(id, data);
+      return data;
+    },
+    initialData: () => getCachedOrganizationProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
-  // Fetch volunteer activities for contribution stats
+  // Fetch volunteer activities for contribution stats - shorter cache for activity data
   const { data: activities } = useQuery({
     queryKey: ["/api/volunteer-activities", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
-    staleTime: 0, // Always refetch fresh data for real-time updates
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
       const response = await fetch(`/api/volunteer-activities?userId=${id}`);
       if (!response.ok) return [];
       return response.json();
-    }
+    },
+    ...PROFILE_ACTIVITY_QUERY_CONFIG,
   });
 
-  // Fetch current projects (via project assignments)
+  // Fetch current projects (via project assignments) - shorter cache for activity data
   const { data: assignments } = useQuery({
     queryKey: ["/api/project-assignments", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
-    staleTime: 0, // Always refetch fresh data for real-time updates
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
       const response = await fetch(`/api/project-assignments?volunteerId=${id}`);
       if (!response.ok) return [];
       return response.json();
-    }
+    },
+    ...PROFILE_ACTIVITY_QUERY_CONFIG,
   });
 
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;

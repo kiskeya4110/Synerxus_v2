@@ -13,6 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  PROFILE_QUERY_CONFIG,
+  cacheCorporatePartnerProfile,
+  getCachedCorporatePartnerProfile,
+  cacheUserProfile,
+  getCachedUserProfile
+} from "@/lib/profile-cache";
 import { sdgGoals, getSDGColor } from "@shared/sdg-goals";
 import { Building2, Check, ChevronRight, Save, Bell, Target, Settings as SettingsIcon, Users, Calendar, Globe, FileText, Shield, Mail, Clock, Zap, Award } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
@@ -134,9 +141,14 @@ export default function CorporatePartnerProfileSettings() {
       if (!id) throw new Error("No user ID found");
       const response = await fetch(`/api/users/me?userId=${id}`);
       if (!response.ok) throw new Error("User not found");
-      return response.json();
+      const data = await response.json();
+      // Cache user data for instant loading
+      cacheUserProfile(id, data);
+      return data;
     },
-    enabled: !!userId
+    enabled: !!userId,
+    initialData: () => getCachedUserProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
   // Redirect non-corporate users
@@ -152,7 +164,7 @@ export default function CorporatePartnerProfileSettings() {
     }
   }, [currentUser?.userType, navigate]);
 
-  // Fetch CSR partner profile
+  // Fetch CSR partner profile - use caching for instant loading
   const { data: partnerProfile, isLoading } = useQuery({
     queryKey: ['/api/csr/partners', userId],
     queryFn: async () => {
@@ -160,13 +172,19 @@ export default function CorporatePartnerProfileSettings() {
       try {
         const response = await fetch(`/api/csr/partners?userId=${userId}`);
         const data = await response.json();
+        // Cache profile for instant loading
+        if (data) {
+          cacheCorporatePartnerProfile(userId, data);
+        }
         return data || null;
       } catch (err) {
         console.error("[Corporate Settings] Error fetching profile:", err);
         return null;
       }
     },
-    enabled: !!userId
+    enabled: !!userId,
+    initialData: () => getCachedCorporatePartnerProfile(userId),
+    ...PROFILE_QUERY_CONFIG,
   });
 
   const form = useForm<CorporatePartnerForm>({

@@ -1010,24 +1010,29 @@ export default function VolunteerProfileSettings() {
   }, [userLoading, userId, setLocation, toast]);
 
   // Fetch volunteer profile using intake API which includes all availability fields
+  // Use userId from localStorage directly to avoid dependency on currentUser loading first
   const profileQuery = useQuery<any>({
-    queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
+    queryKey: ["/api/intake/volunteer-profile", userId],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
+      if (!userId) return null;
       const response = await fetch(
-        `/api/intake/volunteer-profile?userId=${currentUser.id}`,
+        `/api/intake/volunteer-profile?userId=${userId}`,
       );
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
       // API returns { user, volunteerProfile }, extract the volunteerProfile
       const profile = data.volunteerProfile || data;
       // Cache profile data for instant loading on next visit
-      cacheVolunteerProfile(userId, profile);
+      if (profile) {
+        cacheVolunteerProfile(userId, profile);
+      }
       return profile;
     },
-    enabled: !!currentUser?.id,
+    enabled: !!userId,
     initialData: () => getCachedVolunteerProfile(userId),
-    ...PROFILE_QUERY_CONFIG,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnMount: true,
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
@@ -1075,14 +1080,24 @@ export default function VolunteerProfileSettings() {
     },
   });
 
+  // Track if form has been populated to prevent multiple resets
+  const formPopulatedRef = useRef(false);
+  const lastProfileIdRef = useRef<number | null>(null);
+
   // Load profile data into form whenever profile data changes or user ID changes
   useEffect(() => {
-    if (!currentUser?.id || userLoading) return;
+    // Wait for both user and profile to be loaded
+    if (userLoading || loadingProfile) return;
+    if (!currentUser?.id) return;
 
     // Determine if we have existing profile data
     const hasProfileData = existingProfile && Object.keys(existingProfile).length > 0;
+    const profileId = existingProfile?.id || existingProfile?.userId;
 
-    if (hasProfileData && !loadingProfile) {
+    // Only populate form if we have new profile data we haven't processed yet
+    if (hasProfileData && profileId !== lastProfileIdRef.current) {
+      lastProfileIdRef.current = profileId;
+      formPopulatedRef.current = true;
       // Existing profile - reset form with all profile data
       const resetData = {
         email: currentUser?.email || "",
@@ -1117,8 +1132,9 @@ export default function VolunteerProfileSettings() {
         },
       };
       form.reset(resetData);
-    } else if (!loadingProfile && !hasProfileData && currentUser?.email) {
-      // New profile - initialize with user data only
+    } else if (!hasProfileData && currentUser?.email && !formPopulatedRef.current) {
+      // New profile - initialize with user data only (only if we haven't populated before)
+      formPopulatedRef.current = true;
       form.reset({
         email: currentUser?.email || "",
         name: currentUser?.displayName || "",
@@ -1146,7 +1162,7 @@ export default function VolunteerProfileSettings() {
         },
       });
     }
-  }, [currentUser?.id, currentUser?.email, existingProfile, loadingProfile, userLoading, form]);
+  }, [currentUser?.id, currentUser?.email, currentUser?.displayName, existingProfile, loadingProfile, userLoading, form]);
 
   // Load existing photo URL
   useEffect(() => {

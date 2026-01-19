@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, authenticatedFetch, authenticatedPost } from "@/lib/queryClient";
 import {
   MessageSquare,
   Send,
@@ -102,9 +102,7 @@ export default function CSRMessagesPWA() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
+      return authenticatedFetch(`/api/users/me?userId=${userId}`);
     },
     enabled: !!userId,
   });
@@ -113,9 +111,7 @@ export default function CSRMessagesPWA() {
   const { data: organizations = [] } = useQuery<Organization[]>({
     queryKey: ["/api/organizations"],
     queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) return [];
-      const data = await response.json();
+      const data = await authenticatedFetch<Organization[]>("/api/organizations");
       return Array.isArray(data) ? data : [];
     },
     staleTime: 120000,
@@ -125,9 +121,8 @@ export default function CSRMessagesPWA() {
   const { data: sponsoredProjects = [] } = useQuery({
     queryKey: ["/api/projects/sponsored", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/projects?sponsorId=${userId}`);
-      if (!response.ok) return [];
-      return response.json();
+      const data = await authenticatedFetch(`/api/projects?sponsorId=${userId}`);
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!userId,
   });
@@ -144,9 +139,9 @@ export default function CSRMessagesPWA() {
     queryFn: async () => {
       if (!userId) return [];
       // CSR users use the volunteer endpoint as they initiate conversations with orgs
-      const response = await fetch(`/api/conversation-threads/volunteer/${userId}`);
-      if (!response.ok) return [];
-      const data = await response.json();
+      const data = await authenticatedFetch<ConversationThread[]>(
+        `/api/conversation-threads/volunteer/${userId}`
+      );
       return Array.isArray(data) ? data : [];
     },
     enabled: !!userId,
@@ -164,11 +159,10 @@ export default function CSRMessagesPWA() {
     queryFn: async () => {
       if (!selectedThread?.id || !userId) return { thread: null, messages: [] };
       try {
-        const response = await fetch(
-          `/api/conversation-threads/${selectedThread.id}/messages?userId=${userId}`
+        const data = await authenticatedFetch<{ thread: any; messages: any[] }>(
+          `/api/conversation-threads/${selectedThread.id}/messages`
         );
-        if (!response.ok) return { thread: null, messages: [] };
-        const data = await response.json();
+        if (!data) return { thread: null, messages: [] };
         return {
           thread: data.thread || null,
           messages: Array.isArray(data.messages) ? data.messages : [],
@@ -269,13 +263,12 @@ export default function CSRMessagesPWA() {
   // Mark messages as delivered when viewed by the receiver
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (messageIds: number[]) => {
-      const response = await fetch('/api/mark-delivered', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageIds }),
-      });
-      if (!response.ok) throw new Error('Failed to mark messages as delivered');
-      return response.json();
+      const result = await authenticatedPost<{ updated: number; total: number }>(
+        '/api/messages/mark-delivered',
+        { messageIds }
+      );
+      if (!result) throw new Error('Failed to mark messages as delivered');
+      return result;
     },
   });
 

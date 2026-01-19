@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, authenticatedFetch, authenticatedPost } from "@/lib/queryClient";
 import {
   MessageSquare,
   Send,
@@ -108,14 +108,9 @@ export default function VolunteerMessagesPWA() {
     queryKey: ["/api/conversation-threads/volunteer", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const response = await fetch(
+      const data = await authenticatedFetch<ConversationThread[]>(
         `/api/conversation-threads/volunteer/${userId}`,
       );
-      if (!response.ok) {
-        console.error("Failed to fetch threads:", response.status);
-        return [];
-      }
-      const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
     enabled: !!userId && !!parsedUserId,
@@ -128,14 +123,9 @@ export default function VolunteerMessagesPWA() {
     queryKey: ["/api/project-assignments", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const response = await fetch(
+      const data = await authenticatedFetch<any[]>(
         `/api/project-assignments?volunteerId=${userId}`,
       );
-      if (!response.ok) {
-        console.error("Failed to fetch project assignments:", response.status);
-        return [];
-      }
-      const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
     enabled: !!userId,
@@ -147,12 +137,7 @@ export default function VolunteerMessagesPWA() {
     queryKey: ["/api/applications", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const response = await fetch(`/api/applications?volunteerId=${userId}`);
-      if (!response.ok) {
-        console.error("Failed to fetch applications:", response.status);
-        return [];
-      }
-      const data = await response.json();
+      const data = await authenticatedFetch<any[]>(`/api/applications?volunteerId=${userId}`);
       return Array.isArray(data) ? data : [];
     },
     enabled: !!userId,
@@ -163,12 +148,7 @@ export default function VolunteerMessagesPWA() {
   const { data: organizations = [] } = useQuery<Organization[]>({
     queryKey: ["/api/organizations"],
     queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) {
-        console.error("Failed to fetch organizations:", response.status);
-        return [];
-      }
-      const data = await response.json();
+      const data = await authenticatedFetch<Organization[]>("/api/organizations");
       return Array.isArray(data) ? data : [];
     },
     staleTime: 120000, // Cache for 2 minutes
@@ -178,12 +158,7 @@ export default function VolunteerMessagesPWA() {
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
     queryFn: async () => {
-      const response = await fetch("/api/projects");
-      if (!response.ok) {
-        console.error("Failed to fetch projects:", response.status);
-        return [];
-      }
-      const data = await response.json();
+      const data = await authenticatedFetch<Project[]>("/api/projects");
       return Array.isArray(data) ? data : [];
     },
     staleTime: 120000,
@@ -206,14 +181,12 @@ export default function VolunteerMessagesPWA() {
         return { thread: null, messages: [] };
       }
       try {
-        const response = await fetch(
-          `/api/conversation-threads/${selectedThread.id}/messages?userId=${userId}`,
+        const data = await authenticatedFetch<{ thread: any; messages: any[] }>(
+          `/api/conversation-threads/${selectedThread.id}/messages`,
         );
-        if (!response.ok) {
-          console.error("Failed to fetch messages:", response.status);
+        if (!data) {
           return { thread: null, messages: [] };
         }
-        const data = await response.json();
         return {
           thread: data.thread || null,
           messages: Array.isArray(data.messages) ? data.messages : [],
@@ -364,13 +337,12 @@ export default function VolunteerMessagesPWA() {
   // Mark messages as delivered when viewed by the receiver
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (messageIds: number[]) => {
-      const response = await fetch('/api/mark-delivered', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageIds }),
-      });
-      if (!response.ok) throw new Error('Failed to mark messages as delivered');
-      return response.json();
+      const result = await authenticatedPost<{ updated: number; total: number }>(
+        '/api/messages/mark-delivered',
+        { messageIds }
+      );
+      if (!result) throw new Error('Failed to mark messages as delivered');
+      return result;
     },
   });
 

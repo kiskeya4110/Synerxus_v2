@@ -1,18 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { auth } from "./firebase";
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
 /**
  * Get current Firebase user's ID token for API authentication
  * Returns null if user is not authenticated
+ * Exported for use in components that need to make authenticated fetch calls
  */
-async function getAuthToken(): Promise<string | null> {
+export async function getAuthToken(): Promise<string | null> {
   try {
     const user = auth.currentUser;
     if (user) {
@@ -26,26 +20,12 @@ async function getAuthToken(): Promise<string | null> {
 }
 
 /**
- * Get Firebase UID for API authentication (fallback)
+ * Get headers for authenticated API requests
+ * Use this for custom fetch calls that need authentication
  */
-function getFirebaseUid(): string | null {
-  const user = auth.currentUser;
-  return user?.uid || null;
-}
-
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+export async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
 
-  if (data) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  // SECURITY: Use Firebase ID token for secure authentication
-  // ID tokens are cryptographically signed and can be verified on the backend
   const token = await getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -55,6 +35,78 @@ export async function apiRequest(
   const currentUserId = localStorage.getItem('currentUserId');
   if (currentUserId) {
     headers["x-user-id"] = currentUserId;
+  }
+
+  return headers;
+}
+
+/**
+ * Make an authenticated GET request and return JSON
+ * Use this for custom queries that need authentication
+ */
+export async function authenticatedFetch<T>(url: string): Promise<T | null> {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(url, {
+      credentials: "include",
+      headers,
+    });
+
+    if (!response.ok) {
+      console.error(`[authenticatedFetch] GET ${url} failed with status ${response.status}`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`[authenticatedFetch] Error fetching ${url}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Make an authenticated POST request and return JSON
+ */
+export async function authenticatedPost<T>(url: string, data: unknown): Promise<T | null> {
+  try {
+    const headers = await getAuthHeaders();
+    headers["Content-Type"] = "application/json";
+
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      console.error(`[authenticatedPost] POST ${url} failed with status ${response.status}`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`[authenticatedPost] Error posting to ${url}:`, error);
+    return null;
+  }
+}
+
+async function throwIfResNotOk(res: Response) {
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    throw new Error(`${res.status}: ${text}`);
+  }
+}
+
+export async function apiRequest(
+  method: string,
+  url: string,
+  data?: unknown | undefined,
+): Promise<Response> {
+  const headers = await getAuthHeaders();
+
+  if (data) {
+    headers["Content-Type"] = "application/json";
   }
 
   const res = await fetch(url, {
@@ -78,17 +130,11 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers: Record<string, string> = {};
-    
-    // SECURITY: Use Firebase ID token for secure authentication
-    const token = await getAuthToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    
+    const headers = await getAuthHeaders();
+
     // Build URL with query parameters from queryKey
     let url = queryKey[0] as string;
-    
+
     // Handle special cases for intake endpoints with IDs
     if (queryKey.length > 1) {
       if (url.includes('/intake/volunteer-profile') && queryKey[1]) {
@@ -97,7 +143,7 @@ export const getQueryFn: <T>(options: {
         url = `${url}?organizationId=${queryKey[1]}`;
       }
     }
-    
+
     const res = await fetch(url, {
       credentials: "include",
       headers,

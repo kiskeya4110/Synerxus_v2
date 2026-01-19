@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useViewportDetection } from "@/hooks/use-mobile";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, authenticatedFetch, authenticatedPost } from "@/lib/queryClient";
 import {
   MessageSquare,
   Send,
@@ -95,13 +95,11 @@ export default function OrganizationMessagesPWA() {
   }, [userType, navigate]);
 
   // Fetch current user to get organization ID
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<{ id: number; organizationId?: number } | null>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
+      return authenticatedFetch<{ id: number; organizationId?: number }>(`/api/users/me?userId=${userId}`);
     },
     enabled: !!userId,
   });
@@ -118,12 +116,9 @@ export default function OrganizationMessagesPWA() {
     queryKey: ["/api/conversation-threads/organization", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const response = await fetch(`/api/conversation-threads/organization/${organizationId}`);
-      if (!response.ok) {
-        console.error("Failed to fetch threads:", response.status);
-        return [];
-      }
-      const data = await response.json();
+      const data = await authenticatedFetch<ConversationThread[]>(
+        `/api/conversation-threads/organization/${organizationId}`
+      );
       return Array.isArray(data) ? data : [];
     },
     enabled: !!organizationId,
@@ -136,9 +131,9 @@ export default function OrganizationMessagesPWA() {
     queryKey: ["/api/organizations", organizationId, "volunteers", userId],
     queryFn: async () => {
       if (!organizationId || !userId) return [];
-      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
-      if (!response.ok) return [];
-      const data = await response.json();
+      const data = await authenticatedFetch<Volunteer[]>(
+        `/api/organizations/${organizationId}/volunteers?userId=${userId}`
+      );
       return Array.isArray(data) ? data : [];
     },
     enabled: showNewConversation && !!organizationId && !!userId,
@@ -154,11 +149,10 @@ export default function OrganizationMessagesPWA() {
     queryFn: async () => {
       if (!selectedThread?.id || !userId) return { thread: null, messages: [] };
       try {
-        const response = await fetch(
-          `/api/conversation-threads/${selectedThread.id}/messages?userId=${userId}`
+        const data = await authenticatedFetch<{ thread: any; messages: any[] }>(
+          `/api/conversation-threads/${selectedThread.id}/messages`
         );
-        if (!response.ok) return { thread: null, messages: [] };
-        const data = await response.json();
+        if (!data) return { thread: null, messages: [] };
         return {
           thread: data.thread || null,
           messages: Array.isArray(data.messages) ? data.messages : [],
@@ -278,13 +272,12 @@ export default function OrganizationMessagesPWA() {
   // Mark messages as delivered when viewed by the receiver
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (messageIds: number[]) => {
-      const response = await fetch('/api/mark-delivered', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageIds }),
-      });
-      if (!response.ok) throw new Error('Failed to mark messages as delivered');
-      return response.json();
+      const result = await authenticatedPost<{ updated: number; total: number }>(
+        '/api/messages/mark-delivered',
+        { messageIds }
+      );
+      if (!result) throw new Error('Failed to mark messages as delivered');
+      return result;
     },
   });
 

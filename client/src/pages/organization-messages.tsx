@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, authenticatedFetch } from "@/lib/queryClient";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -85,13 +85,11 @@ export default function OrganizationMessages() {
     }
   }, [isMobile, navigate]);
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<{ id: number; organizationId?: number } | null>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
+      return authenticatedFetch<{ id: number; organizationId?: number }>(`/api/users/me?userId=${userId}`);
     },
     enabled: !!userId,
   });
@@ -107,9 +105,8 @@ export default function OrganizationMessages() {
   const { data: threads = [], isLoading: loadingThreads, refetch: refetchThreads } = useQuery<ConversationThread[]>({
     queryKey: ["/api/conversation-threads/organization", organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/conversation-threads/organization/${organizationId}`);
-      if (!response.ok) throw new Error("Failed to fetch threads");
-      return response.json();
+      const data = await authenticatedFetch<ConversationThread[]>(`/api/conversation-threads/organization/${organizationId}`);
+      return data || [];
     },
     enabled: !!organizationId,
     refetchInterval: 5000 // Poll every 5 seconds to catch new messages and threads
@@ -119,33 +116,20 @@ export default function OrganizationMessages() {
     queryKey: ["/api/conversation-threads", selectedThread?.id, "messages", userId],
     queryFn: async () => {
       if (!selectedThread || !userId) return { thread: null, messages: [] };
-      const response = await fetch(`/api/conversation-threads/${selectedThread.id}/messages?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch messages");
-      return response.json();
+      const data = await authenticatedFetch<{ thread: any; messages: any[] }>(`/api/conversation-threads/${selectedThread.id}/messages`);
+      return data || { thread: null, messages: [] };
     },
     enabled: !!selectedThread && !!userId,
     refetchInterval: selectedThread ? 3000 : false // Poll every 3 seconds when a thread is selected
   });
 
-  // Fetch volunteers assigned to organization projects - uses apiRequest for proper auth
+  // Fetch volunteers assigned to organization projects - uses authenticatedFetch for proper auth
   const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError, refetch: refetchVolunteers } = useQuery({
     queryKey: ["/api/organizations", organizationId, "volunteers", userId],
     queryFn: async () => {
       if (!organizationId || !userId) return [];
-      // Use fetch with userId header for proper authentication
-      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`, {
-        headers: {
-          'x-user-id': userId,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        console.error("Failed to fetch volunteers:", response.status, await response.text());
-        return [];
-      }
-      const data = await response.json();
-      console.log("Fetched volunteers for messaging:", data);
-      return data;
+      const data = await authenticatedFetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
+      return data || [];
     },
     enabled: !!organizationId && !!userId,
     staleTime: 30000,
@@ -205,7 +189,7 @@ export default function OrganizationMessages() {
   const createThreadMutation = useMutation({
     mutationFn: async (data: { volunteerId: number; topic: string; initialMessage: string }) => {
       return apiRequest("POST", "/api/conversation-threads", {
-        organizationId: parseInt(organizationId || "0"),
+        organizationId: organizationId || 0,
         volunteerId: data.volunteerId,
         topic: data.topic,
         initialMessage: data.initialMessage,

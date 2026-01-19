@@ -74,19 +74,20 @@ export function cacheVolunteerProfile(userId: string | null, data: any): void {
 
 /**
  * Get cached volunteer profile
+ * Returns undefined (not null) when no cache, so React Query treats it as "no initial data"
  */
-export function getCachedVolunteerProfile(userId: string | null): any | null {
-  if (!userId) return null;
+export function getCachedVolunteerProfile(userId: string | null): any | undefined {
+  if (!userId) return undefined;
   try {
     const key = getUserCacheKey(CACHE_KEYS.VOLUNTEER_PROFILE, userId);
     const cached = localStorage.getItem(key);
     if (cached && isCacheValid(userId)) {
       return JSON.parse(cached);
     }
-    return null;
+    return undefined;
   } catch (error) {
     console.warn('[ProfileCache] Failed to read cached volunteer profile:', error);
-    return null;
+    return undefined;
   }
 }
 
@@ -106,19 +107,20 @@ export function cacheOrganizationProfile(userId: string | null, data: any): void
 
 /**
  * Get cached organization profile
+ * Returns undefined (not null) when no cache, so React Query treats it as "no initial data"
  */
-export function getCachedOrganizationProfile(userId: string | null): any | null {
-  if (!userId) return null;
+export function getCachedOrganizationProfile(userId: string | null): any | undefined {
+  if (!userId) return undefined;
   try {
     const key = getUserCacheKey(CACHE_KEYS.ORGANIZATION_PROFILE, userId);
     const cached = localStorage.getItem(key);
     if (cached && isCacheValid(userId)) {
       return JSON.parse(cached);
     }
-    return null;
+    return undefined;
   } catch (error) {
     console.warn('[ProfileCache] Failed to read cached organization profile:', error);
-    return null;
+    return undefined;
   }
 }
 
@@ -138,19 +140,20 @@ export function cacheCorporatePartnerProfile(userId: string | null, data: any): 
 
 /**
  * Get cached corporate partner profile
+ * Returns undefined (not null) when no cache, so React Query treats it as "no initial data"
  */
-export function getCachedCorporatePartnerProfile(userId: string | null): any | null {
-  if (!userId) return null;
+export function getCachedCorporatePartnerProfile(userId: string | null): any | undefined {
+  if (!userId) return undefined;
   try {
     const key = getUserCacheKey(CACHE_KEYS.CORPORATE_PARTNER_PROFILE, userId);
     const cached = localStorage.getItem(key);
     if (cached && isCacheValid(userId)) {
       return JSON.parse(cached);
     }
-    return null;
+    return undefined;
   } catch (error) {
     console.warn('[ProfileCache] Failed to read cached corporate partner profile:', error);
-    return null;
+    return undefined;
   }
 }
 
@@ -170,19 +173,20 @@ export function cacheUserProfile(userId: string | null, data: any): void {
 
 /**
  * Get cached user data
+ * Returns undefined (not null) when no cache, so React Query treats it as "no initial data"
  */
-export function getCachedUserProfile(userId: string | null): any | null {
-  if (!userId) return null;
+export function getCachedUserProfile(userId: string | null): any | undefined {
+  if (!userId) return undefined;
   try {
     const key = getUserCacheKey(CACHE_KEYS.USER_PROFILE, userId);
     const cached = localStorage.getItem(key);
     if (cached && isCacheValid(userId)) {
       return JSON.parse(cached);
     }
-    return null;
+    return undefined;
   } catch (error) {
     console.warn('[ProfileCache] Failed to read cached user profile:', error);
-    return null;
+    return undefined;
   }
 }
 

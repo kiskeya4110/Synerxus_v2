@@ -23,6 +23,7 @@ const PREAPPROVED_EMAILS = [
   'emezil97@gmail.com',
   'mabspro34@gmail.com',
   'mackenroodlacour@gmail.com',
+  'limitlessfoundation633@gmail.com',
   // Pre-approved Volunteers
   'hpare79@gmail.com',
   'kamzizfr@gmail.com',

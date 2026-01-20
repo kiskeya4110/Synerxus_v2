@@ -1096,8 +1096,9 @@ export default function VolunteerProfileSettings() {
     const profileData = existingProfile?.volunteerProfile || existingProfile;
 
     // Determine if we have existing profile data
-    const hasProfileData = profileData && Object.keys(profileData).length > 0;
+    // Must have an id/userId to be considered valid profile data (not just a wrapper object)
     const profileId = profileData?.id || profileData?.userId;
+    const hasProfileData = profileData && profileId && Object.keys(profileData).length > 0;
 
     // Only populate form if we have new profile data we haven't processed yet
     if (hasProfileData && profileId !== lastProfileIdRef.current) {

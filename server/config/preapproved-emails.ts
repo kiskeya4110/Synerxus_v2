@@ -17,6 +17,7 @@ export const PREAPPROVED_EMAILS = [
   'mabspro34@gmail.com',
   'mackenroodlacour@gmail.com',
   'limitlessfoundation633@gmail.com',
+  'support@limitlessfoundationzm.org',
   // Pre-approved Volunteers
   'hpare79@gmail.com',
   'kamzizfr@gmail.com',

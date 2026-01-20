@@ -1020,19 +1020,21 @@ export default function VolunteerProfileSettings() {
       );
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
+      console.log("[ProfileSettings] API response:", data);
       // API returns { user, volunteerProfile }, extract the volunteerProfile
       const profile = data.volunteerProfile || data;
+      console.log("[ProfileSettings] Extracted profile:", profile);
       // Cache profile data for instant loading on next visit
-      if (profile) {
+      if (profile && profile.id) {
         cacheVolunteerProfile(userId, profile);
       }
       return profile;
     },
     enabled: !!userId,
-    initialData: () => getCachedVolunteerProfile(userId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // Skip cache to always fetch fresh data - fixes stale cache issues
+    staleTime: 0,
     gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnMount: true,
+    refetchOnMount: 'always',
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
@@ -1086,6 +1088,14 @@ export default function VolunteerProfileSettings() {
 
   // Load profile data into form whenever profile data changes or user ID changes
   useEffect(() => {
+    console.log("[ProfileSettings] Effect running:", {
+      userLoading,
+      loadingProfile,
+      currentUserId: currentUser?.id,
+      existingProfile: existingProfile ? 'exists' : 'null',
+      existingProfileKeys: existingProfile ? Object.keys(existingProfile) : []
+    });
+
     // Wait for both user and profile to be loaded
     if (userLoading || loadingProfile) return;
     if (!currentUser?.id) return;
@@ -1095,13 +1105,18 @@ export default function VolunteerProfileSettings() {
     // - Extracted profile from our queryFn: { id, userId, volunteerName, ... }
     const profileData = existingProfile?.volunteerProfile || existingProfile;
 
+    console.log("[ProfileSettings] profileData:", profileData);
+
     // Determine if we have existing profile data
     // Must have an id/userId to be considered valid profile data (not just a wrapper object)
     const profileId = profileData?.id || profileData?.userId;
     const hasProfileData = profileData && profileId && Object.keys(profileData).length > 0;
 
+    console.log("[ProfileSettings] hasProfileData:", hasProfileData, "profileId:", profileId, "lastProfileIdRef:", lastProfileIdRef.current);
+
     // Only populate form if we have new profile data we haven't processed yet
     if (hasProfileData && profileId !== lastProfileIdRef.current) {
+      console.log("[ProfileSettings] Populating form with profile data");
       lastProfileIdRef.current = profileId;
       formPopulatedRef.current = true;
       // Existing profile - reset form with all profile data

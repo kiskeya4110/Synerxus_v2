@@ -219,6 +219,9 @@ export default function OrganizationDashboard() {
   // Track individual item processing states
   const [processingActivityIds, setProcessingActivityIds] = useState<Set<number>>(new Set());
   const [processingImpactIds, setProcessingImpactIds] = useState<Set<number>>(new Set());
+  // Bulk approval processing states
+  const [isApprovingAllHours, setIsApprovingAllHours] = useState(false);
+  const [isApprovingAllImpacts, setIsApprovingAllImpacts] = useState(false);
   // Rejection confirmation state
   const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
   const [itemToReject, setItemToReject] = useState<{ id: number; type: 'hours' | 'impact'; name: string; details: string } | null>(null);
@@ -447,6 +450,65 @@ export default function OrganizationDashboard() {
       toast({ title: 'Error', description: 'Failed to reject KPI', variant: 'destructive' });
     } finally {
       removeProcessingImpact(impact.id);
+    }
+  };
+
+  // Bulk approval handlers - approve all pending items with one click
+  const handleApproveAllHours = async () => {
+    const activities = pendingHours?.pendingActivities || [];
+    if (activities.length === 0) return;
+
+    setIsApprovingAllHours(true);
+    // Mark all items as processing
+    activities.forEach((a: any) => addProcessingActivity(a.id));
+
+    try {
+      // Approve all activities in parallel
+      await Promise.all(
+        activities.map((activity: any) =>
+          apiRequest('POST', `/api/volunteer-activities/${activity.id}/approve`, { reviewerId: userId })
+        )
+      );
+      refetchPendingApprovals();
+      refetchDashboard();
+      toast({
+        title: 'All hours approved',
+        description: `${activities.length} hour record${activities.length !== 1 ? 's' : ''} approved successfully.`
+      });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to approve some hours', variant: 'destructive' });
+    } finally {
+      activities.forEach((a: any) => removeProcessingActivity(a.id));
+      setIsApprovingAllHours(false);
+    }
+  };
+
+  const handleApproveAllImpacts = async () => {
+    const impacts = pendingVerifications || [];
+    if (impacts.length === 0) return;
+
+    setIsApprovingAllImpacts(true);
+    // Mark all items as processing
+    impacts.forEach((i: any) => addProcessingImpact(i.id));
+
+    try {
+      // Approve all impacts in parallel
+      await Promise.all(
+        impacts.map((impact: any) =>
+          apiRequest('POST', `/api/project-impacts/${impact.id}/approve`, { reviewerId: userId })
+        )
+      );
+      refetchPendingApprovals();
+      refetchDashboard();
+      toast({
+        title: 'All KPIs approved',
+        description: `${impacts.length} impact record${impacts.length !== 1 ? 's' : ''} approved and AIU recalculated.`
+      });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to approve some KPIs', variant: 'destructive' });
+    } finally {
+      impacts.forEach((i: any) => removeProcessingImpact(i.id));
+      setIsApprovingAllImpacts(false);
     }
   };
 
@@ -3527,10 +3589,36 @@ export default function OrganizationDashboard() {
                   {/* Pending Volunteer Hours Table */}
                   {(pendingHours?.pendingActivities?.length || 0) > 0 && (
                     <div style={{ marginBottom: '24px' }}>
-                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Clock size={18} />
-                        Volunteer Hours ({pendingHours?.pendingActivities?.length})
-                      </h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                          <Clock size={18} />
+                          Volunteer Hours ({pendingHours?.pendingActivities?.length})
+                        </h3>
+                        <button
+                          onClick={handleApproveAllHours}
+                          disabled={isApprovingAllHours}
+                          style={{
+                            padding: '8px 16px',
+                            backgroundColor: isApprovingAllHours ? '#86efac' : '#166534',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: isApprovingAllHours ? 'wait' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            opacity: isApprovingAllHours ? 0.7 : 1
+                          }}
+                        >
+                          {isApprovingAllHours ? (
+                            <span style={{ animation: 'pulse 1s infinite' }}>Approving...</span>
+                          ) : (
+                            <><ThumbsUp size={14} /> Approve All Hours</>
+                          )}
+                        </button>
+                      </div>
                       <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                           <thead>
@@ -3660,10 +3748,36 @@ export default function OrganizationDashboard() {
                   {/* Pending Impact/KPI Records Table */}
                   {(pendingVerifications?.length || 0) > 0 && (
                     <div>
-                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#d97706', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Target size={18} />
-                        Impact & KPI Records ({pendingVerifications?.length})
-                      </h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#d97706', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                          <Target size={18} />
+                          Impact & KPI Records ({pendingVerifications?.length})
+                        </h3>
+                        <button
+                          onClick={handleApproveAllImpacts}
+                          disabled={isApprovingAllImpacts}
+                          style={{
+                            padding: '8px 16px',
+                            backgroundColor: isApprovingAllImpacts ? '#86efac' : '#166534',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: isApprovingAllImpacts ? 'wait' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            opacity: isApprovingAllImpacts ? 0.7 : 1
+                          }}
+                        >
+                          {isApprovingAllImpacts ? (
+                            <span style={{ animation: 'pulse 1s infinite' }}>Approving...</span>
+                          ) : (
+                            <><ThumbsUp size={14} /> Approve All Impacts</>
+                          )}
+                        </button>
+                      </div>
                       <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                           <thead>

@@ -1090,9 +1090,14 @@ export default function VolunteerProfileSettings() {
     if (userLoading || loadingProfile) return;
     if (!currentUser?.id) return;
 
+    // Handle both data formats:
+    // - Full response from React Query cache: { user, volunteerProfile }
+    // - Extracted profile from our queryFn: { id, userId, volunteerName, ... }
+    const profileData = existingProfile?.volunteerProfile || existingProfile;
+
     // Determine if we have existing profile data
-    const hasProfileData = existingProfile && Object.keys(existingProfile).length > 0;
-    const profileId = existingProfile?.id || existingProfile?.userId;
+    const hasProfileData = profileData && Object.keys(profileData).length > 0;
+    const profileId = profileData?.id || profileData?.userId;
 
     // Only populate form if we have new profile data we haven't processed yet
     if (hasProfileData && profileId !== lastProfileIdRef.current) {
@@ -1101,29 +1106,29 @@ export default function VolunteerProfileSettings() {
       // Existing profile - reset form with all profile data
       const resetData = {
         email: currentUser?.email || "",
-        name: existingProfile.volunteerName || currentUser?.displayName || "",
-        professionalTitle: existingProfile.professionalTitle || "",
-        yearsOfExperience: existingProfile.yearsOfExperience || "",
-        linkedinProfile: existingProfile.linkedinProfile || "",
-        languages: existingProfile.languages || [],
-        experienceLevel: existingProfile.experienceLevel as "entry-level" | "intermediate" | "expert" | undefined,
-        employerId: existingProfile.employerId || "",
-        departmentName: existingProfile.departmentName || "",
-        jobTitleAtCompany: existingProfile.jobTitleAtCompany || "",
-        skills: parseSkillsFromDb(existingProfile.skills, existingProfile.skillRatings as Record<string, number>),
-        interests: existingProfile.interests || [],
-        location: existingProfile.location || "",
-        sdgGoals: existingProfile.preferredSdgs || [],
-        weeklyHours: existingProfile.weeklyAvailability || 1,
-        availability: existingProfile.availability || [],
+        name: profileData.volunteerName || currentUser?.displayName || "",
+        professionalTitle: profileData.professionalTitle || "",
+        yearsOfExperience: profileData.yearsOfExperience || "",
+        linkedinProfile: profileData.linkedinProfile || "",
+        languages: profileData.languages || [],
+        experienceLevel: profileData.experienceLevel as "entry-level" | "intermediate" | "expert" | undefined,
+        employerId: profileData.employerId || "",
+        departmentName: profileData.departmentName || "",
+        jobTitleAtCompany: profileData.jobTitleAtCompany || "",
+        skills: parseSkillsFromDb(profileData.skills, profileData.skillRatings as Record<string, number>),
+        interests: profileData.interests || [],
+        location: profileData.location || "",
+        sdgGoals: profileData.preferredSdgs || [],
+        weeklyHours: profileData.weeklyAvailability || 1,
+        availability: profileData.availability || [],
         timezone:
-          existingProfile.timezone ||
+          profileData.timezone ||
           Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferredCommitment:
-          existingProfile.preferredCommitment || "flexible",
-        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-        personalStatement: existingProfile.personalStatement || "",
-        matchingPriorities: existingProfile.matchingPriorities || {
+          profileData.preferredCommitment || "flexible",
+        preferredWorkStyle: profileData.preferredWorkStyle || "remote",
+        personalStatement: profileData.personalStatement || "",
+        matchingPriorities: profileData.matchingPriorities || {
           skillsMatch: 3,
           causeAlignment: 3,
           timeFlexibility: 3,
@@ -1166,8 +1171,10 @@ export default function VolunteerProfileSettings() {
 
   // Load existing photo URL
   useEffect(() => {
-    if (existingProfile?.profilePhotoUrl) {
-      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
+    // Handle both data formats (full response or extracted profile)
+    const profile = existingProfile?.volunteerProfile || existingProfile;
+    if (profile?.profilePhotoUrl) {
+      setProfilePhotoUrl(profile.profilePhotoUrl);
     }
   }, [existingProfile]);
 

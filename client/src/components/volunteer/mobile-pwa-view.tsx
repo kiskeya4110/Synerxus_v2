@@ -80,7 +80,7 @@ const SDG_NAMES: { [key: number]: string } = {
 };
 
 // Format number to 2 decimal places if decimal, otherwise show as whole number
-// For values less than 1 (like small AIU scores), always show 2 decimal places
+// For values less than 1 (like small pts scores), always show 2 decimal places
 function formatNumber(value: number | string | undefined | null): string {
   if (value === undefined || value === null) return '0.00';
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -259,12 +259,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     return Math.round(filteredActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0));
   }, [filteredActivities]);
 
-  // Fetch AIU summary for volunteer
+  // Fetch impact score summary for volunteer
   const { data: aiuSummary } = useQuery<AIUSummary>({
     queryKey: ["/api/aiu/volunteer", userId],
     queryFn: async () => {
       const response = await fetch(`/api/aiu/volunteer/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch AIU');
+      if (!response.ok) throw new Error('Failed to fetch impact score');
       return response.json();
     },
     enabled: !!userId,
@@ -352,7 +352,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   // Extract pending applications count for easy access
   const pendingApplicationsCount = kpis.pendingApplications;
 
-  // Helper to get project AIU from aiuSummary (single source of truth)
+  // Helper to get project pts from aiuSummary (single source of truth)
   // Falls back to project.aiuEarned if aiuSummary is not available
   const getProjectAiu = (projectId: number): number => {
     if (aiuSummary?.projects) {
@@ -361,13 +361,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         return aiuProject.aiu || 0;
       }
     }
-    // Fallback to dashboard calculated AIU (now correctly calculated in dashboard-service)
+    // Fallback to dashboard calculated pts (now correctly calculated in dashboard-service)
     const dashboardProject = projects?.find((p: any) => p.id === projectId);
     return dashboardProject?.aiuEarned || 0;
   };
 
-  // Impact Over Time data - use server-calculated monthlyImpactData with AIU
-  // AIU is now calculated on the server using the official aiu-service formula
+  // Impact Over Time data - use server-calculated monthlyImpactData with pts
+  // pts is now calculated on the server using the official aiu-service formula
   // and distributed proportionally by hours to ensure consistency with SDG Impact Report
   const impactOverTimeData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -384,7 +384,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         // Use server-calculated values directly
         const hours = Number(item.hours) || 0;
         const peopleImpacted = Number(item.peopleImpacted) || 0;
-        // AIU is now provided by server using official aiu-service calculation
+        // pts is now provided by server using official aiu-service calculation
         const aiu = Number(item.aiu) || 0;
 
         return {
@@ -410,7 +410,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         }
       });
       const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
-      // Without server data, show 0 for people reached and AIU until data is loaded
+      // Without server data, show 0 for people reached and pts until data is loaded
       return {
         month,
         hours: hours,
@@ -537,7 +537,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     return result;
   }, [dashboardData, volunteerProfile]);
 
-  // Calculate AIU per SDG from aiuSummary projects
+  // Calculate pts per SDG from aiuSummary projects
   const aiuPerSdg = useMemo(() => {
     const sdgAiu: { [key: number]: number } = {};
     const safeProjects = Array.isArray(projects) ? projects : [];
@@ -550,7 +550,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       }
     });
 
-    // Calculate AIU per SDG from aiuSummary projects
+    // Calculate pts per SDG from aiuSummary projects
     if (aiuSummary?.projects) {
       aiuSummary.projects.forEach((aiuProject: any) => {
         const projectId = aiuProject.projectId;
@@ -1345,7 +1345,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
             )}
 
-            {/* KPI Cards - Key metrics: Lives Impacted, AIU Score, Hours, SDGs */}
+            {/* KPI Cards - Key metrics: Lives Impacted, pts Score, Hours, SDGs */}
             <div className="px-4 grid grid-cols-4 gap-2">
               {/* Lives Impacted - Total people reached */}
               <button
@@ -1360,7 +1360,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-[10px] font-medium text-slate-500">Impacted</div>
                 <div className="text-[8px] text-slate-400">people</div>
               </button>
-              {/* AIU Score - Attributable Impact Units */}
+              {/* Impact Score */}
               <button
                 onClick={() => setShowAIUDetailsModal(true)}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm group"
@@ -1373,7 +1373,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-xl font-bold text-slate-800">
                   {formatNumber(aiuSummary?.totalAiu || 0)}
                 </div>
-                <div className="text-[10px] font-medium text-slate-500">{isAIUEnabled ? "AIU Score" : "Impact Score"}</div>
+                <div className="text-[10px] font-medium text-slate-500">Impact Score</div>
                 <div className="text-[8px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
               </button>
               {/* Total Hours - Time contributed with verification status */}
@@ -1454,7 +1454,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="text-[9px] text-slate-600 font-medium">Projects</div>
                       <div className="text-[8px] text-purple-400 mt-0.5">Tap for details</div>
                     </button>
-                    {/* Impact Score (AIU) - Clickable, using aiuSummary as single source of truth */}
+                    {/* Impact Score - Clickable, using aiuSummary as single source of truth */}
                     <button
                       onClick={() => setShowAIUDetailsModal(true)}
                       className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer group"
@@ -1462,7 +1462,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="text-2xl font-bold text-amber-600">
                         {formatNumber(aiuSummary?.totalAiu)}
                       </div>
-                      <div className="text-[9px] text-slate-600 font-medium">{isAIUEnabled ? "AIUs" : "Score"}</div>
+                      <div className="text-[9px] text-slate-600 font-medium">Score</div>
                       <div className="text-[8px] text-amber-400 mt-0.5">Tap for details</div>
                     </button>
                   </div>
@@ -1616,7 +1616,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               <span className="text-emerald-600 text-[9px]">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
                               {sdgAiu > 0 && (
                                 <span className="text-amber-600 text-[9px] bg-amber-50 px-1.5 py-0.5 rounded font-medium">
-                                  {sdgAiu >= 1 ? formatNumber(sdgAiu) : sdgAiu.toFixed(1)} AIU
+                                  {sdgAiu >= 1 ? formatNumber(sdgAiu) : sdgAiu.toFixed(1)} pts
                                 </span>
                               )}
                             </div>
@@ -1640,7 +1640,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex items-start gap-2 text-[10px] text-slate-500">
                       <Target className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                       <p>
-                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIUs (Attributable Impact Units) are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
+                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. Impact Points are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
                       </p>
                     </div>
                   </div>
@@ -1670,7 +1670,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
-                          <span className="text-slate-500">AIUs</span>
+                          <span className="text-slate-500">Impact Points</span>
                         </div>
                       </div>
                       <div className="h-40">
@@ -1686,7 +1686,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             />
                             <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="Hours" />
                             <Line yAxisId="left" type="monotone" dataKey="peopleReached" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 3 }} name="People Reached" />
-                            <Line yAxisId="right" type="monotone" dataKey="aiu" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} name="AIUs" />
+                            <Line yAxisId="right" type="monotone" dataKey="aiu" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} name="Impact Points" />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -1920,7 +1920,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex items-center gap-3 text-xs text-slate-500">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-3 h-3" />
-                        <span>{formatNumber(getProjectAiu(project.id))} AIUs</span>
+                        <span>{formatNumber(getProjectAiu(project.id))} Impact Points</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -2580,7 +2580,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <ChevronDown className="w-4 h-4 opacity-60 ml-auto -rotate-90" />
                 </button>
-                {/* AIU Score - Clickable */}
+                {/* pts Score - Clickable */}
                 <button
                   onClick={() => setShowAIUDetailsModal(true)}
                   className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all active:scale-[0.98] text-left"
@@ -2588,7 +2588,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <Target className="w-6 h-6 opacity-90" />
                   <div>
                     <div className="text-3xl font-bold">{formatNumber(aiuSummary?.totalAiu)}</div>
-                    <div className="text-xs opacity-80">{isAIUEnabled ? "Total AIU Earned" : "Total Impact Score"}</div>
+                    <div className="text-xs opacity-80">Total Impact Score</div>
                   </div>
                   <ChevronDown className="w-4 h-4 opacity-60 ml-auto -rotate-90" />
                 </button>
@@ -2828,7 +2828,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
-                        <span className="text-slate-600">AIUs</span>
+                        <span className="text-slate-600">Impact Points</span>
                       </div>
                     </div>
                     <div className="h-32" style={{ isolation: 'isolate' }}>
@@ -2845,7 +2845,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             formatter={(value: number, name: string) => [
                               name === 'aiu' ? formatDecimal(value) : value,
-                              name === 'hours' ? 'Hours' : name === 'peopleReached' ? 'People Reached' : 'AIUs'
+                              name === 'hours' ? 'Hours' : name === 'peopleReached' ? 'People Reached' : 'Impact Points'
                             ]}
                           />
                           <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="hours" />
@@ -3593,8 +3593,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <Award className="w-5 h-5 text-amber-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">{isAIUEnabled ? "AIU Score" : "Impact Score"}</div>
-                  <div className="text-slate-500 text-xs">Attributable Impact Units breakdown</div>
+                  <div className="text-slate-800 font-medium">Impact Score</div>
+                  <div className="text-slate-500 text-xs">Impact Score breakdown</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
@@ -3723,7 +3723,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
-                        <span>AIUs Earned:</span>
+                        <span>Impact Points Earned:</span>
                         <span className="text-emerald-600 font-semibold">{formatNumber(aiuSummary?.totalAiu)}</span>
                       </div>
                       <div className="flex justify-between">
@@ -4274,7 +4274,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           </div>
                           <div className="flex items-center gap-1">
                             <TrendingUp className="w-3 h-3" />
-                            <span>{formatNumber(getProjectAiu(project.id))} AIUs</span>
+                            <span>{formatNumber(getProjectAiu(project.id))} Impact Points</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
@@ -4355,7 +4355,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             </div>
                             <div className="flex items-center gap-1">
                               <TrendingUp className="w-3 h-3" />
-                              <span>{formatNumber(getProjectAiu(project.id))} AIUs</span>
+                              <span>{formatNumber(getProjectAiu(project.id))} Impact Points</span>
                             </div>
                           </div>
                         </div>
@@ -4397,7 +4397,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <span className="text-blue-600 font-semibold">{Math.round(kpis.totalHours)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">AIUs Earned:</span>
+                      <span className="text-slate-600">Impact Points Earned:</span>
                       <span className="text-emerald-600 font-semibold">{formatNumber(aiuSummary?.totalAiu)}</span>
                     </div>
                   </div>
@@ -4671,7 +4671,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
             {(() => {
               const milestones = [
-                { title: 'Rising Star', desc: 'Complete 5 projects', fullDesc: 'Become a Rising Star by completing your first 5 volunteer projects. This milestone recognizes your dedication and commitment to making a difference.', target: 5, current: kpis.projectsCompleted, icon: '⭐', bgFrom: '#fbbf24', bgTo: '#f59e0b', reward: '500 Bonus AIUs' },
+                { title: 'Rising Star', desc: 'Complete 5 projects', fullDesc: 'Become a Rising Star by completing your first 5 volunteer projects. This milestone recognizes your dedication and commitment to making a difference.', target: 5, current: kpis.projectsCompleted, icon: '⭐', bgFrom: '#fbbf24', bgTo: '#f59e0b', reward: '500 Bonus Impact Points' },
                 { title: 'Impact Leader', desc: 'Log 50 volunteer hours', fullDesc: 'Achieve Impact Leader status by contributing 50 hours of your time. Your sustained effort creates meaningful change in communities.', target: 50, current: kpis.totalHours, icon: '🏆', bgFrom: '#60a5fa', bgTo: '#3b82f6', reward: 'Leadership Badge' },
                 { title: 'Global Champion', desc: 'Contribute to 5 SDGs', fullDesc: 'Become a Global Champion by making contributions across 5 different Sustainable Development Goals. Your diverse impact spans multiple global challenges.', target: 5, current: kpis.sdgsContributed, icon: '🌍', bgFrom: '#4ade80', bgTo: '#22c55e', reward: 'Global Impact Certificate' },
                 { title: 'Community Builder', desc: 'Join 3 organizations', fullDesc: 'Earn Community Builder status by collaborating with 3 different organizations. Your network expands the reach of your positive impact.', target: 3, current: Math.min(projects.length, 3), icon: '🤝', bgFrom: '#c084fc', bgTo: '#a855f7', reward: 'Network Expansion Badge' }
@@ -4948,7 +4948,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         </div>
       )}
 
-      {/* Enhanced AIU Details Modal - Opens when AIU KPI is clicked */}
+      {/* Enhanced pts Details Modal - Opens when pts KPI is clicked */}
       <AIUDetailsModal
         isOpen={showAIUDetailsModal}
         onClose={() => setShowAIUDetailsModal(false)}

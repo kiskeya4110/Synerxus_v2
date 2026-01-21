@@ -34,31 +34,17 @@ import { isAIUDisplayEnabled } from "@shared/feature-flags";
 export const aiuRouter = Router();
 
 /**
- * Shadow Mode Middleware
- * When AIU display is disabled, block API access to prevent network inspection exposure.
- * The AIU calculations still run internally via the aiu-service for data collection.
+ * Impact Score API (formerly AIU)
  *
- * TODO (Post-Pilot): Remove this middleware once AIU display is enabled.
+ * NOTE: As of pilot phase, we use "Impact Score" terminology in the UI.
+ * The underlying calculation system remains unchanged.
+ * API endpoints continue to function but return data labeled as Impact Score.
+ *
+ * TODO (Post-Pilot): Consider renaming endpoints to /api/impact-score/
  */
-const shadowModeMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (!isAIUDisplayEnabled()) {
-    // Return 403 to indicate the feature is disabled
-    // This prevents accidental exposure of AIU data in network inspection tools
-    return res.status(403).json({
-      error: "AIU display is currently disabled",
-      message: "This feature is in shadow mode for the pilot program.",
-      // Include generic impact metrics as alternative
-      alternative: {
-        metricType: "Verified Social Impact",
-        description: "Impact data is being collected internally."
-      }
-    });
-  }
-  next();
-};
 
-// Apply shadow mode middleware to all AIU routes
-aiuRouter.use(shadowModeMiddleware);
+// No middleware blocking - Impact Score data flows to all clients
+// Only the UI terminology changes, not the data availability
 
 /**
  * GET /api/aiu/volunteer/:volunteerId

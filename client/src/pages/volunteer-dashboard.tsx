@@ -155,7 +155,7 @@ export default function Dashboard() {
   // Detect if on mobile device for PWA vs desktop navigation
   const isMobile = useIsMobile();
 
-  // Feature flag for AIU display (Shadow Mode when disabled)
+  // Feature flag for pts display (Shadow Mode when disabled)
   const isAIUEnabled = useAIUDisplay();
 
   // Read tab parameter from URL for PWA navigation
@@ -237,7 +237,7 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  // Fetch AIU summary for volunteer users
+  // Fetch impact score summary for volunteer users
   interface AIUSummary {
     volunteerId: number;
     volunteerName: string;
@@ -263,7 +263,7 @@ export default function Dashboard() {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
       const response = await fetch(`/api/aiu/volunteer/${id}`);
-      if (!response.ok) throw new Error('Failed to fetch AIU');
+      if (!response.ok) throw new Error('Failed to fetch impact score');
       return response.json();
     },
     enabled: !!userId && currentUser?.userType === 'volunteer',
@@ -420,7 +420,7 @@ export default function Dashboard() {
       return projects;
     }
 
-    // Fallback: Use contributed SDGs from AIU summary or volunteer profile
+    // Fallback: Use contributed SDGs from pts summary or volunteer profile
     const fallbackSdgs = aiuSummary?.sdgsContributed ||
                          dashboardData?.volunteerProfile?.preferredSdgs || [];
 
@@ -676,7 +676,7 @@ export default function Dashboard() {
   }, [filteredMonthlyImpactData, timeFilter, dashboardType, selectedProject, filteredData, projects]);
 
   // Use KPIs from backend - API returns summary data at top level
-  // Use aiuSummary from dedicated AIU endpoint for accurate metrics
+  // Use aiuSummary from dedicated pts endpoint for accurate metrics
   const kpis = useMemo(() => {
     // Get skills count - use skillsCount from summary, fallback to volunteerProfile.skills.length
     const skillsCount = dashboardData?.skillsCount ?? dashboardData?.volunteerProfile?.skills?.length ?? 0;
@@ -704,7 +704,7 @@ export default function Dashboard() {
         sdgs: dashboardData?.sdgsAddressed || 0,
         impactScore: dashboardData?.impactScore || 0,
         skills: skillsCount,
-        // Use accurate AIU data from dedicated endpoint, fallback to dashboard data
+        // Use accurate pts data from dedicated endpoint, fallback to dashboard data
         aiuEarned: aiuSummary?.totalAiu ?? dashboardData?.totalAiuEarned ?? 0,
         aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
         aiuProjects: aiuSummary?.projects ?? [],
@@ -728,7 +728,7 @@ export default function Dashboard() {
     const uniqueSDGsArray = extractSdgsFromProjects(filteredData.projects);
     const uniqueSDGs = new Set(uniqueSDGsArray);
 
-    // Filter AIU projects by selected project if specific project selected
+    // Filter pts projects by selected project if specific project selected
     let filteredAiuProjects = aiuSummary?.projects ?? [];
     if (selectedProject !== "all") {
       const selectedProjectId = parseInt(selectedProject);
@@ -746,18 +746,18 @@ export default function Dashboard() {
       return sum + Math.round((impact.value || 0) * multiplier);
     }, 0);
 
-    // Calculate AIU based on filtered data when time filter is active
-    // AIU formula: hours-based (0.5 AIU per hour) when we can't use the detailed AIU service
+    // Calculate pts based on filtered data when time filter is active
+    // pts formula: hours-based (0.5 pts per hour) when we can't use the detailed pts service
     let calculatedAiu = filteredAiu;
     if (timeFilter !== 'all' && filteredHours > 0) {
-      // When time filter is active, calculate AIU proportionally from filtered hours
-      // Use ratio: (filtered hours / total hours) * total AIU
+      // When time filter is active, calculate pts proportionally from filtered hours
+      // Use ratio: (filtered hours / total hours) * total pts
       const totalAiu = aiuSummary?.totalAiu ?? dashboardData?.totalAiuEarned ?? 0;
       const totalHours = aiuSummary?.totalHours ?? dashboardData?.totalHours ?? 0;
       if (totalHours > 0 && totalAiu > 0) {
         calculatedAiu = Math.round((filteredHours / totalHours) * totalAiu * 100) / 100;
       } else {
-        // Fallback: approximate AIU from hours (0.5 AIU per hour is reasonable estimate)
+        // Fallback: approximate pts from hours (0.5 pts per hour is reasonable estimate)
         calculatedAiu = Math.round(filteredHours * 0.5 * 100) / 100;
       }
     }
@@ -774,7 +774,7 @@ export default function Dashboard() {
       impactScore: dashboardData?.impactScore || 0,
       skills: skillsCount,
       livesTouched: filteredPeopleImpacted,
-      // Use filtered AIU when project or time filter is active
+      // Use filtered pts when project or time filter is active
       aiuEarned: calculatedAiu,
       aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
       aiuProjects: filteredAiuProjects,
@@ -1301,7 +1301,7 @@ export default function Dashboard() {
           totalScore: value,
         };
         break;
-      case "AIUs Earned":
+      case "Impact Points Earned":
         // Use projectImpacts data (real beneficiary data) instead of activities
         const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; volunteerCount: number; volunteers: Set<number> }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
@@ -1382,13 +1382,13 @@ export default function Dashboard() {
         }
         
         
-        // For volunteers, show the dedicated AIU details modal
+        // For volunteers, show the dedicated pts details modal
         if (dashboardType === "volunteer") {
           setShowAIUModal(true);
           return; // Don't show the generic dialog
         }
         detailData = {
-          title: "AIU Breakdown - Impact Details",
+          title: "Impact Score Details",
           items: items,
           totalScore: totalBeneficiaries,
         };
@@ -1683,17 +1683,17 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              {/* Impact Score KPI Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+              {/* Impact Score KPI Card - Shows "Impact Points Earned" when enabled, "Impact Score" when in shadow mode */}
               <button
                 type="button"
-                onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+                onClick={() => handleKPIClick("Impact Score", kpis.aiuEarned)}
                 className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">
-                        {isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+                        {SHADOW_MODE_LABELS.AIU_REPLACEMENT}
                       </p>
                       <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
                     </div>
@@ -1931,10 +1931,10 @@ export default function Dashboard() {
                       <div className="p-3 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                           {aiuSummary.totalAiu >= 10
-                            ? `Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} AIUs across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}.`
+                            ? `Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} Impact Points across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}.`
                             : aiuSummary.totalAiu >= 5
-                            ? `Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} AIUs.`
-                            : `Building momentum with ${formatDecimal(aiuSummary.totalAiu)} AIUs earned!`}
+                            ? `Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} Impact Points.`
+                            : `Building momentum with ${formatDecimal(aiuSummary.totalAiu)} Impact Points earned!`}
                         </p>
                       </div>
 
@@ -1945,7 +1945,7 @@ export default function Dashboard() {
                             <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                             <div>
                               <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary.totalAiu)}</span>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Total Impact Points</p>
                             </div>
                           </div>
                         </div>
@@ -1967,7 +1967,7 @@ export default function Dashboard() {
                           <Link key={idx} href={`/projects/${project.projectId}`}>
                             <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700">
                               <span className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1">{project.projectName}</span>
-                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-2">{formatDecimal(project.aiu)} AIU</span>
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-2">{formatDecimal(project.aiu)} pts</span>
                             </div>
                           </Link>
                         ))}
@@ -2309,7 +2309,7 @@ export default function Dashboard() {
                 {selectedKPI?.title?.includes("Projects") && <Briefcase className="h-5 w-5 text-emerald-600" />}
                 {selectedKPI?.title?.includes("Tasks") && <CheckSquare className="h-5 w-5 text-purple-600" />}
                 {selectedKPI?.title?.includes("Skills") && <Award className="h-5 w-5 text-amber-600" />}
-                {selectedKPI?.title?.includes("AIU") && <TrendingUp className="h-5 w-5 text-cyan-600" />}
+                {selectedKPI?.title?.includes("Impact") && <TrendingUp className="h-5 w-5 text-cyan-600" />}
                 {selectedKPI?.title?.includes("Streak") && <Flame className="h-5 w-5 text-orange-600" />}
                 {selectedKPI?.title?.includes("People Impacted") && <Users className="h-5 w-5 text-purple-600" />}
                 {selectedKPI?.title}
@@ -2325,7 +2325,7 @@ export default function Dashboard() {
                   ? "See completed tasks and your productivity metrics"
                   : selectedKPI?.title?.includes("Skills")
                   ? "Skills you bring to volunteer projects"
-                  : selectedKPI?.title?.includes("AIU")
+                  : selectedKPI?.title?.includes("Impact")
                   ? "Anthropic Impact Units - measuring your real-world impact"
                   : selectedKPI?.title?.includes("Streak")
                   ? "Your consistency in making an impact"
@@ -2367,9 +2367,9 @@ export default function Dashboard() {
                         {kpis.skills >= 5 ? " Diverse skill set! You're valuable for various projects." :
                          " Add more skills to unlock matching opportunities."}</>
                       )}
-                      {selectedKPI?.title?.includes("AIU") && (
-                        <>You've earned <span className="font-bold text-cyan-600">{formatDecimal(kpis.aiuEarned)} AIUs</span> through your impact.
-                        AIUs represent real people helped and communities served.</>
+                      {selectedKPI?.title?.includes("Impact") && (
+                        <>You've earned <span className="font-bold text-cyan-600">{formatDecimal(kpis.aiuEarned)} Impact Points</span> through your impact.
+                        Impact Points represent real people helped and communities served.</>
                       )}
                       {selectedKPI?.title?.includes("Streak") && (
                         <>Your current streak is <span className="font-bold text-orange-600">{impactStreakData.currentStreak} day{impactStreakData.currentStreak !== 1 ? 's' : ''}</span>.
@@ -2545,7 +2545,7 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
-        {/* AIU Details Modal for desktop volunteers - Only shown when AIU display is enabled */}
+        {/* pts Details Modal for desktop volunteers - Only shown when pts display is enabled */}
         {isAIUEnabled && (
           <AIUDetailsModal
             isOpen={showAIUModal}
@@ -2860,13 +2860,13 @@ export default function Dashboard() {
               data-testid="kpi-skills"
               />
             </StaggerItem>
-            {/* Impact Score Stats Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+            {/* Impact Score Stats Card - Shows "Impact Points Earned" when enabled, "Impact Score" when in shadow mode */}
             <StaggerItem>
               <StatsCard
-              title={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+              title={SHADOW_MODE_LABELS.AIU_REPLACEMENT}
               value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
-              onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+              onClick={() => handleKPIClick("Impact Score", kpis.aiuEarned)}
               compact={true}
               gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
               data-testid="kpi-impact-score"
@@ -2919,13 +2919,13 @@ export default function Dashboard() {
               data-testid="kpi-sdgs"
               />
             </StaggerItem>
-            {/* Impact Score Stats Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+            {/* Impact Score Stats Card - Shows "Impact Points Earned" when enabled, "Impact Score" when in shadow mode */}
             <StaggerItem>
               <StatsCard
-              title={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+              title={SHADOW_MODE_LABELS.AIU_REPLACEMENT}
               value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
-              onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+              onClick={() => handleKPIClick("Impact Score", kpis.aiuEarned)}
               compact={true}
               gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
               data-testid="kpi-impact-score"
@@ -2935,7 +2935,7 @@ export default function Dashboard() {
         )}
       </StaggerContainer>
 
-      {/* Impact Portfolio - Shows impact per project using AIU endpoint data */}
+      {/* Impact Portfolio - Shows impact per project using pts endpoint data */}
       {dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
         <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/20">
           <CardHeader className="pb-3">
@@ -2947,7 +2947,7 @@ export default function Dashboard() {
                 <div>
                   <span className="block">Your Impact Portfolio</span>
                   <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
-                    {isAIUEnabled ? "AIU measures your real-world contribution" : "Track your verified social impact"}
+                    Track your verified social impact
                   </span>
                 </div>
               </CardTitle>
@@ -2959,10 +2959,10 @@ export default function Dashboard() {
               <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {aiuSummary.totalAiu >= 10
-                    ? `🌟 Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'Attributable Impact Units' : 'Impact Points'} across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${Math.round(aiuSummary.totalHours || 0)} hours are creating measurable change.`
+                    ? `🌟 Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} Impact Points across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${Math.round(aiuSummary.totalHours || 0)} hours are creating measurable change.`
                     : aiuSummary.totalAiu >= 5
-                    ? `✨ Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'AIUs' : 'points'}. With ${Math.round(aiuSummary.totalHours || 0)} hours invested, your impact is growing steadily.`
-                    : `🚀 You're building momentum with ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'AIUs' : 'points'} earned. Every hour you contribute amplifies your positive influence!`}
+                    ? `✨ Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} Impact Points. With ${Math.round(aiuSummary.totalHours || 0)} hours invested, your impact is growing steadily.`
+                    : `🚀 You're building momentum with ${formatDecimal(aiuSummary.totalAiu)} Impact Points earned. Every hour you contribute amplifies your positive influence!`}
                 </p>
               </div>
 
@@ -2976,7 +2976,7 @@ export default function Dashboard() {
                     <div>
                       <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary.totalAiu) || '0.00'}</span>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {isAIUEnabled ? "Total AIUs Earned" : "Total Impact Score"}
+                        Total Impact Score
                       </p>
                     </div>
                   </div>
@@ -3044,11 +3044,11 @@ export default function Dashboard() {
                           <div className="text-right ml-3">
                             <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(project.aiu) || '0.00'}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400 block">
-                              {isAIUEnabled ? "AIU" : "Score"}
+                              Score
                             </span>
                           </div>
                         </div>
-                        {/* Progress bar showing project's share of total AIU */}
+                        {/* Progress bar showing project's share of total impact */}
                         <div className="mt-3">
                           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                             <span>{formatDecimal(project.hours) || 0}h invested</span>
@@ -3062,9 +3062,9 @@ export default function Dashboard() {
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 italic">
                             {project.aiu >= 3
-                              ? `🎯 High-impact contributor • ${hoursPerAiu}h per AIU`
+                              ? `🎯 High-impact contributor • ${hoursPerAiu}h per pts`
                               : project.aiu >= 1
-                              ? `📈 Building momentum • ${hoursPerAiu}h per AIU`
+                              ? `📈 Building momentum • ${hoursPerAiu}h per pts`
                               : `🌱 Growing your impact here`}
                           </p>
                         </div>
@@ -3259,7 +3259,7 @@ export default function Dashboard() {
         />
       )}
 
-      {/* AIU Details Modal - Enhanced view for volunteers */}
+      {/* pts Details Modal - Enhanced view for volunteers */}
       <AIUDetailsModal
         isOpen={showAIUModal}
         onClose={() => setShowAIUModal(false)}
@@ -3281,13 +3281,13 @@ export default function Dashboard() {
             <DialogDescription>
               {selectedKPI?.title.includes("Impact Score") 
                 ? "Your impact score breakdown across multiple dimensions"
-                : selectedKPI?.title.includes("AIU")
+                : selectedKPI?.title.includes("Impact")
                 ? "Total beneficiaries reached and impact efficiency metrics"
                 : `Detailed breakdown of ${selectedKPI?.title.toLowerCase()}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Impact Score Breakdown - Only show for actual Impact Score, not AIU */}
+            {/* Impact Score Breakdown - Only show for actual Impact Score, not pts */}
             {selectedKPI?.totalScore !== undefined && selectedKPI?.title.includes("Impact Score") && (
               <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                 <div className="flex items-center justify-between">
@@ -3352,7 +3352,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Category Header (for AIU sections)
+              // Category Header (for pts sections)
               if (isCategory) {
                 return (
                   <div key={index} className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700 mt-4" data-testid={`kpi-item-${index}`}>
@@ -3367,7 +3367,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Highlight Item (for AIU key metrics)
+              // Highlight Item (for pts key metrics)
               if (isHighlight) {
                 return (
                   <div key={index} className="p-4 border-2 border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20" data-testid={`kpi-item-${index}`}>
@@ -3387,7 +3387,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Project Group Item (for AIU projects)
+              // Project Group Item (for pts projects)
               if (item.isProjectGroup && item.description) {
                 return (
                   <div key={index} className="p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:shadow-md transition-shadow" data-testid={`kpi-item-${index}`}>
@@ -3684,7 +3684,7 @@ function getEventType(eventType: string): "primary" | "success" | "info" | "warn
 }
 
 // Format number to 2 decimal places if decimal, otherwise show as whole number
-// For values less than 1 (like small AIU scores), always show 2 decimal places
+// For values less than 1 (like small pts scores), always show 2 decimal places
 function formatNumber(value: number | string | undefined | null): string {
   if (value === undefined || value === null) return '0.00';
   const num = typeof value === 'string' ? parseFloat(value) : value;

@@ -1766,15 +1766,15 @@ export default function OrganizationDashboard() {
             onClick={() => setActiveModal('tasks')}
             tooltip={`${taskMetrics.completed} completed, ${taskMetrics.inProgress} in progress, ${taskMetrics.pending} pending`}
           />
-          {/* Impact Score Metric Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+          {/* Impact Score Metric Card - Shows "Impact Score" when enabled, "Impact Score" when in shadow mode */}
           <MetricCard
             icon={<Zap size={24} />}
-            label={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+            label={isAIUEnabled ? "Impact Score" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
             value={typeof displayMetrics.aiuEarned === 'number' ? formatDecimal(displayMetrics.aiuEarned) : displayMetrics.aiuEarned}
             color="#10b981"
             testId="metric-impact-score"
             onClick={() => setActiveModal('aiu')}
-            tooltip={isAIUEnabled ? "Attributable Impact Units measure verified social impact" : "Verified social impact score"}
+            tooltip={isAIUEnabled ? "Verified social impact score" : "Verified social impact score"}
           />
           <MetricCard
             icon={<Activity size={24} />}
@@ -1891,7 +1891,7 @@ export default function OrganizationDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <Award size={18} style={{ color: '#7c3aed' }} />
-                {isAIUEnabled ? "Impact Metrics (AIU)" : "Impact Metrics"}
+                {isAIUEnabled ? "Impact Metrics" : "Impact Metrics"}
               </h3>
               <button
                 onClick={() => setActiveModal('impact')}
@@ -1909,7 +1909,7 @@ export default function OrganizationDashboard() {
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
               >
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                  {isAIUEnabled ? "Total AIUs" : "Total Impact Score"}
+                  {isAIUEnabled ? "Total Score" : "Total Impact Score"}
                 </p>
                 <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>
                   {formatDecimal(organizationAIU?.totalAiu || 0)}
@@ -1924,7 +1924,7 @@ export default function OrganizationDashboard() {
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
               >
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                  {isAIUEnabled ? "Volunteer AIUs" : "Volunteer Score"}
+                  {isAIUEnabled ? "Volunteer Score" : "Volunteer Score"}
                 </p>
                 <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>
                   {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
@@ -3181,7 +3181,7 @@ export default function OrganizationDashboard() {
                 <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Impact Score</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? formatDecimal(metrics.aiuEarned) : metrics.aiuEarned}</p>
-                  <span style={{ fontSize: '11px', color: '#6b7280' }}>AIUs</span>
+                  <span style={{ fontSize: '11px', color: '#6b7280' }}>pts</span>
                 </div>
               </div>
             </div>
@@ -3287,7 +3287,7 @@ export default function OrganizationDashboard() {
       
       {activeModal === 'aiu' && (
         <MetricsModal
-          title="Attributable Impact Units (AIUs)"
+          title="Impact Score Details"
           onClose={() => setActiveModal(null)}
           type="aiu"
           data={dashboardData?.projects?.slice(0, 10) || []}
@@ -3493,14 +3493,14 @@ export default function OrganizationDashboard() {
                   <p style={{ fontSize: '36px', fontWeight: '700', color: '#d97706', margin: 0 }}>
                     {formatDecimal(organizationAIU?.totalAiu || 0)}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total AIUs</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total Score</p>
                   <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>Org + Volunteer Combined</p>
                 </div>
                 <div style={{ padding: '20px', backgroundColor: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
                   <p style={{ fontSize: '36px', fontWeight: '700', color: '#166534', margin: 0 }}>
                     {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Volunteer AIUs</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Volunteer Score</p>
                   <p style={{ fontSize: '10px', color: '#9ca3af', margin: '2px 0 0 0' }}>From {organizationAIU?.volunteerCount || 0} volunteers</p>
                 </div>
                 <div style={{ padding: '20px', backgroundColor: '#eff6ff', borderRadius: '10px', textAlign: 'center' }}>
@@ -3524,7 +3524,7 @@ export default function OrganizationDashboard() {
               {/* Project AIU Breakdown */}
               {organizationAIU?.projects && organizationAIU.projects.length > 0 && (
                 <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>AIU by Project</h3>
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>Impact by Project</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
                     {organizationAIU.projects.map((project) => (
                       <div key={project.projectId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
@@ -3549,10 +3549,10 @@ export default function OrganizationDashboard() {
                 <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
                   <Info size={18} style={{ color: '#0284c7', flexShrink: 0, marginTop: '2px' }} />
                   <div>
-                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#0c4a6e', margin: '0 0 4px 0' }}>How AIU is Calculated</p>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#0c4a6e', margin: '0 0 4px 0' }}>How Impact Score is Calculated</p>
                     <p style={{ fontSize: '11px', color: '#0369a1', margin: 0, lineHeight: '1.5' }}>
-                      <strong>Total AIU = Org Direct Share + Volunteer AIUs</strong><br />
-                      Org Direct Share reflects your management contribution. Volunteer AIUs represent the impact enabled through your volunteers' work.
+                      <strong>Total AIU = Org Direct Share + Volunteer Score</strong><br />
+                      Org Direct Share reflects your management contribution. Volunteer Score represent the impact enabled through your volunteers' work.
                     </p>
                   </div>
                 </div>
@@ -4040,7 +4040,7 @@ export default function OrganizationDashboard() {
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; }}
                     >
                       <p style={{ fontSize: '28px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{formatDecimal(selectedVolunteerData.aiuData?.totalAiu || 0)}</p>
-                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>AIU Earned</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>Score Earned</p>
                     </button>
                     <button
                       onClick={() => { setSelectedVolunteerId(null); setActiveModal('hours'); }}
@@ -5028,7 +5028,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                         <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Status: {project.status}</p>
                       </div>
                       <span style={{ padding: '4px 12px', backgroundColor: '#10b981', color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                        {formatDecimal(project.aiuEarned || 0)} AIUs
+                        {formatDecimal(project.aiuEarned || 0)} pts
                       </span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '12px' }}>
@@ -5096,7 +5096,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
               <div style={{ padding: '20px', backgroundColor: '#10b98110', borderRadius: '12px', border: '2px solid #10b981' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total AIUs Earned</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total Impact Score</p>
                     <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
                       {formatDecimal(displayedTotal)}
                     </p>
@@ -5112,9 +5112,9 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
 
               {/* AIU Explanation - Conceptual, no formula */}
               <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', fontSize: '13px', color: '#166534', border: '1px solid #bbf7d0' }}>
-                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#166534' }}>How AIUs are Calculated:</p>
+                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#166534' }}>How Impact Score is Calculated:</p>
                 <p style={{ margin: '0 0 8px 0', lineHeight: '1.5' }}>
-                  <strong>AIU (Attributable Impact Units)</strong> measure your organization's real-world social impact through volunteer activities.
+                  <strong>Impact Score</strong> measure your organization's real-world social impact through volunteer activities.
                 </p>
                 <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#15803d' }}>
                   <li style={{ marginBottom: '4px' }}><strong>Hours Contributed:</strong> Volunteer time invested in projects</li>
@@ -5126,7 +5126,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
 
               {/* Project AIU Breakdown */}
               <div>
-                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>AIU by Project</h4>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Impact by Project</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {data.length === 0 ? (
                     <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No project data</p>
@@ -5193,7 +5193,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, o
                           <p style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', margin: 0 }}>
                             {formatDecimal(projectAiu)}
                           </p>
-                          <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>AIUs</p>
+                          <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>pts</p>
                           {aiuPercentage > 0 && (
                             <p style={{ fontSize: '10px', color: '#9ca3af', margin: 0 }}>{formatDecimal(aiuPercentage)}%</p>
                           )}

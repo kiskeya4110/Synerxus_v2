@@ -1043,10 +1043,10 @@ export default function LogActivity() {
                       <div className="space-y-2">
                         <p className="font-semibold text-blue-300">What is Lives Impacted?</p>
                         <p className="leading-relaxed">
-                          This number feeds into <span className="font-medium text-emerald-300">Attributable Impact Units (AIUs)</span> calculation.
+                          This number feeds into <span className="font-medium text-emerald-300">Impact Score</span> calculation.
                         </p>
                         <p className="leading-relaxed">
-                          AIU Unique counts each beneficiary once per reporting window and maps to SDG indicators for verified, auditable impact measurement.
+                          Each beneficiary is counted once per reporting window and maps to SDG indicators for verified, auditable impact measurement.
                         </p>
                         <div className="pt-2 border-t border-slate-600 mt-2">
                           <p className="text-xs text-slate-300">

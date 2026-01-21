@@ -330,9 +330,9 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/aiu/project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
       toast({
-        title: variables.status === 'verified' ? "AIU Verified" : "AIU Rejected",
+        title: variables.status === 'verified' ? "Impact Verified" : "Impact Rejected",
         description: variables.status === 'verified'
-          ? "The impact has been verified and AIU credits confirmed."
+          ? "The impact has been verified and credits confirmed."
           : "The impact record has been rejected."
       });
       setActiveKpiModal(null);
@@ -357,7 +357,7 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/aiu/project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
       toast({
-        title: "AIU Adjusted & Verified",
+        title: "Impact Adjusted & Verified",
         description: "The impact metrics have been adjusted and verified successfully."
       });
       setActiveKpiModal(null);
@@ -686,7 +686,7 @@ export default function ProjectDetail() {
                 </div>
                 <div className="flex-1">
                   <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatDecimal(aiuEarned)}</div>
-                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
+                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">Impact Score</div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-emerald-400" />
               </div>
@@ -911,7 +911,7 @@ export default function ProjectDetail() {
                                     {assignment?.role || vol.role}
                                   </span>
                                 )}
-                                <span className="text-xs text-muted-foreground">{formatDecimal(vol.hours)}h • {formatDecimal(vol.aiu)} AIU</span>
+                                <span className="text-xs text-muted-foreground">{formatDecimal(vol.hours)}h • {formatDecimal(vol.aiu)} pts</span>
                               </div>
                             </div>
                           </div>
@@ -1097,11 +1097,11 @@ export default function ProjectDetail() {
                 <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">Impact Score</div>
                   </div>
                   <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{formatDecimal(aiuEarned)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
-                    {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Attributable Impact Units'}
+                    {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Verified Impact Points'}
                   </div>
                   {projectAIU?.verificationStatus && (
                     <div className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -1132,7 +1132,7 @@ export default function ProjectDetail() {
                         placeholder="Update lives impacted"
                         data-testid="input-lives-impacted"
                       />
-                      <p className="text-xs text-orange-600/70 mt-1.5">This value feeds into AIU calculations</p>
+                      <p className="text-xs text-orange-600/70 mt-1.5">This value feeds into Impact Score calculations</p>
                     </div>
                   )}
                 </div>
@@ -1159,7 +1159,7 @@ export default function ProjectDetail() {
                       {projectAIU.volunteers.slice(0, 3).map((vol, idx) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{vol.volunteerName}</span>
-                          <span className="font-semibold text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
+                          <span className="font-semibold text-emerald-600">{formatDecimal(vol.aiu)} pts</span>
                         </div>
                       ))}
                     </div>
@@ -1240,7 +1240,7 @@ export default function ProjectDetail() {
                   data-testid="button-verify-aiu"
                 >
                   <Shield className="h-4 w-4" />
-                  Verify Pending AIU
+                  Verify Pending Impact
                 </Button>
               )}
             </CardContent>
@@ -1304,7 +1304,7 @@ export default function ProjectDetail() {
                 {activeKpiModal === 'volunteers' && 'Team Volunteers'}
                 {activeKpiModal === 'hours' && 'Hours Logged'}
                 {activeKpiModal === 'tasks' && 'Task Progress'}
-                {activeKpiModal === 'aiu' && 'AIU Impact Details'}
+                {activeKpiModal === 'aiu' && 'Impact Score Details'}
                 {activeKpiModal === 'engagement' && 'Engagement Score'}
                 {activeKpiModal === 'team' && 'Team Members'}
                 {activeKpiModal === 'impact' && 'Impact Metrics'}
@@ -1335,7 +1335,7 @@ export default function ProjectDetail() {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-emerald-600">{formatDecimal(vol.aiu)}</div>
-                          <div className="text-xs text-muted-foreground">AIU</div>
+                          <div className="text-xs text-muted-foreground">Score</div>
                         </div>
                       </div>
                     )) || <p className="text-center text-muted-foreground py-4">No volunteer data available</p>}
@@ -1427,7 +1427,7 @@ export default function ProjectDetail() {
                 <>
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
                     <div className="text-4xl font-bold text-emerald-600">{formatDecimal(aiuEarned)}</div>
-                    <div className="text-sm text-emerald-600/80">Total AIUs Earned</div>
+                    <div className="text-sm text-emerald-600/80">Total Impact Score</div>
                     {projectAIU?.verificationStatus && (
                       <Badge className={`mt-2 ${projectAIU.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {projectAIU.verificationStatus === 'verified' ? 'Verified' : 'Pending Verification'}
@@ -1440,7 +1440,7 @@ export default function ProjectDetail() {
                     <div className="flex items-start gap-2">
                       <Info className="h-4 w-4 text-blue-500 mt-0.5" />
                       <div className="text-sm text-muted-foreground">
-                        <strong>AIU (Attributable Impact Units)</strong> measure real-world social impact. Calculated from volunteer hours, SDG alignment, and verified beneficiary data.
+                        <strong>Impact Score</strong> measures real-world social impact. Calculated from volunteer hours, SDG alignment, and verified beneficiary data.
                       </div>
                     </div>
                   </div>
@@ -1448,11 +1448,11 @@ export default function ProjectDetail() {
                   {/* Per-volunteer AIU breakdown */}
                   {projectAIU?.volunteers && projectAIU.volunteers.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">AIU by Contributor</h4>
+                      <h4 className="font-semibold text-sm">Impact Score by Contributor</h4>
                       {projectAIU.volunteers.map((vol, idx) => (
                         <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
                           <span>{vol.volunteerName}</span>
-                          <span className="font-bold text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
+                          <span className="font-bold text-emerald-600">{formatDecimal(vol.aiu)} pts</span>
                         </div>
                       ))}
                     </div>
@@ -1534,7 +1534,7 @@ export default function ProjectDetail() {
                               <span className="font-medium">{totalHours}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                              <span className="text-slate-600 dark:text-slate-400">AIU Calculated:</span>
+                              <span className="text-slate-600 dark:text-slate-400">Impact Score:</span>
                               <span className="font-medium text-emerald-600">{formatDecimal(aiuEarned)}</span>
                             </div>
                           </div>
@@ -1694,7 +1694,7 @@ export default function ProjectDetail() {
                             <div className="text-sm text-muted-foreground">{vol.role}</div>
                             <div className="flex gap-3 mt-1 text-xs">
                               <span className="text-green-600">{vol.hours}h logged</span>
-                              <span className="text-emerald-600">{formatDecimal(vol.aiu)} AIU</span>
+                              <span className="text-emerald-600">{formatDecimal(vol.aiu)} pts</span>
                             </div>
                           </div>
                         </div>
@@ -1727,7 +1727,7 @@ export default function ProjectDetail() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
                       <div className="text-3xl font-bold text-emerald-600">{formatDecimal(aiuEarned)}</div>
-                      <div className="text-xs text-emerald-600/80">AIUs Earned</div>
+                      <div className="text-xs text-emerald-600/80">Impact Score</div>
                     </div>
                     <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
                       <div className="text-3xl font-bold text-orange-600">{livesImpacted.toLocaleString()}</div>
@@ -1757,7 +1757,7 @@ export default function ProjectDetail() {
                   <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <h4 className="font-semibold text-sm mb-2">How Impact is Measured</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• <strong>AIUs:</strong> Calculated from hours, SDG alignment, and verified outcomes</li>
+                      <li>• <strong>Impact Score:</strong> Calculated from hours, SDG alignment, and verified outcomes</li>
                       <li>• <strong>Lives Impacted:</strong> Direct beneficiaries reported and verified</li>
                       <li>• <strong>Impact Score:</strong> Aggregate of all project impact records</li>
                     </ul>

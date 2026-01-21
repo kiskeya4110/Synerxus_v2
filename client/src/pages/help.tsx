@@ -52,8 +52,8 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Corporate Partners",
-    question: "What is the AIU (Annual Impact Unit)?",
-    answer: "AIU is our proprietary metric that quantifies social impact by combining volunteer hours, people impacted, and SDG alignment into a single, comparable score."
+    question: "What is the Impact Score?",
+    answer: "Impact Score is our proprietary metric that quantifies social impact by combining volunteer hours, people impacted, and SDG alignment into a single, comparable score."
   },
   {
     category: "SDG Goals",

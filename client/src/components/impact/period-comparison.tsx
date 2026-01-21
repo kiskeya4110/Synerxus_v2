@@ -52,7 +52,7 @@ export function PeriodComparison({
       calculate("Volunteers", current.volunteers, previous.volunteers),
       calculate("Beneficiaries", current.beneficiaries, previous.beneficiaries),
       ...(current.aiu !== undefined && previous.aiu !== undefined
-        ? [calculate("AIU", current.aiu, previous.aiu, "decimal")]
+        ? [calculate("Impact Score", current.aiu, previous.aiu, "decimal")]
         : []),
       ...(current.projects !== undefined && previous.projects !== undefined
         ? [calculate("Projects", current.projects, previous.projects)]

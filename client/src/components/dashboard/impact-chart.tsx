@@ -53,7 +53,7 @@ export default function ImpactChart({
     () => ({
       hours: userType === "volunteer" ? "Your Hours" : "Volunteer Hours",
       impact: userType === "volunteer" ? "People You Impacted" : "People Impacted",
-      aiu: userType === "volunteer" ? "Your AIU" : "Organization AIU",
+      aiu: userType === "volunteer" ? "Your Impact Score" : "Organization Impact Score",
       score: userType === "volunteer" ? "Impact Score" : "Impact Score",
     }),
     [userType],
@@ -266,7 +266,7 @@ export default function ImpactChart({
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: 'AIU / Score',
+                  text: 'Impact Score',
                   color: theme === "dark" ? "#9ca3af" : "#6b7280",
                   font: { size: 11 },
                 },
@@ -336,7 +336,7 @@ export default function ImpactChart({
                     }
                     if (context.parsed.y !== null) {
                       const value = context.parsed.y;
-                      if (context.dataset.label?.includes('AIU')) {
+                      if (context.dataset.label?.includes('Impact Score')) {
                         label += formatDecimal(value);
                       } else if (value >= 1000) {
                         label += formatDecimal(value / 1000) + 'k';
@@ -436,7 +436,7 @@ export default function ImpactChart({
             }`}
           >
             {visibleSeries.aiu ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-            AIU
+            Score
           </button>
           <button
             onClick={() => toggleSeries('score')}

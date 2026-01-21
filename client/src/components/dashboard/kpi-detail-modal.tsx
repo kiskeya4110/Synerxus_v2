@@ -527,7 +527,7 @@ export default function KPIDetailModal({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">SDGs → Impact</span>
                 <span className="text-sm font-semibold text-blue-600">
-                  {sdgMetrics.length} → {formatDecimal(totalAIU)} AIU
+                  {sdgMetrics.length} → {formatDecimal(totalAIU)} pts
                 </span>
               </div>
             </div>
@@ -734,7 +734,7 @@ export default function KPIDetailModal({
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">AIU Generated</span>
+                <span className="text-sm text-slate-600">Impact Score</span>
                 <span className="font-semibold text-cyan-600">{formatDecimal(totalAIU)}</span>
               </div>
             </div>
@@ -949,7 +949,7 @@ export default function KPIDetailModal({
                 <Zap className="h-5 w-5 text-cyan-600" />
               </div>
               <div>
-                <p className="text-xs text-cyan-600 font-medium">Total AIU</p>
+                <p className="text-xs text-cyan-600 font-medium">Total Impact Score</p>
                 <p className="text-lg font-bold text-cyan-700">{formatDecimal(totalAIU)}</p>
               </div>
             </CardContent>
@@ -960,7 +960,7 @@ export default function KPIDetailModal({
                 <TrendingUp className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs text-purple-600 font-medium">AIU per Hour</p>
+                <p className="text-xs text-purple-600 font-medium">Score per Hour</p>
                 <p className="text-lg font-bold text-purple-700">
                   {formatDecimal(totalHours > 0 ? totalAIU / totalHours : 0)}
                 </p>
@@ -972,7 +972,7 @@ export default function KPIDetailModal({
         {/* AIU by SDG */}
         <Card className="border-slate-200">
           <CardContent className="p-4">
-            <p className="font-semibold text-slate-800 mb-3">AIU Distribution by SDG</p>
+            <p className="font-semibold text-slate-800 mb-3">Impact Score Distribution by SDG</p>
             <div className="space-y-2">
               {sdgMetrics.slice(0, 5).map((metric, idx) => {
                 const sdgAIU = metric.totalHours > 0 ? (metric.totalHours / totalHours) * totalAIU : 0;
@@ -997,12 +997,12 @@ export default function KPIDetailModal({
       <TabsContent value="formula" className="space-y-4 mt-0">
         <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="p-4">
-            <p className="font-semibold text-blue-800 mb-3">Pure Impact AIU Formula</p>
+            <p className="font-semibold text-blue-800 mb-3">Impact Score Formula</p>
             <p className="text-sm text-slate-600 mb-3">
-              AIU measures verified, auditable impact using a proprietary formula:
+              Impact Score measures verified, auditable impact using a proprietary formula:
             </p>
             <div className="bg-white rounded-lg p-3 text-sm font-mono text-slate-700">
-              AIU = min(MaxAIU, k × ln(1 + EffectiveScore)) × (1 + ConsistencyBonus)
+              Score = min(MaxScore, k × ln(1 + EffectiveScore)) × (1 + ConsistencyBonus)
             </div>
           </CardContent>
         </Card>
@@ -1040,7 +1040,7 @@ export default function KPIDetailModal({
     projects: { title: 'Active Projects', icon: Briefcase, gradient: 'from-purple-500 to-violet-500', value: totalProjects.toString() },
     sdg: { title: 'SDG Goals', icon: Target, gradient: 'from-amber-500 to-orange-500', value: sdgMetrics.length.toString() },
     volunteers: { title: 'Employee Volunteers', icon: Users, gradient: 'from-cyan-500 to-blue-500', value: (totalVolunteers || totalEmployees).toString() },
-    aiu: { title: 'AIUs Earned', icon: Zap, gradient: 'from-cyan-500 to-blue-600', value: formatDecimal(totalAIU) },
+    aiu: { title: 'Impact Score', icon: Zap, gradient: 'from-cyan-500 to-blue-600', value: formatDecimal(totalAIU) },
   };
 
   const config = headerConfig[kpiType];

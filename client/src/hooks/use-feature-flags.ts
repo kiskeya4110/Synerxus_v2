@@ -2,68 +2,77 @@
  * Feature Flags React Hook
  *
  * Provides React components with access to feature flags.
- * Handles client-side detection of feature flag state.
  *
- * TODO (Post-Pilot): Enable AIU display once marketing materials are ready.
+ * NOTE: AIU (Attributable Impact Units) terminology is hidden until post-pilot phase.
+ * All user-facing displays use "Impact Score" terminology instead.
+ * The underlying calculation system remains unchanged - only the display labels are affected.
  */
 
 import { useMemo } from 'react';
-import { FEATURE_FLAGS } from '@shared/constants';
 
 /**
- * Check if AIU display is enabled (client-side)
- *
- * @returns boolean - true if AIU should be displayed to users
+ * Standard labels for Impact Score display
+ * These are the primary labels used throughout the platform
  */
-function isAIUDisplayEnabled(): boolean {
-  // Check environment variable (NEXT_PUBLIC_ prefix makes it available in browser)
-  const envValue = typeof window !== 'undefined'
-    ? (import.meta as any).env?.VITE_ENABLE_AIU_DISPLAY
-      || (import.meta as any).env?.NEXT_PUBLIC_ENABLE_AIU_DISPLAY
-      || (window as any).__ENV__?.NEXT_PUBLIC_ENABLE_AIU_DISPLAY
-    : undefined;
+export const IMPACT_SCORE_LABELS = {
+  // Primary labels
+  PRIMARY: 'Impact Score',
+  FULL_NAME: 'Verified Social Impact',
+  DESCRIPTION: 'A measure of your verified contribution to social and environmental outcomes',
 
-  if (envValue !== undefined) {
-    return envValue === 'true' || envValue === '1' || envValue === true;
-  }
+  // Display variants
+  EARNED: 'Impact Score Earned',
+  TOTAL: 'Total Impact Score',
+  PER_PROJECT: 'Score/Project',
+  PER_VOLUNTEER: 'Score/Volunteer',
+  PER_HOUR: 'Score/Hour',
 
-  // Fall back to compile-time constant
-  return FEATURE_FLAGS.ENABLE_AIU_DISPLAY;
-}
+  // Explanatory text
+  TOOLTIP: 'Your Impact Score measures verified contributions to social and environmental outcomes based on hours, SDG alignment, and verified results.',
+
+  // Action labels
+  VIEW_DETAILS: 'View Impact Details',
+  VIEW_BREAKDOWN: 'View Impact Breakdown',
+} as const;
+
+/**
+ * @deprecated Use IMPACT_SCORE_LABELS instead
+ * Kept for backward compatibility during transition
+ */
+export const SHADOW_MODE_LABELS = {
+  AIU_REPLACEMENT: IMPACT_SCORE_LABELS.PRIMARY,
+  AIU_FULL_NAME_REPLACEMENT: IMPACT_SCORE_LABELS.FULL_NAME,
+  AIU_DESCRIPTION: IMPACT_SCORE_LABELS.DESCRIPTION,
+  SOCIAL_VALUE_ESTIMATE: 'Social Value Estimate',
+  IMPACT_SCORE: IMPACT_SCORE_LABELS.PRIMARY,
+  CONTRIBUTION_INDEX: 'Contribution Index',
+} as const;
 
 /**
  * Hook to access feature flags in React components
- *
- * @returns Object containing feature flag values
+ * NOTE: AIU display is always disabled until post-pilot
  */
 export function useFeatureFlags() {
   return useMemo(() => ({
-    isAIUDisplayEnabled: isAIUDisplayEnabled(),
-    // Add more feature flags as needed
+    // AIU display is permanently disabled until post-pilot
+    isAIUDisplayEnabled: false,
   }), []);
 }
 
 /**
  * Hook specifically for AIU display feature flag
- *
- * @returns boolean - true if AIU should be displayed
+ * NOTE: Always returns false - AIU terminology is hidden until post-pilot
+ * @returns false - Impact Score terminology is always used
  */
 export function useAIUDisplay(): boolean {
-  return useMemo(() => isAIUDisplayEnabled(), []);
+  // Always return false - we use Impact Score terminology until post-pilot
+  return false;
 }
 
 /**
- * Labels for alternative metrics when AIU is hidden
- * These are used to maintain layout while hiding AIU terminology
+ * Hook to get Impact Score labels
+ * Use this hook in components that need to display impact metrics
  */
-export const SHADOW_MODE_LABELS = {
-  // Replace "AIU" with these generic terms
-  AIU_REPLACEMENT: 'Impact Score',
-  AIU_FULL_NAME_REPLACEMENT: 'Verified Social Impact',
-  AIU_DESCRIPTION: 'A measure of your verified contribution to social and environmental outcomes',
-
-  // Alternative metric labels
-  SOCIAL_VALUE_ESTIMATE: 'Social Value Estimate',
-  IMPACT_SCORE: 'Impact Score',
-  CONTRIBUTION_INDEX: 'Contribution Index',
-} as const;
+export function useImpactScoreLabels() {
+  return useMemo(() => IMPACT_SCORE_LABELS, []);
+}

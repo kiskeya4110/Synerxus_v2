@@ -68,6 +68,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useAIUDisplay, SHADOW_MODE_LABELS } from "@/hooks/use-feature-flags";
 import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { useState, useEffect, useTransition } from "react";
@@ -465,6 +466,9 @@ export default function CSRDashboard() {
   const [location, navigate] = useLocation();
   const searchString = useSearch(); // Track query params for tab navigation
   const { toast } = useToast();
+
+  // Feature flag for AIU display (Shadow Mode when disabled)
+  const isAIUEnabled = useAIUDisplay();
   const userId = localStorage.getItem("currentUserId");
   const [isPending, startTransition] = useTransition();
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
@@ -1602,7 +1606,7 @@ export default function CSRDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
-                      <span className="text-teal-700 text-[10px] font-medium">AIUs Earned</span>
+                      <span className="text-teal-700 text-[10px] font-medium">{isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}</span>
                     </div>
                     <ChevronRight className="w-3 h-3 text-teal-400" />
                   </div>
@@ -1862,7 +1866,7 @@ export default function CSRDashboard() {
                           <span className="text-[8px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">High Impact</span>
                           <ChevronRight className="w-3 h-3 text-blue-400 ml-auto" />
                         </div>
-                        <p className="text-[9px] text-slate-600 mt-0.5">{Math.max(2, Math.round(displayActiveEmployees * 0.2))} employees with skills not yet matched. Pro bono mentoring could significantly increase your AIU.</p>
+                        <p className="text-[9px] text-slate-600 mt-0.5">{Math.max(2, Math.round(displayActiveEmployees * 0.2))} employees with skills not yet matched. Pro bono mentoring could significantly increase your {isAIUEnabled ? "AIU" : "impact score"}.</p>
                       </div>
                     </div>
                   </button>
@@ -2236,7 +2240,7 @@ export default function CSRDashboard() {
                     onClick={() => startTransition(() => setMobileKPIModal('aiu'))}
                     className="bg-teal-50 rounded p-2 border border-teal-200 text-left hover:bg-teal-100 hover:border-teal-300 active:scale-[0.98] transition-all"
                   >
-                    <div className="text-slate-600 font-medium">Total AIUs Earned</div>
+                    <div className="text-slate-600 font-medium">{isAIUEnabled ? "Total AIUs Earned" : `Total ${SHADOW_MODE_LABELS.AIU_REPLACEMENT}`}</div>
                     <div className="text-teal-700 text-lg font-bold">{formatDecimal(displayTotalImpact || 0)}</div>
                   </button>
                   <button
@@ -2579,7 +2583,7 @@ export default function CSRDashboard() {
                   {mobileKPIModal === 'hours' && 'Total Volunteer Hours'}
                   {mobileKPIModal === 'employees' && 'Active Employees'}
                   {mobileKPIModal === 'projects' && 'Active Projects'}
-                  {mobileKPIModal === 'aiu' && 'Attributable Impact Units'}
+                  {mobileKPIModal === 'aiu' && (isAIUEnabled ? 'Attributable Impact Units' : SHADOW_MODE_LABELS.AIU_FULL_NAME_REPLACEMENT)}
                   {mobileKPIModal === 'participation' && 'Participation Rate'}
                   {mobileKPIModal === 'retention' && 'Volunteer Retention'}
                   {mobileKPIModal === 'satisfaction' && 'Satisfaction Score'}
@@ -2829,7 +2833,7 @@ export default function CSRDashboard() {
                         className="bg-white text-purple-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-purple-300 hover:bg-purple-50 active:scale-95 transition-all"
                       >
                         <TrendingUp className="w-3.5 h-3.5" />
-                        View AIUs
+                        {isAIUEnabled ? "View AIUs" : `View ${SHADOW_MODE_LABELS.AIU_REPLACEMENT}`}
                       </button>
                     </div>
                   </>
@@ -2840,13 +2844,15 @@ export default function CSRDashboard() {
                   <>
                     <div className="text-center py-4">
                       <div className="text-4xl font-bold text-teal-600">{formatDecimal(displayTotalImpact || 0)}</div>
-                      <div className="text-slate-600 text-sm mt-1">Attributable Impact Units</div>
+                      <div className="text-slate-600 text-sm mt-1">{isAIUEnabled ? "Attributable Impact Units" : SHADOW_MODE_LABELS.AIU_FULL_NAME_REPLACEMENT}</div>
                     </div>
+                    {isAIUEnabled && (
                     <div className="bg-teal-50 rounded-lg p-3 border border-teal-200">
-                      <h4 className="font-semibold text-teal-800 text-sm mb-2">What is an AIU?</h4>
-                      <p className="text-xs text-slate-700 mb-2">AIUs (Attributable Impact Units) are Synerxus's proprietary metric for measuring verified SDG contributions. Each AIU represents your auditable share of real-world social and environmental impact.</p>
-                      <p className="text-[10px] text-slate-600 italic">AIUs are evidence-backed by NGO verification and project data</p>
+                      <h4 className="font-semibold text-teal-800 text-sm mb-2">What is Impact Score?</h4>
+                      <p className="text-xs text-slate-700 mb-2">Impact Score is Synerxus's proprietary metric for measuring verified SDG contributions. Your score represents your auditable share of real-world social and environmental impact.</p>
+                      <p className="text-[10px] text-slate-600 italic">Scores are evidence-backed by NGO verification and project data</p>
                     </div>
+                    )}
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => startTransition(() => {
@@ -2862,7 +2868,7 @@ export default function CSRDashboard() {
                         onClick={() => {
                           toast({
                             title: "Verification Status",
-                            description: "All AIUs are evidence-backed with NGO verification and project IDs.",
+                            description: isAIUEnabled ? "All Scores are evidence-backed with NGO verification and project IDs." : "All impact scores are evidence-backed with NGO verification and project IDs.",
                           });
                         }}
                         className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 active:scale-95 transition-all"
@@ -2874,9 +2880,11 @@ export default function CSRDashboard() {
                         <div className="text-emerald-600 text-xs">Evidence-Backed</div>
                       </button>
                     </div>
+                    {isAIUEnabled && (
                     <div className="bg-slate-50 rounded-lg p-2 mt-2">
-                      <p className="text-[10px] text-slate-600 text-center">AIUs are Synerxus's proprietary metric for measuring verified, attributable SDG impact.</p>
+                      <p className="text-[10px] text-slate-600 text-center">Impact Score is Synerxus's proprietary metric for measuring verified, attributable SDG impact.</p>
                     </div>
+                    )}
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       <button
@@ -3266,7 +3274,7 @@ export default function CSRDashboard() {
                   <div className="p-4 space-y-4">
                     <div className="text-center py-4">
                       <div className="text-5xl font-bold text-blue-600">+340%</div>
-                      <div className="text-slate-600 text-sm mt-1">Potential AIU increase</div>
+                      <div className="text-slate-600 text-sm mt-1">{isAIUEnabled ? "Potential AIU increase" : "Potential impact increase"}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
@@ -3299,7 +3307,7 @@ export default function CSRDashboard() {
                             <div className="text-sm font-medium text-slate-800">Tech Mentoring Program</div>
                             <div className="text-xs text-slate-500">3 employees × 4 projects</div>
                           </div>
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">+120 AIU</span>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{isAIUEnabled ? "+120 AIU" : "+120 pts"}</span>
                         </button>
                         <button onClick={() => { setActiveInsightModal(null); navigate('/project-portfolio'); }} className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
                           <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
@@ -3309,13 +3317,13 @@ export default function CSRDashboard() {
                             <div className="text-sm font-medium text-slate-800">Digital Skills Workshop</div>
                             <div className="text-xs text-slate-500">5 employees × 2 projects</div>
                           </div>
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">+85 AIU</span>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{isAIUEnabled ? "+85 AIU" : "+85 pts"}</span>
                         </button>
                       </div>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                       <h4 className="font-semibold text-blue-800 text-sm mb-1">AI Recommendation</h4>
-                      <p className="text-xs text-slate-700">Match tech-skilled employees with digital literacy programs for maximum impact. Pro bono consulting can multiply your AIU by leveraging professional expertise.</p>
+                      <p className="text-xs text-slate-700">Match tech-skilled employees with digital literacy programs for maximum impact. Pro bono consulting can multiply your {isAIUEnabled ? "AIU" : "impact score"} by leveraging professional expertise.</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -3497,7 +3505,7 @@ export default function CSRDashboard() {
                         <div className="text-emerald-700 font-bold text-lg">{selectedInitiativeSDG === 4 ? 23 : selectedInitiativeSDG === 13 ? 18 : 15}</div>
                       </div>
                       <div className="bg-white rounded p-2 border border-slate-200">
-                        <div className="text-slate-500">Projected AIU</div>
+                        <div className="text-slate-500">{isAIUEnabled ? "Projected AIU" : "Projected Impact"}</div>
                         <div className="text-teal-700 font-bold text-lg">+{selectedInitiativeSDG === 4 ? 156 : selectedInitiativeSDG === 13 ? 124 : 98}</div>
                       </div>
                       <div className="bg-white rounded p-2 border border-slate-200">
@@ -3605,7 +3613,7 @@ export default function CSRDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-700">
                       <TrendingUp className="w-4 h-4 text-emerald-500" />
-                      <span>+{Math.round(challengeConfig.hours * 0.8)} bonus AIU for the team</span>
+                      <span>+{Math.round(challengeConfig.hours * 0.8)} {isAIUEnabled ? "bonus AIU for the team" : "bonus points for the team"}</span>
                     </div>
                   </div>
                 </div>
@@ -3838,7 +3846,7 @@ export default function CSRDashboard() {
                           <span>•</span>
                           <span>{project.volunteers} volunteers</span>
                           <span>•</span>
-                          <span className="text-emerald-600 font-medium">+{project.aiu} AIU</span>
+                          <span className="text-emerald-600 font-medium">+{project.aiu} {isAIUEnabled ? "AIU" : "pts"}</span>
                         </div>
                         <div className="flex gap-1 mt-1.5">
                           {project.skills.map((skill, j) => (
@@ -4032,7 +4040,7 @@ export default function CSRDashboard() {
                 <div className="flex items-center justify-center gap-3 mt-2 text-xs">
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="font-medium text-slate-700">{formatDecimal(displayTotalImpact || 0)} AIU</span>
+                    <span className="font-medium text-slate-700">{formatDecimal(displayTotalImpact || 0)} {isAIUEnabled ? "AIU" : ""}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <Target className="w-3 h-3 text-teal-500" />
@@ -4513,7 +4521,7 @@ export default function CSRDashboard() {
                         e.currentTarget.style.background = "transparent";
                         e.currentTarget.style.transform = "scale(1)";
                       }}
-                      title="Click to view AIU breakdown"
+                      title={isAIUEnabled ? "Click to view AIU breakdown" : "Click to view impact breakdown"}
                     >
                       <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                         <span
@@ -4529,7 +4537,7 @@ export default function CSRDashboard() {
                       </div>
                     </button>
                     <p style={{ color: "#64748b", fontSize: "14px", marginTop: "8px" }}>
-                      Total AIU (Attributable Impact Units) across all initiatives
+                      {isAIUEnabled ? "Total AIU (Attributable Impact Units) across all initiatives" : `Total ${SHADOW_MODE_LABELS.AIU_REPLACEMENT} across all initiatives`}
                     </p>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "160px", maxWidth: "160px", flexShrink: 0 }}>
@@ -4598,7 +4606,8 @@ export default function CSRDashboard() {
                   </div>
                 </div>
 
-                {/* Quick AIU Insight - Full width below both columns */}
+                {/* Quick AIU Insight - Full width below both columns - only show when AIU display enabled */}
+                {isAIUEnabled && (
                 <div style={{
                   padding: "12px 16px",
                   background: "linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(20, 184, 166, 0.12) 100%)",
@@ -4611,9 +4620,9 @@ export default function CSRDashboard() {
                 }}>
                   <Info style={{ width: "18px", height: "18px", color: "#0d9488", flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: "13px", color: "#0f766e", fontWeight: "600" }}>What is an AIU? </span>
+                    <span style={{ fontSize: "13px", color: "#0f766e", fontWeight: "600" }}>What is Impact Score? </span>
                     <span style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
-                      Attributable Impact Units are Synerxus's proprietary metric for measuring verified SDG contributions. Each AIU represents your auditable share of real-world impact.
+                      Impact Score is Synerxus's proprietary metric for measuring verified SDG contributions. Your score represents your auditable share of real-world impact.
                     </span>
                   </div>
                   <button
@@ -4646,6 +4655,7 @@ export default function CSRDashboard() {
                     Learn More
                   </button>
                 </div>
+                )}
 
                 {/* ESG Metrics Section */}
                 <div style={{ borderTop: "1px solid rgba(59, 130, 246, 0.15)", paddingTop: "20px" }}>
@@ -5823,7 +5833,7 @@ export default function CSRDashboard() {
                   </p>
                 </button>
 
-                {/* 6th KPI: AIUs Earned */}
+                {/* 6th KPI: Impact Score */}
                 <button
                   onClick={() => startTransition(() => {
                     setSelectedKPI("aiu");
@@ -5852,7 +5862,7 @@ export default function CSRDashboard() {
                   data-testid="kpi-aiu"
                 >
                   <p style={{ fontSize: "9px", color: "#64748b", marginBottom: "4px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.3px" }}>
-                    AIUs
+                    {isAIUEnabled ? "AIUs" : "Impact"}
                   </p>
                   <p style={{ fontSize: "22px", fontWeight: "bold", color: selectedKPI === "aiu" ? "#be185d" : "#db2777", lineHeight: 1.1 }}>
                     {formatDecimal(displayTotalImpact || 0)}
@@ -7370,7 +7380,7 @@ export default function CSRDashboard() {
                 {selectedKPI === "sdg" && "Active SDGs"}
                 {selectedKPI === "economic" && "Economic Value"}
                 {selectedKPI === "volunteers" && "Employee Volunteers"}
-                {selectedKPI === "aiu" && "AIUs Earned"}
+                {selectedKPI === "aiu" && (isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT)}
               </h2>
               <button
                 onClick={() => startTransition(() => setSelectedKPI(null))}
@@ -8069,7 +8079,7 @@ export default function CSRDashboard() {
                     onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
                   >
                     <TrendingUp style={{ width: "16px", height: "16px" }} />
-                    View AIUs
+                    {isAIUEnabled ? "View AIUs" : `View ${SHADOW_MODE_LABELS.AIU_REPLACEMENT}`}
                   </button>
                 </div>
               </div>
@@ -8667,8 +8677,9 @@ export default function CSRDashboard() {
                     marginBottom: "16px",
                   }}
                 >
-                  {formatDecimal(displayTotalImpact || 0)} AIUs Earned
+                  {formatDecimal(displayTotalImpact || 0)} {isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
                 </p>
+                {isAIUEnabled && (
                 <p
                   style={{
                     fontSize: "14px",
@@ -8676,8 +8687,9 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  AIUs (Attributable Impact Units) are Synerxus's proprietary metric for measuring verified SDG contributions. Each AIU represents your auditable share of real-world social and environmental impact.
+                  Impact Score is Synerxus's proprietary metric for measuring verified SDG contributions. Your score represents your auditable share of real-world social and environmental impact.
                 </p>
+                )}
                 <div
                   style={{
                     backgroundColor: "#ecfdf5",
@@ -8694,7 +8706,7 @@ export default function CSRDashboard() {
                       marginBottom: "8px",
                     }}
                   >
-                    AIU Breakdown:
+                    {isAIUEnabled ? "AIU Breakdown:" : "Impact Breakdown:"}
                   </p>
                   <ul
                     style={{
@@ -8711,7 +8723,7 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Total AIUs earned:</span>
+                      <span>✓ {isAIUEnabled ? "Total AIUs earned:" : "Total score:"}</span>
                       <span style={{ fontWeight: "600" }}>
                         {formatDecimal(displayTotalImpact || 0)}
                       </span>
@@ -8723,7 +8735,7 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ AIUs per employee:</span>
+                      <span>✓ {isAIUEnabled ? "AIUs per employee:" : "Score per employee:"}</span>
                       <span style={{ fontWeight: "600" }}>
                         {formatDecimal(csrData?.activeEmployees && displayTotalImpact
                           ? csrData.totalImpact / csrData.activeEmployees
@@ -8737,7 +8749,7 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ AIUs per project:</span>
+                      <span>✓ {isAIUEnabled ? "AIUs per project:" : "Score per project:"}</span>
                       <span style={{ fontWeight: "600" }}>
                         {formatDecimal(csrData?.projectsCompleted && displayTotalImpact
                           ? csrData.totalImpact / csrData.projectsCompleted
@@ -8751,7 +8763,7 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Hours per AIU:</span>
+                      <span>✓ {isAIUEnabled ? "Hours per AIU:" : "Hours per point:"}</span>
                       <span style={{ fontWeight: "600" }}>
                         {formatDecimal(displayTotalImpact && csrData?.totalHours
                           ? csrData.totalHours / csrData.totalImpact
@@ -8789,7 +8801,7 @@ export default function CSRDashboard() {
                       marginBottom: "8px",
                     }}
                   >
-                    AIU Contribution by SDG:
+                    {isAIUEnabled ? "AIU Contribution by SDG:" : "Impact by SDG:"}
                   </p>
                   <div style={{ maxHeight: "180px", overflowY: "auto" }}>
                     {sdgMetrics
@@ -8843,7 +8855,7 @@ export default function CSRDashboard() {
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{ fontWeight: "600", color: "#0d5f52", fontSize: "12px" }}>
-                                {metricAIU} AIUs
+                                {metricAIU} {isAIUEnabled ? "AIUs" : ""}
                               </span>
                               <ChevronRight style={{ width: "14px", height: "14px", color: "#9ca3af" }} />
                             </div>
@@ -8863,10 +8875,14 @@ export default function CSRDashboard() {
                     gap: "8px",
                   }}
                 >
+                  {isAIUEnabled && (
+                  <>
                   <span style={{ fontSize: "18px" }}>🌍</span>
                   <span style={{ fontSize: "13px", color: "#065f46" }}>
-                    <strong>What are AIUs?</strong> Attributable Impact Units are Synerxus's proprietary metric for measuring verified SDG contributions. Each AIU represents your auditable share of real-world impact, backed by NGO verification and project evidence.
+                    <strong>What is Impact Score?</strong> Impact Score is Synerxus's proprietary metric for measuring verified SDG contributions. Your score represents your auditable share of real-world impact, backed by NGO verification and project evidence.
                   </span>
+                  </>
+                  )}
                 </div>
                 {/* Action Buttons */}
                 <div

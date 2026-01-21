@@ -1070,10 +1070,10 @@ export default function ProjectEdit() {
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Zap className="h-5 w-5 text-amber-600" />
-                      AIU Settings (Impact Attribution)
+                      Impact Score Settings
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      Configure how Attributable Impact Units are calculated for this project
+                      Configure how Impact Score is calculated for this project
                     </CardDescription>
                   </div>
                   <FormField

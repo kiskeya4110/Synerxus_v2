@@ -437,8 +437,8 @@ export default function ProjectDetailPWA() {
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs font-semibold text-slate-700">Your AIUs Earned</p>
-                      <p className="text-xs text-slate-500">Attributable Impact Units</p>
+                      <p className="text-xs font-semibold text-slate-700">Your Impact Score</p>
+                      <p className="text-xs text-slate-500">Verified Impact Points</p>
                     </div>
                   </div>
                   <div className="text-right">

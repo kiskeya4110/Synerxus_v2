@@ -1097,7 +1097,7 @@ export default function ImpactReport() {
                         <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold">AIUs Earned</p>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold">Impact Score</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">Your verified share of SDG progress</p>
                       </div>
                     </div>

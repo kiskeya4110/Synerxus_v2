@@ -737,7 +737,7 @@ export function CSRImpactReporting() {
             <div className="bg-purple-50 rounded-lg p-3 border border-purple-200 shadow-sm">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-purple-600" />
-                <span className="text-purple-700 text-[10px] font-medium">AIUs Earned</span>
+                <span className="text-purple-700 text-[10px] font-medium">Impact Score</span>
               </div>
               <div className="text-slate-900 text-xl font-bold mt-1">{impactData?.impactMetrics?.estimatedLivesTouched || 0}</div>
             </div>
@@ -978,7 +978,7 @@ export function CSRImpactReporting() {
         <div style={{ marginBottom: "12px", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px" }}>
           <InteractiveKPICard id="hours" label="Total Hours" value={impactData?.engagementMetrics.totalHours || 0} unit="hrs" icon="⏱️" color="#1e3a8a" trend="up" trendValue="+12%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="employees" label="Employees" value={impactData?.engagementMetrics.activeEmployees || 0} unit="active" icon="👥" color="#059669" trend="up" trendValue="+8%" onClick={setShowDetailModal} />
-          <InteractiveKPICard id="aiu" label="AIUs Earned" value={impactData?.impactMetrics.estimatedLivesTouched || 0} unit="impact" icon="📊" color="#8b5cf6" trend="up" trendValue="+15%" onClick={setShowDetailModal} />
+          <InteractiveKPICard id="aiu" label="Impact Score" value={impactData?.impactMetrics.estimatedLivesTouched || 0} unit="impact" icon="📊" color="#8b5cf6" trend="up" trendValue="+15%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="roi" label="ROI" value={`${impactData?.financialMetrics.roi || 0}%`} unit="return" icon="📈" color="#059669" trend="up" trendValue="+5%" onClick={setShowDetailModal} />
           <InteractiveKPICard id="esg" label="ESG Rating" value={Math.round(esGRating)} unit="/ 100" icon="✨" color="#f97316" trend="up" trendValue="+3" onClick={setShowDetailModal} />
           <InteractiveKPICard id="sroi" label="SROI" value={`${sroiData.ratio}:1`} unit="ratio" icon="💎" color={sroiData.color} trend="up" trendValue="+0.3" onClick={setShowDetailModal} />
@@ -1349,7 +1349,7 @@ export function CSRImpactReporting() {
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#5b21b6", marginBottom: "16px" }}>Impact Efficiency</h3>
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>AIUs Earned</div>
+                  <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>Impact Score</div>
                   <div style={{ fontSize: "32px", fontWeight: "bold", color: "#8b5cf6" }}>{impactData?.impactMetrics.estimatedLivesTouched || 0}</div>
                 </div>
                 <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: "12px" }}>

@@ -70,12 +70,12 @@ export default function AIUDetailsModal({
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2 text-xl">
               <TrendingUp className="h-6 w-6" />
-              Attributable Impact Units (AIU)
+              Impact Score Details
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <p className="text-cyan-100 text-sm">Your Total AIU</p>
+              <p className="text-cyan-100 text-sm">Your Total Score</p>
               <p className="text-4xl font-bold">{formatDecimal(totalAIU)}</p>
             </div>
             <div className={`px-3 py-1.5 rounded-full ${aiuLevel.bg}`}>
@@ -85,7 +85,7 @@ export default function AIUDetailsModal({
           <Progress value={aiuLevel.progress} className="mt-3 h-2 bg-white/20" />
           {aiuLevel.next && (
             <p className="text-xs text-cyan-100 mt-2 text-center">
-              {formatDecimal(aiuLevel.next - totalAIU)} more AIU to reach next level
+              {formatDecimal(aiuLevel.next - totalAIU)} more points to reach next level
             </p>
           )}
         </div>
@@ -96,7 +96,7 @@ export default function AIUDetailsModal({
           <div className="grid grid-cols-4 gap-2">
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-2.5 text-center border border-blue-100">
               <Zap className="h-4 w-4 text-blue-600 mx-auto mb-1" />
-              <p className="text-xs text-blue-600 font-medium">AIU/Hour</p>
+              <p className="text-xs text-blue-600 font-medium">Score/Hour</p>
               <p className="text-lg font-bold text-blue-700">{aiuPerHour}</p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-2.5 text-center border border-emerald-100">
@@ -167,9 +167,9 @@ export default function AIUDetailsModal({
                   <Info className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">What is AIU?</p>
+                  <p className="font-semibold text-slate-800 text-sm">What is Impact Score?</p>
                   <p className="text-xs text-slate-600 mt-1">
-                    AIU is Synerxus's proprietary metric that measures your verified contribution to social and environmental impact.
+                    Impact Score is Synerxus's proprietary metric that measures your verified contribution to social and environmental impact.
                     It provides an auditable record for CSR/ESG reporting.
                   </p>
                 </div>
@@ -214,7 +214,7 @@ export default function AIUDetailsModal({
                 <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-600">
                   <span className="flex items-center gap-1">
                     <TrendingUp className="h-3 w-3 text-cyan-500" />
-                    {formatDecimal(topProject.aiu)} AIU
+                    {formatDecimal(topProject.aiu)} pts
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-slate-400" />
@@ -233,7 +233,7 @@ export default function AIUDetailsModal({
             <div>
               <p className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                AIU by Project
+                Impact by Project
               </p>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {projects.sort((a, b) => b.aiu - a.aiu).slice(0, 5).map((project, index) => {
@@ -242,7 +242,7 @@ export default function AIUDetailsModal({
                     <div key={project.projectId || index} className="bg-white rounded-lg p-2 border border-slate-100">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-xs font-medium text-slate-800 truncate flex-1">{project.projectName}</p>
-                        <p className="text-xs font-bold text-cyan-600 ml-2">{formatDecimal(project.aiu)} AIU</p>
+                        <p className="text-xs font-bold text-cyan-600 ml-2">{formatDecimal(project.aiu)} pts</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Progress value={percentage} className="h-1 flex-1" />
@@ -262,7 +262,7 @@ export default function AIUDetailsModal({
             <div className="text-center py-6 text-slate-500 bg-slate-50 rounded-lg">
               <BarChart3 className="h-10 w-10 mx-auto mb-2 text-slate-300" />
               <p className="font-medium text-sm">No project data yet</p>
-              <p className="text-xs mt-1">Start contributing to projects to earn AIU</p>
+              <p className="text-xs mt-1">Start contributing to projects to earn points</p>
             </div>
           )}
 
@@ -274,7 +274,7 @@ export default function AIUDetailsModal({
                 <p className="font-semibold text-slate-800 text-sm">Role Recognition</p>
               </div>
               <p className="text-xs text-slate-600 mb-2">
-                Different roles contribute differently to impact. Your AIU reflects your unique contribution:
+                Different roles contribute differently to impact. Your score reflects your unique contribution:
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {[
@@ -299,15 +299,15 @@ export default function AIUDetailsModal({
                 <p className="font-semibold text-violet-800 text-sm">Performance Insights</p>
               </div>
               <div className="space-y-2">
-                {/* AIU Efficiency */}
+                {/* Efficiency */}
                 <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Zap className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-xs text-slate-700">AIU Efficiency</span>
+                    <span className="text-xs text-slate-700">Efficiency</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold text-violet-600">{aiuPerHour}</span>
-                    <span className="text-[10px] text-slate-500">AIU/hr</span>
+                    <span className="text-[10px] text-slate-500">pts/hr</span>
                   </div>
                 </div>
                 {/* Project Diversity */}
@@ -352,7 +352,7 @@ export default function AIUDetailsModal({
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Lightbulb className="h-4 w-4 text-emerald-600" />
-                <p className="font-semibold text-emerald-800 text-sm">Increase Your AIU</p>
+                <p className="font-semibold text-emerald-800 text-sm">Increase Your Score</p>
               </div>
               <div className="grid grid-cols-1 gap-1">
                 {[
@@ -369,9 +369,9 @@ export default function AIUDetailsModal({
             </CardContent>
           </Card>
 
-          {/* Why AIU Matters - Compact Footer */}
+          {/* Why Impact Score Matters - Compact Footer */}
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-3 border border-cyan-100">
-            <p className="text-xs font-semibold text-cyan-800 mb-1.5">Why AIU Matters</p>
+            <p className="text-xs font-semibold text-cyan-800 mb-1.5">Why Impact Score Matters</p>
             <div className="flex flex-wrap gap-2 text-[10px]">
               <span className="bg-white px-2 py-0.5 rounded-full text-slate-600 border border-slate-200">
                 ✓ Auditable for CSR/ESG

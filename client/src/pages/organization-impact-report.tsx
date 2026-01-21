@@ -1507,7 +1507,7 @@ export default function OrganizationImpactReport() {
 
                     <div className="bg-emerald-50 dark:bg-emerald-900 p-2.5 md:p-4 rounded-lg border border-emerald-200 dark:border-emerald-700">
                       <p className="text-[10px] md:text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold mb-1 md:mb-2">
-                        AIUs Earned
+                        Impact Score
                       </p>
                       <p className="text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-1 md:mb-2">
                         {formatDecimal(organizationAIU?.totalAiu || dashboardData?.totalAiuEarned || 0)}

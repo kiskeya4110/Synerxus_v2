@@ -617,8 +617,8 @@ export default function CSRDashboardPWA() {
                 <p className="text-2xl font-bold text-amber-800 pointer-events-none">
                   {formatDecimal(typeof metrics?.aiuEarned === 'number' ? metrics.aiuEarned : 0)}
                 </p>
-                <p className="text-xs text-amber-700 font-medium pointer-events-none">AIU Earned</p>
-                <p className="text-[10px] text-amber-600 mt-0.5 pointer-events-none">Attributable Impact Units</p>
+                <p className="text-xs text-amber-700 font-medium pointer-events-none">Impact Score</p>
+                <p className="text-[10px] text-amber-600 mt-0.5 pointer-events-none">Verified Social Impact</p>
               </button>
             </div>
 

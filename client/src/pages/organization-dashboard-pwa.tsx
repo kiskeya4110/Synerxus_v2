@@ -44,6 +44,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
+import { useAIUDisplay, SHADOW_MODE_LABELS } from "@/hooks/use-feature-flags";
 import { formatDecimal } from "@/lib/format-utils";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
@@ -172,6 +173,9 @@ export default function OrganizationDashboardPWA() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+
+  // Feature flag for AIU display (Shadow Mode when disabled)
+  const isAIUEnabled = useAIUDisplay();
   const userId = localStorage.getItem("currentUserId");
   const userType = localStorage.getItem("userType");
 
@@ -944,7 +948,7 @@ export default function OrganizationDashboardPWA() {
             >
               <Award className="w-4 h-4 text-teal-500 mb-1" />
               <p className="text-lg font-bold text-slate-800">{formatDecimal(totalAiu)}</p>
-              <p className="text-[9px] text-slate-500">AIU Score</p>
+              <p className="text-[9px] text-slate-500">{isAIUEnabled ? "AIU Score" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}</p>
             </button>
 
             {/* SDG Coverage - Opens SDG Coverage Modal */}
@@ -2297,10 +2301,10 @@ export default function OrganizationDashboardPWA() {
                   </div>
                   <div>
                     <p className="text-white/80 text-[10px] font-medium uppercase tracking-wide">
-                      Attributable Impact Units
+                      {isAIUEnabled ? "Attributable Impact Units" : SHADOW_MODE_LABELS.AIU_FULL_NAME_REPLACEMENT}
                     </p>
                     <h3 className="font-bold text-xl leading-tight mt-0.5">
-                      {formatDecimal(totalAiu)} AIU
+                      {formatDecimal(totalAiu)} {isAIUEnabled ? "AIU" : ""}
                     </h3>
                   </div>
                 </div>
@@ -2319,19 +2323,19 @@ export default function OrganizationDashboardPWA() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-3 border border-teal-100 text-center">
                   <p className="text-xl font-bold text-teal-700">{formatDecimal(totalAiu)}</p>
-                  <p className="text-[10px] text-teal-600 font-medium">Total AIU</p>
+                  <p className="text-[10px] text-teal-600 font-medium">{isAIUEnabled ? "Total AIU" : "Total Score"}</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
                   <p className="text-xl font-bold text-blue-700">
                     {metrics.activeProjects > 0 ? formatDecimal(totalAiu / metrics.activeProjects) : '0.00'}
                   </p>
-                  <p className="text-[10px] text-blue-600 font-medium">AIU/Project</p>
+                  <p className="text-[10px] text-blue-600 font-medium">{isAIUEnabled ? "AIU/Project" : "Score/Project"}</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100 text-center">
                   <p className="text-xl font-bold text-purple-700">
                     {metrics.activeVolunteers > 0 ? formatDecimal(totalAiu / metrics.activeVolunteers) : '0.00'}
                   </p>
-                  <p className="text-[10px] text-purple-600 font-medium">AIU/Volunteer</p>
+                  <p className="text-[10px] text-purple-600 font-medium">{isAIUEnabled ? "AIU/Volunteer" : "Score/Volunteer"}</p>
                 </div>
               </div>
 
@@ -2339,7 +2343,7 @@ export default function OrganizationDashboardPWA() {
               <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-teal-600" />
-                  AIU Calculation Components
+                  {isAIUEnabled ? "AIU Calculation Components" : "Impact Score Components"}
                 </h4>
 
                 {/* Hours Component (35%) */}
@@ -2354,7 +2358,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((metrics.totalHours / 1000) * 35, 35)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.35)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.35)} {isAIUEnabled ? "AIU" : "pts"}</p>
                 </div>
 
                 {/* SDG Alignment (25%) */}
@@ -2369,7 +2373,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(metrics.sdgsAddressed / 17) * 25}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} {isAIUEnabled ? "AIU" : "pts"}</p>
                 </div>
 
                 {/* Lives Impacted (25%) */}
@@ -2384,7 +2388,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min((totalPeopleImpacted / 1000) * 25, 25)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.25)} {isAIUEnabled ? "AIU" : "pts"}</p>
                 </div>
 
                 {/* Verification (15%) */}
@@ -2399,7 +2403,7 @@ export default function OrganizationDashboardPWA() {
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(((metrics.completedProjects || 0) / Math.max(metrics.totalProjects, 1)) * 15, 15)}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.15)} AIU</p>
+                  <p className="text-[10px] text-slate-500">Contributes {formatDecimal(totalAiu * 0.15)} {isAIUEnabled ? "AIU" : "pts"}</p>
                 </div>
               </div>
 
@@ -2423,7 +2427,7 @@ export default function OrganizationDashboardPWA() {
                       <p className="text-[11px] font-medium text-slate-700">Impact Efficiency</p>
                       <p className="text-[10px] text-slate-500">
                         {metrics.totalHours > 0
-                          ? `${formatDecimal((totalAiu / metrics.totalHours) * 100)} AIU per 100 hours`
+                          ? `${formatDecimal((totalAiu / metrics.totalHours) * 100)} ${isAIUEnabled ? "AIU" : "pts"} per 100 hours`
                           : 'Log hours to track efficiency'}
                       </p>
                     </div>
@@ -2448,7 +2452,7 @@ export default function OrganizationDashboardPWA() {
                       <Zap className="w-4 h-4 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-[11px] font-medium text-slate-700">Boost Your AIU</p>
+                      <p className="text-[11px] font-medium text-slate-700">{isAIUEnabled ? "Boost Your AIU" : "Boost Your Score"}</p>
                       <p className="text-[10px] text-slate-500">
                         {metrics.sdgsAddressed < 5
                           ? 'Align more projects with SDGs for bonus multiplier'
@@ -2466,7 +2470,7 @@ export default function OrganizationDashboardPWA() {
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-100">
                   <h4 className="text-xs font-semibold text-teal-800 mb-3 flex items-center gap-1">
                     <Target className="w-3.5 h-3.5" />
-                    AIU Distribution by SDG
+                    {isAIUEnabled ? "AIU Distribution by SDG" : "Impact Distribution by SDG"}
                   </h4>
                   <div className="space-y-2">
                     {dashboardData.sdgDistribution.slice(0, 4).map((sdg) => {
@@ -2501,14 +2505,15 @@ export default function OrganizationDashboardPWA() {
                 </div>
               )}
 
-              {/* What is AIU */}
+              {/* What is AIU - only show when AIU display enabled */}
+              {isAIUEnabled && (
               <div className="bg-slate-100 rounded-xl p-3">
                 <h4 className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
                   <Award className="w-3.5 h-3.5" />
-                  What is AIU?
+                  What is Impact Score?
                 </h4>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  <strong>Attributable Impact Units (AIU)</strong> measure your organization's real contribution to social impact. Unlike simple "hours logged", AIUs calculate your proportional share of project outcomes based on:
+                  <strong>Impact Score</strong> measure your organization's real contribution to social impact. Unlike simple "hours logged", Impact Scores calculate your proportional share of project outcomes based on:
                 </p>
                 <ul className="text-[10px] text-slate-500 mt-2 space-y-1 ml-3 list-disc">
                   <li>Volunteer effort and engagement (35%)</li>
@@ -2517,6 +2522,7 @@ export default function OrganizationDashboardPWA() {
                   <li>Verified and completed outcomes (15%)</li>
                 </ul>
               </div>
+              )}
 
               {/* Action Button */}
               <button
@@ -2756,7 +2762,7 @@ export default function OrganizationDashboardPWA() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">AIU per 100 Hours</span>
+                    <span className="text-xs text-slate-600">{isAIUEnabled ? "AIU per 100 Hours" : "Impact per 100 Hours"}</span>
                     <span className="text-sm font-bold text-teal-600">
                       {metrics.totalHours > 0 ? formatDecimal((totalAiu / metrics.totalHours) * 100) : 0}
                     </span>
@@ -2956,7 +2962,7 @@ export default function OrganizationDashboardPWA() {
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-purple-600" />
                       <p className="text-[10px] text-purple-700 font-medium">
-                        Impact Tip: Projects addressing 3+ SDGs earn up to 2x AIU multiplier bonus!
+                        {isAIUEnabled ? "Impact Tip: Projects addressing 3+ SDGs earn up to 2x AIU multiplier bonus!" : "Impact Tip: Projects addressing 3+ SDGs earn up to 2x impact multiplier bonus!"}
                       </p>
                     </div>
                   </div>
@@ -3257,7 +3263,7 @@ export default function OrganizationDashboardPWA() {
                 >
                   <Award className="w-5 h-5 text-purple-600 mx-auto mb-1" />
                   <p className="text-xl font-bold text-purple-700">{formatDecimal(volunteerAiuData?.totalAiu || selectedVolunteer.hours * 0.1)}</p>
-                  <p className="text-[10px] text-purple-600">AIU Earned</p>
+                  <p className="text-[10px] text-purple-600">{isAIUEnabled ? "AIU Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}</p>
                   <p className="text-[8px] text-purple-500 mt-0.5">Impact report →</p>
                 </button>
               </div>

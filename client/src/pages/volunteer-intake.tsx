@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
 import {
   Loader2,
@@ -179,7 +179,11 @@ export default function VolunteerIntake() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me?userId=${userId}`, {
+        headers,
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },

@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import {
   PROFILE_QUERY_CONFIG,
   cacheVolunteerProfile,
@@ -950,7 +950,11 @@ export default function VolunteerProfileSettings() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me?userId=${userId}`, {
+        headers,
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Failed to fetch user");
       const data = await response.json();
       // Cache user data for instant loading on next visit
@@ -1015,8 +1019,10 @@ export default function VolunteerProfileSettings() {
     queryKey: ["/api/intake/volunteer-profile", userId],
     queryFn: async () => {
       if (!userId) return null;
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `/api/intake/volunteer-profile?userId=${userId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
@@ -1042,7 +1048,11 @@ export default function VolunteerProfileSettings() {
   const { data: csrPartners = [] } = useQuery<any[]>({
     queryKey: ["/api/csr/partners/list"],
     queryFn: async () => {
-      const response = await fetch("/api/csr/partners/list");
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/csr/partners/list", {
+        headers,
+        credentials: "include"
+      });
       if (!response.ok) return [];
       return response.json();
     },

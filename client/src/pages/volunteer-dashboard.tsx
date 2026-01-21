@@ -1683,26 +1683,26 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              {/* AIU KPI Card - Only shown when AIU display is enabled */}
-              {isAIUEnabled && (
-                <button
-                  type="button"
-                  onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                >
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">AIUs Earned</p>
-                        <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
-                      </div>
-                      <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
-                        <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                      </div>
+              {/* Impact Score KPI Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+              <button
+                type="button"
+                onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              >
+                <div className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">
+                        {isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+                      </p>
+                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
+                    </div>
+                    <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                     </div>
                   </div>
-                </button>
-              )}
+                </div>
+              </button>
 
               <button
                 type="button"
@@ -2860,20 +2860,18 @@ export default function Dashboard() {
               data-testid="kpi-skills"
               />
             </StaggerItem>
-            {/* AIU Stats Card - Only shown when AIU display is enabled */}
-            {isAIUEnabled && (
-              <StaggerItem>
-                <StatsCard
-                title="AIUs Earned"
-                value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
-                icon={<TrendingUp className="h-6 w-6" />}
-                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-                compact={true}
-                gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
-                data-testid="kpi-aiu-earned"
-                />
-              </StaggerItem>
-            )}
+            {/* Impact Score Stats Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+            <StaggerItem>
+              <StatsCard
+              title={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
+              icon={<TrendingUp className="h-6 w-6" />}
+              onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+              compact={true}
+              gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
+              data-testid="kpi-impact-score"
+              />
+            </StaggerItem>
           </>
         ) : (
           <>
@@ -2921,26 +2919,24 @@ export default function Dashboard() {
               data-testid="kpi-sdgs"
               />
             </StaggerItem>
-            {/* AIU Stats Card - Only shown when AIU display is enabled */}
-            {isAIUEnabled && (
-              <StaggerItem>
-                <StatsCard
-                title="AIUs Earned"
-                value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
-                icon={<TrendingUp className="h-6 w-6" />}
-                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-                compact={true}
-                gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
-                data-testid="kpi-aiu-earned"
-                />
-              </StaggerItem>
-            )}
+            {/* Impact Score Stats Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+            <StaggerItem>
+              <StatsCard
+              title={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
+              icon={<TrendingUp className="h-6 w-6" />}
+              onClick={() => handleKPIClick(isAIUEnabled ? "AIUs Earned" : "Impact Score", kpis.aiuEarned)}
+              compact={true}
+              gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
+              data-testid="kpi-impact-score"
+              />
+            </StaggerItem>
           </>
         )}
       </StaggerContainer>
 
-      {/* AIU Project Breakdown - Shows impact per project using AIU endpoint data - Only shown when AIU display is enabled */}
-      {isAIUEnabled && dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
+      {/* Impact Portfolio - Shows impact per project using AIU endpoint data */}
+      {dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
         <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/20">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -2950,7 +2946,9 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="block">Your Impact Portfolio</span>
-                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400">AIU measures your real-world contribution</span>
+                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                    {isAIUEnabled ? "AIU measures your real-world contribution" : "Track your verified social impact"}
+                  </span>
                 </div>
               </CardTitle>
             </div>
@@ -2961,10 +2959,10 @@ export default function Dashboard() {
               <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {aiuSummary.totalAiu >= 10
-                    ? `🌟 Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} Attributable Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${Math.round(aiuSummary.totalHours || 0)} hours are creating measurable change.`
+                    ? `🌟 Outstanding! You've earned ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'Attributable Impact Units' : 'Impact Points'} across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${Math.round(aiuSummary.totalHours || 0)} hours are creating measurable change.`
                     : aiuSummary.totalAiu >= 5
-                    ? `✨ Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} AIUs. With ${Math.round(aiuSummary.totalHours || 0)} hours invested, your impact is growing steadily.`
-                    : `🚀 You're building momentum with ${formatDecimal(aiuSummary.totalAiu)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
+                    ? `✨ Great progress! You've accumulated ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'AIUs' : 'points'}. With ${Math.round(aiuSummary.totalHours || 0)} hours invested, your impact is growing steadily.`
+                    : `🚀 You're building momentum with ${formatDecimal(aiuSummary.totalAiu)} ${isAIUEnabled ? 'AIUs' : 'points'} earned. Every hour you contribute amplifies your positive influence!`}
                 </p>
               </div>
 
@@ -2977,7 +2975,9 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(aiuSummary.totalAiu) || '0.00'}</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs Earned</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {isAIUEnabled ? "Total AIUs Earned" : "Total Impact Score"}
+                      </p>
                     </div>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 italic">
@@ -3043,7 +3043,9 @@ export default function Dashboard() {
                           </div>
                           <div className="text-right ml-3">
                             <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatDecimal(project.aiu) || '0.00'}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 block">AIU</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 block">
+                              {isAIUEnabled ? "AIU" : "Score"}
+                            </span>
                           </div>
                         </div>
                         {/* Progress bar showing project's share of total AIU */}

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreHorizontal } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
+import { useAIUDisplay } from "@/hooks/use-feature-flags";
 import ContributionBadges from "@/components/dashboard/contribution-badges";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
@@ -101,6 +102,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { signOut } = useAuth();
+  const isAIUEnabled = useAIUDisplay();
   const [activeTab, setActiveTab] = useState<TabType>(initialActiveTab || 'dashboard');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
@@ -1371,7 +1373,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-xl font-bold text-slate-800">
                   {formatNumber(aiuSummary?.totalAiu || 0)}
                 </div>
-                <div className="text-[10px] font-medium text-slate-500">AIU Score</div>
+                <div className="text-[10px] font-medium text-slate-500">{isAIUEnabled ? "AIU Score" : "Impact Score"}</div>
                 <div className="text-[8px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
               </button>
               {/* Total Hours - Time contributed with verification status */}
@@ -1460,7 +1462,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="text-2xl font-bold text-amber-600">
                         {formatNumber(aiuSummary?.totalAiu)}
                       </div>
-                      <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
+                      <div className="text-[9px] text-slate-600 font-medium">{isAIUEnabled ? "AIUs" : "Score"}</div>
                       <div className="text-[8px] text-amber-400 mt-0.5">Tap for details</div>
                     </button>
                   </div>
@@ -2586,7 +2588,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <Target className="w-6 h-6 opacity-90" />
                   <div>
                     <div className="text-3xl font-bold">{formatNumber(aiuSummary?.totalAiu)}</div>
-                    <div className="text-xs opacity-80">Total AIU Earned</div>
+                    <div className="text-xs opacity-80">{isAIUEnabled ? "Total AIU Earned" : "Total Impact Score"}</div>
                   </div>
                   <ChevronDown className="w-4 h-4 opacity-60 ml-auto -rotate-90" />
                 </button>
@@ -3591,7 +3593,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <Award className="w-5 h-5 text-amber-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">AIU Score</div>
+                  <div className="text-slate-800 font-medium">{isAIUEnabled ? "AIU Score" : "Impact Score"}</div>
                   <div className="text-slate-500 text-xs">Attributable Impact Units breakdown</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />

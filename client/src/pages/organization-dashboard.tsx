@@ -1766,18 +1766,16 @@ export default function OrganizationDashboard() {
             onClick={() => setActiveModal('tasks')}
             tooltip={`${taskMetrics.completed} completed, ${taskMetrics.inProgress} in progress, ${taskMetrics.pending} pending`}
           />
-          {/* AIU Metric Card - Only shown when AIU display is enabled */}
-          {isAIUEnabled && (
-            <MetricCard
-              icon={<Zap size={24} />}
-              label="AIUs Earned"
-              value={typeof displayMetrics.aiuEarned === 'number' ? formatDecimal(displayMetrics.aiuEarned) : displayMetrics.aiuEarned}
-              color="#10b981"
-              testId="metric-aiu"
-              onClick={() => setActiveModal('aiu')}
-              tooltip="Attributable Impact Units measure verified social impact"
-            />
-          )}
+          {/* Impact Score Metric Card - Shows "AIUs Earned" when enabled, "Impact Score" when in shadow mode */}
+          <MetricCard
+            icon={<Zap size={24} />}
+            label={isAIUEnabled ? "AIUs Earned" : SHADOW_MODE_LABELS.AIU_REPLACEMENT}
+            value={typeof displayMetrics.aiuEarned === 'number' ? formatDecimal(displayMetrics.aiuEarned) : displayMetrics.aiuEarned}
+            color="#10b981"
+            testId="metric-impact-score"
+            onClick={() => setActiveModal('aiu')}
+            tooltip={isAIUEnabled ? "Attributable Impact Units measure verified social impact" : "Verified social impact score"}
+          />
           <MetricCard
             icon={<Activity size={24} />}
             label="Engagement"
@@ -1879,88 +1877,90 @@ export default function OrganizationDashboard() {
             </div>
           </button>
 
-          {/* Impact Metrics Card - Interactive - AIU Focused - Only shown when AIU display is enabled */}
-          {isAIUEnabled && (
-            <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                border: '1px solid #e5e7eb',
-              }}
-              data-testid="card-impact-metrics"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                  <Award size={18} style={{ color: '#7c3aed' }} />
-                  Impact Metrics (AIU)
-                </h3>
-                <button
-                  onClick={() => setActiveModal('impact')}
-                  style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  View All →
-                </button>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                {/* Total AIUs - Combined organization + volunteer */}
-                <button
-                  onClick={() => setActiveModal('aiu')}
-                  style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Total AIUs</p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>
-                    {formatDecimal(organizationAIU?.totalAiu || 0)}
-                  </p>
-                  <p style={{ fontSize: '9px', color: '#92400e', margin: '4px 0 0 0' }}>Click to view breakdown</p>
-                </button>
-                {/* Volunteer AIUs - Sum from all volunteers */}
-                <button
-                  onClick={() => navigate('/volunteers')}
-                  style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Volunteer AIUs</p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>
-                    {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
-                  </p>
-                  <p style={{ fontSize: '9px', color: '#166534', margin: '4px 0 0 0' }}>View volunteers</p>
-                </button>
-                {/* Organization Direct Share */}
-                <button
-                  onClick={() => navigate('/overview')}
-                  style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1e40af'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Org Direct Share</p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
-                    {formatDecimal(organizationAIU?.aiuUnique || 0)}
-                  </p>
-                  <p style={{ fontSize: '9px', color: '#1e40af', margin: '4px 0 0 0' }}>View org impact</p>
-                </button>
-                {/* Verification Rate */}
-                <button
-                  onClick={() => setActiveModal('verification')}
-                  style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Verification Rate</p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
-                    {organizationAIU?.verificationRate !== undefined ? `${organizationAIU.verificationRate}%` : '—'}
-                  </p>
-                  <p style={{ fontSize: '9px', color: '#7c3aed', margin: '4px 0 0 0' }}>
-                    {organizationAIU?.verificationRate === 100 ? 'All verified!' : organizationAIU?.verificationRate !== undefined ? 'Verify impacts' : 'No records yet'}
-                  </p>
-                </button>
-              </div>
+          {/* Impact Metrics Card - Interactive - Shows AIU terminology when enabled, Impact Score when in shadow mode */}
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb',
+            }}
+            data-testid="card-impact-metrics"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Award size={18} style={{ color: '#7c3aed' }} />
+                {isAIUEnabled ? "Impact Metrics (AIU)" : "Impact Metrics"}
+              </h3>
+              <button
+                onClick={() => setActiveModal('impact')}
+                style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                View All →
+              </button>
             </div>
-          )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              {/* Total Impact Score - Combined organization + volunteer */}
+              <button
+                onClick={() => setActiveModal('aiu')}
+                style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>
+                  {isAIUEnabled ? "Total AIUs" : "Total Impact Score"}
+                </p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.totalAiu || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#92400e', margin: '4px 0 0 0' }}>Click to view breakdown</p>
+              </button>
+              {/* Volunteer Impact Score - Sum from all volunteers */}
+              <button
+                onClick={() => navigate('/volunteers')}
+                style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>
+                  {isAIUEnabled ? "Volunteer AIUs" : "Volunteer Score"}
+                </p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.projects?.reduce((sum, p) => sum + (p.volunteerAiuSum || 0), 0) || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#166534', margin: '4px 0 0 0' }}>View volunteers</p>
+              </button>
+              {/* Organization Direct Share */}
+              <button
+                onClick={() => navigate('/overview')}
+                style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1e40af'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Org Direct Share</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
+                  {formatDecimal(organizationAIU?.aiuUnique || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#1e40af', margin: '4px 0 0 0' }}>View org impact</p>
+              </button>
+              {/* Verification Rate */}
+              <button
+                onClick={() => setActiveModal('verification')}
+                style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '8px', border: '2px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Verification Rate</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
+                  {organizationAIU?.verificationRate !== undefined ? `${organizationAIU.verificationRate}%` : '—'}
+                </p>
+                <p style={{ fontSize: '9px', color: '#7c3aed', margin: '4px 0 0 0' }}>
+                  {organizationAIU?.verificationRate === 100 ? 'All verified!' : organizationAIU?.verificationRate !== undefined ? 'Verify impacts' : 'No records yet'}
+                </p>
+              </button>
+            </div>
+          </div>
 
           {/* Pending AIU Verification Card - Interactive */}
           {(() => {

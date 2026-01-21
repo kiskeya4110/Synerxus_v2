@@ -195,7 +195,37 @@ export const CSR_SCORING = {
   },
 } as const;
 
+// ============================================
+// FEATURE FLAGS CONFIGURATION
+// ============================================
+
+/**
+ * Feature flags for controlling feature visibility
+ *
+ * TODO (Post-Pilot): Enable AIU display once marketing materials are ready.
+ * The AIU system remains fully functional in the background for data collection
+ * and internal validation. Only the user-facing display is controlled by this flag.
+ */
+export const FEATURE_FLAGS = {
+  /**
+   * Controls visibility of AIU (Attributable Impact Units) in the UI
+   * When FALSE (Shadow Mode):
+   * - AIU calculations continue running in the background
+   * - AIU data is saved to the database for internal use
+   * - AIU is hidden from all user-facing UI
+   * - AIU is excluded from API responses to prevent network inspection exposure
+   * - Generic "Social Value Estimate" or "Impact Score" may be shown instead
+   *
+   * When TRUE:
+   * - Full AIU display is enabled
+   * - All AIU-related UI components are visible
+   * - API responses include AIU data
+   */
+  ENABLE_AIU_DISPLAY: false,
+} as const;
+
 // Type exports for type-safe usage
 export type ImageType = typeof IMAGE_CONFIG.IMAGE_TYPES[number];
 export type AllowedMimeType = typeof IMAGE_CONFIG.ALLOWED_MIME_TYPES[number];
 export type RoleWeight = keyof typeof IMPACT_CONFIG.ROLE_WEIGHTS;
+export type FeatureFlag = keyof typeof FEATURE_FLAGS;

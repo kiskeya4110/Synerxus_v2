@@ -45,3 +45,6 @@ export { useCurrentUserId } from "./use-current-user-id";
 
 // Animation
 export { useCounterAnimation } from "./use-counter-animation";
+
+// Feature flags
+export { useFeatureFlags, useAIUDisplay, SHADOW_MODE_LABELS } from "./use-feature-flags";

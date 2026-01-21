@@ -41,6 +41,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
 import ContributionBadges from "@/components/dashboard/contribution-badges";
+import { useAIUDisplay, SHADOW_MODE_LABELS } from "@/hooks/use-feature-flags";
 import Footer from "@/components/layout/footer";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
@@ -153,6 +154,9 @@ export default function Dashboard() {
 
   // Detect if on mobile device for PWA vs desktop navigation
   const isMobile = useIsMobile();
+
+  // Feature flag for AIU display (Shadow Mode when disabled)
+  const isAIUEnabled = useAIUDisplay();
 
   // Read tab parameter from URL for PWA navigation
   const initialTab = useMemo(() => {
@@ -1679,23 +1683,26 @@ export default function Dashboard() {
                 </div>
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">AIUs Earned</p>
-                      <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
-                    </div>
-                    <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+              {/* AIU KPI Card - Only shown when AIU display is enabled */}
+              {isAIUEnabled && (
+                <button
+                  type="button"
+                  onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 cursor-pointer rounded-xl text-left active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wide">AIUs Earned</p>
+                        <p className="text-gray-900 dark:text-white text-2xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
+                      </div>
+                      <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
+                        <TrendingUp className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -2538,19 +2545,21 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
-        {/* AIU Details Modal for desktop volunteers */}
-        <AIUDetailsModal
-          isOpen={showAIUModal}
-          onClose={() => setShowAIUModal(false)}
-          totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
-          projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
-          totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
-          volunteerName={currentUser?.displayName}
-          sdgsContributed={aiuSummary?.sdgsContributed ?? []}
-          verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
-          verifiedHours={kpis.verifiedHours ?? 0}
-          pendingHours={kpis.pendingHours ?? 0}
-        />
+        {/* AIU Details Modal for desktop volunteers - Only shown when AIU display is enabled */}
+        {isAIUEnabled && (
+          <AIUDetailsModal
+            isOpen={showAIUModal}
+            onClose={() => setShowAIUModal(false)}
+            totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
+            projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
+            totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
+            volunteerName={currentUser?.displayName}
+            sdgsContributed={aiuSummary?.sdgsContributed ?? []}
+            verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
+            verifiedHours={kpis.verifiedHours ?? 0}
+            pendingHours={kpis.pendingHours ?? 0}
+          />
+        )}
         </div>
       </PageTransition>
     );
@@ -2851,17 +2860,20 @@ export default function Dashboard() {
               data-testid="kpi-skills"
               />
             </StaggerItem>
-            <StaggerItem>
-              <StatsCard
-              title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
-              icon={<TrendingUp className="h-6 w-6" />}
-              onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-              compact={true}
-              gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
-              data-testid="kpi-aiu-earned"
-              />
-            </StaggerItem>
+            {/* AIU Stats Card - Only shown when AIU display is enabled */}
+            {isAIUEnabled && (
+              <StaggerItem>
+                <StatsCard
+                title="AIUs Earned"
+                value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
+                icon={<TrendingUp className="h-6 w-6" />}
+                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
+                compact={true}
+                gradient="bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800"
+                data-testid="kpi-aiu-earned"
+                />
+              </StaggerItem>
+            )}
           </>
         ) : (
           <>
@@ -2909,23 +2921,26 @@ export default function Dashboard() {
               data-testid="kpi-sdgs"
               />
             </StaggerItem>
-            <StaggerItem>
-              <StatsCard
-              title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
-              icon={<TrendingUp className="h-6 w-6" />}
-              onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
-              compact={true}
-              gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
-              data-testid="kpi-aiu-earned"
-              />
-            </StaggerItem>
+            {/* AIU Stats Card - Only shown when AIU display is enabled */}
+            {isAIUEnabled && (
+              <StaggerItem>
+                <StatsCard
+                title="AIUs Earned"
+                value={typeof kpis.aiuEarned === 'number' ? formatDecimal(kpis.aiuEarned) : kpis.aiuEarned || 0}
+                icon={<TrendingUp className="h-6 w-6" />}
+                onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
+                compact={true}
+                gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
+                data-testid="kpi-aiu-earned"
+                />
+              </StaggerItem>
+            )}
           </>
         )}
       </StaggerContainer>
 
-      {/* AIU Project Breakdown - Shows impact per project using AIU endpoint data */}
-      {dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
+      {/* AIU Project Breakdown - Shows impact per project using AIU endpoint data - Only shown when AIU display is enabled */}
+      {isAIUEnabled && dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
         <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/20">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">

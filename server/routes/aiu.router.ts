@@ -6,9 +6,16 @@
  * - Project: Project-level AIU calculations
  * - Organization: Organization-wide AIU aggregation
  * - CSR: Comprehensive CSR reporting
+ *
+ * SHADOW MODE (Feature Flag):
+ * When ENABLE_AIU_DISPLAY is false, these endpoints return 403 to prevent
+ * accidental exposure of AIU data in network inspection tools.
+ * The AIU calculations still run internally for data collection.
+ *
+ * TODO (Post-Pilot): Enable AIU display once marketing materials are ready.
  */
 
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import {
   calculateProjectAIU,
   calculateVolunteerAIU,
@@ -22,8 +29,36 @@ import {
   calculateProjectAIUs,
   type AIUCalculationInput,
 } from "@shared/aiu-calculations";
+import { isAIUDisplayEnabled } from "@shared/feature-flags";
 
 export const aiuRouter = Router();
+
+/**
+ * Shadow Mode Middleware
+ * When AIU display is disabled, block API access to prevent network inspection exposure.
+ * The AIU calculations still run internally via the aiu-service for data collection.
+ *
+ * TODO (Post-Pilot): Remove this middleware once AIU display is enabled.
+ */
+const shadowModeMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (!isAIUDisplayEnabled()) {
+    // Return 403 to indicate the feature is disabled
+    // This prevents accidental exposure of AIU data in network inspection tools
+    return res.status(403).json({
+      error: "AIU display is currently disabled",
+      message: "This feature is in shadow mode for the pilot program.",
+      // Include generic impact metrics as alternative
+      alternative: {
+        metricType: "Verified Social Impact",
+        description: "Impact data is being collected internally."
+      }
+    });
+  }
+  next();
+};
+
+// Apply shadow mode middleware to all AIU routes
+aiuRouter.use(shadowModeMiddleware);
 
 /**
  * GET /api/aiu/volunteer/:volunteerId

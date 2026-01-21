@@ -346,3 +346,34 @@ export function formatAIUShort(
 export function formatAIUFull(value: number | undefined | null): string {
   return formatAIU(value, 2);
 }
+
+/**
+ * Format Impact Score (Shadow Mode alternative for AIU)
+ * Used when AIU display is disabled but we need to show a generic impact metric
+ * @example formatImpactScore(1.23456) => "1.23"
+ */
+export function formatImpactScore(
+  value: number | undefined | null,
+  decimals: number = 2
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "0.00";
+  }
+  return value.toFixed(decimals);
+}
+
+/**
+ * Format Social Value Estimate (Shadow Mode dollar value display)
+ * Converts hours to dollar value using volunteer hour rate
+ * @example formatSocialValue(100) => "$3,479" (100 hours × $34.79/hour)
+ */
+export function formatSocialValue(
+  hours: number | undefined | null,
+  hourlyRate: number = 34.79
+): string {
+  if (hours === undefined || hours === null || isNaN(hours)) {
+    return "$0";
+  }
+  const value = hours * hourlyRate;
+  return formatCurrency(value);
+}

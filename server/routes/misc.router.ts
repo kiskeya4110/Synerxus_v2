@@ -847,7 +847,7 @@ miscRouter.post("/invitations/send", async (req, res) => {
           role: role || 'volunteer',
           projectName: project?.name,
           message: message,
-          invitationLink: `${appUrl}/register?org=${organizationId}&role=volunteer`
+          invitationLink: `${appUrl}/login?tab=register&type=volunteer`
         });
 
         invitationResult.emailSent = emailResult.success;

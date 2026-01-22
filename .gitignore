@@ -7,4 +7,9 @@ vite.config.ts.*
 
 # User uploads (should not be committed)
 uploads/
-!uploads/.gitkeep.env
+!uploads/.gitkeep
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local

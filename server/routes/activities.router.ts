@@ -63,46 +63,58 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
     if (userId) {
       const requestedUserId = parseInt(userId as string);
 
+      // SECURITY: Require authentication when querying by userId
+      if (!authenticatedUser) {
+        return res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Authentication required to access user activities"
+        });
+      }
+
       // Authorization check: Users can only access their own activities
       // unless they are an organization viewing their project's activities
-      if (authenticatedUser) {
-        if (authenticatedUser.id !== requestedUserId &&
-            authenticatedUser.userType !== 'organization' &&
-            authenticatedUser.userType !== 'corporate-partner') {
-          return res.status(403).json({
-            error: "FORBIDDEN",
-            message: "You can only access your own activities"
-          });
-        }
+      if (authenticatedUser.id !== requestedUserId &&
+          authenticatedUser.userType !== 'organization' &&
+          authenticatedUser.userType !== 'corporate-partner') {
+        return res.status(403).json({
+          error: "FORBIDDEN",
+          message: "You can only access your own activities"
+        });
       }
 
       activities = await storage.listVolunteerActivitiesByUser(requestedUserId);
     } else if (projectId) {
       const projectIdNum = parseInt(projectId as string);
 
-      // Verify user has access to this project
-      if (authenticatedUser) {
-        const project = await storage.getProject(projectIdNum);
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
+      // SECURITY: Require authentication when querying by projectId
+      if (!authenticatedUser) {
+        return res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Authentication required to access project activities"
+        });
+      }
 
-        // Check authorization: must be volunteer assigned to project or org owner
-        if (authenticatedUser.userType === 'volunteer') {
-          const assignments = await storage.listProjectAssignmentsByVolunteer(authenticatedUser.id);
-          if (!assignments.some(a => a.projectId === projectIdNum)) {
-            return res.status(403).json({
-              error: "FORBIDDEN",
-              message: "You must be assigned to this project to view activities"
-            });
-          }
-        } else if (authenticatedUser.userType === 'organization') {
-          if (project.organizationId !== authenticatedUser.organizationId) {
-            return res.status(403).json({
-              error: "FORBIDDEN",
-              message: "You can only view activities for your organization's projects"
-            });
-          }
+      // Verify user has access to this project
+      const project = await storage.getProject(projectIdNum);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Check authorization: must be volunteer assigned to project or org owner
+      if (authenticatedUser.userType === 'volunteer') {
+        const assignments = await storage.listProjectAssignmentsByVolunteer(authenticatedUser.id);
+        if (!assignments.some(a => a.projectId === projectIdNum)) {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "You must be assigned to this project to view activities"
+          });
+        }
+      } else if (authenticatedUser.userType === 'organization') {
+        if (project.organizationId !== authenticatedUser.organizationId) {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "You can only view activities for your organization's projects"
+          });
         }
       }
 
@@ -110,8 +122,16 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
     } else if (organizationId) {
       const orgId = parseInt(organizationId as string);
 
+      // SECURITY: Require authentication when querying by organizationId
+      if (!authenticatedUser) {
+        return res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "Authentication required to access organization activities"
+        });
+      }
+
       // Authorization: Only organization members can view org activities
-      if (authenticatedUser && authenticatedUser.userType === 'organization') {
+      if (authenticatedUser.userType === 'organization') {
         if (authenticatedUser.organizationId !== orgId) {
           return res.status(403).json({
             error: "FORBIDDEN",

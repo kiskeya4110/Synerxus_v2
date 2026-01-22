@@ -1,9 +1,10 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertOpportunitySchema } from "@shared/schema";
-import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
+import { handleValidationError, requireOrgUser, verifyOwnership, getAuthenticatedUser } from "./utils";
 import { getProjectsForVolunteer } from "../dashboard-service";
 import { deriveCategoryFromSDGs, calculateMatchScore } from "../matching-algorithm";
+import { authMiddleware } from "../middleware/auth";
 
 export const opportunitiesRouter = Router();
 
@@ -15,16 +16,16 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/opportunities/matches - Get AI-matched opportunities for volunteer
-opportunitiesRouter.get("/matches", async (req: Request, res: Response) => {
+opportunitiesRouter.get("/matches", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string | undefined;
+    // SECURITY: Verify authenticated user
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const thresholdParam = req.query.threshold as string | undefined;
 
-    if (!userId) {
-      return res.status(400).json({ message: "userId query parameter is required" });
-    }
-
-    const userIdNum = parseInt(userId);
+    // SECURITY: Use authenticated user's ID
+    const userIdNum = authUser.id;
     const threshold = thresholdParam ? parseInt(thresholdParam) : 40;
 
     const matchedOpportunities = await getProjectsForVolunteer(userIdNum, threshold);
@@ -42,19 +43,16 @@ opportunitiesRouter.get("/matches", async (req: Request, res: Response) => {
 });
 
 // GET /api/opportunities/discover - Discover opportunities with enrichment
-opportunitiesRouter.get("/discover", async (req: Request, res: Response) => {
+opportunitiesRouter.get("/discover", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
+    // SECURITY: Verify authenticated user
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const thresholdParam = req.query.threshold as string;
 
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user's ID
+    const userId = authUser.id;
 
     let matchThreshold = 50;
     if (thresholdParam) {
@@ -79,19 +77,14 @@ opportunitiesRouter.get("/discover", async (req: Request, res: Response) => {
 });
 
 // GET /api/opportunities/status - Get opportunity status for volunteer
-opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
+opportunitiesRouter.get("/status", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const volunteerId = req.query.volunteerId as string;
+    // SECURITY: Verify authenticated user
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId) {
-      return res.status(400).json({ message: "volunteerId is required" });
-    }
-
-    const vid = Number(volunteerId);
-
-    if (isNaN(vid)) {
-      return res.status(400).json({ message: "volunteerId must be a valid number" });
-    }
+    // SECURITY: Use authenticated user's ID
+    const vid = authUser.id;
 
     const [saved, rejected, applications] = await Promise.all([
       storage.listSavedOpportunitiesByVolunteer(vid),
@@ -111,37 +104,28 @@ opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
 });
 
 // GET /api/opportunities - List opportunities with authorization
-opportunitiesRouter.get("/", async (req: Request, res: Response) => {
+opportunitiesRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId } = req.query;
-
-    if (!organizationId && !userId) {
-      return res.status(400).json({
-        message: "Either organizationId or userId must be provided for data security"
-      });
-    }
+    // SECURITY: Verify authenticated user
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
     let opportunities;
-    if (organizationId) {
-      opportunities = await storage.listOpportunitiesByOrganization(parseInt(organizationId as string));
-    } else if (userId) {
-      const userIdNum = parseInt(userId as string);
-      const user = await storage.getUser(userIdNum);
 
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (user.userType === 'organization' && user.organizationId) {
-        opportunities = await storage.listOpportunitiesByOrganization(user.organizationId);
-      } else if (user.userType === 'volunteer') {
+    // SECURITY: Use authenticated user's data instead of query parameters
+    if (authUser.userType === 'organization' && authUser.organizationId) {
+      opportunities = await storage.listOpportunitiesByOrganization(authUser.organizationId);
+    } else if (authUser.userType === 'volunteer') {
+      const allOpportunities = await storage.listOpportunities();
+      opportunities = allOpportunities.filter(opp => opp.status === 'open');
+    } else {
+      // For other user types, get opportunities from their organization if they have one
+      if (authUser.organizationId) {
+        opportunities = await storage.listOpportunitiesByOrganization(authUser.organizationId);
+      } else {
         const allOpportunities = await storage.listOpportunities();
         opportunities = allOpportunities.filter(opp => opp.status === 'open');
-      } else {
-        return res.status(400).json({ message: "Invalid user type" });
       }
-    } else {
-      return res.status(400).json({ message: "Missing required parameters" });
     }
 
     res.json(opportunities);

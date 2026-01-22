@@ -6,6 +6,8 @@ import {
   getSDGContributionsForOrganization
 } from "../dashboard-service";
 import { calculateOrganizationAIU, calculateProjectAIU } from "../aiu-service";
+import { authMiddleware } from "../middleware/auth";
+import { getAuthenticatedUser } from "./utils";
 
 export const dashboardRouter = Router();
 
@@ -52,8 +54,12 @@ function safeNumber(value: any, defaultValue: number = 0): number {
 // - Impact over time
 // - AI insights
 // - Volunteer summaries
-dashboardRouter.get("/organization", async (req: Request, res: Response) => {
+dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: Response) => {
   try {
+    // SECURITY: Verify authenticated user
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     // Check if client is requesting fresh data (bypass cache)
     const forceRefresh = req.query.refresh === 'true' || req.headers['cache-control'] === 'no-cache';
 
@@ -64,22 +70,20 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 
-    const userId = req.query.userId as string | undefined;
     const projectFilter = req.query.projectId as string | undefined;
     const timePeriod = req.query.timePeriod as string | undefined;
 
-    if (!userId) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
+    // SECURITY: Use authenticated user's ID instead of query parameter
+    const userIdNum = authUser.id;
 
-    const userIdNum = parseInt(userId);
-    if (isNaN(userIdNum)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
+    // Verify user is an organization
+    if (authUser.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organizations can access this dashboard" });
     }
 
     const user = await storage.getUser(userIdNum);
-    if (!user || user.userType !== 'organization') {
-      return res.status(403).json({ message: "Only organizations can access this dashboard" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     const organizationId = user.organizationId || userIdNum;

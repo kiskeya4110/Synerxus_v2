@@ -15,6 +15,7 @@ import { optionalAuthMiddleware, verifyToken } from "../middleware/auth";
 import { verifyFirebaseIdToken } from "../lib/firebase-admin";
 import { storage } from "../storage";
 import { logger } from "../logger";
+import { generalRateLimiter } from "../middleware/security";
 
 export const storageRouter = Router();
 
@@ -81,7 +82,7 @@ function handleMulterError(err: any, req: Request, res: Response, next: Function
  *   - isOptimized: boolean - Whether image was optimized
  *   - message: string - Success message
  */
-storageRouter.post("/upload", upload.single("file"), handleMulterError, async (req: Request, res: Response) => {
+storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleMulterError, async (req: Request, res: Response) => {
   try {
     const pathParam = req.query.path as string;
     const authHeader = req.headers.authorization;
@@ -308,13 +309,29 @@ storageRouter.get("/storage/:filePath(*)", async (req: Request, res: Response) =
       return res.status(400).json({ message: "File path is required" });
     }
 
-    // Security: Prevent path traversal attacks
-    const normalizedPath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, "");
-    if (normalizedPath !== filePath || filePath.includes("..")) {
+    // SECURITY: Strengthen path traversal protection
+    // 1. Decode URL-encoded characters first
+    const decodedPath = decodeURIComponent(filePath);
+
+    // 2. Check for path traversal patterns (including encoded variants)
+    if (decodedPath.includes("..") || decodedPath.includes("\0") ||
+        filePath.includes("..") || filePath.includes("%2e%2e") ||
+        filePath.includes("%252e")) {
+      logger.warn(`[Storage] Path traversal attempt blocked: ${filePath}`);
       return res.status(403).json({ message: "Invalid file path" });
     }
 
-    const imageUrl = `/api/storage/${filePath}`;
+    // 3. Resolve and validate the path is within uploads directory
+    const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+    const resolvedPath = path.resolve(UPLOAD_DIR, decodedPath);
+
+    // 4. Ensure resolved path is still within UPLOAD_DIR
+    if (!resolvedPath.startsWith(UPLOAD_DIR + path.sep) && resolvedPath !== UPLOAD_DIR) {
+      logger.warn(`[Storage] Path escape attempt blocked: ${filePath} -> ${resolvedPath}`);
+      return res.status(403).json({ message: "Invalid file path" });
+    }
+
+    const imageUrl = `/api/storage/${decodedPath}`;
     const buffer = getImageBuffer(imageUrl);
 
     if (!buffer) {

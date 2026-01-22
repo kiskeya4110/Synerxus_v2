@@ -8703,15 +8703,9 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         projectName = project?.name;
       }
 
-      // Generate invitation link - directs to signup page with pre-filled data
+      // Generate invitation link - directs to login page with register tab
       const baseUrl = process.env.APP_URL || 'https://synerxus.replit.dev';
-      const invitationParams = new URLSearchParams({
-        email: email,
-        role: role || 'volunteer',
-        org: organizationId.toString(),
-        invited: 'true'
-      });
-      const invitationLink = `${baseUrl}/signup?${invitationParams.toString()}`;
+      const invitationLink = `${baseUrl}/login?tab=register&type=${role || 'volunteer'}`;
 
       // Send the invitation email
       const emailResult = await sendInvitationEmail({
@@ -8786,7 +8780,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       projectName: req.query.project as string || "Solar Village Initiative",
       message: req.query.message as string || "We are excited to invite you to join our team and make a difference in communities around the world!",
       recipientEmail: req.query.email as string || "volunteer@example.com",
-      invitationLink: `${process.env.APP_URL || 'https://synerxus.replit.dev'}/signup?email=volunteer@example.com&role=volunteer&org=1&invited=true`
+      invitationLink: `${process.env.APP_URL || 'https://synerxus.replit.dev'}/login?tab=register&type=volunteer`
     };
 
     const roleDisplay = sampleData.role === 'volunteer' ? 'Volunteer' :

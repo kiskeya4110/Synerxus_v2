@@ -56,7 +56,6 @@ import { projectsRouter, setBroadcastFn as setProjectsBroadcast } from "./routes
 import { tasksRouter, setBroadcastFn as setTasksBroadcast } from "./routes/tasks.router";
 import { opportunitiesRouter, setBroadcastFn as setOpportunitiesBroadcast } from "./routes/opportunities.router";
 import { applicationsRouter, setBroadcastFn as setApplicationsBroadcast } from "./routes/applications.router";
-import { messagesRouter, setBroadcastFn as setMessagesBroadcast } from "./routes/messages.router";
 import { calendarRouter, setBroadcastFn as setCalendarBroadcast } from "./routes/calendar.router";
 import { volunteersRouter, setBroadcastFn as setVolunteersBroadcast } from "./routes/volunteers.router";
 import { projectAssignmentsRouter, setBroadcastFn as setProjectAssignmentsBroadcast } from "./routes/project-assignments.router";
@@ -65,14 +64,13 @@ import { dashboardRouter } from "./routes/dashboard.router";
 import { profileRouter } from "./routes/profile.router";
 import { csrRouter } from "./routes/csr.router";
 import { activitiesRouter, setBroadcastFn as setActivitiesBroadcast } from "./routes/activities.router";
-import { gamificationRouter } from "./routes/gamification.router";
+import { logsRouter, setBroadcastFn as setLogsBroadcast } from "./routes/logs.router";
 import { adminRouter } from "./routes/admin.router";
 import { storageRouter } from "./routes/storage.router";
 import { miscRouter } from "./routes/misc.router";
 import { aiuRouter } from "./routes/aiu.router";
 import { invitationCodesRouter } from "./routes/invitation-codes.router";
 import { calculateOrganizationAIU } from "./aiu-service";
-import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
 import { aiRecommendationsRouter } from "./routes/ai-recommendations.router";
 import { externalVolunteersRouter } from "./routes/external-volunteers.router";
 import uptimeMonitor from "./services/uptime-monitor";
@@ -351,12 +349,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setTasksBroadcast(broadcastUpdate);
   setOpportunitiesBroadcast(broadcastUpdate);
   setApplicationsBroadcast(broadcastUpdate);
-  setMessagesBroadcast(broadcastUpdate);
   setCalendarBroadcast(broadcastUpdate);
   setVolunteersBroadcast(broadcastUpdate);
   setProjectAssignmentsBroadcast(broadcastUpdate);
   setActivitiesBroadcast(broadcastUpdate);
-  setStoriesBroadcast(broadcastUpdate);
+  setLogsBroadcast(broadcastUpdate);
   setNotificationBroadcast(broadcastUpdate);
 
   // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
@@ -368,7 +365,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/tasks", tasksRouter);
   app.use("/api/opportunities", opportunitiesRouter);
   app.use("/api/applications", applicationsRouter);
-  app.use("/api", messagesRouter); // Handles /messages and /conversation-threads
   app.use("/api/calendar-events", calendarRouter);
   app.use("/api/volunteers", volunteersRouter); // Handles /volunteers/*, /matchable-organizations, /matches
   app.use("/api/project-assignments", projectAssignmentsRouter);
@@ -378,12 +374,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Phase 7 routers: mounted at /api level with full paths in router definitions
   app.use("/api", csrRouter); // Handles /csr/*, /employee-engagement/*, /volunteer-employers
   app.use("/api", activitiesRouter); // Handles /volunteer-activities, /impact-metrics, /project-impacts
-  app.use("/api", gamificationRouter); // Handles /leaderboard*, /user-badges, /volunteer-spotlight, etc.
+  app.use("/api", logsRouter); // Handles /logs (unified impact log API), /reports/export
   app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
   app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
   app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
-  app.use("/api", storiesRouter); // Handles /stories and story likes
   app.use("/api", aiRecommendationsRouter); // Handles /ai-recommendations for Apply/Dismiss AI insights
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime
   app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform

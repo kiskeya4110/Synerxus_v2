@@ -158,6 +158,8 @@ export const projects = pgTable("projects", {
   // Organization's paid staff carries (100 - totalVolunteerContribution)% of the impact
   // The volunteerRoles.contributionPercent then divides this total among volunteer roles
   totalVolunteerContribution: integer("total_volunteer_contribution").default(100), // 0-100%, default 100% (all volunteer)
+  // Outcome templates for verified impact logging - [{name: "Trees Planted", unit: "trees"}]
+  outcomeTemplates: jsonb("outcome_templates"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -185,21 +187,27 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Volunteer Activity schema
+// Volunteer Activity schema (Impact Log)
 export const volunteerActivities = pgTable("volunteer_activities", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   projectId: integer("project_id").references(() => projects.id),
   taskId: integer("task_id").references(() => tasks.id),
-  hours: integer("hours").notNull(),
+  hours: doublePrecision("hours").notNull(), // Changed from integer to support 0.5 hour increments
   date: timestamp("date").notNull(),
   description: text("description"),
   skillsApplied: text("skills_applied").array(),
   outcomes: text("outcomes"),
+  // Outcome quantity tracking (e.g., "10 trees planted", "5 meals served")
+  outcomeQuantity: integer("outcome_quantity"),
   // Deduplication fields
   outcomeType: text("outcome_type").default("individual"), // individual, shared, system
   role: text("role").default("support"), // lead, support, observer
   verificationStatus: text("verification_status").default("pending"), // pending, approved, rejected
+  // Verification audit trail
+  verifiedBy: integer("verified_by").references(() => users.id), // NGO staff who verified
+  verifiedAt: timestamp("verified_at"), // When verification occurred
+  rejectedReason: text("rejected_reason"), // Reason for rejection (required if rejected)
   evidenceUrls: text("evidence_urls").array(), // URLs for photo/geo evidence
   dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
   isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate

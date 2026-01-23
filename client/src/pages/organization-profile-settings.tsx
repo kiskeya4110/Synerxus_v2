@@ -487,8 +487,8 @@ export default function OrganizationProfileSettings() {
       localStorage.setItem('profileComplete', 'true');
       localStorage.removeItem('isNewSignup');
 
-      // Redirect to organization dashboard after successful save
-      setTimeout(() => setLocation("/organization-dashboard"), 500);
+      // New profiles go to intake form to complete setup
+      setTimeout(() => setLocation("/organization-intake"), 500);
     },
     onError: (error: Error) => {
       toast({

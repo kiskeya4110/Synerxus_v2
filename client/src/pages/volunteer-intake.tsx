@@ -328,9 +328,9 @@ export default function VolunteerIntake() {
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
-      // Always redirect to dashboard after form submission
+      // Always redirect to volunteer dashboard after form submission
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/volunteer-dashboard';
       }, 1000);
     },
     onError: (error: Error) => {

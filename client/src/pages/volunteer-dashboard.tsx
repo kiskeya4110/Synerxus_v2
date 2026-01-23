@@ -41,6 +41,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
 import ContributionBadges from "@/components/dashboard/contribution-badges";
+import ImpactLogHistory from "@/components/dashboard/impact-log-history";
 import { useAIUDisplay, SHADOW_MODE_LABELS } from "@/hooks/use-feature-flags";
 import Footer from "@/components/layout/footer";
 interface Html2PdfInstance {
@@ -2316,7 +2317,7 @@ export default function Dashboard() {
               </DialogTitle>
               <DialogDescription className="text-base">
                 {selectedKPI?.title?.includes("Impact Score")
-                  ? "Your impact score breakdown across multiple dimensions"
+                  ? "Impact Score is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and SDG alignment."
                   : selectedKPI?.title?.includes("Hours")
                   ? "Track your volunteer hours and contribution patterns"
                   : selectedKPI?.title?.includes("Projects")
@@ -3221,6 +3222,13 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Impact Log History - Only for volunteers */}
+      {dashboardType === 'volunteer' && userId && (
+        <div className="mt-6">
+          <ImpactLogHistory userId={userId} limit={5} />
+        </div>
+      )}
+
       {/* Volunteer Insights Section - Only for volunteers */}
       {dashboardType === 'volunteer' && dashboardData && (
         <VolunteerInsightsSection
@@ -3279,8 +3287,8 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>{selectedKPI?.title}</DialogTitle>
             <DialogDescription>
-              {selectedKPI?.title.includes("Impact Score") 
-                ? "Your impact score breakdown across multiple dimensions"
+              {selectedKPI?.title.includes("Impact Score")
+                ? "Impact Score is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and SDG alignment."
                 : selectedKPI?.title.includes("Impact")
                 ? "Total beneficiaries reached and impact efficiency metrics"
                 : `Detailed breakdown of ${selectedKPI?.title.toLowerCase()}`}

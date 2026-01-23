@@ -3137,6 +3137,29 @@ export default function OrganizationDashboard() {
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Compare outcomes</p>
                 </div>
               </button>
+              <button
+                onClick={() => navigate('/ngo-verification')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#ecfdf5',
+                  border: '2px solid #a7f3d0',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#d1fae5'; e.currentTarget.style.borderColor = '#059669'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ecfdf5'; e.currentTarget.style.borderColor = '#a7f3d0'; }}
+                data-testid="quick-action-verify-hours"
+              >
+                <ShieldCheck size={20} style={{ color: '#059669' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#059669', margin: 0 }}>Verify Hours</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Review volunteer logs</p>
+                </div>
+              </button>
             </div>
           </div>
 

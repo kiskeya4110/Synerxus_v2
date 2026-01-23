@@ -254,7 +254,7 @@ export default function CorporatePartnerProfileSettings() {
         return response.json();
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/csr/partners'] });
       queryClient.invalidateQueries({ queryKey: ['/api/csr/dashboard'] });
       toast({
@@ -266,8 +266,14 @@ export default function CorporatePartnerProfileSettings() {
       localStorage.setItem('profileComplete', 'true');
       localStorage.removeItem('isNewSignup');
 
-      // Redirect to CSR Dashboard after successful save
-      setTimeout(() => navigate("/csr-dashboard"), 500);
+      // New profiles go to intake form, existing profiles go to dashboard
+      setTimeout(() => {
+        if (partnerProfile?.id) {
+          navigate("/csr-dashboard");
+        } else {
+          navigate("/corporate-partner-intake");
+        }
+      }, 500);
     },
     onError: (error) => {
       console.error("[Corporate Settings] Save error:", error);

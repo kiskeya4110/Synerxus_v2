@@ -233,9 +233,9 @@ export default function OrganizationIntake() {
         title: "Profile completed!",
         description: "Your organization profile has been successfully saved."
       });
-      // Always redirect to dashboard after form submission
+      // Always redirect to organization dashboard after form submission
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/organization-dashboard");
       }, 1000);
     },
     onError: (error: any) => {
@@ -329,7 +329,7 @@ export default function OrganizationIntake() {
             <p className="text-gray-700 mb-4">
               Your organization profile has already been set up. You can now access all features or return to the dashboard.
             </p>
-            <Link href="/dashboard">
+            <Link href="/organization-dashboard">
               <Button className="bg-primary">
                 Go to Dashboard
               </Button>

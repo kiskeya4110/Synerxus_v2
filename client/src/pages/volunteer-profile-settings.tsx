@@ -1271,11 +1271,12 @@ export default function VolunteerProfileSettings() {
       localStorage.setItem('profileComplete', 'true');
       localStorage.removeItem('isNewSignup');
 
-      // Redirect to volunteer dashboard after successful save
+      // Redirect: new profiles go to intake form, existing profiles go to dashboard
       setTimeout(() => {
-        const navigate = (window as any).__wouter_setLocation || (() => window.location.href = '/volunteer-dashboard');
-        if (typeof navigate === 'function') {
-          navigate('/volunteer-dashboard');
+        if (existingProfile) {
+          setLocation('/volunteer-dashboard');
+        } else {
+          setLocation('/volunteer-intake');
         }
       }, 500);
     },

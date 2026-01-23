@@ -9,106 +9,122 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X, WifiOff, CloudOff } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, Plus, Minus, Camera, CheckCircle } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
-import WebBottomNav from "@/components/layout/web-bottom-nav";
-import Footer from "@/components/layout/footer";
 import OfflineBanner from "@/components/layout/offline-banner";
 import { useOfflineSync } from "@/hooks/use-offline-sync";
-import { saveActivityOffline, saveImpactOffline } from "@/lib/offline-storage";
+import { saveActivityOffline } from "@/lib/offline-storage";
+
+// Hour Stepper Component - allows 0.5 hour increments
+function HourStepper({
+  value,
+  onChange,
+  min = 0.5,
+  max = 24,
+  step = 0.5
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+}) {
+  const decrement = () => {
+    if (value > min) {
+      onChange(Math.max(min, value - step));
+    }
+  };
+
+  const increment = () => {
+    if (value < max) {
+      onChange(Math.min(max, value + step));
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={decrement}
+        disabled={value <= min}
+        className="h-12 w-12 rounded-full border-2 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 disabled:opacity-50"
+      >
+        <Minus className="h-6 w-6 text-emerald-600" />
+      </Button>
+      <div className="text-center min-w-[100px]">
+        <span className="text-4xl font-bold text-emerald-700">{value}</span>
+        <span className="text-xl text-emerald-600 ml-1">hours</span>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={increment}
+        disabled={value >= max}
+        className="h-12 w-12 rounded-full border-2 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 disabled:opacity-50"
+      >
+        <Plus className="h-6 w-6 text-emerald-600" />
+      </Button>
+    </div>
+  );
+}
 
 export default function LogActivity() {
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"activity" | "impact">("activity");
 
-  // Parse URL parameters for pre-selection (from My Applications page)
-  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
+  // Parse URL parameters for pre-selection
   const preselectedProjectId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('projectId') : null;
-  const preselectedTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
 
-  // Offline sync state - single instance of hook, props passed to OfflineBanner
+  // Offline sync state
   const storedUserIdForSync = typeof window !== 'undefined' ? parseInt(localStorage.getItem('currentUserId') || '0') : 0;
-  const { 
-    isOnline, 
-    isSyncing, 
-    pendingCount, 
-    lastSyncAt, 
-    syncAll, 
+  const {
+    isOnline,
+    isSyncing,
+    pendingCount,
+    lastSyncAt,
+    syncAll,
     updatePendingCount,
     getCachedProjects,
-    getCachedTasks,
     isWeakConnection
   } = useOfflineSync(storedUserIdForSync || undefined);
 
   // Cached offline data
   const [cachedProjects, setCachedProjects] = useState<any[]>([]);
-  const [cachedTasks, setCachedTasks] = useState<any[]>([]);
 
-  // Load cached data when offline or connection is weak
+  // Load cached data when offline
   useEffect(() => {
     const loadCachedData = async () => {
       if (!isOnline || isWeakConnection) {
         try {
           const projects = await getCachedProjects();
-          const tasks = await getCachedTasks();
           if (projects) setCachedProjects(projects);
-          if (tasks) setCachedTasks(tasks);
         } catch (err) {
           console.error('[LogActivity] Failed to load cached data:', err);
         }
       }
     };
     loadCachedData();
-  }, [isOnline, isWeakConnection, getCachedProjects, getCachedTasks]);
+  }, [isOnline, isWeakConnection, getCachedProjects]);
 
-  // Apply URL parameters for pre-selection (from My Applications page)
-  useEffect(() => {
-    if (!urlParamsProcessed) {
-      if (preselectedProjectId && preselectedProjectId !== 'null' && preselectedProjectId !== '') {
-        setSelectedProjectId(preselectedProjectId);
-        setImpactProjectId(preselectedProjectId);
-      }
-      if (preselectedTab === 'impact') {
-        setActiveTab('impact');
-      }
-      setUrlParamsProcessed(true);
-    }
-  }, [preselectedProjectId, preselectedTab, urlParamsProcessed]);
-
-  // Activity form state
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
+  // Form state - simplified for <60 second completion
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(preselectedProjectId || "");
   const [date, setDate] = useState<Date>(new Date());
-  const [hours, setHours] = useState<string>("");
+  const [hours, setHours] = useState<number>(1);
   const [description, setDescription] = useState<string>("");
-  const [activityType, setActivityType] = useState<string>("volunteering");
-  const [showTasksSection, setShowTasksSection] = useState<boolean>(true);
-
-  // Impact form state
-  const [impactProjectId, setImpactProjectId] = useState<string>("");
-  const [impactTaskId, setImpactTaskId] = useState<string>("");
-  const [impactDate, setImpactDate] = useState<Date>(new Date());
-  const [peopleReached, setPeopleReached] = useState<string>("");
-  const [impactDescription, setImpactDescription] = useState<string>("");
-  const [impactCategory, setImpactCategory] = useState<string>("direct");
-  const [showImpactTasksSection, setShowImpactTasksSection] = useState<boolean>(true);
-
-  // Task comment modal state
-  const [selectedTaskForComment, setSelectedTaskForComment] = useState<any>(null);
-  const [taskComment, setTaskComment] = useState<string>("");
-
-  // Calendar popover states
-  const [activityCalendarOpen, setActivityCalendarOpen] = useState(false);
-  const [impactCalendarOpen, setImpactCalendarOpen] = useState(false);
+  const [outcomeType, setOutcomeType] = useState<string>("");
+  const [outcomeQuantity, setOutcomeQuantity] = useState<string>("");
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch current user
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -122,20 +138,6 @@ export default function LogActivity() {
     },
   });
 
-  // Fetch volunteer's project assignments (includes enriched project data)
-  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
-    queryKey: ["/api/project-assignments", { volunteerId: currentUser?.id }],
-    queryFn: async () => {
-      if (!currentUser?.id) return [];
-      const response = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: !!currentUser?.id && isOnline && !isWeakConnection
-  });
-  // Ensure projectAssignments is always an array
-  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
-
   // Fetch all projects for this user
   const { data: allProjects = [] } = useQuery<any[]>({
     queryKey: ["/api/projects", { userId: currentUser?.id }],
@@ -148,101 +150,34 @@ export default function LogActivity() {
     enabled: !!currentUser?.id && isOnline && !isWeakConnection,
   });
 
-  // Fetch impact metrics to get the default "Lives Impacted" metric ID
-  const { data: impactMetrics = [] } = useQuery<any[]>({
-    queryKey: ["/api/impact-metrics"],
-    queryFn: async () => {
-      const response = await fetch("/api/impact-metrics");
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: isOnline && !isWeakConnection
-  });
-
-  // Find the "Lives Impacted" metric ID - no fallback so offline validation works
-  const livesImpactedMetricId = impactMetrics.find(
-    (m: any) => m.name === "Lives Impacted" || m.category === "general"
-  )?.id;
-
-  // Fetch all tasks
-  const { data: allTasks = [] } = useQuery<any[]>({
-    queryKey: ["/api/tasks"],
-    queryFn: async () => {
-      const response = await fetch("/api/tasks");
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: isOnline && !isWeakConnection
-  });
-
-  // Get tasks for selected project (activity form) - use availableTasks which handles offline caching
-  const projectTasks = useMemo(() => {
-    if (!selectedProjectId) return [];
-    const tasks = (!isOnline || isWeakConnection) && cachedTasks.length > 0 ? cachedTasks : allTasks;
-    return tasks.filter((task: any) => task.projectId === parseInt(selectedProjectId));
-  }, [selectedProjectId, isOnline, isWeakConnection, cachedTasks, allTasks]);
-
-  // Get tasks for impact project
-  const impactProjectTasks = useMemo(() => {
-    if (!impactProjectId) return [];
-    const tasks = (!isOnline || isWeakConnection) && cachedTasks.length > 0 ? cachedTasks : allTasks;
-    return tasks.filter((task: any) => task.projectId === parseInt(impactProjectId));
-  }, [impactProjectId, isOnline, isWeakConnection, cachedTasks, allTasks]);
-
-  // Get available projects - show all projects, prioritizing assigned ones
-  // Get assigned project IDs for reference
-  const assignedProjectIds = new Set(
-    projectAssignments
-      .filter((assignment: any) => assignment.projectId && assignment.status !== 'removed')
-      .map((assignment: any) => assignment.projectId)
-  );
-
-  // Use all projects as primary source, but include enriched data from assignments where available
-  // When offline, fall back to cached projects
+  // Available projects - use cached when offline
   const availableProjects = useMemo(() => {
-    // When offline, use cached projects if available
     if ((!isOnline || isWeakConnection) && cachedProjects.length > 0) {
       return cachedProjects;
     }
+    return Array.isArray(allProjects) ? allProjects : [];
+  }, [isOnline, isWeakConnection, cachedProjects, allProjects]);
 
-    // Online: use live data
-    if (!Array.isArray(allProjects)) return [];
-    return allProjects.map((project: any) => {
-      const assignmentWithData = projectAssignments.find(
-        (assignment: any) => assignment.projectId === project.id && assignment.project
-      );
-      return assignmentWithData?.project || project;
-    });
-  }, [isOnline, isWeakConnection, cachedProjects, allProjects, projectAssignments]);
-
-  // Available tasks - use cached when offline
-  const availableTasks = useMemo(() => {
-    if ((!isOnline || isWeakConnection) && cachedTasks.length > 0) {
-      return cachedTasks;
-    }
-    return allTasks;
-  }, [isOnline, isWeakConnection, cachedTasks, allTasks]);
-
-  // Get the selected project for activity form to compute date restrictions
+  // Get the selected project
   const selectedProject = useMemo(() => {
     if (!selectedProjectId) return null;
     return availableProjects.find((p: any) => p.id === parseInt(selectedProjectId));
   }, [selectedProjectId, availableProjects]);
 
-  // Get the selected project for impact form to compute date restrictions
-  const selectedImpactProject = useMemo(() => {
-    if (!impactProjectId) return null;
-    return availableProjects.find((p: any) => p.id === parseInt(impactProjectId));
-  }, [impactProjectId, availableProjects]);
+  // Get outcome templates from selected project
+  const outcomeTemplates = useMemo(() => {
+    if (!selectedProject?.outcomeTemplates) return [];
+    return Array.isArray(selectedProject.outcomeTemplates)
+      ? selectedProject.outcomeTemplates
+      : [];
+  }, [selectedProject]);
 
-  // Compute date restrictions for activity form calendar
-  const activityDateRestrictions = useMemo(() => {
+  // Date restrictions
+  const dateRestrictions = useMemo(() => {
     const today = startOfDay(new Date());
 
     if (!selectedProject) {
-      // No project selected - only restrict to today or earlier (can't log future hours)
       return {
-        fromDate: undefined,
         toDate: today,
         disabled: (date: Date) => isAfter(startOfDay(date), today)
       };
@@ -255,7 +190,6 @@ export default function LogActivity() {
       ? startOfDay(new Date(selectedProject.endDate))
       : undefined;
 
-    // Can't log hours for future dates - use the earlier of today or project end date
     const maxDate = projectEndDate && isBefore(projectEndDate, today)
       ? projectEndDate
       : today;
@@ -265,213 +199,96 @@ export default function LogActivity() {
       toDate: maxDate,
       disabled: (date: Date) => {
         const checkDate = startOfDay(date);
-        // Disable dates before project start
-        if (projectStartDate && isBefore(checkDate, projectStartDate)) {
-          return true;
-        }
-        // Disable dates after max date (today or project end, whichever is earlier)
-        if (isAfter(checkDate, maxDate)) {
-          return true;
-        }
+        if (projectStartDate && isBefore(checkDate, projectStartDate)) return true;
+        if (isAfter(checkDate, maxDate)) return true;
         return false;
       }
     };
   }, [selectedProject]);
 
-  // Compute date restrictions for impact form calendar
-  const impactDateRestrictions = useMemo(() => {
-    const today = startOfDay(new Date());
-
-    if (!selectedImpactProject) {
-      // No project selected - only restrict to today or earlier
-      return {
-        fromDate: undefined,
-        toDate: today,
-        disabled: (date: Date) => isAfter(startOfDay(date), today)
-      };
-    }
-
-    const projectStartDate = selectedImpactProject.startDate
-      ? startOfDay(new Date(selectedImpactProject.startDate))
-      : undefined;
-    const projectEndDate = selectedImpactProject.endDate
-      ? startOfDay(new Date(selectedImpactProject.endDate))
-      : undefined;
-
-    // Can't log impact for future dates - use the earlier of today or project end date
-    const maxDate = projectEndDate && isBefore(projectEndDate, today)
-      ? projectEndDate
-      : today;
-
-    return {
-      fromDate: projectStartDate,
-      toDate: maxDate,
-      disabled: (date: Date) => {
-        const checkDate = startOfDay(date);
-        // Disable dates before project start
-        if (projectStartDate && isBefore(checkDate, projectStartDate)) {
-          return true;
-        }
-        // Disable dates after max date
-        if (isAfter(checkDate, maxDate)) {
-          return true;
-        }
-        return false;
-      }
-    };
-  }, [selectedImpactProject]);
-
-  // Reset date to valid range when project changes (for activity form)
-  useEffect(() => {
-    if (selectedProject && date) {
-      const today = startOfDay(new Date());
-      const projectStartDate = selectedProject.startDate
-        ? startOfDay(new Date(selectedProject.startDate))
-        : null;
-      const projectEndDate = selectedProject.endDate
-        ? startOfDay(new Date(selectedProject.endDate))
-        : null;
-
-      const currentDate = startOfDay(date);
-      const maxDate = projectEndDate && isBefore(projectEndDate, today) ? projectEndDate : today;
-
-      // If current date is outside valid range, reset to a valid date
-      if (projectStartDate && isBefore(currentDate, projectStartDate)) {
-        setDate(projectStartDate);
-      } else if (isAfter(currentDate, maxDate)) {
-        setDate(maxDate);
-      }
-    }
-  }, [selectedProject, date]);
-
-  // Reset date to valid range when project changes (for impact form)
-  useEffect(() => {
-    if (selectedImpactProject && impactDate) {
-      const today = startOfDay(new Date());
-      const projectStartDate = selectedImpactProject.startDate
-        ? startOfDay(new Date(selectedImpactProject.startDate))
-        : null;
-      const projectEndDate = selectedImpactProject.endDate
-        ? startOfDay(new Date(selectedImpactProject.endDate))
-        : null;
-
-      const currentDate = startOfDay(impactDate);
-      const maxDate = projectEndDate && isBefore(projectEndDate, today) ? projectEndDate : today;
-
-      // If current date is outside valid range, reset to a valid date
-      if (projectStartDate && isBefore(currentDate, projectStartDate)) {
-        setImpactDate(projectStartDate);
-      } else if (isAfter(currentDate, maxDate)) {
-        setImpactDate(maxDate);
-      }
-    }
-  }, [selectedImpactProject, impactDate]);
-
-  // Log activity mutation
+  // Log activity mutation - uses new unified /api/logs endpoint
   const logActivityMutation = useMutation({
     mutationFn: async (activityData: any) => {
-      const response = await fetch("/api/volunteer-activities", {
+      const response = await fetch("/api/logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(activityData),
       });
-      if (!response.ok) throw new Error("Failed to log activity");
+      if (!response.ok) {
+        // Fallback to old endpoint if new one doesn't exist
+        const fallbackResponse = await fetch("/api/volunteer-activities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(activityData),
+        });
+        if (!fallbackResponse.ok) throw new Error("Failed to log activity");
+        return fallbackResponse.json();
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
 
       toast({
-        title: "Activity Logged",
-        description: "Your volunteer hours have been recorded successfully.",
+        title: "Impact Log Submitted",
+        description: "Your hours have been submitted for verification.",
       });
 
       // Reset form
       setSelectedProjectId("");
-      setSelectedTaskId("");
-      setHours("");
+      setHours(1);
       setDescription("");
-      setActivityType("volunteering");
+      setOutcomeType("");
+      setOutcomeQuantity("");
+      setPhotoUrl("");
       setDate(new Date());
+      setIsSubmitting(false);
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to log activity. Please try again.",
+        description: "Failed to submit log. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  // Record impact mutation - uses /api/project-impacts endpoint
-  const recordImpactMutation = useMutation({
-    mutationFn: async (impactData: any) => {
-      const response = await fetch("/api/project-impacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(impactData),
-      });
-      if (!response.ok) throw new Error("Failed to record impact");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-
-      toast({
-        title: "Impact Recorded",
-        description: "Your impact has been recorded successfully.",
-      });
-
-      // Reset form
-      setImpactProjectId("");
-      setImpactTaskId("");
-      setPeopleReached("");
-      setImpactDescription("");
-      setImpactCategory("direct");
-      setImpactDate(new Date());
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to record impact. Please try again.",
-        variant: "destructive",
-      });
+      setIsSubmitting(false);
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedProjectId || !hours || !date) {
+    if (!selectedProjectId || hours <= 0) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please select a project and enter hours.",
         variant: "destructive",
       });
       return;
     }
 
+    setIsSubmitting(true);
+
     const activityData = {
       userId: currentUser?.id,
       projectId: parseInt(selectedProjectId),
-      taskId: selectedTaskId ? parseInt(selectedTaskId) : null,
       date: format(date, "yyyy-MM-dd"),
-      hours: parseFloat(hours),
+      hours: hours,
       description: description || null,
-      activityType,
+      outcomeQuantity: outcomeQuantity ? parseInt(outcomeQuantity) : null,
+      outcomes: outcomeType || null,
+      evidenceUrls: photoUrl ? [photoUrl] : [],
+      verificationStatus: 'pending'
     };
 
-    // If offline or weak connection, save locally and show success message
+    // If offline, save locally
     if (!isOnline || isWeakConnection) {
       try {
         await saveActivityOffline({
           userId: currentUser?.id || 0,
           projectId: parseInt(selectedProjectId),
-          taskId: selectedTaskId ? parseInt(selectedTaskId) : undefined,
-          hours: parseFloat(hours),
+          hours: hours,
           date: format(date, "yyyy-MM-dd"),
           description: description || '',
           skillsApplied: [],
@@ -481,25 +298,26 @@ export default function LogActivity() {
 
         toast({
           title: isWeakConnection ? "Saved (Low Bandwidth Mode)" : "Saved Offline",
-          description: isWeakConnection 
-            ? "Your activity was saved locally to preserve bandwidth and will sync later." 
-            : "Your activity has been saved locally and will sync when you're back online.",
+          description: "Your log will sync when you're back online.",
         });
 
         // Reset form
         setSelectedProjectId("");
-        setSelectedTaskId("");
-        setHours("");
+        setHours(1);
         setDescription("");
-        setActivityType("volunteering");
+        setOutcomeType("");
+        setOutcomeQuantity("");
+        setPhotoUrl("");
         setDate(new Date());
+        setIsSubmitting(false);
       } catch (err) {
         console.error('[LogActivity] Failed to save offline:', err);
         toast({
           title: "Error",
-          description: "Failed to save activity offline. Please try again.",
+          description: "Failed to save offline. Please try again.",
           variant: "destructive",
         });
+        setIsSubmitting(false);
       }
       return;
     }
@@ -507,92 +325,44 @@ export default function LogActivity() {
     logActivityMutation.mutate(activityData);
   };
 
-  const handleImpactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Photo upload handler
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (!impactProjectId || !peopleReached || !impactDate) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       });
-      return;
-    }
 
-    // Validate metricId is available
-    if (!livesImpactedMetricId && isOnline && !isWeakConnection) {
-      toast({
-        title: "Loading...",
-        description: "Impact metrics are still loading. Please wait a moment and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Format data for /api/project-impacts endpoint
-    // Uses value field (lives impacted) and includes userId for tracking
-    const impactData = {
-      projectId: parseInt(impactProjectId),
-      taskId: impactTaskId ? parseInt(impactTaskId) : null,
-      userId: currentUser?.id,
-      metricId: livesImpactedMetricId, // Use dynamically fetched "Lives Impacted" metric ID
-      value: parseInt(peopleReached), // Lives impacted / people reached
-      date: new Date(impactDate).toISOString(),
-      notes: impactDescription || null,
-      outcomeType: impactCategory === 'direct' ? 'individual' : impactCategory === 'community' ? 'shared' : 'individual',
-      role: 'lead', // Volunteer logging their own impact
-    };
-
-    // If offline or weak connection, save locally and show success message
-    // Note: metricId validation already done above
-    if (!isOnline || isWeakConnection) {
-      try {
-        await saveImpactOffline({
-          userId: currentUser?.id || 0,
-          projectId: parseInt(impactProjectId),
-          taskId: impactTaskId ? parseInt(impactTaskId) : undefined,
-          metricId: livesImpactedMetricId || 0,
-          value: parseInt(peopleReached),
-          date: new Date(impactDate).toISOString(),
-          notes: impactDescription || '',
-        });
-
-        await updatePendingCount();
-
+      if (response.ok) {
+        const data = await response.json();
+        setPhotoUrl(data.url || data.path);
         toast({
-          title: isWeakConnection ? "Saved (Low Bandwidth Mode)" : "Saved Offline",
-          description: isWeakConnection 
-            ? "Your impact data was saved locally to preserve bandwidth and will sync later." 
-            : "Your impact has been saved locally and will sync when you're back online.",
-        });
-
-        // Reset form
-        setImpactProjectId("");
-        setImpactTaskId("");
-        setPeopleReached("");
-        setImpactDescription("");
-        setImpactCategory("direct");
-        setImpactDate(new Date());
-      } catch (err) {
-        console.error('[LogActivity] Failed to save impact offline:', err);
-        toast({
-          title: "Error",
-          description: "Failed to save impact offline. Please try again.",
-          variant: "destructive",
+          title: "Photo Uploaded",
+          description: "Your photo evidence has been attached.",
         });
       }
-      return;
+    } catch (err) {
+      console.error('[LogActivity] Photo upload failed:', err);
+      toast({
+        title: "Upload Failed",
+        description: "Could not upload photo. You can submit without it.",
+        variant: "destructive",
+      });
     }
-
-    recordImpactMutation.mutate(impactData);
   };
 
   const isVolunteer = currentUser?.userType === 'volunteer';
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-[#f8f9fa]'}`}>
-      {/* Offline Banner - shows when offline or has pending sync items */}
-      <OfflineBanner 
+      {/* Offline Banner */}
+      <OfflineBanner
         isOnline={isOnline}
         isSyncing={isSyncing}
         pendingCount={pendingCount}
@@ -600,635 +370,205 @@ export default function LogActivity() {
         onSyncNow={() => syncAll()}
       />
 
-      {/* Volunteer Desktop Navigation - only for volunteers */}
+      {/* Volunteer Navigation */}
       {isVolunteer && <VolunteerNav />}
 
-      {/* Back Button for Non-PWA */}
+      {/* Back Button */}
       {(!isMobile || !isVolunteer) && (
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 24px 0 24px' }}>
           <Button
             variant="ghost"
-            onClick={() => setLocation('/my-work')}
+            onClick={() => setLocation('/volunteer-dashboard')}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to My Work
+            Back to Dashboard
           </Button>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className={isMobile && isVolunteer ? 'px-4 py-6' : ''} style={!(isMobile && isVolunteer) ? { maxWidth: '800px', margin: '0 auto', padding: '0 24px 24px 24px' } : undefined}>
-        <Card className={isMobile && isVolunteer ? 'bg-white border-amber-200/60 shadow-sm' : ''}>
-          <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
+      {/* Main Content - Simplified Form */}
+      <div className={isMobile && isVolunteer ? 'px-4 py-6' : ''} style={!(isMobile && isVolunteer) ? { maxWidth: '600px', margin: '0 auto', padding: '0 24px 24px 24px' } : undefined}>
+        <Card className={isMobile && isVolunteer ? 'bg-white border-emerald-200/60 shadow-lg' : ''}>
+          <CardHeader className="pb-4">
+            <CardTitle className={`flex items-center gap-2 text-xl ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
               <Clock className="w-6 h-6 text-emerald-600" />
-              Log Activity & Record Impact
+              Log Your Impact
             </CardTitle>
+            <p className="text-sm text-slate-500 mt-1">
+              Quick form - complete in under 60 seconds
+            </p>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "activity" | "impact")} className="w-full">
-              <TabsList className={`grid w-full grid-cols-2 ${isMobile && isVolunteer ? 'bg-slate-100' : ''}`}>
-                <TabsTrigger value="activity" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500 data-[state=active]:text-white' : ''}>
-                  <Clock className="w-4 h-4 mr-2" />
-                  Log Activity
-                </TabsTrigger>
-                <TabsTrigger value="impact" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500 data-[state=active]:text-white' : ''}>
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Record Impact
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="activity" className="mt-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Project Selection */}
               <div className="space-y-2">
-                <Label htmlFor="project" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
+                <Label htmlFor="project" className="text-slate-700 font-medium">
                   Project <span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                  <SelectTrigger id="project" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
+                  <SelectTrigger id="project" className="h-12 bg-slate-50 border-slate-200">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
+                  <SelectContent>
                     {availableProjects.length === 0 ? (
                       <SelectItem value="none" disabled>Loading projects...</SelectItem>
                     ) : (
-                      availableProjects.map((project: any) => {
-                        const isAssigned = assignedProjectIds.has(project.id);
-                        const label = `${project.name}${isAssigned ? ' (Assigned)' : ''}`;
-                        return (
-                          <SelectItem key={project.id} value={project.id.toString()}>
-                            {label}
-                          </SelectItem>
-                        );
-                      })
+                      availableProjects.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))
                     )}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Tasks Section - Collapsible list of project tasks */}
-              {selectedProjectId && projectTasks.length > 0 && (
-                <div className={`space-y-2 rounded-lg border ${isMobile && isVolunteer ? 'border-amber-200/60 bg-amber-50/50' : 'border-slate-200 bg-slate-50'}`}>
-                  <button
-                    type="button"
-                    onClick={() => setShowTasksSection(!showTasksSection)}
-                    className={`w-full flex items-center justify-between p-3 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-emerald-500" />
-                      <span className="font-medium text-sm">Project Tasks ({projectTasks.length})</span>
-                    </div>
-                    {showTasksSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-
-                  {showTasksSection && (
-                    <div className="px-3 pb-3 space-y-2">
-                      {projectTasks.map((task: any) => {
-                        const isSelected = selectedTaskId === task.id.toString();
-                        const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
-                                           task.status?.toLowerCase() === 'in progress' ? 'bg-blue-500' : 'bg-gray-400';
-                        const StatusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
-                                          task.status?.toLowerCase() === 'in progress' ? Play : Circle;
-
-                        return (
-                          <div
-                            key={task.id}
-                            className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                              isSelected
-                                ? 'border-emerald-500 bg-emerald-50'
-                                : isMobile && isVolunteer
-                                  ? 'border-slate-200 bg-white hover:border-emerald-300'
-                                  : 'border-slate-200 bg-white hover:border-emerald-300'
-                            }`}
-                            onClick={() => setSelectedTaskId(isSelected ? "" : task.id.toString())}
-                          >
-                            <div className={`w-5 h-5 rounded-full ${statusColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                              <StatusIcon className="w-3 h-3 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-medium text-sm truncate ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>{task.title}</p>
-                              {task.description && (
-                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1">
-                                {task.priority && (
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                    task.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {task.priority}
-                                  </span>
-                                )}
-                                {isSelected && (
-                                  <span className="text-[10px] text-emerald-600 font-medium">✓ Selected</span>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTaskForComment(task);
-                                setTaskComment(description || "");
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
-                              title="Add comment for this task"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Date Selection */}
               <div className="space-y-2">
-                <Label htmlFor="date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
+                <Label className="text-slate-700 font-medium">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                {selectedProject && (selectedProject.startDate || selectedProject.endDate) && (
-                  <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
-                    Project active: {selectedProject.startDate ? format(new Date(selectedProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedProject.endDate ? format(new Date(selectedProject.endDate), "MMM d, yyyy") : 'Ongoing'}
-                  </p>
-                )}
-                <Popover open={activityCalendarOpen} onOpenChange={setActivityCalendarOpen}>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={`w-full justify-start text-left font-normal ${
-                        isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100' : ''
-                      }`}
+                      className="w-full h-12 justify-start text-left font-normal bg-slate-50 border-slate-200"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      {format(date, "PPP")}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={date}
                       onSelect={(newDate) => {
                         if (newDate) {
                           setDate(newDate);
-                          setActivityCalendarOpen(false);
+                          setCalendarOpen(false);
                         }
                       }}
-                      disabled={activityDateRestrictions.disabled}
-                      fromDate={activityDateRestrictions.fromDate}
-                      toDate={activityDateRestrictions.toDate}
+                      disabled={dateRestrictions.disabled}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
               </div>
 
-              {/* Hours Input */}
+              {/* Hours - Stepper Component */}
               <div className="space-y-2">
-                <Label htmlFor="hours" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
+                <Label className="text-slate-700 font-medium">
                   Hours <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="hours"
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  max="24"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  placeholder="e.g., 2.5"
-                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
-                />
+                <HourStepper value={hours} onChange={setHours} />
               </div>
 
-              {/* Activity Type */}
-              <div className="space-y-2">
-                <Label htmlFor="activityType" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Activity Type
-                </Label>
-                <Select value={activityType} onValueChange={setActivityType}>
-                  <SelectTrigger id="activityType" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
-                    <SelectValue placeholder="Select activity type" />
-                  </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
-                    <SelectItem value="volunteering">Volunteering</SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="event">Event</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Outcome Type - from project templates */}
+              {outcomeTemplates.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="outcomeType" className="text-slate-700 font-medium">
+                    Outcome Type
+                  </Label>
+                  <Select value={outcomeType} onValueChange={setOutcomeType}>
+                    <SelectTrigger id="outcomeType" className="h-12 bg-slate-50 border-slate-200">
+                      <SelectValue placeholder="What did you accomplish?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {outcomeTemplates.map((template: any, index: number) => (
+                        <SelectItem key={index} value={template.name}>
+                          {template.name} ({template.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {/* Description */}
+              {/* Outcome Quantity - only show if outcome type selected */}
+              {outcomeType && (
+                <div className="space-y-2">
+                  <Label htmlFor="outcomeQuantity" className="text-slate-700 font-medium">
+                    Quantity
+                  </Label>
+                  <Input
+                    id="outcomeQuantity"
+                    type="number"
+                    min="0"
+                    value={outcomeQuantity}
+                    onChange={(e) => setOutcomeQuantity(e.target.value)}
+                    placeholder="How many?"
+                    className="h-12 bg-slate-50 border-slate-200"
+                  />
+                </div>
+              )}
+
+              {/* Description - optional */}
               <div className="space-y-2">
-                <Label htmlFor="description" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Description (Optional)
+                <Label htmlFor="description" className="text-slate-700 font-medium">
+                  Notes (optional)
                 </Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe what you did..."
-                  rows={4}
-                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
+                  placeholder="Brief description of what you did..."
+                  rows={2}
+                  className="bg-slate-50 border-slate-200 resize-none"
                 />
               </div>
 
-              {/* Submit Button */}
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={logActivityMutation.isPending || !selectedProjectId || !hours}
-                  className={`flex-1 ${
-                    isMobile && isVolunteer
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                      : ''
-                  }`}
-                >
-                  {logActivityMutation.isPending ? (
-                    <>Logging...</>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Log Activity
-                    </>
-                  )}
-                </Button>
-                {(!isMobile || !isVolunteer) && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setLocation('/my-work')}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="impact" className="mt-6">
-            <form onSubmit={handleImpactSubmit} className="space-y-6">
-              {/* Project Selection */}
+              {/* Photo Upload - optional */}
               <div className="space-y-2">
-                <Label htmlFor="impact-project" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Project <span className="text-red-500">*</span>
+                <Label className="text-slate-700 font-medium">
+                  Photo Evidence (optional)
                 </Label>
-                <Select value={impactProjectId} onValueChange={setImpactProjectId}>
-                  <SelectTrigger id="impact-project" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
-                    {availableProjects.length === 0 ? (
-                      <SelectItem value="none" disabled>Loading projects...</SelectItem>
-                    ) : (
-                      availableProjects.map((project: any) => {
-                        const isAssigned = assignedProjectIds.has(project.id);
-                        const label = `${project.name}${isAssigned ? ' (Assigned)' : ''}`;
-                        return (
-                          <SelectItem key={project.id} value={project.id.toString()}>
-                            {label}
-                          </SelectItem>
-                        );
-                      })
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Tasks Section for Impact - Collapsible list of project tasks */}
-              {impactProjectId && impactProjectTasks.length > 0 && (
-                <div className={`space-y-2 rounded-lg border ${isMobile && isVolunteer ? 'border-amber-200/60 bg-amber-50/50' : 'border-slate-200 bg-slate-50'}`}>
-                  <button
-                    type="button"
-                    onClick={() => setShowImpactTasksSection(!showImpactTasksSection)}
-                    className={`w-full flex items-center justify-between p-3 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-emerald-500" />
-                      <span className="font-medium text-sm">Project Tasks ({impactProjectTasks.length})</span>
-                    </div>
-                    {showImpactTasksSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-
-                  {showImpactTasksSection && (
-                    <div className="px-3 pb-3 space-y-2">
-                      {impactProjectTasks.map((task: any) => {
-                        const isSelected = impactTaskId === task.id.toString();
-                        const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
-                                           task.status?.toLowerCase() === 'in progress' ? 'bg-blue-500' : 'bg-gray-400';
-                        const StatusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
-                                          task.status?.toLowerCase() === 'in progress' ? Play : Circle;
-
-                        return (
-                          <div
-                            key={task.id}
-                            className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                              isSelected
-                                ? 'border-emerald-500 bg-emerald-50'
-                                : isMobile && isVolunteer
-                                  ? 'border-slate-200 bg-white hover:border-emerald-300'
-                                  : 'border-slate-200 bg-white hover:border-emerald-300'
-                            }`}
-                            onClick={() => setImpactTaskId(isSelected ? "" : task.id.toString())}
-                          >
-                            <div className={`w-5 h-5 rounded-full ${statusColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                              <StatusIcon className="w-3 h-3 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-medium text-sm truncate ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>{task.title}</p>
-                              {task.description && (
-                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1">
-                                {task.priority && (
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                    task.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {task.priority}
-                                  </span>
-                                )}
-                                {isSelected && (
-                                  <span className="text-[10px] text-emerald-600 font-medium">✓ Selected</span>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTaskForComment(task);
-                                setTaskComment(impactDescription || "");
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
-                              title="Add comment for this task"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Date Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="impact-date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Date <span className="text-red-500">*</span>
-                </Label>
-                {selectedImpactProject && (selectedImpactProject.startDate || selectedImpactProject.endDate) && (
-                  <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
-                    Project active: {selectedImpactProject.startDate ? format(new Date(selectedImpactProject.startDate), "MMM d, yyyy") : 'No start date'} - {selectedImpactProject.endDate ? format(new Date(selectedImpactProject.endDate), "MMM d, yyyy") : 'Ongoing'}
-                  </p>
-                )}
-                <Popover open={impactCalendarOpen} onOpenChange={setImpactCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={`w-full justify-start text-left font-normal ${
-                        isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100' : ''
-                      }`}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {impactDate ? format(impactDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={impactDate}
-                      onSelect={(newDate) => {
-                        if (newDate) {
-                          setImpactDate(newDate);
-                          setImpactCalendarOpen(false);
-                        }
-                      }}
-                      disabled={impactDateRestrictions.disabled}
-                      fromDate={impactDateRestrictions.fromDate}
-                      toDate={impactDateRestrictions.toDate}
-                      initialFocus
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer transition-colors">
+                    <Camera className="w-5 h-5 text-slate-600" />
+                    <span className="text-sm text-slate-600">Add Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Lives Impacted */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                    Lives Impacted <span className="text-red-500">*</span>
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button type="button" className="inline-flex items-center justify-center">
-                        <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'} hover:text-blue-500 transition-colors`} />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-80 p-4 text-sm bg-slate-800 text-white border-slate-700 shadow-xl z-50"
-                      side="top"
-                      align="start"
-                      sideOffset={8}
-                    >
-                      <div className="space-y-2">
-                        <p className="font-semibold text-blue-300">What is Lives Impacted?</p>
-                        <p className="leading-relaxed">
-                          This number feeds into <span className="font-medium text-emerald-300">Impact Score</span> calculation.
-                        </p>
-                        <p className="leading-relaxed">
-                          Each beneficiary is counted once per reporting window and maps to SDG indicators for verified, auditable impact measurement.
-                        </p>
-                        <div className="pt-2 border-t border-slate-600 mt-2">
-                          <p className="text-xs text-slate-300">
-                            Example: If you tutored 10 students today, enter 10.
-                          </p>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  </label>
+                  {photoUrl && (
+                    <div className="flex items-center gap-2 text-sm text-emerald-600">
+                      <CheckCircle className="w-4 h-4" />
+                      Photo attached
+                    </div>
+                  )}
                 </div>
-                <Input
-                  id="peopleReached"
-                  type="number"
-                  min="1"
-                  value={peopleReached}
-                  onChange={(e) => setPeopleReached(e.target.value)}
-                  placeholder="e.g., 50 people directly served"
-                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
-                />
-                <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
-                  Enter the number of unique individuals you directly served or helped during this activity.
-                </p>
-              </div>
-
-              {/* Impact Category */}
-              <div className="space-y-2">
-                <Label htmlFor="impactCategory" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Impact Category
-                </Label>
-                <Select value={impactCategory} onValueChange={setImpactCategory}>
-                  <SelectTrigger id="impactCategory" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
-                    <SelectItem value="direct">Direct Impact</SelectItem>
-                    <SelectItem value="indirect">Indirect Impact</SelectItem>
-                    <SelectItem value="community">Community Impact</SelectItem>
-                    <SelectItem value="environmental">Environmental Impact</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="impactDescription" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                  Impact Description (Optional)
-                </Label>
-                <Textarea
-                  id="impactDescription"
-                  value={impactDescription}
-                  onChange={(e) => setImpactDescription(e.target.value)}
-                  placeholder="Describe the impact made..."
-                  rows={4}
-                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
-                />
               </div>
 
               {/* Submit Button */}
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={recordImpactMutation.isPending || !impactProjectId || !peopleReached}
-                  className={`flex-1 ${
-                    isMobile && isVolunteer
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                      : ''
-                  }`}
-                >
-                  {recordImpactMutation.isPending ? (
-                    <>Recording...</>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Record Impact
-                    </>
-                  )}
-                </Button>
-                {(!isMobile || !isVolunteer) && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setLocation('/my-work')}
-                  >
-                    Cancel
-                  </Button>
+              <Button
+                type="submit"
+                className="w-full h-14 text-lg font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg"
+                disabled={isSubmitting || !selectedProjectId || hours <= 0}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Submit for Verification
+                  </>
                 )}
-              </div>
+              </Button>
+
+              <p className="text-xs text-center text-slate-500">
+                Your log will be sent to the NGO for verification
+              </p>
             </form>
-          </TabsContent>
-        </Tabs>
           </CardContent>
         </Card>
-
-        {/* Success Messages for PWA */}
-        {logActivityMutation.isSuccess && isMobile && isVolunteer && activeTab === "activity" && (
-          <Card className="mt-4 bg-emerald-500/20 border-emerald-500">
-            <CardContent className="pt-6 flex items-center gap-3 text-emerald-400">
-              <CheckCircle className="w-5 h-5" />
-              <span>Activity logged successfully!</span>
-            </CardContent>
-          </Card>
-        )}
-        {recordImpactMutation.isSuccess && isMobile && isVolunteer && activeTab === "impact" && (
-          <Card className="mt-4 bg-emerald-500/20 border-emerald-500">
-            <CardContent className="pt-6 flex items-center gap-3 text-emerald-400">
-              <CheckCircle className="w-5 h-5" />
-              <span>Impact recorded successfully!</span>
-            </CardContent>
-          </Card>
-        )}
       </div>
-
-      {/* Bottom Navigation for PWA */}
-      {isMobile && isVolunteer && <WebBottomNav activeTab="home" />}
-
-      {/* Task Comment Modal */}
-      <Dialog open={!!selectedTaskForComment} onOpenChange={() => setSelectedTaskForComment(null)}>
-        <DialogContent className={`max-w-md ${isMobile && isVolunteer ? 'bg-white' : ''}`}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-emerald-500" />
-              Add Comment for Task
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedTaskForComment && (
-              <div className={`p-3 rounded-lg ${isMobile && isVolunteer ? 'bg-amber-50 border border-amber-200/60' : 'bg-slate-50'}`}>
-                <p className={`font-medium text-sm ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
-                  {selectedTaskForComment.title}
-                </p>
-                {selectedTaskForComment.description && (
-                  <p className="text-xs text-slate-500 mt-1">{selectedTaskForComment.description}</p>
-                )}
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="task-comment" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
-                Comment / Notes
-              </Label>
-              <Textarea
-                id="task-comment"
-                value={taskComment}
-                onChange={(e) => setTaskComment(e.target.value)}
-                placeholder="Describe what you accomplished on this task..."
-                rows={4}
-                className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  if (activeTab === 'activity') {
-                    setDescription(taskComment);
-                    setSelectedTaskId(selectedTaskForComment?.id?.toString() || "");
-                  } else {
-                    setImpactDescription(taskComment);
-                    setImpactTaskId(selectedTaskForComment?.id?.toString() || "");
-                  }
-                  setSelectedTaskForComment(null);
-                  setTaskComment("");
-                }}
-                className={`flex-1 ${isMobile && isVolunteer ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}`}
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Apply Comment
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedTaskForComment(null);
-                  setTaskComment("");
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Footer - Hidden on mobile */}
-      {!isMobile && <Footer />}
     </div>
   );
 }

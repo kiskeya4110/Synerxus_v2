@@ -17,6 +17,7 @@ import {
   FileText,
   BarChart3,
   Home,
+  Menu,
 } from "lucide-react";
 
 // UI Components
@@ -655,10 +656,17 @@ export default function VolunteerDashboardNew() {
 
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Simple Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-5 sticky top-0 z-30">
-          <h1 className="text-xl font-bold text-gray-900">Impact Wallet</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Your verified impact data</p>
+        {/* Header with Logo and Menu */}
+        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Logo size="sm" />
+              <span className="text-xs text-gray-500 font-medium">Impact Wallet</span>
+            </div>
+            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </header>
 
         {/* Main Content */}

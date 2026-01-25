@@ -21,6 +21,8 @@ import {
   Search,
   Calendar,
   Globe,
+  Home,
+  Menu,
 } from "lucide-react";
 
 // UI Components
@@ -41,6 +43,7 @@ import Logo from "@/components/ui/logo";
 // Layout Components
 import OrganizationNav from "@/components/layout/organization-nav";
 import Footer from "@/components/layout/footer";
+import OrganizationMobileView from "@/components/organization/organization-mobile-view";
 
 // Hooks & Utils
 import { useAuth } from "@/hooks/use-auth";
@@ -678,6 +681,200 @@ export default function OrganizationDashboardNew() {
           message="Please log in to view your dashboard."
           retry={() => navigate("/login")}
         />
+      </div>
+    );
+  }
+
+  // Mobile View - Simple NGO Dashboard per redesign spec
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Header with Logo and Menu */}
+        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Logo size="sm" />
+              <span className="text-xs text-gray-500 font-medium">NGO Portal</span>
+            </div>
+            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="px-4 py-5 space-y-5">
+          {/* Core Metrics - 2x2 Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Pending Verification */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Pending</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.pendingVerifications}</p>
+              <p className="text-xs text-gray-500 mt-1">to verify</p>
+            </div>
+
+            {/* Total Hours */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalHours}</p>
+              <p className="text-xs text-gray-500 mt-1">total logged</p>
+            </div>
+
+            {/* Active Projects */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <FolderOpen className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Projects</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.activeProjects}</p>
+              <p className="text-xs text-gray-500 mt-1">active</p>
+            </div>
+
+            {/* Total Volunteers */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-emerald-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Volunteers</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalVolunteers}</p>
+              <p className="text-xs text-gray-500 mt-1">contributing</p>
+            </div>
+          </div>
+
+          {/* Verification Queue Preview */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-amber-600" />
+                Pending Verification
+              </h2>
+              {pendingVerifications.length > 0 && (
+                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                  {pendingVerifications.length} pending
+                </span>
+              )}
+            </div>
+            <div className="divide-y divide-gray-100">
+              {pendingVerifications.slice(0, 3).map((item) => (
+                <div key={item.id} className="px-4 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+                        {item.volunteerName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{item.volunteerName}</p>
+                        <p className="text-xs text-gray-500">{item.hours}h • {item.projectName}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApprove(item.id)}
+                      disabled={processingIds.has(item.id)}
+                      className="flex-1 py-2 px-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      ✓ Verify
+                    </button>
+                    <button
+                      onClick={() => handleReject(item.id)}
+                      disabled={processingIds.has(item.id)}
+                      className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {pendingVerifications.length === 0 && (
+                <div className="px-4 py-8 text-center">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900">All caught up!</p>
+                  <p className="text-xs text-gray-500 mt-1">No pending verifications</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Projects */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-indigo-600" />
+                Active Projects
+              </h2>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {projects.slice(0, 3).map((project: any) => (
+                <div key={project.id} className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{project.name}</p>
+                    <p className="text-xs text-gray-500">{project.volunteerCount || 0} volunteers</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    project.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {project.status || 'active'}
+                  </span>
+                </div>
+              ))}
+              {projects.length === 0 && (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-gray-500">No projects yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom Navigation Tray - 4 tabs per spec */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            {/* Dashboard */}
+            <button className="flex flex-col items-center py-2 px-4 rounded-xl text-indigo-600 bg-indigo-50">
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Dashboard</span>
+            </button>
+
+            {/* Verify - Primary Action */}
+            <button
+              onClick={() => navigate('/verification')}
+              className="flex flex-col items-center py-2 px-5 rounded-xl bg-amber-500 text-white shadow-md -mt-3 relative"
+            >
+              <Shield className="w-6 h-6 mb-0.5" />
+              <span className="text-[10px] font-semibold">Verify</span>
+              {stats.pendingVerifications > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {stats.pendingVerifications > 9 ? '9+' : stats.pendingVerifications}
+                </span>
+              )}
+            </button>
+
+            {/* Projects */}
+            <button
+              onClick={() => navigate('/projects')}
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <FolderOpen className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Projects</span>
+            </button>
+
+            {/* Reports */}
+            <button
+              onClick={() => navigate('/reports')}
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Reports</span>
+            </button>
+          </div>
+        </nav>
       </div>
     );
   }

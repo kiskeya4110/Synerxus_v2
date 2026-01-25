@@ -59,7 +59,7 @@ const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
 const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
 const TeamOverview = lazy(() => import("@/pages/team-overview"));
 const Overview = lazy(() => import("@/pages/overview"));
-const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa"));
+const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa-new"));
 const OrganizationTeam = lazy(() => import("@/pages/organization-team"));
 const NgoVerification = lazy(() => import("@/pages/ngo-verification"));
 const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));

@@ -64,7 +64,7 @@ export default function AIUDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 bg-slate-900 border-slate-700">
         {/* Header with gradient */}
         <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-6 text-white rounded-t-lg">
           <DialogHeader>
@@ -91,28 +91,28 @@ export default function AIUDetailsModal({
         </div>
 
         {/* Single View Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 bg-slate-900">
           {/* Quick Stats Row */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-2.5 text-center border border-blue-100">
-              <Zap className="h-4 w-4 text-blue-600 mx-auto mb-1" />
-              <p className="text-xs text-blue-600 font-medium">Score/Hour</p>
-              <p className="text-lg font-bold text-blue-700">{aiuPerHour}</p>
+            <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg p-2.5 text-center shadow-md">
+              <Zap className="h-4 w-4 text-white mx-auto mb-1" />
+              <p className="text-xs text-white/90 font-medium">Score/Hour</p>
+              <p className="text-lg font-bold text-white">{aiuPerHour}</p>
             </div>
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-2.5 text-center border border-emerald-100">
-              <Target className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
-              <p className="text-xs text-emerald-600 font-medium">Projects</p>
-              <p className="text-lg font-bold text-emerald-700">{projectCount}</p>
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg p-2.5 text-center shadow-md">
+              <Target className="h-4 w-4 text-white mx-auto mb-1" />
+              <p className="text-xs text-white/90 font-medium">Projects</p>
+              <p className="text-lg font-bold text-white">{projectCount}</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-2.5 text-center border border-purple-100">
-              <Clock className="h-4 w-4 text-purple-600 mx-auto mb-1" />
-              <p className="text-xs text-purple-600 font-medium">Hours</p>
-              <p className="text-lg font-bold text-purple-700">{formatDecimal(totalHours)}</p>
+            <div className="bg-gradient-to-br from-purple-500 to-violet-500 rounded-lg p-2.5 text-center shadow-md">
+              <Clock className="h-4 w-4 text-white mx-auto mb-1" />
+              <p className="text-xs text-white/90 font-medium">Hours</p>
+              <p className="text-lg font-bold text-white">{formatDecimal(totalHours)}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-2.5 text-center border border-amber-100">
-              <Globe className="h-4 w-4 text-amber-600 mx-auto mb-1" />
-              <p className="text-xs text-amber-600 font-medium">SDGs</p>
-              <p className="text-lg font-bold text-amber-700">{sdgsContributed.length}</p>
+            <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg p-2.5 text-center shadow-md">
+              <Globe className="h-4 w-4 text-white mx-auto mb-1" />
+              <p className="text-xs text-white/90 font-medium">SDGs</p>
+              <p className="text-lg font-bold text-white">{sdgsContributed.length}</p>
             </div>
           </div>
 
@@ -122,22 +122,22 @@ export default function AIUDetailsModal({
             className="w-full text-left"
             disabled={!onNavigateToVerification}
           >
-            <Card className={`border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 ${onNavigateToVerification ? 'hover:shadow-md hover:border-emerald-300 cursor-pointer transition-all active:scale-[0.99]' : ''}`}>
+            <Card className={`border-slate-700 bg-slate-800/90 ${onNavigateToVerification ? 'hover:shadow-lg hover:border-emerald-500/50 cursor-pointer transition-all active:scale-[0.99]' : ''}`}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-emerald-100 rounded-lg">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg shadow-md">
+                      <CheckCircle2 className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-emerald-800 text-sm">Verified Outcomes</p>
-                      <p className="text-xs text-emerald-600">
+                      <p className="font-semibold text-white text-sm">Verified Outcomes</p>
+                      <p className="text-xs text-slate-400">
                         {verificationRate}% of your activities are verified by organizations
                       </p>
                     </div>
                   </div>
                   {onNavigateToVerification && (
-                    <div className="text-emerald-500 text-xs font-medium flex items-center gap-1">
+                    <div className="text-emerald-400 text-xs font-medium flex items-center gap-1">
                       View Details
                       <TrendingUp className="h-3 w-3" />
                     </div>
@@ -145,13 +145,13 @@ export default function AIUDetailsModal({
                 </div>
                 {(verifiedHours > 0 || pendingHours > 0) && (
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div className="bg-white/60 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-emerald-700">{formatDecimal(verifiedHours)}</p>
-                      <p className="text-[10px] text-emerald-600">Verified Hours</p>
+                    <div className="bg-emerald-500/20 rounded-lg p-2 text-center border border-emerald-500/30">
+                      <p className="text-lg font-bold text-emerald-400">{formatDecimal(verifiedHours)}</p>
+                      <p className="text-[10px] text-emerald-400">Verified Hours</p>
                     </div>
-                    <div className="bg-white/60 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-amber-600">{formatDecimal(pendingHours)}</p>
-                      <p className="text-[10px] text-amber-600">Pending Approval</p>
+                    <div className="bg-amber-500/20 rounded-lg p-2 text-center border border-amber-500/30">
+                      <p className="text-lg font-bold text-amber-400">{formatDecimal(pendingHours)}</p>
+                      <p className="text-[10px] text-amber-400">Pending Approval</p>
                     </div>
                   </div>
                 )}
@@ -160,15 +160,15 @@ export default function AIUDetailsModal({
           </button>
 
           {/* What is AIU - Compact */}
-          <Card className="border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+          <Card className="border-slate-700 bg-slate-800/90">
             <CardContent className="p-3">
               <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-                  <Info className="h-4 w-4 text-blue-600" />
+                <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex-shrink-0 shadow-md">
+                  <Info className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">What is Impact Score?</p>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <p className="font-semibold text-white text-sm">What is Impact Score?</p>
+                  <p className="text-xs text-slate-400 mt-1">
                     Impact Score is Synerxus's proprietary metric that measures your verified contribution to social and environmental impact.
                     It provides an auditable record for CSR/ESG reporting.
                   </p>
@@ -178,11 +178,11 @@ export default function AIUDetailsModal({
           </Card>
 
           {/* Factors Considered - Proprietary (no formula shown) */}
-          <Card className="border-blue-200 bg-blue-50/30">
+          <Card className="border-slate-700 bg-slate-800/90">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-blue-600" />
-                <p className="font-semibold text-blue-800 text-sm">Impact Factors Considered</p>
+                <Shield className="h-4 w-4 text-blue-400" />
+                <p className="font-semibold text-white text-sm">Impact Factors Considered</p>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
@@ -193,8 +193,8 @@ export default function AIUDetailsModal({
                   "Skill-based contribution",
                   "Measurable results"
                 ].map((factor, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
-                    <CheckCircle2 className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <CheckCircle2 className="h-3 w-3 text-blue-400 flex-shrink-0" />
                     <span>{factor}</span>
                   </div>
                 ))}
@@ -204,23 +204,23 @@ export default function AIUDetailsModal({
 
           {/* Top Project */}
           {topProject && (
-            <Card className="border-cyan-200 bg-cyan-50/50">
+            <Card className="border-slate-700 bg-slate-800/90">
               <CardContent className="p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <Award className="h-4 w-4 text-cyan-600" />
-                  <p className="text-sm font-semibold text-cyan-700">Top Contributing Project</p>
+                  <Award className="h-4 w-4 text-cyan-400" />
+                  <p className="text-sm font-semibold text-cyan-400">Top Contributing Project</p>
                 </div>
-                <p className="font-bold text-slate-800 text-sm">{topProject.projectName}</p>
-                <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-600">
+                <p className="font-bold text-white text-sm">{topProject.projectName}</p>
+                <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-400">
                   <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3 text-cyan-500" />
+                    <TrendingUp className="h-3 w-3 text-cyan-400" />
                     {formatDecimal(topProject.aiu)} pts
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-slate-400" />
                     {formatDecimal(topProject.hours)} hrs
                   </span>
-                  <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">
+                  <span className="px-1.5 py-0.5 bg-slate-700 rounded text-slate-300">
                     {topProject.role || "Volunteer"}
                   </span>
                 </div>
@@ -231,21 +231,21 @@ export default function AIUDetailsModal({
           {/* Project Breakdown */}
           {projects.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
+              <p className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-slate-400" />
                 Impact by Project
               </p>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {projects.sort((a, b) => b.aiu - a.aiu).slice(0, 5).map((project, index) => {
                   const percentage = totalAIU > 0 ? (project.aiu / totalAIU) * 100 : 0;
                   return (
-                    <div key={project.projectId || index} className="bg-white rounded-lg p-2 border border-slate-100">
+                    <div key={project.projectId || index} className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-medium text-slate-800 truncate flex-1">{project.projectName}</p>
-                        <p className="text-xs font-bold text-cyan-600 ml-2">{formatDecimal(project.aiu)} pts</p>
+                        <p className="text-xs font-medium text-white truncate flex-1">{project.projectName}</p>
+                        <p className="text-xs font-bold text-cyan-400 ml-2">{formatDecimal(project.aiu)} pts</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Progress value={percentage} className="h-1 flex-1" />
+                        <Progress value={percentage} className="h-1 flex-1 bg-slate-700" />
                         <span className="text-[10px] text-slate-400 w-10 text-right">{formatDecimal(percentage)}%</span>
                       </div>
                     </div>
@@ -259,29 +259,29 @@ export default function AIUDetailsModal({
           )}
 
           {projects.length === 0 && (
-            <div className="text-center py-6 text-slate-500 bg-slate-50 rounded-lg">
-              <BarChart3 className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-              <p className="font-medium text-sm">No project data yet</p>
+            <div className="text-center py-6 text-slate-400 bg-slate-800/60 rounded-lg border border-slate-700">
+              <BarChart3 className="h-10 w-10 mx-auto mb-2 text-slate-500" />
+              <p className="font-medium text-sm text-white">No project data yet</p>
               <p className="text-xs mt-1">Start contributing to projects to earn points</p>
             </div>
           )}
 
           {/* Role Recognition - Compact */}
-          <Card className="border-slate-200">
+          <Card className="border-slate-700 bg-slate-800/90">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-slate-600" />
-                <p className="font-semibold text-slate-800 text-sm">Role Recognition</p>
+                <Users className="h-4 w-4 text-slate-400" />
+                <p className="font-semibold text-white text-sm">Role Recognition</p>
               </div>
-              <p className="text-xs text-slate-600 mb-2">
+              <p className="text-xs text-slate-400 mb-2">
                 Different roles contribute differently to impact. Your score reflects your unique contribution:
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { role: "Leadership", color: "bg-purple-100 text-purple-700" },
-                  { role: "Specialist", color: "bg-blue-100 text-blue-700" },
-                  { role: "Volunteer", color: "bg-green-100 text-green-700" },
-                  { role: "Learner", color: "bg-amber-100 text-amber-700" },
+                  { role: "Leadership", color: "bg-purple-500/20 text-purple-400 border border-purple-500/30" },
+                  { role: "Specialist", color: "bg-blue-500/20 text-blue-400 border border-blue-500/30" },
+                  { role: "Volunteer", color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" },
+                  { role: "Learner", color: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
                 ].map(item => (
                   <span key={item.role} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.color}`}>
                     {item.role}
@@ -292,54 +292,54 @@ export default function AIUDetailsModal({
           </Card>
 
           {/* Performance Insights - Interactive */}
-          <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50">
+          <Card className="border-slate-700 bg-slate-800/90">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-3">
-                <BarChart3 className="h-4 w-4 text-violet-600" />
-                <p className="font-semibold text-violet-800 text-sm">Performance Insights</p>
+                <BarChart3 className="h-4 w-4 text-violet-400" />
+                <p className="font-semibold text-white text-sm">Performance Insights</p>
               </div>
               <div className="space-y-2">
                 {/* Efficiency */}
-                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
+                <div className="w-full flex items-center justify-between p-2 bg-violet-500/10 rounded-lg border border-violet-500/20">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-xs text-slate-700">Efficiency</span>
+                    <Zap className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs text-slate-300">Efficiency</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-violet-600">{aiuPerHour}</span>
+                    <span className="text-sm font-bold text-violet-400">{aiuPerHour}</span>
                     <span className="text-[10px] text-slate-500">pts/hr</span>
                   </div>
                 </div>
                 {/* Project Diversity */}
-                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
+                <div className="w-full flex items-center justify-between p-2 bg-violet-500/10 rounded-lg border border-violet-500/20">
                   <div className="flex items-center gap-2">
-                    <Target className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-xs text-slate-700">Project Diversity</span>
+                    <Target className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs text-slate-300">Project Diversity</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-violet-600">{projectCount}</span>
+                    <span className="text-sm font-bold text-violet-400">{projectCount}</span>
                     <span className="text-[10px] text-slate-500">projects</span>
                   </div>
                 </div>
                 {/* SDG Coverage */}
-                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
+                <div className="w-full flex items-center justify-between p-2 bg-violet-500/10 rounded-lg border border-violet-500/20">
                   <div className="flex items-center gap-2">
-                    <Globe className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-xs text-slate-700">SDG Coverage</span>
+                    <Globe className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs text-slate-300">SDG Coverage</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-violet-600">{Math.round((sdgsContributed.length / 17) * 100)}%</span>
+                    <span className="text-sm font-bold text-violet-400">{Math.round((sdgsContributed.length / 17) * 100)}%</span>
                     <span className="text-[10px] text-slate-500">of 17 SDGs</span>
                   </div>
                 </div>
                 {/* Verification Rate */}
-                <div className="w-full flex items-center justify-between p-2 bg-white/60 rounded-lg">
+                <div className="w-full flex items-center justify-between p-2 bg-violet-500/10 rounded-lg border border-violet-500/20">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-xs text-slate-700">Verification Rate</span>
+                    <Shield className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs text-slate-300">Verification Rate</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-violet-600">{verificationRate}%</span>
+                    <span className="text-sm font-bold text-violet-400">{verificationRate}%</span>
                     <span className="text-[10px] text-slate-500">verified</span>
                   </div>
                 </div>
@@ -348,11 +348,11 @@ export default function AIUDetailsModal({
           </Card>
 
           {/* Tips to Improve - Compact */}
-          <Card className="border-emerald-200 bg-emerald-50/50">
+          <Card className="border-slate-700 bg-slate-800/90">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-emerald-600" />
-                <p className="font-semibold text-emerald-800 text-sm">Increase Your Score</p>
+                <Lightbulb className="h-4 w-4 text-emerald-400" />
+                <p className="font-semibold text-white text-sm">Increase Your Score</p>
               </div>
               <div className="grid grid-cols-1 gap-1">
                 {[
@@ -361,8 +361,8 @@ export default function AIUDetailsModal({
                   "Contribute specialized skills (pro bono)"
                 ].map((tip, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                    <p className="text-xs text-slate-700">{tip}</p>
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                    <p className="text-xs text-slate-400">{tip}</p>
                   </div>
                 ))}
               </div>

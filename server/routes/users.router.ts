@@ -130,22 +130,27 @@ usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
 // Apply strict rate limiting to prevent enumeration attacks
 usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { firebaseUid, email, displayName, userType, organizationName, invitationCode, dataConsent, dataConsentDate } = req.body;
+    const { firebaseUid, email, displayName, userType, organizationName, invitationCode, dataConsent, dataConsentDate, isLoginAttempt } = req.body;
 
     if (!firebaseUid || !email) {
+      console.log(`[firebase-sync] Missing fields - firebaseUid: ${!!firebaseUid}, email: ${!!email}`);
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
     }
+
+    console.log(`[firebase-sync] Attempting sync for email: ${email}, firebaseUid: ${firebaseUid?.substring(0, 8)}..., isLoginAttempt: ${isLoginAttempt}`);
 
     let user = await storage.getUserByFirebaseUid(firebaseUid);
 
     if (user) {
       // Existing user - return with isNewUser: false
+      console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
       return res.json({ ...user, isNewUser: false });
     }
 
     user = await storage.getUserByEmail(email);
 
     if (user) {
+      console.log(`[firebase-sync] Found user by email, linking firebaseUid: ${user.id} (${user.email})`);
       const updatedUser = await storage.updateUser(user.id, {
         firebaseUid,
         displayName: displayName || user.displayName
@@ -154,10 +159,14 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       return res.json({ ...updatedUser, isNewUser: false });
     }
 
+    console.log(`[firebase-sync] No existing user found for email: ${email}, userType: ${userType || 'not provided'}`);
+
     // Check if platform is in invite-only mode for new user registration
-    // Skip invitation code check for preapproved organization emails
+    // Skip invitation code check for:
+    // 1. Preapproved organization emails
+    // 2. Login attempts (user already authenticated via Firebase, just missing DB record)
     const isInviteOnly = await storage.isInviteOnlyMode();
-    if (isInviteOnly && !isPreapprovedEmail(email)) {
+    if (isInviteOnly && !isPreapprovedEmail(email) && !isLoginAttempt) {
       if (!invitationCode) {
         return res.status(403).json({
           message: "This platform requires an invitation code to register",
@@ -173,6 +182,11 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
           requiresInvitation: true
         });
       }
+    }
+
+    // Log when creating a new user from login attempt (data recovery scenario)
+    if (isLoginAttempt) {
+      console.log(`[firebase-sync] Creating database record for existing Firebase user (login recovery): ${email}`);
     }
 
     if (!userType) {

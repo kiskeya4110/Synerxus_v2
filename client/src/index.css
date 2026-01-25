@@ -873,11 +873,21 @@ input[type="radio"] {
   padding-top: max(env(safe-area-inset-top), 0px);
 }
 
-.safe-area-bottom {
+.safe-area-bottom,
+.safe-area-pb {
   padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
 
 .safe-area-x {
   padding-left: max(env(safe-area-inset-left), 0px);
   padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+/* Safe area with minimum padding */
+.safe-area-pb-16 {
+  padding-bottom: max(env(safe-area-inset-bottom), 4rem);
+}
+
+.safe-area-pb-20 {
+  padding-bottom: max(env(safe-area-inset-bottom), 5rem);
 }

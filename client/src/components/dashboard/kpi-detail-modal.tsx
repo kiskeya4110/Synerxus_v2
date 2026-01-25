@@ -942,6 +942,13 @@ export default function KPIDetailModal({
       </TabsList>
 
       <TabsContent value="overview" className="space-y-4 mt-0">
+        {/* Impact Score Definition */}
+        <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-3">
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold text-cyan-700">Impact Score</span> is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and alignment with UN Sustainable Development Goals.
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-100">
             <CardContent className="p-3 flex items-center gap-3">

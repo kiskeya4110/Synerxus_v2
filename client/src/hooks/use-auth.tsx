@@ -56,11 +56,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with email:", error);
+
+      // Provide specific error messages based on Firebase error codes
+      let errorMessage = "Failed to sign in. Please try again.";
+      const errorCode = error?.code;
+
+      if (errorCode === "auth/user-not-found") {
+        errorMessage = "No account found with this email. Please check your email or register first.";
+      } else if (errorCode === "auth/wrong-password") {
+        errorMessage = "Incorrect password. Please try again or reset your password.";
+      } else if (errorCode === "auth/invalid-email") {
+        errorMessage = "Invalid email address format.";
+      } else if (errorCode === "auth/user-disabled") {
+        errorMessage = "This account has been disabled. Please contact support.";
+      } else if (errorCode === "auth/too-many-requests") {
+        errorMessage = "Too many failed login attempts. Please try again later or reset your password.";
+      } else if (errorCode === "auth/invalid-credential") {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      }
+
       toast({
         title: "Authentication Error",
-        description: "Invalid email or password. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;

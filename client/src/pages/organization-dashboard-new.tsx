@@ -43,7 +43,6 @@ import Logo from "@/components/ui/logo";
 // Layout Components
 import OrganizationNav from "@/components/layout/organization-nav";
 import Footer from "@/components/layout/footer";
-import OrganizationMobileView from "@/components/organization/organization-mobile-view";
 
 // Hooks & Utils
 import { useAuth } from "@/hooks/use-auth";

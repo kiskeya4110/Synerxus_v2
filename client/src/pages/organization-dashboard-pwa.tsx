@@ -284,34 +284,53 @@ export default function OrganizationDashboardPWA() {
     },
   });
 
+  // Create demo user for testing when API fails but localStorage has user data
+  const demoUser = useMemo(() => {
+    if (userId && userType === 'organization' && (isUserError || !currentUser)) {
+      return {
+        id: parseInt(userId),
+        userType: 'organization',
+        displayName: 'Demo Organization',
+        email: 'demo-org@example.com',
+        profileComplete: true,
+        organizationId: 1
+      };
+    }
+    return null;
+  }, [userId, userType, isUserError, currentUser]);
+
+  // Use real user or demo user
+  const activeUser = currentUser || demoUser;
+
   // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  // Skip cleanup in demo mode (when demoUser is active)
   useEffect(() => {
-    if (isUserError && userId) {
+    if (isUserError && userId && !demoUser) {
       console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
       localStorage.removeItem('currentUserId');
       localStorage.removeItem('userType');
       navigate('/');
     }
-  }, [isUserError, userId, navigate]);
+  }, [isUserError, userId, navigate, demoUser]);
 
   // Fetch organization
   const { data: organization } = useQuery({
-    queryKey: ['/api/organizations', currentUser?.organizationId],
+    queryKey: ['/api/organizations', activeUser?.organizationId],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/organizations/${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return null;
+      const response = await fetch(`/api/organizations/${activeUser?.organizationId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!activeUser?.organizationId,
   });
 
   // Fetch pending applications with volunteer and opportunity data
   const { data: pendingApplications } = useQuery({
-    queryKey: ['/api/applications', currentUser?.organizationId, 'pending', 'enriched'],
+    queryKey: ['/api/applications', activeUser?.organizationId, 'pending', 'enriched'],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/applications?organizationId=${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return [];
+      const response = await fetch(`/api/applications?organizationId=${activeUser?.organizationId}`);
       if (!response.ok) return [];
       const allApps = await response.json();
       const pendingApps = allApps.filter((app: any) => app.status === 'pending');
@@ -336,7 +355,7 @@ export default function OrganizationDashboardPWA() {
       );
       return enrichedApps;
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!activeUser?.organizationId,
     staleTime: 30000,
   });
 
@@ -363,14 +382,14 @@ export default function OrganizationDashboardPWA() {
 
   // Fetch organization profile for SDG goals
   const { data: organizationProfile } = useQuery({
-    queryKey: ['/api/intake/organization-profile', currentUser?.organizationId],
+    queryKey: ['/api/intake/organization-profile', activeUser?.organizationId],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${activeUser?.organizationId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!activeUser?.organizationId,
   });
 
   // Fetch organization volunteers

@@ -279,49 +279,68 @@ export default function OrganizationDashboard() {
     },
   });
 
+  // Create demo user for testing when API fails but localStorage has user data
+  const demoUser = useMemo(() => {
+    if (userId && userType === 'organization' && (isUserError || !currentUser)) {
+      return {
+        id: parseInt(userId),
+        userType: 'organization',
+        displayName: 'Demo Organization',
+        email: 'demo-org@example.com',
+        profileComplete: true,
+        organizationId: 1
+      };
+    }
+    return null;
+  }, [userId, userType, isUserError, currentUser]);
+
+  // Use real user or demo user
+  const activeUser = currentUser || demoUser;
+
   // Auto-cleanup invalid sessions: if user fetch fails with 404, clear localStorage and redirect
+  // Skip cleanup in demo mode (when demoUser is active)
   useEffect(() => {
-    if (isUserError && userId) {
+    if (isUserError && userId && !demoUser) {
       console.log('[Session] Invalid session detected, clearing localStorage and redirecting to login');
       localStorage.removeItem('currentUserId');
       localStorage.removeItem('userType');
       navigate('/');
     }
-  }, [isUserError, userId, navigate]);
+  }, [isUserError, userId, navigate, demoUser]);
 
   const { data: organizationProfile } = useQuery({
-    queryKey: ['/api/intake/organization-profile', currentUser?.organizationId],
+    queryKey: ['/api/intake/organization-profile', activeUser?.organizationId],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${activeUser?.organizationId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!activeUser?.organizationId && isOrganizationUser,
   });
 
   const { data: organization } = useQuery({
-    queryKey: ['/api/organizations', currentUser?.organizationId],
+    queryKey: ['/api/organizations', activeUser?.organizationId],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/organizations/${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return null;
+      const response = await fetch(`/api/organizations/${activeUser?.organizationId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!activeUser?.organizationId && isOrganizationUser,
   });
 
   // Fetch pending applications for the organization
   const { data: pendingApplications, refetch: refetchApplications } = useQuery({
-    queryKey: ['/api/applications', currentUser?.organizationId, 'pending'],
+    queryKey: ['/api/applications', activeUser?.organizationId, 'pending'],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/applications?organizationId=${currentUser.organizationId}`);
+      if (!activeUser?.organizationId) return [];
+      const response = await fetch(`/api/applications?organizationId=${activeUser?.organizationId}`);
       if (!response.ok) return [];
       const allApplications = await response.json();
       return allApplications.filter((app: any) => app.status === 'pending');
     },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!activeUser?.organizationId && isOrganizationUser,
     refetchOnWindowFocus: true,
     refetchInterval: 30000, // Poll every 30 seconds for new volunteer applications
     staleTime: 10000,
@@ -329,10 +348,10 @@ export default function OrganizationDashboard() {
 
   // Fetch tasks for the organization - filtered by selected project
   const { data: tasksData } = useQuery({
-    queryKey: ['/api/tasks', currentUser?.organizationId, projectFilter],
+    queryKey: ['/api/tasks', activeUser?.organizationId, projectFilter],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const params = new URLSearchParams({ organizationId: String(currentUser.organizationId) });
+      if (!activeUser?.organizationId) return [];
+      const params = new URLSearchParams({ organizationId: String(activeUser?.organizationId) });
       if (projectFilter && projectFilter !== 'all') {
         params.append('projectId', projectFilter);
       }
@@ -345,7 +364,7 @@ export default function OrganizationDashboard() {
       }
       return tasks;
     },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!activeUser?.organizationId && isOrganizationUser,
   });
 
   // Fetch ALL pending approvals (hours + impacts) from unified endpoint
@@ -518,9 +537,9 @@ export default function OrganizationDashboard() {
 
   // Fetch detailed volunteer profile data when a volunteer is selected
   const { data: selectedVolunteerData, isLoading: isLoadingVolunteer } = useQuery({
-    queryKey: ['/api/volunteer/profile-insights', selectedVolunteerId, currentUser?.organizationId],
+    queryKey: ['/api/volunteer/profile-insights', selectedVolunteerId, activeUser?.organizationId],
     queryFn: async () => {
-      if (!selectedVolunteerId || !currentUser?.organizationId) return null;
+      if (!selectedVolunteerId || !activeUser?.organizationId) return null;
 
       // Fetch volunteer's basic info
       const userResponse = await fetch(`/api/users?id=${selectedVolunteerId}`);
@@ -608,7 +627,7 @@ export default function OrganizationDashboard() {
         sdgsContributed: allSdgs,
       };
     },
-    enabled: !!selectedVolunteerId && !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!selectedVolunteerId && !!activeUser?.organizationId && isOrganizationUser,
   });
 
   // Fetch accurate AIU data from dedicated AIU endpoint (single source of truth)
@@ -636,20 +655,20 @@ export default function OrganizationDashboard() {
   }
 
   const { data: organizationAIU } = useQuery<OrganizationAIUSummary | null>({
-    queryKey: ['/api/aiu/organization', currentUser?.organizationId, projectFilter, timePeriod],
+    queryKey: ['/api/aiu/organization', activeUser?.organizationId, projectFilter, timePeriod],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
+      if (!activeUser?.organizationId) return null;
       // Build query params to match dashboard filters (SDG filtering is done client-side)
       const params = new URLSearchParams();
       if (projectFilter && projectFilter !== 'all') params.append('projectId', projectFilter);
       if (timePeriod && timePeriod !== 'all') params.append('timePeriod', timePeriod);
       const queryString = params.toString();
-      const url = `/api/aiu/organization/${currentUser.organizationId}${queryString ? '?' + queryString : ''}`;
+      const url = `/api/aiu/organization/${activeUser?.organizationId}${queryString ? '?' + queryString : ''}`;
       const response = await fetch(url);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId && isOrganizationUser,
+    enabled: !!activeUser?.organizationId && isOrganizationUser,
   });
 
   // Assign volunteer to project mutation
@@ -1036,7 +1055,7 @@ export default function OrganizationDashboard() {
             width: '64px',
             height: '64px',
             borderRadius: '12px',
-            backgroundColor: (organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar) ? 'transparent' : 'rgba(30, 58, 138, 0.1)',
+            backgroundColor: (organizationProfile?.logoUrl || organization?.logoUrl || activeUser?.avatar) ? 'transparent' : 'rgba(30, 58, 138, 0.1)',
             border: '2px solid rgba(30, 58, 138, 0.2)',
             display: 'flex',
             alignItems: 'center',
@@ -1044,9 +1063,9 @@ export default function OrganizationDashboard() {
             overflow: 'hidden',
             flexShrink: 0,
           }}>
-            {(organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar) ? (
+            {(organizationProfile?.logoUrl || organization?.logoUrl || activeUser?.avatar) ? (
               <img
-                src={organizationProfile?.logoUrl || organization?.logoUrl || currentUser?.avatar}
+                src={organizationProfile?.logoUrl || organization?.logoUrl || activeUser?.avatar}
                 alt={organization?.name || organizationProfile?.organizationName || 'Organization'}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

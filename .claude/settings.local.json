@@ -140,7 +140,11 @@
       "WebFetch(domain:localhost)",
       "Bash(Hours\" and \"Approve All Impacts\" buttons, instead of approving one by one.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(__NEW_LINE_0ccf979bb769a16f__ echo -e \"\\\\n\\\\nTesting AIU organization endpoint \\(should return 403\\):\")",
-      "Bash(__NEW_LINE_0ccf979bb769a16f__ echo -e \"\\\\n\\\\nTesting AIU project endpoint \\(should return 403\\):\")"
+      "Bash(__NEW_LINE_0ccf979bb769a16f__ echo -e \"\\\\n\\\\nTesting AIU project endpoint \\(should return 403\\):\")",
+      "Bash(git rm:*)",
+      "Bash(true pkill -f node.*server)",
+      "Bash(xdg-open:*)",
+      "Bash(open \"http://localhost:5000/volunteer-dashboard/pwa\")"
     ],
     "deny": [],
     "ask": []

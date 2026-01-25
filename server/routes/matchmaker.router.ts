@@ -48,13 +48,13 @@ matchmakerRouter.post("/run", async (req: Request, res: Response) => {
 /**
  * GET /api/matchmaker/volunteer/:id - Get top matches for a specific volunteer
  * Query params:
- * - limit: Maximum number of matches (default: 10)
+ * - limit: Maximum number of matches (default: 3 for Impact Log model)
  * - threshold: Minimum match score (default: 40.0)
  */
 matchmakerRouter.get("/volunteer/:id", async (req: Request, res: Response) => {
   try {
     const volunteerId = req.params.id;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 3; // Default to top 3 for Impact Log model
     const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
 
     // Get all volunteers and organizations
@@ -94,6 +94,56 @@ matchmakerRouter.get("/volunteer/:id", async (req: Request, res: Response) => {
     console.error("Error getting volunteer matches:", err);
     res.status(500).json({
       message: "Failed to get volunteer matches",
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+});
+
+/**
+ * POST /api/matchmaker/volunteer/:volunteerId - Get top 3 project matches for volunteer
+ * Used by Impact Log model for quick project selection
+ * Always returns exactly 3 (or fewer if unavailable) active projects
+ */
+matchmakerRouter.post("/volunteer/:volunteerId", async (req: Request, res: Response) => {
+  try {
+    const volunteerId = req.params.volunteerId;
+
+    // Get all volunteers and organizations (projects)
+    const volunteers = await storage.listVolunteers();
+    const organizations = await storage.listMatchableOrganizations();
+
+    // Check if volunteer exists
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    if (!volunteer) {
+      return res.status(404).json({ message: "Volunteer not found" });
+    }
+
+    if (organizations.length === 0) {
+      return res.json({
+        volunteer_id: volunteerId,
+        matches: [],
+        message: "No projects available for matching"
+      });
+    }
+
+    // Get top 3 matches for this volunteer (fixed for Impact Log model)
+    const matches = await getVolunteerMatches(
+      volunteerId,
+      volunteers,
+      organizations,
+      3, // Always return top 3 for Impact Log model
+      40.0
+    );
+
+    res.json({
+      volunteer_id: volunteerId,
+      volunteer_name: volunteer.name,
+      matches
+    });
+  } catch (err) {
+    console.error("Error getting volunteer project matches:", err);
+    res.status(500).json({
+      message: "Failed to get project matches",
       error: err instanceof Error ? err.message : String(err)
     });
   }

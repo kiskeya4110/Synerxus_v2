@@ -1,12 +1,39 @@
-import { Linkedin, Facebook } from "lucide-react";
+import { Link } from "wouter";
+import { Linkedin, Facebook, Mail, ExternalLink } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { useEffect, useRef, useState } from "react";
+import Logo from "@/components/ui/logo";
+import { Divider } from "@/components/ui/section";
 
 // Global registry to track footer instances and prevent duplicates
 const footerRegistry = {
   instances: new Set<string>(),
-  counter: 0
+  counter: 0,
 };
+
+const FOOTER_LINKS = {
+  platform: [
+    { href: "/volunteer-dashboard", label: "Dashboard" },
+    { href: "/discover-opportunities", label: "Opportunities" },
+    { href: "/projects", label: "Projects" },
+    { href: "/organizations", label: "Organizations" },
+  ],
+  resources: [
+    { href: "/help", label: "Help Center" },
+    { href: "/sdg-mapping", label: "SDG Framework" },
+    { href: "/impact-visualization", label: "Impact Reports" },
+  ],
+  legal: [
+    { href: "/privacy", label: "Privacy Policy" },
+    { href: "/terms", label: "Terms of Service" },
+  ],
+};
+
+const SOCIAL_LINKS = [
+  { href: "https://x.com", label: "X (Twitter)", icon: SiX },
+  { href: "https://www.linkedin.com/company/synerxus", label: "LinkedIn", icon: Linkedin },
+  { href: "https://www.facebook.com/861509087040686", label: "Facebook", icon: Facebook },
+];
 
 export default function Footer() {
   const instanceId = useRef<string>(`footer-${++footerRegistry.counter}`);
@@ -34,116 +61,115 @@ export default function Footer() {
 
   return (
     <footer
-      className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-4 border-t border-gray-800 mt-6 rounded-t-xl"
+      className="bg-secondary border-t border-border mt-auto"
       data-footer-id={instanceId.current}
     >
-      <div className="px-6">
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          {/* Brand & Links Section */}
-          <div className="space-y-2">
-            <div>
-              <h3 className="text-sm font-bold mb-0.5">
-                <span className="text-white">SYNER</span>
-                <span style={{ color: '#FFB84D' }}>XUS</span>
-              </h3>
-              <p className="text-[11px] text-gray-400">
-                Connect. Manage. Impact Globally.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">
-                Platform & Resources
-              </h4>
-              <ul className="space-y-0.5 text-[11px] text-gray-400">
-                <li>
-                  <a href="/dashboard" className="hover:text-white transition">
-                    Dashboard
-                  </a>
-                </li>
-                <li>
+      <div className="container max-w-7xl mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* Brand Section */}
+          <div className="md:col-span-1 space-y-4">
+            <Logo size="sm" variant="full" clickable={false} />
+            <p className="text-sm text-muted-foreground">
+              Turn Volunteer Hours into Audit-Ready ESG Data
+            </p>
+            <div className="flex gap-3">
+              {SOCIAL_LINKS.map((link) => {
+                const Icon = link.icon;
+                return (
                   <a
-                    href="/discover-opportunities"
-                    className="hover:text-white transition"
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+                    aria-label={link.label}
                   >
-                    Opportunities
+                    <Icon className="h-4 w-4" />
                   </a>
-                </li>
-                <li>
-                  <a
-                    href="/organizations"
-                    className="hover:text-white transition"
-                  >
-                    Organizations
-                  </a>
-                </li>
-              </ul>
+                );
+              })}
             </div>
           </div>
 
-          {/* Resources & Social Links Section */}
-          <div className="space-y-2">
-            <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">
-                Help
-              </h4>
-              <ul className="space-y-0.5 text-[11px] text-gray-400">
-                <li>
-                  <a href="/help" className="hover:text-white transition">
-                    Documentation
-                  </a>
+          {/* Platform Links */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">Platform</h4>
+            <ul className="space-y-2">
+              {FOOTER_LINKS.platform.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
-                <li>
-                  <a href="/help" className="hover:text-white transition">
-                    Help Center
-                  </a>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources Links */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">Resources</h4>
+            <ul className="space-y-2">
+              {FOOTER_LINKS.resources.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
-                <li>
-                  <a href="mailto:support@synerxus.com" className="hover:text-white transition">
-                    Contact Us
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">
-                Follow Us
-              </h4>
-              <div className="flex gap-2">
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Section */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">Contact</h4>
+            <ul className="space-y-2">
+              <li>
                 <a
-                  href="https://x.com"
-                  className="text-gray-400 hover:text-white transition"
+                  href="mailto:support@synerxus.com"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <SiX className="h-4 w-4" />
+                  <Mail className="h-4 w-4" />
+                  support@synerxus.com
                 </a>
+              </li>
+              <li>
                 <a
-                  href="https://www.linkedin.com/company/synerxus"
-                  className="text-gray-400 hover:text-white transition"
+                  href="https://synerxus.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Linkedin className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4" />
+                  synerxus.com
                 </a>
-                <a
-                  href="https://www.facebook.com/861509087040686"
-                  className="text-gray-400 hover:text-white transition"
-                >
-                  <Facebook className="h-4 w-4" />
-                </a>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-800 pt-2">
-          <div className="flex flex-col md:flex-row justify-between items-center text-[11px] text-gray-500 gap-2">
-            <p>© {currentYear} Synerxus. All rights reserved.</p>
-            <div className="flex gap-4 text-[11px]">
-              <a href="/privacy" className="hover:text-gray-300 transition">
-                Privacy
-              </a>
-              <a href="/terms" className="hover:text-gray-300 transition">
-                Terms
-              </a>
-            </div>
+        <Divider />
+
+        {/* Bottom Section */}
+        <div className="pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-muted-foreground">
+            © {currentYear} Synerxus. All rights reserved.
+          </p>
+          <div className="flex gap-6">
+            {FOOTER_LINKS.legal.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

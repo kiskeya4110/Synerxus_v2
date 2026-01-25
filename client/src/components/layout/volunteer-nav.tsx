@@ -1,277 +1,218 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Sparkles, BarChart3, ClipboardList, Trophy, MessageCircle, BookOpen, Shield } from "lucide-react";
+import {
+  Home,
+  Briefcase,
+  User,
+  Menu,
+  X,
+  LogOut,
+  Bell,
+  Sparkles,
+  BarChart3,
+  ClipboardList,
+  Plus,
+  Settings,
+  HelpCircle,
+  Shield,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
+import { Button } from "@/components/ui/button";
+import Logo from "@/components/ui/logo";
 
-// Desktop nav items with full labels for better readability
+// Desktop nav items
 const VOLUNTEER_NAV_ITEMS = [
-  { href: "/volunteer-dashboard", label: "Dashboard", icon: <Home className="w-4 h-4" />, description: "Dashboard & Metrics" },
-  { href: "/projects", label: "My Projects", icon: <Briefcase className="w-4 h-4" />, description: "Your Projects" },
-  { href: "/my-work", label: "My Work", icon: <ClipboardList className="w-4 h-4" />, description: "Tasks & Assignments" },
-  { href: "/discover-opportunities", label: "Discover", icon: <Sparkles className="w-4 h-4" />, description: "Discover Opportunities" },
-  { href: "/impact-visualization", label: "My Impact", icon: <BarChart3 className="w-4 h-4" />, description: "View Your Impact" },
+  { href: "/volunteer-dashboard", label: "Dashboard", icon: Home },
+  { href: "/projects", label: "Projects", icon: Briefcase },
+  { href: "/discover-opportunities", label: "Discover", icon: Sparkles },
+  { href: "/my-work", label: "My Work", icon: ClipboardList },
+  { href: "/impact-visualization", label: "Impact", icon: BarChart3 },
 ];
 
-// Dropdown menu items matching PWA mobile view
+// Dropdown menu items
 const MENU_ITEMS = [
-  { href: "/volunteer-dashboard", label: "Dashboard", icon: <Home className="w-4 h-4" /> },
-  { href: "/projects", label: "My Projects", icon: <Briefcase className="w-4 h-4" /> },
-  { href: "/discover-opportunities", label: "Discover", icon: <Sparkles className="w-4 h-4" /> },
-  { href: "/log-activity", label: "Log Activity", icon: <ClipboardList className="w-4 h-4" /> },
-  { href: "/impact-report", label: "SDG Impact Report", icon: <BarChart3 className="w-4 h-4" /> },
-  { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-4 h-4" /> },
-  { href: "/volunteer-messages", label: "Messages", icon: <MessageCircle className="w-4 h-4" /> },
-  { href: "/stories", label: "Stories", icon: <BookOpen className="w-4 h-4" /> },
-  { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <User className="w-4 h-4" /> },
+  { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: User },
+  { href: "/log-activity", label: "Log Activity", icon: ClipboardList },
+  { href: "/impact-report", label: "Impact Report", icon: BarChart3 },
+  { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
 export default function VolunteerNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [navMenuOpen, setNavMenuOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const { signOut } = useAuth();
-  const userId = localStorage.getItem('currentUserId');
+  const userId = localStorage.getItem("currentUserId");
 
-  // Fetch current user to verify volunteer type
+  // Fetch current user
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const url = userId ? `/api/users/me?userId=${userId}` : "/api/users/me";
       const response = await fetch(url);
       return response.ok ? response.json() : null;
     },
-    enabled: !!userId
+    enabled: !!userId,
   });
 
   // Handle logout
   const handleLogout = async () => {
     setMenuOpen(false);
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   // Don't show on PWA routes or landing/login routes
-  const isPwaRoute = location.endsWith('/pwa');
-  const standaloneRoutes = [
-    '/landing',
-    '/login',
-    '/'
-  ];
-  const isStandaloneRoute = standaloneRoutes.some(route =>
-    location === route || location.startsWith(route + '/')
+  const isPwaRoute = location.endsWith("/pwa");
+  const standaloneRoutes = ["/landing", "/login", "/"];
+  const isStandaloneRoute = standaloneRoutes.some(
+    (route) => location === route || location.startsWith(route + "/")
   );
 
-  // Use localStorage userType as fallback while query is loading (for refresh/login)
-  const storedUserType = localStorage.getItem('userType');
+  const storedUserType = localStorage.getItem("userType");
   const effectiveUserType = currentUser?.userType || storedUserType;
 
-  // Only show for volunteers on desktop (hide on mobile for PWA)
-  if (effectiveUserType !== 'volunteer' || isPwaRoute || isStandaloneRoute) {
+  if (effectiveUserType !== "volunteer" || isPwaRoute || isStandaloneRoute) {
     return null;
   }
 
-  const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
-
-  // Navigate to volunteer dashboard when logo is clicked (dashboard home button)
-  const handleLogoClick = () => {
-    navigate('/volunteer-dashboard');
-  };
+  const userInitial = (currentUser?.displayName || currentUser?.username || "V")
+    .charAt(0)
+    .toUpperCase();
 
   return (
-    <div className="hidden md:block sticky top-0 z-[9999] bg-[#f8f9fa] dark:bg-gray-950" style={{ padding: '16px 24px 0 24px' }}>
-      {/* Constrained container matching page content width */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-        <nav className="flex items-center justify-between h-14 px-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-          {/* Logo and Brand - Never shrink, always visible */}
-          <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
-            <button
-              onClick={handleLogoClick}
-              className="flex items-center hover:opacity-90 transition-opacity cursor-pointer flex-shrink-0"
-              title="Go to Dashboard"
-            >
-              {!imageError ? (
-                <img
-                  src={logoImage}
-                  alt="Synerxus Logo"
-                  className="h-10 lg:h-12 w-auto object-contain"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">S</span>
-                </div>
-              )}
-            </button>
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container max-w-7xl mx-auto px-4">
+        <nav className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-8">
+            <Logo size="sm" variant="full" />
 
-            {/* Hamburger Menu for Nav Items - Shows on md-lg screens when nav items are hidden */}
-            <div className="lg:hidden relative">
-              <button
-                onClick={() => setNavMenuOpen(!navMenuOpen)}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                aria-label="Navigation menu"
-                data-testid="nav-hamburger-menu"
-              >
-                {navMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-
-              {/* Nav Dropdown Menu */}
-              {navMenuOpen && (
-                <>
-                  {/* Backdrop - outside stacking context */}
-                  <div
-                    className="fixed inset-0 bg-black/20 backdrop-blur-[1px]"
-                    style={{ zIndex: 9998 }}
-                    onClick={() => setNavMenuOpen(false)}
-                    aria-hidden="true"
-                  />
-
-                  {/* Menu Panel - positioned fixed to avoid sticky issues */}
-                  <div
-                    className="fixed left-4 top-16 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden"
-                    style={{ zIndex: 10000 }}
-                  >
-                    <div className="py-1">
-                      {VOLUNTEER_NAV_ITEMS.map((item) => {
-                        const isActive = location === item.href ||
-                          (item.href === '/volunteer-dashboard' && (location === '/dashboard' || location.startsWith('/volunteer-dashboard'))) ||
-                          (item.href === '/projects' && location.startsWith('/projects')) ||
-                          (item.href === '/my-work' && location.startsWith('/my-work')) ||
-                          (item.href === '/discover-opportunities' && location.includes('discover-opportunities')) ||
-                          (item.href === '/impact-visualization' && location.includes('impact-visualization'));
-
-                        return (
-                          <Link key={item.href} href={item.href}>
-                            <button
-                              className={cn(
-                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                                isActive
-                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                              )}
-                              onClick={() => setNavMenuOpen(false)}
-                            >
-                              {item.icon}
-                              <span className="font-medium">{item.label}</span>
-                            </button>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Nav Items - Hidden on smaller screens, collapse before logo */}
-            <div className="hidden lg:flex items-center gap-1 overflow-x-auto border-l border-gray-200 dark:border-gray-700 pl-4 lg:pl-6">
+            {/* Desktop Nav Items */}
+            <div className="hidden lg:flex items-center gap-1">
               {VOLUNTEER_NAV_ITEMS.map((item) => {
-                const isActive = location === item.href ||
-                               (item.href === '/volunteer-dashboard' && (location === '/dashboard' || location.startsWith('/volunteer-dashboard'))) ||
-                               (item.href === '/projects' && location.startsWith('/projects')) ||
-                               (item.href === '/my-work' && location.startsWith('/my-work')) ||
-                               (item.href === '/discover-opportunities' && location.includes('discover-opportunities')) ||
-                               (item.href === '/impact-visualization' && location.includes('impact-visualization'));
+                const Icon = item.icon;
+                const isActive =
+                  location === item.href ||
+                  (item.href === "/volunteer-dashboard" &&
+                    location.startsWith("/volunteer-dashboard")) ||
+                  (item.href === "/projects" && location.startsWith("/projects")) ||
+                  (item.href === "/my-work" && location.startsWith("/my-work")) ||
+                  (item.href === "/discover-opportunities" &&
+                    location.includes("discover-opportunities")) ||
+                  (item.href === "/impact-visualization" &&
+                    location.includes("impact-visualization"));
 
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium min-h-[40px]",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-                    )}
-                    data-testid={`volunteer-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                    title={item.description}
-                  >
-                    {item.icon}
-                    <span className="hidden xl:inline">{item.label}</span>
+                  <Link key={item.href} href={item.href}>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </button>
                   </Link>
                 );
               })}
             </div>
           </div>
 
-          {/* Right Section: Notifications + User Profile Menu */}
+          {/* Right Section */}
           <div className="flex items-center gap-3">
-            {/* Notifications Bell */}
-            <Link
-              href="/notifications"
-              className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer z-50"
-              aria-label="Notifications"
+            {/* Quick Log Button */}
+            <Button
+              variant="accent"
+              size="sm"
+              className="hidden sm:flex"
+              onClick={() => navigate("/log-activity")}
             >
-              <Bell className="w-5 h-5" />
-            </Link>
+              <Plus className="h-4 w-4 mr-1" />
+              Log Impact
+            </Button>
 
-            {/* User Profile Menu */}
+            {/* Notifications */}
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-[10px] font-bold flex items-center justify-center text-slate-900">
+                3
+              </span>
+            </Button>
+
+            {/* User Menu */}
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer active:scale-95"
-                aria-label="User menu"
-                aria-expanded={menuOpen}
-                aria-haspopup="true"
-                data-testid="volunteer-nav-profile-menu"
-                type="button"
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all",
+                  "hover:bg-white/5",
+                  menuOpen && "bg-white/10"
+                )}
               >
-                <Avatar className="h-8 w-8 border-2 border-blue-500">
-                  <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
+                <Avatar size="sm" ring={menuOpen ? "primary" : "none"}>
+                  <AvatarImage
+                    src={currentUser?.avatar || undefined}
+                    alt={currentUser?.displayName || "User"}
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
-                  {currentUser?.displayName || currentUser?.username || 'Volunteer'}
+                <span className="hidden md:block text-sm font-medium text-foreground max-w-[120px] truncate">
+                  {currentUser?.displayName || "Volunteer"}
                 </span>
-                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                {menuOpen ? (
+                  <X className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Menu className="h-4 w-4 text-muted-foreground" />
+                )}
               </button>
 
               {/* Dropdown Menu */}
               {menuOpen && (
                 <>
-                  {/* Backdrop - outside stacking context */}
+                  {/* Backdrop */}
                   <div
-                    className="fixed inset-0 bg-black/20 backdrop-blur-[1px]"
-                    style={{ zIndex: 9998 }}
+                    className="fixed inset-0 z-40"
                     onClick={() => setMenuOpen(false)}
-                    aria-hidden="true"
                   />
 
-                  {/* Menu Panel - positioned fixed to avoid sticky issues */}
-                  <div
-                    className="fixed right-4 top-16 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
-                    style={{ zIndex: 10000 }}
-                  >
+                  {/* Menu Panel */}
+                  <div className="absolute right-0 top-full mt-2 w-64 z-50 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
                     {/* User Info Header */}
-                    <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
+                    <div className="px-4 py-3 bg-secondary/50 border-b border-border">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border-2 border-blue-500">
-                          <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                        <Avatar size="default">
+                          <AvatarImage
+                            src={currentUser?.avatar || undefined}
+                            alt={currentUser?.displayName || "User"}
+                          />
+                          <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                             {userInitial}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {currentUser?.displayName || currentUser?.username || 'Volunteer'}
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {currentUser?.displayName || "Volunteer"}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {currentUser?.email || 'volunteer@example.com'}
+                          <p className="text-xs text-muted-foreground truncate">
+                            {currentUser?.email || "volunteer@example.com"}
                           </p>
                         </div>
                       </div>
                     </div>
 
                     {/* Menu Items */}
-                    <div className="py-1 overflow-y-auto flex-1">
+                    <div className="py-2">
                       {MENU_ITEMS.map((item) => {
+                        const Icon = item.icon;
                         const isActive = location === item.href;
                         return (
                           <Link key={item.href} href={item.href}>
@@ -279,63 +220,66 @@ export default function VolunteerNav() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
                                 isActive
-                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-white/5"
                               )}
                               onClick={() => setMenuOpen(false)}
                             >
-                              {item.icon}
-                              <span className="font-medium">{item.label}</span>
+                              <Icon className="h-4 w-4" />
+                              <span className="text-sm font-medium">{item.label}</span>
                             </button>
                           </Link>
                         );
                       })}
                     </div>
 
-                    {/* Admin Section - Only for platform admins */}
+                    {/* Admin Section */}
                     {(currentUser as any)?.isAdmin && (
-                      <div className="border-t border-gray-200 dark:border-gray-600 py-1 flex-shrink-0">
+                      <div className="border-t border-border py-2">
                         <div className="px-4 py-1">
-                          <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Admin</span>
+                          <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                            Admin
+                          </span>
                         </div>
                         <Link href="/admin/dashboard">
                           <button
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-primary hover:bg-primary/10 transition-colors"
                             onClick={() => setMenuOpen(false)}
                           >
-                            <Shield className="w-4 h-4" />
-                            <span className="font-medium">Admin Dashboard</span>
-                          </button>
-                        </Link>
-                        <Link href="/admin/organization-approval">
-                          <button
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                            onClick={() => setMenuOpen(false)}
-                          >
-                            <Shield className="w-4 h-4" />
-                            <span className="font-medium">Organization Approvals</span>
+                            <Shield className="h-4 w-4" />
+                            <span className="text-sm font-medium">Admin Dashboard</span>
                           </button>
                         </Link>
                       </div>
                     )}
 
-                    {/* Logout Button */}
-                    <div className="border-t border-gray-200 dark:border-gray-600 py-1 flex-shrink-0">
+                    {/* Logout */}
+                    <div className="border-t border-border py-2">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-destructive hover:bg-destructive/10 transition-colors"
                       >
-                        <LogOut className="w-4 h-4" />
-                        <span className="font-medium">Sign Out</span>
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-sm font-medium">Sign Out</span>
                       </button>
                     </div>
                   </div>
                 </>
               )}
             </div>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </nav>
       </div>
-    </div>
+    </header>
   );
 }

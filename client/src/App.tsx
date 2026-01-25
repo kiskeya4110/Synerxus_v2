@@ -12,8 +12,8 @@ import { useBadgeCelebration } from "@/hooks/use-badge-celebration";
 const Landing = lazy(() => import("@/pages/landing"));
 const Login = lazy(() => import("@/pages/login"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
-const VolunteerDashboard = lazy(() => import("@/pages/volunteer-dashboard"));
-const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard"));
+const VolunteerDashboard = lazy(() => import("@/pages/volunteer-dashboard-new"));
+const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard-new"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Lazy-loaded pages - loaded on demand to reduce initial bundle size
@@ -43,18 +43,14 @@ const ImpactReport = lazy(() => import("@/pages/impact-report"));
 const OrganizationImpactReport = lazy(() => import("@/pages/organization-impact-report"));
 const MobileDataCollection = lazy(() => import("@/pages/mobile-data-collection"));
 const ImpactVisualization = lazy(() => import("@/pages/impact-visualization"));
-const ImpactStorytellingPage = lazy(() => import("@/pages/impact-storytelling"));
 const Assignments = lazy(() => import("@/pages/assignments"));
 const MatchedVolunteers = lazy(() => import("@/pages/matched-volunteers"));
 const EmailDigests = lazy(() => import("@/pages/email-digests"));
-const Achievements = lazy(() => import("@/pages/achievements"));
 const LogActivity = lazy(() => import("@/pages/log-activity"));
-const Leaderboard = lazy(() => import("@/pages/leaderboard"));
-const OrganizationLeaderboard = lazy(() => import("@/pages/organization-leaderboard"));
 const DiscoverOpportunities = lazy(() => import("@/pages/discover-opportunities"));
 const DiscoverOpportunitiesPWA = lazy(() => import("@/pages/discover-opportunities-pwa"));
 const SDGMapping = lazy(() => import("@/pages/sdg-mapping"));
-const CSRDashboard = lazy(() => import("@/pages/csr-dashboard"));
+const CSRDashboard = lazy(() => import("@/pages/csr-dashboard-new"));
 const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
 const CSRImpactReporting = lazy(() => import("@/pages/csr-impact-reporting").then(m => ({ default: m.CSRImpactReporting })));
 const ProjectPortfolio = lazy(() => import("@/pages/project-portfolio"));
@@ -63,19 +59,11 @@ const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
 const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
 const TeamOverview = lazy(() => import("@/pages/team-overview"));
 const Overview = lazy(() => import("@/pages/overview"));
-const OrganizationMessages = lazy(() => import("@/pages/organization-messages"));
-const OrganizationMessagesPWA = lazy(() => import("@/pages/organization-messages-pwa"));
 const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa"));
 const OrganizationTeam = lazy(() => import("@/pages/organization-team"));
+const NgoVerification = lazy(() => import("@/pages/ngo-verification"));
 const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));
-const VolunteerMessages = lazy(() => import("@/pages/volunteer-messages"));
-const VolunteerMessagesPWA = lazy(() => import("@/pages/volunteer-messages-pwa"));
-const CSRMessagesPWA = lazy(() => import("@/pages/csr-messages-pwa"));
-const VolunteerLeaderboardPWA = lazy(() => import("@/pages/volunteer-leaderboard-pwa"));
 const EmployeeEngagementTabPage = lazy(() => import("@/pages/employee-engagement-tab-page"));
-const Stories = lazy(() => import("@/pages/stories"));
-const CreateStory = lazy(() => import("@/pages/create-story"));
-const StoryDetail = lazy(() => import("@/pages/story-detail"));
 const Help = lazy(() => import("@/pages/help"));
 const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
@@ -281,8 +269,8 @@ function AppWithOnboarding() {
           {/* Organization routes - standalone layout */}
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/organization-my-work" component={MyWork} />
-          <Route path="/organization-messages" component={OrganizationMessages} />
           <Route path="/organization-team" component={OrganizationTeam} />
+          <Route path="/ngo-verification" component={NgoVerification} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
           <Route path="/overview" component={Overview} />
           <Route path="/volunteers" component={Volunteers} />
@@ -304,11 +292,7 @@ function AppWithOnboarding() {
           <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
           <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
-          <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
-          <Route path="/organization-messages/pwa" component={OrganizationMessagesPWA} />
           <Route path="/organization-dashboard/pwa" component={OrganizationDashboardPWA} />
-          <Route path="/volunteer-leaderboard/pwa" component={VolunteerLeaderboardPWA} />
-          <Route path="/csr-messages/pwa" component={CSRMessagesPWA} />
           {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
         </Switch>
@@ -364,21 +348,11 @@ function LayoutRoute() {
       <Route path="/impact-report/:volunteerId?" component={ImpactReport} />
       <Route path="/organization-impact-report/:organizationId?" component={OrganizationImpactReport} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
-      <Route path="/impact-storytelling" component={ImpactStorytellingPage} />
       {/* Assignments & Matching */}
       <Route path="/assignments" component={Assignments} />
       <Route path="/matched-volunteers" component={MatchedVolunteers} />
-      {/* Notifications & Achievements */}
+      {/* Notifications */}
       <Route path="/email-digests" component={EmailDigests} />
-      <Route path="/achievements" component={Achievements} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
-      {/* Messages */}
-      <Route path="/volunteer-messages" component={VolunteerMessages} />
-      {/* Stories */}
-      <Route path="/stories" component={Stories} />
-      <Route path="/create-story" component={CreateStory} />
-      <Route path="/stories/:id" component={StoryDetail} />
     </Layout>
   );
 }

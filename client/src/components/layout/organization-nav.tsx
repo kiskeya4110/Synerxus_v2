@@ -1,76 +1,303 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, BarChart3, Users, Briefcase, TrendingUp } from "lucide-react";
+import {
+  Home,
+  BarChart3,
+  Users,
+  FolderOpen,
+  TrendingUp,
+  Shield,
+  Plus,
+  Bell,
+  Menu,
+  X,
+  LogOut,
+  Settings,
+  HelpCircle,
+  Building2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Logo from "@/components/ui/logo";
 
-// Navigation items - organizationId will be added dynamically for impact report
+// Navigation items
 const getOrgNavItems = (organizationId?: number) => [
-  { href: "/organization-dashboard", label: "Home", icon: <Home className="w-4 h-4" /> },
-  { href: "/overview", label: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
-  { href: organizationId ? `/organization-impact-report/${organizationId}` : "/organization-impact-report", label: "Impacts", icon: <TrendingUp className="w-4 h-4" /> },
-  { href: "/volunteers", label: "Volunteers", icon: <Users className="w-4 h-4" /> },
-  { href: "/projects", label: "Projects", icon: <Briefcase className="w-4 h-4" /> },
+  { href: "/organization-dashboard", label: "Dashboard", icon: Home },
+  { href: "/ngo-verification", label: "Verify", icon: Shield },
+  { href: "/projects", label: "Projects", icon: FolderOpen },
+  { href: "/volunteers", label: "Team", icon: Users },
+  {
+    href: organizationId
+      ? `/organization-impact-report/${organizationId}`
+      : "/organization-impact-report",
+    label: "Impact",
+    icon: TrendingUp,
+  },
+];
+
+// Dropdown menu items
+const MENU_ITEMS = [
+  { href: "/organization-profile-settings", label: "Settings", icon: Settings },
+  { href: "/overview", label: "Overview", icon: BarChart3 },
+  { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
 export default function OrganizationNav() {
-  const [location] = useLocation();
-  const userId = localStorage.getItem('currentUserId');
-  
-  // Fetch current user to verify organization type
+  const [location, navigate] = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { signOut } = useAuth();
+  const userId = localStorage.getItem("currentUserId");
+
+  // Fetch current user
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
+      const url = userId ? `/api/users/me?userId=${userId}` : "/api/users/me";
       const response = await fetch(url);
       return response.ok ? response.json() : null;
     },
-    enabled: !!userId
+    enabled: !!userId,
   });
 
-  // Use localStorage userType as fallback while query is loading (for refresh/login)
-  const storedUserType = localStorage.getItem('userType');
+  // Fetch organization
+  const { data: organization } = useQuery({
+    queryKey: ["/api/organizations", currentUser?.organizationId],
+    queryFn: async () => {
+      const response = await fetch(`/api/organizations?id=${currentUser?.organizationId}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return Array.isArray(data) ? data[0] : data;
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
+  // Fetch pending count
+  const { data: pendingData } = useQuery({
+    queryKey: ["/api/pending-approvals", currentUser?.organizationId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/pending-approvals?organizationId=${currentUser?.organizationId}`
+      );
+      if (!response.ok) return { pendingActivities: [], pendingImpacts: [] };
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
+  const pendingCount =
+    (pendingData?.pendingActivities?.length || 0) + (pendingData?.pendingImpacts?.length || 0);
+
+  // Handle logout
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate("/");
+  };
+
+  // Use localStorage userType as fallback
+  const storedUserType = localStorage.getItem("userType");
   const effectiveUserType = currentUser?.userType || storedUserType;
 
-  // Only show for organizations
-  if (effectiveUserType !== 'organization') {
+  // Don't show on PWA routes or landing/login routes
+  const isPwaRoute = location.endsWith("/pwa");
+  const standaloneRoutes = ["/landing", "/login", "/"];
+  const isStandaloneRoute = standaloneRoutes.some(
+    (route) => location === route || location.startsWith(route + "/")
+  );
+
+  if (effectiveUserType !== "organization" || isPwaRoute || isStandaloneRoute) {
     return null;
   }
 
-  // Get nav items with organizationId for impact report link
-  // Convert null to undefined since getOrgNavItems expects number | undefined
   const navItems = getOrgNavItems(currentUser?.organizationId ?? undefined);
+  const orgInitial = (organization?.name || "O").charAt(0).toUpperCase();
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center gap-1 sm:gap-2 h-16 overflow-x-auto">
-          {navItems.map((item) => {
-            const isActive = location === item.href ||
-                           (item.href === '/organization-dashboard' && location.startsWith('/organization-dashboard')) ||
-                           (item.href === '/overview' && location.startsWith('/overview')) ||
-                           (item.href.includes('/organization-impact-report') && location.includes('impact-report'));
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container max-w-7xl mx-auto px-4">
+        <nav className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-8">
+            <Logo size="sm" variant="full" />
+
+            {/* Desktop Nav Items */}
+            <div className="hidden lg:flex items-center gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  location === item.href ||
+                  (item.href === "/organization-dashboard" &&
+                    location.startsWith("/organization-dashboard")) ||
+                  (item.href === "/ngo-verification" &&
+                    location.includes("ngo-verification")) ||
+                  (item.href === "/projects" && location.startsWith("/projects")) ||
+                  (item.href === "/volunteers" && location.startsWith("/volunteers")) ||
+                  (item.href.includes("impact-report") && location.includes("impact-report"));
+
+                const isVerifyTab = item.label === "Verify";
+
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      {isVerifyTab && pendingCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center"
+                        >
+                          {pendingCount}
+                        </Badge>
+                      )}
+                    </button>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-3">
+            {/* Create Project Button */}
+            <Button
+              variant="accent"
+              size="sm"
+              className="hidden sm:flex"
+              onClick={() => navigate("/post-core-opportunity")}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              New Project
+            </Button>
+
+            {/* Notifications */}
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-bold flex items-center justify-center text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </Button>
+
+            {/* Org Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
                 className={cn(
-                  "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors whitespace-nowrap text-sm sm:text-base font-medium min-h-[44px]",
-                  isActive
-                    ? "bg-blue-900 text-white dark:bg-blue-800"
-                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all",
+                  "hover:bg-white/5",
+                  menuOpen && "bg-white/10"
                 )}
-                data-testid={`org-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                {item.icon}
-                <span className="hidden sm:inline">{item.label}</span>
-                <span className="sm:hidden text-xs">{item.label.charAt(0)}</span>
-              </Link>
-            );
-          })}
-        </div>
+                <Avatar size="sm" ring={menuOpen ? "primary" : "none"}>
+                  <AvatarImage src={organization?.logo || undefined} alt={organization?.name} />
+                  <AvatarFallback className="bg-success text-white text-sm font-semibold">
+                    {orgInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden md:block text-sm font-medium text-foreground max-w-[120px] truncate">
+                  {organization?.name || "Organization"}
+                </span>
+                {menuOpen ? (
+                  <X className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Menu className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {/* Dropdown Menu */}
+              {menuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+
+                  {/* Menu Panel */}
+                  <div className="absolute right-0 top-full mt-2 w-64 z-50 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+                    {/* Org Info Header */}
+                    <div className="px-4 py-3 bg-secondary/50 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <Avatar size="default">
+                          <AvatarImage src={organization?.logo || undefined} />
+                          <AvatarFallback className="bg-success text-white font-semibold">
+                            {orgInitial}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {organization?.name || "Organization"}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            <span>NGO Portal</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      {MENU_ITEMS.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location === item.href;
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <button
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                isActive
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-white/5"
+                              )}
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4" />
+                              <span className="text-sm font-medium">{item.label}</span>
+                            </button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-border py-2">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-sm font-medium">Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }

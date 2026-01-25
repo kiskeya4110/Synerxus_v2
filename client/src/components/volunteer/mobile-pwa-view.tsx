@@ -5,6 +5,7 @@ import PWAHeader from "@/components/pwa/pwa-header";
 import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
 import { useAIUDisplay } from "@/hooks/use-feature-flags";
 import ContributionBadges from "@/components/dashboard/contribution-badges";
+import ImpactLogHistory from "@/components/dashboard/impact-log-history";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { formatDecimal } from "@/lib/format-utils";
@@ -1240,7 +1241,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col w-full max-w-full overflow-hidden">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col w-full max-w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 
@@ -1249,7 +1250,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
       {/* Offline Banner */}
       {isOffline && (
-        <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2 justify-center">
+        <div className="bg-amber-500 text-slate-900 px-4 py-2 text-sm font-semibold flex items-center gap-2 justify-center shadow-lg">
           <span>⚠️</span>
           <span>Offline Mode - Data may be outdated</span>
         </div>
@@ -1261,11 +1262,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
             {dashboardData?.volunteerProfile && (
-              <div className="bg-gradient-to-r from-sky-300 via-sky-200 to-amber-100 px-4 pt-4 pb-6 -mt-0.5">
+              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-4 pt-4 pb-6 -mt-0.5 shadow-xl">
                 <div className="flex items-center gap-4">
                   {/* Profile Picture */}
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/50 shadow-lg ring-2 ring-white/30">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg ring-2 ring-white/20">
                       {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
                         <img
                           src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
@@ -1273,24 +1274,24 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-xl font-bold">
+                        <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white text-xl font-bold">
                           {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white flex items-center justify-center shadow-md">
                       <CheckCircle className="w-3 h-3 text-white" />
                     </div>
                   </div>
 
                   {/* Welcome Text */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-slate-600 text-xs font-medium">Welcome back,</p>
-                    <h1 className="text-slate-800 text-lg font-bold truncate">
+                    <p className="text-white/80 text-xs font-medium">Welcome back,</p>
+                    <h1 className="text-white text-lg font-bold truncate drop-shadow-sm">
                       {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
                     </h1>
                     {dashboardData.volunteerProfile.professionalTitle && (
-                      <p className="text-slate-600 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
+                      <p className="text-white/70 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
                     )}
                   </div>
                 </div>
@@ -1298,15 +1299,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {/* Quick Stats Row */}
                 <div className="flex items-center gap-2 mt-4">
                   {dashboardData.volunteerProfile.weeklyAvailability && (
-                    <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <Clock className="h-3.5 w-3.5 text-slate-600" />
-                      <span className="text-slate-700 text-xs font-medium">{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
+                    <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                      <Clock className="h-3.5 w-3.5 text-white" />
+                      <span className="text-white text-xs font-semibold">{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
                     </div>
                   )}
                   {kpis.activeProjects > 0 && (
-                    <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <Briefcase className="h-3.5 w-3.5 text-slate-600" />
-                      <span className="text-slate-700 text-xs font-medium">{kpis.activeProjects} Active</span>
+                    <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                      <Briefcase className="h-3.5 w-3.5 text-white" />
+                      <span className="text-white text-xs font-semibold">{kpis.activeProjects} Active</span>
                     </div>
                   )}
                 </div>
@@ -1316,28 +1317,28 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             {/* Skills Section - Card style */}
             {dashboardData?.volunteerProfile?.skills && dashboardData.volunteerProfile.skills.length > 0 && (
               <div className="px-4 -mt-3">
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Award className="h-3.5 w-3.5 text-amber-500" />
+                <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-slate-700/50">
+                  <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Award className="h-3.5 w-3.5 text-amber-400" />
                     Your Skills
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {dashboardData.volunteerProfile.skills.slice(0, 5).map((skill: string, index: number) => (
                       <span
                         key={index}
-                        className="px-2.5 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[11px] font-medium rounded-lg shadow-sm"
+                        className="px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[11px] font-semibold rounded-lg shadow-md"
                       >
                         {skill}
                       </span>
                     ))}
                     {dashboardData.volunteerProfile.skills.length > 5 && (
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[11px] font-medium rounded-lg">
+                      <span className="px-2.5 py-1 bg-slate-600 text-white text-[11px] font-semibold rounded-lg border border-slate-500">
                         +{dashboardData.volunteerProfile.skills.length - 5} more
                       </span>
                     )}
                   </div>
                   {dashboardData.volunteerProfile.motivations && (
-                    <p className="text-[11px] text-slate-500 mt-3 italic border-t border-slate-100 pt-3">
+                    <p className="text-[11px] text-slate-200 mt-3 italic border-t border-slate-700/50 pt-3">
                       "{dashboardData.volunteerProfile.motivations}"
                     </p>
                   )}
@@ -1350,45 +1351,45 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               {/* Lives Impacted - Total people reached */}
               <button
                 onClick={() => setShowKpiModal('people')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg"
                 data-testid="kpi-lives-impacted"
               >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-rose-100 to-pink-100 rounded-xl flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-rose-600" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
+                  <Heart className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.livesImpacted}</div>
-                <div className="text-[10px] font-medium text-slate-500">Impacted</div>
-                <div className="text-[8px] text-slate-400">people</div>
+                <div className="text-xl font-bold text-white">{kpis.livesImpacted}</div>
+                <div className="text-[10px] font-semibold text-slate-200">Impacted</div>
+                <div className="text-[8px] text-rose-300">people</div>
               </button>
               {/* Impact Score */}
               <button
                 onClick={() => setShowAIUDetailsModal(true)}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm group"
+                className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg group"
                 data-testid="kpi-aiu-score"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Award className="w-4 h-4 text-amber-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                  <Award className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">
+                <div className="text-xl font-bold text-white">
                   {formatNumber(aiuSummary?.totalAiu || 0)}
                 </div>
-                <div className="text-[10px] font-medium text-slate-500">Impact Score</div>
-                <div className="text-[8px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
+                <div className="text-[10px] font-semibold text-slate-200">Impact Score</div>
+                <div className="text-[8px] text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
               </button>
               {/* Total Hours - Time contributed with verification status */}
               <button
                 onClick={() => setShowKpiModal('hours')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg"
                 data-testid="kpi-hours"
               >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
+                  <Clock className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.totalHours}</div>
-                <div className="text-[10px] font-medium text-slate-500">Hours</div>
+                <div className="text-xl font-bold text-white">{kpis.totalHours}</div>
+                <div className="text-[10px] font-semibold text-slate-200">Hours</div>
                 {kpis.verifiedHours > 0 && (
-                  <div className="text-[8px] text-emerald-600 font-medium flex items-center justify-center gap-0.5">
+                  <div className="text-[8px] text-emerald-300 font-semibold flex items-center justify-center gap-0.5">
                     <CheckCircle className="w-2.5 h-2.5" /> {kpis.verifiedHours} verified
                   </div>
                 )}
@@ -1396,14 +1397,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               {/* SDG Goals - Sustainable Development Goals contributed */}
               <button
                 onClick={() => setShowKpiModal('sdgs')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg"
                 data-testid="kpi-sdgs"
               >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <Target className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-md">
+                  <Target className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.sdgsContributed}</div>
-                <div className="text-[10px] font-medium text-slate-500">SDGs</div>
+                <div className="text-xl font-bold text-white">{kpis.sdgsContributed}</div>
+                <div className="text-[10px] font-semibold text-slate-200">SDGs</div>
               </button>
             </div>
 
@@ -1411,67 +1412,67 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             {sdgDistribution.length > 0 && (
               <div className="px-4 w-full max-w-full">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-white text-lg font-semibold flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-blue-400" />
                     SDG Impact Report
                   </h2>
-                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium border border-blue-100">
+                  <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full font-semibold border border-blue-500/30">
                     UN Aligned
                   </span>
                 </div>
 
                 {/* UN SDG Summary KPIs - Key Performance Indicators */}
-                <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3 w-full">
+                <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl mb-3 w-full">
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     {/* SDGs Committed (from profile) - User's commitment, not work done */}
                     <button
                       onClick={() => setShowKpiModal('sdgs')}
-                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
+                      className="text-center p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 transition-all active:scale-95 shadow-md border border-slate-600/50 cursor-pointer"
                     >
-                      <div className="text-2xl font-bold text-blue-600">{kpis.sdgsCommitted}</div>
-                      <div className="text-[9px] text-slate-600 font-medium">SDG Goals</div>
-                      <div className="text-[8px] text-blue-400 mt-0.5">Tap for details</div>
+                      <div className="text-2xl font-bold text-blue-300">{kpis.sdgsCommitted}</div>
+                      <div className="text-[9px] text-slate-200 font-semibold">SDG Goals</div>
+                      <div className="text-[8px] text-blue-300 mt-0.5">Tap for details</div>
                     </button>
                     {/* Total Hours - Clickable, use actual kpis.totalHours */}
                     <button
                       onClick={() => setShowKpiModal('hours')}
-                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
+                      className="text-center p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 transition-all active:scale-95 shadow-md border border-slate-600/50 cursor-pointer"
                     >
-                      <div className="text-2xl font-bold text-emerald-600">
+                      <div className="text-2xl font-bold text-emerald-300">
                         {kpis.totalHours}
                       </div>
-                      <div className="text-[9px] text-slate-600 font-medium">Hours</div>
-                      <div className="text-[8px] text-emerald-400 mt-0.5">Tap for details</div>
+                      <div className="text-[9px] text-slate-200 font-semibold">Hours</div>
+                      <div className="text-[8px] text-emerald-300 mt-0.5">Tap for details</div>
                     </button>
                     {/* Projects - Clickable, use actual kpis.totalProjects */}
                     <button
                       onClick={() => setShowKpiModal('projects')}
-                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
+                      className="text-center p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 transition-all active:scale-95 shadow-md border border-slate-600/50 cursor-pointer"
                     >
-                      <div className="text-2xl font-bold text-purple-600">
+                      <div className="text-2xl font-bold text-purple-300">
                         {kpis.totalProjects}
                       </div>
-                      <div className="text-[9px] text-slate-600 font-medium">Projects</div>
-                      <div className="text-[8px] text-purple-400 mt-0.5">Tap for details</div>
+                      <div className="text-[9px] text-slate-200 font-semibold">Projects</div>
+                      <div className="text-[8px] text-purple-300 mt-0.5">Tap for details</div>
                     </button>
                     {/* Impact Score - Clickable, using aiuSummary as single source of truth */}
                     <button
                       onClick={() => setShowAIUDetailsModal(true)}
-                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer group"
+                      className="text-center p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 transition-all active:scale-95 shadow-md border border-slate-600/50 cursor-pointer group"
                     >
-                      <div className="text-2xl font-bold text-amber-600">
+                      <div className="text-2xl font-bold text-amber-300">
                         {formatNumber(aiuSummary?.totalAiu)}
                       </div>
-                      <div className="text-[9px] text-slate-600 font-medium">Score</div>
-                      <div className="text-[8px] text-amber-400 mt-0.5">Tap for details</div>
+                      <div className="text-[9px] text-slate-200 font-semibold">Score</div>
+                      <div className="text-[8px] text-amber-300 mt-0.5">Tap for details</div>
                     </button>
                   </div>
 
                   {/* UN SDG Coverage Indicator - Shows committed SDGs (goals) vs contributed (work done) */}
-                  <div className="bg-white/70 rounded-lg p-2 mb-3">
+                  <div className="bg-slate-700/50 rounded-lg p-2 mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] text-slate-600 font-medium">SDG Commitments</span>
-                      <span className="text-[10px] text-blue-600 font-bold">
+                      <span className="text-[10px] text-slate-200 font-semibold">SDG Commitments</span>
+                      <span className="text-[10px] text-blue-300 font-bold">
                         {kpis.sdgsCommitted} of 17 Goals ({Math.round((kpis.sdgsCommitted / 17) * 100)}%)
                       </span>
                     </div>
@@ -1501,10 +1502,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 </div>
 
                 {/* Donut Chart with Center Stats */}
-                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm w-full">
+                <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl w-full">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600 text-xs font-medium">Hours Distribution by SDG</span>
-                    <span className="text-emerald-700 text-[10px] px-2 py-0.5 bg-emerald-50 rounded-full font-medium">
+                    <span className="text-slate-300 text-xs font-semibold">Hours Distribution by SDG</span>
+                    <span className="text-emerald-400 text-[10px] px-2 py-0.5 bg-emerald-500/20 rounded-full font-semibold border border-emerald-500/30">
                       Live Data
                     </span>
                   </div>
@@ -1543,7 +1544,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               const percentage = totalHours > 0 ? Math.round((data.value / totalHours) * 100) : 0;
                               return (
                                 <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 text-xs min-w-[180px] z-[100]">
-                                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200">
                                     <div
                                       className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
                                       style={{ backgroundColor: data.color }}
@@ -1551,22 +1552,22 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                       {data.sdg}
                                     </div>
                                     <div>
-                                      <div className="font-bold text-slate-800">SDG {data.sdg}</div>
-                                      <div className="text-slate-500 text-[10px]">{data.name}</div>
+                                      <div className="font-bold text-slate-900">SDG {data.sdg}</div>
+                                      <div className="text-slate-600 text-[10px]">{data.name}</div>
                                     </div>
                                   </div>
                                   <div className="space-y-1">
                                     <div className="flex justify-between">
-                                      <span className="text-slate-500">Hours:</span>
-                                      <span className="font-semibold text-slate-800">{data.value} hrs</span>
+                                      <span className="text-slate-600">Hours:</span>
+                                      <span className="font-semibold text-slate-900">{data.value} hrs</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-slate-500">Projects:</span>
-                                      <span className="font-semibold text-slate-800">{data.projectCount}</span>
+                                      <span className="text-slate-600">Projects:</span>
+                                      <span className="font-semibold text-slate-900">{data.projectCount}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-slate-500">Share:</span>
-                                      <span className="font-semibold text-blue-600">{percentage}%</span>
+                                      <span className="text-slate-600">Share:</span>
+                                      <span className="font-semibold text-blue-700">{percentage}%</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1579,11 +1580,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     </ResponsiveContainer>
                     {/* Center Label - Shows Average Completion Percentage */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
-                      <div className="text-center bg-white/90 rounded-full w-[90px] h-[90px] flex flex-col items-center justify-center shadow-sm">
-                        <div className="text-2xl font-bold text-emerald-600">
+                      <div className="text-center bg-slate-900/95 rounded-full w-[90px] h-[90px] flex flex-col items-center justify-center shadow-lg border border-slate-700/50">
+                        <div className="text-2xl font-bold text-emerald-400">
                           {kpis.totalTasks > 0 ? Math.round((kpis.completedTasks / kpis.totalTasks) * 100) : 0}%
                         </div>
-                        <div className="text-[9px] text-slate-500 leading-tight">Avg Completion</div>
+                        <div className="text-[9px] text-slate-200 leading-tight font-medium">Avg Completion</div>
                       </div>
                     </div>
                   </div>
@@ -1598,24 +1599,24 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <button
                           key={sdg.sdg}
                           onClick={() => setShowSdgModal(sdg.sdg)}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all text-left border border-slate-200 hover:border-slate-300 hover:shadow-md active:scale-98 cursor-pointer"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 transition-all text-left border border-slate-600/50 hover:border-slate-500/50 hover:shadow-lg active:scale-98 cursor-pointer"
                         >
                           <div
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm"
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md"
                             style={{ backgroundColor: sdg.color }}
                           >
                             {sdg.sdg}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-slate-800 font-semibold text-[11px] truncate">{sdg.name}</div>
+                            <div className="text-white font-semibold text-[11px] truncate">{sdg.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-slate-600 text-[10px] font-medium">{Math.round(sdg.value)} hrs</span>
-                              <span className="text-blue-600 text-[9px] bg-blue-50 px-1.5 py-0.5 rounded font-medium">{percentage}%</span>
+                              <span className="text-slate-300 text-[10px] font-semibold">{Math.round(sdg.value)} hrs</span>
+                              <span className="text-blue-300 text-[9px] bg-blue-500/20 px-1.5 py-0.5 rounded font-semibold">{percentage}%</span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-emerald-600 text-[9px]">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
+                              <span className="text-emerald-400 text-[9px] font-medium">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
                               {sdgAiu > 0 && (
-                                <span className="text-amber-600 text-[9px] bg-amber-50 px-1.5 py-0.5 rounded font-medium">
+                                <span className="text-amber-400 text-[9px] bg-amber-500/20 px-1.5 py-0.5 rounded font-semibold">
                                   {sdgAiu >= 1 ? formatNumber(sdgAiu) : sdgAiu.toFixed(1)} pts
                                 </span>
                               )}
@@ -1629,18 +1630,18 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   {sdgDistribution.length > 6 && (
                     <button
                       onClick={() => setShowKpiModal('sdgs')}
-                      className="w-full text-center mt-3 py-2 text-blue-600 text-xs font-medium hover:bg-blue-50 rounded-lg transition-colors"
+                      className="w-full text-center mt-3 py-2 text-blue-400 text-xs font-semibold hover:bg-blue-500/10 rounded-lg transition-colors"
                     >
                       View all {sdgDistribution.length} SDGs →
                     </button>
                   )}
 
                   {/* UN SDG Compliance Note */}
-                  <div className="mt-4 pt-3 border-t border-slate-100">
-                    <div className="flex items-start gap-2 text-[10px] text-slate-500">
-                      <Target className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div className="mt-4 pt-3 border-t border-slate-700/50">
+                    <div className="flex items-start gap-2 text-[10px] text-slate-300">
+                      <Target className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                       <p>
-                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. Impact Points are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
+                        <span className="font-semibold text-slate-200">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. Impact Points are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
                       </p>
                     </div>
                   </div>
@@ -1651,26 +1652,26 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             {/* Impact Over Time Chart */}
             {impactOverTimeData.length > 0 && (
               <div className="px-4">
-                <h2 className="text-slate-800 text-lg font-semibold mb-3">Impact Over Time</h2>
-                <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+                <h2 className="text-white text-lg font-semibold mb-3">Impact Over Time</h2>
+                <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-slate-500 text-sm">Volunteer Hours & Impact</span>
-                    <span className="text-emerald-700 text-xs px-2 py-1 bg-emerald-100 rounded font-medium">Live Data</span>
+                    <span className="text-slate-300 text-sm font-medium">Volunteer Hours & Impact</span>
+                    <span className="text-emerald-400 text-xs px-2 py-1 bg-emerald-500/20 rounded-full font-semibold border border-emerald-500/30">Live Data</span>
                   </div>
                   {impactOverTimeData.some(d => d.hours > 0) ? (
                     <>
                       <div className="flex flex-wrap gap-3 mb-2 text-xs">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#4CAF50]"></div>
-                          <span className="text-slate-500">Hours</span>
+                          <span className="text-slate-300">Hours</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#2563eb]"></div>
-                          <span className="text-slate-500">People Reached</span>
+                          <span className="text-slate-300">People Reached</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
-                          <span className="text-slate-500">Impact Points</span>
+                          <span className="text-slate-300">Impact Points</span>
                         </div>
                       </div>
                       <div className="h-40">
@@ -1706,7 +1707,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Recommended Projects */}
             <div className="px-4">
-              <h2 className="text-slate-800 text-lg font-semibold mb-3">Recommended Projects</h2>
+              <h2 className="text-white text-lg font-semibold mb-3">Recommended Projects</h2>
               <div className="space-y-3">
                 {recommendedProjects.map((project: any) => {
                   const matchData = project.matchData;
@@ -1717,17 +1718,17 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   return (
                     <div
                       key={project.id}
-                      className="w-full bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm"
+                      className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs text-slate-500">Match Score</span>
-                            <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-600 rounded font-semibold">
+                            <span className="text-xs text-slate-400">Match Score</span>
+                            <span className="text-xs px-2 py-0.5 bg-emerald-500/30 text-emerald-400 rounded font-bold">
                               {matchData.score}%
                             </span>
                           </div>
-                          <h3 className="text-slate-800 font-semibold text-sm">
+                          <h3 className="text-white font-semibold text-sm">
                             {project.name}
                           </h3>
                         </div>
@@ -1735,7 +1736,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           {projectSDGs.slice(0, 3).map((sdg: number) => (
                             <div
                               key={sdg}
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-md"
                               style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
                             >
                               {sdg}
@@ -1744,17 +1745,17 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         </div>
                       </div>
 
-                      <div className="text-xs text-slate-500 mb-2">{organization}</div>
+                      <div className="text-xs text-slate-400 mb-2">{organization}</div>
 
                       {/* Description */}
-                      <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+                      <p className="text-xs text-slate-300 mb-2 line-clamp-2">
                         {project.description || 'Join this impactful project to make a difference in the community.'}
                       </p>
 
                       {/* Match Reasons */}
                       <div className="mb-2 space-y-1">
                         {matchData.reasons.slice(0, 2).map((reason: string, idx: number) => (
-                          <div key={idx} className="flex items-center gap-1 text-xs text-emerald-700">
+                          <div key={idx} className="flex items-center gap-1 text-xs text-emerald-400">
                             <CheckCircle className="w-3 h-3" />
                             <span>{reason}</span>
                           </div>
@@ -1763,14 +1764,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                       {/* Progress Bar */}
                       <div className="mb-3">
-                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <div className="flex justify-between text-xs text-slate-400 mb-1">
                           <span>Progress</span>
                           <span>{completion}%</span>
                         </div>
-                        <Progress value={completion} className="h-1.5 bg-slate-200" />
+                        <Progress value={completion} className="h-1.5 bg-slate-700" />
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                      <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           <span>{project.ongoingHoursPerWeek || 5} hrs/week</span>
@@ -1785,9 +1786,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="flex gap-2">
                         <Button
                           onClick={() => navigate(`/projects/${project.id}/pwa`)}
-                          variant="outline"
                           size="sm"
-                          className={hasApplied(project.id) ? "w-full text-xs h-8" : "flex-1 text-xs h-8"}
+                          className={hasApplied(project.id) ? "w-full text-xs h-8 bg-slate-700 hover:bg-slate-600 text-white font-semibold border border-slate-600" : "flex-1 text-xs h-8 bg-slate-700 hover:bg-slate-600 text-white font-semibold border border-slate-600"}
                         >
                           View Details
                         </Button>
@@ -1799,13 +1799,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             }}
                             disabled={applyMutation.isPending}
                             size="sm"
-                            className="flex-1 text-xs h-8 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50"
+                            className="flex-1 text-xs h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white disabled:opacity-50 font-semibold"
                           >
                             {applyMutation.isPending ? "Applying..." : "Apply Now"}
                           </Button>
                         )}
                         {hasApplied(project.id) && (
-                          <div className="flex-1 text-xs h-8 bg-emerald-600/30 text-emerald-300 rounded-md flex items-center justify-center gap-1">
+                          <div className="flex-1 text-xs h-8 bg-emerald-500/20 text-emerald-400 rounded-md flex items-center justify-center gap-1 font-semibold border border-emerald-500/30">
                             <CheckCircle className="w-3 h-3" />
                             <span>Applied</span>
                           </div>
@@ -1826,6 +1826,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </Button>
             </div>
 
+            {/* Impact Log History - Your Impact Wallet */}
+            <div className="px-4">
+              <ImpactLogHistory userId={parseInt(userId)} limit={5} />
+            </div>
+
             {/* Contribution Badges Section */}
             <div className="px-4">
               <ContributionBadges userId={userId} />
@@ -1835,38 +1840,38 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
         {activeTab === 'projects' && (
           <div className="space-y-4 p-4">
-            <h1 className="text-slate-800 text-xl font-bold">Projects Completed</h1>
-            
+            <h1 className="text-white text-xl font-bold">Projects Completed</h1>
+
             {/* Stats Cards - Single Row - Now Interactive */}
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setShowProjectStatsModal('active')}
-                className="bg-[#d97706] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 text-white text-center hover:brightness-110 transition-all active:scale-95 shadow-lg"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.activeProjects}</div>
-                <div className="text-xs font-medium">Active</div>
+                <div className="text-xs font-semibold">Active</div>
                 <CheckCircle className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
               <button
                 onClick={() => setShowProjectStatsModal('total')}
-                className="bg-[#059669] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 text-white text-center hover:brightness-110 transition-all active:scale-95 shadow-lg"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.totalProjects}</div>
-                <div className="text-xs font-medium">Total</div>
+                <div className="text-xs font-semibold">Total</div>
                 <Briefcase className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
               <button
                 onClick={() => setShowProjectStatsModal('sdgs')}
-                className="bg-[#be185d] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-3 text-white text-center hover:brightness-110 transition-all active:scale-95 shadow-lg"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.sdgsContributed}</div>
-                <div className="text-xs font-medium">SDG Impact</div>
+                <div className="text-xs font-semibold">SDG Impact</div>
                 <Target className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
             </div>
 
             {/* All Projects List */}
-            <h2 className="text-slate-800 text-lg font-semibold">All Projects</h2>
+            <h2 className="text-white text-lg font-semibold">All Projects</h2>
             <div className="space-y-3">
               {projects.map((project: any) => {
                 const matchScore = calculateMatchScore(project);
@@ -1874,7 +1879,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 const completion = project.completionPercentage || 0;
                 const normalizedStatus = (project.status || 'active').toLowerCase();
                 const statusColor = normalizedStatus === 'active' ? 'bg-emerald-500' :
-                                   normalizedStatus === 'completed' ? 'bg-blue-500' : 'bg-gray-500';
+                                   normalizedStatus === 'completed' ? 'bg-blue-500' : 'bg-slate-600';
                 const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 
                 return (
@@ -1885,13 +1890,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       e.stopPropagation();
                       navigate(`/projects/${project.id}/pwa`);
                     }}
-                    className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm hover:border-gray-500 transition-all cursor-pointer active:scale-95"
+                    className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl hover:border-slate-500 transition-all cursor-pointer active:scale-95"
                     data-testid={`project-card-${project.id}`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                        <span className="text-xs text-slate-500">{displayStatus}</span>
+                        <span className="text-xs text-slate-400">{displayStatus}</span>
                       </div>
                       <div className="flex gap-1">
                         {projectSDGs.slice(0, 3).map((sdg: number) => (
@@ -1906,18 +1911,18 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                     </div>
                     
-                    <h3 className="text-slate-800 font-semibold mb-1">{project.name}</h3>
-                    <p className="text-xs text-slate-500 mb-2 line-clamp-2">{project.description}</p>
-                    
+                    <h3 className="text-white font-semibold mb-1">{project.name}</h3>
+                    <p className="text-xs text-slate-400 mb-2 line-clamp-2">{project.description}</p>
+
                     <div className="mb-2">
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                      <div className="flex justify-between text-xs text-slate-400 mb-1">
                         <span>Completion</span>
                         <span>{completion}%</span>
                       </div>
-                      <Progress value={completion} className="h-2 bg-slate-200" />
+                      <Progress value={completion} className="h-2 bg-slate-700" />
                     </div>
-                    
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
+
+                    <div className="flex items-center gap-3 text-xs text-slate-400">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-3 h-3" />
                         <span>{formatNumber(getProjectAiu(project.id))} Impact Points</span>
@@ -1936,12 +1941,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
         {activeTab === 'potential' && (
           <div className="space-y-4 p-4">
-            <h1 className="text-slate-800 text-xl font-bold flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-amber-600" />
+            <h1 className="text-white text-xl font-bold flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-amber-400" />
               AI Insights Dashboard
             </h1>
 
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-400 text-sm">
               Real-time AI analysis of your volunteer profile, impact metrics, and personalized growth recommendations.
             </p>
 
@@ -1999,13 +2004,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               })()}
 
               {/* Skills Analysis with Expandable View */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-amber-600" />
-                    <span className="text-slate-800 font-semibold">Skills Intelligence</span>
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <span className="text-white font-semibold">Skills Intelligence</span>
                   </div>
-                  <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{kpis.skills} Active</span>
+                  <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/30">{kpis.skills} Active</span>
                 </div>
 
                 {/* Skills Grid - Show first 4 */}
@@ -2016,19 +2021,19 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <button
                         key={idx}
                         onClick={() => setSelectedSkill(skill)}
-                        className="text-left bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-100/50 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+                        className="text-left bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-lg p-2 border border-amber-500/30 cursor-pointer hover:shadow-lg hover:bg-amber-500/30 active:scale-[0.98] transition-all"
                       >
-                        <div className="text-slate-800 text-xs font-semibold truncate">{skill}</div>
+                        <div className="text-white text-xs font-semibold truncate">{skill}</div>
                         <div className="flex items-center justify-between mt-1 text-[10px]">
-                          <span className="text-emerald-700">{stats.matchingOpps} opps</span>
-                          <span className="text-blue-600">{stats.projects} projects</span>
+                          <span className="text-emerald-400">{stats.matchingOpps} opps</span>
+                          <span className="text-blue-400">{stats.projects} projects</span>
                         </div>
-                        <div className="text-[9px] text-slate-400 mt-0.5">Tap for insights</div>
+                        <div className="text-[9px] text-slate-500 mt-0.5">Tap for insights</div>
                       </button>
                     );
                   }) || (
-                    <div className="col-span-2 text-slate-500 text-sm text-center py-4">
-                      <Award className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    <div className="col-span-2 text-slate-400 text-sm text-center py-4">
+                      <Award className="w-8 h-8 mx-auto mb-2 text-slate-500" />
                       Add skills to unlock AI-powered skill insights
                     </div>
                   )}
@@ -2041,14 +2046,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
                       View all {volunteerProfile.skills.length} skills
                     </summary>
-                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-600">
                       {volunteerProfile?.skills?.slice(4).map((skill: string, idx: number) => {
                         const stats = skillAnalytics[skill] || { matchingOpps: 0, demandScore: 0, projects: 0 };
                         return (
                           <button
                             key={idx + 4}
                             onClick={() => setSelectedSkill(skill)}
-                            className="text-left bg-slate-50 rounded-lg p-2 border border-slate-100 hover:shadow-md active:scale-[0.98] transition-all"
+                            className="text-left bg-slate-800/60 rounded-lg p-2 border border-slate-600 hover:shadow-md active:scale-[0.98] transition-all"
                           >
                             <div className="text-slate-700 text-xs font-medium truncate">{skill}</div>
                             <div className="flex items-center justify-between mt-1 text-[10px]">
@@ -2065,10 +2070,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
 
               {/* AI-Powered Market Insights */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                  <span className="text-slate-800 font-semibold">Market Intelligence</span>
+                  <TrendingUp className="w-5 h-5 text-white" />
+                  <span className="text-white font-semibold">Market Intelligence</span>
                   <span className="ml-auto text-[10px] text-slate-400">Updated today</span>
                 </div>
                 <div className="space-y-3">
@@ -2156,7 +2161,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-slate-400">
                       {highDemandSkillsAnalysis.userMatchingSkills.length >= 3
                         ? `Your skills in ${highDemandSkillsAnalysis.userMatchingSkills.slice(0, 2).map(s => s.skill).join(' and ')} match ${highDemandSkillsAnalysis.userMatchingSkills.reduce((sum, s) => sum + s.count, 0)} open opportunities. You're well-positioned for high-impact projects!`
                         : highDemandSkillsAnalysis.userMatchingSkills.length >= 1
@@ -2170,17 +2175,17 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
 
               {/* SDG Impact Forecast */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center gap-2 mb-3">
-                  <Target className="w-5 h-5 text-emerald-600" />
-                  <span className="text-slate-800 font-semibold">Impact Forecast</span>
-                  <span className="ml-auto text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">AI-Powered</span>
+                  <Target className="w-5 h-5 text-white" />
+                  <span className="text-white font-semibold">Impact Forecast</span>
+                  <span className="ml-auto text-[10px] text-slate-400 bg-slate-700/60 px-2 py-0.5 rounded-full">AI-Powered</span>
                 </div>
                 <div className="space-y-2">
                   {sdgDistribution.slice(0, 3).map((sdg) => {
                     const forecast = calculateSDGForecastConfidence(sdg);
                     return (
-                      <div key={sdg.sdg} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div key={sdg.sdg} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/60 transition-colors">
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
                           style={{ backgroundColor: sdg.color }}
@@ -2188,9 +2193,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           {sdg.sdg}
                         </div>
                         <div className="flex-1">
-                          <div className="text-slate-800 text-sm font-medium">{sdg.name}</div>
+                          <div className="text-white text-sm font-medium">{sdg.name}</div>
                           <div className="flex items-center gap-2">
-                            <span className="text-slate-500 text-xs">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
+                            <span className="text-slate-400 text-xs">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
                             <span className="text-emerald-600 text-xs font-medium">+{forecast.projectedGrowth}% potential</span>
                           </div>
                         </div>
@@ -2211,10 +2216,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
 
               {/* Growth Journey */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center gap-2 mb-3">
-                  <Zap className="w-5 h-5 text-amber-600" />
-                  <span className="text-slate-800 font-semibold">Your Growth Journey</span>
+                  <Zap className="w-5 h-5 text-white" />
+                  <span className="text-white font-semibold">Your Growth Journey</span>
                 </div>
                 <div className="relative">
                   {/* Progress Line */}
@@ -2233,10 +2238,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <button
                           key={idx}
                           onClick={() => setSelectedMilestone(idx)}
-                          className="flex gap-3 relative w-full text-left hover:bg-slate-50/50 rounded-lg p-1 -m-1 transition-colors active:scale-[0.99]"
+                          className="flex gap-3 relative w-full text-left hover:bg-slate-700/50 rounded-lg p-1 -m-1 transition-colors active:scale-[0.99]"
                         >
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 flex-shrink-0 ${
-                            isComplete ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'
+                            isComplete ? 'bg-emerald-500 text-white' : 'bg-slate-700/60 text-slate-400'
                           }`}>
                             {isComplete ? <CheckCircle className="w-4 h-4" /> : milestone.icon}
                           </div>
@@ -2247,9 +2252,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               </span>
                               {isComplete && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Achieved!</span>}
                             </div>
-                            <div className="text-xs text-slate-500">{milestone.desc}</div>
+                            <div className="text-xs text-slate-400">{milestone.desc}</div>
                             <div className="flex items-center gap-2 mt-1">
-                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full"
                                   style={{
@@ -2299,13 +2304,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </Button>
 
               {/* Discover Opportunities Section */}
-              <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="mt-6 pt-6 border-t border-slate-700">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-slate-800 text-lg font-bold flex items-center gap-2">
-                    <Search className="w-5 h-5 text-emerald-600" />
+                  <h2 className="text-white text-lg font-bold flex items-center gap-2">
+                    <Search className="w-5 h-5 text-emerald-400" />
                     Discover Opportunities
                   </h2>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-400">
                     {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length} matches
                   </span>
                 </div>
@@ -2316,9 +2321,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <p className="text-slate-500 text-sm">Finding opportunities...</p>
                   </div>
                 ) : discoverOpportunities.length === 0 ? (
-                  <div className="bg-white rounded-xl p-6 text-center border border-amber-200/60">
+                  <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-6 text-center border border-slate-700/50 shadow-xl">
                     <Search className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                    <p className="text-slate-600">No opportunities found</p>
+                    <p className="text-slate-400">No opportunities found</p>
                     <p className="text-slate-400 text-sm mt-1">Check back later for new matches</p>
                   </div>
                 ) : (
@@ -2331,13 +2336,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         const matchScore = opp.matchScore ?? 0;
                         const matchColor = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
                                           matchScore >= 60 ? 'from-blue-500 to-indigo-500' :
-                                          matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-gray-400 to-gray-500';
+                                          matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-slate-500 to-slate-600';
                         const hasApplied = hasAppliedToOpportunity(opp.id);
 
                         return (
                           <div
                             key={opp.id}
-                            className="bg-white rounded-xl border border-amber-200/60 overflow-hidden shadow-sm"
+                            className="bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-xl"
                           >
                             {/* Match Score Header */}
                             <div className={`bg-gradient-to-r ${matchColor} px-4 py-2 flex items-center justify-between`}>
@@ -2357,9 +2362,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             </div>
 
                             <div className="p-4">
-                              <h3 className="text-slate-800 font-semibold text-sm mb-1">{opp.title}</h3>
+                              <h3 className="text-white font-semibold text-sm mb-1">{opp.title}</h3>
                               {opp.organizationName && (
-                                <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
+                                <div className="flex items-center gap-1 text-slate-400 text-xs mb-2">
                                   <Building2 className="w-3 h-3" />
                                   <span>{opp.organizationName}</span>
                                 </div>
@@ -2378,7 +2383,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                     </div>
                                   ))}
                                   {opp.sdgGoals.length > 4 && (
-                                    <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center text-white text-[9px]">
+                                    <div className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center text-white text-[9px]">
                                       +{opp.sdgGoals.length - 4}
                                     </div>
                                   )}
@@ -2420,7 +2425,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                 }}
                                 disabled={hasApplied}
                                 size="sm"
-                                className={`w-full ${hasApplied ? 'bg-gray-500' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'} text-white font-medium text-xs`}
+                                className={`w-full ${hasApplied ? 'bg-slate-600' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'} text-white font-semibold text-xs`}
                               >
                                 {hasApplied ? "Already Applied" : "View & Apply"}
                               </Button>
@@ -2433,8 +2438,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length > 5 && (
                       <Button
                         onClick={() => navigate('/discover-opportunities/pwa')}
-                        variant="outline"
-                        className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold"
                       >
                         View All {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length} Opportunities
                       </Button>
@@ -2449,7 +2453,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         {activeTab === 'impacts' && (
           <div className="space-y-4">
             {/* Gradient Header */}
-            <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6 -mt-0.5">
+            <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6 -mt-0.5 shadow-xl">
               <div className="flex items-center gap-4">
                 {/* Profile Picture */}
                 <div className="relative">
@@ -2487,7 +2491,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             <div className="space-y-4 p-4">
               {/* Dashboard Title with Time Filter */}
               <div className="flex items-center justify-between">
-                <h2 className="text-slate-800 text-xl font-bold">Your Impact</h2>
+                <h2 className="text-white text-xl font-bold">Your Impact</h2>
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4 text-gray-500" />
                 <Select value={timeFilter} onValueChange={(value: "all" | "month" | "quarter" | "year") => setTimeFilter(value)}>
@@ -2506,10 +2510,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Committed SDGs with UN Icons - Interactive Buttons */}
             {kpis.committedSdgs.length > 0 && (
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-slate-800 font-semibold text-sm">Your SDG Commitments</h3>
-                  <span className="text-xs text-slate-500">{kpis.committedSdgs.length} goals</span>
+                  <h3 className="text-white font-semibold text-sm">Your SDG Commitments</h3>
+                  <span className="text-xs text-slate-400">{kpis.committedSdgs.length} goals</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {kpis.committedSdgs.map((sdgNum: number) => {
@@ -2546,14 +2550,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   })}
                 </div>
                 {/* Progress indicator */}
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                <div className="mt-3 pt-3 border-t border-slate-600">
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>Progress</span>
                     <span className="font-medium">{kpis.alignedSdgs.length}/{kpis.committedSdgs.length} active</span>
                   </div>
                   <Progress
                     value={(kpis.alignedSdgs.length / kpis.committedSdgs.length) * 100}
-                    className="h-1.5 bg-slate-200"
+                    className="h-1.5 bg-slate-700"
                   />
                 </div>
               </div>
@@ -2642,41 +2646,41 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Project Overview Section - Interactive Cards */}
             <div>
-              <h2 className="text-slate-800 text-lg font-semibold mb-3">Project Overview</h2>
+              <h2 className="text-white text-lg font-semibold mb-3">Project Overview</h2>
               <div className="grid grid-cols-2 gap-3">
                 {/* Active Projects - Clickable */}
                 <button
                   onClick={() => setShowProjectStatsModal('active')}
-                  className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm text-left transition-all hover:shadow-md hover:border-emerald-300 active:scale-[0.98]"
+                  className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl text-left transition-all hover:shadow-md hover:border-emerald-300 active:scale-[0.98]"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-sm mb-1">
+                  <div className="flex items-center justify-between text-slate-300 text-sm mb-1">
                     <span>Active Projects</span>
-                    <Briefcase className="w-4 h-4 text-emerald-500" />
+                    <Briefcase className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-emerald-600 text-4xl font-bold">{kpis.activeProjects}</span>
+                    <span className="text-emerald-400 text-4xl font-bold">{kpis.activeProjects}</span>
                     <div className="flex-1">
-                      <Progress value={(kpis.activeProjects / Math.max(kpis.totalProjects, 1)) * 100} className="h-2 bg-slate-200" />
+                      <Progress value={(kpis.activeProjects / Math.max(kpis.totalProjects, 1)) * 100} className="h-2 bg-slate-700" />
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1">Tap to view details</div>
+                  <div className="text-[10px] text-slate-300 mt-1">Tap to view details</div>
                 </button>
                 {/* Total Projects - Clickable */}
                 <button
                   onClick={() => setShowProjectStatsModal('total')}
-                  className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm text-left transition-all hover:shadow-md hover:border-blue-300 active:scale-[0.98]"
+                  className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl text-left transition-all hover:shadow-md hover:border-blue-300 active:scale-[0.98]"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-sm mb-1">
+                  <div className="flex items-center justify-between text-slate-300 text-sm mb-1">
                     <span>Total Projects</span>
-                    <Building2 className="w-4 h-4 text-blue-500" />
+                    <Building2 className="w-4 h-4 text-blue-400" />
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-blue-600 text-4xl font-bold">{kpis.totalProjects}</span>
-                    <div className="flex flex-col text-xs text-slate-500">
+                    <span className="text-blue-400 text-4xl font-bold">{kpis.totalProjects}</span>
+                    <div className="flex flex-col text-xs text-slate-300">
                       <span>{kpis.projectsCompleted} done</span>
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1">Tap to view all</div>
+                  <div className="text-[10px] text-slate-300 mt-1">Tap to view all</div>
                 </button>
               </div>
               {/* Secondary metrics row */}
@@ -2686,8 +2690,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   onClick={() => setActiveTab('projects')}
                   className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200/60 text-left transition-all hover:shadow-sm active:scale-[0.98]"
                 >
-                  <div className="text-amber-600 text-2xl font-bold">{pendingApplicationsCount}</div>
-                  <div className="text-[10px] text-slate-600">Pending Apps</div>
+                  <div className="text-amber-700 text-2xl font-bold">{pendingApplicationsCount}</div>
+                  <div className="text-[10px] text-amber-800/70 font-medium">Pending Apps</div>
                   {pendingApplicationsCount > 0 && (
                     <div className="w-2 h-2 rounded-full bg-amber-500 mt-1 animate-pulse"></div>
                   )}
@@ -2697,16 +2701,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   onClick={() => setShowKpiModal('tasks')}
                   className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200/60 text-left transition-all hover:shadow-sm active:scale-[0.98]"
                 >
-                  <div className="text-emerald-600 text-2xl font-bold">{kpis.completedTasks}</div>
-                  <div className="text-[10px] text-slate-600">Tasks Done</div>
+                  <div className="text-emerald-700 text-2xl font-bold">{kpis.completedTasks}</div>
+                  <div className="text-[10px] text-emerald-800/70 font-medium">Tasks Done</div>
                 </button>
                 {/* SDGs Contributed */}
                 <button
                   onClick={() => setShowProjectStatsModal('sdgs')}
                   className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200/60 text-left transition-all hover:shadow-sm active:scale-[0.98]"
                 >
-                  <div className="text-purple-600 text-2xl font-bold">{kpis.sdgsContributed}</div>
-                  <div className="text-[10px] text-slate-600">SDGs Active</div>
+                  <div className="text-purple-700 text-2xl font-bold">{kpis.sdgsContributed}</div>
+                  <div className="text-[10px] text-purple-800/70 font-medium">SDGs Active</div>
                 </button>
               </div>
             </div>
@@ -2714,16 +2718,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             {/* Your Top SDGs - Enhanced Bar Chart with Real Data */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-slate-800 text-lg font-semibold">Your Top SDGs</h2>
-                <span className="text-xs text-slate-500">
+                <h2 className="text-white text-lg font-semibold">Your Top SDGs</h2>
+                <span className="text-xs text-slate-400">
                   {filteredSdgDistribution.length} SDGs • {timeFilter === 'all' ? 'All time' : timeFilter === 'month' ? 'This month' : timeFilter === 'quarter' ? 'This quarter' : 'This year'}
                 </span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 {filteredSdgDistribution.length > 0 ? (
                   <>
                     {/* Summary stats */}
-                    <div className="flex items-center gap-4 mb-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-4 mb-3 pb-3 border-b border-slate-600">
                       <div className="text-center">
                         <div className="text-lg font-bold text-emerald-600">{Math.round(filteredSdgDistribution.reduce((sum, s) => sum + s.value, 0))}</div>
                         <div className="text-[10px] text-slate-500">Total Hours</div>
@@ -2770,12 +2774,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </ResponsiveContainer>
                     </div>
                     {/* Interactive Legend with UN Icons */}
-                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-200">
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-700">
                       {filteredSdgDistribution.slice(0, 4).map((sdg) => (
                         <button
                           key={sdg.sdg}
                           onClick={() => setShowSdgModal(sdg.sdg)}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left"
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/60 transition-colors text-left"
                         >
                           <img
                             src={getSDGIcon(sdg.sdg)}
@@ -2813,22 +2817,22 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Impact Timeline */}
             <div>
-              <h2 className="text-slate-800 text-lg font-semibold mb-3">Impact Over Time</h2>
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <h2 className="text-white text-lg font-semibold mb-3">Impact Over Time</h2>
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 {impactOverTimeData.some(d => d.hours > 0) ? (
                   <>
                     <div className="flex flex-wrap gap-3 mb-2 text-xs">
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#4CAF50]"></div>
-                        <span className="text-slate-600">Hours</span>
+                        <span className="text-slate-400">Hours</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#2563eb]"></div>
-                        <span className="text-slate-600">People Reached</span>
+                        <span className="text-slate-400">People Reached</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
-                        <span className="text-slate-600">Impact Points</span>
+                        <span className="text-slate-400">Impact Points</span>
                       </div>
                     </div>
                     <div className="h-32" style={{ isolation: 'isolate' }}>
@@ -2905,13 +2909,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
 
             {/* Tab Switcher */}
-            <div className="flex bg-slate-100 rounded-xl p-1">
+            <div className="flex bg-slate-800/90 backdrop-blur-sm rounded-xl p-1 border border-slate-700/50">
               <button
                 onClick={() => setLogFormTab("activity")}
-                className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                   logFormTab === "activity"
-                    ? "bg-white text-emerald-600 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
                 }`}
               >
                 <Clock className="w-4 h-4" />
@@ -2919,10 +2923,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </button>
               <button
                 onClick={() => setLogFormTab("impact")}
-                className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                   logFormTab === "impact"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
                 }`}
               >
                 <Users className="w-4 h-4" />
@@ -2932,10 +2936,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Activity Form */}
             {logFormTab === "activity" && (
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl space-y-4">
                 {/* Project Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Project *
                   </label>
                   <select
@@ -2944,7 +2948,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       setLogActivityProjectId(e.target.value);
                       setLogActivityTaskId("");
                     }}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <option value="">Select a project</option>
                     {projects.map((project: any) => (
@@ -2958,13 +2962,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {/* Task Selection (Optional) */}
                 {logActivityProjectId && logActivityProjectTasks.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">
                       Task (Optional)
                     </label>
                     <select
                       value={logActivityTaskId}
                       onChange={(e) => setLogActivityTaskId(e.target.value)}
-                      className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     >
                       <option value="">Select a task</option>
                       {logActivityProjectTasks.map((task: any) => (
@@ -2978,20 +2982,20 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Date */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Date *
                   </label>
                   <input
                     type="date"
                     value={logActivityDate}
                     onChange={(e) => setLogActivityDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   />
                 </div>
 
                 {/* Hours */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Hours *
                   </label>
                   <input
@@ -3002,19 +3006,19 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     value={logActivityHours}
                     onChange={(e) => setLogActivityHours(e.target.value)}
                     placeholder="e.g., 2.5"
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-400"
                   />
                 </div>
 
                 {/* Activity Type */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Activity Type
                   </label>
                   <select
                     value={logActivityType}
                     onChange={(e) => setLogActivityType(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <option value="volunteering">Volunteering</option>
                     <option value="training">Training</option>
@@ -3027,7 +3031,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Description (Optional)
                   </label>
                   <textarea
@@ -3035,7 +3039,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     onChange={(e) => setLogActivityDescription(e.target.value)}
                     placeholder="Describe what you did..."
                     rows={3}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none placeholder-slate-400"
                   />
                 </div>
 
@@ -3063,10 +3067,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Impact Form */}
             {logFormTab === "impact" && (
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl space-y-4">
                 {/* Project Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Project *
                   </label>
                   <select
@@ -3075,7 +3079,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       setImpactProjectId(e.target.value);
                       setImpactTaskId("");
                     }}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select a project</option>
                     {projects.map((project: any) => (
@@ -3089,13 +3093,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {/* Task Selection (Optional) */}
                 {impactProjectId && impactProjectTasks.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">
                       Task (Optional)
                     </label>
                     <select
                       value={impactTaskId}
                       onChange={(e) => setImpactTaskId(e.target.value)}
-                      className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select a task</option>
                       {impactProjectTasks.map((task: any) => (
@@ -3109,20 +3113,20 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Date */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Date *
                   </label>
                   <input
                     type="date"
                     value={impactDate}
                     onChange={(e) => setImpactDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 {/* People Reached */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     People Reached / Lives Impacted *
                   </label>
                   <input
@@ -3131,19 +3135,19 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     value={peopleReached}
                     onChange={(e) => setPeopleReached(e.target.value)}
                     placeholder="e.g., 50"
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400"
                   />
                 </div>
 
                 {/* Impact Category */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Impact Category
                   </label>
                   <select
                     value={impactCategory}
                     onChange={(e) => setImpactCategory(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="direct">Direct (Individual)</option>
                     <option value="community">Community (Shared)</option>
@@ -3153,7 +3157,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">
                     Impact Description (Optional)
                   </label>
                   <textarea
@@ -3161,7 +3165,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     onChange={(e) => setImpactDescription(e.target.value)}
                     placeholder="Describe the impact you made..."
                     rows={3}
-                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full p-3 border border-slate-600 rounded-lg text-white bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400"
                   />
                 </div>
 
@@ -3194,8 +3198,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           <div className="p-4 space-y-4 pb-4">
             {/* Header with Create Story Button */}
             <div className="flex items-center justify-between">
-              <h2 className="text-slate-800 text-lg font-bold flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-purple-600" />
+              <h2 className="text-white text-lg font-bold flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-white" />
                 Volunteer Stories
               </h2>
               <Button
@@ -3208,8 +3212,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
 
             {/* My Stories Section */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-purple-600" />
                 My Stories ({volunteerStories.length})
               </h3>
@@ -3217,7 +3221,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               {loadingStories ? (
                 <div className="space-y-3">
                   {[1, 2].map((i) => (
-                    <div key={i} className="animate-pulse bg-slate-100 rounded-lg h-24"></div>
+                    <div key={i} className="animate-pulse bg-slate-700/60 rounded-lg h-24"></div>
                   ))}
                 </div>
               ) : volunteerStories.length > 0 ? (
@@ -3226,7 +3230,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div
                       key={story.id}
                       onClick={() => navigate(`/stories/${story.id}`)}
-                      className="bg-slate-50 rounded-lg p-3 cursor-pointer hover:bg-slate-100 transition-colors border border-slate-200"
+                      className="bg-slate-800/60 rounded-lg p-3 cursor-pointer hover:bg-slate-700/60 transition-colors border border-slate-700"
                       data-testid={`card-story-${story.id}`}
                     >
                       <div className="flex gap-3">
@@ -3240,8 +3244,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-slate-800 font-medium text-sm truncate">{story.title}</h4>
-                          <p className="text-slate-500 text-xs line-clamp-2 mt-1">{story.content?.substring(0, 80)}...</p>
+                          <h4 className="text-white font-medium text-sm truncate">{story.title}</h4>
+                          <p className="text-slate-400 text-xs line-clamp-2 mt-1">{story.content?.substring(0, 80)}...</p>
                           <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
@@ -3269,8 +3273,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <p className="text-slate-400 text-xs mt-1">Share your volunteer experience!</p>
                   <Button
                     onClick={() => navigate('/create-story')}
-                    variant="outline"
-                    className="mt-3 text-purple-600 border-purple-300"
+                    className="mt-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold"
                     data-testid="button-create-first-story"
                   >
                     Create Your First Story
@@ -3290,8 +3293,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
 
             {/* Featured Stories Section */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 Featured Stories
               </h3>
@@ -3316,8 +3319,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-slate-800 font-medium text-sm truncate">{story.title}</h4>
-                          <p className="text-slate-600 text-xs mt-1">{story.authorName || 'Anonymous Volunteer'}</p>
+                          <h4 className="text-white font-medium text-sm truncate">{story.title}</h4>
+                          <p className="text-slate-400 text-xs mt-1">{story.authorName || 'Anonymous Volunteer'}</p>
                           <div className="flex items-center gap-2 mt-2">
                             {story.sdgGoals?.slice(0, 3).map((sdg: number) => (
                               <div
@@ -3375,7 +3378,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   {(volunteerProfile?.volunteer_name || user?.displayName || 'V').charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-slate-800 text-xl font-bold mt-3">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'}</h2>
+              <h2 className="text-white text-xl font-bold mt-3">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'}</h2>
               <p className="text-slate-500 text-sm">{user?.email}</p>
               {volunteerProfile?.professional_title && (
                 <p className="text-emerald-700 text-sm mt-1 font-medium">{volunteerProfile.professional_title}</p>
@@ -3384,60 +3387,60 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm">
-                <div className="text-xl font-bold text-slate-800">{formatNumber(kpis.totalHours)}</div>
-                <div className="text-xs text-slate-500">Hours</div>
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50 shadow-xl">
+                <div className="text-xl font-bold text-white">{formatNumber(kpis.totalHours)}</div>
+                <div className="text-xs text-slate-400">Hours</div>
               </div>
-              <div className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm">
-                <div className="text-xl font-bold text-slate-800">{kpis.totalProjects}</div>
-                <div className="text-xs text-slate-500">Projects</div>
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50 shadow-xl">
+                <div className="text-xl font-bold text-white">{kpis.totalProjects}</div>
+                <div className="text-xs text-slate-400">Projects</div>
               </div>
-              <div className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm">
-                <div className="text-xl font-bold text-slate-800">{kpis.sdgsContributed}</div>
-                <div className="text-xs text-slate-500">SDGs</div>
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50 shadow-xl">
+                <div className="text-xl font-bold text-white">{kpis.sdgsContributed}</div>
+                <div className="text-xs text-slate-400">SDGs</div>
               </div>
             </div>
 
             {/* Location & Availability */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 Location & Availability
               </h3>
               <div className="space-y-2 text-sm">
                 {(volunteerProfile?.location || user?.location) && (
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <MapPin className="w-4 h-4 text-slate-500" />
                     <span>{volunteerProfile?.location || user?.location}</span>
                   </div>
                 )}
                 {volunteerProfile?.weekly_availability && (
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Clock className="w-4 h-4 text-slate-500" />
                     <span>{volunteerProfile.weekly_availability} hours/week available</span>
                   </div>
                 )}
                 {volunteerProfile?.preferred_work_style && (
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Briefcase className="w-4 h-4 text-slate-500" />
                     <span>{volunteerProfile.preferred_work_style === 'remote' ? 'Remote' : volunteerProfile.preferred_work_style === 'onsite' ? 'On-site' : 'Hybrid'}</span>
                   </div>
                 )}
                 {volunteerProfile?.timezone && (
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Globe className="w-4 h-4 text-slate-500" />
                     <span>{volunteerProfile.timezone}</span>
                   </div>
                 )}
                 {!volunteerProfile?.location && !user?.location && !volunteerProfile?.weekly_availability && (
-                  <p className="text-slate-500 text-xs">Add your location and availability in settings</p>
+                  <p className="text-slate-400 text-xs">Add your location and availability in settings</p>
                 )}
               </div>
             </div>
 
             {/* Skills */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-600" />
                 Skills
               </h3>
@@ -3450,13 +3453,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   ))}
                 </div>
               ) : (
-                <p className="text-slate-500 text-xs">Add skills to your profile</p>
+                <p className="text-slate-400 text-xs">Add skills to your profile</p>
               )}
             </div>
 
             {/* SDG Commitments */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <Target className="w-4 h-4 text-pink-600" />
                 SDG Commitments
               </h3>
@@ -3487,14 +3490,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   ))}
                 </div>
               ) : (
-                <p className="text-slate-500 text-xs">Select SDGs you care about in settings</p>
+                <p className="text-slate-400 text-xs">Select SDGs you care about in settings</p>
               )}
             </div>
 
             {/* Interests */}
             {volunteerProfile?.interests && volunteerProfile.interests.length > 0 && (
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                   <Heart className="w-4 h-4 text-red-500" />
                   Interests
                 </h3>
@@ -3510,12 +3513,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Bio */}
             {volunteerProfile?.bio && (
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <h3 className="text-slate-800 font-semibold mb-2 flex items-center gap-2">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+                <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600" />
                   About Me
                 </h3>
-                <p className="text-slate-600 text-sm">{volunteerProfile.bio}</p>
+                <p className="text-slate-400 text-sm">{volunteerProfile.bio}</p>
               </div>
             )}
 
@@ -3532,36 +3535,36 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         {/* More Tab */}
         {activeTab === 'more' && (
           <div className="p-4 space-y-4 pb-4">
-            <h2 className="text-slate-800 text-xl font-bold">More Options</h2>
+            <h2 className="text-white text-xl font-bold">More Options</h2>
 
             {/* Settings Section */}
             <div className="space-y-2">
-              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Account</h3>
+              <h3 className="text-slate-400 font-semibold text-sm px-2 uppercase tracking-wider">Account</h3>
               <button
                 onClick={() => navigate('/volunteer-profile-settings')}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-profile-settings"
               >
-                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                  <Settings className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">Profile Settings</div>
-                  <div className="text-slate-500 text-xs">Edit your profile and preferences</div>
+                  <div className="text-white font-medium">Profile Settings</div>
+                  <div className="text-slate-400 text-xs">Edit your profile and preferences</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
                 onClick={() => navigate('/volunteer-messages/pwa')}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-messages"
               >
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
+                  <MessageCircle className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">Messages</div>
-                  <div className="text-slate-500 text-xs">View your conversations</div>
+                  <div className="text-white font-medium">Messages</div>
+                  <div className="text-slate-400 text-xs">View your conversations</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
@@ -3569,46 +3572,46 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Impact & Analytics Section */}
             <div className="space-y-2">
-              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Impact & Analytics</h3>
+              <h3 className="text-slate-400 font-semibold text-sm px-2 uppercase tracking-wider">Impact & Analytics</h3>
               <button
                 onClick={() => setActiveTab('impacts')}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-my-impact"
               >
-                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
+                  <BarChart3 className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">My Impact</div>
-                  <div className="text-slate-500 text-xs">View your impact analytics and ROI</div>
+                  <div className="text-white font-medium">My Impact</div>
+                  <div className="text-slate-400 text-xs">View your impact analytics and ROI</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
                 onClick={() => setShowAIUDetailsModal(true)}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-aiu-score"
               >
-                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
+                  <Award className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">Impact Score</div>
-                  <div className="text-slate-500 text-xs">Impact Score breakdown</div>
+                  <div className="text-white font-medium">Impact Score</div>
+                  <div className="text-slate-400 text-xs">Impact Score breakdown</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
                 onClick={() => setShowKpiModal('impact-roi')}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-impact-roi"
               >
-                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">Impact ROI</div>
-                  <div className="text-slate-500 text-xs">Your return on investment metrics</div>
+                  <div className="text-white font-medium">Impact ROI</div>
+                  <div className="text-slate-400 text-xs">Your return on investment metrics</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
@@ -3616,43 +3619,43 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
             {/* Help & Support Section */}
             <div className="space-y-2">
-              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Support</h3>
+              <h3 className="text-slate-400 font-semibold text-sm px-2 uppercase tracking-wider">Support</h3>
               <button
                 onClick={() => navigate('/impact-report/' + userId)}
-                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-help"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <Lightbulb className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
+                  <Lightbulb className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-medium">Help & Guidance</div>
-                  <div className="text-slate-500 text-xs">Learn more about features</div>
+                  <div className="text-white font-medium">Help & Guidance</div>
+                  <div className="text-slate-400 text-xs">Learn more about features</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
             </div>
 
             {/* Account Information */}
-            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
-                <User className="w-4 h-4 text-slate-600" />
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-slate-400" />
                 Account Info
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Email:</span>
-                  <span className="text-slate-800 font-medium">{user?.email}</span>
+                  <span className="text-slate-400">Email:</span>
+                  <span className="text-white font-medium">{user?.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Member:</span>
-                  <span className="text-slate-800 font-medium">Active</span>
+                  <span className="text-slate-400">Member:</span>
+                  <span className="text-white font-medium">Active</span>
                 </div>
               </div>
             </div>
 
             {/* Danger Zone - Logout */}
-            <div className="pt-4 border-t border-slate-200">
+            <div className="pt-4 border-t border-slate-700">
               <button
                 onClick={handleLogout}
                 className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl p-4 font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
@@ -3664,7 +3667,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
 
             {/* App Info */}
-            <div className="text-center text-slate-500 text-xs py-4">
+            <div className="text-center text-slate-400 text-xs py-4">
               <p>Synerxus v1.0.0</p>
               <p className="mt-1">Making global impact locally</p>
             </div>
@@ -3675,9 +3678,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* KPI Detail Modal */}
       {showKpiModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-slate-800 text-lg font-semibold">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between rounded-t-xl">
+              <h2 className="text-white text-lg font-semibold">
                 {showKpiModal === 'hours' && 'Total Hours Logged'}
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
@@ -3689,7 +3692,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </h2>
               <button
                 onClick={() => setShowKpiModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
+                className="text-slate-400 hover:text-slate-400 text-xl font-medium"
               >
                 ✕
               </button>
@@ -3702,8 +3705,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="text-slate-500">Hours Volunteered</div>
                   </div>
                   {/* Monthly Hours Trend Chart */}
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                    <div className="text-xs text-slate-500 mb-2">Monthly Hours Trend</div>
+                  <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-600">
+                    <div className="text-xs text-slate-400 mb-2">Monthly Hours Trend</div>
                     <div className="h-20">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={impactOverTimeData}>
@@ -3728,7 +3731,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
-                        <span className="text-slate-800 font-semibold">{kpis.totalProjects}</span>
+                        <span className="text-white font-semibold">{kpis.totalProjects}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Avg Hours/Month:</span>
@@ -3749,8 +3752,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="text-slate-500">Total Projects</div>
                   </div>
                   {/* Project Status Donut Chart */}
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                    <div className="text-xs text-slate-500 mb-2">Project Status Distribution</div>
+                  <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-600">
+                    <div className="text-xs text-slate-400 mb-2">Project Status Distribution</div>
                     <div className="h-24 flex items-center justify-center">
                       <ResponsiveContainer width="50%" height="100%">
                         <PieChart>
@@ -3772,11 +3775,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="text-xs space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-orange-500" />
-                          <span className="text-slate-600">Active ({kpis.activeProjects})</span>
+                          <span className="text-slate-400">Active ({kpis.activeProjects})</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-500" />
-                          <span className="text-slate-600">Completed ({kpis.projectsCompleted})</span>
+                          <span className="text-slate-400">Completed ({kpis.projectsCompleted})</span>
                         </div>
                       </div>
                     </div>
@@ -3798,23 +3801,23 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-slate-800 font-semibold text-sm">Your Projects:</h3>
+                    <h3 className="text-white font-semibold text-sm">Your Projects:</h3>
                     {projects.slice(0, 5).map((project: any) => {
                       const normalizedStatus = (project.status || 'active').toLowerCase();
                       const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
                       return (
-                        <div key={project.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                        <div key={project.id} className="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
                           <div className="flex items-center justify-between mb-1">
-                            <div className="text-slate-800 font-medium text-sm">{project.name}</div>
+                            <div className="text-white font-medium text-sm">{project.name}</div>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
                               normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
                               normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                              'bg-slate-100 text-slate-600'
+                              'bg-slate-700/60 text-slate-400'
                             }`}>
                               {displayStatus}
                             </span>
                           </div>
-                          <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
+                          <div className="text-xs text-slate-400 mt-1">{project.organizationName}</div>
                           <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
                         </div>
                       );
@@ -3856,7 +3859,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
                         <span className="text-xs text-slate-400">Committed & Contributing</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -3883,7 +3886,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
                         <span className="text-xs text-slate-400">Committed, no work yet</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -3907,7 +3910,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
                         <span className="text-xs text-slate-400">Contributing, not committed</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -3942,7 +3945,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <>
                   <div className="text-center py-4">
                     <div className="text-5xl font-bold text-indigo-600 mb-2">{kpis.impactScore}</div>
-                    <div className="text-slate-500">Overall Impact Score</div>
+                    <div className="text-slate-600">Overall Impact Score</div>
+                  </div>
+                  {/* Impact Score Definition */}
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-slate-700">
+                      <span className="font-semibold text-indigo-700">Impact Score</span> is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and SDG alignment.
+                    </p>
                   </div>
                   {/* Score Gauge */}
                   <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden mb-4">
@@ -3960,7 +3969,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-600">Hours Impact (35%)</span>
-                          <span className="text-indigo-600 font-semibold">{kpis.totalHours} hrs</span>
+                          <span className="text-indigo-700 font-semibold">{kpis.totalHours} hrs</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((kpis.totalHours / 100) * 100, 100)}%` }} />
@@ -3969,7 +3978,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-600">People Reached (30%)</span>
-                          <span className="text-rose-600 font-semibold">{kpis.livesImpacted}</span>
+                          <span className="text-rose-700 font-semibold">{kpis.livesImpacted}</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min((kpis.livesImpacted / 500) * 100, 100)}%` }} />
@@ -3978,7 +3987,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-600">Task Completion (20%)</span>
-                          <span className="text-emerald-600 font-semibold">{kpis.totalTasks > 0 ? Math.round((kpis.completedTasks / kpis.totalTasks) * 100) : 0}%</span>
+                          <span className="text-emerald-700 font-semibold">{kpis.totalTasks > 0 ? Math.round((kpis.completedTasks / kpis.totalTasks) * 100) : 0}%</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${kpis.totalTasks > 0 ? (kpis.completedTasks / kpis.totalTasks) * 100 : 0}%` }} />
@@ -3987,7 +3996,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-600">SDG Coverage (10%)</span>
-                          <span className="text-purple-600 font-semibold">{kpis.sdgsContributed}/17</span>
+                          <span className="text-purple-700 font-semibold">{kpis.sdgsContributed}/17</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(kpis.sdgsContributed / 17) * 100}%` }} />
@@ -3996,7 +4005,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-600">Skills Listed (5%)</span>
-                          <span className="text-amber-600 font-semibold">{kpis.skills} skills</span>
+                          <span className="text-amber-700 font-semibold">{kpis.skills} skills</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min((kpis.skills / 10) * 100, 100)}%` }} />
@@ -4004,7 +4013,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500 text-center">
+                  <div className="text-xs text-slate-600 text-center">
                     Your impact score reflects your overall contribution across hours, people reached, tasks, SDGs, and skills.
                   </div>
                 </>
@@ -4020,45 +4029,45 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex items-center justify-center gap-3 mb-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-rose-600">{kpis.livesImpacted}</div>
-                        <div className="text-xs text-slate-500">Lives Impacted</div>
+                        <div className="text-xs text-slate-400">Lives Impacted</div>
                       </div>
                       <div className="text-2xl text-slate-400">÷</div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600">{kpis.totalHours}</div>
-                        <div className="text-xs text-slate-500">Hours Volunteered</div>
+                        <div className="text-xs text-slate-400">Hours Volunteered</div>
                       </div>
                       <div className="text-2xl text-slate-400">=</div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-emerald-600">{kpis.impactROI}</div>
-                        <div className="text-xs text-slate-500">Impact ROI</div>
+                        <div className="text-xs text-slate-400">Impact ROI</div>
                       </div>
                     </div>
                   </div>
                   {/* Performance Context */}
-                  <div className="bg-white rounded-lg p-4 border border-slate-200 mb-4">
+                  <div className="bg-white rounded-lg p-4 border border-slate-700 mb-4">
                     <h4 className="font-semibold text-slate-700 text-sm mb-3">What This Means</h4>
-                    <p className="text-sm text-slate-600 mb-3">
+                    <p className="text-sm text-slate-400 mb-3">
                       For every hour you volunteer, you help <span className="font-bold text-emerald-600">{kpis.impactROI} {kpis.impactROI === 1 ? 'person' : 'people'}</span>.
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${kpis.impactROI >= 2 ? 'bg-emerald-500' : kpis.impactROI >= 1 ? 'bg-amber-500' : 'bg-slate-300'}`} />
-                        <span className="text-xs text-slate-600">High impact: 2+ lives/hour</span>
+                        <span className="text-xs text-slate-400">High impact: 2+ lives/hour</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${kpis.impactROI >= 1 && kpis.impactROI < 2 ? 'bg-amber-500' : 'bg-slate-300'}`} />
-                        <span className="text-xs text-slate-600">Good impact: 1-2 lives/hour</span>
+                        <span className="text-xs text-slate-400">Good impact: 1-2 lives/hour</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${kpis.impactROI < 1 && kpis.impactROI > 0 ? 'bg-blue-500' : 'bg-slate-300'}`} />
-                        <span className="text-xs text-slate-600">Building: &lt;1 life/hour (keep going!)</span>
+                        <span className="text-xs text-slate-400">Building: &lt;1 life/hour (keep going!)</span>
                       </div>
                     </div>
                   </div>
                   {/* Tips to Improve */}
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
                     <h4 className="font-semibold text-slate-700 text-sm mb-2">Tips to Improve Your ROI</h4>
-                    <ul className="text-xs text-slate-600 space-y-1">
+                    <ul className="text-xs text-slate-400 space-y-1">
                       <li>• Choose high-reach projects (education, health)</li>
                       <li>• Focus on tasks that directly serve beneficiaries</li>
                       <li>• Complete tasks efficiently to maximize impact</li>
@@ -4077,16 +4086,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="bg-emerald-50 rounded-lg p-4 text-center border border-emerald-100">
                       <div className="text-3xl font-bold text-emerald-600">{kpis.completedTasks}</div>
-                      <div className="text-xs text-slate-500">Completed</div>
+                      <div className="text-xs text-slate-400">Completed</div>
                     </div>
                     <div className="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
                       <div className="text-3xl font-bold text-amber-600">{kpis.totalTasks - kpis.completedTasks}</div>
-                      <div className="text-xs text-slate-500">Remaining</div>
+                      <div className="text-xs text-slate-400">Remaining</div>
                     </div>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-600">Progress</span>
+                      <span className="text-sm text-slate-400">Progress</span>
                       <span className="text-sm font-semibold text-emerald-600">{kpis.completedTasks}/{kpis.totalTasks}</span>
                     </div>
                     <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
@@ -4164,11 +4173,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           .map((app: any, idx: number) => {
                             const project = projects.find((p: any) => p.id === app.projectId);
                             return (
-                              <div key={idx} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                                <div className="text-slate-800 font-medium text-sm">
+                              <div key={idx} className="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <div className="text-white font-medium text-sm">
                                   {project?.name || `Project #${app.projectId}`}
                                 </div>
-                                <div className="text-xs text-slate-500 mt-1">
+                                <div className="text-xs text-slate-400 mt-1">
                                   Applied: {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Recently'}
                                 </div>
                               </div>
@@ -4181,7 +4190,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-8 h-8 text-emerald-600" />
                       </div>
-                      <p className="text-slate-600 font-medium">All caught up!</p>
+                      <p className="text-slate-400 font-medium">All caught up!</p>
                       <p className="text-xs text-slate-400 mt-1">No pending applications</p>
                       <Button
                         onClick={() => navigate('/discover-opportunities/pwa')}
@@ -4202,9 +4211,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* SDG Projects Modal */}
       {showSdgModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between rounded-t-xl">
+              <h2 className="text-white text-lg font-semibold flex items-center gap-2">
                 <span>SDG {showSdgModal}</span>
                 <span className="text-sm font-normal text-slate-500">
                   {SDG_NAMES[showSdgModal]}
@@ -4212,7 +4221,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </h2>
               <button
                 onClick={() => setShowSdgModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
+                className="text-slate-400 hover:text-slate-400 text-xl font-medium"
               >
                 ✕
               </button>
@@ -4227,14 +4236,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   {showSdgModal}
                 </div>
                 <div className="flex-1">
-                  <div className="text-slate-800 font-semibold">{SDG_NAMES[showSdgModal]}</div>
-                  <div className="text-slate-500 text-xs">
+                  <div className="text-white font-semibold">{SDG_NAMES[showSdgModal]}</div>
+                  <div className="text-slate-400 text-xs">
                     {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length} projects contributing
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-emerald-600" />
                 Your Contributing Projects
               </h3>
@@ -4247,7 +4256,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     return (
                       <div
                         key={project.id}
-                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                        className="bg-slate-800/60 rounded-lg p-3 border border-slate-700 cursor-pointer hover:bg-slate-700/60 transition-colors"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -4257,17 +4266,17 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         data-testid={`sdg-project-card-${project.id}`}
                       >
                         <div className="flex items-start justify-between mb-1">
-                          <div className="text-slate-800 font-medium text-sm flex-1">{project.name}</div>
+                          <div className="text-white font-medium text-sm flex-1">{project.name}</div>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                             normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
                             normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-600'
+                            'bg-slate-700/60 text-slate-400'
                           }`}>
                             {displayStatus}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500">{project.organizationName}</div>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
+                        <div className="text-xs text-slate-400">{project.organizationName}</div>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
@@ -4282,7 +4291,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           </div>
                         </div>
                         {project.description && (
-                          <p className="text-slate-500 text-xs mt-2 line-clamp-2">{project.description}</p>
+                          <p className="text-slate-400 text-xs mt-2 line-clamp-2">{project.description}</p>
                         )}
                       </div>
                     );
@@ -4303,16 +4312,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* Project Stats Modal */}
       {showProjectStatsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-slate-800 text-lg font-semibold">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between rounded-t-xl">
+              <h2 className="text-white text-lg font-semibold">
                 {showProjectStatsModal === 'active' && 'Active Projects'}
                 {showProjectStatsModal === 'total' && 'All Projects'}
                 {showProjectStatsModal === 'sdgs' && 'SDG Impact Distribution'}
               </h2>
               <button
                 onClick={() => setShowProjectStatsModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
+                className="text-slate-400 hover:text-slate-400 text-xl font-medium"
               >
                 ✕
               </button>
@@ -4333,7 +4342,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       .map((project: any) => (
                         <div
                           key={project.id}
-                          className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                          className="bg-slate-800/60 rounded-lg p-3 border border-slate-700 cursor-pointer hover:bg-slate-700/60 transition-colors"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -4342,13 +4351,13 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           }}
                           data-testid={`active-projects-list-${project.id}`}
                         >
-                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
+                          <div className="text-white font-medium text-sm">{project.name}</div>
+                          <div className="text-xs text-slate-400 mt-1">{project.organizationName}</div>
                           <div className="flex items-center gap-3 mt-2">
                             <Progress value={project.completionPercentage || 0} className="flex-1 h-2" />
-                            <span className="text-xs text-slate-600">{project.completionPercentage || 0}%</span>
+                            <span className="text-xs text-slate-400">{project.completionPercentage || 0}%</span>
                           </div>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-slate-600">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
@@ -4385,31 +4394,31 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <div className="bg-green-50 rounded-lg p-4 border border-green-100 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Active:</span>
+                      <span className="text-slate-400">Active:</span>
                       <span className="text-orange-600 font-semibold">{kpis.activeProjects}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Completed:</span>
+                      <span className="text-slate-400">Completed:</span>
                       <span className="text-green-600 font-semibold">{kpis.projectsCompleted}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Total Hours:</span>
+                      <span className="text-slate-400">Total Hours:</span>
                       <span className="text-blue-600 font-semibold">{Math.round(kpis.totalHours)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Impact Points Earned:</span>
+                      <span className="text-slate-400">Impact Points Earned:</span>
                       <span className="text-emerald-600 font-semibold">{formatNumber(aiuSummary?.totalAiu)}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    <h3 className="text-slate-800 font-semibold text-sm mb-2">All Projects:</h3>
+                    <h3 className="text-white font-semibold text-sm mb-2">All Projects:</h3>
                     {projects.map((project: any) => {
                       const normalizedStatus = (project.status || 'active').toLowerCase();
                       const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
                       return (
                         <div
                           key={project.id}
-                          className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                          className="bg-slate-800/60 rounded-lg p-3 border border-slate-700 cursor-pointer hover:bg-slate-700/60 transition-colors"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -4419,16 +4428,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           data-testid={`all-projects-list-${project.id}`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <div className="text-slate-800 font-medium text-sm">{project.name}</div>
+                            <div className="text-white font-medium text-sm">{project.name}</div>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
                               normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
                               normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                              'bg-slate-100 text-slate-600'
+                              'bg-slate-700/60 text-slate-400'
                             }`}>
                               {displayStatus}
                             </span>
                           </div>
-                          <div className="text-xs text-slate-500">{project.organizationName}</div>
+                          <div className="text-xs text-slate-400">{project.organizationName}</div>
                           {project.completionPercentage > 0 && (
                             <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
                           )}
@@ -4457,7 +4466,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
                       </div>
                       <div className="space-y-2">
                         {kpis.alignedSdgs.map((sdgNum: number) => {
@@ -4469,7 +4478,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                   {sdgNum}
                                 </div>
                                 <div className="flex-1">
-                                  <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
                                   <div className="text-xs text-emerald-600">{sdgData ? `${sdgData.value} hrs contributed` : 'Committed & Contributing'}</div>
                                 </div>
                               </div>
@@ -4485,7 +4494,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
                       </div>
                       <div className="space-y-2">
                         {kpis.uncommittedWork.map((sdgNum: number) => (
@@ -4495,7 +4504,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                 {sdgNum}
                               </div>
                               <div className="flex-1">
-                                <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
                                 <div className="text-xs text-amber-600">Committed - find projects to start!</div>
                               </div>
                             </div>
@@ -4510,7 +4519,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                        <h3 className="text-slate-800 font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
+                        <h3 className="text-white font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
                       </div>
                       <div className="space-y-2">
                         {kpis.uncommittedContributions.map((sdgNum: number) => {
@@ -4522,7 +4531,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                   {sdgNum}
                                 </div>
                                 <div className="flex-1">
-                                  <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
                                   <div className="text-xs text-purple-600">{sdgData ? `${sdgData.value} hrs` : ''} - Extra impact!</div>
                                 </div>
                               </div>
@@ -4549,7 +4558,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* Skill Detail Modal */}
       {selectedSkill && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
             <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 border-b border-amber-400 p-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-white text-lg font-semibold flex items-center gap-2">
                 <Award className="w-5 h-5" />
@@ -4570,7 +4579,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <>
                     <div className="text-center py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
                       <div className="text-2xl font-bold text-amber-700 mb-1">{selectedSkill}</div>
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="text-xs text-slate-400 mt-1">
                         {stats.projects > 0 ? `Applied in ${stats.projects} project${stats.projects > 1 ? 's' : ''}` : 'Not yet applied in projects'}
                       </div>
                     </div>
@@ -4610,8 +4619,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                     )}
                     {stats.matchingOpps === 0 && (
-                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                        <p className="text-xs text-slate-600">
+                      <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-600">
+                        <p className="text-xs text-slate-400">
                           No current opportunities require this specific skill, but your expertise is valuable across many projects.
                         </p>
                       </div>
@@ -4631,8 +4640,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                     {/* Show matching opportunities preview */}
                     {stats.matchingOpps > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-200">
-                        <div className="text-xs text-slate-500 mb-2 font-medium">Top Matching Opportunities:</div>
+                      <div className="mt-4 pt-4 border-t border-slate-700">
+                        <div className="text-xs text-slate-400 mb-2 font-medium">Top Matching Opportunities:</div>
                         <div className="space-y-2">
                           {discoverOpportunities
                             .filter((opp: any) =>
@@ -4648,10 +4657,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                   setSelectedSkill(null);
                                   navigate(`/opportunities/${opp.id}/pwa`);
                                 }}
-                                className="w-full text-left bg-slate-50 rounded-lg p-2 border border-slate-100 hover:bg-slate-100 transition-colors"
+                                className="w-full text-left bg-slate-800/60 rounded-lg p-2 border border-slate-600 hover:bg-slate-700/60 transition-colors"
                               >
-                                <div className="text-sm font-medium text-slate-800 truncate">{opp.title}</div>
-                                <div className="text-xs text-slate-500 truncate">{opp.organizationName}</div>
+                                <div className="text-sm font-medium text-white truncate">{opp.title}</div>
+                                <div className="text-xs text-slate-400 truncate">{opp.organizationName}</div>
                               </button>
                             ))}
                         </div>
@@ -4668,7 +4677,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* Milestone Detail Modal */}
       {selectedMilestone !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
             {(() => {
               const milestones = [
                 { title: 'Rising Star', desc: 'Complete 5 projects', fullDesc: 'Become a Rising Star by completing your first 5 volunteer projects. This milestone recognizes your dedication and commitment to making a difference.', target: 5, current: kpis.projectsCompleted, icon: '⭐', bgFrom: '#fbbf24', bgTo: '#f59e0b', reward: '500 Bonus Impact Points' },
@@ -4715,12 +4724,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     </div>
 
                     {/* Description */}
-                    <p className="text-slate-600 text-sm text-center leading-relaxed">
+                    <p className="text-slate-400 text-sm text-center leading-relaxed">
                       {milestone.fullDesc}
                     </p>
 
                     {/* Progress Card */}
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-600">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-slate-700 font-medium text-sm">Your Progress</span>
                         <span className="text-slate-500 text-sm">{Math.round(progress)}%</span>
@@ -4737,8 +4746,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         />
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Current: <span className="font-semibold text-slate-800">{Math.round(milestone.current)}</span></span>
-                        <span className="text-slate-600">Target: <span className="font-semibold text-slate-800">{milestone.target}</span></span>
+                        <span className="text-slate-400">Current: <span className="font-semibold text-white">{Math.round(milestone.current)}</span></span>
+                        <span className="text-slate-400">Target: <span className="font-semibold text-white">{milestone.target}</span></span>
                       </div>
                     </div>
 
@@ -4760,7 +4769,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="text-center">
                           <div className="text-3xl font-bold text-blue-600 mb-1">{remaining}</div>
                           <div className="text-blue-600 text-sm">more to unlock this achievement</div>
-                          <div className="text-xs text-slate-500 mt-2">Reward: {milestone.reward}</div>
+                          <div className="text-xs text-slate-400 mt-2">Reward: {milestone.reward}</div>
                         </div>
                       </div>
                     )}
@@ -4789,7 +4798,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       {/* Readiness Score Detail Modal */}
       {showReadinessModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
             <div className="sticky top-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 border-b p-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-white text-lg font-semibold flex items-center gap-2">
                 <Lightbulb className="w-5 h-5" />
@@ -4835,11 +4844,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           </defs>
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-4xl font-bold text-slate-800">{averageScore}</span>
-                          <span className="text-xs text-slate-500">of 100</span>
+                          <span className="text-4xl font-bold text-white">{averageScore}</span>
+                          <span className="text-xs text-slate-400">of 100</span>
                         </div>
                       </div>
-                      <div className="mt-2 text-slate-600 font-medium">
+                      <div className="mt-2 text-slate-400 font-medium">
                         {averageScore >= 80 ? 'Excellent Readiness!' :
                          averageScore >= 60 ? 'Good Progress!' :
                          averageScore >= 40 ? 'Building Momentum' : 'Getting Started'}
@@ -4862,7 +4871,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="h-2 bg-orange-100 rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full" style={{ width: `${skillsMatch}%` }} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-400 mt-2">
                           You have {kpis.skills} skills on your profile. Add more to increase visibility to organizations.
                         </p>
                       </div>
@@ -4879,7 +4888,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="h-2 bg-emerald-100 rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" style={{ width: `${sdgAlignment}%` }} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-400 mt-2">
                           You've contributed to {kpis.sdgsContributed} SDGs through projects. Join diverse projects to expand impact.
                         </p>
                       </div>
@@ -4896,7 +4905,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{ width: `${engagementLevel}%` }} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-400 mt-2">
                           {kpis.totalHours} hours logged. Keep volunteering to boost this score.
                         </p>
                       </div>
@@ -4908,7 +4917,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <Sparkles className="w-4 h-4 text-purple-600" />
                         <span className="text-slate-700 font-medium text-sm">How to Improve</span>
                       </div>
-                      <ul className="text-xs text-slate-600 space-y-1.5">
+                      <ul className="text-xs text-slate-400 space-y-1.5">
                         {skillsMatch < 100 && (
                           <li className="flex items-start gap-2">
                             <span className="text-purple-500 mt-0.5">•</span>
@@ -4972,52 +4981,52 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
         Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex justify-around items-center max-w-[428px] mx-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'dashboard' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-home"
           >
             <Home className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium pointer-events-none">Home</span>
+            <span className="text-[9px] font-semibold pointer-events-none">Home</span>
           </button>
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'projects' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'projects' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-projects"
           >
             <Briefcase className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium pointer-events-none">Projects</span>
+            <span className="text-[9px] font-semibold pointer-events-none">Projects</span>
           </button>
           <button
             onClick={() => setActiveTab('potential')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'potential' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'potential' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-potentials"
           >
             <Sparkles className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium pointer-events-none">Potentials</span>
+            <span className="text-[9px] font-semibold pointer-events-none">Potentials</span>
           </button>
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'messages' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'messages' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-messages"
           >
             <MessageCircle className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium pointer-events-none">Messages</span>
+            <span className="text-[9px] font-semibold pointer-events-none">Messages</span>
           </button>
           <button
             onClick={() => setActiveTab('more')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'more' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'more' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-more"
           >
             <MoreHorizontal className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium pointer-events-none">More</span>
+            <span className="text-[9px] font-semibold pointer-events-none">More</span>
           </button>
         </div>
       </nav>

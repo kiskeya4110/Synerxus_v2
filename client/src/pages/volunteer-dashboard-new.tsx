@@ -16,6 +16,7 @@ import {
   Building2,
   FileText,
   BarChart3,
+  Home,
 } from "lucide-react";
 
 // UI Components
@@ -288,9 +289,8 @@ interface ImpactScoreCardProps {
 
 function ImpactScoreCard({ score, trend, hoursLogged, projectsActive, onViewDetails }: ImpactScoreCardProps) {
   return (
-    <Card variant="glass" className="overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
-      <CardContent className="relative p-6">
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
@@ -642,6 +642,164 @@ export default function VolunteerDashboardNew() {
           message="Please log in to view your dashboard."
           retry={() => navigate("/login")}
         />
+      </div>
+    );
+  }
+
+  // Mobile PWA View - Clean cards like desktop with bottom navigation
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Mobile Header */}
+        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Welcome, {activeUser.displayName?.split(" ")[0] || "Volunteer"}
+              </h1>
+              <p className="text-sm text-gray-500">Track your impact</p>
+            </div>
+            <Button variant="accent" size="sm" onClick={() => setShowLogModal(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Log
+            </Button>
+          </div>
+        </header>
+
+        {/* Mobile Content */}
+        <main className="px-4 py-4 space-y-4">
+          {/* Stats Grid - 2x2 on mobile */}
+          <div className="grid grid-cols-2 gap-3">
+            <MetricCard
+              label="Impact Score"
+              value={formatDecimal(stats.impactScore)}
+              subtitle="points earned"
+              accentColor="primary"
+              icon={<Award className="h-5 w-5 text-primary" />}
+            />
+            <MetricCard
+              label="Hours Logged"
+              value={stats.hoursLogged}
+              subtitle="total hours"
+              accentColor="accent"
+              icon={<Clock className="h-5 w-5 text-accent" />}
+            />
+            <MetricCard
+              label="Active Projects"
+              value={stats.projectsActive}
+              subtitle="contributing to"
+              accentColor="success"
+              icon={<Target className="h-5 w-5 text-success" />}
+            />
+            <MetricCard
+              label="Pending"
+              value={stats.pendingVerifications}
+              subtitle="awaiting review"
+              accentColor="cyan"
+              icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
+            />
+          </div>
+
+          {/* Impact Score Card */}
+          <ImpactScoreCard
+            score={stats.impactScore}
+            trend={15}
+            hoursLogged={stats.hoursLogged}
+            projectsActive={stats.projectsActive}
+          />
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} />
+            </CardContent>
+          </Card>
+
+          {/* Active Projects */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-4 w-4 text-success" />
+                Your Projects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ActiveProjects
+                projects={projects.map((p: any) => ({
+                  id: p.id,
+                  name: p.name,
+                  organizationName: p.organizationName || "Organization",
+                  status: p.status || "active",
+                  completionPercentage: p.completionPercentage || 0,
+                  hoursLogged: p.hoursLogged || 0,
+                  sdgGoals: p.sdgGoals || [],
+                }))}
+                isLoading={isLoadingDashboard}
+              />
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* Bottom Navigation Tray */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            <button className="flex flex-col items-center py-1.5 px-3 rounded-xl text-indigo-600 bg-indigo-100">
+              <Home className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold">Home</span>
+            </button>
+            <button
+              onClick={() => navigate('/discover-opportunities')}
+              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+            >
+              <Target className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold">Discover</span>
+            </button>
+            <button
+              onClick={() => navigate('/log-activity')}
+              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+            >
+              <Plus className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold">Log</span>
+            </button>
+            <button
+              onClick={() => navigate('/my-work')}
+              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+            >
+              <FileText className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold">Activity</span>
+            </button>
+            <button
+              onClick={() => navigate('/volunteer-profile-settings')}
+              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+            >
+              <Building2 className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold">Profile</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Log Impact Modal */}
+        <Dialog open={showLogModal} onOpenChange={setShowLogModal}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Log Your Impact</DialogTitle>
+              <DialogDescription>
+                Record your volunteer hours and the impact you made.
+              </DialogDescription>
+            </DialogHeader>
+            <ImpactLogForm
+              userId={parseInt(userId)}
+              projects={projects}
+              onSuccess={() => setShowLogModal(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

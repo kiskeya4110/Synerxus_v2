@@ -267,7 +267,7 @@ export default function Dashboard() {
       if (!response.ok) throw new Error('Failed to fetch impact score');
       return response.json();
     },
-    enabled: !!userId && currentUser?.userType === 'volunteer',
+    enabled: !!userId && userType === 'volunteer',
     staleTime: 60 * 1000, // Cache for 1 minute
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -299,12 +299,9 @@ export default function Dashboard() {
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!userId && currentUser?.userType === 'volunteer',
+    enabled: !!userId && userType === 'volunteer',
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
-
-  // Determine dashboard type early (needed for data filtering) - must be before useMemo
-  const dashboardType = currentUser?.userType;
 
   // Fetch organization profile for organization users to get their selected SDGs
   const { data: orgProfile } = useQuery({
@@ -317,8 +314,11 @@ export default function Dashboard() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!userId && currentUser?.userType === 'organization'
+    enabled: !!userId && userType === 'organization'
   });
+
+  // Determine dashboard type early (needed for data filtering)
+  const dashboardType = userType as "volunteer" | "organization" | null;
 
   // Helper function to get start date based on time filter
   const getTimeFilterStartDate = (filter: 'all' | 'month' | 'quarter' | 'year'): Date | null => {
@@ -961,37 +961,32 @@ export default function Dashboard() {
     }).filter((p: any) => p.metrics.length > 0);
   }, [filteredData.projects, filteredData.impacts, impactMetrics]);
 
-  // Show loading state while fetching user
-  if (isLoadingUser) {
+  // Create demo user if API fails but localStorage has user data (demo mode)
+  // Must be defined before any early returns to satisfy React hooks rules
+  const demoUser = useMemo(() => {
+    if (userId && userType && (userError || !currentUser)) {
+      return {
+        id: parseInt(userId),
+        userType: userType,
+        displayName: userType === 'volunteer' ? 'Demo Volunteer' : userType === 'organization' ? 'Demo Organization' : 'Demo Corporate Partner',
+        email: 'demo@example.com',
+        profileComplete: true
+      };
+    }
+    return null;
+  }, [userId, userType, userError, currentUser]);
+
+  // Use real user or demo user
+  const activeUser = currentUser || demoUser;
+
+  // Show loading state while fetching user (skip in demo mode)
+  if (isLoadingUser && !demoUser) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
-      </div>
-    );
-  }
-
-  // Show error state if user not found
-  if (userError || !currentUser) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Card className="p-8 max-w-md">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Please log in to access your dashboard.
-            </p>
-            <Link href="/login">
-              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Go to Login
-              </button>
-            </Link>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -1478,12 +1473,12 @@ export default function Dashboard() {
   const isVolunteer = dashboardType === 'volunteer';
 
   // Mobile volunteers get the PWA view with bottom navigation
-  if (isVolunteer && isMobile && userId && currentUser) {
-    return <MobilePWAView userId={userId} user={currentUser} dashboardData={dashboardData} initialActiveTab={initialTab} />;
+  if (isVolunteer && isMobile && userId && activeUser) {
+    return <MobilePWAView userId={userId} user={activeUser} dashboardData={dashboardData} initialActiveTab={initialTab} />;
   }
 
   // Desktop volunteers get the web view with top navigation
-  if (isVolunteer && userId && currentUser) {
+  if (isVolunteer && userId && activeUser) {
     // Calculate goal progress for visual rings
     const hoursGoal = dashboardData?.volunteerProfile?.weeklyAvailability ? dashboardData.volunteerProfile.weeklyAvailability * 52 : 100;
     const hoursProgress = Math.min(((dashboardData?.totalHours || 0) / hoursGoal) * 100, 100);
@@ -1508,21 +1503,21 @@ export default function Dashboard() {
                 {/* Profile Avatar */}
                 <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-blue-100 dark:border-gray-800 shadow-lg bg-white ring-4 ring-blue-50">
                   <AvatarImage
-                    src={dashboardData?.volunteerProfile?.profilePhotoUrl || currentUser?.profilePicture}
-                    alt={currentUser?.displayName || 'Volunteer'}
+                    src={dashboardData?.volunteerProfile?.profilePhotoUrl || activeUser?.profilePicture}
+                    alt={activeUser?.displayName || 'Volunteer'}
                   />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl md:text-3xl font-semibold">
-                    {(currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase()}
+                    {(activeUser?.displayName || activeUser?.username || 'V').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 {/* Profile Info */}
                 <div className="flex-1">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                    {currentUser?.displayName || currentUser?.name || "Volunteer"}
+                    {activeUser?.displayName || activeUser?.name || "Volunteer"}
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base mt-1">
-                    Volunteer • Making an impact since {new Date(currentUser?.createdAt || Date.now()).getFullYear()}
+                    Volunteer • Making an impact since {new Date(activeUser?.createdAt || Date.now()).getFullYear()}
                   </p>
 
                   {/* Skills Tags */}
@@ -2554,7 +2549,7 @@ export default function Dashboard() {
             totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
             projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
             totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
-            volunteerName={currentUser?.displayName}
+            volunteerName={activeUser?.displayName}
             sdgsContributed={aiuSummary?.sdgsContributed ?? []}
             verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
             verifiedHours={kpis.verifiedHours ?? 0}
@@ -2581,7 +2576,7 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                   Welcome back, {dashboardType === "volunteer"
-                    ? (currentUser?.displayName || currentUser?.name || "Volunteer")?.split(' ')[0]
+                    ? (activeUser?.displayName || activeUser?.name || "Volunteer")?.split(' ')[0]
                     : (orgProfile?.organization?.name || orgProfile?.user?.name || "Manager")}!
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -2646,11 +2641,11 @@ export default function Dashboard() {
                 <div className="w-full md:w-1/4 flex items-center justify-center md:justify-start -mt-2 md:mt-6">
                   <Avatar className="h-28 w-28 md:h-36 md:w-36 border-4 border-white dark:border-gray-800 shadow-2xl ring-4 ring-amber-400/30">
                     <AvatarImage
-                      src={dashboardData.volunteerProfile.profilePhotoUrl || currentUser?.profilePicture}
-                      alt={currentUser?.displayName || 'Volunteer'}
+                      src={dashboardData.volunteerProfile.profilePhotoUrl || activeUser?.profilePicture}
+                      alt={activeUser?.displayName || 'Volunteer'}
                     />
                     <AvatarFallback className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 text-white text-4xl md:text-5xl font-bold">
-                      {(currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase()}
+                      {(activeUser?.displayName || activeUser?.name || 'V').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </div>
@@ -2763,34 +2758,34 @@ export default function Dashboard() {
       <div className="md:hidden mt-4">
         <div className="grid grid-cols-4 gap-1">
           <Link href="/log-activity" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Clock className="h-4 w-4" />
               <span>Log</span>
             </Button>
           </Link>
           {dashboardType === "volunteer" ? (
             <Link href="/discover-opportunities" className="w-full aspect-square">
-              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-white dark:bg-gray-800 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
                 <Target className="h-4 w-4" />
                 <span>Find</span>
               </Button>
             </Link>
           ) : (
             <Link href="/projects" className="w-full aspect-square">
-              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-white dark:bg-gray-800 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
                 <Building2 className="h-4 w-4" />
                 <span>Projects</span>
               </Button>
             </Link>
           )}
           <Link href="/my-work" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-white dark:bg-gray-800 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <CheckSquare className="h-4 w-4" />
               <span>Work</span>
             </Button>
           </Link>
           <Link href="/calendar" className="w-full aspect-square">
-            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-white dark:bg-gray-800 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Zap className="h-4 w-4" />
               <span>Cal</span>
             </Button>
@@ -3093,7 +3088,7 @@ export default function Dashboard() {
               monthlyImpactData={filteredMonthlyImpactData}
               monthlyImpactTrend={filteredMonthlyImpactTrend}
               impactGrowthSeries={dashboardData?.impactGrowthSeries || []}
-              userType={currentUser?.userType}
+              userType={activeUser?.userType}
               narrative={impactNarrative}
             />
           </CardContent>
@@ -3101,7 +3096,7 @@ export default function Dashboard() {
         <SDGChart
           projects={enrichedProjectsForSdgChart || []}
           organizationSdgs={
-            currentUser?.userType === 'organization' 
+            activeUser?.userType === 'organization' 
               ? dashboardData?.organizationPrimarySdgs 
               : undefined
           }
@@ -3225,7 +3220,7 @@ export default function Dashboard() {
       {/* Impact Log History - Only for volunteers */}
       {dashboardType === 'volunteer' && userId && (
         <div className="mt-6">
-          <ImpactLogHistory userId={userId} limit={5} />
+          <ImpactLogHistory userId={parseInt(userId)} limit={5} />
         </div>
       )}
 
@@ -3259,11 +3254,11 @@ export default function Dashboard() {
       )}
 
       {/* Contact Volunteer Modal */}
-      {currentUser && (
+      {activeUser && (
         <ContactVolunteerModal
           open={showContactModal}
           onOpenChange={setShowContactModal}
-          organizationUserId={currentUser.id}
+          organizationUserId={activeUser.id}
         />
       )}
 
@@ -3274,7 +3269,7 @@ export default function Dashboard() {
         totalAIU={aiuSummary?.totalAiu ?? kpis.aiuEarned ?? 0}
         projects={aiuSummary?.projects ?? kpis.aiuProjects ?? []}
         totalHours={aiuSummary?.totalHours ?? filteredData.activities?.reduce((sum: number, a: any) => sum + (a.hours || 0), 0) ?? 0}
-        volunteerName={currentUser?.displayName}
+        volunteerName={activeUser?.displayName}
         sdgsContributed={aiuSummary?.sdgsContributed ?? []}
         verificationRate={aiuSummary?.verificationRate ?? kpis.aiuVerificationRate ?? 0}
         verifiedHours={kpis.verifiedHours ?? 0}

@@ -13,7 +13,7 @@ const cardVariants = cva(
         elevated: "bg-card border-border shadow-xl hover:shadow-2xl",
         outline: "bg-transparent border-border",
         ghost: "bg-transparent border-transparent",
-        metric: "bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/5 shadow-lg",
+        metric: "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-md",
       },
       interactive: {
         true: "cursor-pointer hover:border-primary/50 hover:shadow-glow-primary/20 active:scale-[0.99]",
@@ -168,7 +168,7 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
             )}
           </div>
           {icon && (
-            <div className="p-2 rounded-lg bg-white/5">
+            <div className="p-2 rounded-lg bg-gray-100 dark:bg-white/10">
               {icon}
             </div>
           )}

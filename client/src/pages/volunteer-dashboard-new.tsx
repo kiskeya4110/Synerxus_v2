@@ -646,140 +646,143 @@ export default function VolunteerDashboardNew() {
     );
   }
 
-  // Mobile PWA View - Clean cards like desktop with bottom navigation
+  // Mobile PWA View - Simple Impact Wallet per redesign spec
   if (isMobile) {
+    // Calculate simple metrics for Impact Wallet
+    const totalOutcomes = recentLogs.reduce((sum: number, log: any) => sum + (log.outcomeQuantity || 0), 0);
+    const skillsUsed = dashboardData?.volunteerProfile?.skills?.length || 0;
+    const sdgsContributed = new Set(projects.flatMap((p: any) => p.sdgGoals || [])).size;
+
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Mobile Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Welcome, {activeUser.displayName?.split(" ")[0] || "Volunteer"}
-              </h1>
-              <p className="text-sm text-gray-500">Track your impact</p>
-            </div>
-            <Button variant="accent" size="sm" onClick={() => setShowLogModal(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Log
-            </Button>
-          </div>
+        {/* Simple Header */}
+        <header className="bg-white border-b border-gray-200 px-4 py-5 sticky top-0 z-30">
+          <h1 className="text-xl font-bold text-gray-900">Impact Wallet</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Your verified impact data</p>
         </header>
 
-        {/* Mobile Content */}
-        <main className="px-4 py-4 space-y-4">
-          {/* Stats Grid - 2x2 on mobile */}
+        {/* Main Content */}
+        <main className="px-4 py-5 space-y-5">
+          {/* Core Metrics - 2x2 Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard
-              label="Impact Score"
-              value={formatDecimal(stats.impactScore)}
-              subtitle="points earned"
-              accentColor="primary"
-              icon={<Award className="h-5 w-5 text-primary" />}
-            />
-            <MetricCard
-              label="Hours Logged"
-              value={stats.hoursLogged}
-              subtitle="total hours"
-              accentColor="accent"
-              icon={<Clock className="h-5 w-5 text-accent" />}
-            />
-            <MetricCard
-              label="Active Projects"
-              value={stats.projectsActive}
-              subtitle="contributing to"
-              accentColor="success"
-              icon={<Target className="h-5 w-5 text-success" />}
-            />
-            <MetricCard
-              label="Pending"
-              value={stats.pendingVerifications}
-              subtitle="awaiting review"
-              accentColor="cyan"
-              icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
-            />
+            {/* Total Hours */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.hoursLogged}</p>
+              <p className="text-xs text-gray-500 mt-1">verified hours</p>
+            </div>
+
+            {/* Total Outcomes */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Outcomes</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{totalOutcomes}</p>
+              <p className="text-xs text-gray-500 mt-1">total outcomes</p>
+            </div>
+
+            {/* Skills Used */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="h-4 w-4 text-amber-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Skills</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{skillsUsed}</p>
+              <p className="text-xs text-gray-500 mt-1">skills applied</p>
+            </div>
+
+            {/* SDGs */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">SDGs</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{sdgsContributed}</p>
+              <p className="text-xs text-gray-500 mt-1">goals impacted</p>
+            </div>
           </div>
 
-          {/* Impact Score Card */}
-          <ImpactScoreCard
-            score={stats.impactScore}
-            trend={15}
-            hoursLogged={stats.hoursLogged}
-            projectsActive={stats.projectsActive}
-          />
+          {/* Pending Verification Notice */}
+          {stats.pendingVerifications > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">
+                  {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending verification
+                </span>
+              </div>
+            </div>
+          )}
 
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} />
-            </CardContent>
-          </Card>
-
-          {/* Active Projects */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Target className="h-4 w-4 text-success" />
-                Your Projects
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActiveProjects
-                projects={projects.map((p: any) => ({
-                  id: p.id,
-                  name: p.name,
-                  organizationName: p.organizationName || "Organization",
-                  status: p.status || "active",
-                  completionPercentage: p.completionPercentage || 0,
-                  hoursLogged: p.hoursLogged || 0,
-                  sdgGoals: p.sdgGoals || [],
-                }))}
-                isLoading={isLoadingDashboard}
-              />
-            </CardContent>
-          </Card>
+          {/* Recent Logs */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900">Recent Activity</h2>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {recentLogs.slice(0, 5).map((log: any) => (
+                <div key={log.id} className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{log.hours}h logged</p>
+                    <p className="text-xs text-gray-500">{log.projectName || 'Project'}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    log.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                    log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-amber-100 text-amber-700'
+                  }`}>
+                    {log.status || 'pending'}
+                  </span>
+                </div>
+              ))}
+              {recentLogs.length === 0 && (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-gray-500">No activity yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Log your first impact to get started</p>
+                </div>
+              )}
+            </div>
+          </div>
         </main>
 
-        {/* Bottom Navigation Tray */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        {/* Bottom Navigation Tray - 4 tabs per spec */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex justify-around items-center max-w-md mx-auto">
-            <button className="flex flex-col items-center py-1.5 px-3 rounded-xl text-indigo-600 bg-indigo-100">
-              <Home className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-semibold">Home</span>
+            {/* Dashboard/Wallet */}
+            <button className="flex flex-col items-center py-2 px-4 rounded-xl text-indigo-600 bg-indigo-50">
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Wallet</span>
             </button>
+
+            {/* Projects (AI-matched, max 3) */}
             <button
               onClick={() => navigate('/discover-opportunities')}
-              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
-              <Target className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-semibold">Discover</span>
+              <Target className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Projects</span>
             </button>
+
+            {/* Log Impact - Primary Action */}
             <button
-              onClick={() => navigate('/log-activity')}
-              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+              onClick={() => setShowLogModal(true)}
+              className="flex flex-col items-center py-2 px-5 rounded-xl bg-indigo-600 text-white shadow-md -mt-3"
             >
-              <Plus className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-semibold">Log</span>
+              <Plus className="w-6 h-6 mb-0.5" />
+              <span className="text-[10px] font-semibold">Log</span>
             </button>
+
+            {/* History */}
             <button
               onClick={() => navigate('/my-work')}
-              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
-              <FileText className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-semibold">Activity</span>
-            </button>
-            <button
-              onClick={() => navigate('/volunteer-profile-settings')}
-              className="flex flex-col items-center py-1.5 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
-            >
-              <Building2 className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-semibold">Profile</span>
+              <FileText className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">History</span>
             </button>
           </div>
         </nav>
@@ -788,9 +791,9 @@ export default function VolunteerDashboardNew() {
         <Dialog open={showLogModal} onOpenChange={setShowLogModal}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Log Your Impact</DialogTitle>
+              <DialogTitle>Log Impact</DialogTitle>
               <DialogDescription>
-                Record your volunteer hours and the impact you made.
+                Record your hours and outcomes.
               </DialogDescription>
             </DialogHeader>
             <ImpactLogForm

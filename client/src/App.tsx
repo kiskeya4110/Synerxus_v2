@@ -25,9 +25,11 @@ const Projects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
 const ProjectDetailPWA = lazy(() => import("@/pages/project-detail-pwa"));
 const ProjectEdit = lazy(() => import("@/pages/project-edit"));
-// Intake forms now redirect to consolidated settings pages
-// const VolunteerIntake = lazy(() => import("@/pages/volunteer-intake"));
-// const OrganizationIntake = lazy(() => import("@/pages/organization-intake"));
+// Streamlined MVP intake forms
+const VolunteerIntakeSimple = lazy(() => import("@/pages/volunteer-intake-simple"));
+const OrganizationIntakeSimple = lazy(() => import("@/pages/organization-intake-simple"));
+const CorporateIntakeSimple = lazy(() => import("@/pages/corporate-intake-simple"));
+// Full profile settings pages (for later enhancement)
 const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
 const VolunteerProfileSettings = lazy(() => import("@/pages/volunteer-profile-settings"));
 const Opportunities = lazy(() => import("@/pages/opportunities"));
@@ -258,6 +260,11 @@ function AppWithOnboarding() {
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
+          {/* Streamlined MVP Signup Forms */}
+          <Route path="/signup/volunteer" component={VolunteerIntakeSimple} />
+          <Route path="/signup/organization" component={OrganizationIntakeSimple} />
+          <Route path="/signup/corporate" component={CorporateIntakeSimple} />
+          <Route path="/join" component={VolunteerIntakeSimple} />
           {/* CSR/Corporate Partner routes - standalone layout */}
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />

@@ -187,7 +187,14 @@ export default function Dashboard() {
       const url = `/api/users/me?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error("User not found");
+        // Demo mode: return fallback user data when API fails
+        console.log("[VolunteerDashboard] Using demo mode - API user fetch failed");
+        return {
+          id: parseInt(id) || 1,
+          email: `demo_volunteer@synerxus.com`,
+          displayName: 'Demo Volunteer',
+          userType: userType || 'volunteer',
+        };
       }
       return response.json();
     },

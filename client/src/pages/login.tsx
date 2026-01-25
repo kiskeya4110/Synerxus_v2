@@ -1,26 +1,68 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FiHeart, FiGlobe, FiBriefcase } from "react-icons/fi";
+import { Loader2 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRoleSelect = (role: "volunteer" | "organization" | "corporate-partner") => {
-    // Set mock user data for testing/analysis purposes
-    localStorage.setItem('currentUserId', '1');
-    localStorage.setItem('userType', role);
-    localStorage.setItem('profileComplete', 'true');
-    localStorage.removeItem('isNewSignup');
+  const handleRoleSelect = async (role: "volunteer" | "organization" | "corporate-partner") => {
+    setIsLoading(true);
 
-    // Redirect to appropriate dashboard
-    if (role === 'volunteer') {
-      setLocation('/volunteer-dashboard');
-    } else if (role === 'organization') {
-      setLocation('/organization-dashboard');
-    } else if (role === 'corporate-partner') {
-      setLocation('/csr-dashboard');
+    try {
+      // Try to create a demo user in the database
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: `demo_${role}_${Date.now()}@synerxus.com`,
+          displayName: role === "volunteer" ? "Demo Volunteer" : role === "organization" ? "Demo Organization" : "Demo Corporate",
+          username: `demo_${role}_${Date.now()}`,
+          userType: role,
+          firebaseUid: `demo_${Date.now()}`,
+        }),
+      });
+
+      let userId = "1";
+      if (response.ok) {
+        const user = await response.json();
+        userId = String(user.id);
+      }
+
+      // Set user data in localStorage
+      localStorage.setItem('currentUserId', userId);
+      localStorage.setItem('userType', role);
+      localStorage.setItem('profileComplete', 'true');
+      localStorage.removeItem('isNewSignup');
+
+      // Redirect to appropriate dashboard
+      if (role === 'volunteer') {
+        setLocation('/volunteer-dashboard');
+      } else if (role === 'organization') {
+        setLocation('/organization-dashboard');
+      } else if (role === 'corporate-partner') {
+        setLocation('/csr-dashboard');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      // Fallback to demo mode
+      localStorage.setItem('currentUserId', '1');
+      localStorage.setItem('userType', role);
+      localStorage.setItem('profileComplete', 'true');
+
+      if (role === 'volunteer') {
+        setLocation('/volunteer-dashboard');
+      } else if (role === 'organization') {
+        setLocation('/organization-dashboard');
+      } else if (role === 'corporate-partner') {
+        setLocation('/csr-dashboard');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 

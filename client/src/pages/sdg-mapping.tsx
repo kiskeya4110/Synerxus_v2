@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
-import OrganizationHeader from "@/components/layout/organization-header";
-import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -521,7 +520,7 @@ export default function SDGMapping() {
   if (sdgData.length === 0) {
     return (
       <div className="h-screen overflow-y-auto pb-36">
-        <OrganizationHeader activeTab="sdgs" />
+        <OrganizationNav />
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
           <div className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
@@ -1591,8 +1590,7 @@ export default function SDGMapping() {
   return (
     <div className="h-screen overflow-y-auto pb-36">
       <OfflineBanner />
-      <OrganizationHeader activeTab="sdgs" />
-      <OrganizationWelcomeBanner pageTitle="SDG Mapping" />
+      <OrganizationNav />
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 16px' }}>
         {/* Page Header with integrated filter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">

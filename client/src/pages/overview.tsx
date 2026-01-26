@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Trophy, Target, TrendingUp, Users, Clock, FolderOpen, Award, ChevronRight, Check, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import OrganizationHeader from "@/components/layout/organization-header";
-import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
@@ -785,8 +784,7 @@ export default function Overview() {
   // Desktop View
   return (
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
-      <OrganizationHeader activeTab="overview" />
-      <OrganizationWelcomeBanner pageTitle="Team Potential Overview" />
+      <OrganizationNav />
 
       <div className="max-w-7xl mx-auto p-6 pb-24">
         {/* Top Navigation Button */}

@@ -72,7 +72,7 @@ const MapSkeleton = () => (
   </div>
 );
 import { getSDGName, SDG_GOALS, getSDGColor } from "@shared/sdg-goals";
-import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationNav from "@/components/layout/organization-nav";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -1034,8 +1034,8 @@ export default function OrganizationDashboard() {
         onSyncNow={() => syncAll()}
       />
       
-      {/* Reusable Organization Header Component */}
-      <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
+      {/* Reusable Organization Nav Component */}
+      <OrganizationNav />
 
       {/* Welcome Banner - Desktop Only - Contained within margins */}
       <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px 0 24px' }}>

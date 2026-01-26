@@ -17,8 +17,7 @@ import { useViewportDetection } from "@/hooks/use-mobile";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { AddVolunteerModal } from "@/components/add-volunteer-modal";
 import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
-import OrganizationHeader from "@/components/layout/organization-header";
-import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -1609,8 +1608,7 @@ export default function Volunteers() {
   return (
     <div className={isOrganization ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
       {isOrganization && <OfflineBanner />}
-      {isOrganization && <OrganizationHeader activeTab="team" />}
-      {isOrganization && <OrganizationWelcomeBanner pageTitle="Volunteer Management" />}
+      {isOrganization && <OrganizationNav />}
       <div className={isOrganization ? `flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full ${isMobile ? 'pb-36' : ''}` : "h-screen overflow-y-auto pb-36"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">

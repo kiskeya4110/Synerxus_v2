@@ -18,7 +18,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
-import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
@@ -713,7 +713,7 @@ export default function ProjectDetail() {
       <VolunteerNav />
 
       <div className="min-h-full pb-36 md:pb-0">
-      {isOrganization && <OrganizationHeader activeTab="projects" />}
+      {isOrganization && <OrganizationNav />}
 
       {/* Hero Section */}
       <div

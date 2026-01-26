@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useViewportDetection } from "@/hooks/use-mobile";
-import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import {
   CheckCircle,
@@ -365,10 +365,10 @@ export default function NgoVerification() {
     );
   }
 
-  // Desktop view with OrganizationHeader
+  // Desktop view with OrganizationNav
   return (
     <div className="min-h-screen bg-slate-50">
-      <OrganizationHeader activeTab="verify" />
+      <OrganizationNav />
 
       {/* Page Header */}
       <div className="bg-white border-b border-slate-200">

@@ -12,8 +12,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
-import OrganizationHeader from "@/components/layout/organization-header";
-import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
+import OrganizationNav from "@/components/layout/organization-nav";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -816,8 +815,7 @@ export default function MyWork() {
       {/* Main Content Wrapper */}
       <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
       {isOrganizationManager && <OfflineBanner />}
-      {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
-      {isOrganizationManager && <OrganizationWelcomeBanner pageTitle="My Work" />}
+      {isOrganizationManager && <OrganizationNav />}
       {/* Top Navigation Buttons for Organization Managers */}
       {isOrganizationManager && (
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 items-center justify-start border-b">

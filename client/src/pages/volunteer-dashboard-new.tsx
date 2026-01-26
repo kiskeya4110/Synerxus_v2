@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Stat, StatGroup, CompactStat } from "@/components/ui/stat";
 import { EmptyState, LoadingState, ErrorState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid, Stack, Divider } from "@/components/ui/section";
@@ -230,24 +231,38 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
         <label className="text-sm font-medium text-foreground">
           SDG Goals (Select up to 3)
         </label>
-        <div className="flex flex-wrap gap-2">
-          {SDG_OPTIONS.map((sdg) => (
-            <button
-              key={sdg.value}
-              type="button"
-              onClick={() => toggleSdg(sdg.value)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                formData.sdgs.includes(sdg.value)
-                  ? "text-white shadow-md"
-                  : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-              )}
-              style={formData.sdgs.includes(sdg.value) ? { backgroundColor: sdg.color } : {}}
-            >
-              SDG {sdg.value}
-            </button>
-          ))}
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <div className="flex flex-wrap gap-2">
+            {SDG_OPTIONS.map((sdg) => (
+              <Tooltip key={sdg.value}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => toggleSdg(sdg.value)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                      formData.sdgs.includes(sdg.value)
+                        ? "text-white shadow-md"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                    )}
+                    style={formData.sdgs.includes(sdg.value) ? { backgroundColor: sdg.color } : {}}
+                  >
+                    SDG {sdg.value}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px]">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: sdg.color }}
+                    />
+                    <span className="font-medium">SDG {sdg.value}: {sdg.label}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Description */}

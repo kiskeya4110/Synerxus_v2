@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
-  MoreVertical, LogOut, RefreshCw,
+  Menu, LogOut, RefreshCw,
   FolderOpen, Users, Target, BarChart3,
   MessageSquare, Home, Bell, Trophy, X,
   TrendingUp, Award, Lightbulb, Flame, Settings,
@@ -240,6 +240,8 @@ export default function OrganizationPWAHeader({
     {
       title: "MAIN",
       items: [
+        { icon: Home, label: "Dashboard", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
+        { icon: FolderOpen, label: "Projects", desc: "Manage your projects", action: () => navigate('/projects') },
         { icon: MessageSquare, label: "Messages", desc: "Team communication", action: () => navigate('/organization-messages/pwa') },
       ]
     },
@@ -328,14 +330,15 @@ export default function OrganizationPWAHeader({
             )}
           </button>
 
-          {/* Menu Button */}
+          {/* Hamburger Menu Button - Three bar menu */}
           <button
             onClick={() => setShowMenu(true)}
             className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shadow-sm hover:bg-slate-700 transition-all touch-manipulation cursor-pointer active:scale-95"
             style={{ WebkitTapHighlightColor: 'transparent' }}
-            aria-label="Menu"
+            aria-label="Open navigation menu"
+            data-testid="button-org-pwa-hamburger-menu"
           >
-            <MoreVertical className="w-5 h-5 text-slate-300 pointer-events-none" />
+            <Menu className="w-6 h-6 text-slate-300 pointer-events-none" />
           </button>
         </div>
       </header>

@@ -271,13 +271,15 @@ export default function CSRPWAHeader({
               )}
             </button>
 
-            {/* Menu Button */}
+            {/* Hamburger Menu Button - Three bar menu */}
             <button
               onClick={() => setShowMenu(true)}
-              className="flex items-center gap-2 flex-shrink-0 touch-manipulation active:opacity-70"
+              className="w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
+              aria-label="Open navigation menu"
+              data-testid="button-csr-pwa-hamburger-menu"
             >
-              <Menu className="w-5 h-5 text-emerald-700" />
+              <Menu className="w-5 h-5 text-emerald-600 pointer-events-none" />
             </button>
           </div>
         </div>

@@ -408,20 +408,15 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               )}
             </button>
 
-            {/* Profile/Menu Button */}
+            {/* Hamburger Menu Button - Three bar menu */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
-              data-testid="button-pwa-menu"
+              data-testid="button-pwa-hamburger-menu"
+              aria-label="Open navigation menu"
             >
-              <Avatar className="h-8 w-8 border-2 border-slate-600 shadow-sm pointer-events-none">
-                <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-semibold">
-                  {userInitial}
-                </AvatarFallback>
-              </Avatar>
-              <Menu className="w-5 h-5 text-slate-300 pointer-events-none" />
+              <Menu className="w-6 h-6 text-slate-300 pointer-events-none" />
             </button>
           </div>
         </div>

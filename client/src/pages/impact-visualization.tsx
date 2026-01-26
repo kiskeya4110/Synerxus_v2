@@ -757,7 +757,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
       {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
-      {!embedded && isOrganization && <OrganizationHeader activeTab="reports" />}
+      {!embedded && isOrganization && <OrganizationHeader activeTab="impact" />}
       {!embedded && isOrganization && <OrganizationWelcomeBanner pageTitle="Impact Visualization" />}
       <div className={`${!embedded ? 'space-y-6' : 'space-y-6'}`} style={!embedded ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
       {/* Page Header with Action Buttons */}

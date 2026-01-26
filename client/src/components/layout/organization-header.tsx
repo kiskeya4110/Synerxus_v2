@@ -42,12 +42,11 @@ function getRelativeTime(date: Date): string {
   return date.toLocaleDateString();
 }
 const NAV_TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
-  { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
-  { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
-  { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
-  { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
-  { id: 'create', label: 'Create', icon: Plus, path: null },
+  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/organization-dashboard' },
+  { id: 'verify', label: 'Verify', icon: CheckCircle, path: '/ngo-verification' },
+  { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
+  { id: 'team', label: 'Team', icon: Users, path: '/volunteers' },
+  { id: 'impact', label: 'Impact', icon: BarChart3, path: '/organization-impact-report' },
 ];
 
 interface OrganizationHeaderProps {

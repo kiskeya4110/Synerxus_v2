@@ -35,7 +35,6 @@ ChartSkeleton.displayName = "ChartSkeleton";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import Footer from "@/components/layout/footer";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Logo from "@/components/ui/logo";
 
@@ -456,9 +455,6 @@ export default function TeamOverview() {
 
         <Footer />
       </main>
-
-      {/* Only show MobileBottomNav for organizations */}
-      {isOrganization && <MobileBottomNav />}
     </div>
   );
 }

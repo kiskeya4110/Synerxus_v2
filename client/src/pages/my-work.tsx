@@ -15,7 +15,6 @@ import type { User, Task, ProjectAssignment, Project, Opportunity } from "@share
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MyApplicationsPage from "./my-applications";
@@ -1268,9 +1267,6 @@ export default function MyWork() {
       {/* Mobile Metrics Grid - Organization Only */}
       {isOrganizationManager && <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} aiuEarned={dashboardData?.aiuEarned || 0} />}
       </main>
-
-      {/* Mobile Bottom Navigation - Organization Only */}
-      {isOrganizationManager && <MobileBottomNav />}
 
       {/* PWA Bottom Navigation for Volunteers on Mobile */}
       {!isOrganizationManager && isMobile && (

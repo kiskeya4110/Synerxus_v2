@@ -74,7 +74,6 @@ const MapSkeleton = () => (
 import { getSDGName, SDG_GOALS, getSDGColor } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OfflineBanner from "@/components/layout/offline-banner";
 import { useOfflineSync } from "@/hooks/use-offline-sync";
@@ -4417,9 +4416,6 @@ export default function OrganizationDashboard() {
       <div className="hidden md:block" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
         <Footer />
       </div>
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Pending Item Detail Modal */}
       {pendingDetailOpen && selectedPendingItem && (

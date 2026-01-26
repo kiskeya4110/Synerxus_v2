@@ -15,7 +15,6 @@ import type { User, Task, ProjectAssignment, Organization } from "@shared/schema
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -3140,12 +3139,10 @@ export default function ImpactReport() {
       </Dialog>
 
       </div>
-      {/* Mobile Bottom Navigation - Different for volunteers vs organizations */}
-      {isVolunteer && isMobile ? (
+      {/* Mobile Bottom Navigation for Volunteers */}
+      {isVolunteer && isMobile && (
         <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impacts" />
-      ) : isOrganization ? (
-        <MobileBottomNav />
-      ) : null}
+      )}
     </div>
   );
 }

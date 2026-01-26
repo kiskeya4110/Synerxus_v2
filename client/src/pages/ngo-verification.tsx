@@ -10,7 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
+import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import {
   CheckCircle,
   XCircle,
@@ -53,7 +55,7 @@ interface PendingLog {
 
 export default function NgoVerification() {
   const [, setLocation] = useLocation();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -196,7 +198,17 @@ export default function NgoVerification() {
     rejectMutation.mutate({ logId: selectedLogId, reason: rejectReason.trim() });
   };
 
-  const isOrganization = currentUser?.userType === 'organization';
+  const userType = localStorage.getItem('userType');
+  const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Wait for viewport detection
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   // Redirect if not an organization user
   if (currentUser && !isOrganization) {
@@ -218,26 +230,155 @@ export default function NgoVerification() {
     );
   }
 
+  // Mobile Organization PWA View
+  if (isMobile && isOrganization) {
+    return (
+      <OrganizationPWALayout activeTab="home">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">Verification Queue</h1>
+              <p className="text-sm text-slate-500">
+                {pendingLogs.length} pending {pendingLogs.length === 1 ? 'log' : 'logs'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
+              <p className="text-slate-500">Loading pending logs...</p>
+            </div>
+          ) : pendingLogs.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Inbox className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-700 mb-2">All Caught Up!</h3>
+                <p className="text-slate-500">
+                  There are no pending logs to verify at the moment.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {pendingLogs.map((log) => (
+                <Card key={log.id} className="bg-white">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={log.volunteer?.avatar || ''} />
+                          <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
+                            {log.volunteer?.displayName?.charAt(0) || 'V'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{log.volunteer?.displayName || 'Volunteer'}</p>
+                          <p className="text-xs text-slate-500">{log.project?.name || 'Unknown Project'}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pending
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                      <div className="bg-slate-50 rounded p-2">
+                        <span className="text-slate-500">Hours</span>
+                        <p className="font-semibold">{log.hours}h</p>
+                      </div>
+                      <div className="bg-slate-50 rounded p-2">
+                        <span className="text-slate-500">Date</span>
+                        <p className="font-semibold">{format(new Date(log.date), 'MMM d')}</p>
+                      </div>
+                    </div>
+                    {log.description && (
+                      <p className="text-xs text-slate-600 mb-3 line-clamp-2">{log.description}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                        onClick={() => handleVerify(log.id)}
+                        disabled={isVerifying === log.id}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Verify
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleRejectClick(log.id)}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reject Modal */}
+        <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Log Entry</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Reason for rejection</Label>
+                <Textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Please provide a reason..."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRejectSubmit}
+                disabled={isRejecting || !rejectReason.trim()}
+              >
+                Reject
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Desktop view with OrganizationHeader
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <OrganizationHeader activeTab="verify" />
+
+      {/* Page Header */}
+      <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/organization-dashboard')}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-slate-800">Verification Queue</h1>
-                <p className="text-sm text-slate-500">
-                  {pendingLogs.length} pending {pendingLogs.length === 1 ? 'log' : 'logs'}
-                </p>
-              </div>
+            <div>
+              <h1 className="text-xl font-semibold text-slate-800">Verification Queue</h1>
+              <p className="text-sm text-slate-500">
+                {pendingLogs.length} pending {pendingLogs.length === 1 ? 'log' : 'logs'}
+              </p>
             </div>
             <Button
               variant="outline"

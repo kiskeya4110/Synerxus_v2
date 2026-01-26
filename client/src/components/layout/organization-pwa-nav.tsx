@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Home, FolderOpen, Users, Target, MoreHorizontal, X, Shield, MessageCircle, Settings, BarChart3, ClipboardList, Plus, AlertCircle, TrendingUp, Globe } from "lucide-react";
 
 interface OrganizationPWANavProps {
-  activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard' | 'more';
+  activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'team' | 'sdgs' | 'messages' | 'leaderboard' | 'more' | 'impact' | 'verify' | 'dashboard';
   userId?: string;
 }
 
@@ -25,8 +25,19 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
     enabled: !!userId
   });
 
+  // Map desktop tab names to PWA tab names
+  const mapTabToPwaTab = (tab: string | undefined): string => {
+    if (!tab) return 'home';
+    // Map desktop header tabs to PWA nav tabs
+    if (tab === 'team' || tab === 'volunteers') return 'volunteers';
+    if (tab === 'impact') return 'home'; // Impact is in More menu
+    if (tab === 'verify') return 'home'; // Verify is in More menu
+    if (tab === 'dashboard') return 'home';
+    return tab;
+  };
+
   // Determine active tab from current location if not provided
-  const currentTab = activeTab || (() => {
+  const currentTab = mapTabToPwaTab(activeTab) || (() => {
     if (location === '/organization-dashboard' || location === '/organization-dashboard/pwa') return 'home';
     if (location.includes('/projects') || location === '/my-work') return 'projects';
     if (location === '/overview') return 'potential';

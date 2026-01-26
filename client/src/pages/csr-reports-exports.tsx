@@ -44,7 +44,6 @@ import {
   Eye,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1533,9 +1532,6 @@ export default function CSRReportsExports() {
           </div>
         </div>
       )}
-
-      {/* Only show MobileBottomNav for organization users */}
-      {isOrganization && <MobileBottomNav />}
 
       <style>{`
         @keyframes spin {

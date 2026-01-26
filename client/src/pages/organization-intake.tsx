@@ -21,7 +21,6 @@ import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const organizationProfileSchema = z.object({

@@ -21,7 +21,6 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 
@@ -497,7 +496,7 @@ export default function Volunteers() {
   // Mobile organization PWA view
   if (isOrganizationForLayout && isMobile) {
     return (
-      <OrganizationPWALayout activeTab="volunteers">
+      <OrganizationPWALayout activeTab="team">
         <div className="p-4">
           {/* Page Header */}
           <div className="mb-4">
@@ -1610,7 +1609,7 @@ export default function Volunteers() {
   return (
     <div className={isOrganization ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
       {isOrganization && <OfflineBanner />}
-      {isOrganization && <OrganizationHeader activeTab="volunteers" />}
+      {isOrganization && <OrganizationHeader activeTab="team" />}
       {isOrganization && <OrganizationWelcomeBanner pageTitle="Volunteer Management" />}
       <div className={isOrganization ? `flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full ${isMobile ? 'pb-36' : ''}` : "h-screen overflow-y-auto pb-36"}>
       {/* Page Header */}
@@ -2755,15 +2754,8 @@ export default function Volunteers() {
         </DialogContent>
       </Dialog>
       </div>
-      
-      {/* Mobile Metrics Grid - Organization Only */}
-      {isOrganization && <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} aiuEarned={0} />}
-      
-      {/* Mobile Bottom Navigation - Organization Only */}
-      {isOrganization && <MobileBottomNav />}
-
-      {/* Footer - Hidden when mobile navigation is shown */}
-      {!isOrganization && <Footer />}
+      {/* Footer - Desktop only */}
+      {!isMobile && <Footer />}
 
       {/* Project Invite Modal - Desktop */}
       <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>

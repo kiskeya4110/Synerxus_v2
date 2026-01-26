@@ -11,7 +11,6 @@ import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import { useViewportDetection } from "@/hooks/use-mobile";
@@ -1048,7 +1047,7 @@ export default function OrganizationImpactReport() {
   // Desktop Layout
   return (
     <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
-      <OrganizationHeader activeTab="reports" />
+      <OrganizationHeader activeTab="impact" />
       <OrganizationWelcomeBanner pageTitle="Impact Report" />
       {/* UN SDG Wheel Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>
@@ -3065,8 +3064,6 @@ export default function OrganizationImpactReport() {
         `}</style>
       </div>
       
-      {/* Mobile Bottom Navigation - Only for organization managers */}
-      {currentUser?.userType === 'organization' && <MobileBottomNav />}
     </div>
   );
 }

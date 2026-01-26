@@ -21,7 +21,7 @@ import OrganizationPWANav from "./organization-pwa-nav";
  */
 interface OrganizationPWALayoutProps {
   children: ReactNode;
-  activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard';
+  activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'team' | 'sdgs' | 'messages' | 'leaderboard' | 'impact' | 'verify' | 'dashboard';
   organizationName?: string;
   organizationLogo?: string;
   onRefresh?: () => Promise<void>;

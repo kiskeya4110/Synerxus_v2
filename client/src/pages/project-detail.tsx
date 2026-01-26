@@ -19,10 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import OrganizationHeader from "@/components/layout/organization-header";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -109,16 +109,10 @@ interface DBUser {
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
   const [, navigate] = useLocation();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
-
-  // Redirect mobile users to PWA route
-  useEffect(() => {
-    if (isMobile && projectId) {
-      navigate(`/projects/${projectId}/pwa`, { replace: true });
-    }
-  }, [isMobile, projectId, navigate]);
+  const userType = localStorage.getItem('userType');
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -391,7 +385,28 @@ export default function ProjectDetail() {
     }
   });
 
+  // Determine if user is organization (check localStorage as fallback)
+  const isOrganizationUser = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Wait for viewport detection to complete before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
   if (!projectId) {
+    if (isOrganizationUser && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">Invalid project ID</p>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -404,6 +419,21 @@ export default function ProjectDetail() {
   }
 
   if (loadingProject) {
+    if (isOrganizationUser && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-20 w-full" />
+            <div className="grid grid-cols-2 gap-3">
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-24 rounded-xl" />
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="w-full min-h-screen bg-[#faf9f7]">
         <div className="sticky top-0 z-10 bg-white border-b">
@@ -426,6 +456,21 @@ export default function ProjectDetail() {
   }
 
   if (!project) {
+    if (isOrganizationUser && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">Project not found</p>
+            <Link href="/projects">
+              <Button variant="outline" className="mt-4" data-testid="button-back-projects">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Projects
+              </Button>
+            </Link>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -497,7 +542,7 @@ export default function ProjectDetail() {
     engagementScore >= 40 ? 'Moderate' :
     engagementScore >= 20 ? 'Low' : 'Minimal';
 
-  const isOrganization = currentUser?.userType === 'organization';
+  const isOrganization = isOrganizationUser;
   const canEditProject = currentUser?.userType === 'organization' &&
                         project?.organizationId === currentUser?.organizationId;
 
@@ -514,8 +559,154 @@ export default function ProjectDetail() {
     setTaskToDelete(null);
   };
 
-  const isVolunteer = currentUser?.userType === 'volunteer';
+  const isVolunteer = currentUser?.userType === 'volunteer' || userType === 'volunteer';
 
+  // Mobile Organization PWA View
+  if (isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="px-4 py-4 space-y-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="mb-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+
+          {/* Project Header */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h1 className="text-lg font-bold text-slate-800">{project.name}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatusBadge status={project.status} />
+                  {project.location && (
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {project.location}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {canEditProject && (
+                <Link href={`/projects/${projectId}/edit`}>
+                  <Button size="sm" variant="outline">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+            </div>
+            {project.description && (
+              <p className="text-sm text-slate-600 line-clamp-3">{project.description}</p>
+            )}
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
+              <CardContent className="p-3 text-center">
+                <Users className="w-5 h-5 mx-auto text-emerald-500 mb-1" />
+                <p className="text-lg font-bold text-emerald-700">{uniqueVolunteers}</p>
+                <p className="text-[10px] text-emerald-600">Volunteers</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+              <CardContent className="p-3 text-center">
+                <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+                <p className="text-lg font-bold text-blue-700">{totalHours}</p>
+                <p className="text-[10px] text-blue-600">Hours</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
+              <CardContent className="p-3 text-center">
+                <Target className="w-5 h-5 mx-auto text-purple-500 mb-1" />
+                <p className="text-lg font-bold text-purple-700">{completionPercentage}%</p>
+                <p className="text-[10px] text-purple-600">Complete</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100">
+              <CardContent className="p-3 text-center">
+                <Award className="w-5 h-5 mx-auto text-amber-500 mb-1" />
+                <p className="text-lg font-bold text-amber-700">{formatDecimal(aiuEarned)}</p>
+                <p className="text-[10px] text-amber-600">AIU Earned</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Progress */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold">Project Progress</h3>
+                <span className="text-sm font-bold text-emerald-600">{completionPercentage}%</span>
+              </div>
+              <Progress value={completionPercentage} className="h-2" />
+              <div className="flex justify-between mt-2 text-xs text-slate-500">
+                <span>{completedTasks} completed</span>
+                <span>{inProgressTasks} in progress</span>
+                <span>{pendingTasks} pending</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tasks Section */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold">Tasks ({projectTasks.length})</h3>
+              {canEditProject && projectId && (
+                <CreateTaskDialog projectId={projectId} />
+              )}
+            </div>
+            <div className="space-y-2">
+              {projectTasks.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-4">No tasks yet</p>
+              ) : (
+                projectTasks.slice(0, 5).map((task) => (
+                  <div key={task.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`h-4 w-4 ${task.status === 'completed' ? 'text-emerald-500' : 'text-slate-300'}`} />
+                      <span className="text-sm text-slate-700 truncate max-w-[180px]">{task.title}</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{task.status}</Badge>
+                  </div>
+                ))
+              )}
+              {projectTasks.length > 5 && (
+                <p className="text-xs text-center text-slate-500 pt-2">+{projectTasks.length - 5} more tasks</p>
+              )}
+            </div>
+          </div>
+
+          {/* SDG Coverage */}
+          {project.sdgGoals && (project.sdgGoals as number[]).length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-semibold mb-3">SDG Alignment</h3>
+                <div className="flex flex-wrap gap-2">
+                  {(project.sdgGoals as number[]).map((sdg: number) => (
+                    <div
+                      key={sdg}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                      style={{ backgroundColor: SDG_COLORS[sdg] || '#6b7280' }}
+                      title={SDG_NAMES[sdg]}
+                    >
+                      {sdg}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // Desktop view
   return (
     <div className="fixed inset-0 bg-[#f8f9fa] dark:bg-slate-900 overflow-y-auto overflow-x-hidden">
       {/* Volunteer Desktop Navigation */}
@@ -1783,8 +1974,7 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {/* Mobile Bottom Navigation */}
-      {isOrganization && <MobileBottomNav />}
+      {/* Mobile Bottom Navigation for Volunteers */}
       {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
 
       {/* Delete Task Confirmation Dialog */}

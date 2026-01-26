@@ -14,7 +14,6 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import PWAHeader from "@/components/pwa/pwa-header";
@@ -2342,15 +2341,8 @@ export default function SDGMapping() {
           </DialogContent>
         </Dialog>
       </div>
-      
-      {/* Mobile Metrics Grid */}
-      <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} aiuEarned={0} />
-      
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
-      
-      {/* Footer */}
-      <Footer />
+      {/* Footer - Desktop only */}
+      {!isMobile && <Footer />}
     </div>
   );
 }

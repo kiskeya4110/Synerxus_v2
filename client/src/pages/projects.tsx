@@ -11,7 +11,6 @@ import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opp
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
@@ -742,9 +741,6 @@ export default function Projects() {
 
       {/* Mobile Bottom Navigation for Volunteers */}
       {isVolunteer && isMobile && <VolunteerPWANav activeTab="projects" />}
-
-      {/* Mobile Bottom Navigation for Organizations */}
-      {isOrganization && <MobileBottomNav />}
 
       {/* Footer - Hidden on mobile */}
       {!isMobile && <Footer />}

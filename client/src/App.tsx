@@ -47,6 +47,9 @@ const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 const PostUrgentOpportunity = lazy(() => import("@/pages/post-urgent-opportunity"));
 // NGO project management (simplified)
 const NgoProjects = lazy(() => import("@/pages/projects"));
+const ProjectDetail = lazy(() => import("@/pages/project-detail"));
+const Profile = lazy(() => import("@/pages/profile"));
+const ImpactReport = lazy(() => import("@/pages/impact-report"));
 
 // ============================================================================
 // CORPORATE VIEW - ESG Dashboard (Desktop)
@@ -178,6 +181,8 @@ export default function App() {
           <Route path="/organization-dashboard/pwa" component={OrganizationDashboardPWA} />
           <Route path="/ngo-verification" component={NgoVerification} />
           <Route path="/projects" component={NgoProjects} />
+          <Route path="/projects/:id" component={ProjectDetail} />
+          <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
           <Route path="/organization-messages/pwa" component={OrganizationMessages} />
           <Route path="/organization-messages" component={OrganizationMessages} />
@@ -189,6 +194,8 @@ export default function App() {
           <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
           <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/impact-report" component={ImpactReport} />
 
           {/* ================================================================ */}
           {/* CORPORATE ROUTES - ESG Dashboard View */}

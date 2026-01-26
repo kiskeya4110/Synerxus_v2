@@ -27,7 +27,6 @@ import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -931,9 +930,6 @@ export default function Profile() {
           </Card>
         )}
       </div>
-
-      {/* Mobile Bottom Navigation - Only for organizations */}
-      {isOrganization && <MobileBottomNav />}
 
       {/* Footer - Hidden on mobile */}
       {!isMobile && <Footer />}

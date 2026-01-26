@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Bell, 
-  Search, 
-  Moon, 
-  Sun, 
+import {
+  Bell,
+  Search,
+  Moon,
   Menu,
   User,
   Settings,
@@ -51,7 +50,7 @@ function getRelativeTime(date: Date): string {
 }
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
@@ -294,18 +293,14 @@ export default function Header() {
         {/* Right Nav Items */}
         <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
           
-          {/* Dark Mode Toggle - hidden on mobile */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="text-gray-500 dark:text-gray-400 focus:outline-none hidden md:flex"
+          {/* Dark Mode Indicator - MVP is dark-mode only */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-500 dark:text-gray-400 focus:outline-none hidden md:flex cursor-default"
+            title="Dark mode (MVP)"
           >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
+            <Moon className="h-5 w-5" />
           </Button>
           
           {/* Notifications Popover - Interactive Panel */}

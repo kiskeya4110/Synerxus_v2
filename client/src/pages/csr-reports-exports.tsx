@@ -95,94 +95,50 @@ interface ScheduledReport {
   active: boolean;
 }
 
+// MVP: PDF export only - no CSV per spec
 const reportTemplates: ReportTemplate[] = [
   {
-    id: "executive-summary",
-    name: "Executive Summary Report",
-    description: "High-level overview of CSR metrics, ROI, and strategic alignment for leadership.",
-    category: "executive",
-    icon: "📊",
-    formats: ["PDF", "PPTX"],
-    frequency: "quarterly",
-  },
-  {
-    id: "employee-engagement",
-    name: "Employee Engagement Report",
-    description: "Detailed breakdown of employee volunteer hours, participation rates, and trends.",
+    id: "volunteer-hours",
+    name: "Volunteer Hours Report",
+    description: "Verified volunteer hours by employee with SDG breakdown.",
     category: "engagement",
-    icon: "👥",
-    formats: ["PDF", "XLSX", "CSV"],
+    icon: "⏱️",
+    formats: ["PDF"],
     frequency: "monthly",
   },
   {
     id: "sdg-impact",
     name: "SDG Impact Report",
-    description: "Progress tracking against UN Sustainable Development Goals with benchmarks.",
+    description: "Progress tracking against UN Sustainable Development Goals.",
     category: "impact",
     icon: "🌍",
-    formats: ["PDF", "XLSX"],
+    formats: ["PDF"],
     frequency: "quarterly",
   },
   {
-    id: "bcorp-compliance",
-    name: "B-Corp Readiness Report",
-    description: "Assessment of B-Corp certification requirements with gap analysis.",
+    id: "employee-engagement",
+    name: "Employee Engagement Report",
+    description: "Participation rates and volunteer activity trends.",
+    category: "engagement",
+    icon: "👥",
+    formats: ["PDF"],
+    frequency: "monthly",
+  },
+  {
+    id: "impact-summary",
+    name: "Impact Summary Report",
+    description: "Verified outcomes and beneficiary reach metrics.",
+    category: "impact",
+    icon: "📊",
+    formats: ["PDF"],
+    frequency: "quarterly",
+  },
+  {
+    id: "esg-audit",
+    name: "ESG Audit Report",
+    description: "Audit-ready ESG data with verification timestamps.",
     category: "compliance",
     icon: "✅",
-    formats: ["PDF"],
-    frequency: "annual",
-  },
-  {
-    id: "gri-standards",
-    name: "GRI Standards Report",
-    description: "Global Reporting Initiative aligned sustainability disclosure.",
-    category: "compliance",
-    icon: "📋",
-    formats: ["PDF", "XLSX"],
-    frequency: "annual",
-  },
-  {
-    id: "financial-roi",
-    name: "Financial ROI Analysis",
-    description: "Economic value analysis including volunteer hour valuation and cost savings.",
-    category: "financial",
-    icon: "💰",
-    formats: ["PDF", "XLSX", "CSV"],
-    frequency: "quarterly",
-  },
-  {
-    id: "project-portfolio",
-    name: "Project Portfolio Report",
-    description: "Comprehensive overview of all CSR projects, status, and outcomes.",
-    category: "impact",
-    icon: "📁",
-    formats: ["PDF", "XLSX"],
-    frequency: "monthly",
-  },
-  {
-    id: "top-performers",
-    name: "Top Performers Recognition Report",
-    description: "Leaderboard and recognition data for employee volunteer champions.",
-    category: "engagement",
-    icon: "🏆",
-    formats: ["PDF", "XLSX"],
-    frequency: "monthly",
-  },
-  {
-    id: "esg-scorecard",
-    name: "ESG Scorecard",
-    description: "Environmental, Social, and Governance metrics for stakeholder reporting.",
-    category: "compliance",
-    icon: "📈",
-    formats: ["PDF", "PPTX"],
-    frequency: "quarterly",
-  },
-  {
-    id: "beneficiary-impact",
-    name: "Beneficiary Impact Report",
-    description: "Direct and indirect beneficiary reach with impact stories.",
-    category: "impact",
-    icon: "❤️",
     formats: ["PDF"],
     frequency: "quarterly",
   },
@@ -338,42 +294,26 @@ export default function CSRReportsExports() {
     ? reportTemplates
     : reportTemplates.filter(t => t.category === selectedCategory);
 
+  // MVP: PDF export only
   const generateReport = async (template: ReportTemplate, format: string) => {
     setIsGenerating(template.id);
 
     try {
       // Simulate report generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Generate actual data based on template
-      let content = "";
-      const timestamp = new Date().toISOString().split("T")[0];
-
-      if (format === "CSV") {
-        content = generateCSVContent(template, reportData);
-        downloadFile(content, `${template.id}_${timestamp}.csv`, "text/csv");
-      } else if (format === "XLSX") {
-        // For XLSX, we'd use a library like xlsx
-        content = generateCSVContent(template, reportData);
-        downloadFile(content, `${template.id}_${timestamp}.csv`, "text/csv");
-        toast({
-          title: "Report Generated",
-          description: `${template.name} exported as CSV (XLSX conversion available with premium)`,
-        });
-      } else {
-        // PDF generation
-        const htmlContent = generatePDFContent(template, reportData);
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
-          printWindow.document.close();
-          printWindow.print();
-        }
+      // PDF generation only for MVP
+      const htmlContent = generatePDFContent(template, reportData);
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
+        printWindow.document.close();
+        printWindow.print();
       }
 
       toast({
         title: "Report Generated",
-        description: `${template.name} has been generated successfully.`,
+        description: `${template.name} PDF has been generated successfully.`,
       });
     } catch (error) {
       toast({
@@ -1578,12 +1518,10 @@ export default function CSRReportsExports() {
               <div>
                 <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Format</label>
                 <div style={{ display: "flex", gap: "12px" }}>
-                  {["PDF", "XLSX", "CSV"].map((format) => (
-                    <label key={format} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
-                      <input type="radio" name="format" value={format} defaultChecked={format === "PDF"} />
-                      <span style={{ fontSize: "13px" }}>{format}</span>
-                    </label>
-                  ))}
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                    <input type="radio" name="format" value="PDF" defaultChecked />
+                    <span style={{ fontSize: "13px" }}>PDF (Audit-Ready)</span>
+                  </label>
                 </div>
               </div>
             </div>

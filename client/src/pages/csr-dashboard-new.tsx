@@ -41,6 +41,7 @@ import Logo from "@/components/ui/logo";
 // Hooks
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Shared utilities
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
@@ -327,6 +328,7 @@ export default function CSRDashboardNew() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const userId = localStorage.getItem("currentUserId");
   const userType = localStorage.getItem("userType");
 
@@ -468,6 +470,250 @@ export default function CSRDashboardNew() {
   const sdgScoreDelta = csrData?.sdgScoreDelta || 0;
   const leaderboard = csrData?.leaderboard || [];
   const partners = csrData?.partners || [];
+
+  // MVP Mobile View for Corporate Partners
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Header with Logo */}
+        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Logo size="sm" />
+              <span className="text-xs text-gray-500 font-medium">ESG Dashboard</span>
+            </div>
+            <button
+              onClick={() => refetch()}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="px-4 py-5 space-y-5">
+          {/* Core KPI Metrics - 2x2 Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Total Hours */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{totalHours.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">volunteer hours</p>
+            </div>
+
+            {/* Active Employees */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-emerald-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Team</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{activeEmployees}</p>
+              <p className="text-xs text-gray-500 mt-1">active volunteers</p>
+            </div>
+
+            {/* Projects Completed */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Projects</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{projectsCompleted}</p>
+              <p className="text-xs text-gray-500 mt-1">completed</p>
+            </div>
+
+            {/* SDG Impact */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-4 w-4 text-amber-600" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Impact</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">+{sdgScoreDelta}</p>
+              <p className="text-xs text-gray-500 mt-1">SDG points</p>
+            </div>
+          </div>
+
+          {/* ESG Breakdown - Simple Cards */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-blue-600" />
+                ESG Breakdown
+              </h2>
+            </div>
+            <div className="p-4 space-y-3">
+              {/* Environmental */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Leaf className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Environmental</p>
+                    <p className="text-xs text-gray-500">{esgBreakdown.environmental.projects} projects</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">{esgBreakdown.environmental.hours}h</p>
+                  <p className="text-xs text-emerald-600">{esgBreakdown.environmental.percentage}%</p>
+                </div>
+              </div>
+              {/* Social */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
+                    <Heart className="h-4 w-4 text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Social</p>
+                    <p className="text-xs text-gray-500">{esgBreakdown.social.projects} projects</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">{esgBreakdown.social.hours}h</p>
+                  <p className="text-xs text-rose-600">{esgBreakdown.social.percentage}%</p>
+                </div>
+              </div>
+              {/* Governance */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Scale className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Governance</p>
+                    <p className="text-xs text-gray-500">{esgBreakdown.governance.projects} projects</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">{esgBreakdown.governance.hours}h</p>
+                  <p className="text-xs text-blue-600">{esgBreakdown.governance.percentage}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Volunteers */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Award className="h-4 w-4 text-amber-600" />
+                Top Volunteers
+              </h2>
+              <span className="text-xs text-gray-500">This month</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {leaderboard.length > 0 ? (
+                leaderboard.slice(0, 5).map((employee: any, index: number) => (
+                  <div key={employee.employeeName || index} className="px-4 py-3 flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      index === 0 ? 'bg-amber-100 text-amber-700' :
+                      index === 1 ? 'bg-gray-200 text-gray-700' :
+                      index === 2 ? 'bg-orange-100 text-orange-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{employee.employeeName}</p>
+                      <p className="text-xs text-gray-500">{employee.hours}h logged</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <Sparkles className="h-3 w-3" />
+                      <span className="text-sm font-semibold">{employee.points}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-4 py-8 text-center">
+                  <Award className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No volunteer data yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SDG Alignment Summary */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-indigo-600" />
+                SDG Alignment
+              </h2>
+            </div>
+            <div className="p-4">
+              {sdgChartData.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {sdgChartData.slice(0, 6).map((sdg: any) => (
+                    <div
+                      key={sdg.sdg}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50"
+                    >
+                      <div
+                        className="w-6 h-6 rounded text-xs font-bold flex items-center justify-center text-white"
+                        style={{ backgroundColor: sdg.color }}
+                      >
+                        {sdg.sdg}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-900">{sdg.hours}h</p>
+                        <p className="text-[10px] text-gray-500">{sdg.employees} people</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">No SDG data yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom Navigation - 4 tabs */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            {/* Dashboard */}
+            <button className="flex flex-col items-center py-2 px-4 rounded-xl text-indigo-600 bg-indigo-50">
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Dashboard</span>
+            </button>
+
+            {/* Impact */}
+            <button
+              onClick={() => navigate('/csr-impact-reporting')}
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <TrendingUp className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Impact</span>
+            </button>
+
+            {/* Reports */}
+            <button
+              onClick={() => navigate('/csr-reports-exports')}
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <Download className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Reports</span>
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => navigate('/corporate-partner-profile-settings')}
+              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <Building2 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Settings</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

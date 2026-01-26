@@ -558,7 +558,7 @@ export default function PostCoreOpportunity() {
                             key={skill}
                             data-testid={`badge-required-${skill.toLowerCase().replace(/\s+/g, '-')}`}
                             variant={form.watch("requiredSkills")?.includes(skill) ? "default" : "outline"}
-                            className="cursor-pointer"
+                            className={`cursor-pointer ${form.watch("requiredSkills")?.includes(skill) ? "bg-indigo-600 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}
                             onClick={() => toggleSkill(skill, "required")}
                           >
                             {skill}
@@ -582,7 +582,7 @@ export default function PostCoreOpportunity() {
                           <Badge
                             key={skill}
                             variant="default"
-                            className="cursor-pointer"
+                            className="cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700"
                             onClick={() => toggleSkill(skill, "required")}
                           >
                             {skill} <X className="w-3 h-3 ml-1" />
@@ -607,7 +607,7 @@ export default function PostCoreOpportunity() {
                             key={skill}
                             data-testid={`badge-optional-${skill.toLowerCase().replace(/\s+/g, '-')}`}
                             variant={form.watch("optionalSkills")?.includes(skill) ? "secondary" : "outline"}
-                            className="cursor-pointer"
+                            className={`cursor-pointer ${form.watch("optionalSkills")?.includes(skill) ? "bg-slate-200 text-slate-800" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}
                             onClick={() => toggleSkill(skill, "optional")}
                           >
                             {skill}
@@ -631,7 +631,7 @@ export default function PostCoreOpportunity() {
                           <Badge
                             key={skill}
                             variant="secondary"
-                            className="cursor-pointer"
+                            className="cursor-pointer bg-slate-200 text-slate-800 hover:bg-slate-300"
                             onClick={() => toggleSkill(skill, "optional")}
                           >
                             {skill} <X className="w-3 h-3 ml-1" />
@@ -1057,7 +1057,7 @@ export default function PostCoreOpportunity() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100 light">
       {isOrganizationForLayout && <OrganizationNav />}
       <div className="max-w-4xl mx-auto py-8 px-4">
         {formContent}

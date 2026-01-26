@@ -402,7 +402,7 @@ export default function PostUrgentOpportunity() {
                               key={skill}
                               data-testid={`badge-skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}
                               variant={form.watch("requiredSkills")?.includes(skill) ? "default" : "outline"}
-                              className="cursor-pointer"
+                              className={`cursor-pointer ${form.watch("requiredSkills")?.includes(skill) ? "bg-orange-500 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}
                               onClick={() => toggleSkill(skill)}
                             >
                               {skill}
@@ -426,7 +426,7 @@ export default function PostUrgentOpportunity() {
                             <Badge
                               key={skill}
                               variant="default"
-                              className="cursor-pointer"
+                              className="cursor-pointer bg-orange-500 text-white hover:bg-orange-600"
                               onClick={() => toggleSkill(skill)}
                             >
                               {skill} <X className="w-3 h-3 ml-1" />
@@ -483,7 +483,7 @@ export default function PostUrgentOpportunity() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-slate-100 light">
       {isOrganizationForLayout && <OrganizationNav />}
       <div className="max-w-3xl mx-auto py-8 px-4">
         {formContent}

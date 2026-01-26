@@ -492,6 +492,37 @@ export default function Volunteers() {
     );
   }
 
+  // Handle no user ID - show navigation with login prompt
+  if (!userId) {
+    if (isOrganizationForLayout && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="team">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">Please log in to view volunteers</p>
+              <Link href="/landing">
+                <Button>Go to Login</Button>
+              </Link>
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
+    return (
+      <div className="min-h-screen bg-[#f9fafb]">
+        <OrganizationNav />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">Please log in to view volunteers</p>
+            <Link href="/landing">
+              <Button>Go to Login</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Mobile organization PWA view
   if (isOrganizationForLayout && isMobile) {
     return (
@@ -1606,10 +1637,10 @@ export default function Volunteers() {
   }
 
   return (
-    <div className={isOrganization ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
-      {isOrganization && <OfflineBanner />}
-      {isOrganization && <OrganizationNav />}
-      <div className={isOrganization ? `flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full ${isMobile ? 'pb-36' : ''}` : "h-screen overflow-y-auto pb-36"}>
+    <div className={isOrganizationForLayout ? "min-h-screen flex flex-col bg-[#f9fafb]" : ""}>
+      {isOrganizationForLayout && <OfflineBanner />}
+      {isOrganizationForLayout && <OrganizationNav />}
+      <div className={isOrganizationForLayout ? `flex-1 max-w-[1400px] mx-auto px-6 pt-6 w-full ${isMobile ? 'pb-36' : ''}` : "h-screen overflow-y-auto pb-36"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Volunteers</h1>

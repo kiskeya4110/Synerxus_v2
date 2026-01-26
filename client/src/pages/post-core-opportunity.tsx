@@ -1057,7 +1057,7 @@ export default function PostCoreOpportunity() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A]">
+    <div className="min-h-screen pwa-gradient-bg">
       {isOrganizationForLayout && <OrganizationNav />}
       <div className="max-w-4xl mx-auto py-8 px-4 light">
         {formContent}

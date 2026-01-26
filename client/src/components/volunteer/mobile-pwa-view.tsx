@@ -1241,7 +1241,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col w-full max-w-full overflow-hidden">
+    <div className="min-h-screen h-screen pwa-gradient-bg flex flex-col w-full max-w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 

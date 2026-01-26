@@ -868,6 +868,40 @@ input[type="radio"] {
   animation: slideUp 0.3s ease-out;
 }
 
+/* ===== PWA GRADIENT BACKGROUND ===== */
+.pwa-gradient-bg {
+  background:
+    /* Circular gradient node - top right */
+    radial-gradient(
+      ellipse 60% 50% at 85% 15%,
+      rgba(34, 197, 94, 0.15) 0%,
+      rgba(34, 197, 94, 0.05) 40%,
+      transparent 70%
+    ),
+    /* Circular gradient node - bottom left */
+    radial-gradient(
+      ellipse 50% 60% at 10% 85%,
+      rgba(34, 197, 94, 0.12) 0%,
+      rgba(34, 197, 94, 0.04) 45%,
+      transparent 70%
+    ),
+    /* Circular gradient node - center */
+    radial-gradient(
+      ellipse 40% 40% at 50% 50%,
+      rgba(34, 197, 94, 0.08) 0%,
+      transparent 60%
+    ),
+    /* Base gradient from navy to slightly green-tinted navy */
+    linear-gradient(
+      145deg,
+      #0F172A 0%,
+      #0F1F2A 30%,
+      #0D2620 70%,
+      #0F172A 100%
+    );
+  background-color: #0F172A;
+}
+
 /* ===== PWA SAFE AREA ===== */
 .safe-area-top {
   padding-top: max(env(safe-area-inset-top), 0px);

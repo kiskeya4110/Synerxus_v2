@@ -71,7 +71,7 @@ const Help = lazy(() => import("@/pages/help"));
 
 // Loading fallback
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-[#0F172A]">
+  <div className="flex items-center justify-center min-h-screen pwa-gradient-bg">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
   </div>
 );

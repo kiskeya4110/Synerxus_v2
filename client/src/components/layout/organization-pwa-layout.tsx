@@ -58,7 +58,7 @@ export default function OrganizationPWALayout({
   }, [onRefresh]);
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#0F172A] text-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full pwa-gradient-bg text-white flex flex-col overflow-hidden">
       {/* Centered App Container */}
       <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
         {/* Shared Header */}

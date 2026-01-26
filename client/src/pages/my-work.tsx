@@ -487,7 +487,7 @@ export default function MyWork() {
   // Handle no user logged in
   if (!storedUserId) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-300 mb-4">Please log in to view your work</p>
           <Button onClick={() => setLocation("/landing")} className="bg-indigo-600 hover:bg-indigo-700">
@@ -501,7 +501,7 @@ export default function MyWork() {
   // Show loading state while user data is being fetched to prevent wrong view flash
   if (isUserLoading || !currentUser) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
           <p className="text-slate-300">Loading...</p>

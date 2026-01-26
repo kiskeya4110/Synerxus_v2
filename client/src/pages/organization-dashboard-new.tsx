@@ -832,24 +832,28 @@ export default function OrganizationDashboardNew() {
           </div>
         </main>
 
-        {/* Bottom Navigation Tray - 4 tabs per spec */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        {/* Bottom Navigation Tray - 4 tabs with consistent styling */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex justify-around items-center max-w-md mx-auto">
-            {/* Dashboard */}
-            <button className="flex flex-col items-center py-2 px-4 rounded-xl text-indigo-600 bg-indigo-50">
-              <Home className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">Dashboard</span>
+            {/* Dashboard - Active */}
+            <button className="flex flex-col items-center py-2 px-4 rounded-xl">
+              <div className="p-2 rounded-lg bg-indigo-600">
+                <Home className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-[10px] font-semibold text-white mt-1">Dashboard</span>
             </button>
 
-            {/* Verify - Primary Action */}
+            {/* Verify */}
             <button
               onClick={() => navigate('/verification')}
-              className="flex flex-col items-center py-2 px-5 rounded-xl bg-amber-500 text-white shadow-md -mt-3 relative"
+              className="flex flex-col items-center py-2 px-4 rounded-xl relative"
             >
-              <Shield className="w-6 h-6 mb-0.5" />
-              <span className="text-[10px] font-semibold">Verify</span>
+              <div className="p-2 rounded-lg">
+                <Shield className="w-5 h-5 text-slate-400" />
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 mt-1">Verify</span>
               {stats.pendingVerifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {stats.pendingVerifications > 9 ? '9+' : stats.pendingVerifications}
                 </span>
               )}
@@ -858,19 +862,23 @@ export default function OrganizationDashboardNew() {
             {/* Projects */}
             <button
               onClick={() => navigate('/projects')}
-              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              className="flex flex-col items-center py-2 px-4 rounded-xl"
             >
-              <FolderOpen className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">Projects</span>
+              <div className="p-2 rounded-lg">
+                <FolderOpen className="w-5 h-5 text-slate-400" />
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 mt-1">Projects</span>
             </button>
 
             {/* Reports */}
             <button
               onClick={() => navigate('/reports')}
-              className="flex flex-col items-center py-2 px-4 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              className="flex flex-col items-center py-2 px-4 rounded-xl"
             >
-              <BarChart3 className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">Reports</span>
+              <div className="p-2 rounded-lg">
+                <BarChart3 className="w-5 h-5 text-slate-400" />
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 mt-1">Reports</span>
             </button>
           </div>
         </nav>

@@ -301,18 +301,18 @@ export default function PostCoreOpportunity() {
                     <FormItem>
                       <div className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
                         field.value
-                          ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-800'
-                          : 'bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700'
+                          ? 'bg-red-50 border-red-400'
+                          : 'bg-slate-50 border-slate-200'
                       }`}>
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${field.value ? 'bg-red-100 dark:bg-red-900' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                            <AlertTriangle className={`h-5 w-5 ${field.value ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}`} />
+                          <div className={`p-2 rounded-full ${field.value ? 'bg-red-100' : 'bg-slate-200'}`}>
+                            <AlertTriangle className={`h-5 w-5 ${field.value ? 'text-red-600' : 'text-slate-500'}`} />
                           </div>
                           <div>
-                            <FormLabel className="text-base font-semibold cursor-pointer">
+                            <FormLabel className="text-base font-semibold cursor-pointer text-slate-900">
                               Mark as Urgent Opportunity
                             </FormLabel>
-                            <FormDescription className="text-sm">
+                            <FormDescription className="text-sm text-slate-600">
                               Urgent opportunities are highlighted and prioritized in volunteer searches
                             </FormDescription>
                           </div>

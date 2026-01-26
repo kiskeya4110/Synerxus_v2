@@ -75,10 +75,10 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   return (
     <>
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-700"
       style={{
-        background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
-        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
+        background: '#0F172A',
+        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.3)',
         paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
       }}
     >
@@ -94,10 +94,10 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid={`nav-org-${item.id}`}
             >
-              <div className={`p-2 rounded-lg pointer-events-none ${isActive ? 'bg-emerald-100' : ''}`}>
-                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
+              <div className={`p-2 rounded-lg pointer-events-none ${isActive ? 'bg-indigo-600' : ''}`}>
+                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-slate-400'}`} />
               </div>
-              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-500'}`}>
+              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-white font-semibold' : 'text-slate-400'}`}>
                 {item.label}
               </span>
             </button>

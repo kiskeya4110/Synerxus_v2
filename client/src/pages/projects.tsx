@@ -250,8 +250,25 @@ export default function Projects() {
     );
   }
 
-  // Handle user loading or error state
-  if (isUserLoading || (!currentUser && !isUserError)) {
+  // Handle no user ID - user not logged in
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        <OrganizationNav />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">Please log in to view projects</p>
+            <Link href="/landing">
+              <Button>Go to Login</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle user loading state
+  if (isUserLoading) {
     if (isOrganization && isMobile) {
       return (
         <OrganizationPWALayout activeTab="projects">
@@ -262,8 +279,11 @@ export default function Projects() {
       );
     }
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen bg-[#faf9f7]">
+        <OrganizationNav />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        </div>
       </div>
     );
   }
@@ -271,10 +291,13 @@ export default function Projects() {
   // Handle user error or no user
   if (isUserError || !currentUser) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-500 mb-2">Failed to load user data</p>
-          <p className="text-gray-500 text-sm">Please try refreshing the page or logging in again.</p>
+      <div className="min-h-screen bg-[#faf9f7]">
+        <OrganizationNav />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-500 mb-2">Failed to load user data</p>
+            <p className="text-gray-500 text-sm">Please try refreshing the page or logging in again.</p>
+          </div>
         </div>
       </div>
     );

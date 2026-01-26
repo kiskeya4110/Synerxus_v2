@@ -484,13 +484,27 @@ export default function MyWork() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Handle no user logged in
+  if (!storedUserId) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-300 mb-4">Please log in to view your work</p>
+          <Button onClick={() => setLocation("/landing")} className="bg-indigo-600 hover:bg-indigo-700">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading state while user data is being fetched to prevent wrong view flash
   if (isUserLoading || !currentUser) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-300">Loading...</p>
         </div>
       </div>
     );

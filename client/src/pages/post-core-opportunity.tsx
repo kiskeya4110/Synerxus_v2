@@ -24,6 +24,7 @@ import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, I
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import OrganizationNav from "@/components/layout/organization-nav";
 
 const skillOptions = [
   "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
@@ -226,10 +227,21 @@ export default function PostCoreOpportunity() {
             Back
           </Button>
         )}
-        <h1 className={`font-bold text-gray-900 dark:text-white mb-2 ${isMobile ? "text-xl" : "text-3xl"}`}>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/projects')}
+            className="mb-3 -ml-2 text-slate-700 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Projects
+          </Button>
+        )}
+        <h1 className={`font-bold text-slate-900 mb-2 ${isMobile ? "text-xl" : "text-3xl"}`}>
           Post a Core Opportunity
         </h1>
-        <p className={`text-gray-600 dark:text-gray-300 ${isMobile ? "text-sm" : ""}`}>
+        <p className={`text-slate-600 ${isMobile ? "text-sm" : ""}`}>
           For skilled, ongoing, or project-based volunteer roles. This detailed post will power the AI matching algorithm.
         </p>
       </div>
@@ -237,15 +249,15 @@ export default function PostCoreOpportunity() {
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Section 1: The Basics */}
-            <Card data-testid="card-basics">
+            <Card data-testid="card-basics" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
                   Section 1: The Basics
                 </CardTitle>
-                <CardDescription>What is the role?</CardDescription>
+                <CardDescription className="text-slate-600">What is the role?</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="title"
@@ -320,15 +332,15 @@ export default function PostCoreOpportunity() {
             </Card>
 
             {/* Section 2: The Logistics */}
-            <Card data-testid="card-logistics">
+            <Card data-testid="card-logistics" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <MapPin className="w-5 h-5 text-blue-600" />
                   Section 2: The Logistics
                 </CardTitle>
-                <CardDescription>Where and when is this opportunity?</CardDescription>
+                <CardDescription className="text-slate-600">Where and when is this opportunity?</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="engagementType"
@@ -524,15 +536,15 @@ export default function PostCoreOpportunity() {
             </Card>
 
             {/* Section 3: The Ideal Volunteer */}
-            <Card data-testid="card-ideal-volunteer">
+            <Card data-testid="card-ideal-volunteer" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Target className="w-5 h-5 text-blue-600" />
                   Section 3: The Ideal Volunteer
                 </CardTitle>
-                <CardDescription>Who are you looking for? This is the most important section for AI matching.</CardDescription>
+                <CardDescription className="text-slate-600">Who are you looking for? This is the most important section for AI matching.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="requiredSkills"
@@ -634,15 +646,15 @@ export default function PostCoreOpportunity() {
             </Card>
 
             {/* Section 4: Purpose & Impact */}
-            <Card data-testid="card-impact">
+            <Card data-testid="card-impact" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
                   Section 4: The Purpose & Impact
                 </CardTitle>
-                <CardDescription>Why does this role matter? This powers SDG matching and Impact Dashboards.</CardDescription>
+                <CardDescription className="text-slate-600">Why does this role matter? This powers SDG matching and Impact Dashboards.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="primarySdg"
@@ -726,10 +738,10 @@ export default function PostCoreOpportunity() {
             </Card>
 
             {/* Section 5: Volunteer Role Weight Configuration (AIU Formula) */}
-            <Card data-testid="card-role-weights">
+            <Card data-testid="card-role-weights" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Users className="w-5 h-5 text-blue-600" />
                   Section 5: Volunteer Role Configuration
                   <TooltipProvider>
                     <Tooltip>
@@ -748,11 +760,11 @@ export default function PostCoreOpportunity() {
                     </Tooltip>
                   </TooltipProvider>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-600">
                   Set the total volunteer contribution percentage and define how it's distributed among roles.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 {/* Total Volunteer Contribution Field */}
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                   <FormField
@@ -1045,8 +1057,9 @@ export default function PostCoreOpportunity() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100">
+      {isOrganizationForLayout && <OrganizationNav />}
+      <div className="max-w-4xl mx-auto py-8 px-4">
         {formContent}
       </div>
     </div>

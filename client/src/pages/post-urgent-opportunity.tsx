@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { AlertCircle, Calendar, MapPin, Users, X, ArrowLeft } from "lucide-react";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import OrganizationNav from "@/components/layout/organization-nav";
 
 const skillOptions = [
   "No Specific Skills Required", "Physical Labor", "Event Support", "Customer Service",
@@ -159,13 +160,24 @@ export default function PostUrgentOpportunity() {
             Back
           </Button>
         )}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/projects')}
+            className="mb-3 -ml-2 text-slate-700 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Projects
+          </Button>
+        )}
         <div className="flex items-center gap-2 mb-2">
           <AlertCircle className={`text-orange-500 ${isMobile ? "w-6 h-6" : "w-8 h-8"}`} />
-          <h1 className={`font-bold text-gray-900 dark:text-white ${isMobile ? "text-xl" : "text-3xl"}`}>
+          <h1 className={`font-bold text-slate-900 ${isMobile ? "text-xl" : "text-3xl"}`}>
             Post an Urgent Need or Event
           </h1>
         </div>
-        <p className={`text-gray-600 dark:text-gray-300 ${isMobile ? "text-sm" : ""}`}>
+        <p className={`text-slate-600 ${isMobile ? "text-sm" : ""}`}>
           Use this form for time-sensitive events like fundraisers, community drives, or disaster response where you need volunteers now.
           This will prioritize matching by location and availability.
         </p>
@@ -173,12 +185,12 @@ export default function PostUrgentOpportunity() {
 
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card data-testid="card-urgent-details">
+            <Card data-testid="card-urgent-details" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle>Event Details</CardTitle>
-                <CardDescription>Quick and simple - we'll get you volunteers fast!</CardDescription>
+                <CardTitle className="text-slate-900">Event Details</CardTitle>
+                <CardDescription className="text-slate-600">Quick and simple - we'll get you volunteers fast!</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="title"
@@ -216,15 +228,15 @@ export default function PostUrgentOpportunity() {
               </CardContent>
             </Card>
 
-            <Card data-testid="card-when-where">
+            <Card data-testid="card-when-where" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Calendar className="w-5 h-5 text-blue-600" />
                   When & Where
                 </CardTitle>
-                <CardDescription>Date, time, and location details</CardDescription>
+                <CardDescription className="text-slate-600">Date, time, and location details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="location"
@@ -316,15 +328,15 @@ export default function PostUrgentOpportunity() {
               </CardContent>
             </Card>
 
-            <Card data-testid="card-purpose-skills">
+            <Card data-testid="card-purpose-skills" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Users className="w-5 h-5 text-blue-600" />
                   Purpose & Skills
                 </CardTitle>
-                <CardDescription>SDG alignment and volunteer requirements</CardDescription>
+                <CardDescription className="text-slate-600">SDG alignment and volunteer requirements</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-slate-800">
                 <FormField
                   control={form.control}
                   name="primarySdg"
@@ -471,8 +483,9 @@ export default function PostUrgentOpportunity() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-slate-100">
+      {isOrganizationForLayout && <OrganizationNav />}
+      <div className="max-w-3xl mx-auto py-8 px-4">
         {formContent}
       </div>
     </div>

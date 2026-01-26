@@ -9,7 +9,7 @@ import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import AIInsightsModal from "@/components/organization/AIInsightsModal";
 import type { User } from "@shared/schema";
 
@@ -41,7 +41,7 @@ const SDG_ICONS: Record<number, string> = {
 export default function Overview() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const [showAIInsightsModal, setShowAIInsightsModal] = useState(false);
 
   const { data: currentUser } = useQuery<User>({
@@ -116,6 +116,15 @@ export default function Overview() {
   // Use localStorage as fallback for PWA layout detection during initial load
   const userType = localStorage.getItem('userType');
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Wait for viewport detection before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   // Mobile PWA View - Organizations only
   if (isOrganization && isMobile) {

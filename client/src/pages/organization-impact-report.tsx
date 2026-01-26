@@ -14,7 +14,7 @@ import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -148,7 +148,7 @@ export default function OrganizationImpactReport() {
   >("all");
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
   // Get the current userId from localStorage for cache key
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -870,8 +870,21 @@ export default function OrganizationImpactReport() {
     );
   }
 
+  // Wait for viewport detection before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  // Check organization status with localStorage fallback
+  const userType = localStorage.getItem('userType');
+  const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
   // PWA Mobile Layout
-  if (isMobile && currentUser?.userType === 'organization') {
+  if (isMobile && isOrganization) {
     return (
       <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
         <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">

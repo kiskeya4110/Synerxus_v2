@@ -18,7 +18,7 @@ import PWAHeader from "@/components/pwa/pwa-header";
 import Footer from "@/components/layout/footer";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
@@ -29,7 +29,7 @@ interface ProjectWithDetails extends Project {
 export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
   const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
@@ -242,6 +242,15 @@ export default function Projects() {
   const canManageProjects = currentUser?.userType === 'organization';
   // Use localStorage userType as fallback when currentUser hasn't loaded yet
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Wait for viewport detection to complete before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   // Handle user loading or error state
   if (isUserLoading || (!currentUser && !isUserError)) {

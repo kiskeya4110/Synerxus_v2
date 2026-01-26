@@ -19,7 +19,7 @@ import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle, Users, Clock, Globe, Award, FileBarChart, ChevronRight } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -76,7 +76,7 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 export default function SDGMapping() {
   const { theme } = useTheme();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
@@ -551,6 +551,15 @@ export default function SDGMapping() {
   // Use localStorage as fallback for PWA layout detection during initial load
   const userType = localStorage.getItem('userType');
   const isOrganizationForLayout = isOrganization || userType === 'organization';
+
+  // Wait for viewport detection before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   // Mobile organization PWA view - Enhanced with better KPIs
   if (isOrganizationForLayout && isMobile) {

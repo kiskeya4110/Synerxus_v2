@@ -13,7 +13,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { AddVolunteerModal } from "@/components/add-volunteer-modal";
 import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
@@ -58,7 +58,7 @@ export default function Volunteers() {
   const [selectedAssignmentRole, setSelectedAssignmentRole] = useState<string>("Volunteer");
   const [editingAssignmentRole, setEditingAssignmentRole] = useState<{ assignmentId: number; role: string } | null>(null);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const [, navigate] = useLocation();
 
   // Get current user to check if organization
@@ -484,6 +484,15 @@ export default function Volunteers() {
     if (!selectedVolunteerId) return null;
     return volunteersWithStats.find((v: any) => v.id === selectedVolunteerId) || null;
   }, [selectedVolunteerId, volunteersWithStats]);
+
+  // Wait for viewport detection before rendering layout
+  if (isViewportLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   // Mobile organization PWA view
   if (isOrganizationForLayout && isMobile) {

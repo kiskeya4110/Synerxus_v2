@@ -153,8 +153,17 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
   );
 }
 
+// Wordmark colors
+const WORDMARK_COLORS = {
+  synerLight: "#0F172A",  // Dark navy blue for light backgrounds
+  synerDark: "#F8FAFC",   // White for dark backgrounds
+  xus: "#B8860B",         // Dark golden orange
+};
+
 /**
  * Synerxus Wordmark
+ * SYNER in dark navy blue (or white on dark backgrounds)
+ * XUS in dark golden orange
  */
 function Wordmark({
   fontSize = 22,
@@ -165,18 +174,18 @@ function Wordmark({
   theme?: "light" | "dark" | "auto";
   className?: string;
 }) {
-  const textColor = theme === "light" ? "#0F172A" : theme === "dark" ? "#F8FAFC" : "currentColor";
+  const synerColor = theme === "dark" ? WORDMARK_COLORS.synerDark : WORDMARK_COLORS.synerLight;
 
   return (
     <span
       className={cn("font-semibold tracking-tight", className)}
       style={{
         fontSize: `${fontSize}px`,
-        color: textColor,
         fontFamily: "'Inter', 'Instrument Sans', sans-serif",
       }}
     >
-      SYNERXUS
+      <span style={{ color: synerColor }}>SYNER</span>
+      <span style={{ color: WORDMARK_COLORS.xus }}>XUS</span>
     </span>
   );
 }
@@ -252,4 +261,4 @@ export default function Logo({
 }
 
 // Export sub-components for flexible use
-export { LogoIcon, Wordmark, LOGO_COLORS };
+export { LogoIcon, Wordmark, LOGO_COLORS, WORDMARK_COLORS };

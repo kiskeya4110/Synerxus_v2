@@ -530,8 +530,8 @@ export default function Volunteers() {
         <div className="p-4">
           {/* Page Header */}
           <div className="mb-4">
-            <h1 className="text-xl font-bold mb-1">Volunteers</h1>
-            <p className="text-sm text-gray-600">Manage volunteer profiles</p>
+            <h1 className="text-xl font-bold mb-1 text-white">Volunteers</h1>
+            <p className="text-sm text-white/70">Manage volunteer profiles</p>
           </div>
 
           {/* Stats Cards - Mobile - Interactive */}
@@ -634,15 +634,15 @@ export default function Volunteers() {
 
           {filteredVolunteers.length === 0 && !isLoading && (
             <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-              <p className="text-gray-500 text-sm">No volunteers found</p>
+              <Users className="h-12 w-12 mx-auto mb-2 text-white/50" />
+              <p className="text-white/70 text-sm">No volunteers found</p>
             </div>
           )}
 
           {/* Volunteer Insights KPIs */}
           <div className="mt-6 mb-4">
-            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-blue-400" />
               Volunteer Insights
             </h2>
             <div className="grid grid-cols-2 gap-3">

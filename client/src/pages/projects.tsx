@@ -334,8 +334,8 @@ export default function Projects() {
           {/* MVP Header Row */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Projects</h1>
-              <p className="text-xs text-slate-500 mt-0.5">{projects.length} total · {activeProjectsCount} active</p>
+              <h1 className="text-xl font-bold text-white">Projects</h1>
+              <p className="text-xs text-white/70 mt-0.5">{projects.length} total · {activeProjectsCount} active</p>
             </div>
             {canManageProjects && currentUser?.organizationId && (
               <CreateProjectDialog organizationId={currentUser.organizationId} />
@@ -415,8 +415,8 @@ export default function Projects() {
 
           {/* Section Header */}
           <div className="flex items-center justify-between pt-2">
-            <h2 className="text-sm font-semibold text-slate-700">Your Projects</h2>
-            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredProjects.length}</span>
+            <h2 className="text-sm font-semibold text-white">Your Projects</h2>
+            <span className="text-xs text-white bg-white/20 px-2 py-1 rounded-full">{filteredProjects.length}</span>
           </div>
 
           {/* MVP Project Cards */}

@@ -842,8 +842,8 @@ export default function SDGMapping() {
           {/* Header with filters */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-xl font-bold">SDG Mapping</h1>
-              <p className="text-xs text-gray-500">Track UN Goals alignment</p>
+              <h1 className="text-xl font-bold text-white">SDG Mapping</h1>
+              <p className="text-xs text-white/70">Track UN Goals alignment</p>
             </div>
             <div className="flex gap-2">
               {/* Project Filter Dropdown */}

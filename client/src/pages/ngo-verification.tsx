@@ -217,7 +217,7 @@ export default function NgoVerification() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
+            <h2 className="text-xl font-semibold mb-2 text-slate-900">Access Restricted</h2>
             <p className="text-slate-600 mb-4">
               This page is only accessible to NGO/organization staff members.
             </p>

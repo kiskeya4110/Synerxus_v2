@@ -523,7 +523,7 @@ export default function SDGMapping() {
         <OrganizationNav />
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">SDG Mapping</h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Connect volunteer activities to Sustainable Development Goals and track impact
             </p>
@@ -531,7 +531,7 @@ export default function SDGMapping() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <BarChart className="h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No SDGs Selected</h3>
+              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">No SDGs Selected</h3>
               <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
                 Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
               </p>
@@ -1595,7 +1595,7 @@ export default function SDGMapping() {
         {/* Page Header with integrated filter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold">SDG Mapping</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">SDG Mapping</h1>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Track SDG alignment and project impact
             </p>
@@ -1967,7 +1967,7 @@ export default function SDGMapping() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Impact Metrics */}
               <div>
-                <h3 className="text-sm font-semibold mb-2">Impact Metrics</h3>
+                <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-white">Impact Metrics</h3>
                 {selectedData.impactMetrics.length > 0 ? (
                   <div className="space-y-1.5">
                     {selectedData.impactMetrics.map((metric, index) => (
@@ -1988,7 +1988,7 @@ export default function SDGMapping() {
 
               {/* Connected Projects */}
               <div>
-                <h3 className="text-sm font-semibold mb-2">
+                <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-white">
                   Projects ({relatedProjects.length})
                 </h3>
                 {relatedProjects.length > 0 ? (

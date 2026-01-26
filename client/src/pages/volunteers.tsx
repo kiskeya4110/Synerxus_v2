@@ -759,7 +759,7 @@ export default function Volunteers() {
           {/* Pending Approvals Section */}
           {pendingApprovals && pendingApprovals.totalPending > 0 && (
             <div className="mt-4 mb-4">
-              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-slate-900">
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
                 Pending Approvals
                 <Badge className="bg-orange-500 text-white text-xs animate-pulse">
@@ -943,7 +943,7 @@ export default function Volunteers() {
           {/* Potential Matches Section - Mobile PWA */}
           {isOrganization && matchingCandidates.length > 0 && (
             <div className="mt-4 mb-4">
-              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-slate-900">
                 <Target className="h-5 w-5 text-amber-500" />
                 Potential Matches
                 <Badge className="bg-amber-500 text-white text-xs">

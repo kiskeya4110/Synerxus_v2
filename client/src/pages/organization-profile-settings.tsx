@@ -98,8 +98,8 @@ class OrganizationProfileErrorBoundary extends Component<ErrorBoundaryProps, Err
           <OrganizationHeader activeTab="settings" />
           <div className="flex flex-col items-center justify-center min-h-screen gap-4">
             <Building2 className="h-12 w-12 text-destructive" />
-            <h2 className="text-xl font-semibold">Something Went Wrong</h2>
-            <p className="text-muted-foreground">We encountered an error loading your profile.</p>
+            <h2 className="text-xl font-semibold text-slate-900">Something Went Wrong</h2>
+            <p className="text-slate-600">We encountered an error loading your profile.</p>
             <Button onClick={() => this.setState({ hasError: false })}>Try Again</Button>
           </div>
         </>
@@ -641,8 +641,8 @@ export default function OrganizationProfileSettings() {
         <OrganizationHeader activeTab="settings" />
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
           <Building2 className="h-12 w-12 text-muted-foreground" />
-          <h2 className="text-xl font-semibold">Session Expired</h2>
-          <p className="text-muted-foreground">Please log in to access your organization profile.</p>
+          <h2 className="text-xl font-semibold text-slate-900">Session Expired</h2>
+          <p className="text-slate-600">Please log in to access your organization profile.</p>
           <Button onClick={() => setLocation("/login")}>Go to Login</Button>
         </div>
       </>
@@ -656,8 +656,8 @@ export default function OrganizationProfileSettings() {
         <OrganizationHeader activeTab="settings" />
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
           <Building2 className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">Unable to Load Profile</h2>
-          <p className="text-muted-foreground">There was an error loading your profile data.</p>
+          <h2 className="text-xl font-semibold text-slate-900">Unable to Load Profile</h2>
+          <p className="text-slate-600">There was an error loading your profile data.</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </>
@@ -723,8 +723,8 @@ export default function OrganizationProfileSettings() {
         <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>
           <div className={`${isMobile ? 'px-4 py-4 mx-auto' : 'py-8'} max-w-4xl ${!isMobile ? 'mx-auto' : ''}`}>
           <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold mb-2 text-slate-900">Organization Profile Settings</h1>
+          <p className="text-slate-600">
             Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
           </p>
           </div>

@@ -290,6 +290,18 @@ export default function Projects() {
 
   // Handle user error or no user
   if (isUserError || !currentUser) {
+    if (isOrganization && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="projects">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-400 mb-2">Failed to load user data</p>
+              <p className="text-white/70 text-sm">Please try refreshing the page or logging in again.</p>
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <OrganizationNav />

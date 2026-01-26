@@ -20,6 +20,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, setPersistence, browserLocalPersistence, browserSessionPersistence, deleteUser as firebaseDeleteUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useLocation } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
+import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -61,6 +65,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function OrganizationProfile() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
   const [needInput, setNeedInput] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
@@ -431,16 +436,118 @@ export default function OrganizationProfile() {
     );
   }
 
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your organization profile. This data helps the matching algorithm connect you with qualified volunteers.
-        </p>
-      </div>
+  // Mobile PWA view
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-slate-900 text-white flex flex-col overflow-hidden">
+        <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+          <OrganizationPWAHeader />
+          <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+          <main className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold mb-2 text-white">Organization Profile</h1>
+              <p className="text-white/70 text-sm">
+                Manage your organization profile and settings.
+              </p>
+            </div>
 
-      <Card>
+            <Card className="bg-white text-slate-900">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Building2 className="h-5 w-5" />
+                  Organization Profile
+                </CardTitle>
+                <CardDescription>
+                  Update your organization information to improve volunteer matching
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Profile Photo / Logo */}
+                    <div className="space-y-4">
+                      <Label>Organization Logo</Label>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20 border-2 border-border">
+                          <AvatarImage src={photoPreview || user?.avatar || matchableOrganization?.profilePhotoUrl} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                            {form.watch("name")?.[0] || "O"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                          />
+                          <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                            <Camera className="h-4 w-4 mr-2" />
+                            Change Logo
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Organization Name */}
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Organization Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your organization name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Mission */}
+                    <FormField
+                      control={form.control}
+                      name="mission"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mission Statement</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Describe your organization's mission..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" className="w-full" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </main>
+          <OrganizationPWANav activeTab="home" />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop view
+  return (
+    <div className="min-h-screen bg-[#f9fafb]">
+      <OrganizationHeader activeTab="settings" />
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 text-slate-900">Organization Profile Settings</h1>
+          <p className="text-slate-600">
+            Manage your organization profile. This data helps the matching algorithm connect you with qualified volunteers.
+          </p>
+        </div>
+
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
@@ -908,6 +1015,7 @@ export default function OrganizationProfile() {
           </p>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

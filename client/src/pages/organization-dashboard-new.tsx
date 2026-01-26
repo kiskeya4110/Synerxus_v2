@@ -43,6 +43,8 @@ import Logo from "@/components/ui/logo";
 // Layout Components
 import OrganizationNav from "@/components/layout/organization-nav";
 import Footer from "@/components/layout/footer";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 
 // Hooks & Utils
 import { useAuth } from "@/hooks/use-auth";
@@ -687,22 +689,24 @@ export default function OrganizationDashboardNew() {
   // Mobile View - Simple NGO Dashboard per redesign spec
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Header with Logo and Menu */}
-        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Logo size="sm" />
-              <span className="text-xs text-gray-500 font-medium">NGO Portal</span>
-            </div>
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <Menu className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-        </header>
+      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-slate-900 text-white flex flex-col overflow-hidden">
+        {/* Centered App Container */}
+        <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+          {/* Shared PWA Header with working hamburger menu */}
+          <OrganizationPWAHeader
+            organizationName="NGO Portal"
+            metrics={{
+              activeProjects: stats.activeProjects,
+              activeVolunteers: stats.totalVolunteers,
+              totalHours: stats.totalHours,
+            }}
+          />
 
-        {/* Main Content */}
-        <main className="px-4 py-5 space-y-5">
+          {/* Spacer for sticky header */}
+          <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto px-4 py-5 space-y-5" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Core Metrics - 2x2 Grid */}
           <div className="grid grid-cols-2 gap-3">
             {/* Pending Verification */}
@@ -832,56 +836,9 @@ export default function OrganizationDashboardNew() {
           </div>
         </main>
 
-        {/* Bottom Navigation Tray - 4 tabs with consistent styling */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 px-4 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-          <div className="flex justify-around items-center max-w-md mx-auto">
-            {/* Dashboard - Active */}
-            <button className="flex flex-col items-center py-2 px-4 rounded-xl">
-              <div className="p-2 rounded-lg bg-indigo-600">
-                <Home className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-[10px] font-semibold text-white mt-1">Dashboard</span>
-            </button>
-
-            {/* Verify */}
-            <button
-              onClick={() => navigate('/verification')}
-              className="flex flex-col items-center py-2 px-4 rounded-xl relative"
-            >
-              <div className="p-2 rounded-lg">
-                <Shield className="w-5 h-5 text-slate-400" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-400 mt-1">Verify</span>
-              {stats.pendingVerifications > 0 && (
-                <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {stats.pendingVerifications > 9 ? '9+' : stats.pendingVerifications}
-                </span>
-              )}
-            </button>
-
-            {/* Projects */}
-            <button
-              onClick={() => navigate('/projects')}
-              className="flex flex-col items-center py-2 px-4 rounded-xl"
-            >
-              <div className="p-2 rounded-lg">
-                <FolderOpen className="w-5 h-5 text-slate-400" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-400 mt-1">Projects</span>
-            </button>
-
-            {/* Reports */}
-            <button
-              onClick={() => navigate('/reports')}
-              className="flex flex-col items-center py-2 px-4 rounded-xl"
-            >
-              <div className="p-2 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-slate-400" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-400 mt-1">Reports</span>
-            </button>
-          </div>
-        </nav>
+          {/* Bottom Navigation - Shared Component */}
+          <OrganizationPWANav activeTab="home" />
+        </div>
       </div>
     );
   }

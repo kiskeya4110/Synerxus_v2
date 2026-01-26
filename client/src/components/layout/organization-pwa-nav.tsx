@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Home, FolderOpen, Users, Target, MoreHorizontal, X, Shield, MessageCircle, Settings, BarChart3, ClipboardList } from "lucide-react";
+import { Home, FolderOpen, Users, Target, MoreHorizontal, X, Shield, MessageCircle, Settings, BarChart3, ClipboardList, Plus, AlertCircle, TrendingUp, Globe } from "lucide-react";
 
 interface OrganizationPWANavProps {
   activeTab?: 'home' | 'projects' | 'potential' | 'volunteers' | 'sdgs' | 'messages' | 'leaderboard' | 'more';
@@ -46,12 +46,19 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   ];
 
   const moreMenuItems = [
+    // MVP Quick Actions
+    { icon: Plus, label: 'New Project', path: '/post-core-opportunity', highlight: true },
+    { icon: AlertCircle, label: 'Urgent Need', path: '/post-urgent-opportunity', highlight: true },
+    { icon: TrendingUp, label: 'Overview', path: '/overview' },
+    // Core Features
     { icon: ClipboardList, label: 'Log Hours', path: '/log-volunteer-hours' },
     { icon: BarChart3, label: 'Impact Reports', path: '/organization-impact-report' },
     { icon: MessageCircle, label: 'Messages', path: '/organization-messages/pwa' },
+    // Settings & Admin
+    { icon: Globe, label: 'Public Profile', path: '/organization-profile' },
     { icon: Settings, label: 'Settings', path: '/organization-profile-settings' },
     // Admin dashboard - only shown for admin users (uses PWA version on mobile)
-    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin/dashboard/pwa', isAdmin: true }] : []),
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin', path: '/admin/dashboard/pwa', isAdmin: true }] : []),
   ];
 
   return (
@@ -118,28 +125,48 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
 
           {/* Menu Items */}
           <div className="grid grid-cols-3 gap-2 p-4">
-            {moreMenuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setShowMore(false);
-                  navigate(item.path);
-                }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 ${
-                  (item as any).isAdmin
-                    ? 'bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
-                    : 'bg-slate-50 hover:bg-slate-100'
-                }`}
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none ${
-                  (item as any).isAdmin ? 'bg-purple-100' : 'bg-white'
-                }`}>
-                  <item.icon className={`w-6 h-6 pointer-events-none ${(item as any).isAdmin ? 'text-purple-600' : 'text-slate-600'}`} />
-                </div>
-                <span className={`text-xs font-medium text-center pointer-events-none ${(item as any).isAdmin ? 'text-purple-700' : 'text-slate-700'}`}>{item.label}</span>
-              </button>
-            ))}
+            {moreMenuItems.map((item, index) => {
+              const isHighlight = (item as any).highlight;
+              const isAdmin = (item as any).isAdmin;
+
+              // Determine styles based on item type
+              let bgClass = 'bg-slate-50 hover:bg-slate-100';
+              let iconBgClass = 'bg-white';
+              let iconClass = 'text-slate-600';
+              let labelClass = 'text-slate-700';
+              let ringClass = '';
+
+              if (isAdmin) {
+                bgClass = 'bg-purple-50 hover:bg-purple-100';
+                iconBgClass = 'bg-purple-100';
+                iconClass = 'text-purple-600';
+                labelClass = 'text-purple-700';
+                ringClass = 'ring-1 ring-purple-200';
+              } else if (isHighlight) {
+                bgClass = 'bg-emerald-50 hover:bg-emerald-100';
+                iconBgClass = 'bg-emerald-100';
+                iconClass = 'text-emerald-600';
+                labelClass = 'text-emerald-700';
+                ringClass = 'ring-1 ring-emerald-200';
+              }
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setShowMore(false);
+                    navigate(item.path);
+                  }}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 ${bgClass} ${ringClass}`}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none ${iconBgClass}`}>
+                    <item.icon className={`w-6 h-6 pointer-events-none ${iconClass}`} />
+                  </div>
+                  <span className={`text-xs font-medium text-center pointer-events-none ${labelClass}`}>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

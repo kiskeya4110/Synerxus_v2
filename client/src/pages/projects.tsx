@@ -291,51 +291,87 @@ export default function Projects() {
     );
   }
 
-  // Mobile organization PWA view
+  // Mobile organization PWA view - MVP Layout
   if (isOrganization && isMobile) {
+    // Calculate stats for MVP display
+    const activeProjectsCount = projects.filter(p => p.status === 'active').length;
+    const completedProjectsCount = projects.filter(p => p.status === 'completed').length;
+    const totalVolunteers = Array.from(projectMetrics.values()).reduce((sum, m) => sum + m.metrics.volunteers, 0);
+
     return (
       <OrganizationPWALayout activeTab="projects">
-        {/* Hero Banner */}
-        <div className="p-4">
-          <div className="bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-200 rounded-2xl p-4 text-slate-800 shadow-lg relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-400/30" />
-              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-purple-400/20" />
+        <div className="px-4 py-4 space-y-4">
+          {/* MVP Header Row */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">Projects</h1>
+              <p className="text-xs text-slate-500 mt-0.5">{projects.length} total · {activeProjectsCount} active</p>
             </div>
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-indigo-700" />
-                </div>
-                <div>
-                  <p className="text-indigo-700 text-[11px] font-medium uppercase tracking-wide mb-0.5">Project Management</p>
-                  <h2 className="text-xl font-bold text-slate-800">Projects</h2>
-                </div>
-              </div>
-              {canManageProjects && currentUser?.organizationId && (
-                <CreateProjectDialog organizationId={currentUser.organizationId} />
-              )}
+            {canManageProjects && currentUser?.organizationId && (
+              <CreateProjectDialog organizationId={currentUser.organizationId} />
+            )}
+          </div>
+
+          {/* MVP Quick Stats Row */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white rounded-xl p-3 border border-slate-200 text-center">
+              <p className="text-lg font-bold text-slate-800">{projects.length}</p>
+              <p className="text-[10px] text-slate-500">Total</p>
             </div>
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-lg font-bold text-slate-800">{projects.length}</p>
-                <p className="text-[9px] text-indigo-700 font-medium">Projects</p>
-              </div>
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-lg font-bold text-slate-800">{projects.filter(p => p.status === 'active').length}</p>
-                <p className="text-[9px] text-indigo-700 font-medium">Active</p>
-              </div>
-              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-lg font-bold text-slate-800">{allTasks.length}</p>
-                <p className="text-[9px] text-indigo-700 font-medium">Tasks</p>
-              </div>
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
+              <p className="text-lg font-bold text-emerald-700">{activeProjectsCount}</p>
+              <p className="text-[10px] text-emerald-600">Active</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200 text-center">
+              <p className="text-lg font-bold text-blue-700">{completedProjectsCount}</p>
+              <p className="text-[10px] text-blue-600">Done</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-center">
+              <p className="text-lg font-bold text-purple-700">{totalVolunteers}</p>
+              <p className="text-[10px] text-purple-600">Volunteers</p>
             </div>
           </div>
-        </div>
 
-        <div className="px-4 pb-4 space-y-4">
+          {/* MVP Quick Action Tray - Horizontal Scroll */}
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+            <Link href="/post-core-opportunity">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-emerald-600 active:scale-95 transition-all">
+                <Plus className="h-4 w-4" />
+                New Project
+              </button>
+            </Link>
+            <Link href="/post-urgent-opportunity">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-amber-600 active:scale-95 transition-all">
+                <AlertCircle className="h-4 w-4" />
+                Urgent Need
+              </button>
+            </Link>
+            <Link href="/volunteers">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Volunteers
+              </button>
+            </Link>
+            <Link href="/organization-impact-report">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Reports
+              </button>
+            </Link>
+            <Link href="/sdg-mapping">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                </svg>
+                SDGs
+              </button>
+            </Link>
+          </div>
+
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -347,66 +383,99 @@ export default function Projects() {
             />
           </div>
 
-          {/* Post Opportunities - Mobile */}
-          {currentUser?.userType === "organization" && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-emerald-500" />
-                  Post Opportunities
-                </h3>
-              </div>
-              <div className="p-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <Link href="/post-core-opportunity">
-                    <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl hover:shadow-md transition-all">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
-                        <Briefcase className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <p className="text-sm font-semibold text-slate-800">Core</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Skilled roles</p>
-                    </div>
-                  </Link>
-                  <Link href="/post-urgent-opportunity">
-                    <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl hover:shadow-md transition-all">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-2">
-                        <AlertCircle className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <p className="text-sm font-semibold text-slate-800">Urgent</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Time-sensitive</p>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Projects List Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Your Projects ({filteredProjects.length})
-            </h3>
+          {/* Section Header */}
+          <div className="flex items-center justify-between pt-2">
+            <h2 className="text-sm font-semibold text-slate-700">Your Projects</h2>
+            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredProjects.length}</span>
           </div>
 
-          {/* Projects List - Mobile */}
+          {/* MVP Project Cards */}
           <div className="space-y-3">
             {filteredProjects.map((project) => {
               const projectData = projectMetrics.get(project.id);
               if (!projectData) return null;
-              const { tasks, progress, metrics } = projectData;
-              const isExpanded = expandedProjects.has(project.id);
+              const { progress, metrics } = projectData;
+
+              // Status badge colors
+              const statusColors: Record<string, string> = {
+                active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                completed: 'bg-blue-100 text-blue-700 border-blue-200',
+                paused: 'bg-amber-100 text-amber-700 border-amber-200',
+                draft: 'bg-slate-100 text-slate-600 border-slate-200',
+              };
+
               return (
-                <ProjectListCard
-                  key={project.id}
-                  project={project}
-                  tasks={tasks}
-                  metrics={metrics}
-                  progress={progress}
-                  isExpanded={isExpanded}
-                  onToggle={() => toggleProject(project.id)}
-                  canManageProjects={canManageProjects}
-                  isPWA={true}
-                />
+                <Link key={project.id} href={`/projects/${project.id}`}>
+                  <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all cursor-pointer">
+                    {/* Project Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-slate-800 truncate">{project.name}</h3>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusColors[project.status || 'draft'] || statusColors.draft}`}>
+                            {project.status || 'draft'}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {metrics.volunteers} volunteer{metrics.volunteers !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <svg className="h-5 w-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mt-3 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Progress</span>
+                        <span className="text-slate-700 font-medium">{progress}%</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* SDG Tags */}
+                    {project.sdgGoals && project.sdgGoals.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {(project.sdgGoals as number[]).slice(0, 4).map((sdg: number) => (
+                          <div
+                            key={sdg}
+                            className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white"
+                            style={{ backgroundColor: `hsl(${(sdg * 20) % 360}, 70%, 45%)` }}
+                          >
+                            {sdg}
+                          </div>
+                        ))}
+                        {(project.sdgGoals as number[]).length > 4 && (
+                          <span className="text-xs text-slate-500 self-center">
+                            +{(project.sdgGoals as number[]).length - 4}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Quick Stats Row */}
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {metrics.totalCompleted}h logged
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        {metrics.engagementLevel}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
               );
             })}
           </div>
@@ -414,15 +483,20 @@ export default function Projects() {
           {/* Empty State */}
           {filteredProjects.length === 0 && (
             <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Briefcase className="w-8 h-8 text-slate-400" />
+              <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Briefcase className="w-7 h-7 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">No projects yet</h3>
+              <h3 className="text-base font-semibold text-slate-800 mb-1">No projects yet</h3>
               <p className="text-sm text-slate-500 mb-4">
                 {searchTerm ? "No projects match your search" : "Create your first project to get started"}
               </p>
               {!searchTerm && canManageProjects && currentUser?.organizationId && (
-                <CreateProjectDialog organizationId={currentUser.organizationId} />
+                <Link href="/post-core-opportunity">
+                  <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl font-medium text-sm shadow-sm hover:bg-emerald-600 active:scale-95 transition-all">
+                    <Plus className="h-4 w-4" />
+                    Create Project
+                  </button>
+                </Link>
               )}
             </div>
           )}

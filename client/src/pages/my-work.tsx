@@ -498,6 +498,207 @@ export default function MyWork() {
     );
   }
 
+  // MVP PWA view for volunteers on mobile
+  if (!isOrganizationManager && isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setLocation('/volunteer-dashboard')}
+                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Home className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">My Work</h1>
+                <p className="text-xs text-gray-500">Applications, assignments & tasks</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="px-4 py-4 space-y-4">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
+              <p className="text-lg font-bold text-gray-900">{formatDecimal(totalHoursLogged)}</p>
+              <p className="text-[10px] text-gray-500">Hours</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200 text-center">
+              <p className="text-lg font-bold text-blue-700">{activeProjectCount}</p>
+              <p className="text-[10px] text-blue-600">Projects</p>
+            </div>
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
+              <p className="text-lg font-bold text-emerald-700">{completedTaskCount}</p>
+              <p className="text-[10px] text-emerald-600">Done</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-center">
+              <p className="text-lg font-bold text-purple-700">{totalTaskCount - completedTaskCount}</p>
+              <p className="text-[10px] text-purple-600">Pending</p>
+            </div>
+          </div>
+
+          {/* Pending Invitations Alert */}
+          {pendingInvitationsCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-800">
+                  {pendingInvitationsCount} Pending Invitation{pendingInvitationsCount > 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="text-xs text-amber-700 mb-2">Organizations have invited you to join their projects.</p>
+              <button
+                onClick={() => handleTabChange('assignments')}
+                className="text-xs font-semibold text-amber-800 underline"
+              >
+                Review invitations →
+              </button>
+            </div>
+          )}
+
+          {/* Quick Action Tray */}
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+            <Link href="/discover-opportunities">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-indigo-600 active:scale-95 transition-all">
+                <Sparkles className="h-4 w-4" />
+                Discover
+              </button>
+            </Link>
+            <Link href="/log-activity">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-emerald-600 active:scale-95 transition-all">
+                <Plus className="h-4 w-4" />
+                Log Activity
+              </button>
+            </Link>
+            <Link href={`/impact-report/${currentUser?.id}`}>
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
+                <BarChart3 className="h-4 w-4" />
+                Impact Report
+              </button>
+            </Link>
+            <Link href="/volunteer-profile-settings">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
+                <Settings className="h-4 w-4" />
+                Settings
+              </button>
+            </Link>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="flex border-b border-gray-100">
+              <button
+                onClick={() => handleTabChange('applications')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'applications'
+                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Apps
+              </button>
+              <button
+                onClick={() => handleTabChange('assignments')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                  activeTab === 'assignments'
+                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Assign
+                {pendingInvitationsCount > 0 && (
+                  <span className="absolute top-2 right-2 h-5 min-w-[20px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingInvitationsCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => handleTabChange('tasks')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'tasks'
+                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Tasks
+              </button>
+              <button
+                onClick={() => handleTabChange('impact')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'impact'
+                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Impact
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-4">
+              {activeTab === 'applications' && (
+                <MyApplicationsPage embedded />
+              )}
+              {activeTab === 'assignments' && (
+                <AssignmentsPage embedded />
+              )}
+              {activeTab === 'tasks' && (
+                <MyTasksPage embedded />
+              )}
+              {activeTab === 'impact' && (
+                <ImpactVisualization embedded />
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom Navigation - Consistent with volunteer-dashboard-new */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            <button
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Wallet</span>
+            </button>
+            <button
+              onClick={() => setLocation('/discover-opportunities')}
+              className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <Compass className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">Discover</span>
+            </button>
+            <button
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-2 px-5 rounded-xl bg-indigo-600 text-white shadow-md -mt-3"
+            >
+              <Home className="w-6 h-6 mb-0.5" />
+              <span className="text-[10px] font-semibold">Home</span>
+            </button>
+            <Link href="/log-activity">
+              <button className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                <Plus className="w-5 h-5 mb-1" />
+                <span className="text-[10px] font-semibold">Log</span>
+              </button>
+            </Link>
+            <button
+              className="flex flex-col items-center py-2 px-3 rounded-xl text-indigo-600 bg-indigo-50 transition-colors"
+            >
+              <Briefcase className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold">History</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    );
+  }
+
   // PWA view for organization managers on mobile
   if (isOrganizationManager && isMobile) {
     return (

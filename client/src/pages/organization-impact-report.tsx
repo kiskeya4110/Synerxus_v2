@@ -333,7 +333,7 @@ export default function OrganizationImpactReport() {
   // Redirect users without organization context away from organization pages
   useEffect(() => {
     if (!userLoading && currentUser && !canViewReport) {
-      setLocation("/dashboard");
+      setLocation("/organization-dashboard");
     }
   }, [userLoading, currentUser, canViewReport, setLocation]);
 
@@ -842,28 +842,52 @@ export default function OrganizationImpactReport() {
     return description;
   };
 
-  // Render access denied UI if not authorized
-  if (!currentUser || !isOrganizationManager) {
+  // Check organization status with localStorage fallback for layout
+  const userType = localStorage.getItem('userType');
+  const isOrganizationForLayout = currentUser?.userType === 'organization' || userType === 'organization';
+
+  // Handle no user logged in
+  if (!storedUserId) {
     return (
-      <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
-        <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
-          <CardContent className="p-8 text-center">
-            <div className="mb-4 text-4xl">🔒</div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Access Denied
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Organization Impact Reports can only be accessed by organization
-              managers.
-            </p>
-            <Button
-              onClick={() => setLocation("/dashboard")}
-              className="w-full"
-            >
-              Return to Dashboard
+      <div className="min-h-screen bg-[#faf9f7]">
+        {isOrganizationForLayout && <OrganizationNav />}
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">Please log in to view impact reports</p>
+            <Button onClick={() => setLocation("/landing")}>
+              Go to Login
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render access denied UI if not authorized (but user is logged in)
+  if (!userLoading && currentUser && !isOrganizationManager) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        {isOrganizationForLayout && <OrganizationNav />}
+        <div className="p-4 md:p-8 flex items-center justify-center">
+          <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4 text-4xl">🔒</div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Access Denied
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Organization Impact Reports can only be accessed by organization
+                managers.
+              </p>
+              <Button
+                onClick={() => setLocation("/organization-dashboard")}
+                className="w-full"
+              >
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -877,12 +901,8 @@ export default function OrganizationImpactReport() {
     );
   }
 
-  // Check organization status with localStorage fallback
-  const userType = localStorage.getItem('userType');
-  const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
-
   // PWA Mobile Layout
-  if (isMobile && isOrganization) {
+  if (isMobile && isOrganizationForLayout) {
     return (
       <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto">
         <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
@@ -1060,7 +1080,7 @@ export default function OrganizationImpactReport() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation("/dashboard")}
+            onClick={() => setLocation("/organization-dashboard")}
             className="w-full md:w-auto md:justify-start"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

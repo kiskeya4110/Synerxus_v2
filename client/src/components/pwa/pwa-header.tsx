@@ -361,8 +361,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
   return (
     <>
-      {/* Main Header - Sky blue to light gold gradient */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-sky-400 via-sky-300 to-amber-200">
+      {/* Main Header - Dark navy theme */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-[#0F172A] border-b border-slate-700">
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
@@ -387,20 +387,20 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-5 h-5 text-slate-700 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-5 h-5 text-slate-300 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
             </button>
 
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-5 h-5 text-slate-700 pointer-events-none" />
+              <Bell className="w-5 h-5 text-slate-300 pointer-events-none" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -411,17 +411,17 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             {/* Profile/Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-menu"
             >
-              <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm pointer-events-none">
+              <Avatar className="h-8 w-8 border-2 border-slate-600 shadow-sm pointer-events-none">
                 <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-semibold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <Menu className="w-5 h-5 text-slate-700 pointer-events-none" />
+              <Menu className="w-5 h-5 text-slate-300 pointer-events-none" />
             </button>
           </div>
         </div>
@@ -556,19 +556,19 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           />
 
           {/* Notifications Panel */}
-          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-slate-900 rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-sky-400 via-sky-300 to-amber-200 px-4 py-4">
+            <div className="bg-[#0F172A] border-b border-slate-700 px-4 py-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-slate-800 font-semibold text-lg flex items-center gap-2">
+                <h2 className="text-white font-semibold text-lg flex items-center gap-2">
                   <Bell className="w-5 h-5" />
                   Notifications
                 </h2>
                 <button
                   onClick={() => setNotificationsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/50 transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors"
                 >
-                  <X className="w-5 h-5 text-slate-700" />
+                  <X className="w-5 h-5 text-slate-300" />
                 </button>
               </div>
               {/* Action Buttons */}

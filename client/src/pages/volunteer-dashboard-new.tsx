@@ -18,6 +18,8 @@ import {
   BarChart3,
   Home,
   Menu,
+  Search,
+  User,
 } from "lucide-react";
 
 // UI Components
@@ -548,7 +550,7 @@ export default function VolunteerDashboardNew() {
   const userType = localStorage.getItem("userType");
 
   const [showLogModal, setShowLogModal] = useState(false);
-  const [mobileTab, setMobileTab] = useState<'wallet' | 'projects'>('wallet');
+  const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');
 
   // Redirect non-volunteers
   useEffect(() => {
@@ -689,16 +691,126 @@ export default function VolunteerDashboardNew() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Logo size="sm" theme="dark" />
-              <span className="text-xs text-slate-400 font-medium">Impact Wallet</span>
+              <span className="text-xs text-white/70 font-medium">Impact Wallet</span>
             </div>
             <button className="p-2 rounded-lg hover:bg-slate-800 transition-colors">
-              <Menu className="w-5 h-5 text-slate-300" />
+              <Menu className="w-5 h-5 text-white" />
             </button>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="px-4 py-5 space-y-5">
+          {/* Home Tab Content */}
+          {mobileTab === 'home' && (
+            <>
+              {/* Welcome Section */}
+              <div className="text-center py-4">
+                <h1 className="text-2xl font-bold text-white mb-1">
+                  Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}!
+                </h1>
+                <p className="text-white/70 text-sm">Your impact journey continues</p>
+              </div>
+
+              {/* Quick Stats Summary */}
+              <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-white font-semibold">Impact Summary</h2>
+                  <span className="text-xs text-indigo-200 bg-indigo-500/30 px-2 py-1 rounded-full">This Month</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
+                    <p className="text-xs text-indigo-200">Hours</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stats.projectsActive}</p>
+                    <p className="text-xs text-indigo-200">Projects</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{sdgsContributed}</p>
+                    <p className="text-xs text-indigo-200">SDGs</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <h2 className="text-white font-semibold mb-3">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setShowLogModal(true)}
+                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">Log Impact</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/discover-opportunities')}
+                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Search className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">Find Projects</span>
+                  </button>
+                  <button
+                    onClick={() => setMobileTab('wallet')}
+                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">View Wallet</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/volunteer-profile-settings')}
+                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <User className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">My Profile</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent Activity Preview */}
+              {recentLogs.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-white font-semibold">Recent Activity</h2>
+                    <button
+                      onClick={() => navigate('/my-work')}
+                      className="text-xs text-indigo-400 hover:text-indigo-300"
+                    >
+                      View All →
+                    </button>
+                  </div>
+                  <div className="bg-slate-800/80 rounded-xl border border-slate-700 divide-y divide-slate-700">
+                    {recentLogs.slice(0, 3).map((log: any) => (
+                      <div key={log.id} className="px-4 py-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-white">{log.hours}h logged</p>
+                          <p className="text-xs text-white/70">{log.projectName || 'Project'}</p>
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          log.status === 'verified' ? 'bg-emerald-900/50 text-emerald-400' :
+                          log.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
+                          'bg-amber-900/50 text-amber-400'
+                        }`}>
+                          {log.status || 'pending'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Wallet Tab Content */}
           {mobileTab === 'wallet' && (
             <>
@@ -708,40 +820,40 @@ export default function VolunteerDashboardNew() {
                 <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-blue-400" />
-                    <span className="text-xs font-medium text-slate-400 uppercase">Hours</span>
+                    <span className="text-xs font-medium text-white/80 uppercase">Hours</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
-                  <p className="text-xs text-slate-400 mt-1">verified hours</p>
+                  <p className="text-xs text-white/70 mt-1">verified hours</p>
                 </div>
 
                 {/* Total Outcomes */}
                 <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-xs font-medium text-slate-400 uppercase">Outcomes</span>
+                    <span className="text-xs font-medium text-white/80 uppercase">Outcomes</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{totalOutcomes}</p>
-                  <p className="text-xs text-slate-400 mt-1">total outcomes</p>
+                  <p className="text-xs text-white/70 mt-1">total outcomes</p>
                 </div>
 
                 {/* Skills Used */}
                 <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="h-4 w-4 text-amber-400" />
-                    <span className="text-xs font-medium text-slate-400 uppercase">Skills</span>
+                    <span className="text-xs font-medium text-white/80 uppercase">Skills</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{skillsUsed}</p>
-                  <p className="text-xs text-slate-400 mt-1">skills applied</p>
+                  <p className="text-xs text-white/70 mt-1">skills applied</p>
                 </div>
 
                 {/* SDGs */}
                 <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-indigo-400" />
-                    <span className="text-xs font-medium text-slate-400 uppercase">SDGs</span>
+                    <span className="text-xs font-medium text-white/80 uppercase">SDGs</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{sdgsContributed}</p>
-                  <p className="text-xs text-slate-400 mt-1">goals impacted</p>
+                  <p className="text-xs text-white/70 mt-1">goals impacted</p>
                 </div>
               </div>
 
@@ -767,7 +879,7 @@ export default function VolunteerDashboardNew() {
                     <div key={log.id} className="px-4 py-3 flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-white">{log.hours}h logged</p>
-                        <p className="text-xs text-slate-400">{log.projectName || 'Project'}</p>
+                        <p className="text-xs text-white/70">{log.projectName || 'Project'}</p>
                       </div>
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                         log.status === 'verified' ? 'bg-emerald-900/50 text-emerald-400' :
@@ -780,8 +892,8 @@ export default function VolunteerDashboardNew() {
                   ))}
                   {recentLogs.length === 0 && (
                     <div className="px-4 py-8 text-center">
-                      <p className="text-sm text-slate-400">No activity yet</p>
-                      <p className="text-xs text-slate-500 mt-1">Log your first impact to get started</p>
+                      <p className="text-sm text-white/70">No activity yet</p>
+                      <p className="text-xs text-white/60 mt-1">Log your first impact to get started</p>
                     </div>
                   )}
                 </div>
@@ -794,7 +906,7 @@ export default function VolunteerDashboardNew() {
             <>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Best Matches For You</h2>
-                <span className="text-xs text-slate-400">4-Factor AI Match</span>
+                <span className="text-xs text-white/70">4-Factor AI Match</span>
               </div>
 
               {isLoadingMatches ? (
@@ -814,7 +926,7 @@ export default function VolunteerDashboardNew() {
                           <h3 className="text-sm font-semibold text-white">
                             {match.organization_name || 'Organization'}
                           </h3>
-                          <p className="text-xs text-slate-400 mt-0.5">
+                          <p className="text-xs text-white/70 mt-0.5">
                             {match.cause_area || match.focus_area || 'Community Impact'}
                           </p>
                         </div>
@@ -869,9 +981,9 @@ export default function VolunteerDashboardNew() {
                 </div>
               ) : (
                 <div className="bg-slate-800/80 rounded-xl border border-slate-700 shadow-sm p-8 text-center">
-                  <Target className="h-12 w-12 text-slate-500 mx-auto mb-3" />
+                  <Target className="h-12 w-12 text-white/50 mx-auto mb-3" />
                   <p className="text-sm font-medium text-white">No matches yet</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-white/70 mt-1">
                     Complete your profile to get personalized project matches
                   </p>
                   <button
@@ -913,8 +1025,10 @@ export default function VolunteerDashboardNew() {
 
             {/* Home - Primary Center Button */}
             <button
-              onClick={() => setMobileTab('wallet')}
-              className="flex flex-col items-center py-2 px-5 rounded-xl bg-indigo-600 text-white shadow-md -mt-3"
+              onClick={() => setMobileTab('home')}
+              className={`flex flex-col items-center py-2 px-5 rounded-xl shadow-md -mt-3 transition-colors ${
+                mobileTab === 'home' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white'
+              }`}
             >
               <Home className="w-6 h-6 mb-0.5" />
               <span className="text-[10px] font-semibold">Home</span>

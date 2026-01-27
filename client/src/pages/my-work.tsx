@@ -484,8 +484,20 @@ export default function MyWork() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Handle no user logged in
-  if (!storedUserId) {
+  // Show loading state while viewport is being detected to prevent wrong view flash
+  if (isViewportLoading) {
+    return (
+      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle no user logged in or user not found
+  if (!storedUserId || (!isUserLoading && !currentUser)) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
@@ -498,8 +510,8 @@ export default function MyWork() {
     );
   }
 
-  // Show loading state while user data or viewport is being detected to prevent wrong view flash
-  if (isUserLoading || !currentUser || isViewportLoading) {
+  // Show loading state while user data is being fetched
+  if (isUserLoading) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">

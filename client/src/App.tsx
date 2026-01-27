@@ -50,6 +50,7 @@ const NgoProjects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
 const Profile = lazy(() => import("@/pages/profile"));
 const ImpactReport = lazy(() => import("@/pages/impact-report"));
+const ImpactVisualization = lazy(() => import("@/pages/impact-visualization"));
 
 // ============================================================================
 // CORPORATE VIEW - ESG Dashboard (Desktop)
@@ -196,6 +197,8 @@ export default function App() {
           <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
           <Route path="/profile" component={Profile} />
           <Route path="/impact-report" component={ImpactReport} />
+          <Route path="/impact-report/:id" component={ImpactReport} />
+          <Route path="/impact-visualization" component={ImpactVisualization} />
 
           {/* ================================================================ */}
           {/* CORPORATE ROUTES - ESG Dashboard View */}

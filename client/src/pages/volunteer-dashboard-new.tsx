@@ -565,9 +565,14 @@ export default function VolunteerDashboardNew() {
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("User not found");
-      return response.json();
+      try {
+        const response = await fetch(`/api/users/me?userId=${userId}`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch (error) {
+        console.warn("Failed to fetch user:", error);
+        return null;
+      }
     },
     enabled: !!userId,
   });
@@ -576,9 +581,14 @@ export default function VolunteerDashboardNew() {
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
     queryKey: ["/api/dashboard", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/dashboard?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to load dashboard");
-      return response.json();
+      try {
+        const response = await fetch(`/api/dashboard?userId=${userId}`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch (error) {
+        console.warn("Failed to fetch dashboard:", error);
+        return null;
+      }
     },
     enabled: !!userId,
   });
@@ -587,9 +597,14 @@ export default function VolunteerDashboardNew() {
   const { data: projects = [] } = useQuery({
     queryKey: ["/api/projects", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/projects?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to load projects");
-      return response.json();
+      try {
+        const response = await fetch(`/api/projects?userId=${userId}`);
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        console.warn("Failed to fetch projects:", error);
+        return [];
+      }
     },
     enabled: !!userId,
   });
@@ -598,19 +613,24 @@ export default function VolunteerDashboardNew() {
   const { data: recentLogs = [], isLoading: isLoadingLogs } = useQuery({
     queryKey: ["/api/logs", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/logs?user_id=${userId}`);
-      if (!response.ok) throw new Error("Failed to load logs");
-      const logs = await response.json();
-      return logs.slice(0, 5).map((log: any) => ({
-        id: log.id,
-        projectName: log.project_name || "Unknown Project",
-        hours: log.hours,
-        status: log.verification_status || log.status || "pending",
-        createdAt: log.created_at,
-        outcomeType: log.outcome_type,
-        outcomeValue: log.outcome_value,
-        sdgGoals: log.sdg_goals,
-      }));
+      try {
+        const response = await fetch(`/api/logs?user_id=${userId}`);
+        if (!response.ok) return [];
+        const logs = await response.json();
+        return logs.slice(0, 5).map((log: any) => ({
+          id: log.id,
+          projectName: log.project_name || "Unknown Project",
+          hours: log.hours,
+          status: log.verification_status || log.status || "pending",
+          createdAt: log.created_at,
+          outcomeType: log.outcome_type,
+          outcomeValue: log.outcome_value,
+          sdgGoals: log.sdg_goals,
+        }));
+      } catch (error) {
+        console.warn("Failed to fetch logs:", error);
+        return [];
+      }
     },
     enabled: !!userId,
   });

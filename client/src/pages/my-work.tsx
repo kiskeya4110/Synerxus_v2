@@ -22,14 +22,14 @@ import MyTasksPage from "./my-tasks";
 import ImpactVisualization from "./impact-visualization";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import { CreateProjectDialog } from "@/components/projects/project-dialogs";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
@@ -498,8 +498,8 @@ export default function MyWork() {
     );
   }
 
-  // Show loading state while user data is being fetched to prevent wrong view flash
-  if (isUserLoading || !currentUser) {
+  // Show loading state while user data or viewport is being detected to prevent wrong view flash
+  if (isUserLoading || !currentUser || isViewportLoading) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
@@ -511,7 +511,7 @@ export default function MyWork() {
   }
 
   // MVP PWA view for volunteers on mobile
-  if (!isOrganizationManager && isMobile) {
+  if (!isOrganizationManager && isMobile === true) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
@@ -712,7 +712,7 @@ export default function MyWork() {
   }
 
   // PWA view for organization managers on mobile
-  if (isOrganizationManager && isMobile) {
+  if (isOrganizationManager && isMobile === true) {
     return (
       <OrganizationPWALayout activeTab="projects">
         <div className="p-4 space-y-4">
@@ -814,7 +814,7 @@ export default function MyWork() {
 
   // Desktop view (original)
   return (
-    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
+    <div className={`min-h-screen ${!isOrganizationManager && isMobile === true ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
       {/* Create Project Dialog */}
       {currentUser?.organizationId && (
         <CreateProjectDialog 
@@ -827,7 +827,7 @@ export default function MyWork() {
       {!isOrganizationManager && <VolunteerNav />}
 
       {/* Main Content Wrapper */}
-      <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
+      <main className={!isOrganizationManager && isMobile === true ? "flex-1 overflow-y-auto pb-20" : ""}>
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationNav />}
       {/* Top Navigation Buttons for Organization Managers */}
@@ -1281,12 +1281,12 @@ export default function MyWork() {
       </main>
 
       {/* PWA Bottom Navigation for Volunteers on Mobile */}
-      {!isOrganizationManager && isMobile && (
+      {!isOrganizationManager && isMobile === true && (
         <WebBottomNav activeTab="projects" />
       )}
 
       {/* Footer - Hidden on mobile */}
-      {!isMobile && <Footer />}
+      {isMobile !== true && <Footer />}
     </div>
   );
 }

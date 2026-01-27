@@ -92,9 +92,12 @@ matchmakerRouter.get("/volunteer/:id", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error getting volunteer matches:", err);
-    res.status(500).json({
-      message: "Failed to get volunteer matches",
-      error: err instanceof Error ? err.message : String(err)
+    // Return empty matches on error instead of 500 to prevent client-side errors
+    res.json({
+      volunteer_id: req.params.id,
+      matches: [],
+      message: "Unable to compute matches at this time",
+      error: err instanceof Error ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err))
     });
   }
 });

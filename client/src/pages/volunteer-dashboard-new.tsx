@@ -46,7 +46,7 @@ import Footer from "@/components/layout/footer";
 // Hooks
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import { formatDecimal } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 
@@ -544,7 +544,7 @@ export default function VolunteerDashboardNew() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
   const userId = localStorage.getItem("currentUserId");
   const userType = localStorage.getItem("userType");
@@ -619,12 +619,18 @@ export default function VolunteerDashboardNew() {
   const { data: matchedProjects = [], isLoading: isLoadingMatches } = useQuery({
     queryKey: ["/api/matchmaker/volunteer", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=4`);
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.matches || [];
+      try {
+        const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=4`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.matches || [];
+      } catch (error) {
+        console.warn("Failed to fetch matched projects:", error);
+        return [];
+      }
     },
-    enabled: !!userId && isMobile,
+    enabled: !!userId,
+    retry: 1, // Only retry once to avoid excessive API calls
   });
 
   // Demo data fallback
@@ -655,8 +661,8 @@ export default function VolunteerDashboardNew() {
     };
   }, [dashboardData, projects, recentLogs]);
 
-  // Loading state
-  if (isLoadingUser && !demoUser) {
+  // Loading state - wait for viewport detection and user data
+  if ((isLoadingUser && !demoUser) || isViewportLoading) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />
@@ -678,7 +684,7 @@ export default function VolunteerDashboardNew() {
   }
 
   // Mobile PWA View - Simple Impact Wallet per redesign spec
-  if (isMobile) {
+  if (isMobile === true) {
     // Calculate simple metrics for Impact Wallet
     const totalOutcomes = recentLogs.reduce((sum: number, log: any) => sum + (log.outcomeQuantity || 0), 0);
     const skillsUsed = dashboardData?.volunteerProfile?.skills?.length || 0;

@@ -689,7 +689,7 @@ export default function OrganizationDashboardNew() {
   // Mobile View - Simple NGO Dashboard per redesign spec
   if (isMobile) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-slate-900 text-white flex flex-col overflow-hidden">
+      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-stone-100 text-stone-900 flex flex-col overflow-hidden">
         {/* Centered App Container */}
         <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
           {/* Shared PWA Header with working hamburger menu */}
@@ -844,7 +844,7 @@ export default function OrganizationDashboardNew() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen pwa-gradient-bg">
       {/* Navigation */}
       <OrganizationNav />
 

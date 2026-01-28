@@ -118,12 +118,12 @@ export default function OrganizationNav() {
   const orgInitial = (organization?.name || "O").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-700 bg-[#0F172A]">
+    <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
       <div className="container max-w-7xl mx-auto px-4">
         <nav className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <Logo size="sm" variant="full" />
+            <Logo size="sm" variant="full" theme="light" />
 
             {/* Desktop Nav Items */}
             <div className="hidden lg:flex items-center gap-1">
@@ -148,7 +148,7 @@ export default function OrganizationNav() {
                         "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
                         isActive
                           ? "bg-indigo-600 text-white shadow-md"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                          : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -183,7 +183,7 @@ export default function OrganizationNav() {
             </Button>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative text-stone-600 hover:text-stone-900 hover:bg-stone-100">
               <Bell className="h-5 w-5" />
               {pendingCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-bold flex items-center justify-center text-white">
@@ -198,8 +198,8 @@ export default function OrganizationNav() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className={cn(
                   "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all",
-                  "hover:bg-slate-800",
-                  menuOpen && "bg-slate-800"
+                  "hover:bg-stone-100",
+                  menuOpen && "bg-stone-100"
                 )}
               >
                 <Avatar size="sm" ring={menuOpen ? "primary" : "none"}>
@@ -208,13 +208,13 @@ export default function OrganizationNav() {
                     {orgInitial}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:block text-sm font-medium text-white max-w-[120px] truncate">
+                <span className="hidden md:block text-sm font-medium text-stone-900 max-w-[120px] truncate">
                   {organization?.name || "Organization"}
                 </span>
                 {menuOpen ? (
-                  <X className="h-4 w-4 text-slate-400" />
+                  <X className="h-4 w-4 text-stone-500" />
                 ) : (
-                  <Menu className="h-4 w-4 text-slate-400" />
+                  <Menu className="h-4 w-4 text-stone-500" />
                 )}
               </button>
 
@@ -225,9 +225,9 @@ export default function OrganizationNav() {
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
 
                   {/* Menu Panel */}
-                  <div className="absolute right-0 top-full mt-2 w-64 z-50 rounded-xl border border-slate-700 bg-slate-900 shadow-xl overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-64 z-50 rounded-xl border border-stone-200 bg-white shadow-xl overflow-hidden">
                     {/* Org Info Header */}
-                    <div className="px-4 py-3 bg-slate-800 border-b border-slate-700">
+                    <div className="px-4 py-3 bg-stone-50 border-b border-stone-200">
                       <div className="flex items-center gap-3">
                         <Avatar size="default">
                           <AvatarImage src={organization?.logo || undefined} />
@@ -236,10 +236,10 @@ export default function OrganizationNav() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">
+                          <p className="text-sm font-semibold text-stone-900 truncate">
                             {organization?.name || "Organization"}
                           </p>
-                          <div className="flex items-center gap-1 text-xs text-slate-400">
+                          <div className="flex items-center gap-1 text-xs text-stone-500">
                             <Building2 className="h-3 w-3" />
                             <span>NGO Portal</span>
                           </div>
@@ -258,8 +258,8 @@ export default function OrganizationNav() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
                                 isActive
-                                  ? "bg-indigo-600/20 text-indigo-400"
-                                  : "text-slate-300 hover:bg-slate-800"
+                                  ? "bg-indigo-50 text-indigo-600"
+                                  : "text-stone-700 hover:bg-stone-50"
                               )}
                               onClick={() => setMenuOpen(false)}
                             >
@@ -272,10 +272,10 @@ export default function OrganizationNav() {
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t border-slate-700 py-2">
+                    <div className="border-t border-stone-200 py-2">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-400 hover:bg-red-500/10 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
                         <span className="text-sm font-medium">Sign Out</span>
@@ -290,7 +290,7 @@ export default function OrganizationNav() {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-stone-600 hover:text-stone-900 hover:bg-stone-100"
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <Menu className="h-5 w-5" />

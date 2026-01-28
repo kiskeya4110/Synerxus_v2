@@ -95,7 +95,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-700 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
@@ -118,7 +118,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                 className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive
                     ? 'text-white bg-indigo-600'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 data-testid={`nav-${item.id}`}

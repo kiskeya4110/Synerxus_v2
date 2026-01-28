@@ -232,16 +232,16 @@ export default function PostCoreOpportunity() {
             variant="ghost"
             size="sm"
             onClick={() => navigate('/projects')}
-            className="mb-3 -ml-2 text-slate-300 hover:text-white hover:bg-slate-800"
+            className="mb-3 -ml-2 text-stone-600 hover:text-stone-900 hover:bg-stone-200"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Projects
           </Button>
         )}
-        <h1 className={`font-bold text-white mb-2 ${isMobile ? "text-xl" : "text-3xl"}`}>
+        <h1 className={`font-bold text-stone-900 mb-2 ${isMobile ? "text-xl" : "text-3xl"}`}>
           Post a Core Opportunity
         </h1>
-        <p className={`text-slate-300 ${isMobile ? "text-sm" : ""}`}>
+        <p className={`text-stone-600 ${isMobile ? "text-sm" : ""}`}>
           For skilled, ongoing, or project-based volunteer roles. This detailed post will power the AI matching algorithm.
         </p>
       </div>

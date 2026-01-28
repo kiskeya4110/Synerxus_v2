@@ -165,7 +165,7 @@ export default function PostUrgentOpportunity() {
             variant="ghost"
             size="sm"
             onClick={() => navigate('/projects')}
-            className="mb-3 -ml-2 text-slate-300 hover:text-white hover:bg-slate-800"
+            className="mb-3 -ml-2 text-stone-600 hover:text-stone-900 hover:bg-stone-200"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Projects
@@ -173,11 +173,11 @@ export default function PostUrgentOpportunity() {
         )}
         <div className="flex items-center gap-2 mb-2">
           <AlertCircle className={`text-orange-500 ${isMobile ? "w-6 h-6" : "w-8 h-8"}`} />
-          <h1 className={`font-bold text-white ${isMobile ? "text-xl" : "text-3xl"}`}>
+          <h1 className={`font-bold text-stone-900 ${isMobile ? "text-xl" : "text-3xl"}`}>
             Post an Urgent Need or Event
           </h1>
         </div>
-        <p className={`text-slate-300 ${isMobile ? "text-sm" : ""}`}>
+        <p className={`text-stone-600 ${isMobile ? "text-sm" : ""}`}>
           Use this form for time-sensitive events like fundraisers, community drives, or disaster response where you need volunteers now.
           This will prioritize matching by location and availability.
         </p>

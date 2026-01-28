@@ -346,8 +346,8 @@ export default function Projects() {
           {/* MVP Header Row */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-white">Projects</h1>
-              <p className="text-xs text-white/70 mt-0.5">{projects.length} total · {activeProjectsCount} active</p>
+              <h1 className="text-xl font-bold text-stone-900">Projects</h1>
+              <p className="text-xs text-stone-600 mt-0.5">{projects.length} total · {activeProjectsCount} active</p>
             </div>
             {canManageProjects && currentUser?.organizationId && (
               <CreateProjectDialog organizationId={currentUser.organizationId} />

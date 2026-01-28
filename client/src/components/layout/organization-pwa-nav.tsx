@@ -75,10 +75,10 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   return (
     <>
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-700"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-stone-200"
       style={{
-        background: '#0F172A',
-        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.3)',
+        background: '#FFFFFF',
+        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
         paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
       }}
     >
@@ -95,9 +95,9 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
               data-testid={`nav-org-${item.id}`}
             >
               <div className={`p-2 rounded-lg pointer-events-none ${isActive ? 'bg-indigo-600' : ''}`}>
-                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-stone-600'}`} />
               </div>
-              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-white font-semibold' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-indigo-600 font-semibold' : 'text-stone-600'}`}>
                 {item.label}
               </span>
             </button>

@@ -667,7 +667,7 @@ export default function OrganizationDashboardNew() {
   // Loading state
   if (isLoadingUser && !demoUser) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />
       </div>
     );
@@ -676,7 +676,7 @@ export default function OrganizationDashboardNew() {
   // Auth check
   if (!userId || !activeUser) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <ErrorState
           title="Not Authenticated"
           message="Please log in to view your dashboard."

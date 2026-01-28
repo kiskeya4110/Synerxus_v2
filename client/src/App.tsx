@@ -129,13 +129,13 @@ function RootRedirectRoute() {
 }
 
 // ============================================================================
-// Main App Component - Dark Theme Only
+// Main App Component - Light Theme
 // ============================================================================
 export default function App() {
-  // Ensure dark mode is always applied (no theme toggle in MVP)
+  // Ensure light mode is applied for proper contrast on light backgrounds
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    document.documentElement.classList.remove('light');
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
   }, []);
 
   return (

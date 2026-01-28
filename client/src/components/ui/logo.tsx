@@ -174,6 +174,8 @@ function Wordmark({
   theme?: "light" | "dark" | "auto";
   className?: string;
 }) {
+  // For white/light backgrounds (theme="light" or "auto"), use dark navy blue for contrast
+  // For dark backgrounds (theme="dark"), use white for contrast
   const synerColor = theme === "dark" ? WORDMARK_COLORS.synerDark : WORDMARK_COLORS.synerLight;
 
   return (

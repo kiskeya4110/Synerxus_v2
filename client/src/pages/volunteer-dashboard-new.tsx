@@ -713,14 +713,14 @@ export default function VolunteerDashboardNew() {
     return (
       <div className="min-h-screen pwa-gradient-bg pb-20">
         {/* Header with Logo and Menu */}
-        <header className="bg-[#0F172A]/90 backdrop-blur-sm border-b border-slate-700 px-4 py-4 sticky top-0 z-30">
+        <header className="bg-white/90 backdrop-blur-sm border-b border-stone-200 px-4 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Logo size="sm" theme="dark" />
-              <span className="text-xs text-white/70 font-medium">Impact Wallet</span>
+              <Logo size="sm" theme="light" />
+              <span className="text-xs text-stone-600 font-medium">Impact Wallet</span>
             </div>
-            <button className="p-2 rounded-lg hover:bg-slate-800 transition-colors">
-              <Menu className="w-5 h-5 text-white" />
+            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
+              <Menu className="w-5 h-5 text-stone-700" />
             </button>
           </div>
         </header>
@@ -732,10 +732,10 @@ export default function VolunteerDashboardNew() {
             <>
               {/* Welcome Section */}
               <div className="text-center py-4">
-                <h1 className="text-2xl font-bold text-white mb-1">
+                <h1 className="text-2xl font-bold text-stone-800 mb-1">
                   Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}!
                 </h1>
-                <p className="text-white/70 text-sm">Your impact journey continues</p>
+                <p className="text-stone-600 text-sm">Your impact journey continues</p>
               </div>
 
               {/* Quick Stats Summary */}
@@ -762,43 +762,43 @@ export default function VolunteerDashboardNew() {
 
               {/* Quick Actions */}
               <div>
-                <h2 className="text-white font-semibold mb-3">Quick Actions</h2>
+                <h2 className="text-stone-800 font-semibold mb-3">Quick Actions</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setShowLogModal(true)}
-                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-emerald-400" />
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <span className="text-sm font-medium text-white">Log Impact</span>
+                    <span className="text-sm font-medium text-stone-800">Log Impact</span>
                   </button>
                   <button
                     onClick={() => navigate('/discover-opportunities')}
-                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Search className="w-5 h-5 text-blue-400" />
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Search className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-sm font-medium text-white">Find Projects</span>
+                    <span className="text-sm font-medium text-stone-800">Find Projects</span>
                   </button>
                   <button
                     onClick={() => setMobileTab('wallet')}
-                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-amber-400" />
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-amber-600" />
                     </div>
-                    <span className="text-sm font-medium text-white">View Wallet</span>
+                    <span className="text-sm font-medium text-stone-800">View Wallet</span>
                   </button>
                   <button
                     onClick={() => navigate('/volunteer-profile-settings')}
-                    className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-slate-700/80 transition-colors"
+                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                      <User className="w-5 h-5 text-purple-400" />
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <User className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="text-sm font-medium text-white">My Profile</span>
+                    <span className="text-sm font-medium text-stone-800">My Profile</span>
                   </button>
                 </div>
               </div>
@@ -807,20 +807,20 @@ export default function VolunteerDashboardNew() {
               {recentLogs.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-white font-semibold">Recent Activity</h2>
+                    <h2 className="text-stone-800 font-semibold">Recent Activity</h2>
                     <button
                       onClick={() => navigate('/my-work')}
-                      className="text-xs text-indigo-400 hover:text-indigo-300"
+                      className="text-xs text-indigo-600 hover:text-indigo-700"
                     >
                       View All →
                     </button>
                   </div>
-                  <div className="bg-slate-800/80 rounded-xl border border-slate-700 divide-y divide-slate-700">
+                  <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100 shadow-sm">
                     {recentLogs.slice(0, 3).map((log: any) => (
                       <div key={log.id} className="px-4 py-3 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-white">{log.hours}h logged</p>
-                          <p className="text-xs text-white/70">{log.projectName || 'Project'}</p>
+                          <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
+                          <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
                         </div>
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                           log.status === 'verified' ? 'bg-emerald-900/50 text-emerald-400' :
@@ -843,52 +843,52 @@ export default function VolunteerDashboardNew() {
               {/* Core Metrics - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Total Hours */}
-                <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-blue-400" />
-                    <span className="text-xs font-medium text-white/80 uppercase">Hours</span>
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
-                  <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
-                  <p className="text-xs text-white/70 mt-1">verified hours</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
+                  <p className="text-xs text-stone-500 mt-1">verified hours</p>
                 </div>
 
                 {/* Total Outcomes */}
-                <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-xs font-medium text-white/80 uppercase">Outcomes</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">Outcomes</span>
                   </div>
-                  <p className="text-3xl font-bold text-white">{totalOutcomes}</p>
-                  <p className="text-xs text-white/70 mt-1">total outcomes</p>
+                  <p className="text-3xl font-bold text-stone-800">{totalOutcomes}</p>
+                  <p className="text-xs text-stone-500 mt-1">total outcomes</p>
                 </div>
 
                 {/* Skills Used */}
-                <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-4 w-4 text-amber-400" />
-                    <span className="text-xs font-medium text-white/80 uppercase">Skills</span>
+                    <Award className="h-4 w-4 text-amber-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">Skills</span>
                   </div>
-                  <p className="text-3xl font-bold text-white">{skillsUsed}</p>
-                  <p className="text-xs text-white/70 mt-1">skills applied</p>
+                  <p className="text-3xl font-bold text-stone-800">{skillsUsed}</p>
+                  <p className="text-xs text-stone-500 mt-1">skills applied</p>
                 </div>
 
                 {/* SDGs */}
-                <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <Globe className="h-4 w-4 text-indigo-400" />
-                    <span className="text-xs font-medium text-white/80 uppercase">SDGs</span>
+                    <Globe className="h-4 w-4 text-indigo-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">SDGs</span>
                   </div>
-                  <p className="text-3xl font-bold text-white">{sdgsContributed}</p>
-                  <p className="text-xs text-white/70 mt-1">goals impacted</p>
+                  <p className="text-3xl font-bold text-stone-800">{sdgsContributed}</p>
+                  <p className="text-xs text-stone-500 mt-1">goals impacted</p>
                 </div>
               </div>
 
               {/* Pending Verification Notice */}
               {stats.pendingVerifications > 0 && (
-                <div className="bg-amber-900/30 border border-amber-700/50 rounded-xl p-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm font-medium text-amber-300">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700">
                       {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending verification
                     </span>
                   </div>
@@ -896,21 +896,21 @@ export default function VolunteerDashboardNew() {
               )}
 
               {/* Recent Logs */}
-              <div className="bg-slate-800/80 rounded-xl border border-slate-700 shadow-sm">
-                <div className="px-4 py-3 border-b border-slate-700">
-                  <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+              <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
+                <div className="px-4 py-3 border-b border-stone-100">
+                  <h2 className="text-sm font-semibold text-stone-800">Recent Activity</h2>
                 </div>
-                <div className="divide-y divide-slate-700">
+                <div className="divide-y divide-stone-100">
                   {recentLogs.slice(0, 5).map((log: any) => (
                     <div key={log.id} className="px-4 py-3 flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-white">{log.hours}h logged</p>
-                        <p className="text-xs text-white/70">{log.projectName || 'Project'}</p>
+                        <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
+                        <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
                       </div>
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        log.status === 'verified' ? 'bg-emerald-900/50 text-emerald-400' :
-                        log.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
-                        'bg-amber-900/50 text-amber-400'
+                        log.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                        log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-amber-100 text-amber-700'
                       }`}>
                         {log.status || 'pending'}
                       </span>
@@ -918,8 +918,8 @@ export default function VolunteerDashboardNew() {
                   ))}
                   {recentLogs.length === 0 && (
                     <div className="px-4 py-8 text-center">
-                      <p className="text-sm text-white/70">No activity yet</p>
-                      <p className="text-xs text-white/60 mt-1">Log your first impact to get started</p>
+                      <p className="text-sm text-stone-500">No activity yet</p>
+                      <p className="text-xs text-stone-400 mt-1">Log your first impact to get started</p>
                     </div>
                   )}
                 </div>
@@ -931,34 +931,34 @@ export default function VolunteerDashboardNew() {
           {mobileTab === 'projects' && (
             <>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Best Matches For You</h2>
-                <span className="text-xs text-white/70">4-Factor AI Match</span>
+                <h2 className="text-lg font-semibold text-stone-800">Best Matches For You</h2>
+                <span className="text-xs text-stone-500">4-Factor AI Match</span>
               </div>
 
               {isLoadingMatches ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
               ) : matchedProjects.length > 0 ? (
                 <div className="space-y-3">
                   {matchedProjects.slice(0, 4).map((match: any, index: number) => (
                     <div
                       key={match.organization_id || index}
-                      className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-sm"
+                      className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
                       onClick={() => navigate(`/opportunities/${match.organization_id}`)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-white">
+                          <h3 className="text-sm font-semibold text-stone-800">
                             {match.organization_name || 'Organization'}
                           </h3>
-                          <p className="text-xs text-white/70 mt-0.5">
+                          <p className="text-xs text-stone-500 mt-0.5">
                             {match.cause_area || match.focus_area || 'Community Impact'}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-indigo-900/50 px-2 py-1 rounded-full">
-                          <TrendingUp className="h-3 w-3 text-indigo-400" />
-                          <span className="text-xs font-semibold text-indigo-400">
+                        <div className="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded-full">
+                          <TrendingUp className="h-3 w-3 text-indigo-600" />
+                          <span className="text-xs font-semibold text-indigo-600">
                             {Math.round(match.match_score || match.score || 0)}%
                           </span>
                         </div>
@@ -967,22 +967,22 @@ export default function VolunteerDashboardNew() {
                       {/* Match Factors */}
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         {match.skills_match > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/50 text-blue-400">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                             Skills +{Math.round(match.skills_match)}
                           </span>
                         )}
                         {match.sdg_match > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                             SDG +{Math.round(match.sdg_match)}
                           </span>
                         )}
                         {match.location_match > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-400">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             Location +{Math.round(match.location_match)}
                           </span>
                         )}
                         {match.availability_match > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-400">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
                             Availability +{Math.round(match.availability_match)}
                           </span>
                         )}
@@ -990,7 +990,7 @@ export default function VolunteerDashboardNew() {
 
                       {/* SDG Tags */}
                       {match.sdg_goals && match.sdg_goals.length > 0 && (
-                        <div className="flex gap-1 mt-3 pt-3 border-t border-slate-700">
+                        <div className="flex gap-1 mt-3 pt-3 border-t border-stone-100">
                           {match.sdg_goals.slice(0, 4).map((sdg: number) => (
                             <span
                               key={sdg}
@@ -1006,10 +1006,10 @@ export default function VolunteerDashboardNew() {
                   ))}
                 </div>
               ) : (
-                <div className="bg-slate-800/80 rounded-xl border border-slate-700 shadow-sm p-8 text-center">
-                  <Target className="h-12 w-12 text-white/50 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-white">No matches yet</p>
-                  <p className="text-xs text-white/70 mt-1">
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-8 text-center">
+                  <Target className="h-12 w-12 text-stone-300 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-stone-800">No matches yet</p>
+                  <p className="text-xs text-stone-500 mt-1">
                     Complete your profile to get personalized project matches
                   </p>
                   <button
@@ -1025,13 +1025,13 @@ export default function VolunteerDashboardNew() {
         </main>
 
         {/* Bottom Navigation Tray - 5 tabs with Home in middle */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-700 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex justify-around items-center max-w-md mx-auto">
             {/* Wallet */}
             <button
               onClick={() => setMobileTab('wallet')}
               className={`flex flex-col items-center py-2 px-3 rounded-xl transition-colors ${
-                mobileTab === 'wallet' ? 'text-indigo-400 bg-indigo-900/50' : 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800'
+                mobileTab === 'wallet' ? 'text-indigo-600 bg-indigo-50' : 'text-stone-500 hover:text-indigo-600 hover:bg-stone-100'
               }`}
             >
               <BarChart3 className="w-5 h-5 mb-1" />
@@ -1042,7 +1042,7 @@ export default function VolunteerDashboardNew() {
             <button
               onClick={() => setMobileTab('projects')}
               className={`flex flex-col items-center py-2 px-3 rounded-xl transition-colors ${
-                mobileTab === 'projects' ? 'text-indigo-400 bg-indigo-900/50' : 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800'
+                mobileTab === 'projects' ? 'text-indigo-600 bg-indigo-50' : 'text-stone-500 hover:text-indigo-600 hover:bg-stone-100'
               }`}
             >
               <Target className="w-5 h-5 mb-1" />
@@ -1053,7 +1053,7 @@ export default function VolunteerDashboardNew() {
             <button
               onClick={() => setMobileTab('home')}
               className={`flex flex-col items-center py-2 px-5 rounded-xl shadow-md -mt-3 transition-colors ${
-                mobileTab === 'home' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white'
+                mobileTab === 'home' ? 'bg-indigo-600 text-white' : 'bg-stone-200 text-stone-600 hover:bg-indigo-600 hover:text-white'
               }`}
             >
               <Home className="w-6 h-6 mb-0.5" />
@@ -1063,7 +1063,7 @@ export default function VolunteerDashboardNew() {
             {/* Log Impact */}
             <button
               onClick={() => setShowLogModal(true)}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition-colors"
+              className="flex flex-col items-center py-2 px-3 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-stone-100 transition-colors"
             >
               <Plus className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-semibold">Log</span>
@@ -1072,7 +1072,7 @@ export default function VolunteerDashboardNew() {
             {/* History */}
             <button
               onClick={() => navigate('/my-work')}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition-colors"
+              className="flex flex-col items-center py-2 px-3 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-stone-100 transition-colors"
             >
               <FileText className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-semibold">History</span>

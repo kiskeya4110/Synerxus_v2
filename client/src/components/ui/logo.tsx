@@ -21,13 +21,13 @@ const LOGO_COLORS = {
   lightBlue: "#7DD3FC", // Bottom-Right - Light blue (filled)
 };
 
-// Size configurations - fontSize scaled to match icon height (cap-height ratio ~0.7)
+// Size configurations - fontSize 25% smaller for balanced proportion with icon
 const SIZES = {
-  xs: { icon: 24, fontSize: 32, gap: 6 },
-  sm: { icon: 32, fontSize: 42, gap: 8 },
-  md: { icon: 40, fontSize: 52, gap: 10 },
-  lg: { icon: 52, fontSize: 68, gap: 12 },
-  xl: { icon: 64, fontSize: 84, gap: 14 },
+  xs: { icon: 24, fontSize: 24, gap: 6 },
+  sm: { icon: 32, fontSize: 32, gap: 8 },
+  md: { icon: 40, fontSize: 39, gap: 10 },
+  lg: { icon: 52, fontSize: 51, gap: 12 },
+  xl: { icon: 64, fontSize: 63, gap: 14 },
 };
 
 /**

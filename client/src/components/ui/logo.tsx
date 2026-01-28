@@ -15,10 +15,10 @@ interface LogoProps {
 
 // Logo colors from design system
 const LOGO_COLORS = {
-  indigo: "#6366F1",  // Top-Left - Corporate/Tech
-  amber: "#F59E0B",   // Top-Right - Impact/Outcome
-  green: "#22C55E",   // Bottom-Left - Growth/SDG
-  cyan: "#22D3EE",    // Bottom-Right - NGO/Verification
+  navy: "#0F172A",      // Top-Left - Dark navy blue (filled)
+  darkOrange: "#C2410C", // Top-Right - Dark orange (border only)
+  yellow: "#FACC15",    // Bottom-Left - Yellow (filled)
+  lightBlue: "#7DD3FC", // Bottom-Right - Light blue (filled)
 };
 
 // Size configurations
@@ -34,10 +34,14 @@ const SIZES = {
  * Synerxus Logo Icon - S-shaped 4-square grid
  *
  * Layout:
- *   [Indigo] [Amber]    <- Top row shifted RIGHT
- *   [Green] [Cyan]      <- Bottom row shifted LEFT
+ *   [Navy]   [Orange]    <- Top row shifted RIGHT
+ *   [Yellow] [LightBlue] <- Bottom row shifted LEFT
  *
- * Each square has rounded OUTSIDE corners only
+ * Fill styles:
+ *   - Top-Left (Navy): Filled
+ *   - Top-Right (Dark Orange): Border only, open middle
+ *   - Bottom-Left (Yellow): Filled
+ *   - Bottom-Right (Light Blue): Filled
  */
 function LogoIcon({ size = 40, className }: { size?: number; className?: string }) {
   // Square dimensions
@@ -45,7 +49,7 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
   const gap = size * 0.08;        // Gap between squares
   const offset = size * 0.1;      // S-curve offset (20-25% of square)
   const cornerRadius = squareSize * 0.35; // 35% corner radius
-  const strokeWidth = size * 0.04; // Wireframe stroke width
+  const strokeWidth = size * 0.06; // Border stroke width for outline square
 
   // Calculate positions
   const topRowY = 0;
@@ -71,38 +75,21 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
       className={className}
       aria-label="Synerxus Logo"
     >
-      {/* Top-Left Square - Indigo (rounded top-left corner) */}
-      <rect
-        x={topLeftX + strokeWidth / 2}
-        y={topRowY + strokeWidth / 2}
-        width={squareSize - strokeWidth}
-        height={squareSize - strokeWidth}
-        rx={cornerRadius}
-        ry={cornerRadius}
-        stroke={LOGO_COLORS.indigo}
-        strokeWidth={strokeWidth}
-        fill="none"
-        style={{
-          clipPath: `inset(0 0 ${cornerRadius}px ${cornerRadius}px round ${cornerRadius}px 0 0 0)`,
-        }}
-      />
-      {/* Custom path for top-left with only top-left corner rounded */}
+      {/* Top-Left Square - Dark Navy Blue (FILLED, rounded top-left corner) */}
       <path
         d={`
-          M ${topLeftX + cornerRadius} ${topRowY + strokeWidth / 2}
-          L ${topLeftX + squareSize - strokeWidth / 2} ${topRowY + strokeWidth / 2}
-          L ${topLeftX + squareSize - strokeWidth / 2} ${topRowY + squareSize - strokeWidth / 2}
-          L ${topLeftX + strokeWidth / 2} ${topRowY + squareSize - strokeWidth / 2}
-          L ${topLeftX + strokeWidth / 2} ${topRowY + cornerRadius}
-          Q ${topLeftX + strokeWidth / 2} ${topRowY + strokeWidth / 2} ${topLeftX + cornerRadius} ${topRowY + strokeWidth / 2}
+          M ${topLeftX + cornerRadius} ${topRowY}
+          L ${topLeftX + squareSize} ${topRowY}
+          L ${topLeftX + squareSize} ${topRowY + squareSize}
+          L ${topLeftX} ${topRowY + squareSize}
+          L ${topLeftX} ${topRowY + cornerRadius}
+          Q ${topLeftX} ${topRowY} ${topLeftX + cornerRadius} ${topRowY}
+          Z
         `}
-        stroke={LOGO_COLORS.indigo}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeLinejoin="round"
+        fill={LOGO_COLORS.navy}
       />
 
-      {/* Top-Right Square - Amber (rounded top-right corner) */}
+      {/* Top-Right Square - Dark Orange (BORDER ONLY, rounded top-right corner) */}
       <path
         d={`
           M ${topRightX + strokeWidth / 2} ${topRowY + strokeWidth / 2}
@@ -112,42 +99,37 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
           L ${topRightX + strokeWidth / 2} ${topRowY + squareSize - strokeWidth / 2}
           Z
         `}
-        stroke={LOGO_COLORS.amber}
+        stroke={LOGO_COLORS.darkOrange}
         strokeWidth={strokeWidth}
         fill="none"
         strokeLinejoin="round"
       />
 
-      {/* Bottom-Left Square - Green (rounded bottom-left corner) */}
+      {/* Bottom-Left Square - Yellow (FILLED, rounded bottom-left corner) */}
       <path
         d={`
-          M ${bottomLeftX + strokeWidth / 2} ${bottomRowY + strokeWidth / 2}
-          L ${bottomLeftX + squareSize - strokeWidth / 2} ${bottomRowY + strokeWidth / 2}
-          L ${bottomLeftX + squareSize - strokeWidth / 2} ${bottomRowY + squareSize - strokeWidth / 2}
-          L ${bottomLeftX + cornerRadius} ${bottomRowY + squareSize - strokeWidth / 2}
-          Q ${bottomLeftX + strokeWidth / 2} ${bottomRowY + squareSize - strokeWidth / 2} ${bottomLeftX + strokeWidth / 2} ${bottomRowY + squareSize - cornerRadius}
-          L ${bottomLeftX + strokeWidth / 2} ${bottomRowY + strokeWidth / 2}
-        `}
-        stroke={LOGO_COLORS.green}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeLinejoin="round"
-      />
-
-      {/* Bottom-Right Square - Cyan (rounded bottom-right corner) */}
-      <path
-        d={`
-          M ${bottomRightX + strokeWidth / 2} ${bottomRowY + strokeWidth / 2}
-          L ${bottomRightX + squareSize - strokeWidth / 2} ${bottomRowY + strokeWidth / 2}
-          L ${bottomRightX + squareSize - strokeWidth / 2} ${bottomRowY + squareSize - cornerRadius}
-          Q ${bottomRightX + squareSize - strokeWidth / 2} ${bottomRowY + squareSize - strokeWidth / 2} ${bottomRightX + squareSize - cornerRadius} ${bottomRowY + squareSize - strokeWidth / 2}
-          L ${bottomRightX + strokeWidth / 2} ${bottomRowY + squareSize - strokeWidth / 2}
+          M ${bottomLeftX} ${bottomRowY}
+          L ${bottomLeftX + squareSize} ${bottomRowY}
+          L ${bottomLeftX + squareSize} ${bottomRowY + squareSize}
+          L ${bottomLeftX + cornerRadius} ${bottomRowY + squareSize}
+          Q ${bottomLeftX} ${bottomRowY + squareSize} ${bottomLeftX} ${bottomRowY + squareSize - cornerRadius}
+          L ${bottomLeftX} ${bottomRowY}
           Z
         `}
-        stroke={LOGO_COLORS.cyan}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeLinejoin="round"
+        fill={LOGO_COLORS.yellow}
+      />
+
+      {/* Bottom-Right Square - Light Blue (FILLED, rounded bottom-right corner) */}
+      <path
+        d={`
+          M ${bottomRightX} ${bottomRowY}
+          L ${bottomRightX + squareSize} ${bottomRowY}
+          L ${bottomRightX + squareSize} ${bottomRowY + squareSize - cornerRadius}
+          Q ${bottomRightX + squareSize} ${bottomRowY + squareSize} ${bottomRightX + squareSize - cornerRadius} ${bottomRowY + squareSize}
+          L ${bottomRightX} ${bottomRowY + squareSize}
+          Z
+        `}
+        fill={LOGO_COLORS.lightBlue}
       />
     </svg>
   );

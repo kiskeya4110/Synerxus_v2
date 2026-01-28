@@ -146,6 +146,7 @@ const WORDMARK_COLORS = {
  * Synerxus Wordmark
  * SYNER in dark navy blue (or white on dark backgrounds)
  * XUS in dark golden orange
+ * Bold weight to match the visual weight of the logo icon
  */
 function Wordmark({
   fontSize = 22,
@@ -162,10 +163,12 @@ function Wordmark({
 
   return (
     <span
-      className={cn("font-semibold tracking-tight", className)}
+      className={cn("tracking-tight", className)}
       style={{
         fontSize: `${fontSize}px`,
         fontFamily: "'Inter', 'Instrument Sans', sans-serif",
+        fontWeight: 800,
+        letterSpacing: '-0.02em',
       }}
     >
       <span style={{ color: synerColor }}>SYNER</span>

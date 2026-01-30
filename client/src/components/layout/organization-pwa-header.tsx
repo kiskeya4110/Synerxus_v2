@@ -231,7 +231,7 @@ export default function OrganizationPWAHeader({
     {
       title: "MAIN",
       items: [
-        { icon: Home, label: "Dashboard", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
+        { icon: Home, label: "Verify Hub", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
         { icon: FolderOpen, label: "Projects", desc: "Manage your projects", action: () => navigate('/projects') },
         { icon: CheckCircle, label: "Verify", desc: "1-tap verification queue", action: () => navigate('/ngo-verification') },
       ]

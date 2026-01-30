@@ -278,7 +278,7 @@ export default function CSRPWAHeader({
                   )}
                   <div>
                     <p className="font-semibold text-emerald-900 text-sm">{companyName}</p>
-                    <p className="text-xs text-emerald-700">ESG Command Center</p>
+                    <p className="text-xs text-emerald-700">ESG Console</p>
                   </div>
                 </div>
                 <button onClick={() => setShowMenu(false)} className="p-2 hover:bg-white/50 rounded-lg">

@@ -22,7 +22,7 @@ import Logo from "@/components/ui/logo";
 
 // Navigation items - MVP only
 const getOrgNavItems = () => [
-  { href: "/organization-dashboard", label: "Dashboard", icon: Home },
+  { href: "/organization-dashboard", label: "Verify Hub", icon: Home },
   { href: "/ngo-verification", label: "Verify", icon: Shield },
   { href: "/projects", label: "Projects", icon: FolderOpen },
 ];
@@ -216,7 +216,7 @@ export default function OrganizationNav() {
                           </p>
                           <div className="flex items-center gap-1 text-xs text-stone-500">
                             <Building2 className="h-3 w-3" />
-                            <span>NGO Portal</span>
+                            <span>Verify Hub</span>
                           </div>
                         </div>
                       </div>

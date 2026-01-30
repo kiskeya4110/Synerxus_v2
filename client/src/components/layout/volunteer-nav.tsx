@@ -26,7 +26,7 @@ import Logo from "@/components/ui/logo";
 
 // Desktop nav items - MVP only
 const VOLUNTEER_NAV_ITEMS = [
-  { href: "/volunteer-dashboard", label: "Dashboard", icon: Home },
+  { href: "/volunteer-dashboard", label: "Impact Wallet", icon: Home },
   { href: "/my-work", label: "My Work", icon: ClipboardList },
   { href: "/log-activity", label: "Log Activity", icon: ClipboardList },
 ];

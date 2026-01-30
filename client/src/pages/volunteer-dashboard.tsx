@@ -2588,8 +2588,8 @@ export default function Dashboard() {
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {dashboardType === "volunteer"
-                    ? "Your dashboard to track impact and grow your contribution"
-                    : "Manage your impact and volunteers"}
+                    ? "Impact Wallet — Track your impact and grow your contribution"
+                    : "Verify Hub — Manage your impact and volunteers"}
                 </p>
               </div>
             </div>

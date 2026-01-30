@@ -2477,7 +2477,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Welcome Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-blue-100 text-xs font-medium">Impact Dashboard</p>
+                  <p className="text-blue-100 text-xs font-medium">Impact Wallet</p>
                   <h1 className="text-white text-lg font-bold truncate">
                     {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
                   </h1>

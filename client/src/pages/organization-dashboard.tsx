@@ -1082,7 +1082,7 @@ export default function OrganizationDashboard() {
               {organization?.name || organizationProfile?.organizationName || 'Organization'}
             </h1>
             <p style={{ fontSize: '13px', fontWeight: '500', color: '#3b82f6', margin: '2px 0 0 0', opacity: 0.85 }}>
-              Organization Dashboard
+              Verify Hub
             </p>
           </div>
 

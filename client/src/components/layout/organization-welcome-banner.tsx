@@ -6,7 +6,7 @@ interface OrganizationWelcomeBannerProps {
   pageTitle?: string;
 }
 
-export default function OrganizationWelcomeBanner({ className = "", pageTitle = "Organization Dashboard" }: OrganizationWelcomeBannerProps) {
+export default function OrganizationWelcomeBanner({ className = "", pageTitle = "Verify Hub" }: OrganizationWelcomeBannerProps) {
   const userId = localStorage.getItem("currentUserId");
 
   // Fetch organization data

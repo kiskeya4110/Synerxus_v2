@@ -38,7 +38,7 @@ const faqData: FAQItem[] = [
   {
     category: "Organizations",
     question: "How do I post a volunteer opportunity?",
-    answer: "From your Organization Dashboard, go to 'Projects' and click 'Post Opportunity'. Choose between Core Opportunity (for skilled roles) or Urgent Need (for time-sensitive events)."
+    answer: "From your Verify Hub, go to 'Projects' and click 'Post Opportunity'. Choose between Core Opportunity (for skilled roles) or Urgent Need (for time-sensitive events)."
   },
   {
     category: "Organizations",
@@ -48,7 +48,7 @@ const faqData: FAQItem[] = [
   {
     category: "Corporate Partners",
     question: "How do I track employee volunteering?",
-    answer: "Your CSR Dashboard provides real-time metrics on employee engagement, hours logged, SDG alignment, and economic value generated through volunteering activities."
+    answer: "Your ESG Console provides real-time metrics on employee engagement, hours logged, SDG alignment, and economic value generated through volunteering activities."
   },
   {
     category: "Corporate Partners",

@@ -694,7 +694,7 @@ export default function OrganizationDashboardNew() {
         <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
           {/* Shared PWA Header with working hamburger menu */}
           <OrganizationPWAHeader
-            organizationName="NGO Portal"
+            organizationName={organization?.name || "Verify Hub"}
             metrics={{
               activeProjects: stats.activeProjects,
               activeVolunteers: stats.totalVolunteers,
@@ -852,7 +852,7 @@ export default function OrganizationDashboardNew() {
       <main className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Page Header */}
         <PageHeader
-          title={organization?.name || "Organization Dashboard"}
+          title={organization?.name || "Verify Hub"}
           description="Verify volunteer hours, manage projects, and track your impact."
           actions={
             <div className="flex gap-3">

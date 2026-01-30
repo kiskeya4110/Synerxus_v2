@@ -169,7 +169,10 @@ export default function CSRDashboardPWA() {
       <header className="flex-shrink-0 bg-white border-b border-slate-200">
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
         <div className="px-4 py-3 flex items-center justify-between">
-          <Logo size="sm" className="flex-shrink-0" />
+          <div className="flex items-center gap-2">
+            <Logo size="sm" className="flex-shrink-0" />
+            <span className="text-xs text-slate-600 font-medium">ESG Console</span>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => refetch()}

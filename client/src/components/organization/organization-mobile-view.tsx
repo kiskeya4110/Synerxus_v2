@@ -565,7 +565,7 @@ function SlideOutMenu({
               <p className="text-sm font-semibold text-foreground truncate">
                 {organization?.name || "Organization"}
               </p>
-              <p className="text-xs text-muted-foreground">NGO Portal</p>
+              <p className="text-xs text-muted-foreground">Verify Hub</p>
             </div>
           </div>
         </div>
@@ -755,7 +755,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
   return (
     <div className="min-h-screen bg-background pb-20">
       <MobileHeader
-        title="NGO Portal"
+        title="Verify Hub"
         pendingCount={pendingCount}
         onMenuClick={() => setMenuOpen(true)}
         onNotificationClick={() => setActiveTab("verify")}

@@ -68,7 +68,7 @@ const navSections = [
   {
     title: "DASHBOARD",
     items: [
-      { id: "overview", label: "Overview", icon: Home, href: "/csr-dashboard?tab=overview", description: "ESG Dashboard home" },
+      { id: "overview", label: "Overview", icon: Home, href: "/csr-dashboard?tab=overview", description: "ESG Console home" },
       { id: "engagement", label: "Employee Engagement", icon: UserCheck, href: "/csr-dashboard?tab=engagement", description: "Team activity & stats" },
       { id: "sdg", label: "SDG Alignment", icon: TrendingUp, href: "/csr-dashboard?tab=sdgs", description: "UN Goals tracking" },
     ]
@@ -865,7 +865,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
               )}
               <div>
                 <div style={{ fontSize: "14px", fontWeight: "600", color: "#065f46" }}>{companyName}</div>
-                <div style={{ fontSize: "11px", color: "#059669" }}>ESG Dashboard</div>
+                <div style={{ fontSize: "11px", color: "#059669" }}>ESG Console</div>
               </div>
             </div>
             <button

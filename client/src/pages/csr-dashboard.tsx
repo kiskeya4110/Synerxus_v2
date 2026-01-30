@@ -1208,7 +1208,7 @@ export default function CSRDashboard() {
           </CardHeader>
           <CardContent>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>
-              Please sign in to access the CSR Dashboard.
+              Please sign in to access the ESG Console.
             </p>
             <button
               onClick={() => navigate("/login")}
@@ -1258,7 +1258,7 @@ export default function CSRDashboard() {
           <CardContent>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>
               {isAccessDenied
-                ? "This dashboard is only available for Corporate Partner accounts. Please log in with a corporate partner account."
+                ? "The ESG Console is only available for Corporate Partner accounts. Please log in with a corporate partner account."
                 : errorMessage
               }
             </p>
@@ -1437,7 +1437,7 @@ export default function CSRDashboard() {
     {
       title: "DASHBOARD",
       items: [
-        { icon: Home, label: "Overview", desc: "ESG Dashboard home", action: () => { setMobileTab('overview'); setShowMobileMenu(false); } },
+        { icon: Home, label: "Overview", desc: "ESG Console home", action: () => { setMobileTab('overview'); setShowMobileMenu(false); } },
         { icon: Users, label: "Employee Engagement", desc: "Team activity & stats", action: () => { setMobileTab('employees'); setShowMobileMenu(false); } },
         { icon: Target, label: "SDG Alignment", desc: "UN Goals tracking", action: () => { setMobileTab('sdgs'); setShowMobileMenu(false); } },
       ]
@@ -1486,7 +1486,7 @@ export default function CSRDashboard() {
             <img src={logoUrl} alt="Synerxus" className="h-8 w-auto" />
           </button>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-emerald-800 font-semibold mr-1">ESG Dashboard</span>
+            <span className="text-xs text-emerald-800 font-semibold mr-1">ESG Console</span>
             {/* Refresh Button */}
             <button
               onClick={handleMobileRefresh}
@@ -1540,7 +1540,7 @@ export default function CSRDashboard() {
             )}
             <div className="flex flex-col">
               <span className="text-emerald-900 text-lg font-bold leading-tight">{companyName}</span>
-              <span className="text-emerald-600 text-xs font-medium mt-0.5">ESG Command Center</span>
+              <span className="text-emerald-600 text-xs font-medium mt-0.5">ESG Console</span>
             </div>
           </div>
         </div>
@@ -1549,7 +1549,7 @@ export default function CSRDashboard() {
         <main className="overflow-y-auto pb-20 px-3 pt-3">
           {mobileTab === 'overview' && (
             <div className="space-y-3">
-              <h1 className="text-slate-900 text-base font-bold">ESG Dashboard Overview</h1>
+              <h1 className="text-slate-900 text-base font-bold">ESG Console Overview</h1>
 
               {/* KPI Cards Grid - Interactive */}
               <div className="grid grid-cols-2 gap-2">
@@ -4209,7 +4209,7 @@ export default function CSRDashboard() {
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <span style={{ color: "#064e3b", fontSize: "20px", fontWeight: "700", lineHeight: "1.2" }}>{companyName}</span>
-            <span style={{ color: "#047857", fontSize: "13px", fontWeight: "500" }}>ESG Command Center</span>
+            <span style={{ color: "#047857", fontSize: "13px", fontWeight: "500" }}>ESG Console</span>
           </div>
         </div>
 

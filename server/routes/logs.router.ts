@@ -12,6 +12,10 @@ import {
 import {
   notifyPendingActivity,
 } from "../notification-service";
+import {
+  suggestSDGsFromText,
+  mapOutcomeTypeToSDGs,
+} from "@shared/sdg-goals";
 
 export const logsRouter = Router();
 
@@ -55,16 +59,31 @@ logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => 
     }
 
     // Get project to inherit SDG tags and validate outcome type
-    let sdgGoals: number[] = [];
+    let projectSdgGoals: number[] = [];
     if (validationResult.data.projectId) {
       const project = await storage.getProject(validationResult.data.projectId);
       if (project) {
-        sdgGoals = project.sdgGoals || [];
+        projectSdgGoals = project.sdgGoals || [];
       }
     }
 
+    // Server-side SDG auto-suggestion: merge client sdgTags + project SDGs + text-based suggestions
+    const clientSdgTags: number[] = Array.isArray(req.body.sdgTags) ? req.body.sdgTags : [];
+    const textSdgTags = req.body.outcomeText ? suggestSDGsFromText(req.body.outcomeText) : [];
+    const outcomeSdgTags = req.body.outcomes ? mapOutcomeTypeToSDGs(req.body.outcomes) : [];
+    const mergedSdgTags = Array.from(new Set([
+      ...clientSdgTags,
+      ...textSdgTags,
+      ...outcomeSdgTags,
+      ...projectSdgGoals
+    ])).slice(0, 10); // Cap at 10 tags
+
     const activity = await storage.createVolunteerActivity({
       ...validationResult.data,
+      outcomeText: req.body.outcomeText || null,
+      geolocation: req.body.geolocation || null,
+      deviceId: req.body.deviceId || null,
+      sdgTags: mergedSdgTags.length > 0 ? mergedSdgTags : null,
       verificationStatus: 'pending'
     });
 
@@ -76,7 +95,8 @@ logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => 
         activity.projectId,
         activity.userId,
         activity.hours,
-        project?.name
+        project?.name,
+        activity.outcomeText
       ).catch(err => {
         console.error("Failed to send pending activity notification:", err);
       });
@@ -241,6 +261,102 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /logs/corporate-verified - Enriched verified logs for corporate dashboard (Phase 6)
+ * Returns verified outcomes with NGO name, SDG tags, outcome text, verification timestamp
+ * Supports filters: sdg, start_date, end_date, outcome_type, project_id
+ * NOTE: Must be defined BEFORE /logs/:id to avoid route collision
+ */
+logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) => {
+  try {
+    const { sdg, start_date, end_date, outcome_type, project_id } = _req.query;
+
+    // Get all approved activities
+    const allActivities = await storage.listVolunteerActivities();
+    const approvedActivities = allActivities.filter(
+      (a: any) => a.verificationStatus === 'approved'
+    );
+
+    // Enrich each approved activity with project, volunteer, and verifier data
+    let enrichedLogs: any[] = [];
+    for (const activity of approvedActivities) {
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      const volunteer = activity.userId ? await storage.getUser(activity.userId) : null;
+      const verifier = activity.verifiedBy ? await storage.getUser(activity.verifiedBy) : null;
+      const verifierOrg = verifier?.organizationId
+        ? await storage.getOrganization(verifier.organizationId)
+        : null;
+
+      enrichedLogs.push({
+        id: activity.id,
+        outcomeText: (activity as any).editedOutcomeText || (activity as any).outcomeText || activity.description,
+        outcomeType: activity.outcomes,
+        outcomeQuantity: (activity as any).editedOutcomeQuantity || activity.outcomeQuantity,
+        sdgTags: (activity as any).editedSdgTags || (activity as any).sdgTags || project?.sdgGoals || [],
+        hours: activity.hours,
+        date: activity.date,
+        verifiedAt: activity.verifiedAt,
+        ngoName: verifierOrg?.name || 'NGO',
+        verifierName: verifier?.displayName || null,
+        volunteerName: volunteer?.displayName || volunteer?.email || 'Volunteer',
+        projectName: project?.name || 'Project',
+        projectId: activity.projectId,
+        evidenceUrls: activity.evidenceUrls,
+        geolocation: (activity as any).geolocation
+      });
+    }
+
+    // Apply filters
+    if (sdg) {
+      const sdgNum = parseInt(sdg as string);
+      enrichedLogs = enrichedLogs.filter((l: any) =>
+        Array.isArray(l.sdgTags) && l.sdgTags.includes(sdgNum)
+      );
+    }
+    if (start_date) {
+      const startDateObj = new Date(start_date as string);
+      enrichedLogs = enrichedLogs.filter((l: any) => new Date(l.date) >= startDateObj);
+    }
+    if (end_date) {
+      const endDateObj = new Date(end_date as string);
+      enrichedLogs = enrichedLogs.filter((l: any) => new Date(l.date) <= endDateObj);
+    }
+    if (outcome_type) {
+      enrichedLogs = enrichedLogs.filter((l: any) =>
+        l.outcomeType?.toLowerCase() === (outcome_type as string).toLowerCase()
+      );
+    }
+    if (project_id) {
+      const projectIdNum = parseInt(project_id as string);
+      enrichedLogs = enrichedLogs.filter((l: any) => l.projectId === projectIdNum);
+    }
+
+    // Sort by most recent
+    enrichedLogs.sort((a: any, b: any) => new Date(b.verifiedAt || b.date).getTime() - new Date(a.verifiedAt || a.date).getTime());
+
+    // Summary stats
+    const uniqueSdgs = new Set<number>();
+    enrichedLogs.forEach((l: any) => {
+      if (Array.isArray(l.sdgTags)) l.sdgTags.forEach((s: number) => uniqueSdgs.add(s));
+    });
+
+    res.json({
+      summary: {
+        totalVerifiedOutcomes: enrichedLogs.length,
+        sdgsCovered: Array.from(uniqueSdgs).sort((a, b) => a - b),
+        dateRange: {
+          earliest: enrichedLogs.length > 0 ? enrichedLogs[enrichedLogs.length - 1].date : null,
+          latest: enrichedLogs.length > 0 ? enrichedLogs[0].date : null
+        }
+      },
+      logs: enrichedLogs
+    });
+  } catch (err: any) {
+    console.error("Error fetching corporate verified logs:", err?.message, err?.stack);
+    res.status(500).json({ message: "Failed to fetch verified logs", error: err?.message });
+  }
+});
+
+/**
  * GET /logs/:id - Get a single impact log
  */
 logsRouter.get("/logs/:id", authMiddleware, async (req: Request, res: Response) => {
@@ -324,12 +440,27 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
       }
     }
 
-    // Update with verification data
-    const updatedActivity = await storage.updateVolunteerActivity(logId, {
+    // Accept optional edited fields from NGO verification (Phase 2)
+    const { editedOutcomeText, editedOutcomeQuantity, editedSdgTags } = req.body;
+
+    const verificationUpdate: any = {
       verificationStatus: 'approved',
       verifiedBy: reviewerId,
       verifiedAt: new Date()
-    } as any);
+    };
+
+    // Store NGO edits alongside originals for transparency
+    if (editedOutcomeText && typeof editedOutcomeText === 'string') {
+      verificationUpdate.editedOutcomeText = editedOutcomeText.trim();
+    }
+    if (editedOutcomeQuantity !== undefined && editedOutcomeQuantity !== null) {
+      verificationUpdate.editedOutcomeQuantity = parseInt(editedOutcomeQuantity);
+    }
+    if (Array.isArray(editedSdgTags)) {
+      verificationUpdate.editedSdgTags = editedSdgTags.filter((t: any) => typeof t === 'number');
+    }
+
+    const updatedActivity = await storage.updateVolunteerActivity(logId, verificationUpdate);
 
     // Update CSR employee engagement for verified logs
     if (activity.userId && activity.hours) {
@@ -392,22 +523,35 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
               });
             }
 
-            // Create Verified Output for CSR Audit Trail
+            // Create Verified Output for CSR Audit Trail -- enriched (Phase 1/2)
+            const reviewerUser = reviewerId ? await storage.getUser(reviewerId) : null;
+            const reviewerOrg = reviewerUser?.organizationId
+              ? await storage.getOrganization(reviewerUser.organizationId)
+              : null;
+
             await storage.createVerifiedOutput({
               activityId: logId,
               partnerId: employerIdNum,
               projectId: activity.projectId || 0,
               outputType: 'hours',
-              outputValue: activity.hours,
+              outputValue: activity.hours || 0,
               verificationStatus: 'verified',
               verifiedBy: reviewerId || null,
               verifiedAt: new Date(),
               auditTrail: {
                 action: 'log_verified',
-                description: `Impact log verified: ${activity.hours}h by ${user.displayName || user.email}`,
+                description: `Impact log verified: ${activity.hours || 0}h by ${user.displayName || user.email}`,
                 timestamp: new Date().toISOString(),
                 reviewerId: reviewerId,
-                outcomeQuantity: activity.outcomeQuantity
+                reviewerOrgName: reviewerOrg?.name || null,
+                deviceId: activity.deviceId || null,
+                geolocation: activity.geolocation || null,
+                outcomeText: activity.outcomeText || null,
+                outcomeQuantity: activity.outcomeQuantity,
+                sdgTags: activity.sdgTags || [],
+                editedOutcomeText: editedOutcomeText || null,
+                editedOutcomeQuantity: editedOutcomeQuantity || null,
+                editedSdgTags: editedSdgTags || null
               }
             });
 
@@ -525,6 +669,48 @@ logsRouter.patch("/logs/:id/reject", authMiddleware, async (req: Request, res: R
   } catch (err) {
     console.error("Error rejecting impact log:", err);
     res.status(500).json({ message: "Failed to reject impact log" });
+  }
+});
+
+/**
+ * GET /logs/:id/suggested-sdgs - Get auto-suggested SDG tags for a log (Phase 5)
+ * Used by the NGO Edit modal to show suggestions
+ */
+logsRouter.get("/logs/:id/suggested-sdgs", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const logId = parseInt(req.params.id);
+    const activity = await storage.getVolunteerActivity(logId);
+
+    if (!activity) {
+      return res.status(404).json({ message: "Impact log not found" });
+    }
+
+    const textSuggestions = activity.outcomeText ? suggestSDGsFromText(activity.outcomeText) : [];
+    const outcomeSuggestions = activity.outcomes ? mapOutcomeTypeToSDGs(activity.outcomes) : [];
+
+    let projectSdgs: number[] = [];
+    if (activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      projectSdgs = project?.sdgGoals || [];
+    }
+
+    const allSuggestions = Array.from(new Set([
+      ...textSuggestions,
+      ...outcomeSuggestions,
+      ...projectSdgs
+    ]));
+
+    res.json({
+      logId,
+      textSuggestions,
+      outcomeSuggestions,
+      projectSdgs,
+      merged: allSuggestions,
+      currentTags: activity.sdgTags || []
+    });
+  } catch (err) {
+    console.error("Error fetching SDG suggestions:", err);
+    res.status(500).json({ message: "Failed to fetch SDG suggestions" });
   }
 });
 

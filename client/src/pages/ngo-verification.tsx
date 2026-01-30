@@ -23,20 +23,29 @@ import {
   Image as ImageIcon,
   AlertCircle,
   Inbox,
-  RefreshCw
+  RefreshCw,
+  Pencil,
+  MapPin,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import type { User as UserType } from "@shared/schema";
+import { getSDGName, getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 
 interface PendingLog {
   id: number;
   userId: number;
   projectId: number;
-  hours: number;
+  hours: number | null;
   date: string;
   description: string | null;
+  outcomeText: string | null;
   outcomeQuantity: number | null;
   outcomes: string | null;
+  outcomeType: string | null;
+  sdgTags: number[] | null;
+  geolocation: any | null;
+  deviceId: string | null;
   evidenceUrls: string[] | null;
   verificationStatus: string;
   createdAt: string;
@@ -44,6 +53,7 @@ interface PendingLog {
     id: number;
     name: string;
     sdgGoals: number[] | null;
+    outcomeTemplates: any[] | null;
   } | null;
   volunteer: {
     id: number;
@@ -60,10 +70,18 @@ export default function NgoVerification() {
   const queryClient = useQueryClient();
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [isVerifying, setIsVerifying] = useState<number | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Edit modal state
+  const [editOutcomeText, setEditOutcomeText] = useState("");
+  const [editOutcomeQuantity, setEditOutcomeQuantity] = useState("");
+  const [editSdgTags, setEditSdgTags] = useState<number[]>([]);
+  const [suggestedSdgs, setSuggestedSdgs] = useState<number[]>([]);
 
   // Fetch current user
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -93,18 +111,18 @@ export default function NgoVerification() {
       return response.json();
     },
     enabled: !!currentUser?.organizationId,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Verify mutation
   const verifyMutation = useMutation({
-    mutationFn: async (logId: number) => {
+    mutationFn: async ({ logId, editedData }: { logId: number; editedData?: any }) => {
       const response = await fetch(`/api/logs/${logId}/verify`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editedData || {}),
       });
       if (!response.ok) {
-        // Fallback to old endpoint
         const fallbackResponse = await fetch(`/api/volunteer-activities/${logId}/approve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -122,6 +140,8 @@ export default function NgoVerification() {
         description: "The impact log has been verified successfully.",
       });
       setIsVerifying(null);
+      setEditModalOpen(false);
+      setIsSavingEdit(false);
     },
     onError: () => {
       toast({
@@ -130,6 +150,7 @@ export default function NgoVerification() {
         variant: "destructive",
       });
       setIsVerifying(null);
+      setIsSavingEdit(false);
     },
   });
 
@@ -142,7 +163,6 @@ export default function NgoVerification() {
         body: JSON.stringify({ reason }),
       });
       if (!response.ok) {
-        // Fallback to old endpoint
         const fallbackResponse = await fetch(`/api/volunteer-activities/${logId}/reject`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -176,7 +196,7 @@ export default function NgoVerification() {
 
   const handleVerify = (logId: number) => {
     setIsVerifying(logId);
-    verifyMutation.mutate(logId);
+    verifyMutation.mutate({ logId });
   };
 
   const handleRejectClick = (logId: number) => {
@@ -198,10 +218,51 @@ export default function NgoVerification() {
     rejectMutation.mutate({ logId: selectedLogId, reason: rejectReason.trim() });
   };
 
+  // Edit & Verify flow
+  const handleEditClick = async (log: PendingLog) => {
+    setSelectedLogId(log.id);
+    setEditOutcomeText(log.outcomeText || log.description || "");
+    setEditOutcomeQuantity(String(log.outcomeQuantity || ""));
+    setEditSdgTags(log.sdgTags || log.project?.sdgGoals || []);
+
+    // Fetch suggested SDGs from server
+    try {
+      const res = await fetch(`/api/logs/${log.id}/suggested-sdgs`);
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestedSdgs(data.merged || []);
+      }
+    } catch {
+      setSuggestedSdgs(log.sdgTags || []);
+    }
+
+    setEditModalOpen(true);
+  };
+
+  const handleSaveAndVerify = () => {
+    if (!selectedLogId) return;
+    setIsSavingEdit(true);
+    verifyMutation.mutate({
+      logId: selectedLogId,
+      editedData: {
+        editedOutcomeText: editOutcomeText.trim() || undefined,
+        editedOutcomeQuantity: editOutcomeQuantity ? parseInt(editOutcomeQuantity) : undefined,
+        editedSdgTags: editSdgTags.length > 0 ? editSdgTags : undefined,
+      },
+    });
+  };
+
+  const toggleSdgTag = (sdgId: number) => {
+    setEditSdgTags((prev) =>
+      prev.includes(sdgId)
+        ? prev.filter((s) => s !== sdgId)
+        : [...prev, sdgId]
+    );
+  };
+
   const userType = localStorage.getItem('userType');
   const isOrganization = currentUser?.userType === 'organization' || userType === 'organization';
 
-  // Wait for viewport detection
   if (isViewportLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#faf9f7]">
@@ -210,7 +271,6 @@ export default function NgoVerification() {
     );
   }
 
-  // Redirect if not an organization user
   if (currentUser && !isOrganization) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -229,6 +289,154 @@ export default function NgoVerification() {
       </div>
     );
   }
+
+  // Shared log card renderer -- outcome-first display
+  const renderLogCard = (log: PendingLog, compact: boolean) => (
+    <Card key={log.id} className={compact ? "bg-white" : "overflow-hidden hover:shadow-md transition-shadow"}>
+      <CardContent className={compact ? "p-4" : "p-4 md:p-6"}>
+        {/* Header Row */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Avatar className={compact ? "w-8 h-8" : "h-10 w-10"}>
+              <AvatarImage src={log.volunteer?.avatar || ''} />
+              <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
+                {log.volunteer?.displayName?.charAt(0) || 'V'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className={`font-medium ${compact ? 'text-sm' : ''}`}>
+                {log.volunteer?.displayName || 'Volunteer'}
+              </p>
+              <p className="text-xs text-slate-500">{log.project?.name || 'Unknown Project'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {log.geolocation && (
+              <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+            )}
+            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+              <Clock className="w-3 h-3 mr-1" />
+              Pending
+            </Badge>
+          </div>
+        </div>
+
+        {/* OUTCOME TEXT -- prominently displayed */}
+        {(log.outcomeText || log.description) && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+            <p className="text-sm font-medium text-emerald-800">
+              {log.outcomeText || log.description}
+            </p>
+          </div>
+        )}
+
+        {/* Details Grid -- outcome-first, hours de-emphasized */}
+        <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'} gap-2 mb-3`}>
+          {log.outcomeQuantity && (
+            <div className="bg-slate-50 rounded p-2">
+              <span className="text-xs text-slate-500">Outcome</span>
+              <p className="font-semibold text-sm text-slate-800">
+                {log.outcomeQuantity} {log.outcomes || 'units'}
+              </p>
+            </div>
+          )}
+          <div className="bg-slate-50 rounded p-2">
+            <span className="text-xs text-slate-500">Date</span>
+            <p className="font-medium text-sm">{format(new Date(log.date), compact ? 'MMM d' : 'MMM d, yyyy')}</p>
+          </div>
+          {log.hours != null && log.hours > 0 && (
+            <div className="bg-slate-50 rounded p-2">
+              <span className="text-xs text-slate-500">Hours</span>
+              <p className="font-medium text-sm text-slate-600">{log.hours}h</p>
+            </div>
+          )}
+          {log.evidenceUrls && log.evidenceUrls.length > 0 && (
+            <div className="bg-slate-50 rounded p-2">
+              <span className="text-xs text-slate-500">Evidence</span>
+              <div className="flex items-center gap-1 text-blue-600">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span className="text-sm">{log.evidenceUrls.length} photo(s)</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SDG Tags */}
+        {(log.sdgTags && log.sdgTags.length > 0) && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {log.sdgTags.map((sdg) => (
+              <Badge
+                key={sdg}
+                variant="secondary"
+                className="text-[10px] text-white px-1.5 py-0.5"
+                style={{ backgroundColor: getSDGColor(sdg) }}
+              >
+                SDG {sdg}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {/* Photo Evidence Preview */}
+        {log.evidenceUrls && log.evidenceUrls.length > 0 && (
+          <div className="flex gap-2 mb-3 overflow-x-auto">
+            {log.evidenceUrls.slice(0, 3).map((url, index) => (
+              <img
+                key={index}
+                src={url}
+                alt={`Evidence ${index + 1}`}
+                className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+              />
+            ))}
+            {log.evidenceUrls.length > 3 && (
+              <div className="h-16 w-16 rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center">
+                <span className="text-sm text-slate-500">+{log.evidenceUrls.length - 3}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 3-Button Action Row: Verify / Edit / Reject */}
+        <div className="flex gap-2">
+          <Button
+            size={compact ? "sm" : "default"}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => handleVerify(log.id)}
+            disabled={isVerifying === log.id}
+          >
+            {isVerifying === log.id ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Verify
+              </>
+            )}
+          </Button>
+          <Button
+            size={compact ? "sm" : "default"}
+            variant="outline"
+            className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+            onClick={() => handleEditClick(log)}
+            disabled={isVerifying === log.id}
+          >
+            <Pencil className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          <Button
+            size={compact ? "sm" : "default"}
+            variant="outline"
+            className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+            onClick={() => handleRejectClick(log.id)}
+            disabled={isVerifying === log.id}
+          >
+            <XCircle className="w-4 h-4 mr-1" />
+            Reject
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   // Mobile Organization PWA View
   if (isMobile && isOrganization) {
@@ -269,63 +477,7 @@ export default function NgoVerification() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {pendingLogs.map((log) => (
-                <Card key={log.id} className="bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={log.volunteer?.avatar || ''} />
-                          <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
-                            {log.volunteer?.displayName?.charAt(0) || 'V'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">{log.volunteer?.displayName || 'Volunteer'}</p>
-                          <p className="text-xs text-slate-500">{log.project?.name || 'Unknown Project'}</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Pending
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                      <div className="bg-slate-50 rounded p-2">
-                        <span className="text-slate-500">Hours</span>
-                        <p className="font-semibold">{log.hours}h</p>
-                      </div>
-                      <div className="bg-slate-50 rounded p-2">
-                        <span className="text-slate-500">Date</span>
-                        <p className="font-semibold">{format(new Date(log.date), 'MMM d')}</p>
-                      </div>
-                    </div>
-                    {log.description && (
-                      <p className="text-xs text-slate-600 mb-3 line-clamp-2">{log.description}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-emerald-500 hover:bg-emerald-600"
-                        onClick={() => handleVerify(log.id)}
-                        disabled={isVerifying === log.id}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Verify
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                        onClick={() => handleRejectClick(log.id)}
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Reject
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {pendingLogs.map((log) => renderLogCard(log, true))}
             </div>
           )}
         </div>
@@ -357,6 +509,91 @@ export default function NgoVerification() {
                 disabled={isRejecting || !rejectReason.trim()}
               >
                 Reject
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit & Verify Modal */}
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-blue-500" />
+                Edit & Verify
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label className="text-slate-700">Outcome Text</Label>
+                <Textarea
+                  value={editOutcomeText}
+                  onChange={(e) => setEditOutcomeText(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700">Outcome Quantity</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={editOutcomeQuantity}
+                  onChange={(e) => setEditOutcomeQuantity(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700">SDG Tags</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {editSdgTags.map((sdg) => (
+                    <Badge
+                      key={sdg}
+                      className="text-xs text-white cursor-pointer hover:opacity-80"
+                      style={{ backgroundColor: getSDGColor(sdg) }}
+                      onClick={() => toggleSdgTag(sdg)}
+                    >
+                      SDG {sdg}: {getSDGName(sdg)}
+                      <X className="w-3 h-3 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+                {suggestedSdgs.filter((s) => !editSdgTags.includes(s)).length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-slate-500 mb-1">Suggested:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {suggestedSdgs
+                        .filter((s) => !editSdgTags.includes(s))
+                        .map((sdg) => (
+                          <Badge
+                            key={sdg}
+                            variant="outline"
+                            className="text-xs cursor-pointer hover:bg-slate-100"
+                            style={{ borderColor: getSDGColor(sdg), color: getSDGColor(sdg) }}
+                            onClick={() => toggleSdgTag(sdg)}
+                          >
+                            + SDG {sdg}: {getSDGName(sdg)}
+                          </Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSavingEdit}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={handleSaveAndVerify}
+                disabled={isSavingEdit}
+              >
+                {isSavingEdit ? (
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                )}
+                Save & Verify
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -412,121 +649,7 @@ export default function NgoVerification() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {pendingLogs.map((log) => (
-              <Card key={log.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="p-4 md:p-6">
-                    {/* Header Row */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={log.volunteer?.avatar || undefined} />
-                          <AvatarFallback className="bg-emerald-100 text-emerald-700">
-                            {log.volunteer?.displayName?.[0] || log.volunteer?.email?.[0] || 'V'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-slate-800">
-                            {log.volunteer?.displayName || log.volunteer?.email || 'Unknown Volunteer'}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {log.project?.name || 'Unknown Project'}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Pending
-                      </Badge>
-                    </div>
-
-                    {/* Details Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-slate-50 rounded-lg p-3">
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Hours</p>
-                        <p className="font-semibold text-lg text-emerald-600">{log.hours}h</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Date</p>
-                        <p className="font-medium text-slate-700">
-                          {format(new Date(log.date), 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                      {log.outcomeQuantity && (
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">Outcome</p>
-                          <p className="font-medium text-slate-700">
-                            {log.outcomeQuantity} {log.outcomes || 'units'}
-                          </p>
-                        </div>
-                      )}
-                      {log.evidenceUrls && log.evidenceUrls.length > 0 && (
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">Evidence</p>
-                          <div className="flex items-center gap-1 text-blue-600">
-                            <ImageIcon className="w-4 h-4" />
-                            <span className="text-sm">{log.evidenceUrls.length} photo(s)</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    {log.description && (
-                      <div className="mb-4">
-                        <p className="text-sm text-slate-600 line-clamp-2">{log.description}</p>
-                      </div>
-                    )}
-
-                    {/* Photo Evidence Preview */}
-                    {log.evidenceUrls && log.evidenceUrls.length > 0 && (
-                      <div className="flex gap-2 mb-4 overflow-x-auto">
-                        {log.evidenceUrls.slice(0, 3).map((url, index) => (
-                          <img
-                            key={index}
-                            src={url}
-                            alt={`Evidence ${index + 1}`}
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
-                          />
-                        ))}
-                        {log.evidenceUrls.length > 3 && (
-                          <div className="h-16 w-16 rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center">
-                            <span className="text-sm text-slate-500">+{log.evidenceUrls.length - 3}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                      <Button
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
-                        onClick={() => handleVerify(log.id)}
-                        disabled={isVerifying === log.id}
-                      >
-                        {isVerifying === log.id ? (
-                          <RefreshCw className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <>
-                            <CheckCircle className="w-5 h-5 mr-2" />
-                            Verify
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1 border-red-200 text-red-600 hover:bg-red-50 h-12"
-                        onClick={() => handleRejectClick(log.id)}
-                        disabled={isVerifying === log.id}
-                      >
-                        <XCircle className="w-5 h-5 mr-2" />
-                        Reject
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {pendingLogs.map((log) => renderLogCard(log, false))}
           </div>
         )}
       </div>
@@ -577,6 +700,92 @@ export default function NgoVerification() {
                 <XCircle className="w-4 h-4 mr-2" />
               )}
               Reject Log
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit & Verify Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-blue-500" />
+              Edit & Verify
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Outcome Text</Label>
+              <Textarea
+                value={editOutcomeText}
+                onChange={(e) => setEditOutcomeText(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Outcome Quantity</Label>
+              <Input
+                type="number"
+                min="1"
+                value={editOutcomeQuantity}
+                onChange={(e) => setEditOutcomeQuantity(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">SDG Tags</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {editSdgTags.map((sdg) => (
+                  <Badge
+                    key={sdg}
+                    className="text-xs text-white cursor-pointer hover:opacity-80"
+                    style={{ backgroundColor: getSDGColor(sdg) }}
+                    onClick={() => toggleSdgTag(sdg)}
+                  >
+                    SDG {sdg}: {getSDGName(sdg)}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                ))}
+              </div>
+              {/* Suggested SDGs from auto-tagging (Phase 5) */}
+              {suggestedSdgs.filter((s) => !editSdgTags.includes(s)).length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-slate-500 mb-1">Suggested SDGs:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggestedSdgs
+                      .filter((s) => !editSdgTags.includes(s))
+                      .map((sdg) => (
+                        <Badge
+                          key={sdg}
+                          variant="outline"
+                          className="text-xs cursor-pointer hover:bg-slate-100"
+                          style={{ borderColor: getSDGColor(sdg), color: getSDGColor(sdg) }}
+                          onClick={() => toggleSdgTag(sdg)}
+                        >
+                          + SDG {sdg}: {getSDGName(sdg)}
+                        </Badge>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSavingEdit}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleSaveAndVerify}
+              disabled={isSavingEdit}
+            >
+              {isSavingEdit ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              )}
+              Save & Verify
             </Button>
           </DialogFooter>
         </DialogContent>

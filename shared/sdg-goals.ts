@@ -205,15 +205,44 @@ export function getSDGDescription(sdgId: number): string {
   return SDG_GOALS[sdgId]?.description || "";
 }
 
+// Enhanced keyword list for better matching (Phase 5)
+const EXTENDED_KEYWORDS: Record<number, string[]> = {
+  1: ["poverty", "income", "economic", "resources", "basic services", "vulnerable", "poor", "livelihood", "microfinance", "welfare", "social protection", "homeless", "shelter"],
+  2: ["hunger", "food", "nutrition", "agriculture", "farming", "malnutrition", "meal", "meals", "feeding", "food bank", "soup kitchen", "groceries", "harvest", "crop", "garden", "pantry"],
+  3: ["health", "healthcare", "medical", "disease", "wellness", "mental health", "pandemic", "hospital", "clinic", "vaccination", "first aid", "medicine", "therapy", "counseling", "nursing"],
+  4: ["education", "learning", "school", "literacy", "teachers", "students", "training", "tutor", "tutoring", "mentor", "mentoring", "classroom", "reading", "math", "stem", "scholarship", "library", "workshop", "curriculum"],
+  5: ["gender", "women", "girls", "equality", "empowerment", "discrimination", "maternal", "feminine", "reproductive", "domestic violence"],
+  6: ["water", "sanitation", "hygiene", "clean water", "waste", "sewage", "well", "borehole", "latrine", "handwashing", "purification", "plumbing"],
+  7: ["energy", "renewable", "electricity", "solar", "wind", "power", "sustainable", "solar panel", "battery", "green energy", "off-grid"],
+  8: ["employment", "jobs", "economy", "work", "growth", "labor", "entrepreneurship", "career", "wage", "skill building", "vocational", "internship", "resume"],
+  9: ["infrastructure", "innovation", "industry", "technology", "research", "development", "internet", "connectivity", "digital", "software", "engineering", "bridge", "road"],
+  10: ["inequality", "discrimination", "inclusion", "marginalized", "equity", "refugee", "migrants", "diaspora", "disability", "accessible", "minority"],
+  11: ["cities", "urban", "housing", "transport", "sustainable", "community", "neighborhood", "public space", "park", "playground", "settlement", "affordable housing"],
+  12: ["consumption", "production", "waste", "recycling", "sustainable", "resources", "upcycle", "compost", "reuse", "reduce", "circular economy", "zero waste"],
+  13: ["climate", "global warming", "emissions", "carbon", "greenhouse", "adaptation", "tree", "trees", "planting", "reforestation", "environment", "sustainability", "flood", "drought"],
+  14: ["ocean", "marine", "sea", "fish", "coastal", "water pollution", "coral", "beach", "mangrove", "fisheries", "aquatic"],
+  15: ["forest", "biodiversity", "wildlife", "ecosystem", "land", "deforestation", "tree planting", "habitat", "conservation", "native plants", "species", "endangered", "restoration"],
+  16: ["peace", "justice", "institutions", "governance", "rights", "law", "legal aid", "advocacy", "corruption", "democracy", "civic", "human rights", "conflict resolution"],
+  17: ["partnership", "collaboration", "cooperation", "global", "development", "funding", "donor", "volunteer", "cross-sector", "alliance"],
+};
+
 export function suggestSDGsFromText(text: string): number[] {
   const lowerText = text.toLowerCase();
   const suggestions: { id: number; score: number }[] = [];
 
   Object.values(SDG_GOALS).forEach((sdg) => {
     let score = 0;
-    
-    // Check if any keywords match
+
+    // Check base keywords
     sdg.keywords.forEach((keyword) => {
+      if (lowerText.includes(keyword.toLowerCase())) {
+        score += 1;
+      }
+    });
+
+    // Check extended keywords (Phase 5)
+    const extended = EXTENDED_KEYWORDS[sdg.id] || [];
+    extended.forEach((keyword) => {
       if (lowerText.includes(keyword.toLowerCase())) {
         score += 1;
       }
@@ -234,4 +263,88 @@ export function suggestSDGsFromText(text: string): number[] {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
     .map((s) => s.id);
+}
+
+/**
+ * Phase 5: Direct mapping of standard outcome types to SDGs
+ * Maps common outcome type names (from project templates) to relevant SDG IDs
+ */
+export function mapOutcomeTypeToSDGs(outcomeType: string): number[] {
+  const lower = outcomeType.toLowerCase().trim();
+
+  const OUTCOME_SDG_MAP: Record<string, number[]> = {
+    // Food & Hunger
+    "meals served": [2],
+    "meals distributed": [2],
+    "meals": [2],
+    "food distributed": [2],
+    "food packages": [2],
+    "food bank": [2],
+    "groceries": [2],
+    // Education
+    "students tutored": [4],
+    "tutoring sessions": [4],
+    "tutoring": [4],
+    "workshops": [4],
+    "training sessions": [4],
+    "books distributed": [4],
+    "literacy": [4],
+    "mentoring sessions": [4],
+    "mentoring": [4],
+    // Health
+    "patients served": [3],
+    "health screenings": [3],
+    "vaccinations": [3],
+    "counseling sessions": [3],
+    "first aid": [3],
+    "medical supplies": [3],
+    // Environment
+    "trees planted": [13, 15],
+    "trees": [13, 15],
+    "saplings planted": [13, 15],
+    "area restored": [15],
+    "cleanup events": [12, 14],
+    "beach cleanup": [14],
+    "waste collected": [12],
+    "recycling": [12],
+    // Water
+    "wells built": [6],
+    "water filters": [6],
+    "clean water access": [6],
+    // Gender
+    "women empowered": [5],
+    "girls supported": [5],
+    // Economic
+    "jobs created": [8],
+    "businesses supported": [8],
+    "microloans": [1, 8],
+    // Housing / Community
+    "homes built": [11],
+    "houses repaired": [11],
+    "shelters": [1, 11],
+    // Legal / Justice
+    "legal aid cases": [16],
+    "advocacy campaigns": [16],
+    // General
+    "people helped": [1],
+    "families supported": [1],
+    "beneficiaries": [1],
+    "lives impacted": [1],
+    "volunteer hours": [17],
+  };
+
+  // Direct match
+  if (OUTCOME_SDG_MAP[lower]) {
+    return OUTCOME_SDG_MAP[lower];
+  }
+
+  // Partial match
+  for (const [key, sdgs] of Object.entries(OUTCOME_SDG_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return sdgs;
+    }
+  }
+
+  // Fallback: run through text suggestion
+  return suggestSDGsFromText(outcomeType);
 }

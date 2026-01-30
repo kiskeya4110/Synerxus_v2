@@ -193,21 +193,30 @@ export const volunteerActivities = pgTable("volunteer_activities", {
   userId: integer("user_id").references(() => users.id),
   projectId: integer("project_id").references(() => projects.id),
   taskId: integer("task_id").references(() => tasks.id),
-  hours: doublePrecision("hours").notNull(), // Changed from integer to support 0.5 hour increments
+  hours: doublePrecision("hours"), // Nullable -- outcome-first logging makes hours optional
   date: timestamp("date").notNull(),
   description: text("description"),
   skillsApplied: text("skills_applied").array(),
   outcomes: text("outcomes"),
-  // Outcome quantity tracking (e.g., "10 trees planted", "5 meals served")
+  // Outcome-first fields (Phase 1: Trust Layer MVP)
+  outcomeText: text("outcome_text"), // Free-text "What did you accomplish?"
   outcomeQuantity: integer("outcome_quantity"),
-  // Deduplication fields
   outcomeType: text("outcome_type").default("individual"), // individual, shared, system
+  // Trust & verification enrichment
+  geolocation: jsonb("geolocation"), // {lat, lng, accuracy, timestamp}
+  deviceId: text("device_id"), // Browser fingerprint for audit trail
+  sdgTags: integer("sdg_tags").array(), // Auto-suggested SDG tags
+  // Deduplication fields
   role: text("role").default("support"), // lead, support, observer
   verificationStatus: text("verification_status").default("pending"), // pending, approved, rejected
   // Verification audit trail
   verifiedBy: integer("verified_by").references(() => users.id), // NGO staff who verified
   verifiedAt: timestamp("verified_at"), // When verification occurred
   rejectedReason: text("rejected_reason"), // Reason for rejection (required if rejected)
+  // NGO edit-on-verify fields (Phase 2)
+  editedOutcomeText: text("edited_outcome_text"), // NGO-edited outcome text (original preserved in outcomeText)
+  editedOutcomeQuantity: integer("edited_outcome_quantity"), // NGO-edited quantity
+  editedSdgTags: integer("edited_sdg_tags").array(), // NGO-edited SDG tags
   evidenceUrls: text("evidence_urls").array(), // URLs for photo/geo evidence
   dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
   isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate
@@ -666,6 +675,8 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   jobTitleAtCompany: text("job_title_at_company"), // Job title at employer
   // Experience level for opportunity matching
   experienceLevel: text("experience_level"), // entry-level, intermediate, expert
+  // Diaspora profile (Phase 3)
+  countryOfOrigin: text("country_of_origin"), // Separate from current residence country
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

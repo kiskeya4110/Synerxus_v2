@@ -178,7 +178,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
       return status === 'completed';
     }).length;
 
-    const totalHours = organizationActivities.reduce((sum, a) => sum + a.hours, 0);
+    const totalHours = organizationActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
     const uniqueSDGs = new Set<number>();
     organizationProjects.forEach(project => {
@@ -224,7 +224,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
       if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
         const projectHours = organizationActivities
           .filter(a => a.projectId === project.id)
-          .reduce((sum, a) => sum + a.hours, 0);
+          .reduce((sum, a) => sum + (a.hours || 0), 0);
         const projectVolunteers = organizationAssignments
           .filter(pa => pa.projectId === project.id)
           .map(pa => pa.volunteerId);
@@ -333,7 +333,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
 
       return {
         month: monthKey,
-        hours: monthActivities.reduce((sum, a) => sum + a.hours, 0),
+        hours: monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0),
         peopleImpacted: monthImpacts.filter(i => i.metricId && peopleMetricIds.has(i.metricId)).reduce((sum, i) => sum + (i.value || 0), 0),
         volunteers: new Set(monthActivities.map(a => a.userId)).size,
       };
@@ -383,7 +383,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
         id: v.id,
         name: v.displayName || v.username || 'Unknown',
         avatar: v.avatar,
-        hours: vActivities.reduce((sum, a) => sum + a.hours, 0),
+        hours: vActivities.reduce((sum, a) => sum + (a.hours || 0), 0),
         projects: new Set(vActivities.map(a => a.projectId)).size,
         lastActive: vActivities.length > 0 ? vActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date : null,
       };
@@ -420,7 +420,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
         // Calculate hours for this project from activities
         const projectHours = organizationActivities
           .filter(a => a.projectId === p.id)
-          .reduce((sum, a) => sum + a.hours, 0);
+          .reduce((sum, a) => sum + (a.hours || 0), 0);
 
         // Get configurable weights (default: 60% hours, 40% milestones)
         const hoursWeight = (p as any).completionHoursWeight ?? 60;

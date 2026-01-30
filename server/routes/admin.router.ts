@@ -1185,3 +1185,160 @@ adminRouter.post("/admin/backfill-employer-engagement", queueMiddleware('heavy')
     res.status(500).json({ message: "Failed to backfill employer engagement" });
   }
 });
+
+// ===== PHASE 4: PRE-FILLED NGO ACCOUNTS + DRAFT PROJECTS =====
+
+/**
+ * POST /admin/create-ngo-account
+ * Create a pre-filled NGO account from discovery call notes
+ * Only platform admins can use this endpoint
+ * Creates: organization + user + organization member records
+ */
+adminRouter.post("/admin/create-ngo-account", async (req: Request, res: Response) => {
+  try {
+    const adminUserId = extractUserId(req);
+    if (!adminUserId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const adminUser = await storage.getUser(adminUserId);
+    if (!adminUser?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const {
+      orgName,
+      contactName,
+      contactEmail,
+      tempPassword,
+      country,
+      city,
+      sdgFocus,
+      outcomeTypes,
+      description
+    } = req.body;
+
+    if (!orgName || !contactName || !contactEmail) {
+      return res.status(400).json({ message: "orgName, contactName, and contactEmail are required" });
+    }
+
+    // 1. Create the organization
+    const org = await storage.createOrganization({
+      name: orgName,
+      description: description || `${orgName} - Created via admin onboarding`,
+      contactEmail: contactEmail,
+      country: country || null,
+      city: city || null,
+      primarySdgs: Array.isArray(sdgFocus) ? sdgFocus : [],
+      approvalStatus: 'approved',
+      approvedBy: adminUserId,
+      approvedAt: new Date(),
+      approvalNotes: 'Pre-approved during onboarding by admin',
+    });
+
+    // 2. Create the user account for the NGO contact
+    const user = await storage.createUser({
+      email: contactEmail,
+      displayName: contactName,
+      username: contactEmail.split('@')[0] + '_' + Date.now(),
+      userType: 'organization',
+      organizationId: org.id,
+      firebaseUid: `admin_created_${Date.now()}`,
+    });
+
+    // 3. Create organization member record
+    try {
+      await storage.createOrganizationMember({
+        organizationId: org.id,
+        userId: user.id,
+        role: 'admin',
+        canApproveHours: true,
+        canManageProjects: true,
+      });
+    } catch (memberErr) {
+      console.error("Error creating org member (non-critical):", memberErr);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `NGO account created for ${orgName}`,
+      organization: { id: org.id, name: org.name },
+      user: { id: user.id, email: user.email, displayName: user.displayName },
+      note: tempPassword
+        ? "Temp password set. User should change on first login."
+        : "No password set. User will need to use password reset flow."
+    });
+  } catch (err) {
+    console.error("Error creating NGO account:", err);
+    res.status(500).json({ message: "Failed to create NGO account" });
+  }
+});
+
+/**
+ * POST /admin/create-draft-project
+ * Create a draft project with pre-filled outcome templates and SDGs
+ * Only platform admins can use this endpoint
+ */
+adminRouter.post("/admin/create-draft-project", async (req: Request, res: Response) => {
+  try {
+    const adminUserId = extractUserId(req);
+    if (!adminUserId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const adminUser = await storage.getUser(adminUserId);
+    if (!adminUser?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const {
+      organizationId,
+      projectName,
+      description,
+      sdgGoals,
+      outcomeTemplates,
+      location,
+      startDate,
+      endDate,
+    } = req.body;
+
+    if (!organizationId || !projectName) {
+      return res.status(400).json({ message: "organizationId and projectName are required" });
+    }
+
+    // Verify organization exists
+    const org = await storage.getOrganization(organizationId);
+    if (!org) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+
+    // Create the project
+    const project = await storage.createProject({
+      name: projectName,
+      description: description || `${projectName} - Draft project for ${org.name}`,
+      organizationId: organizationId,
+      status: 'draft',
+      sdgGoals: Array.isArray(sdgGoals) ? sdgGoals : [],
+      outcomeTemplates: Array.isArray(outcomeTemplates) ? outcomeTemplates : [],
+      location: location || org.city || null,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Draft project "${projectName}" created for ${org.name}`,
+      project: {
+        id: project.id,
+        name: project.name,
+        organizationId: project.organizationId,
+        status: project.status,
+        sdgGoals: project.sdgGoals,
+        outcomeTemplates: project.outcomeTemplates,
+      }
+    });
+  } catch (err) {
+    console.error("Error creating draft project:", err);
+    res.status(500).json({ message: "Failed to create draft project" });
+  }
+});

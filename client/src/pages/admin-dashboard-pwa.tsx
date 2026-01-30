@@ -1,5 +1,5 @@
 import { useState, startTransition } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Users, Building2, Activity, Clock,
@@ -7,7 +7,8 @@ import {
   Shield, Bell, MapPin, LogOut,
   ArrowUpRight, ArrowDownRight, BarChart3, ChevronRight,
   Home, Settings, UserCheck, Briefcase,
-  Menu, X, Database, Cpu, Zap, Globe, Target
+  Menu, X, Database, Cpu, Zap, Globe, Target,
+  Plus, FolderPlus
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
@@ -143,10 +144,313 @@ function TrendIndicator({ value }: { value: number }) {
   );
 }
 
+// Phase 4: Setup Tab - Create NGO Account + Draft Project
+function SetupTab({ organizations, userId }: { organizations: Organization[]; userId: string | null }) {
+  const queryClient = useQueryClient();
+  const [setupMode, setSetupMode] = useState<'menu' | 'ngo' | 'project'>('menu');
+
+  // NGO form state
+  const [ngoOrgName, setNgoOrgName] = useState("");
+  const [ngoContactName, setNgoContactName] = useState("");
+  const [ngoContactEmail, setNgoContactEmail] = useState("");
+  const [ngoTempPassword, setNgoTempPassword] = useState("");
+  const [ngoCountry, setNgoCountry] = useState("");
+  const [ngoSdgFocus, setNgoSdgFocus] = useState<number[]>([]);
+
+  // Project form state
+  const [projOrgId, setProjOrgId] = useState("");
+  const [projName, setProjName] = useState("");
+  const [projDescription, setProjDescription] = useState("");
+  const [projSdgGoals, setProjSdgGoals] = useState<number[]>([]);
+  const [projOutcomeTemplates, setProjOutcomeTemplates] = useState<{ name: string; unit: string }[]>([{ name: "", unit: "" }]);
+
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const SDG_LIST = [
+    { id: 1, label: "No Poverty" }, { id: 2, label: "Zero Hunger" },
+    { id: 3, label: "Good Health" }, { id: 4, label: "Education" },
+    { id: 5, label: "Gender Equality" }, { id: 6, label: "Clean Water" },
+    { id: 7, label: "Clean Energy" }, { id: 8, label: "Decent Work" },
+    { id: 9, label: "Innovation" }, { id: 10, label: "Reduced Inequality" },
+    { id: 11, label: "Sustainable Cities" }, { id: 12, label: "Consumption" },
+    { id: 13, label: "Climate Action" }, { id: 14, label: "Life Below Water" },
+    { id: 15, label: "Life on Land" }, { id: 16, label: "Peace Justice" },
+    { id: 17, label: "Partnerships" },
+  ];
+
+  const toggleSdg = (id: number, list: number[], setter: (v: number[]) => void) => {
+    setter(list.includes(id) ? list.filter(s => s !== id) : [...list, id]);
+  };
+
+  const handleCreateNgo = async () => {
+    if (!ngoOrgName || !ngoContactName || !ngoContactEmail) {
+      setSubmitStatus({ type: 'error', message: 'Fill in org name, contact name, and email.' });
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/create-ngo-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+        body: JSON.stringify({
+          orgName: ngoOrgName,
+          contactName: ngoContactName,
+          contactEmail: ngoContactEmail,
+          tempPassword: ngoTempPassword,
+          country: ngoCountry,
+          sdgFocus: ngoSdgFocus,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSubmitStatus({ type: 'success', message: `NGO "${ngoOrgName}" created. User: ${ngoContactEmail}` });
+        setNgoOrgName(""); setNgoContactName(""); setNgoContactEmail("");
+        setNgoTempPassword(""); setNgoCountry(""); setNgoSdgFocus([]);
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/organizations"] });
+      } else {
+        setSubmitStatus({ type: 'error', message: data.message || 'Failed to create NGO account.' });
+      }
+    } catch {
+      setSubmitStatus({ type: 'error', message: 'Network error. Please try again.' });
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!projOrgId || !projName) {
+      setSubmitStatus({ type: 'error', message: 'Select an organization and enter a project name.' });
+      return;
+    }
+    const templates = projOutcomeTemplates.filter(t => t.name && t.unit);
+    try {
+      const res = await fetch("/api/admin/create-draft-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+        body: JSON.stringify({
+          organizationId: parseInt(projOrgId),
+          projectName: projName,
+          description: projDescription,
+          sdgGoals: projSdgGoals,
+          outcomeTemplates: templates,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSubmitStatus({ type: 'success', message: `Draft project "${projName}" created.` });
+        setProjOrgId(""); setProjName(""); setProjDescription("");
+        setProjSdgGoals([]); setProjOutcomeTemplates([{ name: "", unit: "" }]);
+      } else {
+        setSubmitStatus({ type: 'error', message: data.message || 'Failed to create project.' });
+      }
+    } catch {
+      setSubmitStatus({ type: 'error', message: 'Network error. Please try again.' });
+    }
+  };
+
+  const addOutcomeRow = () => {
+    setProjOutcomeTemplates([...projOutcomeTemplates, { name: "", unit: "" }]);
+  };
+
+  const updateOutcomeRow = (index: number, field: 'name' | 'unit', value: string) => {
+    const updated = [...projOutcomeTemplates];
+    updated[index][field] = value;
+    setProjOutcomeTemplates(updated);
+  };
+
+  if (setupMode === 'menu') {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-slate-900 text-lg font-bold">Quick Setup</h2>
+        <p className="text-slate-500 text-sm">Onboard NGOs and create projects from discovery call notes.</p>
+
+        {submitStatus && (
+          <div className={`p-3 rounded-xl text-sm ${submitStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {submitStatus.message}
+          </div>
+        )}
+
+        <button
+          onClick={() => { setSetupMode('ngo'); setSubmitStatus(null); }}
+          className="w-full bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50 active:scale-[0.98] transition-all"
+        >
+          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+            <Building2 className="w-6 h-6 text-purple-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-slate-900 font-semibold">Create NGO Account</div>
+            <div className="text-slate-500 text-xs">Org + user + member from discovery call</div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400" />
+        </button>
+
+        <button
+          onClick={() => { setSetupMode('project'); setSubmitStatus(null); }}
+          className="w-full bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50 active:scale-[0.98] transition-all"
+        >
+          <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <FolderPlus className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-slate-900 font-semibold">Create Draft Project</div>
+            <div className="text-slate-500 text-xs">Pre-fill outcome templates + SDGs</div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400" />
+        </button>
+      </div>
+    );
+  }
+
+  if (setupMode === 'ngo') {
+    return (
+      <div className="space-y-3">
+        <button onClick={() => setSetupMode('menu')} className="text-slate-500 text-sm flex items-center gap-1 mb-1">
+          <ChevronRight className="w-4 h-4 rotate-180" /> Back
+        </button>
+        <h2 className="text-slate-900 text-lg font-bold flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-purple-600" />
+          Create NGO Account
+        </h2>
+
+        {submitStatus && (
+          <div className={`p-3 rounded-xl text-sm ${submitStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {submitStatus.message}
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+          <div>
+            <label className="text-slate-700 text-xs font-medium">Organization Name *</label>
+            <input value={ngoOrgName} onChange={e => setNgoOrgName(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="e.g., Hope Foundation" />
+          </div>
+          <div>
+            <label className="text-slate-700 text-xs font-medium">Contact Name *</label>
+            <input value={ngoContactName} onChange={e => setNgoContactName(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="e.g., Jane Smith" />
+          </div>
+          <div>
+            <label className="text-slate-700 text-xs font-medium">Contact Email *</label>
+            <input value={ngoContactEmail} onChange={e => setNgoContactEmail(e.target.value)} type="email" className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="jane@hopefoundation.org" />
+          </div>
+          <div>
+            <label className="text-slate-700 text-xs font-medium">Temp Password</label>
+            <input value={ngoTempPassword} onChange={e => setNgoTempPassword(e.target.value)} type="text" className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Optional temp password" />
+          </div>
+          <div>
+            <label className="text-slate-700 text-xs font-medium">Country</label>
+            <input value={ngoCountry} onChange={e => setNgoCountry(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="e.g., Kenya" />
+          </div>
+          <div>
+            <label className="text-slate-700 text-xs font-medium">SDG Focus</label>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {SDG_LIST.map(sdg => (
+                <button
+                  key={sdg.id}
+                  type="button"
+                  onClick={() => toggleSdg(sdg.id, ngoSdgFocus, setNgoSdgFocus)}
+                  className={`px-2 py-1 rounded text-[10px] font-medium border transition-all ${ngoSdgFocus.includes(sdg.id) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                >
+                  {sdg.id}. {sdg.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={handleCreateNgo}
+            className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors"
+          >
+            Create NGO Account
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // setupMode === 'project'
+  return (
+    <div className="space-y-3">
+      <button onClick={() => setSetupMode('menu')} className="text-slate-500 text-sm flex items-center gap-1 mb-1">
+        <ChevronRight className="w-4 h-4 rotate-180" /> Back
+      </button>
+      <h2 className="text-slate-900 text-lg font-bold flex items-center gap-2">
+        <FolderPlus className="w-5 h-5 text-emerald-600" />
+        Create Draft Project
+      </h2>
+
+      {submitStatus && (
+        <div className={`p-3 rounded-xl text-sm ${submitStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          {submitStatus.message}
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div>
+          <label className="text-slate-700 text-xs font-medium">Organization *</label>
+          <select value={projOrgId} onChange={e => setProjOrgId(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
+            <option value="">Select organization...</option>
+            {organizations.map(org => (
+              <option key={org.id} value={org.id}>{org.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-slate-700 text-xs font-medium">Project Name *</label>
+          <input value={projName} onChange={e => setProjName(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="e.g., Community Meals Program" />
+        </div>
+        <div>
+          <label className="text-slate-700 text-xs font-medium">Description</label>
+          <textarea value={projDescription} onChange={e => setProjDescription(e.target.value)} rows={2} className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none" placeholder="Brief project description..." />
+        </div>
+        <div>
+          <label className="text-slate-700 text-xs font-medium">SDG Goals</label>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {SDG_LIST.map(sdg => (
+              <button
+                key={sdg.id}
+                type="button"
+                onClick={() => toggleSdg(sdg.id, projSdgGoals, setProjSdgGoals)}
+                className={`px-2 py-1 rounded text-[10px] font-medium border transition-all ${projSdgGoals.includes(sdg.id) ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+              >
+                {sdg.id}. {sdg.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-slate-700 text-xs font-medium">Outcome Templates</label>
+          <div className="space-y-2 mt-1">
+            {projOutcomeTemplates.map((template, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  value={template.name}
+                  onChange={e => updateOutcomeRow(index, 'name', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  placeholder="e.g., Meals Served"
+                />
+                <input
+                  value={template.unit}
+                  onChange={e => updateOutcomeRow(index, 'unit', e.target.value)}
+                  className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  placeholder="unit"
+                />
+              </div>
+            ))}
+            <button type="button" onClick={addOutcomeRow} className="text-emerald-600 text-xs font-medium flex items-center gap-1">
+              <Plus className="w-3 h-3" /> Add row
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={handleCreateProject}
+          className="w-full py-2.5 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition-colors"
+        >
+          Create Draft Project
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboardPWA() {
   const [, navigate] = useLocation();
   const { user: firebaseUser, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'orgs' | 'activity' | 'system'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'orgs' | 'activity' | 'system' | 'setup'>('overview');
   const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -301,6 +605,7 @@ export default function AdminDashboardPWA() {
     { icon: Users, label: "Users", action: () => { setMenuOpen(false); setActiveTab('users'); } },
     { icon: Building2, label: "Organizations", action: () => { setMenuOpen(false); setActiveTab('orgs'); } },
     { icon: Activity, label: "Activity", action: () => { setMenuOpen(false); setActiveTab('activity'); } },
+    { icon: Plus, label: "Setup NGO/Project", action: () => { setMenuOpen(false); setActiveTab('setup'); } },
     { icon: Server, label: "System", action: () => { setMenuOpen(false); setActiveTab('system'); } },
     { icon: BarChart3, label: "Analytics", path: "/admin/dashboard" },
     { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
@@ -311,7 +616,7 @@ export default function AdminDashboardPWA() {
     { id: 'overview', icon: Home, label: 'Overview' },
     { id: 'users', icon: Users, label: 'Users' },
     { id: 'orgs', icon: Building2, label: 'Orgs' },
-    { id: 'activity', icon: Activity, label: 'Activity' },
+    { id: 'setup', icon: Plus, label: 'Setup' },
     { id: 'system', icon: Server, label: 'System' },
   ];
 
@@ -865,6 +1170,11 @@ export default function AdminDashboardPWA() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Setup Tab - Phase 4: Create NGO Account + Draft Project */}
+        {activeTab === 'setup' && (
+          <SetupTab organizations={organizations} userId={userId} />
         )}
 
         {/* System Tab */}

@@ -121,7 +121,7 @@ function buildMonthlyImpactSeries(
   let totalHoursAllMonths = 0;
   const monthlyRawData = monthKeys.map(monthKey => {
     const monthActivities = activitiesByMonth[monthKey] || [];
-    const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+    const hours = monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
     const monthImpacts = impactsByMonth[monthKey] || [];
     const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
     totalHoursAllMonths += hours;
@@ -841,7 +841,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
       }
 
       const entry = projectHoursMap.get(activity.projectId)!;
-      entry.hours += activity.hours;
+      entry.hours += (activity.hours || 0);
     });
 
     const projectHours = Array.from(projectHoursMap.values()).sort((a, b) => b.hours - a.hours);
@@ -932,7 +932,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
       // FIX: Calculate totals once per project, then distribute across SDGs
       const sdgCount = project.sdgGoals.length;
       const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
-      const totalProjectHours = projectActivities.reduce((sum, a) => sum + a.hours, 0);
+      const totalProjectHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
       const totalPeopleImpactedForProject = calculatePeopleImpacted(projectImpacts, peopleMetricIds);
 
@@ -1251,7 +1251,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Calculate hours breakdown by project with organization info
     const hoursByProject = projectsWithOrganization.map(project => {
       const projectActivities = volunteerActivities.filter(a => a.projectId === project.id);
-      const projectHours = projectActivities.reduce((sum, a) => sum + a.hours, 0);
+      const projectHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       return {
         projectId: project.id,
         projectName: project.name,
@@ -1368,7 +1368,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       });
 
       // Calculate monthly metrics
-      const monthHours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+      const monthHours = monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       const monthCompletedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const monthTotalTasks = monthTasks.length;
       const monthAcceptedApps = monthApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
@@ -1559,7 +1559,7 @@ export async function getSDGContributionsForOrganization(userId: number) {
             // Find activities for this project and aggregate hours and volunteers
             const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
             projectActivities.forEach(activity => {
-              sdgContributions[sdgIndex].hours += activity.hours;
+              sdgContributions[sdgIndex].hours += (activity.hours || 0);
               if (activity.userId) {
                 sdgContributions[sdgIndex].volunteers.add(activity.userId);
               }

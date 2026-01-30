@@ -1700,7 +1700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (existing) {
                 // Increment hours
                 await storage.updateEmployeeEngagement(existing.id, {
-                  hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
+                  hoursVolunteered: (existing.hoursVolunteered || 0) + (activity.hours || 0),
                   projectId: activity.projectId
                 });
               } else {
@@ -1710,7 +1710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   employeeEmail: user.email,
                   employeeName: volunteerProfile.volunteerName || user.displayName,
                   projectId: activity.projectId,
-                  hoursVolunteered: activity.hours,
+                  hoursVolunteered: (activity.hours || 0),
                   engagementType: 'vto',
                   impactScore: 0,
                   completionStatus: 'in-progress'
@@ -1730,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       // Update the first matching active challenge
                       const activeChallenge = partnerChallenges.find((c: any) => c.status === 'active') || partnerChallenges[0];
                       await storage.updateCSRChallenge?.(activeChallenge.id, {
-                        currentHours: (activeChallenge.currentHours || 0) + activity.hours
+                        currentHours: (activeChallenge.currentHours || 0) + (activity.hours || 0)
                       });
                     }
                   }
@@ -4002,7 +4002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return status === 'completed' || status === 'complete';
       }).length;
 
-      const totalHours = organizationActivities.reduce((sum, a) => sum + a.hours, 0);
+      const totalHours = organizationActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
       // Calculate unique SDGs addressed
       const uniqueSDGs = new Set<number>();
@@ -4049,7 +4049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
           const projectHours = organizationActivities
             .filter(a => a.projectId === project.id)
-            .reduce((sum, a) => sum + a.hours, 0);
+            .reduce((sum, a) => sum + (a.hours || 0), 0);
           const projectVolunteers = organizationAssignments
             .filter(pa => pa.projectId === project.id)
             .map(pa => pa.volunteerId);
@@ -4158,7 +4158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         return {
           month: monthKey,
-          hours: monthActivities.reduce((sum, a) => sum + a.hours, 0),
+          hours: monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0),
           peopleImpacted: monthImpacts.filter(i => i.metricId && peopleMetricIds.has(i.metricId)).reduce((sum, i) => sum + (i.value || 0), 0),
           volunteers: new Set(monthActivities.map(a => a.userId)).size,
         };
@@ -4208,7 +4208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: v.id,
           name: v.displayName || v.username || 'Unknown',
           avatar: v.avatar,
-          hours: vActivities.reduce((sum, a) => sum + a.hours, 0),
+          hours: vActivities.reduce((sum, a) => sum + (a.hours || 0), 0),
           projects: new Set(vActivities.map(a => a.projectId)).size,
           lastActive: vActivities.length > 0 ? vActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date : null,
         };
@@ -4246,7 +4246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Calculate hours for this project
           const projectHours = organizationActivities
             .filter(a => a.projectId === p.id)
-            .reduce((sum, a) => sum + a.hours, 0);
+            .reduce((sum, a) => sum + (a.hours || 0), 0);
 
           // Calculate people impacted for this project
           const projectImpacts = organizationImpacts.filter(i => i.projectId === p.id);

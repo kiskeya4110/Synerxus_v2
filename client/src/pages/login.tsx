@@ -100,7 +100,7 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 text-left group"
+                className="w-full p-6 h-auto rounded-xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("volunteer")}
                 data-testid="button-select-volunteer"
               >
@@ -123,7 +123,7 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 text-left group"
+                className="w-full p-6 h-auto rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("organization")}
                 data-testid="button-select-organization"
               >
@@ -146,7 +146,7 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-md transition-all duration-200 text-left group"
+                className="w-full p-6 h-auto rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("corporate-partner")}
                 data-testid="button-select-corporate"
               >

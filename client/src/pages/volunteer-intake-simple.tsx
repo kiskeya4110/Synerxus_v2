@@ -19,7 +19,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Logo from "@/components/ui/logo";
-import { Eye, EyeOff, Check, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Eye, EyeOff, Check, Loader2, X } from "lucide-react";
 
 // ============================================================================
 // CONSTANTS
@@ -84,6 +85,18 @@ const AVAILABILITY_OPTIONS = [
   { value: "weekend_evening", label: "Weekend Evenings (6pm-10pm)" },
 ];
 
+const SKILL_OPTIONS = [
+  "Teaching", "Tutoring", "Mentoring", "Project Management", "Data Analysis",
+  "Graphic Design", "Web Development", "Mobile Development", "Social Media",
+  "Content Writing", "Translation", "Legal", "Accounting", "Fundraising",
+  "Event Planning", "Photography", "Videography", "Healthcare", "Nursing",
+  "First Aid", "Counseling", "Cooking", "Agriculture", "Construction",
+  "Electrical", "Plumbing", "Carpentry", "Logistics", "Driving",
+  "Leadership", "Public Speaking", "Marketing", "Research", "IT Support",
+  "Environmental Science", "Community Organizing", "Child Care", "Elder Care",
+  "Animal Care", "Music", "Art", "Sports Coaching", "Yoga/Fitness"
+];
+
 // ============================================================================
 // SCHEMA
 // ============================================================================
@@ -100,6 +113,9 @@ const volunteerSchema = z.object({
   city: z.string().min(1, "City is required"),
   timezone: z.string().min(1, "Timezone is required"),
   availability: z.array(z.string()).min(1, "Select at least one availability slot"),
+  // Phase 3: Skills + Diaspora
+  skills: z.array(z.string()).min(1, "Select at least one skill").max(3, "Maximum 3 skills"),
+  countryOfOrigin: z.string().optional(),
 });
 
 type VolunteerFormData = z.infer<typeof volunteerSchema>;
@@ -128,13 +144,17 @@ export default function VolunteerIntakeSimple() {
       city: "",
       timezone: "",
       availability: [],
+      skills: [],
+      countryOfOrigin: "",
     },
   });
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form;
   const selectedSdgs = watch("sdgGoals") || [];
   const selectedAvailability = watch("availability") || [];
+  const selectedSkills = watch("skills") || [];
   const inviteCode = watch("inviteCode");
+  const [skillSearch, setSkillSearch] = useState("");
 
   // Validate invite code
   const validateInviteCode = async (code: string) => {
@@ -170,6 +190,7 @@ export default function VolunteerIntakeSimple() {
           username: data.email.split('@')[0] + '_' + Date.now(),
           userType: "volunteer",
           firebaseUid: "demo_" + Date.now(), // Demo mode UID
+          skills: data.skills, // Phase 3: up to 3 skills
         });
         const user = await response.json();
         return { id: user.id, ...data };
@@ -194,6 +215,8 @@ export default function VolunteerIntakeSimple() {
         city: data.city,
         timezone: data.timezone,
         availability: data.availability,
+        skills: data.skills,
+        countryOfOrigin: data.countryOfOrigin || "",
       }));
 
       toast({
@@ -232,6 +255,19 @@ export default function VolunteerIntakeSimple() {
       setValue("availability", [...current, slot]);
     }
   };
+
+  const toggleSkill = (skill: string) => {
+    const current = selectedSkills;
+    if (current.includes(skill)) {
+      setValue("skills", current.filter(s => s !== skill));
+    } else if (current.length < 3) {
+      setValue("skills", [...current, skill]);
+    }
+  };
+
+  const filteredSkillOptions = SKILL_OPTIONS.filter(
+    s => s.toLowerCase().includes(skillSearch.toLowerCase()) && !selectedSkills.includes(s)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -364,6 +400,70 @@ export default function VolunteerIntakeSimple() {
                   </SelectContent>
                 </Select>
                 {errors.timezone && <p className="text-sm text-red-500 mt-1">{errors.timezone.message}</p>}
+              </div>
+
+              {/* Country of Origin (Phase 3: Diaspora Profile) */}
+              <div>
+                <Label>Country of Origin (optional)</Label>
+                <Select onValueChange={(v) => setValue("countryOfOrigin", v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Where are you originally from?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map(country => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Skills (Phase 3: max 3 required) */}
+              <div>
+                <Label>Your Skills * (Select up to 3)</Label>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                  {selectedSkills.length}/3 selected
+                </p>
+                {/* Selected skill chips */}
+                {selectedSkills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {selectedSkills.map(skill => (
+                      <Badge
+                        key={skill}
+                        className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer"
+                        onClick={() => toggleSkill(skill)}
+                      >
+                        {skill}
+                        <X className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {/* Skill search */}
+                <Input
+                  placeholder="Search skills..."
+                  value={skillSearch}
+                  onChange={(e) => setSkillSearch(e.target.value)}
+                  className="mb-2"
+                />
+                {/* Filtered skill options */}
+                <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                  {filteredSkillOptions.slice(0, 12).map(skill => (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => toggleSkill(skill)}
+                      disabled={selectedSkills.length >= 3}
+                      className={`p-1.5 rounded text-xs font-medium transition-all text-left ${
+                        selectedSkills.length >= 3
+                          ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+                {errors.skills && <p className="text-sm text-red-500 mt-1">{errors.skills.message}</p>}
               </div>
 
               {/* SDG Goals */}

@@ -72,6 +72,33 @@ function createEmailTransporter() {
 
 const emailTransporter = createEmailTransporter();
 
+// SMS Provider interface (Phase 2 stub -- no-op implementation)
+export interface SMSProvider {
+  sendSMS(to: string, body: string): Promise<{ success: boolean; messageId?: string }>;
+}
+
+class NoOpSMSProvider implements SMSProvider {
+  async sendSMS(to: string, body: string): Promise<{ success: boolean; messageId?: string }> {
+    console.log(`[SMS-NOOP] To: ${to}, Body: ${body.substring(0, 80)}...`);
+    return { success: true, messageId: `sms-noop-${Date.now()}` };
+  }
+}
+
+// Push Provider interface (Phase 2 stub -- no-op implementation)
+export interface PushProvider {
+  sendPush(userId: number, title: string, body: string, data?: Record<string, string>): Promise<{ success: boolean }>;
+}
+
+class NoOpPushProvider implements PushProvider {
+  async sendPush(userId: number, title: string, body: string): Promise<{ success: boolean }> {
+    console.log(`[PUSH-NOOP] User: ${userId}, Title: ${title}, Body: ${body.substring(0, 80)}...`);
+    return { success: true };
+  }
+}
+
+export const smsProvider: SMSProvider = new NoOpSMSProvider();
+export const pushProvider: PushProvider = new NoOpPushProvider();
+
 export async function notifyProjectUpdate(
   projectId: number,
   userId: number,
@@ -711,8 +738,9 @@ export async function notifyPendingActivity(
   activityId: number,
   projectId: number,
   volunteerId: number,
-  hours: number,
-  projectName?: string
+  hours: number | null,
+  projectName?: string,
+  outcomeText?: string | null
 ): Promise<void> {
   try {
     // Get project to find organization
@@ -735,13 +763,27 @@ export async function notifyPendingActivity(
 
     const usedProjectName = projectName || project.name || "a project";
 
+    // Build outcome-first message (Phase 2: include outcomeText, not just hours)
+    let messageBody: string;
+    if (outcomeText) {
+      messageBody = `${volunteerName} submitted an outcome for "${usedProjectName}": "${outcomeText.substring(0, 100)}${outcomeText.length > 100 ? '...' : ''}"`;
+      if (hours && hours > 0) {
+        messageBody += ` (${hours} hours)`;
+      }
+      messageBody += `. Review and verify.`;
+    } else if (hours && hours > 0) {
+      messageBody = `${volunteerName} logged ${hours} hours for "${usedProjectName}". Review and approve to add this to their verified activity record.`;
+    } else {
+      messageBody = `${volunteerName} submitted an impact log for "${usedProjectName}". Review and verify.`;
+    }
+
     // Create notification for each organization user
     for (const orgUser of orgUsers) {
       const notification: InsertNotification = {
         userId: orgUser.id,
         type: "pending_approval",
-        title: "Hours Awaiting Approval",
-        message: `${volunteerName} logged ${hours} hours for "${usedProjectName}". Review and approve to add this to their verified activity record.`,
+        title: outcomeText ? "Outcome Awaiting Verification" : "Hours Awaiting Approval",
+        message: messageBody,
         relatedEntityType: "volunteer_activity",
         relatedEntityId: activityId,
         relatedUserId: volunteerId,
@@ -750,6 +792,13 @@ export async function notifyPendingActivity(
       };
 
       await storage.createNotification(notification);
+
+      // Push notification stub (Phase 2)
+      pushProvider.sendPush(
+        orgUser.id,
+        notification.title,
+        messageBody
+      ).catch(err => console.error("[PUSH] Failed:", err));
     }
 
     console.log(`[Notification] Pending activity notification sent to ${orgUsers.length} organization users`);

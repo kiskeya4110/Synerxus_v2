@@ -516,7 +516,7 @@ export default function SDGMapping() {
   if (isLoading) {
     if (isOrganizationForLayout && isMobile) {
       return (
-        <OrganizationPWALayout activeTab="sdgs">
+        <OrganizationPWALayout activeTab="home">
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -534,7 +534,7 @@ export default function SDGMapping() {
   if (sdgData.length === 0) {
     if (isOrganizationForLayout && isMobile) {
       return (
-        <OrganizationPWALayout activeTab="sdgs">
+        <OrganizationPWALayout activeTab="home">
           <div className="p-4">
             <div className="mb-4">
               <h1 className="text-xl font-bold text-stone-900">SDG Mapping</h1>
@@ -870,7 +870,7 @@ export default function SDGMapping() {
     };
 
     return (
-      <OrganizationPWALayout activeTab="sdgs">
+      <OrganizationPWALayout activeTab="home">
         <div className="p-4 pb-36">
           {/* Header with filters */}
           <div className="flex items-center justify-between mb-3">

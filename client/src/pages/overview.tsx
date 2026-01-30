@@ -128,7 +128,7 @@ export default function Overview() {
   // Mobile PWA View - Organizations only
   if (isOrganization && isMobile) {
     return (
-      <OrganizationPWALayout activeTab="potential">
+      <OrganizationPWALayout activeTab="home">
         <div style={{ margin: '0 16px', paddingTop: '16px' }}>
         <div
           style={{

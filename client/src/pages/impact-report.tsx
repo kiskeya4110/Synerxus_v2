@@ -15,10 +15,12 @@ import type { User, Task, ProjectAssignment, Organization } from "@shared/schema
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
+import Footer from "@/components/layout/footer";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
 import { ImpactScoreGauge } from "@/components/impact/impact-score-gauge";
 import { ActivityHeatmap } from "@/components/impact/activity-heatmap";
 import { AINarrativeSection } from "@/components/impact/ai-narrative-section";
@@ -128,7 +130,7 @@ const getSkillBadgeClass = (index: number): string => {
 export default function ImpactReport() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
   const isOrganization = userType === 'organization';
@@ -665,6 +667,18 @@ export default function ImpactReport() {
     value: Math.floor(Math.random() * 100) + 20
   }));
 
+  // Show loading while viewport is being detected
+  if (isViewportLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show error if no volunteer ID is available
   if (!volunteerId) {
     return (
@@ -690,17 +704,17 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''} ${isOrganization && isMobile ? 'pb-36' : ''}`}>
+    <div className={`min-h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile === true ? 'pt-16 pb-20' : ''} ${isOrganization && isMobile === true ? 'pb-36' : ''}`}>
       {/* Desktop Volunteer Navigation */}
-      {isVolunteer && !isMobile && <VolunteerNav />}
+      {isVolunteer && isMobile !== true && <VolunteerNav />}
       {/* PWA Header for mobile volunteer users */}
-      {isVolunteer && isMobile && <PWAHeader />}
+      {isVolunteer && isMobile === true && <PWAHeader />}
 
-      <div className={isMobile ? "p-2" : ""} style={!isMobile ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
+      <div className={isMobile === true ? "p-2" : ""} style={isMobile !== true ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
 
-      <div className={isMobile ? "max-w-6xl mx-auto" : ""}>
+      <div className={isMobile === true ? "max-w-6xl mx-auto" : ""}>
         {/* Header with Back Button - hidden on mobile PWA since we have the PWAHeader */}
-        <div className={`mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 ${isVolunteer && isMobile ? 'hidden' : ''}`}>
+        <div className={`mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 ${isVolunteer && isMobile === true ? 'hidden' : ''}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -3140,9 +3154,11 @@ export default function ImpactReport() {
 
       </div>
       {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isMobile && (
-        <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impacts" />
+      {isVolunteer && isMobile === true && (
+        <VolunteerPWANav userId={volunteerId?.toString()} activeTab="home" />
       )}
+      {/* Footer for desktop */}
+      {isMobile !== true && <Footer />}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import BeforeAfterComparison from "@/components/impact/before-after-comparison";
 import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -51,13 +51,13 @@ ChartJS.register(
 
 interface ImpactVisualizationProps {
   embedded?: boolean;
-  params?: Record<string, string>;
+  params?: Record<string, string> | { [param: number]: string | undefined };
 }
 
 export default function ImpactVisualization({ embedded = false }: ImpactVisualizationProps) {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
-  const isMobile = useIsMobile();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
@@ -519,8 +519,20 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   const isOrganization = currentUser?.userType === 'organization';
   const isVolunteer = currentUser?.userType === 'volunteer';
 
+  // Show loading while viewport is being detected
+  if (!embedded && isViewportLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Mobile volunteer PWA view
-  if (!embedded && isVolunteer && isMobile) {
+  if (!embedded && isVolunteer && isMobile === true) {
     return (
       <div className="min-h-screen bg-gray-50">
         <PWAHeader />
@@ -634,13 +646,13 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
             </div>
           </div>
         </div>
-        <VolunteerPWANav activeTab="impacts" />
+        <VolunteerPWANav activeTab="home" />
       </div>
     );
   }
 
   // Mobile organization PWA view
-  if (!embedded && isOrganization && isMobile) {
+  if (!embedded && isOrganization && isMobile === true) {
     return (
       <OrganizationPWALayout>
         <div className="p-4">
@@ -757,7 +769,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
       {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
-      {!embedded && isOrganization && <OrganizationHeader activeTab="impact" />}
+      {!embedded && isOrganization && <OrganizationHeader activeTab="dashboard" />}
       {!embedded && isOrganization && <OrganizationWelcomeBanner pageTitle="Impact Visualization" />}
       <div className={`${!embedded ? 'space-y-6' : 'space-y-6'}`} style={!embedded ? { maxWidth: '1280px', margin: '0 auto', padding: '24px' } : undefined}>
       {/* Page Header with Action Buttons */}

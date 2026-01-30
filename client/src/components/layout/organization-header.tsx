@@ -5,9 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
-  FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, LogOut, User, Menu, X, UsersRound, MoreVertical, Home, ClipboardList, Trophy,
-  CheckCircle, XCircle, ChevronLeft, ExternalLink, MapPin, Clock, Star, Briefcase, Key
+  FolderOpen, Users, Plus, User,
+  Bell, LogOut, Menu, X, MoreVertical, Home, ClipboardList,
+  CheckCircle, XCircle, ChevronLeft, ExternalLink, MapPin, Clock, Star, Briefcase
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,8 +45,6 @@ const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/organization-dashboard' },
   { id: 'verify', label: 'Verify', icon: CheckCircle, path: '/ngo-verification' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
-  { id: 'team', label: 'Team', icon: Users, path: '/volunteers' },
-  { id: 'impact', label: 'Impact', icon: BarChart3, path: '/organization-impact-report' },
 ];
 
 interface OrganizationHeaderProps {
@@ -176,23 +174,9 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
         return; // Don't navigate, show in panel
       }
 
-      // For other notifications, navigate to the relevant page
-      if (notificationType.includes('application')) {
-        navigate('/applications');
-        setNotificationPanelOpen(false);
-      } else if (notificationType.includes('project') || notificationType.includes('assignment')) {
-        navigate('/my-work');
-        setNotificationPanelOpen(false);
-      } else if (notificationType.includes('message')) {
-        navigate('/organization-messages');
-        setNotificationPanelOpen(false);
-      } else if (notificationType.includes('volunteer')) {
-        navigate('/volunteers');
-        setNotificationPanelOpen(false);
-      } else {
-        navigate('/organization-dashboard');
-        setNotificationPanelOpen(false);
-      }
+      // Navigate to dashboard for all non-application notifications
+      navigate('/organization-dashboard');
+      setNotificationPanelOpen(false);
     } catch (error) {
       console.error('Error handling notification:', error);
     }
@@ -212,7 +196,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
   const handleViewFullApplication = () => {
     setNotificationPanelOpen(false);
-    navigate('/applications');
+    navigate('/ngo-verification');
   };
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
@@ -638,7 +622,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
           {/* Profile Avatar */}
           <button
             data-testid="profile-avatar"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/organization-dashboard')}
             style={{
               width: '42px',
               height: '42px',
@@ -737,65 +721,27 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 </div>
               </div>
 
-              {/* Navigation Items */}
+              {/* Navigation Items - MVP Only */}
               <div className="py-1">
                 <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-dashboard'); setIsProfileOpen(false); }} data-testid="menu-dashboard">
                   <Home className="mr-2 h-4 w-4" />
                   <span>Dashboard</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/my-work'); setIsProfileOpen(false); }} data-testid="menu-projects">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/projects'); setIsProfileOpen(false); }} data-testid="menu-projects">
                   <FolderOpen className="mr-2 h-4 w-4" />
                   <span>Projects</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/volunteers'); setIsProfileOpen(false); }} data-testid="menu-volunteers">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Volunteers</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-team'); setIsProfileOpen(false); }} data-testid="menu-team">
-                  <UsersRound className="mr-2 h-4 w-4" />
-                  <span>Team</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/applications'); setIsProfileOpen(false); }} data-testid="menu-applications">
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Applications</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-messages'); setIsProfileOpen(false); }} data-testid="menu-messages">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>Messages</span>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/ngo-verification'); setIsProfileOpen(false); }} data-testid="menu-verify">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <span>Verification Queue</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/log-volunteer-hours'); setIsProfileOpen(false); }} data-testid="menu-log-hours">
                   <ClipboardList className="mr-2 h-4 w-4" />
                   <span>Log Hours</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/sdg-mapping'); setIsProfileOpen(false); }} data-testid="menu-sdgs">
-                  <Target className="mr-2 h-4 w-4" />
-                  <span>SDG Mapping</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/impact-visualization'); setIsProfileOpen(false); }} data-testid="menu-impact">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  <span>Impact Reports</span>
-                </DropdownMenuItem>
-              </div>
-
-              <DropdownMenuSeparator />
-
-              {/* Settings & Account */}
-              <div className="py-1">
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/profile'); setIsProfileOpen(false); }} data-testid="menu-profile">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-profile-settings'); setIsProfileOpen(false); }} data-testid="menu-settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/organization-team'); setIsProfileOpen(false); }} data-testid="menu-team-management">
-                  <UsersRound className="mr-2 h-4 w-4" />
-                  <span>Team Management</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/invitation-codes'); setIsProfileOpen(false); }} data-testid="menu-invitation-codes">
-                  <Key className="mr-2 h-4 w-4" />
-                  <span>Invitation Codes</span>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => { navigate('/post-core-opportunity'); setIsProfileOpen(false); }} data-testid="menu-new-project">
+                  <Plus className="mr-2 h-4 w-4" />
+                  <span>New Project</span>
                 </DropdownMenuItem>
               </div>
 

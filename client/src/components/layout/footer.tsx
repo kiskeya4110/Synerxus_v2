@@ -20,8 +20,6 @@ const FOOTER_LINKS = {
   ],
   resources: [
     { href: "/help", label: "Help Center" },
-    { href: "/sdg-mapping", label: "SDG Framework" },
-    { href: "/impact-visualization", label: "Impact Reports" },
   ],
   legal: [
     { href: "/privacy", label: "Privacy Policy" },

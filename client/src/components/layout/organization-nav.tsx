@@ -2,17 +2,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  BarChart3,
-  Users,
   FolderOpen,
-  TrendingUp,
   Shield,
   Plus,
-  Bell,
   Menu,
   X,
   LogOut,
-  Settings,
   HelpCircle,
   Building2,
 } from "lucide-react";
@@ -25,25 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/ui/logo";
 
-// Navigation items
-const getOrgNavItems = (organizationId?: number) => [
+// Navigation items - MVP only
+const getOrgNavItems = () => [
   { href: "/organization-dashboard", label: "Dashboard", icon: Home },
   { href: "/ngo-verification", label: "Verify", icon: Shield },
   { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/volunteers", label: "Team", icon: Users },
-  {
-    href: organizationId
-      ? `/organization-impact-report/${organizationId}`
-      : "/organization-impact-report",
-    label: "Impact",
-    icon: TrendingUp,
-  },
 ];
 
-// Dropdown menu items
+// Dropdown menu items - MVP only
 const MENU_ITEMS = [
-  { href: "/organization-profile-settings", label: "Settings", icon: Settings },
-  { href: "/overview", label: "Overview", icon: BarChart3 },
   { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
@@ -114,7 +99,7 @@ export default function OrganizationNav() {
     return null;
   }
 
-  const navItems = getOrgNavItems(currentUser?.organizationId ?? undefined);
+  const navItems = getOrgNavItems();
   const orgInitial = (organization?.name || "O").charAt(0).toUpperCase();
 
   return (
@@ -180,16 +165,6 @@ export default function OrganizationNav() {
             >
               <Plus className="h-4 w-4 mr-1" />
               New Project
-            </Button>
-
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative text-stone-600 hover:text-stone-900 hover:bg-stone-100">
-              <Bell className="h-5 w-5" />
-              {pendingCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-bold flex items-center justify-center text-white">
-                  {pendingCount}
-                </span>
-              )}
             </Button>
 
             {/* Org Menu */}

@@ -36,21 +36,10 @@ const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard-
 const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa-new"));
 const NgoVerification = lazy(() => import("@/pages/ngo-verification"));
 const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));
-const OrganizationMessages = lazy(() => import("@/pages/organization-messages"));
-const Volunteers = lazy(() => import("@/pages/volunteers"));
-const SDGMapping = lazy(() => import("@/pages/sdg-mapping"));
-const Overview = lazy(() => import("@/pages/overview"));
-const OrganizationImpactReport = lazy(() => import("@/pages/organization-impact-report"));
-const OrganizationProfile = lazy(() => import("@/pages/organization-profile"));
-const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
-const PostUrgentOpportunity = lazy(() => import("@/pages/post-urgent-opportunity"));
 // NGO project management (simplified)
 const NgoProjects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
-const Profile = lazy(() => import("@/pages/profile"));
-const ImpactReport = lazy(() => import("@/pages/impact-report"));
-const ImpactVisualization = lazy(() => import("@/pages/impact-visualization"));
 
 // ============================================================================
 // CORPORATE VIEW - ESG Dashboard (Desktop)
@@ -58,12 +47,6 @@ const ImpactVisualization = lazy(() => import("@/pages/impact-visualization"));
 const CSRDashboard = lazy(() => import("@/pages/csr-dashboard-new"));
 const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
 const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
-const TeamOverview = lazy(() => import("@/pages/team-overview"));
-
-// ============================================================================
-// ADMIN - Founder Metrics Only
-// ============================================================================
-const AdminMetrics = lazy(() => import("@/pages/admin-dashboard"));
 
 // Legal pages
 const Terms = lazy(() => import("@/pages/terms"));
@@ -185,39 +168,19 @@ export default function App() {
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
-          <Route path="/organization-messages/pwa" component={OrganizationMessages} />
-          <Route path="/organization-messages" component={OrganizationMessages} />
-          <Route path="/volunteers" component={Volunteers} />
-          <Route path="/sdg-mapping" component={SDGMapping} />
-          <Route path="/overview" component={Overview} />
-          <Route path="/organization-impact-report" component={OrganizationImpactReport} />
-          <Route path="/organization-profile" component={OrganizationProfile} />
-          <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
-          <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/impact-report" component={ImpactReport} />
-          <Route path="/impact-report/:id" component={ImpactReport} />
-          <Route path="/impact-visualization" component={ImpactVisualization} />
 
           {/* ================================================================ */}
           {/* CORPORATE ROUTES - ESG Dashboard View */}
           {/* ================================================================ */}
           <Route path="/corporate/dashboard" component={CSRDashboard} />
           <Route path="/corporate/dashboard/pwa" component={CSRDashboardPWA} />
-          <Route path="/corporate/employees" component={TeamOverview} />
           <Route path="/corporate/reports" component={CSRReportsExports} />
           {/* Legacy routes - redirect to new structure */}
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
-          <Route path="/team-overview" component={TeamOverview} />
+          <Route path="/csr-dashboard/pwa" component={CSRDashboardPWA} />
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
-
-          {/* ================================================================ */}
-          {/* ADMIN - Founder Metrics Only */}
-          {/* ================================================================ */}
-          <Route path="/admin/metrics" component={AdminMetrics} />
-          <Route path="/admin/dashboard" component={AdminMetrics} />
 
           {/* ================================================================ */}
           {/* UTILITY ROUTES */}

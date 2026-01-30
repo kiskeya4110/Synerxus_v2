@@ -1,30 +1,16 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { Home, Briefcase, Sparkles, MoreHorizontal, X, BarChart3, MessageCircle, BookOpen, ClipboardList, User, Settings, Award, Shield } from "lucide-react";
+import { Home, Briefcase, Sparkles, ClipboardList, MoreHorizontal, X, BarChart3 } from "lucide-react";
 
 interface VolunteerPWANavProps {
   userId?: string;
-  activeTab?: 'home' | 'projects' | 'potentials' | 'impacts' | 'messages' | 'more';
+  activeTab?: 'home' | 'projects' | 'potentials' | 'log' | 'more';
 }
 
 export default function VolunteerPWANav({ userId: propUserId, activeTab }: VolunteerPWANavProps) {
   const [location, navigate] = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [showMore, setShowMore] = useState(false);
-
-  const userId = propUserId || localStorage.getItem('currentUserId');
-
-  // Fetch current user to check admin status
-  const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
-      const response = await fetch(url);
-      return response.ok ? response.json() : null;
-    },
-    enabled: !!userId
-  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -42,8 +28,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
     if (location === '/volunteer-dashboard' || location === '/dashboard') return 'home';
     if (location.includes('/projects')) return 'projects';
     if (location.includes('discover-opportunities') || location.includes('opportunities')) return 'potentials';
-    if (location.includes('impact-report') || location.includes('impacts')) return 'impacts';
-    if (location.includes('/messages') || location.includes('volunteer-messages')) return 'messages';
+    if (location.includes('log-activity') || location.includes('tab=log-activity')) return 'log';
     return 'home';
   })();
 
@@ -69,10 +54,10 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
       path: '/volunteer-dashboard?tab=potential'
     },
     {
-      id: 'messages' as const,
-      label: 'Messages',
-      icon: MessageCircle,
-      path: '/volunteer-messages/pwa'
+      id: 'log' as const,
+      label: 'Log',
+      icon: ClipboardList,
+      path: '/volunteer-dashboard?tab=log-activity'
     },
     {
       id: 'more' as const,
@@ -84,12 +69,6 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
 
   const moreMenuItems = [
     { icon: BarChart3, label: 'My Impact', path: '/volunteer-dashboard?tab=impacts' },
-    { icon: ClipboardList, label: 'Log Activity', path: '/volunteer-dashboard?tab=log-activity' },
-    { icon: BookOpen, label: 'Stories', path: '/stories' },
-    { icon: Award, label: 'Achievements', path: '/achievements' },
-    { icon: User, label: 'Profile & Settings', path: '/volunteer-profile-settings' },
-    // Admin dashboard - only shown for admin users (uses PWA version on mobile)
-    ...(currentUser?.isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin/dashboard/pwa', isAdmin: true }] : []),
   ];
 
   return (
@@ -174,19 +153,13 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                       navigate(item.path);
                     }
                   }}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 ${
-                    (item as any).isAdmin
-                      ? 'bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
-                      : 'bg-slate-50 hover:bg-slate-100'
-                  }`}
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 bg-slate-50 hover:bg-slate-100"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none ${
-                    (item as any).isAdmin ? 'bg-purple-100' : 'bg-white'
-                  }`}>
-                    <item.icon className={`w-6 h-6 pointer-events-none ${(item as any).isAdmin ? 'text-purple-600' : 'text-slate-600'}`} />
+                  <div className="w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none bg-white">
+                    <item.icon className="w-6 h-6 pointer-events-none text-slate-600" />
                   </div>
-                  <span className={`text-xs font-medium text-center pointer-events-none ${(item as any).isAdmin ? 'text-purple-700' : 'text-slate-700'}`}>{item.label}</span>
+                  <span className="text-xs font-medium text-center pointer-events-none text-slate-700">{item.label}</span>
                 </button>
               ))}
             </div>

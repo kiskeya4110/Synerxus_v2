@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Menu, LogOut, RefreshCw,
-  FolderOpen, Users, Target, BarChart3,
-  MessageSquare, Home, Bell, Trophy, X,
-  TrendingUp, Award, Lightbulb, Flame, Settings,
-  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, Shield, UserPlus, ClipboardList, Trash2, Globe
+  FolderOpen, Users, Target,
+  Home, Bell, X,
+  Award, Flame,
+  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, ClipboardList, Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -129,7 +129,7 @@ export default function OrganizationPWAHeader({
       case 'project_update':
         return { icon: Briefcase, color: 'purple', bg: 'bg-purple-500' };
       case 'message':
-        return { icon: MessageSquare, color: 'indigo', bg: 'bg-indigo-500' };
+        return { icon: Bell, color: 'indigo', bg: 'bg-indigo-500' };
       case 'volunteer_joined':
         return { icon: Users, color: 'teal', bg: 'bg-teal-500' };
       case 'project_completed':
@@ -143,30 +143,21 @@ export default function OrganizationPWAHeader({
     }
   };
 
-  // Get navigation path for notification (organization-specific routes)
+  // Get navigation path for notification (MVP routes only)
   const getNotificationPath = (notification: Notification): string => {
     const { type, relatedEntityType, relatedEntityId } = notification;
 
     switch (type) {
       case 'new_application':
       case 'application_submitted':
-        return '/applications';
+        return '/ngo-verification';
       case 'volunteer_joined':
+      case 'project_update':
+      case 'project_completed':
         if (relatedEntityType === 'project' && relatedEntityId) {
           return `/projects/${relatedEntityId}`;
         }
-        return '/volunteers';
-      case 'project_update':
-      case 'project_completed':
-        if (relatedEntityId) {
-          return `/projects/${relatedEntityId}`;
-        }
         return '/organization-dashboard/pwa';
-      case 'message':
-        return '/organization-messages/pwa';
-      case 'impact_update':
-      case 'sdg_contribution':
-        return '/impact-visualization';
       default:
         if (relatedEntityType === 'project' && relatedEntityId) {
           return `/projects/${relatedEntityId}`;
@@ -242,40 +233,16 @@ export default function OrganizationPWAHeader({
       items: [
         { icon: Home, label: "Dashboard", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
         { icon: FolderOpen, label: "Projects", desc: "Manage your projects", action: () => navigate('/projects') },
-        { icon: MessageSquare, label: "Messages", desc: "Team communication", action: () => navigate('/organization-messages/pwa') },
+        { icon: CheckCircle, label: "Verify", desc: "1-tap verification queue", action: () => navigate('/ngo-verification') },
       ]
     },
     {
-      title: "ANALYTICS & REPORTS",
+      title: "ACTIONS",
       items: [
-        { icon: BarChart3, label: "Impact Report", desc: "Visualize your impact", action: () => navigate('/organization-impact-report') },
-        { icon: Target, label: "SDG Mapping", desc: "UN Goals alignment", action: () => navigate('/sdg-mapping') },
-        { icon: Trophy, label: "Leaderboard", desc: "Top performers", action: () => navigate('/volunteer-leaderboard/pwa'), hot: true },
-        { icon: TrendingUp, label: "Overview", desc: "Performance metrics", action: () => navigate('/overview') },
+        { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours') },
+        { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
       ]
     },
-    {
-      title: "TEAM & ENGAGEMENT",
-      items: [
-        { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours'), hot: true },
-        { icon: Users, label: "Volunteers", desc: "Your team members", action: () => navigate('/volunteers') },
-        { icon: UserPlus, label: "Team Management", desc: "Invite staff & volunteers", action: () => navigate('/organization-team') },
-        { icon: Globe, label: "Public Profile", desc: "View your public page", action: () => navigate('/organization-profile') },
-      ]
-    },
-    {
-      title: "ACCOUNT",
-      items: [
-        { icon: Settings, label: "Profile & Settings", desc: "Update organization profile", action: () => navigate('/organization-profile-settings') },
-      ]
-    },
-    // Admin section - only shown for admin users
-    ...(currentUser?.isAdmin ? [{
-      title: "ADMIN",
-      items: [
-        { icon: Shield, label: "Admin Dashboard", desc: "Platform management", action: () => navigate('/admin/dashboard/pwa'), isAdmin: true },
-      ]
-    }] : []),
   ];
 
   return (

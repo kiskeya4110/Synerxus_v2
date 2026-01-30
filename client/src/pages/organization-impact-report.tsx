@@ -851,7 +851,7 @@ export default function OrganizationImpactReport() {
   if (!storedUserId) {
     if (isOrganizationForLayout && isMobile && !isViewportLoading) {
       return (
-        <OrganizationPWALayout activeTab="impact">
+        <OrganizationPWALayout activeTab="home">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-stone-600 mb-2">Please log in to view impact reports</p>
@@ -878,7 +878,7 @@ export default function OrganizationImpactReport() {
   if (!userLoading && currentUser && !isOrganizationManager) {
     if (isOrganizationForLayout && isMobile && !isViewportLoading) {
       return (
-        <OrganizationPWALayout activeTab="impact">
+        <OrganizationPWALayout activeTab="home">
           <div className="p-4 flex items-center justify-center">
             <Card className="w-full max-w-md shadow-lg border-2 border-red-200">
               <CardContent className="p-8 text-center">

@@ -102,7 +102,7 @@ export default function OpportunityDetailPWA() {
         return <OrganizationPWANav activeTab="projects" />;
       case 'corporate-partner':
       case 'corporate_partner':
-        return <CSRPWANav activeTab="projects" />;
+        return <CSRPWANav activeTab="home" />;
       default:
         return <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />;
     }

@@ -496,7 +496,7 @@ export default function Volunteers() {
   if (!userId) {
     if (isOrganizationForLayout && isMobile) {
       return (
-        <OrganizationPWALayout activeTab="team">
+        <OrganizationPWALayout activeTab="home">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-gray-600 mb-2">Please log in to view volunteers</p>
@@ -526,7 +526,7 @@ export default function Volunteers() {
   // Mobile organization PWA view
   if (isOrganizationForLayout && isMobile) {
     return (
-      <OrganizationPWALayout activeTab="team">
+      <OrganizationPWALayout activeTab="home">
         <div className="p-4">
           {/* Page Header */}
           <div className="mb-4">

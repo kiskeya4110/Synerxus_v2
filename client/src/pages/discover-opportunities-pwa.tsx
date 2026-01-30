@@ -111,7 +111,7 @@ export default function DiscoverOpportunitiesPWA() {
         return <OrganizationPWANav activeTab="projects" />;
       case 'corporate-partner':
       case 'corporate_partner':
-        return <CSRPWANav activeTab="projects" />;
+        return <CSRPWANav activeTab="home" />;
       default:
         return <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />;
     }
@@ -350,16 +350,16 @@ export default function DiscoverOpportunitiesPWA() {
         <div className="space-y-4 p-4 -mt-2">
           {/* Filters */}
           {showFilters && (
-            <div className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700 shadow-sm space-y-3">
-              <h3 className="text-white font-semibold text-sm">Filters</h3>
+            <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
+              <h3 className="text-stone-800 font-semibold text-sm">Filters</h3>
 
               {/* Category Filter */}
               <div>
-                <label className="text-white/70 text-xs mb-1 block">Category</label>
+                <label className="text-stone-600 text-xs mb-1 block">Category</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="all">All Categories</option>
                   {availableCategories.map(cat => (
@@ -370,11 +370,11 @@ export default function DiscoverOpportunitiesPWA() {
 
               {/* Location Filter */}
               <div>
-                <label className="text-white/70 text-xs mb-1 block">Location</label>
+                <label className="text-stone-600 text-xs mb-1 block">Location</label>
                 <select
                   value={locationFilter}
                   onChange={(e) => setLocationFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="all">All Locations</option>
                   <option value="remote">Remote Only</option>
@@ -389,8 +389,8 @@ export default function DiscoverOpportunitiesPWA() {
           {/* Top Matches */}
           {topMatches.length > 0 && (
             <div>
-              <h2 className="text-white text-lg font-semibold mb-3 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-stone-800 text-lg font-semibold mb-3 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
                 Top Matches for You
               </h2>
               <div className="space-y-3">
@@ -466,15 +466,15 @@ export default function DiscoverOpportunitiesPWA() {
 
           {/* All Opportunities */}
           <div>
-            <h2 className="text-white text-lg font-semibold mb-3">
+            <h2 className="text-stone-800 text-lg font-semibold mb-3">
               All Opportunities ({filteredOpportunities.length})
             </h2>
 
             {filteredOpportunities.length === 0 ? (
-              <div className="bg-slate-800/80 rounded-2xl p-8 text-center border border-slate-700 shadow-sm">
-                <Search className="w-12 h-12 mx-auto text-slate-500 mb-3" />
-                <p className="text-white font-medium">No opportunities found</p>
-                <p className="text-white/70 text-sm mt-1">Try adjusting your filters</p>
+              <div className="bg-white rounded-2xl p-8 text-center border border-stone-200 shadow-sm">
+                <Search className="w-12 h-12 mx-auto text-stone-400 mb-3" />
+                <p className="text-stone-800 font-medium">No opportunities found</p>
+                <p className="text-stone-500 text-sm mt-1">Try adjusting your filters</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -487,7 +487,7 @@ export default function DiscoverOpportunitiesPWA() {
                   return (
                     <div
                       key={opp.id}
-                      className="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                      className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
                       onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                     >
                       {/* Match Score Header */}
@@ -514,11 +514,11 @@ export default function DiscoverOpportunitiesPWA() {
 
                       <div className="p-4">
                         {/* Title & Organization */}
-                        <h3 className="text-white font-semibold text-base mb-1">
+                        <h3 className="text-stone-800 font-semibold text-base mb-1">
                           {opp.title}
                         </h3>
                         {opp.organizationName && (
-                          <div className="flex items-center gap-1 text-white/70 text-xs mb-2">
+                          <div className="flex items-center gap-1 text-stone-500 text-xs mb-2">
                             <Building2 className="w-3 h-3" />
                             <span>{opp.organizationName}</span>
                           </div>
@@ -526,7 +526,7 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Description */}
                         {opp.description && (
-                          <p className="text-white text-sm line-clamp-2 mb-3">
+                          <p className="text-stone-600 text-sm line-clamp-2 mb-3">
                             {opp.description}
                           </p>
                         )}
@@ -553,31 +553,31 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Match Reasons */}
                         {opp.matchReasons && opp.matchReasons.length > 0 && (
-                          <div className="bg-indigo-900/50 rounded-xl p-3 mb-3">
-                            <p className="text-indigo-300 text-xs font-semibold mb-1 flex items-center gap-1">
+                          <div className="bg-indigo-50 rounded-xl p-3 mb-3">
+                            <p className="text-indigo-700 text-xs font-semibold mb-1 flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" />
                               Why this matches you
                             </p>
-                            <p className="text-indigo-200 text-xs">• {opp.matchReasons[0]}</p>
+                            <p className="text-indigo-600 text-xs">• {opp.matchReasons[0]}</p>
                           </div>
                         )}
 
                         {/* Meta Info */}
-                        <div className="flex flex-wrap gap-2 text-xs text-white/70 mb-3">
+                        <div className="flex flex-wrap gap-2 text-xs text-stone-600 mb-3">
                           {opp.location && (
-                            <div className="flex items-center gap-1 bg-slate-700 px-2 py-1 rounded-lg">
+                            <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-lg">
                               <MapPin className="w-3 h-3" />
                               <span>{opp.location}</span>
                             </div>
                           )}
                           {opp.timeCommitment && (
-                            <div className="flex items-center gap-1 bg-slate-700 px-2 py-1 rounded-lg">
+                            <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-lg">
                               <Clock className="w-3 h-3" />
                               <span>{opp.timeCommitment}</span>
                             </div>
                           )}
                           {opp.volunteersNeeded && (
-                            <div className="flex items-center gap-1 bg-slate-700 px-2 py-1 rounded-lg">
+                            <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-lg">
                               <Users className="w-3 h-3" />
                               <span>{opp.volunteersNeeded} needed</span>
                             </div>
@@ -587,15 +587,15 @@ export default function DiscoverOpportunitiesPWA() {
                         {/* Skills */}
                         {opp.requiredSkills && opp.requiredSkills.length > 0 && (
                           <div className="mb-3">
-                            <p className="text-white/70 text-xs mb-1.5 font-medium">Required Skills:</p>
+                            <p className="text-stone-500 text-xs mb-1.5 font-medium">Required Skills:</p>
                             <div className="flex flex-wrap gap-1.5">
                               {opp.requiredSkills.slice(0, 3).map((skill, idx) => (
-                                <span key={idx} className="text-xs px-2.5 py-1 bg-slate-700 text-white rounded-lg font-medium">
+                                <span key={idx} className="text-xs px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg font-medium">
                                   {skill}
                                 </span>
                               ))}
                               {opp.requiredSkills.length > 3 && (
-                                <span className="text-xs px-2.5 py-1 bg-slate-600 text-white/70 rounded-lg">
+                                <span className="text-xs px-2.5 py-1 bg-stone-200 text-stone-600 rounded-lg">
                                   +{opp.requiredSkills.length - 3}
                                 </span>
                               )}
@@ -611,7 +611,7 @@ export default function DiscoverOpportunitiesPWA() {
                               navigate(`/opportunities/${opp.id}/pwa`);
                             }}
                             variant="outline"
-                            className="flex-1 rounded-xl border-slate-600 text-white hover:bg-slate-700"
+                            className="flex-1 rounded-xl border-stone-300 text-stone-700 hover:bg-stone-100"
                           >
                             View Details
                           </Button>

@@ -156,30 +156,14 @@ export default function CSRPWAHeader({
     }
   };
 
-  // Get navigation path for notification (CSR-specific routes)
+  // Get navigation path for notification (MVP routes only)
   const getNotificationPath = (notification: Notification): string => {
-    const { type, relatedEntityType, relatedEntityId } = notification;
+    const { relatedEntityType, relatedEntityId } = notification;
 
-    switch (type) {
-      case 'project_update':
-      case 'project_completed':
-        if (relatedEntityId) {
-          return `/projects/${relatedEntityId}`;
-        }
-        return '/corporate/dashboard/pwa';
-      case 'message':
-        return '/csr-messages/pwa';
-      case 'impact_update':
-      case 'sdg_contribution':
-        return '/csr-impacts';
-      case 'volunteer_joined':
-        return '/team-overview';
-      default:
-        if (relatedEntityType === 'project' && relatedEntityId) {
-          return `/projects/${relatedEntityId}`;
-        }
-        return '/corporate/dashboard/pwa';
+    if (relatedEntityType === 'project' && relatedEntityId) {
+      return `/projects/${relatedEntityId}`;
     }
+    return '/corporate/dashboard/pwa';
   };
 
   // Handle notification click
@@ -209,12 +193,7 @@ export default function CSRPWAHeader({
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/corporate/dashboard/pwa", color: "emerald" },
-    { icon: FolderOpen, label: "Projects", path: "/csr-projects", color: "blue" },
-    { icon: BarChart3, label: "Impacts", path: "/csr-impacts", color: "purple" },
-    { icon: FileText, label: "Reports", path: "/csr-reports", color: "amber" },
-    { icon: Users, label: "Team", path: "/team-overview", color: "sky" },
-    { icon: MessageCircle, label: "Messages", path: "/csr-messages/pwa", color: "pink" },
-    { icon: Settings, label: "Settings", path: "/corporate-partner-profile-settings", color: "slate" },
+    { icon: FileText, label: "Reports", path: "/csr-reports-exports", color: "amber" },
     { icon: HelpCircle, label: "Help", path: "/help", color: "gray" },
   ];
 

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, Search, Bell, Settings, LogOut,
-  User, MessageCircle, ClipboardList, Briefcase,
-  BarChart3, Sparkles, ChevronRight
+  Menu, X, Home, Search, LogOut,
+  ClipboardList, Briefcase,
+  BarChart3, ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -46,11 +46,8 @@ export default function WebHeader({ showSearch = false, transparent = false, act
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/volunteer-dashboard", active: activeTab === 'dashboard' },
     { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects", active: activeTab === 'projects' },
-    { icon: Sparkles, label: "Discover", path: "/discover-opportunities", active: activeTab === 'discover' },
     { icon: ClipboardList, label: "Log Activity", path: "/log-activity", highlight: true },
     { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts", active: activeTab === 'impacts' },
-    { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
-    { icon: User, label: "Profile & Settings", path: "/volunteer-profile-settings", active: activeTab === 'profile' },
   ];
 
   return (
@@ -79,17 +76,6 @@ export default function WebHeader({ showSearch = false, transparent = false, act
                 <Search className="w-5 h-5 text-stone-600" />
               </button>
             )}
-
-            {/* Notifications */}
-            <button
-              onClick={() => navigate('/notifications')}
-              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all"
-            >
-              <Bell className="w-5 h-5 text-stone-600" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
-                3
-              </span>
-            </button>
 
             {/* Profile/Menu Button */}
             <button

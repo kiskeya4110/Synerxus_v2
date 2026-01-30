@@ -62,9 +62,9 @@ export default {
 
         // Brand colors (direct hex values for flexibility)
         brand: {
-          primary: "#0F172A",     // bg-primary
-          secondary: "#1E293B",   // bg-secondary
-          tertiary: "#334155",    // bg-tertiary
+          primary: "#F5F5F4",     // bg-primary (off-white)
+          secondary: "#FFFFFF",   // bg-secondary (white)
+          tertiary: "#E7E5E4",    // bg-tertiary (stone 200)
           indigo: "#6366F1",      // Primary action color
           amber: "#F59E0B",       // Accent/CTA color
           green: "#22C55E",       // Success color
@@ -124,14 +124,14 @@ export default {
 
       // Box shadows
       boxShadow: {
-        'sm': '0 1px 2px rgba(0, 0, 0, 0.3)',
-        'md': '0 4px 6px rgba(0, 0, 0, 0.4)',
-        'lg': '0 10px 15px rgba(0, 0, 0, 0.5)',
-        'xl': '0 20px 25px rgba(0, 0, 0, 0.6)',
-        'glow-primary': '0 0 20px rgba(99, 102, 241, 0.4)',
-        'glow-accent': '0 0 20px rgba(245, 158, 11, 0.4)',
-        'glow-success': '0 0 20px rgba(34, 197, 94, 0.4)',
-        'glow-cyan': '0 0 20px rgba(34, 211, 238, 0.4)',
+        'sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
+        'md': '0 4px 6px rgba(0, 0, 0, 0.07)',
+        'lg': '0 10px 15px rgba(0, 0, 0, 0.1)',
+        'xl': '0 20px 25px rgba(0, 0, 0, 0.15)',
+        'glow-primary': '0 0 20px rgba(99, 102, 241, 0.3)',
+        'glow-accent': '0 0 20px rgba(245, 158, 11, 0.3)',
+        'glow-success': '0 0 20px rgba(34, 197, 94, 0.3)',
+        'glow-cyan': '0 0 20px rgba(34, 211, 238, 0.3)',
       },
 
       // Spacing

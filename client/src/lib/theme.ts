@@ -6,17 +6,18 @@
 export const SynerxusTheme = {
   // Primary Brand Colors
   colors: {
-    primary: '#2A4B7F',           // Deep Synerxus Blue
-    secondary: '#00C389',         // Impact Green
+    primary: '#6366F1',           // Indigo - Primary action
+    secondary: '#22C55E',         // Impact Green
     accent: '#F59E0B',            // Amber accent
 
-    // Neutrals - Updated for better contrast
-    dark: '#0F172A',            // Darker for better contrast
-    darkGray: '#334155',        // Slightly darker for better readability
-    gray: '#475569',            // Darker gray for better contrast (was #6B7280)
-    mediumGray: '#64748B',      // Medium gray for secondary text
-    lightGray: '#CBD5E1',       // Adjusted for better visibility
-    veryLightGray: '#F1F5F9',
+    // Neutrals - Light theme (off-white)
+    dark: '#1C1917',            // Stone 900 - Dark text
+    darkGray: '#57534E',        // Stone 600 - Secondary text
+    gray: '#78716C',            // Stone 500 - Muted text
+    mediumGray: '#A8A29E',      // Stone 400 - Lighter muted
+    lightGray: '#D6D3D1',       // Stone 300 - Borders
+    veryLightGray: '#E7E5E4',   // Stone 200 - Tertiary bg
+    offWhite: '#F5F5F4',        // Stone 100 - Primary bg
     white: '#FFFFFF',
 
     // Status Colors
@@ -28,30 +29,30 @@ export const SynerxusTheme = {
 
   // Gradients
   gradients: {
-    primary: 'linear-gradient(135deg, #2A4B7F 0%, #00C389 100%)',
-    primaryReverse: 'linear-gradient(135deg, #00C389 0%, #2A4B7F 100%)',
-    header: 'linear-gradient(to right, #2A4B7F 0%, #1E3A5F 100%)',
-    card: 'linear-gradient(135deg, rgba(42, 75, 127, 0.05) 0%, rgba(0, 195, 137, 0.05) 100%)',
-    glassmorphism: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%)',
+    primary: 'linear-gradient(135deg, #6366F1 0%, #22C55E 100%)',
+    primaryReverse: 'linear-gradient(135deg, #22C55E 0%, #6366F1 100%)',
+    header: 'linear-gradient(to right, #FFFFFF 0%, #F5F5F4 100%)',
+    card: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(34, 197, 94, 0.03) 100%)',
+    glassmorphism: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%)',
   },
 
   // Shadows
   shadows: {
-    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-    inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
-    glow: '0 0 20px rgba(42, 75, 127, 0.3)',
-    glowGreen: '0 0 20px rgba(0, 195, 137, 0.3)',
+    inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+    glow: '0 0 20px rgba(99, 102, 241, 0.2)',
+    glowGreen: '0 0 20px rgba(34, 197, 94, 0.2)',
   },
 
   // Glassmorphism
   glass: {
-    background: 'rgba(255, 255, 255, 0.85)',
-    backgroundDark: 'rgba(42, 75, 127, 0.85)',
+    background: 'rgba(255, 255, 255, 0.9)',
+    backgroundDark: 'rgba(28, 25, 23, 0.85)',
     blur: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
+    border: '1px solid rgba(0, 0, 0, 0.05)',
   },
 
   // Typography
@@ -126,6 +127,7 @@ export const getCSSVariables = () => {
       --color-accent: ${SynerxusTheme.colors.accent};
       --color-dark: ${SynerxusTheme.colors.dark};
       --color-gray: ${SynerxusTheme.colors.gray};
+      --color-off-white: ${SynerxusTheme.colors.offWhite};
       --color-success: ${SynerxusTheme.colors.success};
       --color-warning: ${SynerxusTheme.colors.warning};
       --color-error: ${SynerxusTheme.colors.error};

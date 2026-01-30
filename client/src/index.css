@@ -4,19 +4,19 @@
 
 /* =====================================================
    SYNERXUS DESIGN SYSTEM v2.0
-   Dark Theme Default - "Turn Volunteer Hours into Audit-Ready ESG Data"
+   Light Theme (Off-White) Default - "Turn Volunteer Hours into Audit-Ready ESG Data"
    ===================================================== */
 
 /* ===== DESIGN TOKENS ===== */
 :root {
-  /* === PRIMARY PALETTE (Dark Theme - DEFAULT) === */
-  --bg-primary: #0F172A;      /* Slate 900 - Main background */
-  --bg-secondary: #1E293B;    /* Slate 800 - Cards, panels */
-  --bg-tertiary: #334155;     /* Slate 700 - Hover states */
-  --text-primary: #F8FAFC;    /* Slate 50 - Primary text */
-  --text-secondary: #94A3B8;  /* Slate 400 - Secondary text */
-  --text-muted: #64748B;      /* Slate 500 - Muted text */
-  --border-color: #334155;    /* Slate 700 - Borders */
+  /* === PRIMARY PALETTE (Light Theme - DEFAULT) === */
+  --bg-primary: #F5F5F4;      /* Stone 100 - Main background (off-white) */
+  --bg-secondary: #FFFFFF;    /* White - Cards, panels */
+  --bg-tertiary: #E7E5E4;     /* Stone 200 - Hover states */
+  --text-primary: #1C1917;    /* Stone 900 - Primary text */
+  --text-secondary: #57534E;  /* Stone 600 - Secondary text */
+  --text-muted: #78716C;      /* Stone 500 - Muted text */
+  --border-color: #D6D3D1;    /* Stone 300 - Borders */
 
   /* === ACCENT COLORS === */
   --primary: #6366F1;         /* Indigo 500 - Primary actions */
@@ -73,10 +73,10 @@
   --radius-xl: 24px;
   --radius: 0.5rem;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
 
   --container-max: 1280px;
   --sidebar-width: 260px;
@@ -87,27 +87,27 @@
   --transition-default: all 0.2s ease;
   --transition-slow: all 0.3s ease;
 
-  /* === SHADCN THEME VARIABLES (Dark Default) === */
-  --background: 222.2 84% 4.9%;      /* Slate 950 */
-  --foreground: 210 40% 98%;          /* Slate 50 */
-  --card: 222.2 47% 11.2%;            /* Slate 900 */
-  --card-foreground: 210 40% 98%;     /* Slate 50 */
-  --popover: 222.2 47% 11.2%;         /* Slate 900 */
-  --popover-foreground: 210 40% 98%;  /* Slate 50 */
+  /* === SHADCN THEME VARIABLES (Light Default) === */
+  --background: 30 6% 96%;            /* Stone 100 (off-white) */
+  --foreground: 24 10% 10%;           /* Stone 900 */
+  --card: 0 0% 100%;                  /* White */
+  --card-foreground: 24 10% 10%;      /* Stone 900 */
+  --popover: 0 0% 100%;               /* White */
+  --popover-foreground: 24 10% 10%;   /* Stone 900 */
   --primary-hsl: 238.7 83.5% 66.7%;   /* Indigo 500 */
-  --primary-foreground: 210 40% 98%;
-  --secondary: 217.2 32.6% 17.5%;     /* Slate 800 */
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;         /* Slate 800 */
-  --muted-foreground: 215 20.2% 65.1%; /* Slate 400 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 30 6% 90%;             /* Stone 200 */
+  --secondary-foreground: 24 10% 10%;
+  --muted: 30 6% 90%;                 /* Stone 200 */
+  --muted-foreground: 24 6% 45%;      /* Stone 500 */
   --accent-hsl: 38 92% 50%;           /* Amber 500 */
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --accent-foreground: 24 10% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
   --success-hsl: 142.1 76.2% 36.3%;   /* Green 500 */
-  --success-foreground: 144 70% 96%;
-  --border: 217.2 32.6% 17.5%;        /* Slate 800 */
-  --input: 217.2 32.6% 17.5%;         /* Slate 800 */
+  --success-foreground: 144 70% 10%;
+  --border: 24 6% 83%;                /* Stone 300 */
+  --input: 24 6% 83%;                 /* Stone 300 */
   --ring: 238.7 83.5% 66.7%;          /* Indigo 500 */
 
   /* Chart colors */
@@ -118,36 +118,36 @@
   --chart-5: 291.1 47.4% 51.2%;  /* Purple */
 
   /* Sidebar colors */
-  --sidebar-background: 222.2 47% 11.2%;
-  --sidebar-foreground: 210 40% 98%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 24 10% 10%;
   --sidebar-primary: 238.7 83.5% 66.7%;
-  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 38 92% 50%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 24 10% 10%;
+  --sidebar-border: 24 6% 83%;
   --sidebar-ring: 238.7 83.5% 66.7%;
 }
 
-/* Light theme override (optional - can be enabled with .light class) */
-.light {
-  --bg-primary: #F8FAFC;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F1F5F9;
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
+/* Dark theme override (optional - can be enabled with .dark class) */
+.dark {
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-tertiary: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  --border-color: #E2E8F0;
+  --border-color: #334155;
 
-  --background: 210 40% 98%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 47% 11.2%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 47% 11.2%;
+  --popover-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
 }
 
 /* ===== BASE STYLES ===== */
@@ -546,6 +546,13 @@
   }
 
   /* Glass effect */
+  .glass-light {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
   .glass-dark {
     background: rgba(30, 41, 59, 0.8);
     backdrop-filter: blur(12px);
@@ -567,18 +574,38 @@
   }
 
   /* Scrollbar styling */
+  .scrollbar-styled::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  /* Legacy class name support */
   .scrollbar-dark::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .scrollbar-dark::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border-radius: 4px;
   }
 
   .scrollbar-dark::-webkit-scrollbar-thumb {
-    background: var(--bg-tertiary);
+    background: var(--border-color);
     border-radius: 4px;
   }
 
@@ -874,32 +901,32 @@ input[type="radio"] {
     /* Circular gradient node - top right */
     radial-gradient(
       ellipse 60% 50% at 85% 15%,
-      rgba(34, 197, 94, 0.15) 0%,
-      rgba(34, 197, 94, 0.05) 40%,
+      rgba(99, 102, 241, 0.08) 0%,
+      rgba(99, 102, 241, 0.03) 40%,
       transparent 70%
     ),
     /* Circular gradient node - bottom left */
     radial-gradient(
       ellipse 50% 60% at 10% 85%,
-      rgba(34, 197, 94, 0.12) 0%,
-      rgba(34, 197, 94, 0.04) 45%,
+      rgba(34, 197, 94, 0.06) 0%,
+      rgba(34, 197, 94, 0.02) 45%,
       transparent 70%
     ),
     /* Circular gradient node - center */
     radial-gradient(
       ellipse 40% 40% at 50% 50%,
-      rgba(34, 197, 94, 0.08) 0%,
+      rgba(245, 158, 11, 0.04) 0%,
       transparent 60%
     ),
-    /* Base gradient from navy to slightly green-tinted navy */
+    /* Base gradient - subtle off-white warmth */
     linear-gradient(
       145deg,
-      #0F172A 0%,
-      #0F1F2A 30%,
-      #0D2620 70%,
-      #0F172A 100%
+      #F5F5F4 0%,
+      #FAFAF9 30%,
+      #F5F5F4 70%,
+      #FAFAF9 100%
     );
-  background-color: #0F172A;
+  background-color: #F5F5F4;
 }
 
 /* ===== PWA SAFE AREA ===== */

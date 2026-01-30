@@ -240,10 +240,10 @@ export default function AdminDashboardPWA() {
   // Show loading while checking admin status
   if (userLoading) {
     return (
-      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-stone-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-spin" />
-          <p className="text-slate-400 text-sm">Checking access...</p>
+          <RefreshCw className="w-12 h-12 text-stone-400 mx-auto mb-4 animate-spin" />
+          <p className="text-stone-500 text-sm">Checking access...</p>
         </div>
       </div>
     );
@@ -252,14 +252,14 @@ export default function AdminDashboardPWA() {
   // Check admin access using database user
   if (!isAdmin) {
     return (
-      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-stone-100 flex items-center justify-center p-4">
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-white text-xl font-bold mb-2">Access Denied</h1>
-          <p className="text-slate-400 text-sm mb-4">You don't have admin privileges.</p>
+          <h1 className="text-stone-900 text-xl font-bold mb-2">Access Denied</h1>
+          <p className="text-stone-500 text-sm mb-4">You don't have admin privileges.</p>
           <button
             onClick={() => navigate('/volunteer-dashboard')}
-            className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
           >
             Go Back
           </button>

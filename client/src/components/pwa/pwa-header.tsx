@@ -366,46 +366,39 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
-        <div className="px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <Logo size="sm" variant="full" theme="light" />
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-2">
-            {/* Refresh Button */}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-              aria-label="Refresh data"
-            >
-              <RefreshCw className={`w-5 h-5 text-stone-600 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-
+        <div className="flex items-center justify-between px-5 py-3.5">
+          {/* Logo — 40% */}
+          <div className="flex-shrink-0" style={{ width: '40%' }}>
+            <Logo size="xs" variant="full" theme="light" />
+          </div>
+          {/* Type label — 30% */}
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
+            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Impact Wallet</span>
+          </div>
+          {/* Actions — 20% */}
+          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '20%' }}>
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-5 h-5 text-stone-600 pointer-events-none" />
+              <Bell className="w-4 h-4 text-stone-500 pointer-events-none" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
-
-            {/* Hamburger Menu Button - Three bar menu */}
+            {/* Hamburger Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-hamburger-menu"
               aria-label="Open navigation menu"
             >
-              <Menu className="w-6 h-6 text-stone-600 pointer-events-none" />
+              <Menu className="w-4 h-4 text-stone-600 pointer-events-none" />
             </button>
           </div>
         </div>

@@ -713,15 +713,22 @@ export default function VolunteerDashboardNew() {
     return (
       <div className="min-h-screen pwa-gradient-bg pb-20">
         {/* Header with Logo and Menu */}
-        <header className="bg-white/90 backdrop-blur-sm border-b border-stone-200 px-4 py-4 sticky top-0 z-30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Logo size="sm" theme="light" />
-              <span className="text-xs text-stone-600 font-medium">Impact Wallet</span>
+        <header className="bg-white/90 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between px-5 py-3.5">
+            {/* Logo — 40% */}
+            <div className="flex-shrink-0" style={{ width: '40%' }}>
+              <Logo size="xs" variant="full" theme="light" />
             </div>
-            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
-              <Menu className="w-5 h-5 text-stone-700" />
-            </button>
+            {/* Type label — 30% */}
+            <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
+              <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Impact Wallet</span>
+            </div>
+            {/* Menu — 20% */}
+            <div className="flex-shrink-0 flex justify-end" style={{ width: '20%' }}>
+              <button className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors touch-manipulation active:scale-95">
+                <Menu className="w-5 h-5 text-stone-600" />
+              </button>
+            </div>
           </div>
         </header>
 

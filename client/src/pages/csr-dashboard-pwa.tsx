@@ -168,21 +168,26 @@ export default function CSRDashboardPWA() {
       {/* Header */}
       <header className="flex-shrink-0 bg-white border-b border-slate-200">
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Logo size="sm" className="flex-shrink-0" />
-            <span className="text-xs text-slate-600 font-medium">ESG Console</span>
+        <div className="flex items-center justify-between px-5 py-3.5">
+          {/* Logo — 40% */}
+          <div className="flex-shrink-0" style={{ width: '40%' }}>
+            <Logo size="xs" className="flex-shrink-0" />
           </div>
-          <div className="flex items-center gap-2">
+          {/* Type label — 30% */}
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">ESG Console</span>
+          </div>
+          {/* Actions — 20% */}
+          <div className="flex-shrink-0 flex justify-end items-center gap-2" style={{ width: '20%' }}>
             <button
               onClick={() => refetch()}
-              className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+              className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors touch-manipulation active:scale-95"
             >
               <RefreshCw className={`w-4 h-4 text-slate-600 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={handleLogout}
-              className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+              className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors touch-manipulation active:scale-95"
             >
               <LogOut className="w-4 h-4 text-slate-600" />
             </button>

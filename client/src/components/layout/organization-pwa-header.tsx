@@ -248,7 +248,7 @@ export default function OrganizationPWAHeader({
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-40 px-4 pb-3 flex items-center justify-between w-full max-w-[428px] mx-auto border-b border-stone-200"
+        className="fixed top-0 left-0 right-0 z-40 w-full max-w-[428px] mx-auto border-b border-stone-200"
         style={{
           background: '#FFFFFF',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
@@ -257,50 +257,42 @@ export default function OrganizationPWAHeader({
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)'
         }}
       >
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Synerxus Logo */}
-          <Logo size="sm" variant="full" theme="light" />
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Refresh Button */}
-          {onRefresh && (
+        <div className="flex items-center justify-between px-5 pb-3">
+          {/* Logo — 40% */}
+          <div className="flex-shrink-0" style={{ width: '40%' }}>
+            <Logo size="xs" variant="full" theme="light" />
+          </div>
+          {/* Type label — 30% */}
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
+            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Verify Hub</span>
+          </div>
+          {/* Actions — 20% */}
+          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '20%' }}>
+            {/* Notifications */}
             <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center shadow-sm hover:bg-stone-200 transition-all disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              onClick={() => setNotificationsOpen(true)}
+              className="relative w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
-              aria-label="Refresh"
+              aria-label="Notifications"
             >
-              <RefreshCw className={`w-5 h-5 text-stone-600 pointer-events-none ${isRefreshing ? 'animate-spin' : ''}`} />
+              <Bell className="w-4 h-4 text-stone-500 pointer-events-none" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center pointer-events-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
-          )}
-
-          {/* Notifications Button */}
-          <button
-            onClick={() => setNotificationsOpen(true)}
-            className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center shadow-sm hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5 text-stone-600 pointer-events-none" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Hamburger Menu Button - Three bar menu */}
-          <button
-            onClick={() => setShowMenu(true)}
-            className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center shadow-sm hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-            aria-label="Open navigation menu"
-            data-testid="button-org-pwa-hamburger-menu"
-          >
-            <Menu className="w-6 h-6 text-stone-600 pointer-events-none" />
-          </button>
+            {/* Hamburger Menu Button */}
+            <button
+              onClick={() => setShowMenu(true)}
+              className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+              aria-label="Open navigation menu"
+              data-testid="button-org-pwa-hamburger-menu"
+            >
+              <Menu className="w-4 h-4 text-stone-600 pointer-events-none" />
+            </button>
+          </div>
         </div>
       </header>
 

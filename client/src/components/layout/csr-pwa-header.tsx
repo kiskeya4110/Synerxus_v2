@@ -201,48 +201,27 @@ export default function CSRPWAHeader({
     <>
       {/* Header */}
       <header
-        className="sticky top-0 z-40 px-3 py-2 shadow-md border-b"
+        className="sticky top-0 z-40 shadow-md border-b"
         style={{
           background: "linear-gradient(100deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #fef3c7 75%, #fde68a 100%)",
           borderColor: "rgba(16, 185, 129, 0.2)",
         }}
       >
-        <div className="flex items-center justify-between max-w-full">
-          {/* Logo */}
-          <Logo size="xs" variant="full" theme="light" />
-
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-2">
-            {/* Refresh Button */}
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                disabled={refreshing}
-                className="w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation active:scale-95"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                <RefreshCw className={`w-4 h-4 text-emerald-600 pointer-events-none ${refreshing ? "animate-spin" : ""}`} />
-              </button>
-            )}
-
-            {/* Notifications */}
-            <button
-              onClick={() => setNotificationsOpen(true)}
-              className="relative w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 cursor-pointer touch-manipulation active:scale-95"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Bell className="w-4 h-4 text-emerald-600 pointer-events-none" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center pointer-events-none">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Hamburger Menu Button - Three bar menu */}
+        <div className="flex items-center justify-between px-5 py-3">
+          {/* Logo — 40% */}
+          <div className="flex-shrink-0" style={{ width: '40%' }}>
+            <Logo size="xs" variant="full" theme="light" />
+          </div>
+          {/* Type label — 30% */}
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
+            <span className="text-[11px] font-semibold text-emerald-600/70 uppercase tracking-widest">ESG Console</span>
+          </div>
+          {/* Actions — 20% */}
+          <div className="flex-shrink-0 flex justify-end items-center gap-1.5" style={{ width: '20%' }}>
+            {/* Hamburger Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
-              className="w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
+              className="w-9 h-9 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Open navigation menu"
               data-testid="button-csr-pwa-hamburger-menu"

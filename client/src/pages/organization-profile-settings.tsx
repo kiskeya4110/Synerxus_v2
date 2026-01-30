@@ -623,12 +623,24 @@ export default function OrganizationProfileSettings() {
 
   // Show loading while user data is loading
   if (userLoading || loadingProfile) {
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-[#faf9f7] pb-20">
+          <OrganizationPWAHeader />
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-stone-500">Loading organization profile...</p>
+          </div>
+          <OrganizationPWANav activeTab="home" />
+        </div>
+      );
+    }
     return (
       <>
         <OrganizationHeader activeTab="settings" />
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading organization profile...</p>
+          <p className="text-stone-500">Loading organization profile...</p>
         </div>
       </>
     );
@@ -636,13 +648,27 @@ export default function OrganizationProfileSettings() {
 
   // Handle case when no userId is found
   if (!userId) {
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-[#faf9f7] pb-20">
+          <OrganizationPWAHeader />
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <Building2 className="h-12 w-12 text-stone-400" />
+            <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
+            <p className="text-stone-600">Please log in to access your organization profile.</p>
+            <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+          </div>
+          <OrganizationPWANav activeTab="home" />
+        </div>
+      );
+    }
     return (
       <>
         <OrganizationHeader activeTab="settings" />
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Building2 className="h-12 w-12 text-muted-foreground" />
-          <h2 className="text-xl font-semibold text-slate-900">Session Expired</h2>
-          <p className="text-slate-600">Please log in to access your organization profile.</p>
+          <Building2 className="h-12 w-12 text-stone-400" />
+          <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
+          <p className="text-stone-600">Please log in to access your organization profile.</p>
           <Button onClick={() => setLocation("/login")}>Go to Login</Button>
         </div>
       </>
@@ -651,13 +677,27 @@ export default function OrganizationProfileSettings() {
 
   // Handle errors
   if (userError || profileError) {
+    if (isMobile) {
+      return (
+        <div className="min-h-screen bg-[#faf9f7] pb-20">
+          <OrganizationPWAHeader />
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <Building2 className="h-12 w-12 text-red-500" />
+            <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
+            <p className="text-stone-600">There was an error loading your profile data.</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+          <OrganizationPWANav activeTab="home" />
+        </div>
+      );
+    }
     return (
       <>
         <OrganizationHeader activeTab="settings" />
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Building2 className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold text-slate-900">Unable to Load Profile</h2>
-          <p className="text-slate-600">There was an error loading your profile data.</p>
+          <Building2 className="h-12 w-12 text-red-500" />
+          <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
+          <p className="text-stone-600">There was an error loading your profile data.</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </>

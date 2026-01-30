@@ -1,30 +1,30 @@
 import { createContext, useContext, useEffect, ReactNode } from "react";
 
 // ============================================================================
-// SYNERXUS MVP - DARK THEME ONLY (No light mode for MVP)
+// SYNERXUS MVP - LIGHT THEME (Off-White) for readable dashboards
 // ============================================================================
 
 interface ThemeContextType {
-  theme: "dark";
+  theme: "light" | "dark";
 }
 
-const ThemeContext = createContext<ThemeContextType>({ theme: "dark" });
+const ThemeContext = createContext<ThemeContextType>({ theme: "light" });
 
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Force dark theme - no toggle in MVP
+  // Force light theme for readable dashboards
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("light");
-    root.classList.add("dark");
-    localStorage.setItem("theme", "dark");
+    root.classList.remove("dark");
+    root.classList.add("light");
+    localStorage.setItem("theme", "light");
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme: "dark" }}>
+    <ThemeContext.Provider value={{ theme: "light" }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    return { theme: "dark" };
+    return { theme: "light" };
   }
   return context;
 };

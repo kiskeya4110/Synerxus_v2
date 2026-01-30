@@ -429,6 +429,20 @@ export default function OrganizationProfile() {
   };
 
   if (loadingProfile) {
+    if (isMobile) {
+      return (
+        <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-stone-100 text-stone-900 flex flex-col overflow-hidden">
+          <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+            <OrganizationPWAHeader />
+            <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+            <main className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </main>
+            <OrganizationPWANav activeTab="home" />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -439,14 +453,14 @@ export default function OrganizationProfile() {
   // Mobile PWA view
   if (isMobile) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-slate-900 text-white flex flex-col overflow-hidden">
+      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-stone-100 text-stone-900 flex flex-col overflow-hidden">
         <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
           <OrganizationPWAHeader />
           <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
           <main className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-2 text-white">Organization Profile</h1>
-              <p className="text-white/70 text-sm">
+              <h1 className="text-2xl font-bold mb-2 text-stone-900">Organization Profile</h1>
+              <p className="text-stone-600 text-sm">
                 Manage your organization profile and settings.
               </p>
             </div>

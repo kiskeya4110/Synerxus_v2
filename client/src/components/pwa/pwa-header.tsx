@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 import type { User as UserType, Notification, VolunteerProfile } from "@shared/schema";
 
 interface PWAHeaderProps {
@@ -361,25 +361,14 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
   return (
     <>
-      {/* Main Header - Dark navy theme */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-[#0F172A] border-b border-slate-700">
+      {/* Main Header - Light off-white theme */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-stone-200">
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
         <div className="px-4 py-3 flex items-center justify-between">
-          {/* Logo - Site approved logo */}
-          <button
-            onClick={() => navigate('/landing')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0 touch-manipulation cursor-pointer"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            <img
-              src={logoUrl}
-              alt="Synerxus"
-              className="h-10 w-auto object-contain pointer-events-none"
-              style={{ objectFit: 'contain', objectPosition: 'left center', maxWidth: '160px' }}
-            />
-          </button>
+          {/* Logo */}
+          <Logo size="sm" variant="full" theme="light" />
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
@@ -387,20 +376,20 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-5 h-5 text-slate-300 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-5 h-5 text-stone-600 pointer-events-none ${refreshing ? 'animate-spin' : ''}`} />
             </button>
 
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-5 h-5 text-slate-300 pointer-events-none" />
+              <Bell className="w-5 h-5 text-stone-600 pointer-events-none" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -411,12 +400,12 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             {/* Hamburger Menu Button - Three bar menu */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all shadow-sm touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-hamburger-menu"
               aria-label="Open navigation menu"
             >
-              <Menu className="w-6 h-6 text-slate-300 pointer-events-none" />
+              <Menu className="w-6 h-6 text-stone-600 pointer-events-none" />
             </button>
           </div>
         </div>
@@ -551,19 +540,19 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           />
 
           {/* Notifications Panel */}
-          <div className="relative w-full max-w-sm bg-slate-900 rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="bg-[#0F172A] border-b border-slate-700 px-4 py-4">
+            <div className="bg-stone-50 border-b border-stone-200 px-4 py-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-white font-semibold text-lg flex items-center gap-2">
+                <h2 className="text-stone-800 font-semibold text-lg flex items-center gap-2">
                   <Bell className="w-5 h-5" />
                   Notifications
                 </h2>
                 <button
                   onClick={() => setNotificationsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors"
+                  className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center hover:bg-stone-300 transition-colors"
                 >
-                  <X className="w-5 h-5 text-slate-300" />
+                  <X className="w-5 h-5 text-stone-600" />
                 </button>
               </div>
               {/* Action Buttons */}

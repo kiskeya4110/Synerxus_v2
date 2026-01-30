@@ -296,7 +296,7 @@ export default function Projects() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-red-400 mb-2">Failed to load user data</p>
-              <p className="text-white/70 text-sm">Please try refreshing the page or logging in again.</p>
+              <p className="text-stone-500 text-sm">Please try refreshing the page or logging in again.</p>
             </div>
           </div>
         </OrganizationPWALayout>
@@ -357,20 +357,20 @@ export default function Projects() {
           {/* MVP Quick Stats Row */}
           <div className="grid grid-cols-4 gap-2">
             <div className="bg-white rounded-xl p-3 border border-slate-200 text-center">
-              <p className="text-lg font-bold text-slate-800">{projects.length}</p>
-              <p className="text-[10px] text-slate-500">Total</p>
+              <p className="text-lg font-bold text-stone-900">{projects.length}</p>
+              <p className="text-xs text-stone-600 font-medium">Total</p>
             </div>
             <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
-              <p className="text-lg font-bold text-emerald-700">{activeProjectsCount}</p>
-              <p className="text-[10px] text-emerald-600">Active</p>
+              <p className="text-lg font-bold text-emerald-800">{activeProjectsCount}</p>
+              <p className="text-xs text-emerald-700 font-medium">Active</p>
             </div>
             <div className="bg-blue-50 rounded-xl p-3 border border-blue-200 text-center">
-              <p className="text-lg font-bold text-blue-700">{completedProjectsCount}</p>
-              <p className="text-[10px] text-blue-600">Done</p>
+              <p className="text-lg font-bold text-blue-800">{completedProjectsCount}</p>
+              <p className="text-xs text-blue-700 font-medium">Done</p>
             </div>
             <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-center">
-              <p className="text-lg font-bold text-purple-700">{totalVolunteers}</p>
-              <p className="text-[10px] text-purple-600">Volunteers</p>
+              <p className="text-lg font-bold text-purple-800">{totalVolunteers}</p>
+              <p className="text-xs text-purple-700 font-medium">Volunteers</p>
             </div>
           </div>
 
@@ -389,7 +389,7 @@ export default function Projects() {
               </button>
             </Link>
             <Link href="/volunteers">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-stone-300 text-stone-800 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-stone-50 active:scale-95 transition-all">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -397,7 +397,7 @@ export default function Projects() {
               </button>
             </Link>
             <Link href="/organization-impact-report">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-stone-300 text-stone-800 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-stone-50 active:scale-95 transition-all">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -405,7 +405,7 @@ export default function Projects() {
               </button>
             </Link>
             <Link href="/sdg-mapping">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-stone-300 text-stone-800 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-stone-50 active:scale-95 transition-all">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
                 </svg>
@@ -416,19 +416,19 @@ export default function Projects() {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-stone-500" />
             <Input
               placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-11 text-sm bg-white border-slate-200 rounded-xl shadow-sm"
+              className="pl-9 h-11 text-sm bg-white border-stone-300 rounded-xl shadow-sm text-stone-900 placeholder:text-stone-400"
             />
           </div>
 
           {/* Section Header */}
           <div className="flex items-center justify-between pt-2">
-            <h2 className="text-sm font-semibold text-white">Your Projects</h2>
-            <span className="text-xs text-white bg-white/20 px-2 py-1 rounded-full">{filteredProjects.length}</span>
+            <h2 className="text-sm font-semibold text-stone-800">Your Projects</h2>
+            <span className="text-xs text-stone-600 bg-stone-200 px-2 py-1 rounded-full">{filteredProjects.length}</span>
           </div>
 
           {/* MVP Project Cards */}
@@ -440,29 +440,29 @@ export default function Projects() {
 
               // Status badge colors
               const statusColors: Record<string, string> = {
-                active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                completed: 'bg-blue-100 text-blue-700 border-blue-200',
-                paused: 'bg-amber-100 text-amber-700 border-amber-200',
-                draft: 'bg-slate-100 text-slate-600 border-slate-200',
+                active: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                completed: 'bg-blue-100 text-blue-800 border-blue-300',
+                paused: 'bg-amber-100 text-amber-800 border-amber-300',
+                draft: 'bg-stone-100 text-stone-700 border-stone-300',
               };
 
               return (
                 <Link key={project.id} href={`/projects/${project.id}`}>
-                  <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all cursor-pointer">
+                  <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all cursor-pointer">
                     {/* Project Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-slate-800 truncate">{project.name}</h3>
+                        <h3 className="text-sm font-semibold text-stone-900 truncate">{project.name}</h3>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusColors[project.status || 'draft'] || statusColors.draft}`}>
                             {project.status || 'draft'}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-stone-600">
                             {metrics.volunteers} volunteer{metrics.volunteers !== 1 ? 's' : ''}
                           </span>
                         </div>
                       </div>
-                      <svg className="h-5 w-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
@@ -470,10 +470,10 @@ export default function Projects() {
                     {/* Progress Bar */}
                     <div className="mt-3 space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Progress</span>
-                        <span className="text-slate-700 font-medium">{progress}%</span>
+                        <span className="text-stone-600">Progress</span>
+                        <span className="text-stone-800 font-medium">{progress}%</span>
                       </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
@@ -488,13 +488,13 @@ export default function Projects() {
                           <div
                             key={sdg}
                             className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white"
-                            style={{ backgroundColor: `hsl(${(sdg * 20) % 360}, 70%, 45%)` }}
+                            style={{ backgroundColor: `hsl(${(sdg * 20) % 360}, 70%, 40%)` }}
                           >
                             {sdg}
                           </div>
                         ))}
                         {(project.sdgGoals as number[]).length > 4 && (
-                          <span className="text-xs text-slate-500 self-center">
+                          <span className="text-xs text-stone-600 self-center">
                             +{(project.sdgGoals as number[]).length - 4}
                           </span>
                         )}
@@ -502,7 +502,7 @@ export default function Projects() {
                     )}
 
                     {/* Quick Stats Row */}
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-stone-200 text-xs text-stone-700">
                       <span className="flex items-center gap-1">
                         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -524,12 +524,12 @@ export default function Projects() {
 
           {/* Empty State */}
           {filteredProjects.length === 0 && (
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Briefcase className="w-7 h-7 text-slate-400" />
+            <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+              <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Briefcase className="w-7 h-7 text-stone-500" />
               </div>
-              <h3 className="text-base font-semibold text-slate-800 mb-1">No projects yet</h3>
-              <p className="text-sm text-slate-500 mb-4">
+              <h3 className="text-base font-semibold text-stone-900 mb-1">No projects yet</h3>
+              <p className="text-sm text-stone-600 mb-4">
                 {searchTerm ? "No projects match your search" : "Create your first project to get started"}
               </p>
               {!searchTerm && canManageProjects && currentUser?.organizationId && (

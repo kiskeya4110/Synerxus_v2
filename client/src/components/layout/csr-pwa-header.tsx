@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 import type { Notification } from "@shared/schema";
 
 interface CSRPWAHeaderProps {
@@ -166,7 +166,7 @@ export default function CSRPWAHeader({
         if (relatedEntityId) {
           return `/projects/${relatedEntityId}`;
         }
-        return '/csr-dashboard/pwa';
+        return '/corporate/dashboard/pwa';
       case 'message':
         return '/csr-messages/pwa';
       case 'impact_update':
@@ -178,7 +178,7 @@ export default function CSRPWAHeader({
         if (relatedEntityType === 'project' && relatedEntityId) {
           return `/projects/${relatedEntityId}`;
         }
-        return '/csr-dashboard/pwa';
+        return '/corporate/dashboard/pwa';
     }
   };
 
@@ -208,7 +208,7 @@ export default function CSRPWAHeader({
   };
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/csr-dashboard/pwa", color: "emerald" },
+    { icon: Home, label: "Dashboard", path: "/corporate/dashboard/pwa", color: "emerald" },
     { icon: FolderOpen, label: "Projects", path: "/csr-projects", color: "blue" },
     { icon: BarChart3, label: "Impacts", path: "/csr-impacts", color: "purple" },
     { icon: FileText, label: "Reports", path: "/csr-reports", color: "amber" },
@@ -230,18 +230,7 @@ export default function CSRPWAHeader({
       >
         <div className="flex items-center justify-between max-w-full">
           {/* Logo */}
-          <button
-            onClick={() => navigate("/landing")}
-            className="flex items-center gap-1.5 flex-shrink-0 touch-manipulation active:opacity-70"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            <img
-              src={logoUrl}
-              alt="Synerxus"
-              className="h-8 w-auto object-contain pointer-events-none"
-              style={{ filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))", objectFit: 'contain', maxWidth: '150px' }}
-            />
-          </button>
+          <Logo size="xs" variant="full" theme="light" />
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">

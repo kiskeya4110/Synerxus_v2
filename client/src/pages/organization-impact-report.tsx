@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import {
   Select,
@@ -848,15 +849,25 @@ export default function OrganizationImpactReport() {
 
   // Handle no user logged in
   if (!storedUserId) {
+    if (isOrganizationForLayout && isMobile && !isViewportLoading) {
+      return (
+        <OrganizationPWALayout activeTab="impact">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-stone-600 mb-2">Please log in to view impact reports</p>
+              <Button onClick={() => setLocation("/landing")}>Go to Login</Button>
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         {isOrganizationForLayout && <OrganizationNav />}
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-gray-600 mb-2">Please log in to view impact reports</p>
-            <Button onClick={() => setLocation("/landing")}>
-              Go to Login
-            </Button>
+            <p className="text-stone-600 mb-2">Please log in to view impact reports</p>
+            <Button onClick={() => setLocation("/landing")}>Go to Login</Button>
           </div>
         </div>
       </div>
@@ -865,24 +876,36 @@ export default function OrganizationImpactReport() {
 
   // Render access denied UI if not authorized (but user is logged in)
   if (!userLoading && currentUser && !isOrganizationManager) {
+    if (isOrganizationForLayout && isMobile && !isViewportLoading) {
+      return (
+        <OrganizationPWALayout activeTab="impact">
+          <div className="p-4 flex items-center justify-center">
+            <Card className="w-full max-w-md shadow-lg border-2 border-red-200">
+              <CardContent className="p-8 text-center">
+                <h1 className="text-2xl font-bold text-stone-900 mb-2">Access Denied</h1>
+                <p className="text-stone-600 mb-6">
+                  Organization Impact Reports can only be accessed by organization managers.
+                </p>
+                <Button onClick={() => setLocation("/organization-dashboard")} className="w-full">
+                  Return to Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         {isOrganizationForLayout && <OrganizationNav />}
         <div className="p-4 md:p-8 flex items-center justify-center">
-          <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
+          <Card className="w-full max-w-md shadow-lg border-2 border-red-200">
             <CardContent className="p-8 text-center">
-              <div className="mb-4 text-4xl">🔒</div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Access Denied
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Organization Impact Reports can only be accessed by organization
-                managers.
+              <h1 className="text-2xl font-bold text-stone-900 mb-2">Access Denied</h1>
+              <p className="text-stone-600 mb-6">
+                Organization Impact Reports can only be accessed by organization managers.
               </p>
-              <Button
-                onClick={() => setLocation("/organization-dashboard")}
-                className="w-full"
-              >
+              <Button onClick={() => setLocation("/organization-dashboard")} className="w-full">
                 Return to Dashboard
               </Button>
             </CardContent>

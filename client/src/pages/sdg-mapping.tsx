@@ -507,32 +507,70 @@ export default function SDGMapping() {
   }, [organizationSDGs, filteredProjects]);
   
   const isLoading = loadingUser || loadingProjects || loadingImpacts || loadingMetrics;
-  
+
+  const isOrganization = currentUser?.userType === 'organization';
+  // Use localStorage as fallback for PWA layout detection during initial load
+  const userType = localStorage.getItem('userType');
+  const isOrganizationForLayout = isOrganization || userType === 'organization';
+
   if (isLoading) {
+    if (isOrganizationForLayout && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="sdgs">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
+
   // Empty state when organization hasn't selected SDGs in Settings
   if (sdgData.length === 0) {
+    if (isOrganizationForLayout && isMobile) {
+      return (
+        <OrganizationPWALayout activeTab="sdgs">
+          <div className="p-4">
+            <div className="mb-4">
+              <h1 className="text-xl font-bold text-stone-900">SDG Mapping</h1>
+              <p className="text-sm text-stone-600">
+                Connect volunteer activities to Sustainable Development Goals
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+              <BarChart className="h-16 w-16 text-stone-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-stone-900">No SDGs Selected</h3>
+              <p className="text-stone-600 text-center max-w-md mx-auto mb-4">
+                Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
+              </p>
+              <Link href="/organization-profile">
+                <Button>Go to Settings</Button>
+              </Link>
+            </div>
+          </div>
+        </OrganizationPWALayout>
+      );
+    }
     return (
       <div className="h-screen overflow-y-auto pb-36">
         <OrganizationNav />
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">SDG Mapping</h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <h1 className="text-xl sm:text-2xl font-bold text-stone-900">SDG Mapping</h1>
+            <p className="text-sm sm:text-base text-stone-600">
               Connect volunteer activities to Sustainable Development Goals and track impact
             </p>
           </div>
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <BarChart className="h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">No SDGs Selected</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
+              <BarChart className="h-16 w-16 text-stone-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-stone-900">No SDGs Selected</h3>
+              <p className="text-stone-600 text-center max-w-md mb-4">
                 Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
               </p>
               <Link href="/organization-profile">
@@ -544,11 +582,6 @@ export default function SDGMapping() {
       </div>
     );
   }
-  
-  const isOrganization = currentUser?.userType === 'organization';
-  // Use localStorage as fallback for PWA layout detection during initial load
-  const userType = localStorage.getItem('userType');
-  const isOrganizationForLayout = isOrganization || userType === 'organization';
 
   // Wait for viewport detection before rendering layout
   if (isViewportLoading) {

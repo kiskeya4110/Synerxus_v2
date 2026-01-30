@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 
 // Helper function for relative time
 function getRelativeTime(date: Date): string {
@@ -271,30 +271,9 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
         {/* Left: Logo + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Logo */}
-          <button
-            onClick={handleLogoClick}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              paddingRight: '16px',
-              borderRight: '1px solid rgba(30, 58, 138, 0.3)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
-            title="Go to Dashboard"
-          >
-            <img
-              src={logoUrl}
-              alt="Synerxus Logo"
-              style={{ height: '36px', width: 'auto', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))' }}
-            />
-          </button>
+          <div style={{ paddingRight: '16px', borderRight: '1px solid rgba(30, 58, 138, 0.3)' }}>
+            <Logo size="sm" variant="full" theme="light" onClick={handleLogoClick} />
+          </div>
 
           {/* Navigation Tabs - Always visible, responsive sizing */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>

@@ -8,7 +8,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 import type { User as UserType } from "@shared/schema";
 
 interface WebHeaderProps {
@@ -59,25 +59,14 @@ export default function WebHeader({ showSearch = false, transparent = false, act
       <header className={`fixed top-0 left-0 right-0 z-50 ${
         transparent
           ? 'bg-transparent'
-          : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900'
+          : 'bg-white border-b border-stone-200'
       }`}>
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
         <div className="px-4 py-3 flex items-center justify-between">
           {/* Logo */}
-          <button
-            onClick={() => navigate('/landing')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
-          >
-            <div className="relative">
-              <img
-                src={logoUrl}
-                alt="Synerxus"
-                className="h-9 w-auto object-contain brightness-0 invert"
-              />
-            </div>
-          </button>
+          <Logo size="sm" variant="full" theme="light" />
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
@@ -85,18 +74,18 @@ export default function WebHeader({ showSearch = false, transparent = false, act
             {showSearch && (
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-all"
+                className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all"
               >
-                <Search className="w-5 h-5 text-white" />
+                <Search className="w-5 h-5 text-stone-600" />
               </button>
             )}
 
             {/* Notifications */}
             <button
               onClick={() => navigate('/notifications')}
-              className="relative w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-all"
+              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all"
             >
-              <Bell className="w-5 h-5 text-white" />
+              <Bell className="w-5 h-5 text-stone-600" />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
                 3
               </span>
@@ -105,15 +94,15 @@ export default function WebHeader({ showSearch = false, transparent = false, act
             {/* Profile/Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 transition-all"
             >
-              <Avatar className="h-8 w-8 border-2 border-white/30">
+              <Avatar className="h-8 w-8 border-2 border-stone-200">
                 <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-semibold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <Menu className="w-5 h-5 text-white" />
+              <Menu className="w-5 h-5 text-stone-600" />
             </button>
           </div>
         </div>
@@ -122,12 +111,12 @@ export default function WebHeader({ showSearch = false, transparent = false, act
         {searchOpen && (
           <div className="px-4 pb-3 animate-in slide-in-from-top-2 duration-200">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-400" />
               <input
                 type="text"
                 placeholder="Search opportunities, projects..."
                 autoFocus
-                className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-white/50 outline-none shadow-lg"
+                className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 outline-none shadow-sm"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setSearchOpen(false);
                 }}

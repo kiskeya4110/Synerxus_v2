@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, Search, LogOut,
+  Menu, X, Home, LogOut,
   ClipboardList, Briefcase,
-  BarChart3, ChevronRight
+  ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -12,20 +12,18 @@ import Logo from "@/components/ui/logo";
 import type { User as UserType } from "@shared/schema";
 
 interface WebHeaderProps {
-  showSearch?: boolean;
   transparent?: boolean;
   activeTab?: string;
 }
 
-export default function WebHeader({ showSearch = false, transparent = false, activeTab }: WebHeaderProps) {
+export default function WebHeader({ transparent = false, activeTab }: WebHeaderProps) {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
   // Fetch current user
-  const { data: currentUser } = useQuery<UserType>({
+  const { data: currentUser, isError: isUserError, refetch: refetchUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
@@ -45,9 +43,8 @@ export default function WebHeader({ showSearch = false, transparent = false, act
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/volunteer-dashboard", active: activeTab === 'dashboard' },
-    { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects", active: activeTab === 'projects' },
+    { icon: Briefcase, label: "My Work", path: "/my-work", active: activeTab === 'projects' },
     { icon: ClipboardList, label: "Log Activity", path: "/log-activity", highlight: true },
-    { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts", active: activeTab === 'impacts' },
   ];
 
   return (
@@ -67,13 +64,13 @@ export default function WebHeader({ showSearch = false, transparent = false, act
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
-            {/* Search Button (optional) */}
-            {showSearch && (
+            {/* Retry indicator if user fetch failed */}
+            {isUserError && (
               <button
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all"
+                onClick={() => refetchUser()}
+                className="text-xs text-red-500 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
               >
-                <Search className="w-5 h-5 text-stone-600" />
+                Retry
               </button>
             )}
 
@@ -93,23 +90,6 @@ export default function WebHeader({ showSearch = false, transparent = false, act
           </div>
         </div>
 
-        {/* Search Expandable Bar */}
-        {searchOpen && (
-          <div className="px-4 pb-3 animate-in slide-in-from-top-2 duration-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-400" />
-              <input
-                type="text"
-                placeholder="Search opportunities, projects..."
-                autoFocus
-                className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 outline-none shadow-sm"
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setSearchOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Slide-out Menu */}
@@ -122,7 +102,7 @@ export default function WebHeader({ showSearch = false, transparent = false, act
           />
 
           {/* Menu Panel */}
-          <div className="relative ml-auto w-[85%] max-w-sm h-full bg-white dark:bg-slate-900 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+          <div className="relative ml-auto w-[85%] max-w-sm h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
             {/* Menu Header */}
             <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-5 py-6 pt-[max(1.5rem,calc(env(safe-area-inset-top)+0.5rem))]">
               <div className="flex items-center justify-between mb-4">
@@ -165,42 +145,42 @@ export default function WebHeader({ showSearch = false, transparent = false, act
                   }}
                   className={`w-full flex items-center gap-4 px-5 py-3.5 transition-colors text-left ${
                     item.highlight
-                      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-emerald-50 text-emerald-600'
                       : item.active
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-stone-700 hover:bg-stone-50'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     item.highlight
-                      ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                      ? 'bg-emerald-100'
                       : item.active
-                        ? 'bg-blue-100 dark:bg-blue-900/40'
-                        : 'bg-slate-100 dark:bg-slate-800'
+                        ? 'bg-blue-100'
+                        : 'bg-stone-100'
                   }`}>
                     <item.icon className={`w-5 h-5 ${
                       item.highlight
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-emerald-600'
                         : item.active
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-slate-600 dark:text-slate-400'
+                          ? 'text-blue-600'
+                          : 'text-stone-600'
                     }`} />
                   </div>
                   <span className="font-medium flex-1">{item.label}</span>
                   <ChevronRight className={`w-5 h-5 ${
                     item.highlight || item.active
                       ? 'opacity-60'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-stone-400'
                   }`} />
                 </button>
               ))}
             </div>
 
             {/* Logout Button */}
-            <div className="border-t border-slate-200 dark:border-slate-700 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="border-t border-stone-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
                 <span>Sign Out</span>

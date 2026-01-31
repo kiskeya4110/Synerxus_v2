@@ -30,10 +30,10 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-400 border-t border-amber-300/30 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-50 via-violet-50 to-purple-50 border-t border-purple-200 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
       style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="flex justify-around items-center">
+      <div className="grid grid-cols-5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -42,12 +42,12 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
             <button
               key={item.id}
               onClick={() => handleNavClick(item)}
-              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                isActive ? 'text-amber-900' : 'text-amber-700'
+              className={`flex flex-col items-center justify-center py-1 w-full rounded transition-all ${
+                isActive ? 'text-purple-800 bg-purple-100' : 'text-stone-500 hover:text-purple-600'
               }`}
               data-testid={`csr-nav-${item.id}`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-amber-900' : 'text-amber-700'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-purple-700' : 'text-stone-500'}`} />
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>
           );
@@ -70,24 +70,24 @@ export function CSRMobileHeader({ title, companyName, showBackButton, onBack }: 
 
   return (
     <header
-      className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-3 pb-2 flex items-center justify-between sticky top-0 z-50 shadow-lg"
+      className="bg-gradient-to-r from-purple-50 via-violet-50 to-purple-100 text-purple-900 px-3 pb-2 flex items-center justify-between sticky top-0 z-50 shadow-lg"
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
     >
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button
             onClick={onBack || (() => navigate('/csr-dashboard'))}
-            className="p-1 hover:bg-amber-600/10 rounded"
+            className="p-1 hover:bg-purple-600/10 rounded"
           >
-            <svg className="w-5 h-5 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         )}
-        <span className="font-semibold text-sm truncate max-w-[180px] text-amber-900">{title}</span>
+        <span className="font-semibold text-sm truncate max-w-[180px] text-purple-900">{title}</span>
       </div>
       {companyName && (
-        <div className="text-[10px] text-amber-700 truncate max-w-[100px]">{companyName}</div>
+        <div className="text-[10px] text-purple-700 truncate max-w-[100px]">{companyName}</div>
       )}
     </header>
   );

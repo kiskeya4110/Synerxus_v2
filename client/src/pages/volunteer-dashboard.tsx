@@ -13,7 +13,7 @@ import { StaggerContainer, StaggerItem } from "@/components/ui/animated-containe
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
 import ImpactStreak from "@/components/dashboard/impact-streak";
-import ProjectCard from "@/components/dashboard/project-card";
+import ProjectCard, { ProjectCardSkeleton } from "@/components/dashboard/project-card";
 import TaskTable, { Task } from "@/components/dashboard/task-table";
 import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
 import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
@@ -1459,14 +1459,18 @@ export default function Dashboard() {
 
   if (loadingDashboard || loadingProjects) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 md:p-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-96" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <ProjectCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

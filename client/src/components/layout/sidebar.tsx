@@ -37,7 +37,7 @@ export default function Sidebar() {
   const userId = useCurrentUserId();
 
   // Fetch current user to determine role
-  const { data: currentUser } = useQuery<User>({
+  const { data: currentUser, isError: isUserError, refetch: refetchUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
@@ -63,13 +63,36 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sidebarOpen, setSidebarOpen]);
 
+  // Show error state with retry if user fetch fails
+  if (isUserError) {
+    return (
+      <aside
+        id="sidebar"
+        className={cn(
+          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white shadow-md pt-16 overflow-y-auto",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground mb-3">Failed to load navigation</p>
+          <button
+            onClick={() => refetchUser()}
+            className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
   // Show minimal shell if userType is not set
   if (!currentUser?.userType) {
     return (
       <aside 
         id="sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white shadow-md pt-16 overflow-y-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -80,7 +103,7 @@ export default function Sidebar() {
             </div>
           </Link>
           <div className="text-center py-8">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Complete your profile to access all features
             </p>
             <div className="space-y-2">
@@ -99,37 +122,77 @@ export default function Sidebar() {
 
   const userType = currentUser.userType;
 
-  // Volunteer-specific navigation
-  const volunteerNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/achievements", label: "Achievements", icon: <Award className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+  // Volunteer-specific navigation (grouped)
+  const volunteerNavSections = [
+    {
+      label: null,
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "Activity",
+      items: [
+        { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "Progress",
+      items: [
+        { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/achievements", label: "Achievements", icon: <Award className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "More",
+      items: [
+        { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
   ];
 
-  // Organization-specific navigation
-  const organizationNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organization-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/applications", label: "Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organization-leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+  // Organization-specific navigation (grouped)
+  const organizationNavSections = [
+    {
+      label: null,
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/organization-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "Manage",
+      items: [
+        { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/applications", label: "Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "Analytics",
+      items: [
+        { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
+    {
+      label: "More",
+      items: [
+        { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/organization-leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+      ],
+    },
   ];
 
-  const navItems = userType === 'organization' ? organizationNavItems : volunteerNavItems;
+  const navSections = userType === 'organization' ? organizationNavSections : volunteerNavSections;
 
   return (
     <>
@@ -144,30 +207,39 @@ export default function Sidebar() {
       <aside 
         id="sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white shadow-md pt-16 overflow-y-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <nav className="px-4 py-6">
-            <div className="space-y-1">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-3 min-h-[44px] text-sm font-medium rounded-lg transition-colors",
-                    (location === item.href || (item.href === '/my-work' && (location === '/my-applications' || location === '/assignments' || location === '/my-tasks')))
-                      ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400" 
-                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  )}
-                  onClick={() => setSidebarOpen(false)}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {item.icon}
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              ))}
-            </div>
+        <nav className="px-4 py-4">
+            {navSections.map((section, sectionIndex) => (
+              <div key={section.label || 'top'} className={sectionIndex > 0 ? "mt-4 pt-3 border-t border-stone-100" : ""}>
+                {section.label && (
+                  <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-stone-400">
+                    {section.label}
+                  </p>
+                )}
+                <div className="space-y-0.5">
+                  {section.items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center px-3 py-3 min-h-[44px] text-sm font-medium rounded-lg transition-colors",
+                        (location === item.href || (item.href === '/my-work' && (location === '/my-applications' || location === '/assignments' || location === '/my-tasks')))
+                          ? "bg-primary-50 text-primary-700"
+                          : "text-stone-700 hover:bg-stone-100"
+                      )}
+                      onClick={() => setSidebarOpen(false)}
+                      data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {item.icon}
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
         </nav>
       </aside>
 

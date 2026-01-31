@@ -20,6 +20,9 @@ import {
   Menu,
   Search,
   User,
+  X,
+  LogOut,
+  Briefcase,
 } from "lucide-react";
 
 // UI Components
@@ -541,7 +544,7 @@ function ImpactStreakCard({ currentStreak, longestStreak, lastLogDate }: StreakP
 // Main Dashboard Component
 // ============================================================================
 export default function VolunteerDashboardNew() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
@@ -551,6 +554,7 @@ export default function VolunteerDashboardNew() {
 
   const [showLogModal, setShowLogModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Redirect non-volunteers
   useEffect(() => {
@@ -725,12 +729,94 @@ export default function VolunteerDashboardNew() {
             </div>
             {/* Menu — 20% */}
             <div className="flex-shrink-0 flex justify-end" style={{ width: '20%' }}>
-              <button className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors touch-manipulation active:scale-95">
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors touch-manipulation active:scale-95"
+                aria-label="Open navigation menu"
+              >
                 <Menu className="w-5 h-5 text-stone-600" />
               </button>
             </div>
           </div>
         </header>
+
+        {/* Slide-out Menu */}
+        {menuOpen && (
+          <div className="fixed inset-0 z-[100] flex">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="relative ml-auto w-[75%] max-w-[280px] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+              {/* Header */}
+              <div className="bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white/60 text-xs font-medium">Menu</span>
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Avatar className="h-10 w-10 border-2 border-white/30 shadow-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-base font-semibold">
+                      {(activeUser?.displayName || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">
+                      {activeUser?.displayName || activeUser?.username || 'Volunteer'}
+                    </p>
+                    <p className="text-white/60 text-xs truncate">
+                      {activeUser?.email || ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Items */}
+              <div className="flex-1 overflow-y-auto py-1.5">
+                {[
+                  { icon: Home, label: "Dashboard", action: () => { setMenuOpen(false); setMobileTab('home'); } },
+                  { icon: BarChart3, label: "Impact Wallet", action: () => { setMenuOpen(false); setMobileTab('wallet'); } },
+                  { icon: Target, label: "My Projects", action: () => { setMenuOpen(false); setMobileTab('projects'); } },
+                  { icon: Plus, label: "Log Impact", action: () => { setMenuOpen(false); setShowLogModal(true); } },
+                  { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); navigate('/my-work'); } },
+                  { icon: FileText, label: "Log Activity", action: () => { setMenuOpen(false); navigate('/log-activity'); } },
+                ].map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={item.action}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left text-stone-700 hover:bg-stone-50"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-stone-600" />
+                    </div>
+                    <span className="font-medium text-sm flex-1">{item.label}</span>
+                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Logout */}
+              <div className="border-t border-stone-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <button
+                  onClick={async () => {
+                    setMenuOpen(false);
+                    await signOut();
+                    navigate('/');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-50 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="px-4 py-5 space-y-5">
@@ -1032,13 +1118,13 @@ export default function VolunteerDashboardNew() {
         </main>
 
         {/* Bottom Navigation Tray - 5 tabs with Home in middle */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-          <div className="flex justify-around items-center max-w-md mx-auto">
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="grid grid-cols-5 max-w-md mx-auto">
             {/* Wallet */}
             <button
               onClick={() => setMobileTab('wallet')}
-              className={`flex flex-col items-center py-2 px-3 rounded-xl transition-colors ${
-                mobileTab === 'wallet' ? 'text-indigo-600 bg-indigo-50' : 'text-stone-500 hover:text-indigo-600 hover:bg-stone-100'
+              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl transition-colors ${
+                mobileTab === 'wallet' ? 'text-emerald-700 bg-emerald-100' : 'text-stone-500 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
               <BarChart3 className="w-5 h-5 mb-1" />
@@ -1048,8 +1134,8 @@ export default function VolunteerDashboardNew() {
             {/* Projects (AI-matched top 4) */}
             <button
               onClick={() => setMobileTab('projects')}
-              className={`flex flex-col items-center py-2 px-3 rounded-xl transition-colors ${
-                mobileTab === 'projects' ? 'text-indigo-600 bg-indigo-50' : 'text-stone-500 hover:text-indigo-600 hover:bg-stone-100'
+              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl transition-colors ${
+                mobileTab === 'projects' ? 'text-emerald-700 bg-emerald-100' : 'text-stone-500 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
               <Target className="w-5 h-5 mb-1" />
@@ -1059,8 +1145,8 @@ export default function VolunteerDashboardNew() {
             {/* Home - Primary Center Button */}
             <button
               onClick={() => setMobileTab('home')}
-              className={`flex flex-col items-center py-2 px-5 rounded-xl shadow-md -mt-3 transition-colors ${
-                mobileTab === 'home' ? 'bg-indigo-600 text-white' : 'bg-stone-200 text-stone-600 hover:bg-indigo-600 hover:text-white'
+              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl shadow-md -mt-3 transition-colors ${
+                mobileTab === 'home' ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-600 hover:bg-emerald-600 hover:text-white'
               }`}
             >
               <Home className="w-6 h-6 mb-0.5" />
@@ -1070,7 +1156,7 @@ export default function VolunteerDashboardNew() {
             {/* Log Impact */}
             <button
               onClick={() => setShowLogModal(true)}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-stone-100 transition-colors"
+              className="flex flex-col items-center justify-center py-2 w-full rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
             >
               <Plus className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-semibold">Log</span>
@@ -1079,7 +1165,7 @@ export default function VolunteerDashboardNew() {
             {/* History */}
             <button
               onClick={() => navigate('/my-work')}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-stone-100 transition-colors"
+              className="flex flex-col items-center justify-center py-2 w-full rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
             >
               <FileText className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-semibold">History</span>

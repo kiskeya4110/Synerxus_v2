@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, Settings, MessageCircle, LogOut,
+  Menu, X, Home, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
-  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy,
+  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen,
   Target, Heart, FileText, Users, FolderOpen, RefreshCw, Shield, Trash2
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -195,7 +195,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
       case 'project_update':
         return { icon: Briefcase, color: 'purple', bg: 'bg-purple-500' };
       case 'message':
-        return { icon: MessageCircle, color: 'indigo', bg: 'bg-indigo-500' };
+        return { icon: Bell, color: 'indigo', bg: 'bg-indigo-500' };
       case 'volunteer_joined':
         return { icon: Users, color: 'teal', bg: 'bg-teal-500' };
       case 'project_completed':
@@ -347,14 +347,11 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/volunteer-dashboard?tab=dashboard" },
     { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects" },
-    { icon: Sparkles, label: "Discover", path: "/discover-opportunities/pwa" },
+    { icon: Sparkles, label: "Discover", path: "/volunteer-dashboard?tab=potential" },
     { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, isLogActivity: true },
-    { icon: BarChart3, label: "My Impact", path: "/impact-report" },
-    { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
-    { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
-    { icon: BookOpen, label: "Stories", path: "/stories" },
+    { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts" },
+    { icon: BookOpen, label: "Stories", path: "/volunteer-dashboard?tab=stories" },
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
-    { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
     // Admin dashboard - only shown for admin users (uses PWA version on mobile)
     ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin/dashboard/pwa", isAdmin: true }] : []),
   ];

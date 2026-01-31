@@ -9,11 +9,11 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: "bg-card border-border shadow-md",
-        glass: "bg-card/80 backdrop-blur-sm border-white/10 shadow-lg",
+        glass: "bg-card/80 backdrop-blur-sm border-stone-200/50 shadow-lg",
         elevated: "bg-card border-border shadow-xl hover:shadow-2xl",
         outline: "bg-transparent border-border",
         ghost: "bg-transparent border-transparent",
-        metric: "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-md",
+        metric: "bg-white border-stone-200 shadow-md",
       },
       interactive: {
         true: "cursor-pointer hover:border-primary/50 hover:shadow-glow-primary/20 active:scale-[0.99]",
@@ -168,7 +168,7 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
             )}
           </div>
           {icon && (
-            <div className="p-2 rounded-lg bg-gray-100 dark:bg-white/10">
+            <div className="p-2 rounded-lg bg-stone-100">
               {icon}
             </div>
           )}

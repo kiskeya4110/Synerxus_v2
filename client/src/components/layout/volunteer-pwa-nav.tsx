@@ -74,8 +74,8 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
-        <div className="flex justify-around items-center max-w-md mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+        <div className="grid grid-cols-5 max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
             return (
@@ -94,10 +94,10 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                     }
                   }
                 }}
-                className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
+                className={`flex flex-col items-center justify-center py-1.5 mx-auto w-full rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive
-                    ? 'text-white bg-indigo-600'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                    ? 'text-white bg-emerald-600'
+                    : 'text-stone-600 hover:text-emerald-700 hover:bg-emerald-100'
                 }`}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 data-testid={`nav-${item.id}`}

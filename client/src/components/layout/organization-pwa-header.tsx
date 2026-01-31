@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useAIUDisplay } from "@/hooks/use-feature-flags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
 import type { Notification, User as UserType } from "@shared/schema";
@@ -37,6 +38,7 @@ export default function OrganizationPWAHeader({
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const isAIUEnabled = useAIUDisplay();
   const [showMenu, setShowMenu] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -340,7 +342,7 @@ export default function OrganizationPWAHeader({
                 <div className="flex items-center justify-center gap-3 mt-2 text-xs">
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="font-medium text-slate-700">{metrics.totalAiu?.toLocaleString() || 0} AIU</span>
+                    <span className="font-medium text-slate-700">{metrics.totalAiu?.toLocaleString() || 0} {isAIUEnabled ? 'AIU' : 'Impact'}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <span className="font-medium text-slate-700">{metrics.totalHours?.toLocaleString() || 0} Hrs</span>

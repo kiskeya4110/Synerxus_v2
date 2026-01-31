@@ -51,7 +51,7 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-stone-200 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
       {/* Safe area padding for notched devices */}
       <div className="px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="flex justify-around items-center max-w-lg mx-auto">
@@ -64,7 +64,7 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
                 className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 min-w-[60px] ${
                   isActive
                     ? 'scale-105'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
                 data-testid={`nav-${item.id}`}
               >
@@ -74,10 +74,10 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
                 )}
 
                 {/* Icon with active gradient */}
-                <div className={`relative mb-0.5 ${isActive ? '' : ''}`}>
+                <div className="relative mb-0.5">
                   <item.icon className={`w-5 h-5 ${
                     isActive
-                      ? 'text-blue-600 dark:text-blue-400'
+                      ? 'text-blue-600'
                       : ''
                   }`} />
                 </div>
@@ -85,7 +85,7 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
                 {/* Label */}
                 <span className={`text-[10px] font-medium ${
                   isActive
-                    ? 'text-blue-600 dark:text-blue-400'
+                    ? 'text-blue-600'
                     : ''
                 }`}>
                   {item.label}

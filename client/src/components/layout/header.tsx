@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Bell,
   Search,
-  Moon,
   Menu,
   User,
   Settings,
@@ -218,14 +217,14 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 fixed top-0 left-0 right-0 z-40 w-full safe-area-top shadow-sm">
+    <header className="bg-white/95 backdrop-blur-xl border-b border-stone-200/50 fixed top-0 left-0 right-0 z-40 w-full safe-area-top shadow-sm">
       <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-4 gap-2 md:gap-4 min-w-0 max-w-7xl mx-auto">
         {/* Hamburger Menu - Toggle Sidebar (always visible) */}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0 flex"
+          className="text-stone-500 focus:outline-none flex-shrink-0 flex"
           data-testid="button-hamburger-menu"
           title="Toggle menu"
         >
@@ -268,7 +267,7 @@ export default function Header() {
             variant="ghost" 
             size="sm"
             onClick={handleHomeClick}
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 hidden sm:flex gap-1"
+            className="text-stone-600 hover:bg-stone-100 flex-shrink-0 hidden sm:flex gap-1"
             data-testid="button-home-header"
           >
             <Home className="h-4 w-4" />
@@ -280,7 +279,7 @@ export default function Header() {
         <div className="hidden lg:flex flex-grow max-w-2xl mx-2">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <Search className="h-4 w-4 text-stone-400" />
             </div>
             <Input
               type="text"
@@ -293,23 +292,13 @@ export default function Header() {
         {/* Right Nav Items */}
         <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
           
-          {/* Dark Mode Indicator - MVP is dark-mode only */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-500 dark:text-gray-400 focus:outline-none hidden md:flex cursor-default"
-            title="Dark mode (MVP)"
-          >
-            <Moon className="h-5 w-5" />
-          </Button>
-          
           {/* Notifications Popover - Interactive Panel */}
           <Popover open={notificationPanelOpen} onOpenChange={setNotificationPanelOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-500 dark:text-gray-400 focus:outline-none relative hidden md:flex"
+                className="text-stone-500 focus:outline-none relative hidden md:flex"
                 data-testid="button-notifications"
               >
                 <Bell className="h-5 w-5" />
@@ -323,7 +312,7 @@ export default function Header() {
             <PopoverContent align="end" className="w-96 p-0" sideOffset={8}>
               <div className="flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
                   <h3 className="font-semibold">Notifications</h3>
                   <Badge variant="secondary" className="text-xs">
                     {unreadCount} unread
@@ -333,9 +322,9 @@ export default function Header() {
                 <ScrollArea className="max-h-[350px]">
                   {notifications.length === 0 ? (
                     <div className="p-8 text-center">
-                      <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      <Bell className="h-12 w-12 mx-auto text-stone-300 mb-2" />
+                      <p className="text-sm text-muted-foreground">No notifications yet</p>
+                      <p className="text-xs text-stone-400 mt-1">
                         You'll receive notifications about SDG-matched partners and project updates
                       </p>
                     </div>
@@ -348,13 +337,13 @@ export default function Header() {
                         return (
                           <div
                             key={notification.id}
-                            className={`p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+                            className={`p-3 cursor-pointer hover:bg-stone-50 transition-colors ${!notification.read ? 'bg-blue-50/50' : ''}`}
                             onClick={() => handleNotificationClick(notification)}
                             data-testid={`notification-${notification.id}`}
                           >
                             <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100 dark:bg-blue-900/30">
-                                <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+                                <Bell className="h-4 w-4 text-blue-600" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between">
@@ -365,10 +354,10 @@ export default function Header() {
                                     <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
                                   )}
                                 </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-0.5">
+                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                                   {notification.message}
                                 </p>
-                                <span className="text-xs text-gray-400 mt-1 block">{timeAgo}</span>
+                                <span className="text-xs text-stone-400 mt-1 block">{timeAgo}</span>
                               </div>
                             </div>
                           </div>
@@ -383,7 +372,7 @@ export default function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-blue-600 dark:text-blue-400"
+                      className="w-full text-blue-600"
                       onClick={() => {
                         setNotificationPanelOpen(false);
                         setLocation('/dashboard');

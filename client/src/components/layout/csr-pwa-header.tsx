@@ -192,9 +192,9 @@ export default function CSRPWAHeader({
   };
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/corporate/dashboard/pwa", color: "emerald" },
-    { icon: FileText, label: "Reports", path: "/csr-reports-exports", color: "amber" },
-    { icon: HelpCircle, label: "Help", path: "/help", color: "gray" },
+    { icon: Home, label: "Dashboard", path: "/corporate/dashboard/pwa", bgColor: "bg-emerald-100", textColor: "text-emerald-600" },
+    { icon: FileText, label: "Reports", path: "/csr-reports-exports", bgColor: "bg-amber-100", textColor: "text-amber-600" },
+    { icon: HelpCircle, label: "Help", path: "/help", bgColor: "bg-stone-100", textColor: "text-stone-600" },
   ];
 
   return (
@@ -221,7 +221,7 @@ export default function CSRPWAHeader({
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
-              className="w-9 h-9 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Open navigation menu"
               data-testid="button-csr-pwa-hamburger-menu"
@@ -277,8 +277,8 @@ export default function CSRPWAHeader({
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
                 >
-                  <div className={`w-10 h-10 rounded-lg bg-${item.color}-100 flex items-center justify-center`}>
-                    <item.icon className={`w-5 h-5 text-${item.color}-600`} />
+                  <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}>
+                    <item.icon className={`w-5 h-5 ${item.textColor}`} />
                   </div>
                   <span className="text-sm font-medium text-slate-700">{item.label}</span>
                 </button>

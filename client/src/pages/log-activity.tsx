@@ -470,7 +470,7 @@ export default function LogActivity() {
   const isVolunteer = currentUser?.userType === 'volunteer';
 
   return (
-    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-[#f8f9fa]'}`}>
+    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 pb-24' : 'bg-stone-50'}`}>
       {/* Offline Banner */}
       <OfflineBanner
         isOnline={isOnline}
@@ -485,7 +485,7 @@ export default function LogActivity() {
 
       {/* Back Button */}
       {(!isMobile || !isVolunteer) && (
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 24px 0 24px' }}>
+        <div className="max-w-[1280px] mx-auto px-6 pt-6">
           <Button
             variant="ghost"
             onClick={() => setLocation('/volunteer-dashboard')}

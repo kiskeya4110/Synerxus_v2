@@ -490,7 +490,7 @@ export default function MyWork() {
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading...</p>
+          <p className="text-stone-500">Loading...</p>
         </div>
       </div>
     );
@@ -501,7 +501,7 @@ export default function MyWork() {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-300 mb-4">Please log in to view your work</p>
+          <p className="text-stone-500 mb-4">Please log in to view your work</p>
           <Button onClick={() => setLocation("/landing")} className="bg-indigo-600 hover:bg-indigo-700">
             Go to Login
           </Button>
@@ -516,7 +516,7 @@ export default function MyWork() {
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading...</p>
+          <p className="text-stone-500">Loading...</p>
         </div>
       </div>
     );
@@ -826,7 +826,7 @@ export default function MyWork() {
 
   // Desktop view (original)
   return (
-    <div className={`min-h-screen ${!isOrganizationManager && isMobile === true ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto bg-[#f8f9fa]'}`}>
+    <div className={`min-h-screen ${!isOrganizationManager && isMobile === true ? 'bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col' : 'overflow-y-auto bg-stone-50'}`}>
       {/* Create Project Dialog */}
       {currentUser?.organizationId && (
         <CreateProjectDialog 
@@ -847,38 +847,14 @@ export default function MyWork() {
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 items-center justify-start border-b">
           <button
             onClick={() => setLocation('/overview')}
-            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
-            style={{
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              border: '1px solid #d1d5db',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e5e7eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-            }}
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-stone-100 text-stone-700 border border-stone-300 cursor-pointer hover:bg-stone-200"
             data-testid="button-team-overview"
           >
             Team Overview
           </button>
           <button
             onClick={() => setLocation('/my-tasks')}
-            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
-            style={{
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              border: '1px solid #d1d5db',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e5e7eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-            }}
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-stone-100 text-stone-700 border border-stone-300 cursor-pointer hover:bg-stone-200"
             data-testid="button-my-tasks"
           >
             My Tasks
@@ -889,7 +865,7 @@ export default function MyWork() {
       <div className="max-w-[1400px] mx-auto px-6 pt-6 pb-4 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             {isOrganizationManager
               ? "Manage your organization's projects, tasks, and impact"
               : "Manage your applications, assignments, and tasks in one place"
@@ -949,8 +925,8 @@ export default function MyWork() {
             onClick={() => setLocation('/impact-visualization')}
           >
             <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">Lives Impacted</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()}</p>
+              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide">Lives Impacted</p>
+              <p className="text-2xl font-bold text-red-600 mt-1">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()}</p>
               <p className="text-xs text-gray-500 mt-1">30% weight • View →</p>
             </CardContent>
           </Card>
@@ -962,8 +938,8 @@ export default function MyWork() {
             onClick={() => setLocation('/volunteers')}
           >
             <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Total Hours</p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{Math.round(dashboardData?.totalHours || orgTotalHours || 0).toLocaleString()}</p>
+              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Total Hours</p>
+              <p className="text-2xl font-bold text-purple-600 mt-1">{Math.round(dashboardData?.totalHours || orgTotalHours || 0).toLocaleString()}</p>
               <p className="text-xs text-gray-500 mt-1">35% weight • View →</p>
             </CardContent>
           </Card>
@@ -975,9 +951,9 @@ export default function MyWork() {
             onClick={() => setLocation('/tasks')}
           >
             <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Tasks</p>
+              <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Tasks</p>
               <div className="flex items-baseline gap-1 mt-1">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <p className="text-2xl font-bold text-green-600">
                   {dashboardData?.completedTasks || orgTasks.filter((t: Task) => t.status?.toLowerCase() === 'completed').length}
                 </p>
                 <p className="text-sm text-green-600/60">/{dashboardData?.totalTasks || orgTasks.length}</p>
@@ -997,16 +973,16 @@ export default function MyWork() {
             onClick={() => setLocation('/volunteers')}
           >
             <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Engagement</p>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Engagement</p>
               <div className="mt-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <UsersIcon className="w-4 h-4 text-blue-500" />
-                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{orgTotalVolunteers}</span>
+                  <span className="text-lg font-bold text-blue-600">{orgTotalVolunteers}</span>
                   <span className="text-xs text-gray-500">volunteers</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FolderOpen className="w-4 h-4 text-blue-500" />
-                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{orgTotalProjects}</span>
+                  <span className="text-lg font-bold text-blue-600">{orgTotalProjects}</span>
                   <span className="text-xs text-gray-500">projects</span>
                 </div>
               </div>
@@ -1083,11 +1059,11 @@ export default function MyWork() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {personalizedRecommendations.map((rec: any) => (
-              <Card key={rec.id} className="border-blue-200 dark:border-blue-800 hover:shadow-lg transition-shadow cursor-pointer group" data-testid={`recommendation-${rec.id}`}>
+              <Card key={rec.id} className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group" data-testid={`recommendation-${rec.id}`}>
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-3xl">{rec.icon}</span>
-                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                    <Badge className="bg-blue-100 text-blue-700">
                       <Star className="h-3 w-3 mr-1" />
                       {rec.matchScore}%
                     </Badge>
@@ -1095,14 +1071,14 @@ export default function MyWork() {
                   <h3 className="font-semibold text-sm mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
                     {rec.title}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">
+                  <p className="text-xs text-muted-foreground mb-3 font-medium">
                     {rec.organizationName}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                     {rec.description}
                   </p>
                   <div className="space-y-2 mb-3">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                    <p className="text-xs text-muted-foreground italic">
                       {rec.reason}
                     </p>
                     {rec.skills.length > 0 && (
@@ -1116,7 +1092,7 @@ export default function MyWork() {
                     )}
                   </div>
                   <Link href={`/discover-opportunities?opportunity=${rec.opportunityId}`}>
-                    <Button variant="ghost" size="sm" className="w-full text-blue-600 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-950">
+                    <Button variant="ghost" size="sm" className="w-full text-blue-600 group-hover:bg-blue-50">
                       Explore <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                   </Link>
@@ -1218,16 +1194,16 @@ export default function MyWork() {
         <div className="w-full max-w-[1400px] mx-auto px-6 pb-20 md:pb-4">
           {/* Pending Invitations Alert Banner */}
           {pendingInvitationsCount > 0 && (
-            <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
-              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <AlertTitle className="text-amber-800 dark:text-amber-200">
+            <Alert className="mb-4 border-amber-200 bg-amber-50">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800">
                 You have {pendingInvitationsCount} pending project invitation{pendingInvitationsCount > 1 ? 's' : ''}!
               </AlertTitle>
-              <AlertDescription className="text-amber-700 dark:text-amber-300">
+              <AlertDescription className="text-amber-700">
                 <span>Organizations have invited you to join their projects. </span>
                 <Button
                   variant="link"
-                  className="h-auto p-0 text-amber-800 dark:text-amber-200 font-semibold underline"
+                  className="h-auto p-0 text-amber-800 font-semibold underline"
                   onClick={() => handleTabChange('assignments')}
                 >
                   Review and respond to invitations →

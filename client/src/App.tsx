@@ -48,6 +48,11 @@ const CSRDashboard = lazy(() => import("@/pages/csr-dashboard-new"));
 const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
 const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
 
+// Profile Settings
+const VolunteerProfileSettings = lazy(() => import("@/pages/volunteer-profile-settings"));
+const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
+const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
+
 // Legal pages
 const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
@@ -147,10 +152,12 @@ export default function App() {
           <Route path="/volunteer/log" component={LogActivity} />
           <Route path="/volunteer/log/:projectId" component={LogActivity} />
           <Route path="/volunteer/history" component={MyWork} />
+          <Route path="/volunteer/settings" component={VolunteerProfileSettings} />
           {/* Legacy routes - redirect to new structure */}
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/my-work" component={MyWork} />
           <Route path="/log-activity" component={LogActivity} />
+          <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
 
           {/* ================================================================ */}
           {/* NGO ROUTES - Project Pipeline + Verification Queue */}
@@ -160,6 +167,7 @@ export default function App() {
           <Route path="/ngo/verification" component={NgoVerification} />
           <Route path="/ngo/projects" component={NgoProjects} />
           <Route path="/ngo/log-hours" component={LogVolunteerHours} />
+          <Route path="/ngo/settings" component={OrganizationProfileSettings} />
           {/* Legacy routes - redirect to new structure */}
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/organization-dashboard/pwa" component={OrganizationDashboardPWA} />
@@ -169,6 +177,7 @@ export default function App() {
           <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
+          <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
 
           {/* ================================================================ */}
           {/* CORPORATE ROUTES - ESG Dashboard View */}
@@ -176,11 +185,13 @@ export default function App() {
           <Route path="/corporate/dashboard" component={CSRDashboard} />
           <Route path="/corporate/dashboard/pwa" component={CSRDashboardPWA} />
           <Route path="/corporate/reports" component={CSRReportsExports} />
+          <Route path="/corporate/settings" component={CorporatePartnerProfileSettings} />
           {/* Legacy routes - redirect to new structure */}
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
           <Route path="/csr-dashboard/pwa" component={CSRDashboardPWA} />
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
+          <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
 
           {/* ================================================================ */}
           {/* UTILITY ROUTES */}

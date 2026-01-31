@@ -23,6 +23,7 @@ import {
   X,
   LogOut,
   Briefcase,
+  Settings,
 } from "lucide-react";
 
 // UI Components
@@ -785,6 +786,7 @@ export default function VolunteerDashboardNew() {
                   { icon: Plus, label: "Log Impact", action: () => { setMenuOpen(false); setShowLogModal(true); } },
                   { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); navigate('/my-work'); } },
                   { icon: FileText, label: "Log Activity", action: () => { setMenuOpen(false); navigate('/log-activity'); } },
+                  { icon: Settings, label: "Profile Settings", action: () => { setMenuOpen(false); navigate('/volunteer-profile-settings'); } },
                 ].map((item, index) => (
                   <button
                     key={index}

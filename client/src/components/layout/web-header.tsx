@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, LogOut,
+  Menu, X, Home, LogOut, Settings,
   ClipboardList, Briefcase,
   ChevronRight
 } from "lucide-react";
@@ -45,6 +45,7 @@ export default function WebHeader({ transparent = false, activeTab }: WebHeaderP
     { icon: Home, label: "Dashboard", path: "/volunteer-dashboard", active: activeTab === 'dashboard' },
     { icon: Briefcase, label: "My Work", path: "/my-work", active: activeTab === 'projects' },
     { icon: ClipboardList, label: "Log Activity", path: "/log-activity", highlight: true },
+    { icon: Settings, label: "Profile Settings", path: "/volunteer-profile-settings" },
   ];
 
   return (

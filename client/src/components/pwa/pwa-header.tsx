@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, LogOut,
+  Menu, X, Home, LogOut, Settings,
   ClipboardList, Bell, User, Briefcase, BarChart3,
   Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen,
   Target, Heart, FileText, Users, FolderOpen, RefreshCw, Shield, Trash2
@@ -352,6 +352,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts" },
     { icon: BookOpen, label: "Stories", path: "/volunteer-dashboard?tab=stories" },
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
+    { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
     // Admin dashboard - only shown for admin users (uses PWA version on mobile)
     ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin/dashboard/pwa", isAdmin: true }] : []),
   ];

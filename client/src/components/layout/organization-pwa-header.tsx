@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, LogOut, RefreshCw,
+  Menu, LogOut, RefreshCw, Settings,
   FolderOpen, Users, Target,
   Home, Bell, X,
   Award, Flame,
@@ -243,6 +243,12 @@ export default function OrganizationPWAHeader({
       items: [
         { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours') },
         { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
+      ]
+    },
+    {
+      title: "ACCOUNT",
+      items: [
+        { icon: Settings, label: "Profile Settings", desc: "Manage organization profile", action: () => navigate('/organization-profile-settings') },
       ]
     },
   ];

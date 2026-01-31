@@ -28,10 +28,10 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
 
         // Ghost - No background
-        ghost: "hover:bg-white/10 hover:text-foreground",
+        ghost: "hover:bg-accent hover:text-foreground",
 
-        // Glass - Glassmorphic style
-        glass: "bg-white/10 backdrop-blur-sm border border-white/20 text-foreground hover:bg-white/20",
+        // Glass - Frosted style
+        glass: "bg-stone-100/50 backdrop-blur-sm border border-stone-200 text-foreground hover:bg-stone-200/50",
 
         // Link - Text only
         link: "text-primary underline-offset-4 hover:underline shadow-none",

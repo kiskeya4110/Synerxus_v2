@@ -10,7 +10,7 @@ const textareaVariants = cva(
       variant: {
         default: "border-input hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary",
         filled: "border-transparent bg-secondary hover:bg-secondary/80 focus-visible:bg-secondary focus-visible:ring-2 focus-visible:ring-primary",
-        ghost: "border-transparent bg-transparent hover:bg-white/5 focus-visible:bg-white/5 focus-visible:ring-2 focus-visible:ring-primary",
+        ghost: "border-transparent bg-transparent hover:bg-stone-100 focus-visible:bg-stone-50 focus-visible:ring-2 focus-visible:ring-primary",
         error: "border-destructive bg-destructive/10 focus-visible:ring-2 focus-visible:ring-destructive",
       },
       textareaSize: {

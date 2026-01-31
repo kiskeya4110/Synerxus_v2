@@ -45,20 +45,20 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+        <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-xl font-bold text-stone-900 mb-2">
               Something went wrong
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-stone-600 mb-6">
               We encountered an unexpected error. Please try refreshing the page or go back to the home page.
             </p>
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-left">
-                <p className="text-sm font-mono text-red-800 dark:text-red-300 break-words">
+              <div className="mb-6 p-3 bg-red-50 rounded-lg text-left">
+                <p className="text-sm font-mono text-red-800 break-words">
                   {this.state.error.message}
                 </p>
               </div>

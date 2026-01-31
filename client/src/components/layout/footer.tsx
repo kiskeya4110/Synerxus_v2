@@ -79,7 +79,7 @@ export default function Footer() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-lg bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-lg bg-stone-100 text-muted-foreground hover:text-primary hover:bg-indigo-50 transition-colors"
                     aria-label={link.label}
                   >
                     <Icon className="h-4 w-4" />

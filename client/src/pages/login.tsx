@@ -67,13 +67,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#FDF8F3' }}>
+    <div className="min-h-screen pwa-gradient-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <a href="/" className="inline-block hover:opacity-80 transition-opacity mb-4">
             <Logo size="lg" />
           </a>
-          <p className="text-gray-600 dark:text-gray-400 mt-2 font-medium">
+          <p className="text-stone-600 mt-2 font-medium">
             Connect. Manage. Impact Globally.
           </p>
         </div>
@@ -88,11 +88,11 @@ export default function Login() {
           <CardContent>
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                <h3 className="text-lg font-semibold text-stone-800">
                   Select Your Role
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Choose a role to analyze the dashboard
+                <p className="text-sm text-stone-600 mt-1">
+                  Choose a role to preview the dashboard
                 </p>
               </div>
 
@@ -100,19 +100,19 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
+                className="w-full p-6 h-auto rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 hover:border-emerald-400 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("volunteer")}
                 data-testid="button-select-volunteer"
               >
                 <div className="flex items-start gap-4 w-full">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiHeart className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FiHeart className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-base text-emerald-800 dark:text-emerald-200">
+                    <div className="font-semibold text-base text-emerald-800">
                       Volunteer
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="text-sm text-stone-600 mt-1">
                       View volunteer dashboard and opportunities
                     </div>
                   </div>
@@ -123,19 +123,19 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
+                className="w-full p-6 h-auto rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 hover:border-blue-400 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("organization")}
                 data-testid="button-select-organization"
               >
                 <div className="flex items-start gap-4 w-full">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiGlobe className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FiGlobe className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-base text-blue-800 dark:text-blue-200">
+                    <div className="font-semibold text-base text-blue-800">
                       Organization
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="text-sm text-stone-600 mt-1">
                       View organization dashboard and volunteer management
                     </div>
                   </div>
@@ -146,19 +146,19 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full p-6 h-auto rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
+                className="w-full p-6 h-auto rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-violet-50 hover:border-purple-400 hover:shadow-md transition-all duration-200 text-left group whitespace-normal overflow-visible justify-start [&_svg]:size-auto"
                 onClick={() => handleRoleSelect("corporate-partner")}
                 data-testid="button-select-corporate"
               >
                 <div className="flex items-start gap-4 w-full">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiBriefcase className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FiBriefcase className="w-6 h-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-base text-purple-800 dark:text-purple-200">
+                    <div className="font-semibold text-base text-purple-800">
                       Corporate Partner
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="text-sm text-stone-600 mt-1">
                       View CSR dashboard and employee programs
                     </div>
                   </div>

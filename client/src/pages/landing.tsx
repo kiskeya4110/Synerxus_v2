@@ -696,7 +696,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#faf9f7] flex flex-col overflow-x-hidden w-full max-w-full">
       {/* Navigation - Consistent site-wide header with menu tabs */}
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-emerald-50 via-green-50 to-amber-50 border-b border-emerald-200/50 shadow-sm safe-area-top">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm safe-area-top">
         <div className="container mx-auto px-[5%] sm:px-[8%] py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
           {/* Logo */}
           <Link href="/landing">
@@ -708,22 +708,22 @@ export default function Landing() {
           {/* Center: Navigation Menu - Hidden on mobile */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/landing">
-              <Button variant="ghost" size="sm" className="text-emerald-800 font-semibold hover:bg-emerald-100 rounded-lg bg-emerald-100/60">
+              <Button variant="ghost" size="sm" className="text-indigo-700 font-semibold hover:bg-indigo-50 rounded-lg bg-indigo-50/60">
                 Home
               </Button>
             </Link>
             <Link href="/projects">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
                 Projects
               </Button>
             </Link>
             <Link href="/organizations">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
                 Organizations
               </Button>
             </Link>
             <Link href="/help">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
                 Help
               </Button>
             </Link>
@@ -733,7 +733,7 @@ export default function Landing() {
           <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
+                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
                   My Dashboard
                 </Button>
               </Link>
@@ -743,7 +743,7 @@ export default function Landing() {
                   <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-login-nav">Log In</Button>
                 </Link>
                 <Link href="/login?tab=register" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
                     Sign Up
                   </Button>
                 </Link>
@@ -1035,27 +1035,27 @@ export default function Landing() {
             {/* Compact Info Cards */}
             <div className="space-y-3 sm:space-y-4 w-full relative z-20">
               {/* About Card */}
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200 dark:border-slate-700">
-                <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-400 mb-2">About the SDGs</h3>
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200">
+                <h3 className="text-base sm:text-lg font-bold text-blue-900 mb-2">About the SDGs</h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   17 interlinked global goals adopted by all UN Member States in 2015. Each addresses critical challenges: poverty, inequality, climate change, environmental protection, peace, and justice. Success in one area affects outcomes in others.
                 </p>
               </div>
 
               {/* History Card */}
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200 dark:border-slate-700">
-                <h3 className="text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400 mb-2">Brief History</h3>
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200">
+                <h3 className="text-base sm:text-lg font-bold text-amber-600 mb-2">Brief History</h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   Building on the Millennium Development Goals (2000-2015), the 2030 Agenda was adopted at the UN Summit in September 2015. All 193 member states committed to achieve these goals by 2030 through coordinated global action.
                 </p>
               </div>
 
               {/* Progress Update Card */}
-              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg p-3 sm:p-4 shadow-lg border-2 border-red-200 dark:border-red-800">
-                <h3 className="text-base sm:text-lg font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-3 sm:p-4 shadow-lg border-2 border-red-200">
+                <h3 className="text-base sm:text-lg font-bold text-red-700 mb-2 flex items-center gap-2">
                   <span>⚠️</span> Progress Update
                 </h3>
-                <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+                <ul className="space-y-1 text-xs text-slate-700">
                   <li>• Only <strong>17% of targets on track</strong></li>
                   <li>• <strong>4 years remaining</strong> to achieve 2030 goals</li>
                   <li>• Emissions must be cut <strong>43% by 2030</strong></li>

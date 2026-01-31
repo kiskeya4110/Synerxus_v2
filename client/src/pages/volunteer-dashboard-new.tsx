@@ -830,9 +830,9 @@ export default function VolunteerDashboardNew() {
                           <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
                         </div>
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          log.status === 'verified' ? 'bg-emerald-900/50 text-emerald-400' :
-                          log.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
-                          'bg-amber-900/50 text-amber-400'
+                          log.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                          log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          'bg-amber-100 text-amber-700'
                         }`}>
                           {log.status || 'pending'}
                         </span>

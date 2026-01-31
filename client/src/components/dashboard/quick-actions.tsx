@@ -83,13 +83,13 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
 
   return (
     <Card>
-      <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
+      <CardHeader className="pb-2 border-b border-stone-200">
         <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {actions.map((action) => {
-            const baseClasses = "flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[80px] w-full";
+            const baseClasses = "flex flex-col items-center justify-center p-4 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors duration-150 cursor-pointer min-h-[80px] w-full";
 
             if (action.href) {
               return (

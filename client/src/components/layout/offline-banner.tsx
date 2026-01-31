@@ -36,17 +36,7 @@ export default function OfflineBanner({
   if (showSyncSuccess) {
     return (
       <div
-        style={{
-          backgroundColor: '#dcfce7',
-          borderBottom: '1px solid #22c55e',
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          fontSize: '13px',
-          color: '#166534',
-        }}
+        className="bg-green-100 border-b border-green-500 px-4 py-2 flex items-center justify-center gap-2 text-[13px] text-green-800"
         data-testid="sync-success-banner"
       >
         <Check size={16} />
@@ -58,37 +48,17 @@ export default function OfflineBanner({
   if (!isOnline) {
     return (
       <div
-        style={{
-          backgroundColor: '#fef3c7',
-          borderBottom: '1px solid #f59e0b',
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          fontSize: '13px',
-          color: '#92400e',
-          flexWrap: 'wrap',
-        }}
+        className="bg-amber-100 border-b border-amber-500 px-4 py-2.5 flex items-center justify-center gap-3 text-[13px] text-amber-800 flex-wrap"
         data-testid="offline-banner"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           <WifiOff size={16} />
           <span>
             <strong>Offline Mode:</strong> Activities will be saved locally.
           </span>
         </div>
         {pendingCount > 0 && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '6px',
-            backgroundColor: '#fbbf24',
-            padding: '2px 8px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 600
-          }}>
+          <div className="flex items-center gap-1.5 bg-amber-400 px-2 py-0.5 rounded-full text-xs font-semibold">
             <Clock size={12} />
             <span>{pendingCount} pending</span>
           </div>
@@ -100,21 +70,10 @@ export default function OfflineBanner({
   if (pendingCount > 0) {
     return (
       <div
-        style={{
-          backgroundColor: '#dbeafe',
-          borderBottom: '1px solid #3b82f6',
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          fontSize: '13px',
-          color: '#1e40af',
-          flexWrap: 'wrap',
-        }}
+        className="bg-blue-100 border-b border-blue-500 px-4 py-2.5 flex items-center justify-center gap-3 text-[13px] text-blue-800 flex-wrap"
         data-testid="pending-sync-banner"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           <CloudOff size={16} />
           <span>
             <strong>{pendingCount}</strong> {pendingCount === 1 ? 'activity' : 'activities'} pending sync
@@ -125,13 +84,7 @@ export default function OfflineBanner({
           variant="outline"
           onClick={onSyncNow}
           disabled={isSyncing}
-          style={{
-            height: '28px',
-            fontSize: '12px',
-            backgroundColor: 'white',
-            borderColor: '#3b82f6',
-            color: '#1e40af',
-          }}
+          className="h-7 text-xs bg-white border-blue-500 text-blue-800 hover:bg-blue-50"
         >
           {isSyncing ? (
             <>
@@ -146,7 +99,7 @@ export default function OfflineBanner({
           )}
         </Button>
         {lastSyncAt && (
-          <span style={{ fontSize: '11px', opacity: 0.8 }}>
+          <span className="text-[11px] opacity-80">
             Last sync: {lastSyncAt.toLocaleTimeString()}
           </span>
         )}

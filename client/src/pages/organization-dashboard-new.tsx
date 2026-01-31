@@ -366,7 +366,7 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
       {volunteers.slice(0, 5).map((volunteer) => (
         <div
           key={volunteer.id}
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+          className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
           onClick={() => onViewVolunteer?.(volunteer.id)}
         >
           <UserAvatar src={volunteer.avatar} name={volunteer.name} size="sm" />

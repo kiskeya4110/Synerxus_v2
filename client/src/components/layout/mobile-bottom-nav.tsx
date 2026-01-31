@@ -37,43 +37,26 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
     <>
       <div className="h-16 md:hidden" />
       <nav
-        className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden"
-        style={{
-          background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
-          boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
-        }}
+        className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden bg-gradient-to-r from-stone-50 via-amber-50/50 to-amber-50 shadow-[0_-2px_16px_rgba(0,0,0,0.08)]"
         data-testid="mobile-bottom-nav"
       >
         {NAV_ITEMS.map((item) => {
           const active = isActive(item);
-          
+
           if (item.isCenter) {
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
                 data-testid={`nav-${item.id}`}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  background: active
-                    ? 'linear-gradient(135deg, #14532d 0%, #166534 100%)'
-                    : 'linear-gradient(135deg, #166534 0%, #22c55e 100%)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 12px rgba(22, 101, 52, 0.5)',
-                  transform: 'translateY(-8px)',
-                  transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
-                  minWidth: '60px',
-                  minHeight: '48px',
-                }}
+                className={`flex flex-col items-center gap-0.5 px-3.5 py-2.5 rounded-xl border-none cursor-pointer -translate-y-2 transition-all duration-200 min-w-[60px] min-h-[48px] shadow-lg text-white ${
+                  active
+                    ? 'bg-gradient-to-br from-green-900 to-green-700 shadow-green-700/50'
+                    : 'bg-gradient-to-br from-green-700 to-emerald-500 shadow-green-600/50 hover:shadow-green-600/60'
+                }`}
               >
-                <item.icon size={20} style={{ color: '#ffffff' }} />
-                <span style={{ fontSize: '10px', fontWeight: '600', color: '#ffffff', letterSpacing: '0.3px' }}>
+                <item.icon size={20} />
+                <span className="text-[10px] font-semibold tracking-wide">
                   {item.label}
                 </span>
               </button>
@@ -85,36 +68,16 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
               key={item.id}
               onClick={() => handleNavClick(item)}
               data-testid={`nav-${item.id}`}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '2px',
-                padding: '6px 8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: active ? '#1e293b' : '#64748b',
-                transition: 'all 0.2s ease',
-                minWidth: '52px',
-                minHeight: '48px',
-                borderRadius: '8px',
-              }}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 bg-transparent border-none cursor-pointer transition-all duration-200 min-w-[52px] min-h-[48px] rounded-lg ${
+                active ? 'text-stone-900' : 'text-slate-500'
+              }`}
             >
-              <div
-                style={{
-                  padding: '8px',
-                  borderRadius: '8px',
-                  backgroundColor: active ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <item.icon size={20} strokeWidth={2} style={{ color: active ? '#059669' : '#64748b' }} />
+              <div className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                active ? 'bg-emerald-500/15' : 'bg-transparent'
+              }`}>
+                <item.icon size={20} strokeWidth={2} className={active ? 'text-emerald-600' : 'text-slate-500'} />
               </div>
-              <span style={{ fontSize: '10px', fontWeight: active ? '600' : '500', letterSpacing: '0.2px' }}>
+              <span className={`text-[10px] tracking-wide ${active ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}
               </span>
             </button>

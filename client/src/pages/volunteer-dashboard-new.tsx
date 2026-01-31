@@ -208,7 +208,7 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
                 "flex flex-col items-center gap-1 p-3 rounded-lg border transition-all",
                 formData.outcome === option.value
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-primary/50 hover:bg-white/5"
+                  : "border-border hover:border-primary/50 hover:bg-stone-50"
               )}
             >
               <span className="text-xl">{option.icon}</span>

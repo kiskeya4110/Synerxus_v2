@@ -90,13 +90,13 @@ export default function Help() {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Help Center</h1>
-        <p className="text-gray-600">Find answers to common questions and get support</p>
+        <p className="text-muted-foreground">Find answers to common questions and get support</p>
       </div>
 
       {/* Search */}
       <div className="max-w-xl mx-auto mb-8">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-stone-400" />
           <Input
             placeholder="Search for help..."
             value={searchTerm}
@@ -112,28 +112,28 @@ export default function Help() {
           <CardContent className="pt-6 text-center">
             <Book className="h-8 w-8 mx-auto mb-3 text-primary" />
             <h3 className="font-semibold">Getting Started</h3>
-            <p className="text-sm text-gray-500 mt-1">New to Synerxus?</p>
+            <p className="text-sm text-muted-foreground mt-1">New to Synerxus?</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCategory("Volunteers")}>
           <CardContent className="pt-6 text-center">
             <Users className="h-8 w-8 mx-auto mb-3 text-blue-600" />
             <h3 className="font-semibold">For Volunteers</h3>
-            <p className="text-sm text-gray-500 mt-1">Find opportunities</p>
+            <p className="text-sm text-muted-foreground mt-1">Find opportunities</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCategory("Organizations")}>
           <CardContent className="pt-6 text-center">
             <Building2 className="h-8 w-8 mx-auto mb-3 text-green-600" />
             <h3 className="font-semibold">For Organizations</h3>
-            <p className="text-sm text-gray-500 mt-1">Manage projects</p>
+            <p className="text-sm text-muted-foreground mt-1">Manage projects</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCategory("Corporate Partners")}>
           <CardContent className="pt-6 text-center">
             <Briefcase className="h-8 w-8 mx-auto mb-3 text-purple-600" />
             <h3 className="font-semibold">For Corporate</h3>
-            <p className="text-sm text-gray-500 mt-1">CSR & ESG tools</p>
+            <p className="text-sm text-muted-foreground mt-1">CSR & ESG tools</p>
           </CardContent>
         </Card>
       </div>
@@ -141,7 +141,7 @@ export default function Help() {
       {/* Category Filter */}
       {selectedCategory && (
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm text-gray-500">Filtering by:</span>
+          <span className="text-sm text-muted-foreground">Filtering by:</span>
           <Button
             variant="secondary"
             size="sm"
@@ -176,7 +176,7 @@ export default function Help() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-gray-600">{item.answer}</p>
+                  <p className="text-muted-foreground">{item.answer}</p>
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -184,8 +184,8 @@ export default function Help() {
 
           {filteredFAQs.length === 0 && (
             <div className="text-center py-8">
-              <HelpCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">No matching questions found</p>
+              <HelpCircle className="h-12 w-12 mx-auto mb-4 text-stone-300" />
+              <p className="text-muted-foreground">No matching questions found</p>
               <Button
                 variant="link"
                 onClick={() => { setSearchTerm(""); setSelectedCategory(null); }}
@@ -203,7 +203,7 @@ export default function Help() {
           <div className="text-center">
             <MessageCircle className="h-12 w-12 mx-auto mb-4 text-primary" />
             <h3 className="text-xl font-semibold mb-2">Still need help?</h3>
-            <p className="text-gray-600 mb-4">Our support team is here to assist you</p>
+            <p className="text-muted-foreground mb-4">Our support team is here to assist you</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" className="gap-2">
                 <Mail className="h-4 w-4" />
@@ -223,12 +223,12 @@ export default function Help() {
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <FileText className="h-6 w-6 text-indigo-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold mb-1">Documentation</h3>
-                <p className="text-sm text-gray-600 mb-3">Detailed guides and tutorials</p>
+                <p className="text-sm text-muted-foreground mb-3">Detailed guides and tutorials</p>
                 <Button variant="link" className="p-0 h-auto gap-1" onClick={() => navigate("/sdg-mapping")}>
                   View SDG Mapping Guide <ExternalLink className="h-3 w-3" />
                 </Button>
@@ -239,12 +239,12 @@ export default function Help() {
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Users className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-emerald-100 rounded-lg">
+                <Users className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold mb-1">Community</h3>
-                <p className="text-sm text-gray-600 mb-3">Connect with other users</p>
+                <p className="text-sm text-muted-foreground mb-3">Connect with other users</p>
                 <Button variant="link" className="p-0 h-auto gap-1" onClick={() => navigate("/organizations")}>
                   Browse Organizations <ExternalLink className="h-3 w-3" />
                 </Button>
@@ -267,9 +267,9 @@ export default function Help() {
 
   // Default layout for non-CSR users
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
       {/* Consistent Site Navigation Header */}
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-emerald-50 via-green-50 to-amber-50 border-b border-emerald-200/50 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           {/* Logo */}
           <Link href="/landing">
@@ -281,25 +281,25 @@ export default function Help() {
           {/* Center: Navigation Menu */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/landing">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <Home className="w-4 h-4" />
                 Home
               </Button>
             </Link>
             <Link href="/projects">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <FolderOpen className="w-4 h-4" />
                 Projects
               </Button>
             </Link>
             <Link href="/organizations">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <Building2 className="w-4 h-4" />
                 Organizations
               </Button>
             </Link>
             <Link href="/help">
-              <Button variant="ghost" size="sm" className="text-emerald-800 font-semibold bg-emerald-100/60 hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-indigo-700 font-semibold bg-indigo-50/60 hover:bg-indigo-50 rounded-lg gap-1">
                 <HelpCircle className="w-4 h-4" />
                 Help
               </Button>
@@ -309,18 +309,18 @@ export default function Help() {
           {/* Right: Auth Actions */}
           <div className="flex gap-2">
             {userId ? (
-              <Button size="sm" onClick={() => navigate(userType === 'volunteer' ? '/volunteer-dashboard' : userType === 'organization' ? '/organization-dashboard' : '/csr-dashboard')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg">
+              <Button size="sm" onClick={() => navigate(userType === 'volunteer' ? '/volunteer-dashboard' : userType === 'organization' ? '/organization-dashboard' : '/csr-dashboard')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">
                 My Dashboard
               </Button>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="sm" variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 rounded-lg">
+                  <Button size="sm" variant="outline" className="border-stone-300 text-stone-700 hover:bg-indigo-50 rounded-lg">
                     Log In
                   </Button>
                 </Link>
                 <Link href="/login?tab=register">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
                     Sign Up
                   </Button>
                 </Link>

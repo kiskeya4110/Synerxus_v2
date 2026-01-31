@@ -104,7 +104,7 @@ export default function VolunteerNav() {
                         "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                         isActive
                           ? "bg-primary text-primary-foreground shadow-md"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -132,7 +132,7 @@ export default function VolunteerNav() {
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-[10px] font-bold flex items-center justify-center text-slate-900">
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-[10px] font-bold flex items-center justify-center text-stone-900">
                 3
               </span>
             </Button>
@@ -143,8 +143,8 @@ export default function VolunteerNav() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className={cn(
                   "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all",
-                  "hover:bg-white/5",
-                  menuOpen && "bg-white/10"
+                  "hover:bg-stone-100",
+                  menuOpen && "bg-stone-100"
                 )}
               >
                 <Avatar size="sm" ring={menuOpen ? "primary" : "none"}>
@@ -212,7 +212,7 @@ export default function VolunteerNav() {
                                 "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
                                 isActive
                                   ? "bg-primary/10 text-primary"
-                                  : "text-foreground hover:bg-white/5"
+                                  : "text-foreground hover:bg-stone-100"
                               )}
                               onClick={() => setMenuOpen(false)}
                             >

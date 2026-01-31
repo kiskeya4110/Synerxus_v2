@@ -271,7 +271,7 @@ export default function OrganizationPWAHeader({
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Notifications"
             >
@@ -285,7 +285,7 @@ export default function OrganizationPWAHeader({
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
-              className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Open navigation menu"
               data-testid="button-org-pwa-hamburger-menu"
@@ -426,7 +426,7 @@ export default function OrganizationPWAHeader({
           />
 
           {/* Notifications Panel */}
-          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div
               className="px-4 py-4"
@@ -501,8 +501,8 @@ export default function OrganizationPWAHeader({
                       key={notification.id}
                       className={`relative w-full rounded-xl p-3 border transition-colors ${
                         isUnread
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
-                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                          ? 'bg-blue-50 border-blue-100'
+                          : 'bg-slate-50 border-slate-200'
                       }`}
                     >
                       <button
@@ -515,14 +515,14 @@ export default function OrganizationPWAHeader({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className={`font-medium text-sm ${isUnread ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                              <p className={`font-medium text-sm ${isUnread ? 'text-slate-800' : 'text-slate-600'}`}>
                                 {notification.title}
                               </p>
                               {isUnread && (
                                 <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                               )}
                             </div>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">
+                            <p className="text-slate-500 text-xs mt-0.5 line-clamp-2">
                               {notification.message}
                             </p>
                             <p className="text-blue-500 text-[10px] mt-1 flex items-center gap-1">
@@ -552,14 +552,14 @@ export default function OrganizationPWAHeader({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-200 dark:border-slate-700 p-3">
+            <div className="border-t border-slate-200 p-3">
               {notifications.length > 10 ? (
                 <button
                   onClick={() => {
                     setNotificationsOpen(false);
                     navigate('/notifications');
                   }}
-                  className="w-full py-2.5 text-center text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 text-center text-slate-600 font-medium text-sm hover:bg-slate-100 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   <span>View All {notifications.length} Notifications</span>
                   <ChevronRight className="w-4 h-4" />
@@ -567,7 +567,7 @@ export default function OrganizationPWAHeader({
               ) : (
                 <button
                   onClick={() => setNotificationsOpen(false)}
-                  className="w-full py-2.5 text-center text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                  className="w-full py-2.5 text-center text-slate-600 font-medium text-sm hover:bg-slate-100 rounded-xl transition-colors"
                 >
                   Close
                 </button>

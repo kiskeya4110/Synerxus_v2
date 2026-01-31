@@ -519,9 +519,9 @@ export default function Organizations() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
       {/* Consistent Site Navigation Header */}
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-emerald-50 via-green-50 to-amber-50 border-b border-emerald-200/50 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           {/* Logo */}
           <Link href="/landing">
@@ -533,25 +533,25 @@ export default function Organizations() {
           {/* Center: Navigation Menu */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/landing">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <Home className="w-4 h-4" />
                 Home
               </Button>
             </Link>
             <Link href="/projects">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <FolderOpen className="w-4 h-4" />
                 Projects
               </Button>
             </Link>
             <Link href="/organizations">
-              <Button variant="ghost" size="sm" className="text-emerald-800 font-semibold bg-emerald-100/60 hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-indigo-700 font-semibold bg-indigo-50/60 hover:bg-indigo-50 rounded-lg gap-1">
                 <Building2 className="w-4 h-4" />
                 Organizations
               </Button>
             </Link>
             <Link href="/help">
-              <Button variant="ghost" size="sm" className="text-emerald-700 font-medium hover:bg-emerald-100 rounded-lg gap-1">
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg gap-1">
                 <HelpCircle className="w-4 h-4" />
                 Help
               </Button>
@@ -561,18 +561,18 @@ export default function Organizations() {
           {/* Right: Auth Actions */}
           <div className="flex gap-2">
             {userId ? (
-              <Button size="sm" onClick={() => navigate(userType === 'volunteer' ? '/volunteer-dashboard' : userType === 'organization' ? '/organization-dashboard' : '/csr-dashboard')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg">
+              <Button size="sm" onClick={() => navigate(userType === 'volunteer' ? '/volunteer-dashboard' : userType === 'organization' ? '/organization-dashboard' : '/csr-dashboard')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">
                 My Dashboard
               </Button>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="sm" variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 rounded-lg">
+                  <Button size="sm" variant="outline" className="border-stone-300 text-stone-700 hover:bg-indigo-50 rounded-lg">
                     Log In
                   </Button>
                 </Link>
                 <Link href="/login?tab=register">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
                     Sign Up
                   </Button>
                 </Link>

@@ -9,8 +9,8 @@ export default function Privacy() {
           <CardHeader>
             <CardTitle className="text-2xl">Privacy Policy</CardTitle>
           </CardHeader>
-          <CardContent className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <CardContent className="prose max-w-none">
+            <p className="text-muted-foreground mb-6">
               Last updated: {new Date().toLocaleDateString()}
             </p>
 

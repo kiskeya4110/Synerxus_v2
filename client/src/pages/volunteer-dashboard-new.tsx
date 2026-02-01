@@ -1120,7 +1120,7 @@ export default function VolunteerDashboardNew() {
         </main>
 
         {/* Bottom Navigation Tray - 5 tabs with Home in middle */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-[160] shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="grid grid-cols-5 max-w-md mx-auto">
             {/* Wallet */}
             <button
@@ -1177,7 +1177,7 @@ export default function VolunteerDashboardNew() {
 
         {/* Log Impact Modal */}
         <Dialog open={showLogModal} onOpenChange={setShowLogModal}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg top-[3%] translate-y-0 max-h-[calc(100dvh-6rem)]">
             <DialogHeader>
               <DialogTitle>Log Impact</DialogTitle>
               <DialogDescription>

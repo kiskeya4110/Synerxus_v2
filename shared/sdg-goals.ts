@@ -309,7 +309,10 @@ export function mapOutcomeTypeToSDGs(outcomeType: string): number[] {
     "recycling": [12],
     // Water
     "wells built": [6],
+    "wells constructed": [6],
     "water filters": [6],
+    "water filters installed": [6],
+    "water provided": [6],
     "clean water access": [6],
     // Gender
     "women empowered": [5],
@@ -330,6 +333,8 @@ export function mapOutcomeTypeToSDGs(outcomeType: string): number[] {
     "families supported": [1],
     "beneficiaries": [1],
     "lives impacted": [1],
+    "households served": [1, 11],
+    "animals rescued": [15],
     "volunteer hours": [17],
   };
 

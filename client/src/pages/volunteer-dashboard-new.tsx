@@ -95,6 +95,11 @@ const IMPACT_SECTORS = [
         { value: "species_protected", label: "Species Protected", unit: "species" },
         { value: "hectares_monitored", label: "Hectares Monitored", unit: "hectares" },
       ]},
+      { value: "water_sanitation", label: "Water & Sanitation", metrics: [
+        { value: "water_provided", label: "Liters of Water Provided", unit: "liters" },
+        { value: "water_filters_installed", label: "Water Filters Installed", unit: "filters" },
+        { value: "wells_constructed", label: "Wells Constructed", unit: "wells" },
+      ]},
     ],
   },
   {
@@ -168,6 +173,20 @@ const IMPACT_SECTORS = [
       { value: "donations", label: "Donation Drives", metrics: [
         { value: "items_donated", label: "Items Donated", unit: "items" },
         { value: "funds_raised", label: "Funds Raised", unit: "USD" },
+      ]},
+      { value: "general_outreach", label: "General Outreach", metrics: [
+        { value: "lives_impacted", label: "Lives Impacted", unit: "lives" },
+        { value: "households_served", label: "Households Served", unit: "households" },
+        { value: "animals_rescued", label: "Animals Rescued", unit: "animals" },
+      ]},
+    ],
+  },
+  {
+    value: "other", label: "Other", icon: "✨",
+    sdgs: [],
+    activities: [
+      { value: "other_activity", label: "Other Activity", metrics: [
+        { value: "other", label: "Other (Specify in Description)", unit: "count" },
       ]},
     ],
   },

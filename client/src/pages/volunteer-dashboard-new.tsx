@@ -75,17 +75,102 @@ const SDG_OPTIONS = [
   { value: 17, label: "Partnerships", color: "#19486A" },
 ];
 
-// Outcome options for impact logging
-const OUTCOME_OPTIONS = [
-  { value: "lives_impacted", label: "Lives Impacted", icon: "👥" },
-  { value: "meals_served", label: "Meals Served", icon: "🍽️" },
-  { value: "trees_planted", label: "Trees Planted", icon: "🌳" },
-  { value: "students_taught", label: "Students Taught", icon: "📚" },
-  { value: "homes_built", label: "Homes Built", icon: "🏠" },
-  { value: "water_provided", label: "Liters of Water", icon: "💧" },
-  { value: "medical_care", label: "Medical Consultations", icon: "🏥" },
-  { value: "items_donated", label: "Items Donated", icon: "📦" },
-  { value: "other", label: "Other", icon: "✨" },
+// Hierarchical impact sectors with activities, metrics, and SDG auto-mapping
+const IMPACT_SECTORS = [
+  {
+    value: "environment", label: "Environment", icon: "🌱",
+    sdgs: [13, 15],
+    activities: [
+      { value: "tree_planting", label: "Tree Planting", metrics: [
+        { value: "trees_planted", label: "Trees Planted", unit: "trees" },
+        { value: "saplings_maintained", label: "Saplings Maintained", unit: "saplings" },
+        { value: "acres_reforested", label: "Acres Reforested", unit: "acres" },
+      ]},
+      { value: "cleanups", label: "Cleanups", metrics: [
+        { value: "waste_collected_kg", label: "Waste Collected", unit: "kg" },
+        { value: "bags_filled", label: "Bags Filled", unit: "bags" },
+        { value: "area_cleaned_m", label: "Area Cleaned", unit: "meters" },
+      ]},
+      { value: "conservation", label: "Conservation", metrics: [
+        { value: "species_protected", label: "Species Protected", unit: "species" },
+        { value: "hectares_monitored", label: "Hectares Monitored", unit: "hectares" },
+      ]},
+    ],
+  },
+  {
+    value: "education", label: "Education", icon: "📚",
+    sdgs: [4],
+    activities: [
+      { value: "tutoring", label: "Tutoring", metrics: [
+        { value: "students_tutored", label: "Students Tutored", unit: "students" },
+        { value: "sessions_held", label: "Sessions Held", unit: "sessions" },
+        { value: "subjects_covered", label: "Subjects Covered", unit: "subjects" },
+      ]},
+      { value: "workshops", label: "Workshops", metrics: [
+        { value: "attendees", label: "Attendees", unit: "people" },
+        { value: "workshops_delivered", label: "Workshops Delivered", unit: "workshops" },
+      ]},
+      { value: "mentoring", label: "Mentoring", metrics: [
+        { value: "mentees_supported", label: "Mentees Supported", unit: "mentees" },
+        { value: "mentoring_hours", label: "Mentoring Hours", unit: "hours" },
+      ]},
+    ],
+  },
+  {
+    value: "health", label: "Health", icon: "🏥",
+    sdgs: [3],
+    activities: [
+      { value: "medical_outreach", label: "Medical Outreach", metrics: [
+        { value: "patients_seen", label: "Patients Seen", unit: "patients" },
+        { value: "consultations", label: "Consultations Given", unit: "consultations" },
+        { value: "screenings", label: "Screenings Conducted", unit: "screenings" },
+      ]},
+      { value: "nutrition", label: "Nutrition Programs", metrics: [
+        { value: "meals_served", label: "Meals Served", unit: "meals" },
+        { value: "food_kits_distributed", label: "Food Kits Distributed", unit: "kits" },
+      ]},
+      { value: "wellness", label: "Wellness & Fitness", metrics: [
+        { value: "participants", label: "Participants", unit: "people" },
+        { value: "wellness_sessions", label: "Sessions Led", unit: "sessions" },
+      ]},
+    ],
+  },
+  {
+    value: "economic", label: "Economic", icon: "💼",
+    sdgs: [1, 8],
+    activities: [
+      { value: "skills_training", label: "Skills Training", metrics: [
+        { value: "trainees", label: "Trainees", unit: "people" },
+        { value: "certifications_earned", label: "Certifications Earned", unit: "certs" },
+      ]},
+      { value: "microfinance", label: "Microfinance Support", metrics: [
+        { value: "loans_facilitated", label: "Loans Facilitated", unit: "loans" },
+        { value: "businesses_supported", label: "Businesses Supported", unit: "businesses" },
+      ]},
+      { value: "job_placement", label: "Job Placement", metrics: [
+        { value: "placements_made", label: "Placements Made", unit: "placements" },
+        { value: "resumes_reviewed", label: "Resumes Reviewed", unit: "resumes" },
+      ]},
+    ],
+  },
+  {
+    value: "community", label: "Community", icon: "🏘️",
+    sdgs: [11],
+    activities: [
+      { value: "housing", label: "Housing & Shelter", metrics: [
+        { value: "homes_built", label: "Homes Built", unit: "homes" },
+        { value: "repairs_completed", label: "Repairs Completed", unit: "repairs" },
+      ]},
+      { value: "event_organizing", label: "Event Organizing", metrics: [
+        { value: "events_organized", label: "Events Organized", unit: "events" },
+        { value: "attendees_reached", label: "Attendees Reached", unit: "people" },
+      ]},
+      { value: "donations", label: "Donation Drives", metrics: [
+        { value: "items_donated", label: "Items Donated", unit: "items" },
+        { value: "funds_raised", label: "Funds Raised", unit: "USD" },
+      ]},
+    ],
+  },
 ];
 
 // ============================================================================
@@ -105,11 +190,14 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
   const [formData, setFormData] = useState({
     projectId: "",
     hours: "",
+    sector: "",
+    activity: "",
     outcome: "",
     outcomeValue: "",
     description: "",
     sdgs: [] as number[],
   });
+  const [showSdgOverride, setShowSdgOverride] = useState(false);
 
   const logMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -134,7 +222,8 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
       toast({ title: "Impact Logged!", description: "Your contribution has been submitted for verification." });
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
-      setFormData({ projectId: "", hours: "", outcome: "", outcomeValue: "", description: "", sdgs: [] });
+      setFormData({ projectId: "", hours: "", sector: "", activity: "", outcome: "", outcomeValue: "", description: "", sdgs: [] });
+      setShowSdgOverride(false);
       onSuccess?.();
     },
     onError: () => {
@@ -199,76 +288,183 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
         </div>
       </div>
 
-      {/* Outcome Selector */}
+      {/* Impact Sector */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Impact Outcome (Optional)</label>
-        <div className="grid grid-cols-3 gap-2">
-          {OUTCOME_OPTIONS.slice(0, 6).map((option) => (
+        <label className="text-sm font-medium text-foreground">Impact Sector (Optional)</label>
+        <div className="flex flex-wrap gap-2">
+          {IMPACT_SECTORS.map((sector) => (
             <button
-              key={option.value}
+              key={sector.value}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, outcome: option.value }))}
+              onClick={() => {
+                const isDeselect = formData.sector === sector.value;
+                setFormData(prev => ({
+                  ...prev,
+                  sector: isDeselect ? "" : sector.value,
+                  activity: "",
+                  outcome: "",
+                  outcomeValue: "",
+                  sdgs: isDeselect ? [] : sector.sdgs,
+                }));
+                if (isDeselect) setShowSdgOverride(false);
+              }}
               className={cn(
-                "flex flex-col items-center gap-1 p-3 rounded-lg border transition-all",
-                formData.outcome === option.value
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+                formData.sector === sector.value
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border hover:border-primary/50 hover:bg-stone-50"
               )}
             >
-              <span className="text-xl">{option.icon}</span>
-              <span className="text-xs text-center">{option.label}</span>
+              <span>{sector.icon}</span>
+              <span>{sector.label}</span>
             </button>
           ))}
         </div>
-
-        {formData.outcome && (
-          <Input
-            type="number"
-            placeholder="Enter quantity"
-            value={formData.outcomeValue}
-            onChange={(e) => setFormData(prev => ({ ...prev, outcomeValue: e.target.value }))}
-            className="mt-2"
-          />
-        )}
       </div>
 
-      {/* SDG Tags */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">
-          SDG Goals (Select up to 3)
-        </label>
-        <TooltipProvider delayDuration={200}>
-          <div className="flex flex-wrap gap-2">
-            {SDG_OPTIONS.map((sdg) => (
-              <Tooltip key={sdg.value}>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => toggleSdg(sdg.value)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                      formData.sdgs.includes(sdg.value)
-                        ? "text-white shadow-md"
-                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                    )}
-                    style={formData.sdgs.includes(sdg.value) ? { backgroundColor: sdg.color } : {}}
-                  >
-                    SDG {sdg.value}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[200px]">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: sdg.color }}
-                    />
-                    <span className="font-medium">SDG {sdg.value}: {sdg.label}</span>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+      {/* Activity Dropdown — visible when sector is chosen */}
+      {formData.sector && (() => {
+        const selectedSector = IMPACT_SECTORS.find(s => s.value === formData.sector);
+        if (!selectedSector) return null;
+        return (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Activity</label>
+            <Select
+              value={formData.activity}
+              onValueChange={(v) => setFormData(prev => ({ ...prev, activity: v, outcome: "", outcomeValue: "" }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an activity" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedSector.activities.map((act) => (
+                  <SelectItem key={act.value} value={act.value}>
+                    {act.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </TooltipProvider>
+        );
+      })()}
+
+      {/* Metric + Quantity — visible when activity is chosen */}
+      {formData.sector && formData.activity && (() => {
+        const selectedSector = IMPACT_SECTORS.find(s => s.value === formData.sector);
+        const selectedActivity = selectedSector?.activities.find(a => a.value === formData.activity);
+        if (!selectedActivity) return null;
+        const selectedMetric = selectedActivity.metrics.find(m => m.value === formData.outcome);
+        return (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Metric &amp; Quantity</label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select
+                  value={formData.outcome}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, outcome: v, outcomeValue: "" }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a metric" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedActivity.metrics.map((metric) => (
+                      <SelectItem key={metric.value} value={metric.value}>
+                        {metric.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.outcome && (
+                <div className="relative w-32">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={formData.outcomeValue}
+                    onChange={(e) => setFormData(prev => ({ ...prev, outcomeValue: e.target.value }))}
+                    className="pr-12"
+                  />
+                  {selectedMetric && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                      {selectedMetric.unit}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* SDG Auto-Mapping + Override */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-foreground">SDG Goals</label>
+          <button
+            type="button"
+            onClick={() => setShowSdgOverride(prev => !prev)}
+            className="text-xs text-primary hover:underline"
+          >
+            {showSdgOverride ? "Use auto-mapped" : "Adjust SDGs"}
+          </button>
+        </div>
+
+        {/* Auto-mapped badges */}
+        {!showSdgOverride && (
+          <div className="flex flex-wrap gap-2">
+            {formData.sdgs.length > 0 ? formData.sdgs.map((sdgVal) => {
+              const sdg = SDG_OPTIONS.find(s => s.value === sdgVal);
+              return sdg ? (
+                <span
+                  key={sdg.value}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium text-white shadow-sm"
+                  style={{ backgroundColor: sdg.color }}
+                >
+                  SDG {sdg.value}: {sdg.label}
+                </span>
+              ) : null;
+            }) : (
+              <span className="text-xs text-muted-foreground">Select a sector to auto-map SDGs</span>
+            )}
+          </div>
+        )}
+
+        {/* Manual SDG picker */}
+        {showSdgOverride && (
+          <TooltipProvider delayDuration={200}>
+            <div className="flex flex-wrap gap-2">
+              {SDG_OPTIONS.map((sdg) => (
+                <Tooltip key={sdg.value}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => toggleSdg(sdg.value)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                        formData.sdgs.includes(sdg.value)
+                          ? "text-white shadow-md"
+                          : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                      )}
+                      style={formData.sdgs.includes(sdg.value) ? { backgroundColor: sdg.color } : {}}
+                    >
+                      SDG {sdg.value}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[200px]">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: sdg.color }}
+                      />
+                      <span className="font-medium">SDG {sdg.value}: {sdg.label}</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        )}
       </div>
 
       {/* Description */}

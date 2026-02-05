@@ -174,9 +174,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Error signing in with email:", error);
 
+      const errorCode = error?.code;
+
+      // Check if Firebase is not configured (demo mode) - try direct backend lookup
+      if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
+          error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
+        console.log("Firebase not configured, using demo mode login");
+
+        // Try to find user by email in backend
+        const response = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
+        if (response.ok) {
+          const users = await response.json();
+          const user = Array.isArray(users) ? users.find((u: any) => u.email === email) : users;
+
+          if (user) {
+            setDbUser(user);
+            localStorage.setItem("currentUserId", String(user.id));
+            localStorage.setItem("userType", user.userType || "volunteer");
+
+            // Return a mock user object for compatibility
+            return {
+              uid: user.firebaseUid || `demo_${user.id}`,
+              email: user.email,
+              displayName: user.displayName,
+              getIdToken: async () => "demo-token",
+            } as any;
+          }
+        }
+
+        toast({
+          title: "Account Not Found",
+          description: "No account found with this email. Please sign up first.",
+          variant: "destructive",
+        });
+        throw new Error("No account found");
+      }
+
       // Provide specific error messages based on Firebase error codes
       let errorMessage = "Failed to sign in. Please try again.";
-      const errorCode = error?.code;
 
       if (errorCode === "auth/user-not-found") {
         errorMessage = "No account found with this email. Please check your email or register first.";
@@ -220,8 +255,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Error signing up:", error);
 
-      let errorMessage = "Failed to create account. Please try again.";
+      // Check if Firebase is not configured (demo mode) - fallback to direct backend creation
       const errorCode = error?.code;
+      if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
+          error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
+        console.log("Firebase not configured, using demo mode signup");
+
+        // Create user directly in backend without Firebase
+        const demoUid = `demo_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const response = await fetch("/api/users/firebase-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firebaseUid: demoUid,
+            email,
+            displayName: displayName || email.split("@")[0],
+            userType,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDbUser(data.user || data);
+          localStorage.setItem("currentUserId", String(data.user?.id || data.id));
+          localStorage.setItem("userType", userType || "volunteer");
+
+          // Return a mock user object for compatibility
+          return {
+            uid: demoUid,
+            email,
+            displayName: displayName || email.split("@")[0],
+            getIdToken: async () => "demo-token",
+          } as any;
+        } else {
+          const errorData = await response.json().catch(() => ({ message: "Registration failed" }));
+          throw new Error(errorData.message || "Failed to create account");
+        }
+      }
+
+      let errorMessage = "Failed to create account. Please try again.";
 
       if (errorCode === "auth/email-already-in-use") {
         errorMessage = "An account with this email already exists. Please sign in instead.";

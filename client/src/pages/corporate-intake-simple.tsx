@@ -146,29 +146,35 @@ export default function CorporateIntakeSimple() {
       }
 
       // Step 2: Create CSR Partner profile
-      const userId = localStorage.getItem("currentUserId");
-      const idToken = await firebaseUser.getIdToken();
+      try {
+        const userId = localStorage.getItem("currentUserId");
+        const idToken = await firebaseUser.getIdToken();
 
-      const profileResponse = await fetch("/api/csr/partners", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          userId: userId ? parseInt(userId) : null,
-          companyName: data.companyName,
-          contactEmail: data.email,
-          employeeCount: data.employeeCount,
-          ngoPartnerId: data.ngoPartnerId ? parseInt(data.ngoPartnerId) : null,
-          inviteCode: inviteCode,
-          pilotStart: new Date().toISOString(),
-          pilotEnd: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-        }),
-      });
+        const profileResponse = await fetch("/api/csr/partners", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`,
+            ...(userId && { "X-User-Id": userId }),
+          },
+          body: JSON.stringify({
+            userId: userId ? parseInt(userId) : null,
+            companyName: data.companyName,
+            contactEmail: data.email,
+            employeeCount: data.employeeCount,
+            ngoPartnerId: data.ngoPartnerId ? parseInt(data.ngoPartnerId) : null,
+            inviteCode: inviteCode,
+            pilotStart: new Date().toISOString(),
+            pilotEnd: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          }),
+        });
 
-      if (!profileResponse.ok) {
-        console.error("Failed to save CSR partner profile:", await profileResponse.text());
+        if (!profileResponse.ok) {
+          console.error("Failed to save CSR partner profile:", await profileResponse.text());
+          // Don't throw - account is created, profile can be completed later
+        }
+      } catch (profileError) {
+        console.error("Profile save error:", profileError);
         // Don't throw - account is created, profile can be completed later
       }
 

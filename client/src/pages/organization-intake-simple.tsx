@@ -163,26 +163,34 @@ export default function OrganizationIntakeSimple() {
       }
 
       // Step 2: Save organization profile to backend
-      const idToken = await firebaseUser.getIdToken();
-      const profileResponse = await fetch("/api/intake/organization-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          organizationName: data.organizationName,
-          organizationLocation: data.country,
-          primarySdgs: data.sdgFocus,
-          volunteerNeeds: data.skillsNeeded,
-          outcomeTypes: data.outcomeTypes,
-          contactName: data.contactName,
-          onboardingCompleted: true,
-        }),
-      });
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        const userId = localStorage.getItem("currentUserId");
 
-      if (!profileResponse.ok) {
-        console.error("Failed to save profile:", await profileResponse.text());
+        const profileResponse = await fetch("/api/intake/organization-profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`,
+            ...(userId && { "X-User-Id": userId }),
+          },
+          body: JSON.stringify({
+            organizationName: data.organizationName,
+            organizationLocation: data.country,
+            primarySdgs: data.sdgFocus,
+            volunteerNeeds: data.skillsNeeded,
+            outcomeTypes: data.outcomeTypes,
+            contactName: data.contactName,
+            onboardingCompleted: true,
+          }),
+        });
+
+        if (!profileResponse.ok) {
+          console.error("Failed to save profile:", await profileResponse.text());
+          // Don't throw - account is created, profile can be completed later
+        }
+      } catch (profileError) {
+        console.error("Profile save error:", profileError);
         // Don't throw - account is created, profile can be completed later
       }
 

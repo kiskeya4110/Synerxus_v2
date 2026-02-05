@@ -153,8 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
+    console.log("[Auth] signInWithEmail called for:", email);
     try {
+      console.log("[Auth] Calling Firebase signInWithEmailAndPassword...");
       const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log("[Auth] Firebase sign-in successful:", result.user.uid);
 
       // Sync with backend to get user data
       const syncResult = await syncWithBackend(result.user);
@@ -172,27 +175,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result.user;
     } catch (error: any) {
-      console.error("Error signing in with email:", error);
+      console.error("[Auth] Error signing in with email:", error.code, error.message);
 
       const errorCode = error?.code;
 
-      // Check if Firebase is not configured (demo mode) - try direct backend lookup
+      // Check if Firebase is not configured or email auth not enabled - try direct backend lookup
       if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
+          errorCode === "auth/operation-not-allowed" || errorCode === "auth/admin-restricted-operation" ||
           error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
-        console.log("Firebase not configured, using demo mode login");
+        console.log("[Auth] Firebase auth not available for login, using demo mode. Error:", errorCode);
 
-        // Try to find user by email in backend
-        const response = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
+        // Try to find user by email in backend using firebase-sync with isLoginAttempt flag
+        const response = await fetch("/api/users/firebase-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firebaseUid: `demo_login_${Date.now()}`,
+            email,
+            isLoginAttempt: true,
+          }),
+        });
+
         if (response.ok) {
-          const users = await response.json();
-          const user = Array.isArray(users) ? users.find((u: any) => u.email === email) : users;
-
-          if (user) {
+          const data = await response.json();
+          // Check if it's an existing user (isNewUser: false)
+          if (data && !data.isNewUser) {
+            const user = data.user || data;
             setDbUser(user);
             localStorage.setItem("currentUserId", String(user.id));
             localStorage.setItem("userType", user.userType || "volunteer");
+            console.log("[Auth] Demo login successful for existing user:", user.email);
 
-            // Return a mock user object for compatibility
             return {
               uid: user.firebaseUid || `demo_${user.id}`,
               email: user.email,

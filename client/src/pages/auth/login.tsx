@@ -37,9 +37,11 @@ export default function LoginAuth() {
 
   // Handle email/password login
   const onSubmit = async (data: LoginFormData) => {
+    console.log("[Login] Form submitted for:", data.email);
     setIsEmailLoading(true);
     try {
-      await signInWithEmail(data.email, data.password);
+      const user = await signInWithEmail(data.email, data.password);
+      console.log("[Login] Sign in successful:", user?.email);
 
       // Set profile complete and redirect to dashboard
       localStorage.setItem("profileComplete", "true");
@@ -49,8 +51,11 @@ export default function LoginAuth() {
         description: "You have been logged in successfully.",
       });
 
-      navigate(getDashboardRoute());
+      console.log("[Login] Redirecting to dashboard...");
+      // Use window.location for reliable redirect
+      window.location.href = getDashboardRoute();
     } catch (error) {
+      console.error("[Login] Error:", error);
       // Error handling is done in useAuth hook
     } finally {
       setIsEmailLoading(false);

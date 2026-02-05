@@ -163,8 +163,12 @@ export default function VolunteerIntakeSimple() {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerFormData) => {
+      console.log("[Signup] Starting signup for:", data.email);
+
       // Step 1: Create Firebase account and sync with backend
       const firebaseUser = await signUp(data.email, data.password, "volunteer", data.name);
+      console.log("[Signup] Firebase user created:", firebaseUser?.email || firebaseUser);
+
       if (!firebaseUser) {
         throw new Error("Failed to create account");
       }
@@ -203,6 +207,7 @@ export default function VolunteerIntakeSimple() {
       return { firebaseUser, ...data };
     },
     onSuccess: () => {
+      console.log("[Signup] SUCCESS - redirecting to dashboard");
       localStorage.setItem("profileComplete", "true");
       localStorage.removeItem("isNewSignup");
 
@@ -213,10 +218,12 @@ export default function VolunteerIntakeSimple() {
 
       // Use window.location for reliable redirect after auth state change
       setTimeout(() => {
+        console.log("[Signup] Redirecting now to:", getDashboardRoute());
         window.location.href = getDashboardRoute();
       }, 500);
     },
     onError: (error: any) => {
+      console.error("[Signup] ERROR:", error);
       if (!error?.code?.startsWith("auth/")) {
         toast({
           title: "Registration Failed",
@@ -228,6 +235,7 @@ export default function VolunteerIntakeSimple() {
   });
 
   const onSubmit = (data: VolunteerFormData) => {
+    console.log("[Signup] Form submitted with data:", { ...data, password: "***" });
     submitMutation.mutate(data);
   };
 

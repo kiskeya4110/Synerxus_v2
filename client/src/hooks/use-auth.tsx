@@ -237,11 +237,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userType?: string, displayName?: string) => {
+    console.log("[Auth] signUp called for:", email, "userType:", userType);
     try {
+      console.log("[Auth] Calling Firebase createUserWithEmailAndPassword...");
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("[Auth] Firebase user created:", result.user.uid);
 
       // Sync with backend to create the user record
+      console.log("[Auth] Syncing with backend...");
       const syncResult = await syncWithBackend(result.user, userType, displayName);
+      console.log("[Auth] Backend sync result:", syncResult);
 
       if (!syncResult) {
         toast({
@@ -253,7 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result.user;
     } catch (error: any) {
-      console.error("Error signing up:", error);
+      console.error("[Auth] Error signing up:", error.code, error.message);
 
       // Check if Firebase is not configured (demo mode) - fallback to direct backend creation
       const errorCode = error?.code;
@@ -301,8 +306,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         errorMessage = "Password is too weak. Please use at least 8 characters.";
       } else if (errorCode === "auth/invalid-email") {
         errorMessage = "Invalid email address format.";
+      } else if (errorCode === "auth/operation-not-allowed") {
+        errorMessage = "Email/Password sign-in is not enabled. Please contact support.";
+      } else if (errorCode === "auth/network-request-failed") {
+        errorMessage = "Network error. Please check your connection and try again.";
       }
 
+      console.error("[Auth] Showing error toast:", errorMessage);
       toast({
         title: "Registration Error",
         description: errorMessage,

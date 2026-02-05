@@ -19,6 +19,8 @@ Instructions for migrating data from the previous deployment to this version.
 
 Reuse the existing production database—no data copying needed.
 
+#### Steps
+
 1. Go to your **old Replit project** (with production data)
 2. Open **Secrets/Environment Variables** (lock icon in sidebar)
 3. Copy the `DATABASE_URL` value
@@ -26,6 +28,31 @@ Reuse the existing production database—no data copying needed.
 5. Open **Secrets/Environment Variables**
 6. Replace the existing `DATABASE_URL` with the copied value
 7. Restart the application
+
+#### Schema Verification (Before Connecting)
+
+Ensure this version's schema is compatible with the old database:
+
+```bash
+# Check what schema changes Drizzle expects
+npx drizzle-kit generate --name check-diff
+```
+
+If there are new tables/columns in this version that don't exist in the old DB, apply migrations:
+
+```bash
+# Apply pending migrations to the old database
+npx drizzle-kit migrate
+```
+
+#### Schema Compatibility Notes
+
+Both versions use the same stack:
+- **ORM:** Drizzle
+- **Database:** PostgreSQL (Neon)
+- **Schema location:** `shared/schema.ts`
+
+If migrations fail, check for conflicting column types or missing tables in the old database.
 
 ---
 

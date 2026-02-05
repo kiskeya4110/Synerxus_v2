@@ -139,30 +139,44 @@ export default function CorporateIntakeSimple() {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async (data: CorporateFormData) => {
-      try {
-        const firebaseUser = await signUp(data.email, data.password, "corporate-partner", data.companyName);
-        if (!firebaseUser) {
-          throw new Error("Failed to create account");
-        }
-        const userId = localStorage.getItem("currentUserId") || String(Date.now());
-        return { id: userId, ...data };
-      } catch (error: any) {
-        throw error;
+      // Step 1: Create Firebase account and sync with backend
+      const firebaseUser = await signUp(data.email, data.password, "corporate-partner", data.companyName);
+      if (!firebaseUser) {
+        throw new Error("Failed to create account");
       }
+
+      // Step 2: Create CSR Partner profile
+      const userId = localStorage.getItem("currentUserId");
+      const idToken = await firebaseUser.getIdToken();
+
+      const profileResponse = await fetch("/api/csr/partners", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          userId: userId ? parseInt(userId) : null,
+          companyName: data.companyName,
+          contactEmail: data.email,
+          employeeCount: data.employeeCount,
+          ngoPartnerId: data.ngoPartnerId ? parseInt(data.ngoPartnerId) : null,
+          inviteCode: inviteCode,
+          pilotStart: new Date().toISOString(),
+          pilotEnd: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        console.error("Failed to save CSR partner profile:", await profileResponse.text());
+        // Don't throw - account is created, profile can be completed later
+      }
+
+      return { firebaseUser, ...data };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       localStorage.setItem("profileComplete", "true");
       localStorage.removeItem("isNewSignup");
-      localStorage.setItem("corporateProfile", JSON.stringify({
-        companyName: data.companyName,
-        contactName: data.contactName,
-        email: data.email,
-        employeeCount: data.employeeCount,
-        ngoPartnerId: data.ngoPartnerId,
-        inviteCode: inviteCode,
-        pilotStart: new Date().toISOString(),
-        pilotEnd: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-      }));
 
       toast({
         title: "Welcome to Synerxus!",

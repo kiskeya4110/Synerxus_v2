@@ -75,7 +75,7 @@ const volunteerSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
     .regex(/[0-9]/, "Password must contain at least 1 number"),
-  inviteCode: z.string().min(1, "Invite code from your employer is required"),
+  inviteCode: z.string().optional(),
   skills: z.array(z.string()).min(1, "Select at least one skill").max(3, "Maximum 3 skills"),
   sdgInterests: z.array(z.number()).min(1, "Select at least one SDG").max(3, "Maximum 3 SDGs"),
   diaspora: z.array(z.string()).optional(),
@@ -163,27 +163,40 @@ export default function VolunteerIntakeSimple() {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerFormData) => {
-      try {
-        const firebaseUser = await signUp(data.email, data.password, "volunteer", data.name);
-        if (!firebaseUser) {
-          throw new Error("Failed to create account");
-        }
-        const userId = localStorage.getItem("currentUserId") || String(Date.now());
-        return { id: userId, ...data };
-      } catch (error: any) {
-        throw error;
+      // Step 1: Create Firebase account and sync with backend
+      const firebaseUser = await signUp(data.email, data.password, "volunteer", data.name);
+      if (!firebaseUser) {
+        throw new Error("Failed to create account");
       }
+
+      // Step 2: Save profile data to backend
+      const idToken = await firebaseUser.getIdToken();
+      const profileResponse = await fetch("/api/intake/volunteer-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          volunteerName: data.name,
+          skills: data.skills,
+          preferredSdgs: data.sdgInterests,
+          diasporaConnections: data.diaspora || [],
+          inviteCode: data.inviteCode || null,
+          onboardingCompleted: true,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        console.error("Failed to save profile:", await profileResponse.text());
+        // Don't throw - account is created, profile can be completed later
+      }
+
+      return { firebaseUser, ...data };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       localStorage.setItem("profileComplete", "true");
       localStorage.removeItem("isNewSignup");
-      localStorage.setItem("volunteerProfile", JSON.stringify({
-        name: data.name,
-        email: data.email,
-        skills: data.skills,
-        sdgInterests: data.sdgInterests,
-        diaspora: data.diaspora || [],
-      }));
 
       toast({
         title: "Welcome to Synerxus!",
@@ -305,9 +318,9 @@ export default function VolunteerIntakeSimple() {
                 {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
               </div>
 
-              {/* Invite Code */}
+              {/* Invite Code (Optional) */}
               <div>
-                <Label htmlFor="inviteCode">Invite Code * (from your employer)</Label>
+                <Label htmlFor="inviteCode">Employer Invite Code (Optional)</Label>
                 <Input
                   id="inviteCode"
                   placeholder="COMPANY-2026"
@@ -319,6 +332,7 @@ export default function VolunteerIntakeSimple() {
                   className="mt-1"
                   disabled={isLoading}
                 />
+                <p className="text-xs text-gray-500 mt-1">If your employer gave you a code, enter it here</p>
                 {inviteCodeValid === true && (
                   <p className="text-sm text-emerald-600 mt-1 flex items-center gap-1">
                     <Check className="h-4 w-4" /> {inviteCodeOrg}

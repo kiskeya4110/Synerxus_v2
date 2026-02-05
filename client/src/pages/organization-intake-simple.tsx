@@ -156,29 +156,41 @@ export default function OrganizationIntakeSimple() {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async (data: NgoFormData) => {
-      try {
-        const firebaseUser = await signUp(data.email, data.password, "organization", data.organizationName);
-        if (!firebaseUser) {
-          throw new Error("Failed to create account");
-        }
-        const userId = localStorage.getItem("currentUserId") || String(Date.now());
-        return { id: userId, ...data };
-      } catch (error: any) {
-        throw error;
+      // Step 1: Create Firebase account and sync with backend
+      const firebaseUser = await signUp(data.email, data.password, "organization", data.organizationName);
+      if (!firebaseUser) {
+        throw new Error("Failed to create account");
       }
+
+      // Step 2: Save organization profile to backend
+      const idToken = await firebaseUser.getIdToken();
+      const profileResponse = await fetch("/api/intake/organization-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          organizationName: data.organizationName,
+          organizationLocation: data.country,
+          primarySdgs: data.sdgFocus,
+          volunteerNeeds: data.skillsNeeded,
+          outcomeTypes: data.outcomeTypes,
+          contactName: data.contactName,
+          onboardingCompleted: true,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        console.error("Failed to save profile:", await profileResponse.text());
+        // Don't throw - account is created, profile can be completed later
+      }
+
+      return { firebaseUser, ...data };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       localStorage.setItem("profileComplete", "true");
       localStorage.removeItem("isNewSignup");
-      localStorage.setItem("organizationProfile", JSON.stringify({
-        organizationName: data.organizationName,
-        country: data.country,
-        sdgFocus: data.sdgFocus,
-        skillsNeeded: data.skillsNeeded,
-        outcomeTypes: data.outcomeTypes,
-        contactName: data.contactName,
-        email: data.email,
-      }));
 
       toast({
         title: "Welcome to Synerxus!",

@@ -240,6 +240,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     // New user - return with isNewUser: true
     res.status(201).json({ ...user, isNewUser: true });
   } catch (err) {
+    console.error("[firebase-sync] Error creating user:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

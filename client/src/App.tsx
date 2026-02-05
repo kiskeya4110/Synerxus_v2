@@ -1,4 +1,4 @@
-import { Route, Router, Switch, useLocation } from "wouter";
+import { Route, Router, Switch, useLocation, Redirect } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -11,8 +11,13 @@ import { useAuth } from "@/hooks/use-auth";
 
 // Core pages - lazy loaded
 const Landing = lazy(() => import("@/pages/landing"));
-const Login = lazy(() => import("@/pages/login"));
+const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
+const LoginAuth = lazy(() => import("@/pages/auth/login")); // Real Firebase auth login
+const SignupLanding = lazy(() => import("@/pages/auth/signup-landing")); // Role selector for new users
 const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Unified Dashboard - Single entry point for all roles
+const UnifiedDashboard = lazy(() => import("@/pages/unified-dashboard"));
 
 // Streamlined MVP Signup Forms (single page, collect 4-factor matching data)
 const VolunteerIntakeSimple = lazy(() => import("@/pages/volunteer-intake-simple"));
@@ -66,7 +71,7 @@ const PageLoader = () => (
 );
 
 // ============================================================================
-// Root Redirect - Route users to correct dashboard based on role
+// Root Redirect - Route all authenticated users to unified /dashboard
 // ============================================================================
 function RootRedirectRoute() {
   const { user, loading } = useAuth();
@@ -88,19 +93,13 @@ function RootRedirectRoute() {
         return;
       }
 
-      // Route to correct dashboard based on user type
+      // Route to unified dashboard (role detection happens there)
       if (profileComplete) {
-        if (userType === 'corporate-partner') {
-          setLocation('/corporate/dashboard');
-        } else if (userType === 'organization') {
-          setLocation('/ngo/dashboard');
-        } else {
-          setLocation('/volunteer/dashboard');
-        }
+        setLocation('/dashboard');
         return;
       }
 
-      // New user - route to signup
+      // New user - route to signup based on type
       if (userType === 'corporate-partner') {
         setLocation('/signup/corporate');
       } else if (userType === 'organization') {
@@ -134,7 +133,9 @@ export default function App() {
           <Route path="/" component={RootRedirectRoute} />
 
           {/* Auth */}
-          <Route path="/login" component={Login} />
+          <Route path="/login" component={LoginAuth} />
+          <Route path="/signup" component={SignupLanding} />
+          <Route path="/login-demo" component={LoginDemo} />
           <Route path="/landing" component={Landing} />
 
           {/* ================================================================ */}
@@ -146,15 +147,22 @@ export default function App() {
           <Route path="/join" component={VolunteerIntakeSimple} />
 
           {/* ================================================================ */}
+          {/* UNIFIED DASHBOARD - Single entry point for all roles */}
+          {/* Role detection happens inside, renders appropriate view */}
+          {/* ================================================================ */}
+          <Route path="/dashboard" component={UnifiedDashboard} />
+
+          {/* ================================================================ */}
           {/* VOLUNTEER ROUTES - Impact Wallet View */}
           {/* ================================================================ */}
-          <Route path="/volunteer/dashboard" component={VolunteerDashboard} />
+          {/* Legacy route - redirects to unified dashboard */}
+          <Route path="/volunteer/dashboard">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/volunteer/log" component={LogActivity} />
           <Route path="/volunteer/log/:projectId" component={LogActivity} />
           <Route path="/volunteer/history" component={MyWork} />
           <Route path="/volunteer/settings" component={VolunteerProfileSettings} />
-          {/* Legacy routes - redirect to new structure */}
-          <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
+          {/* Legacy routes - redirect to unified dashboard */}
+          <Route path="/volunteer-dashboard">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/my-work" component={MyWork} />
           <Route path="/log-activity" component={LogActivity} />
           <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
@@ -162,15 +170,16 @@ export default function App() {
           {/* ================================================================ */}
           {/* NGO ROUTES - Project Pipeline + Verification Queue */}
           {/* ================================================================ */}
-          <Route path="/ngo/dashboard" component={OrganizationDashboard} />
-          <Route path="/ngo/dashboard/pwa" component={OrganizationDashboardPWA} />
+          {/* Legacy routes - redirect to unified dashboard */}
+          <Route path="/ngo/dashboard">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/ngo/dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/ngo/verification" component={NgoVerification} />
           <Route path="/ngo/projects" component={NgoProjects} />
           <Route path="/ngo/log-hours" component={LogVolunteerHours} />
           <Route path="/ngo/settings" component={OrganizationProfileSettings} />
-          {/* Legacy routes - redirect to new structure */}
-          <Route path="/organization-dashboard" component={OrganizationDashboard} />
-          <Route path="/organization-dashboard/pwa" component={OrganizationDashboardPWA} />
+          {/* Legacy routes - redirect to unified dashboard */}
+          <Route path="/organization-dashboard">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/organization-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/ngo-verification" component={NgoVerification} />
           <Route path="/projects" component={NgoProjects} />
           <Route path="/projects/:id" component={ProjectDetail} />
@@ -182,14 +191,15 @@ export default function App() {
           {/* ================================================================ */}
           {/* CORPORATE ROUTES - ESG Dashboard View */}
           {/* ================================================================ */}
-          <Route path="/corporate/dashboard" component={CSRDashboard} />
-          <Route path="/corporate/dashboard/pwa" component={CSRDashboardPWA} />
+          {/* Legacy routes - redirect to unified dashboard */}
+          <Route path="/corporate/dashboard">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/corporate/dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/corporate/reports" component={CSRReportsExports} />
           <Route path="/corporate/settings" component={CorporatePartnerProfileSettings} />
-          {/* Legacy routes - redirect to new structure */}
-          <Route path="/csr-dashboard" component={CSRDashboard} />
-          <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
-          <Route path="/csr-dashboard/pwa" component={CSRDashboardPWA} />
+          {/* Legacy routes - redirect to unified dashboard */}
+          <Route path="/csr-dashboard">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/csr-dashboard-pwa">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/csr-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
           <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
 

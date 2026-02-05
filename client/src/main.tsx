@@ -5,6 +5,7 @@ import App from "./App";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SidebarProvider } from "@/contexts/sidebar-context";
+import { OnboardingProvider } from "@/contexts/onboarding-context";
 import ErrorBoundary from "@/components/error-boundary";
 import "./index.css";
 import "./service-worker-register";
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <SidebarProvider>
           <AuthProvider>
-            <App />
+            <OnboardingProvider steps={[]}>
+              <App />
+            </OnboardingProvider>
           </AuthProvider>
         </SidebarProvider>
       </ThemeProvider>

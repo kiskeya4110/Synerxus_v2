@@ -260,11 +260,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("[Auth] Error signing up:", error.code, error.message);
 
-      // Check if Firebase is not configured (demo mode) - fallback to direct backend creation
+      // Check if Firebase is not configured or email auth not enabled - fallback to direct backend creation
       const errorCode = error?.code;
       if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
+          errorCode === "auth/operation-not-allowed" || errorCode === "auth/admin-restricted-operation" ||
           error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
-        console.log("Firebase not configured, using demo mode signup");
+        console.log("[Auth] Firebase auth not available, using demo mode signup. Error:", errorCode);
 
         // Create user directly in backend without Firebase
         const demoUid = `demo_${Date.now()}_${Math.random().toString(36).substring(7)}`;

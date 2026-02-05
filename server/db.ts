@@ -1,14 +1,11 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
+import pg from 'pg';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
-
-// Configure WebSocket error handling to prevent "Cannot set property message" errors
-// This occurs when Neon's serverless driver tries to modify read-only ErrorEvent properties
-neonConfig.wsProxy = (host) => host;
-neonConfig.pipelineConnect = false; // Disable pipelining to reduce connection issues
+const { Pool: PgPool } = pg;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -16,22 +13,43 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Detect if using Neon (contains neon.tech) or local PostgreSQL
+const isNeonDatabase = process.env.DATABASE_URL.includes('neon.tech') ||
+                       process.env.DATABASE_URL.includes('neon.') ||
+                       process.env.DATABASE_URL.includes('neondb');
+
 // Pool configuration optimized for high concurrency and stability
-// Increased pool size to handle 500+ concurrent users
 const POOL_CONFIG = {
-  max: parseInt(process.env.DB_POOL_MAX || '50', 10), // Increased for high concurrency
-  min: 5,                         // Keep more connections warm
-  idleTimeoutMillis: 60000,       // Close idle connections after 60s
-  connectionTimeoutMillis: 10000, // Allow more time for connection under load
-  maxUses: 10000,                 // Recycle connections to prevent memory leaks
-  allowExitOnIdle: false,         // Keep pool alive even when idle
+  max: parseInt(process.env.DB_POOL_MAX || '50', 10),
+  min: 5,
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 10000,
 };
 
-// Optimized connection pool for high concurrency
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ...POOL_CONFIG,
-});
+// Configure and create the appropriate pool
+function createPool(): NeonPool | pg.Pool {
+  if (isNeonDatabase) {
+    // Neon serverless configuration
+    neonConfig.webSocketConstructor = ws;
+    neonConfig.wsProxy = (host) => host;
+    neonConfig.pipelineConnect = false;
+
+    console.log('[DB] Using Neon serverless driver');
+    return new NeonPool({
+      connectionString: process.env.DATABASE_URL,
+      ...POOL_CONFIG,
+    });
+  } else {
+    // Standard PostgreSQL configuration
+    console.log('[DB] Using standard PostgreSQL driver');
+    return new PgPool({
+      connectionString: process.env.DATABASE_URL,
+      ...POOL_CONFIG,
+    });
+  }
+}
+
+export const pool = createPool();
 
 // Track pool health metrics
 let poolMetrics = {
@@ -84,7 +102,10 @@ pool.on('remove', () => {
   }
 });
 
-export const db = drizzle({ client: pool, schema });
+// Create Drizzle instance with appropriate driver
+export const db = isNeonDatabase
+  ? drizzleNeon({ client: pool as NeonPool, schema })
+  : drizzlePg({ client: pool as PgPool, schema });
 
 // Export pool stats for monitoring
 export function getPoolStats() {

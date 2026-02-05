@@ -201,10 +201,14 @@ export default function OrganizationIntakeSimple() {
       localStorage.removeItem("isNewSignup");
 
       toast({
-        title: "Welcome to Synerxus!",
-        description: "Start verifying impact!",
+        title: "Account Created Successfully!",
+        description: "Welcome to Synerxus! Redirecting to your dashboard...",
       });
-      navigate(getDashboardRoute());
+
+      // Use window.location for reliable redirect after auth state change
+      setTimeout(() => {
+        window.location.href = getDashboardRoute();
+      }, 500);
     },
     onError: (error: any) => {
       if (!error?.code?.startsWith("auth/")) {

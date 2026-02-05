@@ -3,13 +3,16 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// Firebase configuration for Synerxus
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-key",
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project"}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project"}.appspot.com`,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "demo-sender-id",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "demo-app-id",
+  apiKey: "AIzaSyAXgxscrI7ymmfUuFJvZ3CeAIz_a_wzT7w",
+  authDomain: "synerxus-1302e.firebaseapp.com",
+  databaseURL: "https://synerxus-1302e-default-rtdb.firebaseio.com",
+  projectId: "synerxus-1302e",
+  storageBucket: "synerxus-1302e.firebasestorage.app",
+  messagingSenderId: "629501536901",
+  appId: "1:629501536901:web:cda40c4aff2711d9fd97ec",
+  measurementId: "G-R6LRMPYRGY"
 };
 
 // Initialize Firebase

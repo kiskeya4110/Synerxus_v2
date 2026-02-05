@@ -185,10 +185,14 @@ export default function CorporateIntakeSimple() {
       localStorage.removeItem("isNewSignup");
 
       toast({
-        title: "Welcome to Synerxus!",
-        description: "Your 90-day pilot has started. Share the invite code with employees!",
+        title: "Account Created Successfully!",
+        description: "Welcome to Synerxus! Your 90-day pilot has started. Redirecting...",
       });
-      navigate(getDashboardRoute());
+
+      // Use window.location for reliable redirect after auth state change
+      setTimeout(() => {
+        window.location.href = getDashboardRoute();
+      }, 500);
     },
     onError: (error: any) => {
       if (!error?.code?.startsWith("auth/")) {

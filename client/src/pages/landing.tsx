@@ -62,27 +62,27 @@ const COUNTRY_DATA = {
 
 const PROFILE_STATS = {
   community: {
-    title: "Community Volunteers",
+    title: "Verified Impact Network",
     stats: [
-      { label: "Active Volunteers", value: "15,234" },
-      { label: "Hours Contributed", value: "487,621" },
-      { label: "Communities Served", value: "542" },
+      { label: "NGO Partners", value: "23" },
+      { label: "Countries Active", value: "5" },
+      { label: "Outcomes Verified", value: "Growing" },
     ],
   },
   doctors: {
-    title: "Healthcare Impact",
+    title: "Verification Pipeline",
     stats: [
-      { label: "Medical Professionals", value: "3,847" },
-      { label: "People Treated", value: "128,542" },
-      { label: "Health Projects", value: "216" },
+      { label: "Verification Rate", value: "60-68%" },
+      { label: "Avg Verification Time", value: "<72h" },
+      { label: "Active Projects", value: "Live" },
     ],
   },
   village: {
-    title: "Corporate CSR & NGO Partnerships",
+    title: "Corporate ESG Pilots",
     stats: [
-      { label: "Corporate Partners", value: "287" },
-      { label: "NGO Networks", value: "451" },
-      { label: "CSR Initiatives", value: "1,203" },
+      { label: "Corporate Pilots", value: "4" },
+      { label: "NGO Partners", value: "23" },
+      { label: "CSRD-Ready Reports", value: "Active" },
     ],
   },
 };
@@ -113,9 +113,9 @@ const IMPACT_FACTS = {
 
 // Banner stats fetched from API (real data from your platform)
 const DEFAULT_STATS = [
-  "📊 Real-time volunteer impact metrics loading...",
-  "🌍 Join thousands of volunteers making a global difference",
-  "🎯 Connect. Manage. Impact Globally.",
+  "📊 NGO-verified volunteer outcomes across 5 countries",
+  "🌍 23 NGO partners verifying impact for CSRD compliance",
+  "🎯 Audit-ready ESG data from verified outcomes, not self-reported hours",
 ];
 
 function getRandomFact(category: 'volunteers' | 'ngos' | 'csr'): string {
@@ -424,14 +424,12 @@ const VolunteerSpotlightSection = () => {
   // Format impact message from stats (for volunteers)
   const getVolunteerImpactMessage = (stats: any) => {
     if (!stats) return "Making a difference every day!";
-    const hours = stats.thisWeekHours || 0;
-    const impacts = stats.thisWeekImpacts || 0;
-    if (hours > 0 && impacts > 0) {
-      return `${hours} hours volunteered across ${impacts} activities this week`;
-    } else if (hours > 0) {
-      return `${hours} hours volunteered this week`;
-    } else if (impacts > 0) {
-      return `${impacts} volunteer activities completed this week`;
+    const outcomes = stats.thisWeekImpacts || 0;
+    const verified = stats.verifiedOutcomes || 0;
+    if (verified > 0 && outcomes > 0) {
+      return `${verified} verified outcomes across ${outcomes} activities this week`;
+    } else if (outcomes > 0) {
+      return `${outcomes} outcomes logged this week`;
     }
     return "Dedicated to making a positive impact";
   };

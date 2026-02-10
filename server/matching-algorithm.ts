@@ -5,19 +5,20 @@ interface MatchResult {
   score: number;
   breakdown: {
     skillMatch: number;
+    trustScore: number;
+    availabilityMatch: number;
+    missionMatch: number;
     locationMatch: number;
     sdgMatch: number;
     interestMatch: number;
-    availabilityMatch: number;
     experienceMatch: number;
     engagementBoost: number;
   };
   reasons: string[];
   matchCategory?: "nexus" | "strong" | "gap" | "no-match";
   dataQualityWarnings?: string[];
-  // Enhanced metrics for match certainty
-  confidence?: number; // 0-100: How confident we are in this match based on data quality
-  dataCompleteness?: number; // 0-100: Percentage of relevant data fields populated
+  confidence?: number;
+  dataCompleteness?: number;
 }
 
 interface MatchingWeights {
@@ -29,14 +30,17 @@ interface MatchingWeights {
   experienceWeight: number;
 }
 
-// Default weights (used if database weights not available)
+// 4-Factor Matching (MVP Spec):
+// Skills (35%), Trust (30%), Availability (25%), Mission (10%)
+// Trust = engagement boost + experience + location reliability
+// Mission = SDG alignment + interest overlap
 const DEFAULT_WEIGHTS: MatchingWeights = {
   skillWeight: 0.35,
-  locationWeight: 0.10,
-  sdgWeight: 0.20,
-  interestWeight: 0.10,
-  availabilityWeight: 0.20,
-  experienceWeight: 0.05,
+  locationWeight: 0.05,
+  sdgWeight: 0.10,
+  interestWeight: 0.00,
+  availabilityWeight: 0.25,
+  experienceWeight: 0.25,
 };
 
 // Cache for matching weights from database
@@ -106,24 +110,8 @@ export async function getVolunteerCompletionRate(volunteerId: number): Promise<n
       a.status?.toLowerCase() === 'completed'
     ).length;
 
-    // Also factor in hours completion for active assignments
-    let hoursCompletionBonus = 0;
-    const activeAssignments = relevantAssignments.filter(a =>
-      a.status?.toLowerCase() === 'active' && a.hoursCommitted && a.hoursCommitted > 0
-    );
-
-    for (const assignment of activeAssignments) {
-      const committed = assignment.hoursCommitted || 0;
-      const completed_hrs = assignment.hoursCompleted || 0;
-      if (committed > 0) {
-        hoursCompletionBonus += Math.min(completed_hrs / committed, 1) * 0.5; // Partial credit
-      }
-    }
-
     const baseRate = completed / relevantAssignments.length;
-    const adjustedRate = Math.min(baseRate + (hoursCompletionBonus / relevantAssignments.length), 1);
-
-    return adjustedRate;
+    return baseRate;
   } catch (error) {
     console.warn("Could not calculate volunteer completion rate:", error);
     return undefined;
@@ -450,10 +438,12 @@ export function calculateMatchScore(
   const matchWeights = weights || DEFAULT_WEIGHTS;
   const breakdown = {
     skillMatch: 0,
+    trustScore: 0,
+    availabilityMatch: 0,
+    missionMatch: 0,
     locationMatch: 0,
     sdgMatch: 0,
     interestMatch: 0,
-    availabilityMatch: 0,
     experienceMatch: 0,
     engagementBoost: 0,
   };
@@ -775,27 +765,24 @@ export function calculateMatchScore(
   breakdown.engagementBoost = engagementResult.boost;
   reasons.push(...engagementResult.reasons);
 
-  // Calculate weighted final score
-  // Uses dynamic weights from database (via matchWeights parameter) or defaults:
-  // - Skill Match: 35% (critical for project success, proficiency-weighted)
-  // - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
-  // - Availability/Time Match: 20% (non-negotiable for retention & completion)
-  // - Interest/Cause Match: 10% (re-enabled for better mission alignment)
-  // - Location Match: 10% (increased for hybrid work considerations)
-  // - Experience Level: 5% (bonus factor for seniority)
-  // + Engagement Boost: 0-10 bonus points for active, reliable volunteers
+  // 4-Factor MVP Matching:
+  // - Skills: 35% (critical for project success, proficiency-weighted)
+  // - Trust: 30% (experience 25% + location reliability 5% + engagement boost)
+  // - Availability: 25% (non-negotiable for retention & completion)
+  // - Mission: 10% (SDG alignment)
 
-  // Base weighted score (0-100) + Engagement boost (0-10 bonus)
-  const baseScore =
-    breakdown.skillMatch * matchWeights.skillWeight +
-    breakdown.locationMatch * matchWeights.locationWeight +
-    breakdown.sdgMatch * matchWeights.sdgWeight +
-    breakdown.interestMatch * matchWeights.interestWeight +
-    breakdown.availabilityMatch * matchWeights.availabilityWeight +
-    breakdown.experienceMatch * matchWeights.experienceWeight;
-  
-  // Final score capped at 100, includes engagement boost
-  const finalScore = Math.min(Math.round(baseScore + breakdown.engagementBoost), 100);
+  breakdown.trustScore = Math.min(
+    Math.round(breakdown.experienceMatch * 0.833 + breakdown.locationMatch * 0.167 + breakdown.engagementBoost),
+    100
+  );
+  breakdown.missionMatch = breakdown.sdgMatch;
+
+  const finalScore = Math.min(Math.round(
+    breakdown.skillMatch * 0.35 +
+    breakdown.trustScore * 0.30 +
+    breakdown.availabilityMatch * 0.25 +
+    breakdown.missionMatch * 0.10
+  ), 100);
 
   // Add overall assessment reason
   if (finalScore >= 80) {

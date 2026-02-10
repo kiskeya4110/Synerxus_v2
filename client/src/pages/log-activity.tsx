@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, Plus, Minus, Camera, CheckCircle, MapPin } from "lucide-react";
+import { Target, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -28,61 +28,6 @@ interface OutcomeTemplate {
   sortOrder: number;
 }
 
-// Hour Stepper Component - allows 0.5 hour increments
-function HourStepper({
-  value,
-  onChange,
-  min = 0.5,
-  max = 24,
-  step = 0.5
-}: {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-}) {
-  const decrement = () => {
-    if (value > min) {
-      onChange(Math.max(min, value - step));
-    }
-  };
-
-  const increment = () => {
-    if (value < max) {
-      onChange(Math.min(max, value + step));
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={decrement}
-        disabled={value <= min}
-        className="h-10 w-10 rounded-full border-2 border-slate-300 hover:bg-slate-100 hover:border-slate-400 disabled:opacity-50"
-      >
-        <Minus className="h-5 w-5 text-slate-600" />
-      </Button>
-      <div className="text-center min-w-[80px]">
-        <span className="text-3xl font-bold text-slate-700">{value}</span>
-        <span className="text-lg text-slate-500 ml-1">hrs</span>
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={increment}
-        disabled={value >= max}
-        className="h-10 w-10 rounded-full border-2 border-slate-300 hover:bg-slate-100 hover:border-slate-400 disabled:opacity-50"
-      >
-        <Plus className="h-5 w-5 text-slate-600" />
-      </Button>
-    </div>
-  );
-}
 
 // Generate a simple device fingerprint from browser info
 function getDeviceFingerprint(): string {
@@ -191,7 +136,6 @@ export default function LogActivity() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>(preselectedProjectId || "");
   const [selectedKpi, setSelectedKpi] = useState<string>("");
   const [kpiQuantity, setKpiQuantity] = useState<string>("");
-  const [hours, setHours] = useState<number>(1);
   const [date, setDate] = useState<Date>(new Date());
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -358,15 +302,14 @@ export default function LogActivity() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
 
       toast({
-        title: "Hours Logged",
-        description: "Your hours and impact have been submitted for verification.",
+        title: "Outcome Logged",
+        description: "Your impact has been submitted for NGO verification.",
       });
 
       // Reset form
       setSelectedProjectId("");
       setSelectedKpi("");
       setKpiQuantity("");
-      setHours(1);
       setPhotoUrl("");
       setDate(new Date());
       setIsSubmitting(false);
@@ -399,11 +342,6 @@ export default function LogActivity() {
       return;
     }
 
-    if (hours <= 0) {
-      toast({ title: "Missing Information", description: "Please enter hours worked.", variant: "destructive" });
-      return;
-    }
-
     setIsSubmitting(true);
 
     // Build SDG tags from the selected template + project SDGs
@@ -419,7 +357,7 @@ export default function LogActivity() {
       userId: currentUser?.id,
       projectId: parseInt(selectedProjectId),
       date: format(date, "yyyy-MM-dd"),
-      hours: hours,
+      hours: 0,
       outcomes: selectedKpi,
       outcomeText: selectedKpi,
       outcomeQuantity: parseFloat(kpiQuantity),
@@ -437,7 +375,7 @@ export default function LogActivity() {
         await saveActivityOffline({
           userId: currentUser?.id || 0,
           projectId: parseInt(selectedProjectId),
-          hours: hours,
+          hours: 0,
           date: format(date, "yyyy-MM-dd"),
           description: selectedKpi || '',
           skillsApplied: [],
@@ -454,7 +392,6 @@ export default function LogActivity() {
         setSelectedProjectId("");
         setSelectedKpi("");
         setKpiQuantity("");
-        setHours(1);
         setPhotoUrl("");
         setDate(new Date());
         setIsSubmitting(false);
@@ -506,7 +443,7 @@ export default function LogActivity() {
   };
 
   const isVolunteer = currentUser?.userType === 'volunteer';
-  const canSubmit = !!selectedProjectId && !!selectedKpi && !!kpiQuantity && parseFloat(kpiQuantity) > 0 && hours > 0;
+  const canSubmit = !!selectedProjectId && !!selectedKpi && !!kpiQuantity && parseFloat(kpiQuantity) > 0;
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 pb-24' : 'bg-stone-50'}`}>
@@ -537,11 +474,11 @@ export default function LogActivity() {
         <Card className={isMobile && isVolunteer ? 'bg-white border-emerald-200/60 shadow-lg' : ''}>
           <CardHeader className="pb-4">
             <CardTitle className={`flex items-center gap-2 text-xl ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
-              <Clock className="w-6 h-6 text-emerald-600" />
-              Log Hours
+              <Target className="w-6 h-6 text-emerald-600" />
+              Log Outcome
             </CardTitle>
             <p className="text-sm text-slate-500 mt-1">
-              Record your hours and select the KPI for your impact
+              Record what you delivered and select the impact KPI
             </p>
             {geoStatus === 'granted' && (
               <div className="flex items-center gap-1 text-xs text-emerald-600 mt-1">
@@ -575,15 +512,7 @@ export default function LogActivity() {
                 </Select>
               </div>
 
-              {/* 2. Hours Stepper -- REQUIRED, always visible */}
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-medium">
-                  Hours Worked <span className="text-red-500">*</span>
-                </Label>
-                <HourStepper value={hours} onChange={setHours} min={0.5} />
-              </div>
-
-              {/* 3. KPI Tiles from outcomeTemplates */}
+              {/* 2. KPI Tiles from outcomeTemplates */}
               {selectedProjectId && (
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">
@@ -695,7 +624,7 @@ export default function LogActivity() {
               </Button>
 
               <p className="text-xs text-center text-slate-500">
-                Your hours and impact will be sent to the NGO for verification
+                Your outcome will be sent to the NGO for verification
               </p>
             </form>
           </CardContent>

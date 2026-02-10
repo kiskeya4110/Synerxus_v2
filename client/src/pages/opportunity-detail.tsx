@@ -40,10 +40,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchBreakdown {
   skillMatch: number;
+  trustScore: number;
+  availabilityMatch: number;
+  missionMatch: number;
   locationMatch: number;
   sdgMatch: number;
   interestMatch: number;
-  availabilityMatch: number;
   experienceMatch: number;
   engagementBoost: number;
 }
@@ -168,8 +170,9 @@ export default function OpportunityDetail() {
       insights.push({ icon: Target, text: "Strong skill alignment", type: "good" });
     }
 
-    if (breakdown.sdgMatch >= 80) {
-      insights.push({ icon: Heart, text: "Aligned with your mission goals", type: "excellent" });
+    const trust = breakdown.trustScore || breakdown.experienceMatch || 0;
+    if (trust >= 80) {
+      insights.push({ icon: Flame, text: "High trust score - reliable match!", type: "excellent" });
     }
 
     if (breakdown.availabilityMatch >= 80) {
@@ -178,12 +181,9 @@ export default function OpportunityDetail() {
       insights.push({ icon: Clock, text: "May require schedule adjustment", type: "caution" });
     }
 
-    if (breakdown.locationMatch >= 80) {
-      insights.push({ icon: MapPin, text: "Convenient location for you", type: "excellent" });
-    }
-
-    if (breakdown.engagementBoost > 5) {
-      insights.push({ icon: Flame, text: "Your active profile gives you an edge!", type: "boost" });
+    const mission = breakdown.missionMatch || breakdown.sdgMatch || 0;
+    if (mission >= 80) {
+      insights.push({ icon: Heart, text: "Aligned with your mission goals", type: "excellent" });
     }
 
     return insights;

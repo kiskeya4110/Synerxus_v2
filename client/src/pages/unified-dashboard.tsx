@@ -176,7 +176,7 @@ export default function UnifiedDashboard() {
             activeUser={activeUser}
             organization={organization}
             orgTab={orgTab}
-            setOrgTab={setOrgTab}
+            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify')}
           />
         )}
 
@@ -198,7 +198,7 @@ export default function UnifiedDashboard() {
             userType === 'volunteer'
               ? (tab: string) => setMobileTab(tab as 'home' | 'wallet' | 'projects' | 'history')
               : userType === 'organization'
-                ? (tab: string) => setOrgTab(tab as 'home' | 'verify')
+                ? (tab: string) => setOrgTab(tab as string as 'home' | 'verify')
                 : undefined
           }
         />
@@ -232,7 +232,7 @@ export default function UnifiedDashboard() {
           activeUser={activeUser}
           organization={organization}
           orgTab={orgTab}
-          setOrgTab={setOrgTab}
+          setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify')}
         />
       )}
 

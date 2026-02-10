@@ -185,13 +185,11 @@ def compute_match_score(volunteer: Dict[str, Any], organization: Dict[str, Any])
     """
     Calculate overall match score between a volunteer and organization
     
-    OPTIMIZED Matching Weights (Nov 2025):
-    - Skill Match: 35% (critical for project success, proficiency-weighted)
-    - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
-    - Availability/Time Match: 20% (non-negotiable for retention & completion)
-    - Interest/Cause Match: 10% (re-enabled for better mission alignment)
-    - Location Match: 10% (increased for hybrid work considerations)
-    - Experience Level: 5% (bonus factor for seniority)
+    4-Factor MVP Matching:
+    - Skills: 35% (critical for project success, proficiency-weighted)
+    - Trust: 30% (experience 25% + location reliability 5%)
+    - Availability: 25% (non-negotiable for retention & completion)
+    - Mission: 10% (SDG alignment)
     
     Returns a dictionary with:
     - score: Overall match score (0-100)
@@ -239,14 +237,13 @@ def compute_match_score(volunteer: Dict[str, Any], organization: Dict[str, Any])
     elif '10+' in str(experience): experience_score = 100
     
     # Calculate weighted final score
-    # OPTIMIZED Weights: Skills 35%, SDG 20%, Availability 20%, Interests 10%, Location 10%, Experience 5%
+    # 4-Factor MVP: Skills 35%, Trust 30% (experience 25% + location 5%), Availability 25%, Mission 10% (SDG)
     final_score = (
         (skill_score * 0.35) +
-        (sdg_score * 0.20) +
-        (availability_score * 0.20) +
-        (interest_score * 0.10) +
-        (location_score * 0.10) +
-        (experience_score * 0.05)
+        (sdg_score * 0.10) +
+        (availability_score * 0.25) +
+        (experience_score * 0.25) +
+        (location_score * 0.05)
     )
     
     # Round to 2 decimal places

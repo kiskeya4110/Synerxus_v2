@@ -172,7 +172,7 @@ export default function VolunteerView({
 
     return {
       impactScore: data.totalAiu || data.impactScore || 0,
-      hoursLogged: data.totalHours || verifiedHours || 0,
+      outcomesVerified: allLogs.filter((l: any) => l.verificationStatus === 'approved').length,
       projectsActive: data.activeProjects || 0,
       currentStreak: data.currentStreak || 0,
       longestStreak: data.longestStreak || 0,
@@ -242,8 +242,8 @@ export default function VolunteerView({
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
-                    <p className="text-xs text-indigo-200">Hours</p>
+                    <p className="text-3xl font-bold text-white">{stats.outcomesVerified}</p>
+                    <p className="text-xs text-indigo-200">Verified</p>
                   </div>
                   <div>
                     <p className="text-3xl font-bold text-white">{stats.projectsActive}</p>
@@ -286,7 +286,7 @@ export default function VolunteerView({
                     </div>
                     <div className="flex-1 text-left">
                       <span className="text-sm font-semibold text-stone-800 block">Impact Wallet</span>
-                      <span className="text-xs text-stone-500">{stats.hoursLogged} hours • {sdgsContributed} SDGs</span>
+                      <span className="text-xs text-stone-500">{stats.outcomesVerified} verified • {sdgsContributed} SDGs</span>
                     </div>
                     <ChevronRight className={`w-5 h-5 text-stone-400 transition-transform ${expandedSection === 'wallet' ? 'rotate-90' : ''}`} />
                   </button>
@@ -295,10 +295,10 @@ export default function VolunteerView({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white rounded-lg p-3 border border-stone-200">
                           <div className="flex items-center gap-2 mb-1">
-                            <Clock className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs text-stone-500">Hours</span>
+                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                            <span className="text-xs text-stone-500">Verified</span>
                           </div>
-                          <p className="text-2xl font-bold text-stone-800">{stats.hoursLogged}</p>
+                          <p className="text-2xl font-bold text-stone-800">{stats.outcomesVerified}</p>
                         </div>
                         <div className="bg-white rounded-lg p-3 border border-stone-200">
                           <div className="flex items-center gap-2 mb-1">
@@ -463,11 +463,11 @@ export default function VolunteerView({
                   className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">Verified</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
-                  <p className="text-xs text-stone-500 mt-1">verified hours →</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.outcomesVerified}</p>
+                  <p className="text-xs text-stone-500 mt-1">verified outcomes →</p>
                 </button>
 
                 <button
@@ -815,7 +815,7 @@ export default function VolunteerView({
           {/* Page Header */}
           <PageHeader
             title={`Welcome back, ${activeUser?.displayName?.split(" ")[0] || "Volunteer"}`}
-            description="Track your impact, log your hours, and make a difference."
+            description="Track your impact, log outcomes, and make a difference."
             actions={
               <Button variant="accent" size="lg" onClick={() => navigate('/log-activity')}>
                 <Plus className="h-5 w-5 mr-2" />
@@ -837,11 +837,11 @@ export default function VolunteerView({
             </div>
             <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
-                label="Hours Logged"
-                value={stats.hoursLogged}
-                subtitle="total hours"
+                label="Outcomes Verified"
+                value={stats.outcomesVerified}
+                subtitle="by NGOs"
                 accentColor="accent"
-                icon={<Clock className="h-5 w-5 text-accent" />}
+                icon={<CheckCircle2 className="h-5 w-5 text-accent" />}
               />
             </div>
             <div onClick={() => navigate('/discover-opportunities')} className="cursor-pointer hover:scale-[1.02] transition-transform">
@@ -894,9 +894,9 @@ export default function VolunteerView({
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span className="text-xs">Hours Logged</span>
+                        <span className="text-xs">Outcomes Verified</span>
                       </div>
-                      <p className="text-xl font-semibold text-foreground">{stats.hoursLogged}</p>
+                      <p className="text-xl font-semibold text-foreground">{stats.outcomesVerified}</p>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); navigate('/discover-opportunities'); }}

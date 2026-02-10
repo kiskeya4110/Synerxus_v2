@@ -174,18 +174,10 @@ export default function MatchAnalysisModal({ isOpen, onClose, projectId, opportu
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                   <span className="font-semibold text-xs text-slate-800">Score Breakdown</span>
                 </div>
-                <CompactScoreBar score={analysis.breakdown.skillMatch} label="Skills" color="#8b5cf6" />
-                <CompactScoreBar score={analysis.breakdown.sdgMatch} label="SDG Align" color="#10b981" />
-                <CompactScoreBar score={analysis.breakdown.availabilityMatch} label="Availability" color="#3b82f6" />
-                <CompactScoreBar score={analysis.breakdown.interestMatch} label="Interest" color="#f59e0b" />
-                <CompactScoreBar score={analysis.breakdown.locationMatch} label="Location" color="#ec4899" />
-                <CompactScoreBar score={analysis.breakdown.experienceMatch} label="Experience" color="#6366f1" />
-                {analysis.breakdown.engagementBoost > 0 && (
-                  <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200">
-                    <span className="text-emerald-600 font-medium">Engagement Bonus</span>
-                    <span className="text-emerald-600 font-semibold">+{analysis.breakdown.engagementBoost} pts</span>
-                  </div>
-                )}
+                <CompactScoreBar score={analysis.breakdown.skillMatch} label="Skills (35%)" color="#8b5cf6" />
+                <CompactScoreBar score={analysis.breakdown.trustScore || analysis.breakdown.experienceMatch} label="Trust (30%)" color="#10b981" />
+                <CompactScoreBar score={analysis.breakdown.availabilityMatch} label="Availability (25%)" color="#3b82f6" />
+                <CompactScoreBar score={analysis.breakdown.missionMatch || analysis.breakdown.sdgMatch} label="Mission (10%)" color="#f59e0b" />
               </div>
 
               {/* Detailed Insights - Compact */}

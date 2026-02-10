@@ -520,9 +520,10 @@ export default function OrganizationView({
   const stats = useMemo(() => {
     const data = dashboardData?.keyMetrics || {};
     return {
-      activeProjects: data.activeProjects || 0, // Only API data
-      totalVolunteers: data.activeVolunteers || 0, // Only API data
+      activeProjects: data.activeProjects || 0,
+      totalVolunteers: data.activeVolunteers || 0,
       totalHours: data.totalHours || 0,
+      verifiedCount: data.verifiedCount || pendingVerifications.filter((v: any) => v.verificationStatus === 'approved').length || 0,
       pendingVerifications: pendingVerifications.length,
       impactScore: data.aiuEarned || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
@@ -993,10 +994,10 @@ export default function OrganizationView({
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Verified</span>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.totalHours}</p>
-                  <p className="text-xs text-gray-500 mt-1">total logged</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.verifiedCount || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">outcomes verified</p>
                 </button>
 
                 <button
@@ -1157,12 +1158,12 @@ export default function OrganizationView({
       {/* Page Header */}
       <PageHeader
         title={organization?.name || "Verify Hub"}
-        description="Verify volunteer hours, manage projects, and track your impact."
+        description="Verify volunteer outcomes, manage projects, and track your impact."
         actions={
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
               <Clock className="h-4 w-4 mr-2" />
-              Log Hours
+              Log Outcomes
             </Button>
             <Button variant="accent" onClick={() => navigate("/post-core-opportunity")}>
               <Plus className="h-4 w-4 mr-2" />
@@ -1187,8 +1188,8 @@ export default function OrganizationView({
           icon={<Users className="h-5 w-5 text-success" />}
         />
         <MetricCard
-          label="Hours Logged"
-          value={stats.totalHours}
+          label="Outcomes Verified"
+          value={stats.verifiedCount || 0}
           accentColor="accent"
           icon={<Clock className="h-5 w-5 text-accent" />}
         />
@@ -1241,9 +1242,8 @@ export default function OrganizationView({
                     size="lg"
                   />
                   <Stat
-                    label="Total Hours"
-                    value={stats.totalHours}
-                    suffix="hrs"
+                    label="Outcomes Verified"
+                    value={stats.verifiedCount || 0}
                     size="lg"
                   />
                   <Stat

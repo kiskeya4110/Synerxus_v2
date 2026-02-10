@@ -1,1280 +1,395 @@
 import { useLocation } from "wouter";
-import { formatDecimal } from "@/lib/format-utils";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles, AlertCircle } from "lucide-react";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
-import OrganizationNav from "@/components/layout/organization-nav";
-import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import OfflineBanner from "@/components/layout/offline-banner";
-import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
-import MyApplicationsPage from "./my-applications";
-import AssignmentsPage from "./assignments";
-import MyTasksPage from "./my-tasks";
-import ImpactVisualization from "./impact-visualization";
-import { ProjectListCard } from "@/components/projects/project-list-card";
-import { CreateProjectDialog } from "@/components/projects/project-dialogs";
+import { useState, useMemo } from "react";
+import { ArrowLeft, Plus, FileText } from "lucide-react";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
-import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
+import DashboardMobileNav from "@/components/dashboard/shared/DashboardMobileNav";
+import { getSDGColor } from "@shared/sdg-goals";
 
+/**
+ * History Page (MVP) — Simple chronological list of submitted impact logs
+ * with verification status. No tabs, no charts, no search.
+ */
 export default function MyWork() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    // Restore from sessionStorage first, then URL hash, then default
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('mywork-active-tab');
-      if (stored && ['applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
-        return stored;
-      }
-      const hash = window.location.hash.replace('#', '');
-      if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
-        return hash;
-      }
-    }
-    return 'applications'; // Default to applications for all users
+
+  const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
+
+  const [filter, setFilter] = useState<"all" | "pending" | "verified" | "rejected">("all");
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  // Fetch all impact logs for this user
+  const { data: allLogs = [], isLoading } = useQuery({
+    queryKey: ["/api/logs", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/logs?user_id=${userId}`);
+      if (!response.ok) return [];
+      const logs = await response.json();
+      return Array.isArray(logs) ? logs : [];
+    },
+    enabled: !!userId,
   });
 
-  // State for projects tab
-  const [projectSearchTerm, setProjectSearchTerm] = useState("");
-  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
-  
-  // Initialize tab from URL hash on mount and listen for hash changes
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (typeof window !== 'undefined') {
-        const hash = window.location.hash.replace('#', '');
-        if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
-          setActiveTab(hash);
-          sessionStorage.setItem('mywork-active-tab', hash);
-        }
-      }
+  // Filter + sort newest first
+  const filteredLogs = useMemo(() => {
+    const statusMap: Record<string, string> = {
+      pending: "pending",
+      verified: "approved",
+      rejected: "rejected",
     };
-    
-    // Initial check
-    handleHashChange();
-    
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-  
-  // Get the current userId from localStorage for cache key
-  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
-  
-  // Fetch current user with userId in cache key to avoid stale data
-  const { data: currentUser, isLoading: isUserLoading } = useQuery<User>({
-    queryKey: ["/api/users/me", storedUserId],
-    queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
-    },
-    staleTime: 0,
-    refetchOnMount: true,
-    enabled: !!storedUserId
-  });
+    const logs =
+      filter === "all"
+        ? [...allLogs]
+        : allLogs.filter((l: any) => l.verificationStatus === statusMap[filter]);
+    return logs.sort(
+      (a: any, b: any) =>
+        new Date(b.date || b.createdAt).getTime() -
+        new Date(a.date || a.createdAt).getTime()
+    );
+  }, [allLogs, filter]);
 
-  const userId = localStorage.getItem('currentUserId');
-  const volunteerId = currentUser?.id;
+  // Counts for filter pills
+  const counts = useMemo(() => ({
+    pending: allLogs.filter((l: any) => l.verificationStatus === "pending").length,
+    verified: allLogs.filter((l: any) => l.verificationStatus === "approved").length,
+    rejected: allLogs.filter((l: any) => l.verificationStatus === "rejected").length,
+  }), [allLogs]);
 
-  // Fetch dashboard data for consistent metrics
-  const { data: dashboardData } = useQuery<any>({
-    queryKey: ["/api/dashboard/summary", userId],
-    queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return null;
-      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
-      return response.json();
-    },
-    enabled: !!currentUser && !!currentUser.userType && !!userId
-  });
-
-  // Fetch volunteer's tasks
-  const { data: tasks = [] } = useQuery<Task[]>({
-    queryKey: ["/api/tasks", { volunteerId }],
-    queryFn: async () => {
-      const response = await fetch("/api/tasks");
-      const allTasks = await response.json();
-      return allTasks.filter((task: Task) => task.assigneeId === volunteerId);
-    },
-    enabled: !!volunteerId
-  });
-
-  // Fetch volunteer's project assignments
-  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
-    queryKey: ["/api/project-assignments", { volunteerId }],
-    queryFn: async () => {
-      const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: !!volunteerId
-  });
-  // Ensure projectAssignments is always an array
-  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
-
-  // Fetch volunteer's activities for real-time hours tracking
-  const { data: volunteerActivities = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities", { volunteerId }],
-    queryFn: async () => {
-      if (!volunteerId) return [];
-      const response = await fetch(`/api/volunteer-activities?userId=${volunteerId}`);
-      return response.json();
-    },
-    enabled: !!volunteerId
-  });
-
-  // Fetch volunteer profile for availability info
-  const { data: volunteerProfile } = useQuery<any>({
-    queryKey: ["/api/intake/volunteer-profile", { volunteerId }],
-    queryFn: async () => {
-      if (!volunteerId) return null;
-      const response = await fetch(`/api/intake/volunteer-profile?userId=${volunteerId}`);
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.volunteerProfile || data;
-    },
-    enabled: !!volunteerId
-  });
-
-  // Fetch organization data if user is org manager
-  const { data: organization } = useQuery<any>({
-    queryKey: ["/api/organizations", currentUser?.organizationId],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/organizations/${currentUser.organizationId}`);
-      return response.ok ? response.json() : null;
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
-  });
-
-  // Fetch organization projects
-  const { data: orgProjects = [], isLoading: orgProjectsLoading, isError: orgProjectsError } = useQuery<any[]>({
-    queryKey: ["/api/projects", "org", currentUser?.organizationId],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
-      if (!response.ok) {
-        console.error("Failed to fetch organization projects:", response.status);
-        return [];
-      }
-      return response.json();
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization',
-    staleTime: 0,
-    refetchOnMount: true
-  });
-
-  // Fetch all volunteers for organization (use org-specific endpoint)
-  const { data: orgVolunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteers", { organizationId: currentUser?.organizationId }],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/volunteers?organizationId=${currentUser.organizationId}`);
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
-  });
-
-  // Fetch all volunteer activities for organization
-  const { data: orgActivities = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities", currentUser?.organizationId],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/volunteer-activities?organizationId=${currentUser.organizationId}`);
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
-  });
-
-  // Fetch all tasks for organization
-  const { data: orgTasks = [] } = useQuery<Task[]>({
-    queryKey: ["/api/tasks", { organizationId: currentUser?.organizationId }],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/tasks`);
-      if (!response.ok) return [];
-      const allTasks = await response.json();
-      // Filter tasks by organization's projects - ensure orgProjects is an array
-      const projectsArray = Array.isArray(orgProjects) ? orgProjects : [];
-      const orgProjectIds = new Set(projectsArray.map((p: Project) => p.id));
-      return Array.isArray(allTasks) ? allTasks.filter((t: Task) => orgProjectIds.has(t.projectId ?? 0)) : [];
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && Array.isArray(orgProjects) && orgProjects.length > 0
-  });
-
-  // Fetch all project assignments for organization (to calculate project-specific volunteer counts)
-  const { data: orgProjectAssignments = [] } = useQuery<any[]>({
-    queryKey: ["/api/project-assignments", "org", currentUser?.organizationId],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch("/api/project-assignments");
-      if (!response.ok) return [];
-      const allAssignments = await response.json();
-      // Filter assignments by organization's projects
-      const projectsArray = Array.isArray(orgProjects) ? orgProjects : [];
-      const orgProjectIds = new Set(projectsArray.map((p: Project) => p.id));
-      return Array.isArray(allAssignments)
-        ? allAssignments.filter((a: any) => orgProjectIds.has(a.projectId))
-        : [];
-    },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && Array.isArray(orgProjects) && orgProjects.length > 0
-  });
-
-  // Fetch AI-matched opportunities for personalized recommendations
-  const { data: matchedOpportunities = [] } = useQuery<any[]>({
-    queryKey: ["/api/opportunities/matches", volunteerId],
-    queryFn: async () => {
-      if (!volunteerId || currentUser?.userType !== 'volunteer') return [];
-      try {
-        const response = await fetch(`/api/opportunities/matches?userId=${volunteerId}&threshold=50`);
-        if (!response.ok) return [];
-        const opportunities = await response.json();
-        // Return top 4 matched opportunities for display
-        return Array.isArray(opportunities) ? opportunities.slice(0, 4) : [];
-      } catch (error) {
-        console.error("Failed to fetch matched opportunities:", error);
-        return [];
-      }
-    },
-    enabled: !!volunteerId && currentUser?.userType === 'volunteer'
-  });
-
-  // Calculate KPIs
-  const tasksByStatus = {
-    todo: tasks.filter(t => t.status?.toLowerCase() === "todo" || t.status?.toLowerCase() === "pending"),
-    inProgress: tasks.filter(t => t.status?.toLowerCase() === "in progress"),
-    completed: tasks.filter(t => t.status?.toLowerCase() === "completed")
+  const handleFilterChange = (f: typeof filter) => {
+    setFilter(f);
+    setVisibleCount(20);
   };
 
-  // Use backend-calculated hours for consistency with dashboard
-  const totalHoursLogged = currentUser?.userType === 'volunteer' && dashboardData?.totalHours !== undefined
-    ? dashboardData.totalHours
-    : (Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0);
-  const totalHoursCommitted = Array.isArray(projectAssignments) ? projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0) : 0;
-  const hoursProgressPercentage = totalHoursCommitted > 0 
-    ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)
-    : 0;
-
-  const completedTaskCount = tasksByStatus.completed.length;
-  const totalTaskCount = tasks.length;
-  const taskCompletionPercentage = totalTaskCount > 0 
-    ? Math.round((completedTaskCount / totalTaskCount) * 100)
-    : 0;
-
-  // Use backend-calculated project count for consistency with dashboard
-  const activeProjectCount = currentUser?.userType === 'volunteer' && dashboardData?.activeProjects !== undefined
-    ? dashboardData.activeProjects
-    : (Array.isArray(projectAssignments) ? projectAssignments.filter(a => a.status === 'active').length : 0);
-
-  // Calculate pending invitations count for badge
-  const pendingInvitationsCount = Array.isArray(projectAssignments)
-    ? projectAssignments.filter(a => a.status === 'pending').length
-    : 0;
-
-  // Calculate weekly capacity usage
-  const weeklyCapacity = volunteerProfile?.weeklyAvailability || 0;
-  const hoursCommitted = totalHoursCommitted;
-  const capacityUsedPercentage = weeklyCapacity > 0 
-    ? Math.round((hoursCommitted / weeklyCapacity) * 100)
-    : 0;
-  const hoursRemaining = Math.max(0, weeklyCapacity - hoursCommitted);
-
-  // Calculate weekly hours to date (THIS WEEK only)
-  const getWeekStart = () => {
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-    const weekStart = new Date(now.setDate(diff));
-    weekStart.setHours(0, 0, 0, 0);
-    return weekStart;
-  };
-
-  const weekStart = getWeekStart();
-  const weeklyHoursLogged = Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => {
-    // Guard against missing or invalid date
-    if (!a?.date) return sum;
-    const activityDate = new Date(a.date);
-    // Check for Invalid Date
-    if (isNaN(activityDate.getTime())) return sum;
-    return activityDate >= weekStart ? sum + (a.hours || 0) : sum;
-  }, 0) : 0;
-
-  const weeklyCapacityUsedPercentage = weeklyCapacity > 0 
-    ? Math.round((weeklyHoursLogged / weeklyCapacity) * 100)
-    : 0;
-  const weeklyHoursRemaining = Math.max(0, weeklyCapacity - weeklyHoursLogged);
-  
-  // Get initial tab from URL hash or default to applications
-  const getInitialTab = () => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks') {
-        return hash;
-      }
-    }
-    return 'applications';
-  };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    sessionStorage.setItem('mywork-active-tab', value);
-    window.history.replaceState(null, '', `#${value}`);
-  };
-
-  // Make buttons interactive
-  const handleImpactLeaderClick = () => {
-    if (impactLeaderEntry) {
-      // Navigate to volunteers page or show volunteer profile
-      setLocation('/volunteers');
-    }
-  };
-
-  const handleExploreRecommendation = (opportunityId: number) => {
-    setLocation(`/discover-opportunities?opportunity=${opportunityId}`);
-  };
-
-  // Generate personalized recommendations from AI-matched opportunities
-  const generateRecommendations = () => {
-    // Use real matched opportunities from AI algorithm
-    if (!matchedOpportunities || matchedOpportunities.length === 0) {
-      return [];
-    }
-
-    return matchedOpportunities.map((opportunity: any, index: number) => {
-      // Extract match score (handle different API response formats)
-      const matchScore = Math.round(opportunity.matchScore || opportunity.match_score || 0);
-      
-      // Extract key details about why this is a good match
-      const reasons = opportunity.reasons || opportunity.matchReasons || [];
-      const primaryReason = typeof reasons === 'string' 
-        ? reasons 
-        : Array.isArray(reasons) && reasons.length > 0
-        ? reasons[0]
-        : "AI matched for your profile";
-
-      // Extract skills from the opportunity
-      const skills = opportunity.requiredSkills 
-        ? Array.isArray(opportunity.requiredSkills)
-          ? opportunity.requiredSkills.slice(0, 2)
-          : opportunity.requiredSkills.split(',').slice(0, 2).map((s: string) => s.trim())
-        : opportunity.skills
-        ? opportunity.skills.slice(0, 2)
-        : [];
-
-      // Select icon based on match score
-      let icon = "⭐";
-      if (matchScore >= 90) {
-        icon = "🌟";
-      } else if (matchScore >= 75) {
-        icon = "⭐";
-      } else if (matchScore >= 60) {
-        icon = "✨";
-      } else {
-        icon = "👍";
-      }
-
-      // Generate description that emphasizes why this is a good fit
-      const descText = typeof opportunity.description === 'string' ? opportunity.description : '';
-      const description = descText
-        ? descText.substring(0, 100) + (descText.length > 100 ? "..." : "")
-        : `This opportunity aligns well with your profile and current availability`;
-
-      return {
-        id: opportunity.id || index,
-        title: opportunity.title || opportunity.name || "New Opportunity",
-        description: description,
-        matchScore: matchScore,
-        reason: primaryReason,
-        skills: skills,
-        icon: icon,
-        opportunityId: opportunity.id,
-        organizationName: opportunity.organizationName || opportunity.organization?.name || "Organization"
-      };
-    });
-  };
-
-  const personalizedRecommendations = generateRecommendations();
-
-  // Calculate organization KPIs for org managers
-  const isOrganizationManager = currentUser?.userType === 'organization';
-
-  // Use organization-wide data sources for accuracy
-  // orgVolunteers is now filtered by organizationId on the server, counting only
-  // volunteers who have active/accepted project assignments with this organization
-  // If that returns 0, fallback to calculating from project assignments directly
-  const uniqueVolunteerIds = isOrganizationManager
-    ? new Set(
-        orgProjectAssignments
-          .filter((a: any) => a.status === 'active' || a.status === 'accepted')
-          .map((a: any) => a.volunteerId)
-      )
-    : new Set();
-  const orgTotalVolunteers = isOrganizationManager
-    ? (orgVolunteers.length > 0 ? orgVolunteers.length : uniqueVolunteerIds.size)
-    : 0;
-
-  const orgTotalProjects = isOrganizationManager ? orgProjects.length : 0;
-  
-  const orgTotalHours = isOrganizationManager 
-    ? orgActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
-    : 0;
-  
-  const orgCompletedProjects = isOrganizationManager && orgProjects 
-    ? orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length 
-    : 0;
-
-  // Calculate Impact Leader (volunteer with most hours)
-  const volunteerHoursMap = new Map<number, { hours: number; name: string }>();
-  const safeOrgActivities = Array.isArray(orgActivities) ? orgActivities : [];
-  const safeOrgVolunteers = Array.isArray(orgVolunteers) ? orgVolunteers : [];
-  safeOrgActivities.forEach(activity => {
-    if (activity?.userId) {
-      const volunteer = safeOrgVolunteers.find((v: any) => v.id === activity.userId);
-      const key = activity.userId;
-      const existingEntry = volunteerHoursMap.get(key);
-      if (existingEntry) {
-        volunteerHoursMap.set(key, {
-          hours: existingEntry.hours + (activity.hours || 0),
-          name: existingEntry.name
-        });
-      } else {
-        volunteerHoursMap.set(key, {
-          hours: activity.hours || 0,
-          name: volunteer?.displayName || volunteer?.username || 'Unknown'
-        });
-      }
-    }
-  });
-  
-  const impactLeaderEntry = Array.from(volunteerHoursMap.entries())
-    .sort((a, b) => b[1].hours - a[1].hours)[0];
-  const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
-
-  // Debug logging for mobile detection
-  console.log('[MyWork Debug]', {
-    isMobile,
-    isOrganizationManager,
-    userType: currentUser?.userType,
-    organizationId: currentUser?.organizationId,
-    userId: currentUser?.id,
-    windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'SSR',
-    willShowPWALayout: isOrganizationManager && isMobile,
-    willShowCreateProject: !!(currentUser?.organizationId),
-  });
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Show loading state while viewport is being detected to prevent wrong view flash
+  // Loading state
   if (isViewportLoading) {
     return (
-      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-stone-500">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
       </div>
     );
   }
 
-  // Handle no user logged in or user not found
-  if (!storedUserId || (!isUserLoading && !currentUser)) {
+  // Not logged in
+  if (!userId) {
     return (
-      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-stone-500 mb-4">Please log in to view your work</p>
-          <Button onClick={() => setLocation("/landing")} className="bg-indigo-600 hover:bg-indigo-700">
+          <p className="text-gray-500 mb-4">Please log in to view your history</p>
+          <button
+            onClick={() => navigate("/landing")}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700"
+          >
             Go to Login
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  // Show loading state while user data is being fetched
-  if (isUserLoading) {
-    return (
-      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-stone-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Shared filter pills
+  const filterPills = (compact: boolean) => (
+    <div className="flex gap-2 flex-wrap">
+      {(["all", "pending", "verified", "rejected"] as const).map((f) => (
+        <button
+          key={f}
+          onClick={() => handleFilterChange(f)}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            filter === f
+              ? "bg-emerald-600 text-white"
+              : compact
+                ? "bg-white text-stone-600 border border-stone-200"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+          {f !== "all" && (
+            <span className="ml-1.5 opacity-70">
+              ({counts[f]})
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
 
-  // MVP PWA view for volunteers on mobile
-  if (!isOrganizationManager && isMobile === true) {
-    return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
+  // Shared log card renderer
+  const renderLogCard = (log: any, compact: boolean) => {
+    const logDate = new Date(log.date || log.createdAt);
+    const status = log.verificationStatus || "pending";
+    const sdgTags: number[] = log.sdgTags || log.project?.sdgGoals || [];
+    const firstSdg = sdgTags.length > 0 ? sdgTags[0] : null;
+
+    if (compact) {
+      // Mobile card
+      return (
+        <div key={log.id} className="bg-white rounded-xl border border-stone-200 shadow-sm p-4 space-y-2">
+          {/* Row 1: Date + Hours + Status */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setLocation('/volunteer-dashboard')}
-                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Home className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">My Work</h1>
-                <p className="text-xs text-gray-500">Applications, assignments & tasks</p>
-              </div>
+            <div className="flex items-center gap-3 text-sm text-stone-700">
+              <span className="font-medium">
+                {logDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+              {log.hours != null && (
+                <>
+                  <span className="text-stone-300">|</span>
+                  <span>{log.hours} hrs</span>
+                </>
+              )}
             </div>
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
+                status === "approved"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : status === "rejected"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : "⏳ Pending"}
+            </span>
+          </div>
+
+          {/* Row 2: Outcome + SDG */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {(log.outcomes || log.outcomeQuantity) && (
+              <span className="text-sm text-stone-700">
+                {log.outcomes || "Outcome"}
+                {log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ""}
+              </span>
+            )}
+            {firstSdg && (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                style={{ backgroundColor: getSDGColor(firstSdg) }}
+              >
+                SDG {firstSdg}
+              </span>
+            )}
+          </div>
+
+          {/* Row 3: Project/NGO name */}
+          <p className="text-xs text-stone-500">{log.project?.name || "Unknown Project"}</p>
+
+          {/* Rejection reason */}
+          {status === "rejected" && log.rejectedReason && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              Reason: &ldquo;{log.rejectedReason}&rdquo;
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    // Desktop row
+    return (
+      <div key={log.id} className="flex items-center gap-6 px-6 py-4 hover:bg-gray-50 transition-colors">
+        {/* Date */}
+        <div className="w-20 flex-shrink-0">
+          <p className="text-sm font-semibold text-gray-900">
+            {logDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          </p>
+        </div>
+
+        {/* Hours */}
+        <div className="w-16 flex-shrink-0 text-center">
+          <p className="text-sm font-medium text-gray-600">
+            {log.hours != null ? `${log.hours} hrs` : "—"}
+          </p>
+        </div>
+
+        {/* Status */}
+        <div className="w-24 flex-shrink-0">
+          <span
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              status === "approved"
+                ? "bg-emerald-100 text-emerald-700"
+                : status === "rejected"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : "⏳ Pending"}
+          </span>
+        </div>
+
+        {/* Outcome + SDG + Project */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {(log.outcomes || log.outcomeQuantity) && (
+              <span className="text-sm font-medium text-gray-900">
+                {log.outcomes || "Outcome"}
+                {log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ""}
+              </span>
+            )}
+            {firstSdg && (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                style={{ backgroundColor: getSDGColor(firstSdg) }}
+              >
+                SDG {firstSdg}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">{log.project?.name || "Unknown Project"}</p>
+          {status === "rejected" && log.rejectedReason && (
+            <p className="text-xs text-red-600 mt-1">
+              Reason: &ldquo;{log.rejectedReason}&rdquo;
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Empty state
+  const emptyState = (compact: boolean) => (
+    <div className={compact
+      ? "bg-white rounded-xl border border-stone-200 shadow-sm p-8 text-center"
+      : "bg-white rounded-xl border border-gray-200 p-12 text-center"
+    }>
+      <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+      <p className="text-sm font-medium text-gray-900 mb-1">
+        {filter === "all"
+          ? "No impact logged yet."
+          : `No ${filter} logs found.`}
+      </p>
+      {filter === "all" && (
+        <>
+          <p className="text-xs text-gray-500 mb-4">
+            Start by logging your first outcome!
+          </p>
+          <button
+            onClick={() => navigate("/log-activity")}
+            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 inline mr-1" />
+            Log Impact
+          </button>
+        </>
+      )}
+    </div>
+  );
+
+  // Mobile PWA view
+  if (isMobile === true) {
+    return (
+      <div className="min-h-screen pwa-gradient-bg pb-20">
+        {/* Header */}
+        <header
+          className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-stone-200"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="p-1.5 -ml-1 rounded-lg hover:bg-stone-100 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-stone-600" />
+            </button>
+            <h1 className="text-lg font-bold text-stone-900">History</h1>
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* Spacer for fixed header */}
+        <div className="flex-shrink-0" style={{ height: "calc(env(safe-area-inset-top, 0px) + 56px)" }} />
+
         <main className="px-4 py-4 space-y-4">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
-              <p className="text-lg font-bold text-gray-900">{formatDecimal(totalHoursLogged)}</p>
-              <p className="text-[10px] text-gray-500">Hours</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200 text-center">
-              <p className="text-lg font-bold text-blue-700">{activeProjectCount}</p>
-              <p className="text-[10px] text-blue-600">Projects</p>
-            </div>
-            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
-              <p className="text-lg font-bold text-emerald-700">{completedTaskCount}</p>
-              <p className="text-[10px] text-emerald-600">Done</p>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-center">
-              <p className="text-lg font-bold text-purple-700">{totalTaskCount - completedTaskCount}</p>
-              <p className="text-[10px] text-purple-600">Pending</p>
-            </div>
-          </div>
+          {/* Filter pills */}
+          {filterPills(true)}
 
-          {/* Pending Invitations Alert */}
-          {pendingInvitationsCount > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-800">
-                  {pendingInvitationsCount} Pending Invitation{pendingInvitationsCount > 1 ? 's' : ''}
-                </span>
+          {/* Log list */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            emptyState(true)
+          ) : (
+            <>
+              <div className="space-y-3">
+                {filteredLogs.slice(0, visibleCount).map((log: any) => renderLogCard(log, true))}
               </div>
-              <p className="text-xs text-amber-700 mb-2">Organizations have invited you to join their projects.</p>
-              <button
-                onClick={() => handleTabChange('assignments')}
-                className="text-xs font-semibold text-amber-800 underline"
-              >
-                Review invitations →
-              </button>
-            </div>
+
+              {filteredLogs.length > visibleCount && (
+                <button
+                  onClick={() => setVisibleCount((prev) => prev + 20)}
+                  className="w-full py-3 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-white rounded-xl border border-stone-200 shadow-sm"
+                >
+                  Load More ({filteredLogs.length - visibleCount} remaining)
+                </button>
+              )}
+            </>
           )}
-
-          {/* Quick Action Tray */}
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            <Link href="/discover-opportunities">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-indigo-600 active:scale-95 transition-all">
-                <Sparkles className="h-4 w-4" />
-                Discover
-              </button>
-            </Link>
-            <Link href="/log-activity">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-emerald-600 active:scale-95 transition-all">
-                <Plus className="h-4 w-4" />
-                Log Activity
-              </button>
-            </Link>
-            <Link href={`/impact-report/${currentUser?.id}`}>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
-                <BarChart3 className="h-4 w-4" />
-                Impact Report
-              </button>
-            </Link>
-            <Link href="/volunteer-profile-settings">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
-                <Settings className="h-4 w-4" />
-                Settings
-              </button>
-            </Link>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="flex border-b border-gray-100">
-              <button
-                onClick={() => handleTabChange('applications')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'applications'
-                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Apps
-              </button>
-              <button
-                onClick={() => handleTabChange('assignments')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-                  activeTab === 'assignments'
-                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Assign
-                {pendingInvitationsCount > 0 && (
-                  <span className="absolute top-2 right-2 h-5 min-w-[20px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {pendingInvitationsCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => handleTabChange('tasks')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'tasks'
-                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Tasks
-              </button>
-              <button
-                onClick={() => handleTabChange('impact')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'impact'
-                    ? 'text-indigo-600 bg-indigo-50 border-b-2 border-indigo-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Impact
-              </button>
-            </div>
-
-            {/* Tab Content */}
-            <div className="p-4">
-              {activeTab === 'applications' && (
-                <MyApplicationsPage embedded />
-              )}
-              {activeTab === 'assignments' && (
-                <AssignmentsPage embedded />
-              )}
-              {activeTab === 'tasks' && (
-                <MyTasksPage embedded />
-              )}
-              {activeTab === 'impact' && (
-                <ImpactVisualization embedded />
-              )}
-            </div>
-          </div>
         </main>
 
-        {/* Bottom Navigation - Consistent with volunteer-dashboard-new */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-          <div className="flex justify-around items-center max-w-md mx-auto">
-            <button
-              onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            >
-              <BarChart3 className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">Wallet</span>
-            </button>
-            <button
-              onClick={() => setLocation('/discover-opportunities')}
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            >
-              <Compass className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">Discover</span>
-            </button>
-            <button
-              onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-2 px-5 rounded-xl bg-indigo-600 text-white shadow-md -mt-3"
-            >
-              <Home className="w-6 h-6 mb-0.5" />
-              <span className="text-[10px] font-semibold">Home</span>
-            </button>
-            <Link href="/log-activity">
-              <button className="flex flex-col items-center py-2 px-3 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                <Plus className="w-5 h-5 mb-1" />
-                <span className="text-[10px] font-semibold">Log</span>
-              </button>
-            </Link>
-            <button
-              className="flex flex-col items-center py-2 px-3 rounded-xl text-indigo-600 bg-indigo-50 transition-colors"
-            >
-              <Briefcase className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-semibold">History</span>
-            </button>
-          </div>
-        </nav>
-      </div>
-    );
-  }
-
-  // PWA view for organization managers on mobile
-  if (isOrganizationManager && isMobile === true) {
-    return (
-      <OrganizationPWALayout activeTab="projects">
-        <div className="p-4 space-y-4">
-          {/* Page Title */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">My Work</h1>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Project
-            </Button>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="p-3">
-              <p className="text-xs text-gray-500">Active Projects</p>
-              <p className="text-xl font-bold">{orgTotalProjects}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-xs text-gray-500">Total Hours</p>
-              <p className="text-xl font-bold">{orgTotalHours}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-xs text-gray-500">Volunteers</p>
-              <p className="text-xl font-bold">{orgTotalVolunteers}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-xs text-gray-500">Completed</p>
-              <p className="text-xl font-bold">{orgCompletedProjects}</p>
-            </Card>
-          </div>
-
-          {/* Projects List */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">Organization Projects</h2>
-            <div className="space-y-3">
-              {orgProjectsLoading ? (
-                <Card className="p-6 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                    <p className="text-gray-500 text-sm">Loading projects...</p>
-                  </div>
-                </Card>
-              ) : orgProjectsError ? (
-                <Card className="p-6 text-center">
-                  <p className="text-red-500 text-sm mb-3">Failed to load projects.</p>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
-                </Card>
-              ) : orgProjects.length > 0 ? (
-                orgProjects.map((project: Project) => {
-                  const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
-                  const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
-                  const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
-                  const projectAssignments = orgProjectAssignments.filter((a: any) => a.projectId === project.id);
-                  const projectVolunteerCount = new Set(projectAssignments.map((a: any) => a.volunteerId)).size;
-
-                  return (
-                    <Card key={project.id} className="p-4">
-                      <Link href={`/projects/${project.id}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium text-sm">{project.name}</h3>
-                          <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                            {project.status}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{project.description}</p>
-                        <div className="flex justify-between text-xs text-gray-500 mb-2">
-                          <span>{projectVolunteerCount} volunteers</span>
-                          <span>{project.completionPercentage ?? progress}% complete</span>
-                        </div>
-                        <Progress value={project.completionPercentage ?? progress} className="h-1.5" />
-                      </Link>
-                    </Card>
-                  );
-                })
-              ) : (
-                <Card className="p-6 text-center">
-                  <FolderOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm mb-3">No projects yet</p>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
-                </Card>
-              )}
-            </div>
-          </div>
-
-          {/* Tasks Section */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">Tasks</h2>
-            <MyTasksPage />
-          </div>
-        </div>
-      </OrganizationPWALayout>
-    );
-  }
-
-  // Desktop view (original)
-  return (
-    <div className={`min-h-screen ${!isOrganizationManager && isMobile === true ? 'bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col' : 'overflow-y-auto bg-stone-50'}`}>
-      {/* Create Project Dialog */}
-      {currentUser?.organizationId && (
-        <CreateProjectDialog 
-          organizationId={currentUser.organizationId} 
-          defaultOpen={showCreateModal}
-          onOpenChange={setShowCreateModal}
+        <DashboardMobileNav
+          userType="volunteer"
+          activeTab="history"
+          onLogImpact={() => navigate("/log-activity")}
+          onTabChange={(tab: string) => {
+            if (tab === 'home') navigate('/dashboard');
+            else if (tab === 'wallet') navigate('/dashboard');
+            else if (tab === 'projects') navigate('/dashboard');
+            else if (tab === 'history') { /* already here */ }
+          }}
         />
-      )}
-      {/* Volunteer Desktop Navigation - only for volunteers, not organization managers */}
-      {!isOrganizationManager && <VolunteerNav />}
-
-      {/* Main Content Wrapper */}
-      <main className={!isOrganizationManager && isMobile === true ? "flex-1 overflow-y-auto pb-20" : ""}>
-      {isOrganizationManager && <OfflineBanner />}
-      {isOrganizationManager && <OrganizationNav />}
-      {/* Top Navigation Buttons for Organization Managers */}
-      {isOrganizationManager && (
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 items-center justify-start border-b">
-          <button
-            onClick={() => setLocation('/overview')}
-            className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-stone-100 text-stone-700 border border-stone-300 cursor-pointer hover:bg-stone-200"
-            data-testid="button-team-overview"
-          >
-            Team Overview
-          </button>
-          <button
-            onClick={() => setLocation('/my-tasks')}
-            className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-stone-100 text-stone-700 border border-stone-300 cursor-pointer hover:bg-stone-200"
-            data-testid="button-my-tasks"
-          >
-            My Tasks
-          </button>
-        </div>
-      )}
-      
-      <div className="max-w-[1400px] mx-auto px-6 pt-6 pb-4 flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>
-          <p className="text-muted-foreground mt-1">
-            {isOrganizationManager
-              ? "Manage your organization's projects, tasks, and impact"
-              : "Manage your applications, assignments, and tasks in one place"
-            }
-          </p>
-        </div>
-        {isOrganizationManager ? (
-          <Link href={`/organization-impact-report/${currentUser?.organizationId || ''}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 cursor-pointer"
-              data-testid="button-create-impact-report"
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Create Impact Report</span>
-              <span className="sm:hidden">Report</span>
-            </Button>
-          </Link>
-        ) : (
-          <Link href={`/impact-report/${currentUser?.id}`}>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Share2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Share Impact Report</span>
-              <span className="sm:hidden">Report</span>
-            </Button>
-          </Link>
-        )}
       </div>
+    );
+  }
 
-      {/* Organization Impact KPIs - Interactive Cards */}
-      {isOrganizationManager ? (
-        <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pb-4">
-          {/* Impact Score - Primary Metric */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:scale-[1.02]"
-            data-testid="card-impact-score"
-            onClick={() => setLocation('/impact-visualization')}
-          >
-            <CardContent className="pt-4 pb-3">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide">Impact Score</p>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-3xl font-bold text-primary">{dashboardData?.impactScore || 0}</p>
-                  <p className="text-xs text-primary/60">/100</p>
-                </div>
-                <Progress value={dashboardData?.impactScore || 0} className="h-1 mt-1" />
-                <p className="text-xs text-gray-500 mt-1">View details →</p>
-              </div>
-            </CardContent>
-          </Card>
+  // Desktop view
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <VolunteerNav />
 
-          {/* People Impacted */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20 hover:scale-[1.02]"
-            data-testid="card-people-impacted"
-            onClick={() => setLocation('/impact-visualization')}
-          >
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-red-600 uppercase tracking-wide">Lives Impacted</p>
-              <p className="text-2xl font-bold text-red-600 mt-1">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">30% weight • View →</p>
-            </CardContent>
-          </Card>
-
-          {/* Volunteer Hours */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20 hover:scale-[1.02]"
-            data-testid="card-hours"
-            onClick={() => setLocation('/volunteers')}
-          >
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Total Hours</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{Math.round(dashboardData?.totalHours || orgTotalHours || 0).toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">35% weight • View →</p>
-            </CardContent>
-          </Card>
-
-          {/* Task Completion */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20 hover:scale-[1.02]"
-            data-testid="card-task-completion"
-            onClick={() => setLocation('/tasks')}
-          >
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Tasks</p>
-              <div className="flex items-baseline gap-1 mt-1">
-                <p className="text-2xl font-bold text-green-600">
-                  {dashboardData?.completedTasks || orgTasks.filter((t: Task) => t.status?.toLowerCase() === 'completed').length}
-                </p>
-                <p className="text-sm text-green-600/60">/{dashboardData?.totalTasks || orgTasks.length}</p>
-              </div>
-              <Progress
-                value={((dashboardData?.completedTasks || 0) / Math.max(dashboardData?.totalTasks || 1, 1)) * 100}
-                className="h-1 mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Manage tasks →</p>
-            </CardContent>
-          </Card>
-
-          {/* Engagement - Real KPIs from database */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20 hover:scale-[1.02]"
-            data-testid="card-engagement"
-            onClick={() => setLocation('/volunteers')}
-          >
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Engagement</p>
-              <div className="mt-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <UsersIcon className="w-4 h-4 text-blue-500" />
-                  <span className="text-lg font-bold text-blue-600">{orgTotalVolunteers}</span>
-                  <span className="text-xs text-gray-500">volunteers</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="w-4 h-4 text-blue-500" />
-                  <span className="text-lg font-bold text-blue-600">{orgTotalProjects}</span>
-                  <span className="text-xs text-gray-500">projects</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">View team →</p>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('tasks')} data-testid="card-tasks">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Tasks Progress</p>
-                  <p className="text-2xl font-bold">{completedTaskCount}/{totalTaskCount}</p>
-                  <p className="text-xs text-gray-500 mt-1">{taskCompletionPercentage}% complete</p>
-                </div>
-                <CheckSquare className="h-8 w-8 text-gray-400" />
-              </div>
-              <Progress value={taskCompletionPercentage} className="mt-3 h-1" />
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-capacity">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Weekly Capacity</p>
-                  <p className="text-2xl font-bold">{formatDecimal(weeklyHoursLogged)}/{weeklyCapacity}h</p>
-                  <p className="text-xs text-gray-500 mt-1">this week • {formatDecimal(weeklyHoursRemaining)}h remaining</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-blue-500" />
-              </div>
-              <Progress value={weeklyCapacityUsedPercentage} className="mt-3 h-1" />
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-projects">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Projects</p>
-                  <p className="text-2xl font-bold">{activeProjectCount}</p>
-                  <p className="text-xs text-gray-500 mt-1">active assignments</p>
-                </div>
-                <FolderKanban className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-hours">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Hours Logged</p>
-                  <p className="text-2xl font-bold">{formatDecimal(totalHoursLogged)}/{totalHoursCommitted}</p>
-                  <p className="text-xs text-gray-500 mt-1">{hoursProgressPercentage}% of target</p>
-                </div>
-                <Clock className="h-8 w-8 text-purple-500" />
-              </div>
-              <Progress value={Math.min(hoursProgressPercentage, 100)} className="mt-3 h-1" />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Personalized Recommendations Section */}
-      {personalizedRecommendations.length > 0 && (
-        <div className="max-w-[1400px] mx-auto px-6 pb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Lightbulb className="h-5 w-5 text-yellow-500" />
-            <h2 className="text-lg font-semibold">Personalized Opportunities for You</h2>
-            <p className="text-xs text-gray-500 ml-auto">AI-matched based on your profile</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {personalizedRecommendations.map((rec: any) => (
-              <Card key={rec.id} className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group" data-testid={`recommendation-${rec.id}`}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <span className="text-3xl">{rec.icon}</span>
-                    <Badge className="bg-blue-100 text-blue-700">
-                      <Star className="h-3 w-3 mr-1" />
-                      {rec.matchScore}%
-                    </Badge>
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
-                    {rec.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-3 font-medium">
-                    {rec.organizationName}
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                    {rec.description}
-                  </p>
-                  <div className="space-y-2 mb-3">
-                    <p className="text-xs text-muted-foreground italic">
-                      {rec.reason}
-                    </p>
-                    {rec.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {rec.skills.map((skill: string) => (
-                          <Badge key={skill} variant="outline" className="text-xs py-0">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Link href={`/discover-opportunities?opportunity=${rec.opportunityId}`}>
-                    <Button variant="ghost" size="sm" className="w-full text-blue-600 group-hover:bg-blue-50">
-                      Explore <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">History</h1>
           </div>
         </div>
-      )}
 
-      {isOrganizationManager ? (
-        <div className="max-w-[1400px] mx-auto px-6 py-4">
-          {/* Projects List Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Organization Projects</h2>
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Project
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {(orgProjectsLoading || isUserLoading) ? (
-                <Card className="p-8 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                    <p className="text-gray-500">Loading projects...</p>
-                  </div>
-                </Card>
-              ) : orgProjectsError ? (
-                <Card className="p-8 text-center">
-                  <p className="text-red-500 mb-4">Failed to load projects. Please try refreshing the page.</p>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Project
-                  </Button>
-                </Card>
-              ) : orgProjects.length > 0 ? (
-                orgProjects.map((project: Project) => {
-                  const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
-                  const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
-                  const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+        {/* Filter pills */}
+        {filterPills(false)}
 
-                  // Calculate project-specific volunteer count from assignments
-                  const projectAssignments = orgProjectAssignments.filter((a: any) => a.projectId === project.id);
-                  const projectVolunteerCount = new Set(projectAssignments.map((a: any) => a.volunteerId)).size;
-
-                  // Calculate hours from assignments for this project
-                  const hoursCommitted = projectAssignments.reduce((sum: number, a: any) => sum + (a.hoursCommitted || 0), 0);
-                  const hoursCompleted = projectAssignments.reduce((sum: number, a: any) => sum + (a.hoursCompleted || 0), 0);
-
-                  return (
-                    <ProjectListCard
-                      key={project.id}
-                      project={project}
-                      tasks={projectTasks}
-                      metrics={{
-                        volunteers: projectVolunteerCount,
-                        totalCommitted: hoursCommitted,
-                        totalCompleted: hoursCompleted
-                      }}
-                      progress={project.completionPercentage ?? progress}
-                      isExpanded={expandedProjects.has(project.id)}
-                      onToggle={() => {
-                        setExpandedProjects(prev => {
-                          const newSet = new Set(prev);
-                          if (newSet.has(project.id)) {
-                            newSet.delete(project.id);
-                          } else {
-                            newSet.add(project.id);
-                          }
-                          return newSet;
-                        });
-                      }}
-                      canManageProjects={true}
-                    />
-                  );
-                })
-              ) : (
-                <Card className="p-8 text-center">
-                  <FolderOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">No projects yet. Create your first project to get started!</p>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Project
-                  </Button>
-                </Card>
-              )}
-            </div>
+        {/* Log list */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
           </div>
-
-          {/* Tasks Only - Impact is on Reports tab */}
-          <div className="pb-4">
-            <h3 className="text-lg font-semibold mb-4">Tasks</h3>
-            <MyTasksPage />
-          </div>
-        </div>
-      ) : (
-        <div className="w-full max-w-[1400px] mx-auto px-6 pb-20 md:pb-4">
-          {/* Pending Invitations Alert Banner */}
-          {pendingInvitationsCount > 0 && (
-            <Alert className="mb-4 border-amber-200 bg-amber-50">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800">
-                You have {pendingInvitationsCount} pending project invitation{pendingInvitationsCount > 1 ? 's' : ''}!
-              </AlertTitle>
-              <AlertDescription className="text-amber-700">
-                <span>Organizations have invited you to join their projects. </span>
-                <Button
-                  variant="link"
-                  className="h-auto p-0 text-amber-800 font-semibold underline"
-                  onClick={() => handleTabChange('assignments')}
-                >
-                  Review and respond to invitations →
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 md:grid-cols-4 mb-4 sm:mb-6">
-            <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
-              <Briefcase className="h-4 w-4" />
-              <span>Apps</span>
-            </TabsTrigger>
-            <TabsTrigger value="assignments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm relative" data-testid="tab-assignments">
-              <FolderKanban className="h-4 w-4" />
-              <span>Assign</span>
-              {pendingInvitationsCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] px-1.5 text-xs font-bold animate-pulse">
-                  {pendingInvitationsCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
-              <ListTodo className="h-4 w-4" />
-              <span>Tasks</span>
-            </TabsTrigger>
-            <TabsTrigger value="impact" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-impact">
-              <TrendingUp className="h-4 w-4" />
-              <span>Impact</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="applications" className="mt-2">
-            <div className="w-full overflow-x-hidden">
-              <MyApplicationsPage embedded />
+        ) : filteredLogs.length === 0 ? (
+          emptyState(false)
+        ) : (
+          <>
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="divide-y divide-gray-100">
+                {filteredLogs.slice(0, visibleCount).map((log: any) => renderLogCard(log, false))}
+              </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="assignments" className="mt-2">
-            <div className="w-full overflow-x-hidden">
-              <AssignmentsPage embedded />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tasks" className="mt-2">
-            <div className="w-full overflow-x-hidden">
-              <MyTasksPage embedded />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="impact" className="mt-2">
-            <div className="w-full overflow-x-hidden">
-              <ImpactVisualization embedded />
-            </div>
-          </TabsContent>
-        </Tabs>
-        </div>
-      )}
-      
-      {/* Mobile Metrics Grid - Organization Only */}
-      {isOrganizationManager && <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} aiuEarned={dashboardData?.aiuEarned || 0} />}
+            {filteredLogs.length > visibleCount && (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 20)}
+                className="w-full py-3 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+              >
+                Load More ({filteredLogs.length - visibleCount} remaining)
+              </button>
+            )}
+          </>
+        )}
       </main>
 
-      {/* PWA Bottom Navigation for Volunteers on Mobile */}
-      {!isOrganizationManager && isMobile === true && (
-        <WebBottomNav activeTab="projects" />
-      )}
-
-      {/* Footer - Hidden on mobile */}
-      {isMobile !== true && <Footer />}
+      <Footer />
     </div>
   );
 }

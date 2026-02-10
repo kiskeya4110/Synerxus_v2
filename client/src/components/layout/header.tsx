@@ -9,7 +9,18 @@ import {
   User,
   Settings,
   LogOut,
-  Home
+  Home,
+  CheckCircle,
+  Award,
+  Sparkles,
+  Briefcase,
+  Users,
+  FolderOpen,
+  Heart,
+  Target,
+  Trash2,
+  RefreshCw,
+  Clock,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,7 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import Logo from "@/components/ui/logo";
@@ -41,11 +52,42 @@ function getRelativeTime(date: Date): string {
   const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+
   if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
   if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
   if (days === 1) return "Yesterday";
   return `${days} days ago`;
+}
+
+function getNotificationIcon(type: string) {
+  switch (type) {
+    case 'application_approved':
+    case 'application_submitted':
+    case 'new_application':
+      return { icon: CheckCircle, bg: 'bg-blue-100', fg: 'text-blue-600' };
+    case 'badge_earned':
+    case 'milestone':
+      return { icon: Award, bg: 'bg-amber-100', fg: 'text-amber-600' };
+    case 'opportunity_match':
+    case 'sdg_match':
+      return { icon: Sparkles, bg: 'bg-emerald-100', fg: 'text-emerald-600' };
+    case 'task_assigned':
+    case 'project_update':
+      return { icon: Briefcase, bg: 'bg-purple-100', fg: 'text-purple-600' };
+    case 'message':
+    case 'new_message':
+      return { icon: Bell, bg: 'bg-indigo-100', fg: 'text-indigo-600' };
+    case 'volunteer_joined':
+      return { icon: Users, bg: 'bg-teal-100', fg: 'text-teal-600' };
+    case 'project_completed':
+      return { icon: FolderOpen, bg: 'bg-green-100', fg: 'text-green-600' };
+    case 'impact_update':
+      return { icon: Heart, bg: 'bg-rose-100', fg: 'text-rose-600' };
+    case 'sdg_contribution':
+      return { icon: Target, bg: 'bg-orange-100', fg: 'text-orange-600' };
+    default:
+      return { icon: Bell, bg: 'bg-blue-100', fg: 'text-blue-600' };
+  }
 }
 
 export default function Header() {
@@ -107,6 +149,52 @@ export default function Header() {
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     refetchInterval: 60000, // Refetch every minute as backup
     refetchOnWindowFocus: true, // Refetch when window regains focus
+  });
+
+  // Mark single notification as read
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    },
+  });
+
+  // Mark all notifications as read
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const response = await fetch(`/api/notifications/clear-all?userId=${id}`, { method: 'POST' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    },
+  });
+
+  // Delete single notification
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    },
+  });
+
+  // Delete all notifications
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const response = await fetch(`/api/notifications/delete-all?userId=${id}`, { method: 'DELETE' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    },
   });
 
   // Hide header for organization users and PWA routes (which have their own headers)
@@ -171,48 +259,27 @@ export default function Header() {
     }
   };
 
-  const handleNotificationClick = async (notification: any) => {
-    try {
-      // Mark notification as read on backend
-      const response = await fetch(`/api/notifications/${notification.id}/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.read) {
+      markAsReadMutation.mutate(notification.id);
+    }
+    setNotificationPanelOpen(false);
 
-      if (!response.ok) {
-        throw new Error(`Failed to mark notification as read: ${response.statusText}`);
-      }
+    // Navigate based on notification type
+    const notificationType = notification.type || '';
 
-      // Invalidate cache to refresh notification list
-      await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-
-      // Close the notification panel
-      setNotificationPanelOpen(false);
-
-      // Navigate based on notification type
-      const notificationType = notification.type || '';
-
-      if (notificationType.includes('application')) {
-        setLocation('/my-work#applications');
-      } else if (notificationType.includes('assignment')) {
-        setLocation('/my-work#assignments');
-      } else if (notificationType.includes('project')) {
-        setLocation('/projects');
-      } else if (notificationType.includes('volunteer')) {
-        setLocation('/volunteers');
-      } else if (notificationType.includes('opportunity')) {
-        setLocation('/discover-opportunities');
-      } else {
-        // Default to dashboard for general notifications
-        setLocation('/dashboard');
-      }
-    } catch (error) {
-      console.error("Error handling notification click:", error instanceof Error ? error.message : String(error));
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to open notification",
-        variant: "destructive"
-      });
+    if (notificationType.includes('application')) {
+      setLocation('/my-work#applications');
+    } else if (notificationType.includes('assignment')) {
+      setLocation('/my-work#assignments');
+    } else if (notificationType.includes('project')) {
+      setLocation('/projects');
+    } else if (notificationType.includes('volunteer')) {
+      setLocation('/volunteers');
+    } else if (notificationType.includes('opportunity')) {
+      setLocation('/discover-opportunities');
+    } else {
+      setLocation('/dashboard');
     }
   };
 
@@ -275,6 +342,9 @@ export default function Header() {
           </Button>
         )}
         
+        {/* Spacer - fills gap between logo and right icons on screens without search bar */}
+        <div className="flex-grow lg:hidden" />
+
         {/* Search Bar - Hidden on smaller screens to prioritize logo */}
         <div className="hidden lg:flex flex-grow max-w-2xl mx-2">
           <div className="relative w-full">
@@ -319,6 +389,38 @@ export default function Header() {
                   </Badge>
                 </div>
 
+                {/* Bulk Actions */}
+                {notifications.length > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 border-b bg-stone-50">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => clearAllMutation.mutate()}
+                        disabled={clearAllMutation.isPending}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white rounded-md transition-colors disabled:opacity-50"
+                      >
+                        {clearAllMutation.isPending ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-3 h-3" />
+                        )}
+                        Mark All Read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteAllMutation.mutate()}
+                      disabled={deleteAllMutation.isPending}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 ml-auto"
+                    >
+                      {deleteAllMutation.isPending ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3 h-3" />
+                      )}
+                      Clear All
+                    </button>
+                  </div>
+                )}
+
                 <ScrollArea className="max-h-[350px]">
                   {notifications.length === 0 ? (
                     <div className="p-8 text-center">
@@ -333,32 +435,68 @@ export default function Header() {
                       {notifications.slice(0, 10).map((notification: any) => {
                         const timeAgo = notification.createdAt ?
                           getRelativeTime(new Date(notification.createdAt)) : '';
+                        const { icon: NotifIcon, bg, fg } = getNotificationIcon(notification.type);
+                        const isUnread = !notification.read;
 
                         return (
                           <div
                             key={notification.id}
-                            className={`p-3 cursor-pointer hover:bg-stone-50 transition-colors ${!notification.read ? 'bg-blue-50/50' : ''}`}
-                            onClick={() => handleNotificationClick(notification)}
+                            className={`relative p-3 cursor-pointer hover:bg-stone-50 transition-colors ${isUnread ? 'bg-blue-50/50' : ''}`}
                             data-testid={`notification-${notification.id}`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
-                                <Bell className="h-4 w-4 text-blue-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between">
-                                  <span className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
-                                    {notification.title}
-                                  </span>
-                                  {!notification.read && (
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
-                                  )}
+                            <button
+                              onClick={() => handleNotificationClick(notification)}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-start gap-3 pr-14">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
+                                  <NotifIcon className={`h-4 w-4 ${fg}`} />
                                 </div>
-                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                                  {notification.message}
-                                </p>
-                                <span className="text-xs text-stone-400 mt-1 block">{timeAgo}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm ${isUnread ? 'font-semibold' : 'font-medium'}`}>
+                                      {notification.title}
+                                    </span>
+                                    {isUnread && (
+                                      <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                    {notification.message}
+                                  </p>
+                                  <span className="text-xs text-stone-400 mt-1 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {timeAgo}
+                                  </span>
+                                </div>
                               </div>
+                            </button>
+                            {/* Per-notification actions */}
+                            <div className="absolute top-2.5 right-2 flex items-center gap-0.5">
+                              {isUnread && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsReadMutation.mutate(notification.id);
+                                  }}
+                                  disabled={markAsReadMutation.isPending}
+                                  className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                  title="Mark as read"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotificationMutation.mutate(notification.id);
+                                }}
+                                disabled={deleteNotificationMutation.isPending}
+                                className="p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                title="Delete notification"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
                         );

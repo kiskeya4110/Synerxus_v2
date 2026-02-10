@@ -141,7 +141,8 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
-import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql, count } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql, count, gte } from "drizzle-orm";
+import { DATA_CUTOFF } from "@shared/constants";
 
 // Pagination options for list methods
 export interface PaginationOptions {
@@ -504,6 +505,7 @@ export class DatabaseStorage implements IStorage {
 
   private async initializeImpactMetrics() {
     const initialMetrics: InsertImpactMetric[] = [
+      // SDG 1 — No Poverty
       {
         name: "Lives Impacted",
         description: "Number of people directly impacted by volunteer activities",
@@ -512,12 +514,28 @@ export class DatabaseStorage implements IStorage {
         sdgGoal: 1
       },
       {
-        name: "People with Clean Water Access",
-        description: "Number of people who gained access to clean water",
-        unit: "people",
-        category: "water",
-        sdgGoal: 6
+        name: "Families Reached",
+        description: "Number of families reached through outreach or support programs",
+        unit: "families",
+        category: "community",
+        sdgGoal: 1
       },
+      {
+        name: "Funds Raised",
+        description: "Total dollars raised through fundraising efforts",
+        unit: "dollars",
+        category: "fundraising",
+        sdgGoal: 1
+      },
+      // SDG 2 — Zero Hunger
+      {
+        name: "Meals Provided",
+        description: "Number of meals provided to people in need",
+        unit: "meals",
+        category: "hunger",
+        sdgGoal: 2
+      },
+      // SDG 3 — Good Health and Well-being
       {
         name: "Healthcare Services Delivered",
         description: "Number of healthcare services provided",
@@ -526,6 +544,28 @@ export class DatabaseStorage implements IStorage {
         sdgGoal: 3
       },
       {
+        name: "Health Screenings Completed",
+        description: "Number of health screenings or check-ups completed",
+        unit: "screenings",
+        category: "health",
+        sdgGoal: 3
+      },
+      {
+        name: "Wellness Sessions Held",
+        description: "Number of wellness or mental health sessions conducted",
+        unit: "sessions",
+        category: "health",
+        sdgGoal: 3
+      },
+      {
+        name: "Hours of Counseling",
+        description: "Hours of counseling or therapy provided",
+        unit: "hours",
+        category: "health",
+        sdgGoal: 3
+      },
+      // SDG 4 — Quality Education
+      {
         name: "Students Educated",
         description: "Number of students who received education services",
         unit: "students",
@@ -533,19 +573,97 @@ export class DatabaseStorage implements IStorage {
         sdgGoal: 4
       },
       {
+        name: "Workshops Conducted",
+        description: "Number of educational workshops or training sessions held",
+        unit: "workshops",
+        category: "education",
+        sdgGoal: 4
+      },
+      {
+        name: "School Supplies Distributed",
+        description: "Number of school supply kits distributed to students",
+        unit: "kits",
+        category: "education",
+        sdgGoal: 4
+      },
+      {
+        name: "Books Distributed",
+        description: "Number of books or learning materials distributed",
+        unit: "books",
+        category: "education",
+        sdgGoal: 4
+      },
+      // SDG 5 — Gender Equality
+      {
+        name: "Women & Girls Empowered",
+        description: "Number of women and girls supported through empowerment programs",
+        unit: "participants",
+        category: "equality",
+        sdgGoal: 5
+      },
+      // SDG 6 — Clean Water and Sanitation
+      {
+        name: "People with Clean Water Access",
+        description: "Number of people who gained access to clean water",
+        unit: "people",
+        category: "water",
+        sdgGoal: 6
+      },
+      // SDG 8 — Decent Work and Economic Growth
+      {
+        name: "Job Training Participants",
+        description: "Number of people trained in job-readiness or vocational skills",
+        unit: "participants",
+        category: "employment",
+        sdgGoal: 8
+      },
+      {
+        name: "Business Plans Created",
+        description: "Number of business or entrepreneurship plans developed",
+        unit: "plans",
+        category: "employment",
+        sdgGoal: 8
+      },
+      // SDG 10 — Reduced Inequalities
+      {
+        name: "Youth Mentored",
+        description: "Number of youth served through mentoring or enrichment programs",
+        unit: "youth",
+        category: "mentoring",
+        sdgGoal: 10
+      },
+      // SDG 11 — Sustainable Cities and Communities
+      {
+        name: "Community Events Organized",
+        description: "Number of community events or gatherings organized",
+        unit: "events",
+        category: "community",
+        sdgGoal: 11
+      },
+      // SDG 13 — Climate Action
+      {
         name: "CO2 Emissions Reduced",
         description: "Amount of CO2 emissions reduced",
         unit: "tons",
         category: "climate",
         sdgGoal: 13
       },
+      // SDG 15 — Life on Land
       {
-        name: "Meals Provided",
-        description: "Number of meals provided to people in need",
-        unit: "meals",
-        category: "hunger",
-        sdgGoal: 2
-      }
+        name: "Trees Planted",
+        description: "Number of trees planted for reforestation or greening",
+        unit: "trees",
+        category: "environment",
+        sdgGoal: 15
+      },
+      // SDG 17 — Partnerships for the Goals
+      {
+        name: "Partnerships Established",
+        description: "Number of partnerships or collaborations formed",
+        unit: "partnerships",
+        category: "partnerships",
+        sdgGoal: 17
+      },
     ];
 
     for (const metric of initialMetrics) {
@@ -787,7 +905,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivities(options?: PaginationOptions): Promise<VolunteerActivity[]> {
-    const query = db.select().from(volunteerActivities).orderBy(desc(volunteerActivities.date));
+    // Filter to only include data from December 15, 2025 onwards
+    const query = db.select().from(volunteerActivities)
+      .where(gte(volunteerActivities.date, DATA_CUTOFF.DATE))
+      .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
     }
@@ -796,8 +917,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivitiesByUser(userId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(eq(volunteerActivities.userId, userId))
+      .where(and(
+        eq(volunteerActivities.userId, userId),
+        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
+      ))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -806,14 +931,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async countVolunteerActivitiesByUser(userId: number): Promise<number> {
+    // Filter to only count data from December 15, 2025 onwards
     const [result] = await db.select({ count: count() }).from(volunteerActivities)
-      .where(eq(volunteerActivities.userId, userId));
+      .where(and(
+        eq(volunteerActivities.userId, userId),
+        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
+      ));
     return result?.count || 0;
   }
 
   async listVolunteerActivitiesByProject(projectId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(eq(volunteerActivities.projectId, projectId))
+      .where(and(
+        eq(volunteerActivities.projectId, projectId),
+        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
+      ))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -865,8 +998,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivitiesByExternalVolunteer(externalVolunteerId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
+    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(eq(volunteerActivities.externalVolunteerId, externalVolunteerId))
+      .where(and(
+        eq(volunteerActivities.externalVolunteerId, externalVolunteerId),
+        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
+      ))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -1031,7 +1168,10 @@ export class DatabaseStorage implements IStorage {
 
   async listApplicationsByVolunteer(volunteerId: number, options?: PaginationOptions): Promise<Application[]> {
     const query = db.select().from(applications)
-      .where(eq(applications.volunteerId, volunteerId))
+      .where(and(
+        eq(applications.volunteerId, volunteerId),
+        gte(applications.createdAt, DATA_CUTOFF.DATE)
+      ))
       .orderBy(desc(applications.createdAt));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -1289,7 +1429,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]> {
-    return await db.select().from(projectAssignments).where(eq(projectAssignments.volunteerId, volunteerId));
+    return await db.select().from(projectAssignments).where(
+      and(
+        eq(projectAssignments.volunteerId, volunteerId),
+        gte(projectAssignments.createdAt, DATA_CUTOFF.DATE)
+      )
+    );
   }
 
   async deleteProjectAssignment(id: number): Promise<boolean> {
@@ -1312,7 +1457,12 @@ export class DatabaseStorage implements IStorage {
 
   async listVolunteerActivitiesByProjectIds(projectIds: number[]): Promise<VolunteerActivity[]> {
     if (projectIds.length === 0) return [];
-    return await db.select().from(volunteerActivities).where(inArray(volunteerActivities.projectId, projectIds));
+    // Filter to only include data from December 15, 2025 onwards
+    return await db.select().from(volunteerActivities)
+      .where(and(
+        inArray(volunteerActivities.projectId, projectIds),
+        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
+      ));
   }
 
   async listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]> {

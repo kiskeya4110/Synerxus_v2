@@ -61,29 +61,39 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
   const bottomLeftX = 0;
   const bottomRightX = squareSize + gap;
 
-  // Total viewBox dimensions
-  const totalWidth = squareSize * 2 + gap + offset;
-  const totalHeight = squareSize * 2 + gap;
+  // Total content dimensions
+  const contentWidth = squareSize * 2 + gap + offset;
+  const contentHeight = squareSize * 2 + gap;
+
+  // Add padding so the icon isn't edge-to-edge and is centered in its box
+  const padding = size * 0.06;
+  const viewBoxWidth = contentWidth + padding * 2;
+  const viewBoxHeight = contentHeight + padding * 2;
+
+  // Offset all content by padding so it's centered in the viewBox
+  const padX = padding;
+  const padY = padding;
 
   return (
     <svg
       width={size}
       height={size}
-      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+      viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      style={{ display: 'block' }}
       aria-label="Synerxus Logo"
     >
       {/* Top-Left Square - Dark Navy Blue (FILLED, rounded top-left corner) */}
       <path
         d={`
-          M ${topLeftX + cornerRadius} ${topRowY}
-          L ${topLeftX + squareSize} ${topRowY}
-          L ${topLeftX + squareSize} ${topRowY + squareSize}
-          L ${topLeftX} ${topRowY + squareSize}
-          L ${topLeftX} ${topRowY + cornerRadius}
-          Q ${topLeftX} ${topRowY} ${topLeftX + cornerRadius} ${topRowY}
+          M ${padX + topLeftX + cornerRadius} ${padY + topRowY}
+          L ${padX + topLeftX + squareSize} ${padY + topRowY}
+          L ${padX + topLeftX + squareSize} ${padY + topRowY + squareSize}
+          L ${padX + topLeftX} ${padY + topRowY + squareSize}
+          L ${padX + topLeftX} ${padY + topRowY + cornerRadius}
+          Q ${padX + topLeftX} ${padY + topRowY} ${padX + topLeftX + cornerRadius} ${padY + topRowY}
           Z
         `}
         fill={LOGO_COLORS.navy}
@@ -92,11 +102,11 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
       {/* Top-Right Square - Dark Orange (BORDER ONLY, rounded top-right corner) */}
       <path
         d={`
-          M ${topRightX + strokeWidth / 2} ${topRowY + strokeWidth / 2}
-          L ${topRightX + squareSize - cornerRadius} ${topRowY + strokeWidth / 2}
-          Q ${topRightX + squareSize - strokeWidth / 2} ${topRowY + strokeWidth / 2} ${topRightX + squareSize - strokeWidth / 2} ${topRowY + cornerRadius}
-          L ${topRightX + squareSize - strokeWidth / 2} ${topRowY + squareSize - strokeWidth / 2}
-          L ${topRightX + strokeWidth / 2} ${topRowY + squareSize - strokeWidth / 2}
+          M ${padX + topRightX + strokeWidth / 2} ${padY + topRowY + strokeWidth / 2}
+          L ${padX + topRightX + squareSize - cornerRadius} ${padY + topRowY + strokeWidth / 2}
+          Q ${padX + topRightX + squareSize - strokeWidth / 2} ${padY + topRowY + strokeWidth / 2} ${padX + topRightX + squareSize - strokeWidth / 2} ${padY + topRowY + cornerRadius}
+          L ${padX + topRightX + squareSize - strokeWidth / 2} ${padY + topRowY + squareSize - strokeWidth / 2}
+          L ${padX + topRightX + strokeWidth / 2} ${padY + topRowY + squareSize - strokeWidth / 2}
           Z
         `}
         stroke={LOGO_COLORS.darkOrange}
@@ -108,12 +118,12 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
       {/* Bottom-Left Square - Yellow (FILLED, rounded bottom-left corner) */}
       <path
         d={`
-          M ${bottomLeftX} ${bottomRowY}
-          L ${bottomLeftX + squareSize} ${bottomRowY}
-          L ${bottomLeftX + squareSize} ${bottomRowY + squareSize}
-          L ${bottomLeftX + cornerRadius} ${bottomRowY + squareSize}
-          Q ${bottomLeftX} ${bottomRowY + squareSize} ${bottomLeftX} ${bottomRowY + squareSize - cornerRadius}
-          L ${bottomLeftX} ${bottomRowY}
+          M ${padX + bottomLeftX} ${padY + bottomRowY}
+          L ${padX + bottomLeftX + squareSize} ${padY + bottomRowY}
+          L ${padX + bottomLeftX + squareSize} ${padY + bottomRowY + squareSize}
+          L ${padX + bottomLeftX + cornerRadius} ${padY + bottomRowY + squareSize}
+          Q ${padX + bottomLeftX} ${padY + bottomRowY + squareSize} ${padX + bottomLeftX} ${padY + bottomRowY + squareSize - cornerRadius}
+          L ${padX + bottomLeftX} ${padY + bottomRowY}
           Z
         `}
         fill={LOGO_COLORS.yellow}
@@ -122,11 +132,11 @@ function LogoIcon({ size = 40, className }: { size?: number; className?: string 
       {/* Bottom-Right Square - Light Blue (FILLED, rounded bottom-right corner) */}
       <path
         d={`
-          M ${bottomRightX} ${bottomRowY}
-          L ${bottomRightX + squareSize} ${bottomRowY}
-          L ${bottomRightX + squareSize} ${bottomRowY + squareSize - cornerRadius}
-          Q ${bottomRightX + squareSize} ${bottomRowY + squareSize} ${bottomRightX + squareSize - cornerRadius} ${bottomRowY + squareSize}
-          L ${bottomRightX} ${bottomRowY + squareSize}
+          M ${padX + bottomRightX} ${padY + bottomRowY}
+          L ${padX + bottomRightX + squareSize} ${padY + bottomRowY}
+          L ${padX + bottomRightX + squareSize} ${padY + bottomRowY + squareSize - cornerRadius}
+          Q ${padX + bottomRightX + squareSize} ${padY + bottomRowY + squareSize} ${padX + bottomRightX + squareSize - cornerRadius} ${padY + bottomRowY + squareSize}
+          L ${padX + bottomRightX} ${padY + bottomRowY + squareSize}
           Z
         `}
         fill={LOGO_COLORS.lightBlue}

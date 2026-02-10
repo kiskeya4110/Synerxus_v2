@@ -1,0 +1,115 @@
+## **SYNERXUS MVP — CURRENT STATE (FEBRUARY 2026)**  
+*Founder-honest summary of what exists today—not roadmap aspirations*
+
+---
+
+### **WHAT IT IS**  
+A B2B SaaS platform that captures **NGO-verified volunteer outcomes**—not self-reported hours—to generate audit-ready impact data for corporate ESG reporting. Built as a single codebase with **role-based views** (not three separate dashboards):
+
+| User Type | What They See | Core Action |
+|-----------|---------------|-------------|
+| **NGO** | Verification queue + "Post Project Need" button | 1-tap confirmation of outcomes via app *or SMS* |
+| **Volunteer** | Curated project matches + outcome logging form | Logs what they delivered ("Built financial dashboard") |
+| **Corporation** | Read-only dashboard of verified outcomes + CSRD report generator | Views NGO-confirmed data with full audit trail |
+
+---
+
+### **CORE LOOP (THE ONLY THING THAT MATTERS)**  
+```
+Volunteer completes work 
+  → Logs outcome ("Built dashboard for donor reporting") 
+  → NGO receives push notification *or SMS* 
+  → NGO taps "Confirm" (≤15 seconds) 
+  → System captures: timestamp, device ID/SMS number, outcome text 
+  → Auto-maps to UN SDGs 
+  → Generates: (a) audit trail for corporation, (b) branded PDF for NGO fundraising
+```
+
+**This loop is functional today.** Everything else is scaffolding.
+
+---
+
+### **BUILT FEATURES (MVP COMPLETE)**  
+
+| Feature | Status | Critical Constraint |
+|---------|--------|---------------------|
+| **Outcome logging** | ✅ Live | Text field + dropdown for outcome type. *No hour tracking.* |
+| **1-tap NGO verification** | ✅ Live | Push notification → Confirm/Reject/Edit (≤3 taps) |
+| **SMS fallback verification** | ✅ Live | Auto-SMS after 4h if no app response: "Reply Y/N" |
+| **Audit trail capture** | ✅ Live | Logs NGO name, timestamp, device ID/SMS number, geolocation (if available) |
+| **SDG auto-tagging** | ✅ Live | Pre-mapped outcomes → SDGs (e.g., "financial dashboard" → SDG 16.6) |
+| **4-factor matching** | ✅ Live | Skills (35%), Trust (30%), Availability (25%), Mission (10%) |
+| **Corporate dashboard** | ✅ Live | Read-only list of verified outcomes + CSRD report export |
+| **Pre-filled NGO onboarding** | ⚠️ Manual | *You* create accounts + draft first project need *before* NGO signs up |
+
+---
+
+### **NOT BUILT (ROADMAP ONLY)**  
+
+| Feature | Timeline | Why It's Not MVP |
+|---------|----------|------------------|
+| AI anomaly detection ("Verification Intelligence") | Q3 2026+ | Requires 12+ months of verified data to train. Not built. |
+| 12-factor matching algorithm | Scale phase | 4 factors suffice for pilot volume. Complexity kills velocity now. |
+| HRIS integrations (Workday, etc.) | Phase 2 | Pilot = manual CSV upload by you. No enterprise integration yet. |
+| Multi-language UI | Phase 3 | English + SMS works for pilot NGOs. Localization = scale problem. |
+| Volunteer ratings/reviews | Never (likely) | Adds friction. Verification rate > social features at this stage. |
+
+---
+
+### **CURRENT TRACTION (TRANSPARENT)**  
+
+| Metric | Status | Context |
+|--------|--------|---------|
+| NGO partners onboarded | 23 across 5 countries | Zambia, Philippines, Zimbabwe, Mexico, Haiti |
+| NGOs completing verifications (last 30d) | ~14 | 60–68% verification rate within 72h (industry baseline) |
+| Silent pilots | ~9 NGOs | Not rejecting—just not engaging. Root cause: setup friction before value |
+| Corporate pilots | 4 active | Testing CSRD-ready reporting; pre-revenue |
+| **Make-or-break metric** | **Verification rate** | Target: ≥75%. Current focus: "Value Flip" (auto-generate fundraising PDFs) |
+
+---
+
+### **THE SILENT PILOT PROBLEM (REALITY CHECK)**  
+
+9 of 23 NGO partners are silent because:  
+- They were asked to *do work* (onboard staff, post projects) *before* seeing value  
+- "Active partner" ≠ "verifying outcomes weekly"  
+
+**Current fix:**  
+- You manually draft their first project need → they only click "Publish"  
+- You create their account → they only confirm staff list  
+- First verification auto-generates branded PDF → immediate value ("This helps my fundraising")  
+
+*Until verification rate hits 75%, no new features. Only friction removal.*
+
+---
+
+### **WHAT IT IS NOT**  
+
+❌ Not a volunteer management platform (like Benevity)  
+❌ Not an AI company (no ML models in production)  
+❌ Not a donation processor  
+❌ Not deep tech in the lab-science sense (it's workflow engineering for low-connectivity environments)  
+❌ Not tracking hours (only outcomes)  
+❌ Not three separate dashboards (one codebase, role-based views)  
+
+---
+
+### **WHY IT MATTERS NOW**  
+
+EU CSRD enforcement begins April 2025. Auditors are already rejecting self-reported volunteer hours as "unverifiable." Synerxus is the only platform where:  
+- NGOs—not corporations—own verification  
+- Verification works on basic phones via SMS  
+- Every tap creates an audit trail satisfying ESRS S4 (communities)  
+
+This isn't a "nice-to-have" feature. It's regulatory risk mitigation with a hard deadline.
+
+---
+
+### **THE HONEST POSITIONING**  
+
+> *"Synerxus is impact data infrastructure—not lab-based deep tech. We solve a compliance problem (CSRD 2025) with engineered workflow simplicity: making NGO verification trivially easy in resource-constrained environments. Our defensibility isn't AI—it's trust built over years with 23 NGO partners who verify because it generates fundraising assets for them. We're not claiming attribution yet. We're solving the foundational problem: capturing verified outcomes instead of self-reported hours."*
+
+---
+
+**This is your MVP today.**  
+No vaporware. No inflated stats. Just a functional verification loop being stress-tested across 5 countries—with NGO trust as the only moat that matters right now. Everything else is noise until verification rate exceeds 75%.

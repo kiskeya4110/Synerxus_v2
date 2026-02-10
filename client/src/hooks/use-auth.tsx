@@ -83,17 +83,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(error.message || "Failed to sync with backend");
       }
 
-      const data: SyncResponse = await response.json();
+      const data = await response.json();
+
+      // Backend returns user data directly, not nested under 'user'
+      const user = data.user || data;
+      const isNewUser = data.isNewUser ?? false;
 
       // Update local state
-      setDbUser(data.user);
-      setIsNewUser(data.isNewUser);
+      setDbUser(user);
+      setIsNewUser(isNewUser);
 
       // Store in localStorage for persistence
-      localStorage.setItem("currentUserId", String(data.user.id));
-      localStorage.setItem("userType", data.user.userType);
+      localStorage.setItem("currentUserId", String(user.id));
+      localStorage.setItem("userType", user.userType);
 
-      return data;
+      return { user, isNewUser };
     } catch (error) {
       console.error("Backend sync error:", error);
       // Don't show toast here - let the caller handle the error display
@@ -154,9 +158,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     console.log("[Auth] signInWithEmail called for:", email);
+
+    // Helper to add timeout to promises
+    const withTimeout = <T,>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+      ]);
+    };
+
     try {
       console.log("[Auth] Calling Firebase signInWithEmailAndPassword...");
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      const result = await withTimeout(
+        signInWithEmailAndPassword(auth, email, password),
+        10000,
+        "Firebase authentication timed out"
+      );
       console.log("[Auth] Firebase sign-in successful:", result.user.uid);
 
       // Sync with backend to get user data
@@ -175,44 +192,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result.user;
     } catch (error: any) {
-      console.error("[Auth] Error signing in with email:", error.code, error.message);
+      console.error("[Auth] Error signing in with email:", error.code, error.message, error);
 
       const errorCode = error?.code;
 
-      // Check if Firebase is not configured or email auth not enabled - try direct backend lookup
-      if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
-          errorCode === "auth/operation-not-allowed" || errorCode === "auth/admin-restricted-operation" ||
-          error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
-        console.log("[Auth] Firebase auth not available for login, using demo mode. Error:", errorCode);
+      // Check if Firebase is not configured, email auth not enabled, user doesn't exist, or timed out
+      // This allows demo mode users (created directly in DB) to log in even with real Firebase config
+      const shouldFallbackToDemo =
+        errorCode === "auth/invalid-api-key" ||
+        errorCode === "auth/configuration-not-found" ||
+        errorCode === "auth/operation-not-allowed" ||
+        errorCode === "auth/admin-restricted-operation" ||
+        errorCode === "auth/user-not-found" ||
+        errorCode === "auth/invalid-credential" ||
+        errorCode === "auth/network-request-failed" ||
+        error?.message?.includes("demo-key") ||
+        error?.message?.includes("invalid-api-key") ||
+        error?.message?.includes("timed out");
 
-        // Try to find user by email in backend using firebase-sync with isLoginAttempt flag
-        const response = await fetch("/api/users/firebase-sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firebaseUid: `demo_login_${Date.now()}`,
-            email,
-            isLoginAttempt: true,
-          }),
-        });
+      if (shouldFallbackToDemo) {
+        console.log("[Auth] Firebase auth failed, trying backend lookup. Error:", errorCode || error?.message);
 
-        if (response.ok) {
-          const data = await response.json();
-          // Check if it's an existing user (isNewUser: false)
-          if (data && !data.isNewUser) {
-            const user = data.user || data;
-            setDbUser(user);
-            localStorage.setItem("currentUserId", String(user.id));
-            localStorage.setItem("userType", user.userType || "volunteer");
-            console.log("[Auth] Demo login successful for existing user:", user.email);
+        try {
+          // Try to find user by email in backend using firebase-sync with isLoginAttempt flag
+          console.log("[Auth] Attempting backend login for:", email);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            return {
-              uid: user.firebaseUid || `demo_${user.id}`,
-              email: user.email,
-              displayName: user.displayName,
-              getIdToken: async () => "demo-token",
-            } as any;
+          const response = await fetch("/api/users/firebase-sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              firebaseUid: `demo_login_${Date.now()}`,
+              email,
+              isLoginAttempt: true,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json();
+            // Check if it's an existing user (isNewUser: false)
+            if (data && !data.isNewUser) {
+              const user = data.user || data;
+              setDbUser(user);
+              localStorage.setItem("currentUserId", String(user.id));
+              localStorage.setItem("userType", user.userType || "volunteer");
+              console.log("[Auth] Demo login successful for existing user:", user.email);
+
+              return {
+                uid: user.firebaseUid || `demo_${user.id}`,
+                email: user.email,
+                displayName: user.displayName,
+                getIdToken: async () => "demo-token",
+              } as any;
+            }
           }
+        } catch (backendError: any) {
+          console.error("[Auth] Backend lookup failed:", backendError.message);
         }
 
         toast({

@@ -165,15 +165,6 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
     console.log(`[Matches API] Opportunity SDGs: ${JSON.stringify(representativeOpportunity.sdgGoals)}, primary: ${representativeOpportunity.primarySdg}`);
     console.log(`[Matches API] Total volunteers to match: ${volunteersWithProfiles.length}`);
 
-    // Debug: check sample volunteer data
-    const sampleVol = volunteersWithProfiles.find((v: any) => v.displayName === 'Al Honorat');
-    if (sampleVol) {
-      console.log(`[Matches API] Al Honorat data: userType=${sampleVol.userType}, skills=${JSON.stringify(sampleVol.skills)}, profile.preferredSdgs=${JSON.stringify(sampleVol.profile?.preferredSdgs)}`);
-    } else {
-      const first = volunteersWithProfiles[0];
-      console.log(`[Matches API] First volunteer: userType=${first?.userType}, skills=${JSON.stringify(first?.skills?.slice(0,2))}, hasProfile=${!!first?.profile}`);
-    }
-
     const matchedVolunteers = findTopVolunteers(
       representativeOpportunity,
       volunteersWithProfiles as any,

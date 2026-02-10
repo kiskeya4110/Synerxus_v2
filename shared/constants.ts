@@ -196,6 +196,35 @@ export const CSR_SCORING = {
 } as const;
 
 // ============================================
+// DATA CUTOFF CONFIGURATION
+// ============================================
+
+/**
+ * Data cutoff date - all metrics and data queries should only include
+ * data from this date onwards. Data before this date should not be displayed.
+ * This ensures the platform only shows relevant, current information.
+ */
+export const DATA_CUTOFF = {
+  // The cutoff date - December 15, 2025
+  DATE: new Date('2025-12-15T00:00:00.000Z'),
+
+  // ISO format for database queries
+  DATE_ISO: '2025-12-15',
+
+  // Human-readable format
+  DATE_DISPLAY: 'December 15, 2025',
+} as const;
+
+/**
+ * Check if a date is within the valid data range (on or after cutoff)
+ */
+export function isDateAfterCutoff(date: Date | string | null | undefined): boolean {
+  if (!date) return false;
+  const checkDate = typeof date === 'string' ? new Date(date) : date;
+  return checkDate >= DATA_CUTOFF.DATE;
+}
+
+// ============================================
 // FEATURE FLAGS CONFIGURATION
 // ============================================
 

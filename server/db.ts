@@ -77,7 +77,7 @@ function serializeError(err: unknown): string {
 }
 
 // Log pool events for monitoring - handle errors without crashing
-pool.on('error', (err) => {
+(pool as NodeJS.EventEmitter).on('error', (err) => {
   poolMetrics.errorCount++;
   poolMetrics.lastError = err instanceof Error ? err : new Error(String(err));
   poolMetrics.lastErrorTime = Date.now();
@@ -105,7 +105,7 @@ pool.on('remove', () => {
 // Create Drizzle instance with appropriate driver
 export const db = isNeonDatabase
   ? drizzleNeon({ client: pool as NeonPool, schema })
-  : drizzlePg({ client: pool as PgPool, schema });
+  : drizzlePg({ client: pool as InstanceType<typeof PgPool>, schema });
 
 // Export pool stats for monitoring
 export function getPoolStats() {

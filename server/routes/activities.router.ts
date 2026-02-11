@@ -299,9 +299,30 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
  *   autoApprove?: boolean (default: true)
  * }
  */
-activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req: Request, res: Response) => {
+activitiesRouter.post("/admin/volunteer-activities", optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
-    const user = req.user;
+    // Try token-based auth first, fall back to x-user-id header for demo mode
+    // Note: Cannot use req.body.userId for admin identity because that field
+    // contains the target volunteer's userId in this endpoint
+    let user = req.user;
+    if (!user) {
+      const headerUserId = req.headers['x-user-id'] as string;
+      const fallbackUserId = headerUserId ? parseInt(headerUserId) : null;
+      if (fallbackUserId && !isNaN(fallbackUserId)) {
+        const fallbackUser = await storage.getUser(fallbackUserId);
+        if (fallbackUser) {
+          user = {
+            id: fallbackUser.id,
+            email: fallbackUser.email,
+            userType: fallbackUser.userType || 'volunteer',
+            organizationId: fallbackUser.organizationId,
+            firebaseUid: fallbackUser.firebaseUid,
+          };
+          req.user = user;
+        }
+      }
+    }
+
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -333,7 +354,10 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
       skillsApplied,
       outcomes,
       evidenceUrls,
-      autoApprove = true // Default to auto-approve for admin-logged activities
+      autoApprove = true, // Default to auto-approve for admin-logged activities
+      outcomeQuantity,
+      outcomeText,
+      outcomeType
     } = req.body;
 
     // Validate required fields
@@ -416,7 +440,10 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
       evidenceUrls: evidenceUrls || null,
       loggedBy: user.id,
       loggedByType: 'admin',
-      verificationStatus: autoApprove ? 'approved' : 'pending'
+      verificationStatus: autoApprove ? 'approved' : 'pending',
+      outcomeQuantity: outcomeQuantity || null,
+      outcomeText: outcomeText || null,
+      outcomeType: outcomeType || null,
     };
 
     const activity = await storage.createVolunteerActivity(activityData);

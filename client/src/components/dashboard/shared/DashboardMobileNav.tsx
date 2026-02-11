@@ -135,7 +135,7 @@ export default function DashboardMobileNav({
               return (
                 <button
                   key={item.id}
-                  onClick={() => (item as any).isMore ? setShowMore(true) : item.action()}
+                  onClick={() => (item as any).isMore ? setShowMore(true) : item.action?.()}
                   className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                     isPrimary
                       ? isActive

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserPlus, Upload, X, Image, UserCheck, Info } from "lucide-react";
+import { Plus, Edit, Trash2, UserPlus, Upload, X, Image, UserCheck, Info, Target, BarChart3 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -19,6 +19,55 @@ import { ProjectCoverUpload } from "@/components/project-cover-upload";
 import type { Project } from "@shared/schema";
 import { formatDecimal } from "@/lib/format-utils";
 import { FormDescription } from "@/components/ui/form";
+
+// Predefined KPI/Metric presets organized by category
+const KPI_PRESETS = [
+  {
+    category: "Education",
+    metrics: [
+      { name: "Students Tutored", unit: "students" },
+      { name: "Literacy Rate Improvement", unit: "percentage" },
+      { name: "Training Sessions Delivered", unit: "sessions" },
+      { name: "Scholarships Awarded", unit: "scholarships" },
+    ]
+  },
+  {
+    category: "Environment",
+    metrics: [
+      { name: "Trees Planted", unit: "trees" },
+      { name: "Waste Collected", unit: "kg" },
+      { name: "Carbon Offset", unit: "tonnes CO2" },
+      { name: "Water Bodies Cleaned", unit: "sites" },
+    ]
+  },
+  {
+    category: "Health",
+    metrics: [
+      { name: "Patients Served", unit: "patients" },
+      { name: "Health Screenings Conducted", unit: "screenings" },
+      { name: "Meals Distributed", unit: "meals" },
+      { name: "First Aid Kits Delivered", unit: "kits" },
+    ]
+  },
+  {
+    category: "Community",
+    metrics: [
+      { name: "Families Supported", unit: "families" },
+      { name: "Homes Built or Repaired", unit: "homes" },
+      { name: "Community Events Organized", unit: "events" },
+      { name: "People Reached", unit: "people" },
+    ]
+  },
+  {
+    category: "Economic",
+    metrics: [
+      { name: "Jobs Created", unit: "jobs" },
+      { name: "Businesses Mentored", unit: "businesses" },
+      { name: "Microloans Facilitated", unit: "loans" },
+      { name: "Skills Certifications Issued", unit: "certifications" },
+    ]
+  },
+];
 
 // Volunteer role schema for AIU contribution tracking
 const volunteerRoleSchema = z.object({
@@ -848,21 +897,62 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
               />
               
               <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-950 rounded">
-                <p className="text-sm font-semibold mb-2">Define Your Impact Metric (Critical for Dashboard)</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                  This allows Synerxus to track your success. When volunteers log hours, they will report against this metric.
+                <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  Define Your Impact KPI (Critical for Dashboard)
                 </p>
-                
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  Select a predefined KPI or create a custom one. Volunteers will report against this metric.
+                </p>
+
+                {/* KPI Preset Selection */}
+                <div className="mb-4">
+                  <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Quick Select a KPI</Label>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-lg p-2 bg-white dark:bg-slate-900">
+                    {KPI_PRESETS.map((category) => (
+                      <div key={category.category}>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <BarChart3 className="h-3 w-3" />
+                          {category.category}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {category.metrics.map((metric) => {
+                            const isSelected = form.watch("impactMetricName") === metric.name;
+                            return (
+                              <button
+                                key={metric.name}
+                                type="button"
+                                onClick={() => {
+                                  form.setValue("impactMetricName", metric.name);
+                                  form.setValue("impactMetricUnit", metric.unit);
+                                }}
+                                className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                  isSelected
+                                    ? 'bg-blue-100 border-blue-400 text-blue-700 font-medium'
+                                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300'
+                                }`}
+                              >
+                                {metric.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom KPI fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="impactMetricName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Metric Name</FormLabel>
+                        <FormLabel>KPI / Metric Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., Students Tutored, Trees Planted"
+                            placeholder="e.g., Students Tutored"
                             {...field}
                             data-testid="input-metric-name"
                           />
@@ -889,6 +979,13 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
                     )}
                   />
                 </div>
+                {form.watch("impactMetricName") && (
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-950 rounded border border-green-200 dark:border-green-800">
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      Selected KPI: <strong>{form.watch("impactMetricName")}</strong> (measured in {form.watch("impactMetricUnit") || "units"})
+                    </p>
+                  </div>
+                )}
               </div>
 
               <FormField
@@ -1225,6 +1322,87 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* KPI / Impact Metrics */}
+            <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-950 rounded">
+              <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-600" />
+                Impact KPI / Metrics
+              </p>
+
+              {/* KPI Preset Selection */}
+              <div className="mb-3">
+                <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Quick Select a KPI</Label>
+                <div className="space-y-2 max-h-[180px] overflow-y-auto border rounded-lg p-2 bg-white dark:bg-slate-900">
+                  {KPI_PRESETS.map((category) => (
+                    <div key={category.category}>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <BarChart3 className="h-3 w-3" />
+                        {category.category}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {category.metrics.map((metric) => {
+                          const isSelected = form.watch("impactMetricName") === metric.name;
+                          return (
+                            <button
+                              key={metric.name}
+                              type="button"
+                              onClick={() => {
+                                form.setValue("impactMetricName", metric.name);
+                                form.setValue("impactMetricUnit", metric.unit);
+                              }}
+                              className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                isSelected
+                                  ? 'bg-blue-100 border-blue-400 text-blue-700 font-medium'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300'
+                              }`}
+                            >
+                              {metric.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="impactMetricName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">KPI / Metric Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Students Tutored" {...field} className="h-9" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="impactMetricUnit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Unit of Measurement</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., students" {...field} className="h-9" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {form.watch("impactMetricName") && (
+                <div className="mt-2 p-2 bg-green-50 dark:bg-green-950 rounded border border-green-200 dark:border-green-800">
+                  <p className="text-xs text-green-700 dark:text-green-300">
+                    Selected KPI: <strong>{form.watch("impactMetricName")}</strong> (measured in {form.watch("impactMetricUnit") || "units"})
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Cover Image Upload */}
             <div className="space-y-2">

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, getAuthHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
@@ -36,6 +36,14 @@ interface RecentActivity extends VolunteerActivity {
   volunteerName?: string;
 }
 
+interface OutcomeTemplate {
+  name: string;
+  unit: string;
+  sdg: number;
+  icon: string;
+  sortOrder: number;
+}
+
 export default function LogVolunteerHoursPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -59,6 +67,8 @@ export default function LogVolunteerHoursPage() {
   const [autoApprove, setAutoApprove] = useState(true);
   const [volunteerSearch, setVolunteerSearch] = useState('');
   const [externalSearch, setExternalSearch] = useState('');
+  const [selectedKpi, setSelectedKpi] = useState('');
+  const [kpiQuantity, setKpiQuantity] = useState('');
 
   // Fetch current user's organization
   const { data: currentUser } = useQuery<UserType>({
@@ -130,6 +140,19 @@ export default function LogVolunteerHoursPage() {
     enabled: !!organizationId
   });
 
+  // Derive outcomeTemplates from the selected project's KPI configuration
+  const selectedProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return projects.find((p: Project) => p.id === selectedProjectId) || null;
+  }, [selectedProjectId, projects]);
+
+  const outcomeTemplates: OutcomeTemplate[] = useMemo(() => {
+    if (!selectedProject || !(selectedProject as any).outcomeTemplates) return [];
+    const templates = (selectedProject as any).outcomeTemplates;
+    if (!Array.isArray(templates) || templates.length === 0) return [];
+    return [...templates].sort((a: OutcomeTemplate, b: OutcomeTemplate) => a.sortOrder - b.sortOrder);
+  }, [selectedProject]);
+
   // Fetch recent admin-logged activities
   const { data: recentActivities = [] } = useQuery<RecentActivity[]>({
     queryKey: ["/api/volunteer-activities/recent", organizationId],
@@ -157,9 +180,11 @@ export default function LogVolunteerHoursPage() {
   // Create activity mutation
   const createActivityMutation = useMutation({
     mutationFn: async (data: any) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/admin/volunteer-activities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       if (!response.ok) {
@@ -173,7 +198,7 @@ export default function LogVolunteerHoursPage() {
         title: "Hours Logged",
         description: autoApprove ? "Activity has been logged and approved." : "Activity has been logged and is pending approval.",
       });
-      // Reset form
+      // Reset entire form
       setSelectedUserId(null);
       setSelectedExternalVolunteerId(null);
       setNewVolunteerName('');
@@ -181,9 +206,15 @@ export default function LogVolunteerHoursPage() {
       setNewVolunteerPhone('');
       setNewVolunteerNotes('');
       setNewVolunteerSource('');
+      setSelectedProjectId(null);
       setHours('');
+      setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
       setExternalVolunteerTab('select');
+      setVolunteerSearch('');
+      setExternalSearch('');
+      setSelectedKpi('');
+      setKpiQuantity('');
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
       queryClient.invalidateQueries({ queryKey: ["/api/external-volunteers"] });
@@ -238,7 +269,13 @@ export default function LogVolunteerHoursPage() {
       hours: parseFloat(hours),
       date,
       description: description || undefined,
-      autoApprove
+      autoApprove,
+      ...(selectedKpi ? {
+        outcomes: selectedKpi,
+        outcomeText: selectedKpi,
+        outcomeQuantity: kpiQuantity ? parseFloat(kpiQuantity) : undefined,
+        outcomeType: 'individual',
+      } : {}),
     };
 
     if (volunteerType === 'registered') {
@@ -319,6 +356,11 @@ export default function LogVolunteerHoursPage() {
             projects={projects}
             onSubmit={handleSubmit}
             isSubmitting={createActivityMutation.isPending}
+            outcomeTemplates={outcomeTemplates}
+            selectedKpi={selectedKpi}
+            setSelectedKpi={setSelectedKpi}
+            kpiQuantity={kpiQuantity}
+            setKpiQuantity={setKpiQuantity}
           />
         </div>
       </OrganizationPWALayout>
@@ -396,6 +438,11 @@ export default function LogVolunteerHoursPage() {
                   projects={projects}
                   onSubmit={handleSubmit}
                   isSubmitting={createActivityMutation.isPending}
+                  outcomeTemplates={outcomeTemplates}
+                  selectedKpi={selectedKpi}
+                  setSelectedKpi={setSelectedKpi}
+                  kpiQuantity={kpiQuantity}
+                  setKpiQuantity={setKpiQuantity}
                 />
               </CardContent>
             </Card>
@@ -514,6 +561,11 @@ interface LogHoursFormProps {
   projects: Project[];
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
+  outcomeTemplates: OutcomeTemplate[];
+  selectedKpi: string;
+  setSelectedKpi: (kpi: string) => void;
+  kpiQuantity: string;
+  setKpiQuantity: (qty: string) => void;
 }
 
 function LogHoursForm({
@@ -553,7 +605,12 @@ function LogHoursForm({
   externalVolunteers,
   projects,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  outcomeTemplates,
+  selectedKpi,
+  setSelectedKpi,
+  kpiQuantity,
+  setKpiQuantity
 }: LogHoursFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -746,7 +803,11 @@ function LogHoursForm({
         <Label htmlFor="project">Project *</Label>
         <Select
           value={selectedProjectId?.toString() || ''}
-          onValueChange={(v) => setSelectedProjectId(parseInt(v))}
+          onValueChange={(v) => {
+            setSelectedProjectId(parseInt(v));
+            setSelectedKpi('');
+            setKpiQuantity('');
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a project" />
@@ -760,6 +821,58 @@ function LogHoursForm({
           </SelectContent>
         </Select>
       </div>
+
+      {/* KPI Selection (optional) */}
+      {selectedProjectId && outcomeTemplates.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Impact KPI <span className="text-xs text-gray-400 font-normal">(optional)</span>
+          </Label>
+          <div className="grid grid-cols-2 gap-3">
+            {outcomeTemplates.map((template) => (
+              <button
+                key={template.name}
+                type="button"
+                onClick={() => {
+                  if (selectedKpi === template.name) {
+                    setSelectedKpi('');
+                    setKpiQuantity('');
+                  } else {
+                    setSelectedKpi(template.name);
+                    setKpiQuantity('');
+                  }
+                }}
+                className={`relative flex flex-col items-center text-center p-4 rounded-xl border-2 transition-all ${
+                  selectedKpi === template.name
+                    ? "border-emerald-500 bg-emerald-50 shadow-md"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+                }`}
+              >
+                <span className="text-2xl mb-1">{template.icon}</span>
+                <span className={`text-sm font-medium leading-tight ${selectedKpi === template.name ? "text-emerald-800" : "text-slate-700"}`}>
+                  {template.name}
+                </span>
+                <span className="text-xs text-slate-400 mt-0.5">{template.unit}</span>
+
+                {selectedKpi === template.name && (
+                  <div className="mt-3 w-full" onClick={(e) => e.stopPropagation()}>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={kpiQuantity}
+                      onChange={(e) => setKpiQuantity(e.target.value)}
+                      placeholder="Qty"
+                      className="h-9 text-center text-lg font-semibold bg-white border-emerald-300 focus:border-emerald-500"
+                      autoFocus
+                    />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Hours and Date */}
       <div className="grid grid-cols-2 gap-4">

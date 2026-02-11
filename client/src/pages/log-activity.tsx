@@ -216,12 +216,25 @@ export default function LogActivity() {
     return availableProjects.find((p: any) => p.id === parseInt(selectedProjectId));
   }, [selectedProjectId, availableProjects]);
 
-  // Parse outcome templates from the selected project
+  // Parse outcome templates from the selected project, with fallback to impactMetricName
   const outcomeTemplates: OutcomeTemplate[] = useMemo(() => {
-    if (!selectedProject?.outcomeTemplates) return [];
-    const templates = selectedProject.outcomeTemplates;
-    if (!Array.isArray(templates) || templates.length === 0) return [];
-    return [...templates].sort((a: OutcomeTemplate, b: OutcomeTemplate) => a.sortOrder - b.sortOrder);
+    if (selectedProject?.outcomeTemplates) {
+      const templates = selectedProject.outcomeTemplates;
+      if (Array.isArray(templates) && templates.length > 0) {
+        return [...templates].sort((a: OutcomeTemplate, b: OutcomeTemplate) => a.sortOrder - b.sortOrder);
+      }
+    }
+    // Fallback: build from impactMetricName/Unit for projects created before outcomeTemplates
+    if (selectedProject?.impactMetricName) {
+      return [{
+        name: selectedProject.impactMetricName,
+        unit: selectedProject.impactMetricUnit || "units",
+        sdg: selectedProject.primarySdg || 0,
+        icon: "\u{1F4CA}",
+        sortOrder: 0,
+      }];
+    }
+    return [];
   }, [selectedProject]);
 
   // Get the selected template for SDG tagging

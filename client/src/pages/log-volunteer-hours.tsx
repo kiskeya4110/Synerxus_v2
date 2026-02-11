@@ -147,10 +147,23 @@ export default function LogVolunteerHoursPage() {
   }, [selectedProjectId, projects]);
 
   const outcomeTemplates: OutcomeTemplate[] = useMemo(() => {
-    if (!selectedProject || !(selectedProject as any).outcomeTemplates) return [];
-    const templates = (selectedProject as any).outcomeTemplates;
-    if (!Array.isArray(templates) || templates.length === 0) return [];
-    return [...templates].sort((a: OutcomeTemplate, b: OutcomeTemplate) => a.sortOrder - b.sortOrder);
+    if (selectedProject && (selectedProject as any).outcomeTemplates) {
+      const templates = (selectedProject as any).outcomeTemplates;
+      if (Array.isArray(templates) && templates.length > 0) {
+        return [...templates].sort((a: OutcomeTemplate, b: OutcomeTemplate) => a.sortOrder - b.sortOrder);
+      }
+    }
+    // Fallback: build from impactMetricName/Unit for projects created before outcomeTemplates
+    if (selectedProject?.impactMetricName) {
+      return [{
+        name: selectedProject.impactMetricName,
+        unit: selectedProject.impactMetricUnit || "units",
+        sdg: (selectedProject as any).primarySdg || 0,
+        icon: "\u{1F4CA}",
+        sortOrder: 0,
+      }];
+    }
+    return [];
   }, [selectedProject]);
 
   // Fetch recent admin-logged activities

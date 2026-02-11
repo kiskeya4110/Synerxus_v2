@@ -69,6 +69,43 @@ const KPI_PRESETS = [
   },
 ];
 
+// KPI emoji map for auto-generating outcomeTemplates
+const KPI_EMOJI_MAP: Record<string, string> = {
+  "Trees Planted": "\u{1F333}",
+  "Waste Collected": "\u{267B}\uFE0F",
+  "Carbon Offset": "\u{1F30D}",
+  "Water Bodies Cleaned": "\u{1F4A7}",
+  "Students Tutored": "\u{1F393}",
+  "Literacy Rate Improvement": "\u{1F4DA}",
+  "Training Sessions Delivered": "\u{1F3EB}",
+  "Scholarships Awarded": "\u{1F3C6}",
+  "Patients Served": "\u{1FA7A}",
+  "Health Screenings Conducted": "\u{2695}\uFE0F",
+  "Meals Distributed": "\u{1F372}",
+  "First Aid Kits Delivered": "\u{1F6E1}\uFE0F",
+  "Families Supported": "\u{1F46A}",
+  "Homes Built or Repaired": "\u{1F3E0}",
+  "Community Events Organized": "\u{1F389}",
+  "People Reached": "\u{1F465}",
+  "Jobs Created": "\u{1F4BC}",
+  "Businesses Mentored": "\u{1F4C8}",
+  "Microloans Facilitated": "\u{1F4B0}",
+  "Skills Certifications Issued": "\u{1F4DD}",
+};
+
+function buildOutcomeTemplates(impactMetricName?: string, impactMetricUnit?: string, primarySdg?: number, sdgGoals?: number[]) {
+  if (!impactMetricName) return undefined;
+  const sdg = primarySdg || (sdgGoals && sdgGoals.length > 0 ? sdgGoals[0] : 0);
+  const icon = KPI_EMOJI_MAP[impactMetricName] || "\u{1F4CA}";
+  return [{
+    name: impactMetricName,
+    unit: impactMetricUnit || "units",
+    sdg: sdg || 0,
+    icon,
+    sortOrder: 0,
+  }];
+}
+
 // Volunteer role schema for AIU contribution tracking
 const volunteerRoleSchema = z.object({
   role: z.string().min(1, "Role is required"),
@@ -287,6 +324,12 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
       if (data.projectTotalHours) payload.projectTotalHours = parseInt(data.projectTotalHours);
       if (data.impactMetricName) payload.impactMetricName = data.impactMetricName;
       if (data.impactMetricUnit) payload.impactMetricUnit = data.impactMetricUnit;
+      // Auto-generate outcomeTemplates so KPI tiles appear in activity logging
+      const outcomeTemplates = buildOutcomeTemplates(
+        data.impactMetricName, data.impactMetricUnit,
+        data.primarySdg ? parseInt(data.primarySdg) : undefined, sdgArray
+      );
+      if (outcomeTemplates) payload.outcomeTemplates = outcomeTemplates;
       if (data.completionPercentage) payload.completionPercentage = parseInt(data.completionPercentage);
       if (data.totalHoursLogged) payload.totalHoursLogged = parseInt(data.totalHoursLogged);
 
@@ -1191,11 +1234,18 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       const totalVolunteersNeeded = data.volunteerRoles?.reduce((sum, role) => sum + role.count, 0)
         || (data.volunteersNeeded ? parseInt(data.volunteersNeeded) : 1);
 
+      // Auto-generate outcomeTemplates so KPI tiles appear in activity logging
+      const outcomeTemplates = buildOutcomeTemplates(
+        data.impactMetricName, data.impactMetricUnit,
+        data.primarySdg ? parseInt(data.primarySdg) : undefined, sdgArray
+      );
+
       const payload: any = {
         ...data,
         sdgGoals: sdgArray,
         coverImage: coverImageUrl || null,
         volunteersNeeded: totalVolunteersNeeded,
+        ...(outcomeTemplates ? { outcomeTemplates } : {}),
       };
 
       if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();

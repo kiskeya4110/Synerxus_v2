@@ -634,14 +634,14 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
 
   // Fetch dashboard metrics
   const { data: dashboardData, refetch: refetchDashboard } = useQuery({
-    queryKey: ["/api/organization-dashboard", organizationId],
+    queryKey: ["/api/organization/dashboard", userId, organizationId],
     queryFn: async () => {
-      if (!organizationId) return null;
-      const response = await fetch(`/api/organization-dashboard?organizationId=${organizationId}`);
+      if (!userId) return null;
+      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!organizationId,
+    enabled: !!userId && !!organizationId,
   });
 
   // Fetch pending verifications
@@ -744,7 +744,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     }));
   }, [pendingData]);
 
-  const pendingCount = allPending.length;
+  const pendingCount = allPending.length || dashboardData?.keyMetrics?.pendingCount || 0;
   const metrics = dashboardData?.keyMetrics || {};
 
   const handleLogout = async () => {

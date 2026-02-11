@@ -26,6 +26,7 @@ interface ProjectWithDetails extends Project {
 
 export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'volunteers'>('all');
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const userType = localStorage.getItem('userType');
@@ -229,11 +230,21 @@ export default function Projects() {
     return project?.name || null;
   }, [projects]);
 
-  const filteredProjects = useMemo(() => 
-    projects.filter(project =>
-      project.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-    [projects, searchTerm]
+  const filteredProjects = useMemo(() =>
+    projects.filter(project => {
+      const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchesSearch) return false;
+      if (statusFilter === 'all' || statusFilter === 'volunteers') return true;
+      if (statusFilter === 'active') {
+        const s = (project.status || '').toLowerCase();
+        return s === 'active' || s === 'in progress';
+      }
+      if (statusFilter === 'completed') {
+        return (project.status || '').toLowerCase() === 'completed';
+      }
+      return true;
+    }),
+    [projects, searchTerm, statusFilter]
   );
 
   // Volunteers can only view projects, not edit them
@@ -356,23 +367,72 @@ export default function Projects() {
 
           {/* MVP Quick Stats Row */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white rounded-xl p-3 border border-slate-200 text-center">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`rounded-xl p-3 border text-center transition-all active:scale-[0.97] ${
+                statusFilter === 'all'
+                  ? 'bg-white border-indigo-400 ring-2 ring-indigo-400/30 shadow-sm'
+                  : 'bg-white border-slate-200'
+              }`}
+            >
               <p className="text-lg font-bold text-stone-900">{projects.length}</p>
               <p className="text-xs text-stone-600 font-medium">Total</p>
-            </div>
-            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`rounded-xl p-3 border text-center transition-all active:scale-[0.97] ${
+                statusFilter === 'active'
+                  ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/30 shadow-sm'
+                  : 'bg-emerald-50 border-emerald-200'
+              }`}
+            >
               <p className="text-lg font-bold text-emerald-800">{activeProjectsCount}</p>
               <p className="text-xs text-emerald-700 font-medium">Active</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200 text-center">
+            </button>
+            <button
+              onClick={() => setStatusFilter('completed')}
+              className={`rounded-xl p-3 border text-center transition-all active:scale-[0.97] ${
+                statusFilter === 'completed'
+                  ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-400/30 shadow-sm'
+                  : 'bg-blue-50 border-blue-200'
+              }`}
+            >
               <p className="text-lg font-bold text-blue-800">{completedProjectsCount}</p>
               <p className="text-xs text-blue-700 font-medium">Done</p>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-center">
+            </button>
+            <button
+              onClick={() => setStatusFilter('volunteers')}
+              className={`rounded-xl p-3 border text-center transition-all active:scale-[0.97] ${
+                statusFilter === 'volunteers'
+                  ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-400/30 shadow-sm'
+                  : 'bg-purple-50 border-purple-200'
+              }`}
+            >
               <p className="text-lg font-bold text-purple-800">{totalVolunteers}</p>
               <p className="text-xs text-purple-700 font-medium">Volunteers</p>
-            </div>
+            </button>
           </div>
+
+          {/* Per-project volunteer breakdown when volunteers filter is active */}
+          {statusFilter === 'volunteers' && (
+            <div className="bg-white rounded-xl border border-purple-200 shadow-sm">
+              <div className="px-4 py-3 border-b border-purple-100">
+                <h3 className="text-sm font-semibold text-purple-800">Volunteers by Project</h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {projects.map((project) => {
+                  const metrics = projectMetrics.get(project.id);
+                  if (!metrics) return null;
+                  return (
+                    <div key={project.id} className="px-4 py-3 flex items-center justify-between">
+                      <p className="text-sm font-medium text-stone-900 truncate flex-1">{project.name}</p>
+                      <span className="text-sm font-bold text-purple-700">{metrics.metrics.volunteers}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Quick Action - New Project */}
           <div className="flex gap-2">

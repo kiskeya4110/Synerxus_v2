@@ -4222,6 +4222,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { id: 'view-reports', label: 'View Reports', icon: 'bar-chart' },
       ];
 
+      // Count verified and pending activities for KPI display
+      const verifiedCount = organizationActivities.filter(a => a.verificationStatus === 'approved' || a.verificationStatus === 'verified').length;
+      const pendingCount = organizationActivities.filter(a => a.verificationStatus === 'pending').length;
+
       res.json({
         keyMetrics: {
           activeProjects,
@@ -4233,6 +4237,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           livesTouched: totalPeopleImpacted,
           peopleImpacted: totalPeopleImpacted,
           activeVolunteers: organizationVolunteers.length,
+          verifiedCount,
+          pendingCount,
         },
         sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({
           goal: parseInt(goal),
@@ -4300,6 +4306,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               (normalizedMilestonesWeight / 100) * milestoneProgress, 100));
           }
 
+          // Calculate unique volunteer count from assignments + activities
+          const projAssigns = organizationAssignments.filter((a: any) => a.projectId === p.id);
+          const projVolunteerIds = new Set([
+            ...projAssigns.map((a: any) => a.volunteerId),
+            ...organizationActivities.filter((a: any) => a.projectId === p.id).map((a: any) => a.userId),
+          ]);
+
           return {
             id: p.id,
             name: p.name,
@@ -4308,6 +4321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sdgGoals: p.sdgGoals || [],
             location: p.location,
             totalHours: projectHours,
+            volunteerCount: projVolunteerIds.size,
             livesTouched: projectLivesTouched,
           };
         }),

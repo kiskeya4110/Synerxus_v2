@@ -29,45 +29,48 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
   })();
 
   const navItems = [
-    { id: 'home' as const, label: 'Home', icon: Home, path: '/organization-dashboard/pwa' },
-    { id: 'projects' as const, label: 'Projects', icon: FolderOpen, path: '/projects' },
+    { id: 'projects' as const, label: 'Projects', icon: FolderOpen, path: '/ngo/projects' },
+    { id: 'log' as const, label: 'Log', icon: ClipboardList, path: '/ngo/log-hours' },
+    { id: 'home' as const, label: 'Home', icon: Home, path: '/dashboard', isPrimary: true },
     { id: 'verify' as const, label: 'Verify', icon: ShieldCheck, path: '/ngo-verification' },
     { id: 'more' as const, label: 'More', icon: MoreHorizontal, action: () => setShowMore(true) },
   ];
 
   const moreMenuItems = [
     { icon: Plus, label: 'New Project', path: '/post-core-opportunity' },
-    { icon: ClipboardList, label: 'Log Hours', path: '/log-volunteer-hours' },
   ];
 
   return (
     <>
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-stone-200"
-      style={{
-        background: '#FFFFFF',
-        boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
-      }}
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-1 pt-2 z-[160] shadow-lg"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="flex items-center justify-around py-2 px-1 max-w-[428px] mx-auto">
+      <div className="grid grid-cols-5 items-end max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
+          const isPrimary = (item as any).isPrimary;
 
           return (
             <button
               key={item.id}
-              onClick={() => item.action ? item.action() : navigate(item.path!)}
-              className="flex flex-col items-center gap-0.5 min-w-[52px] min-h-[48px] py-2 touch-manipulation cursor-pointer active:scale-95"
+              onClick={() => (item as any).action ? (item as any).action() : navigate(item.path!)}
+              className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
+                isPrimary
+                  ? isActive
+                    ? 'bg-indigo-600 text-white -mt-3 shadow-md'
+                    : 'text-stone-500 -mt-3 hover:bg-indigo-600 hover:text-white'
+                  : isActive
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-stone-500 hover:text-indigo-600 hover:bg-indigo-50'
+              }`}
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid={`nav-org-${item.id}`}
             >
-              <div className={`p-2 rounded-lg pointer-events-none ${isActive ? 'bg-indigo-600' : ''}`}>
-                <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-stone-600'}`} />
+              <div className={`flex items-center justify-center ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                <item.icon className={isPrimary ? 'w-6 h-6' : 'w-5 h-5'} />
               </div>
-              <span className={`text-[10px] font-medium pointer-events-none ${isActive ? 'text-indigo-600 font-semibold' : 'text-stone-600'}`}>
-                {item.label}
-              </span>
+              <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
             </button>
           );
         })}

@@ -121,7 +121,9 @@ type ProjectEditForm = z.infer<typeof projectEditSchema>;
 
 export default function ProjectEdit() {
   const [, navigate] = useLocation();
-  const [, params] = useRoute("/projects/:id/edit");
+  const [, paramsBase] = useRoute("/projects/:id/edit");
+  const [matchNgo, paramsNgo] = useRoute("/ngo/projects/:id/edit");
+  const params = matchNgo ? paramsNgo : paramsBase;
   const projectId = params?.id ? parseInt(params.id) : null;
   const { toast } = useToast();
   const [newSkill, setNewSkill] = useState("");

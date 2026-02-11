@@ -116,7 +116,27 @@ projectsRouter.get("/", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Missing required parameters" });
     }
 
-    res.json(projects);
+    // Enrich projects with volunteer counts and hours from activities
+    const allActivities = await storage.listVolunteerActivities();
+    const allAssignments = await storage.listProjectAssignments();
+
+    const enrichedProjects = projects.map((project: any) => {
+      const projectAssignments = allAssignments.filter((a: any) => a.projectId === project.id);
+      const uniqueVolunteers = new Set(projectAssignments.map((a: any) => a.volunteerId));
+
+      const projectActivities = allActivities.filter((a: any) => a.projectId === project.id);
+      projectActivities.forEach((a: any) => uniqueVolunteers.add(a.userId));
+
+      const totalHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+      return {
+        ...project,
+        volunteerCount: uniqueVolunteers.size,
+        totalHours: Math.round(totalHours)
+      };
+    });
+
+    res.json(enrichedProjects);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch projects" });
   }

@@ -488,15 +488,15 @@ export default function OrganizationDashboardNew() {
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/organization-dashboard", currentUser?.organizationId],
+    queryKey: ["/api/organization/dashboard", userId, currentUser?.organizationId],
     queryFn: async () => {
       const response = await fetch(
-        `/api/organization-dashboard?organizationId=${currentUser.organizationId}`
+        `/api/organization/dashboard?userId=${userId}`
       );
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!userId && !!currentUser?.organizationId,
   });
 
   // Fetch pending verifications
@@ -595,7 +595,7 @@ export default function OrganizationDashboardNew() {
       activeProjects: data.activeProjects || projects.filter((p: any) => p.status === "active").length,
       totalVolunteers: data.activeVolunteers || volunteers.length,
       totalHours: data.totalHours || 0,
-      pendingVerifications: pendingVerifications.length,
+      pendingVerifications: pendingVerifications.length || data.pendingCount || 0,
       impactScore: data.aiuEarned || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
     };
@@ -607,7 +607,7 @@ export default function OrganizationDashboardNew() {
     try {
       await apiRequest("POST", `/api/volunteer-activities/${id}/approve`, { reviewerId: userId });
       refetchPending();
-      queryClient.invalidateQueries({ queryKey: ["/api/organization-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
       toast({ title: "Verified!", description: "Hours have been verified successfully." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to verify hours.", variant: "destructive" });
@@ -651,7 +651,7 @@ export default function OrganizationDashboardNew() {
         )
       );
       refetchPending();
-      queryClient.invalidateQueries({ queryKey: ["/api/organization-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
       toast({
         title: "All Verified!",
         description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} verified.`,
@@ -932,9 +932,8 @@ export default function OrganizationDashboardNew() {
                 <CardContent>
                   <div className="grid grid-cols-3 gap-6">
                     <Stat
-                      label="Impact Score"
-                      value={formatDecimal(stats.impactScore)}
-                      suffix="pts"
+                      label="People Impacted"
+                      value={dashboardData?.keyMetrics?.peopleImpacted || 0}
                       size="lg"
                     />
                     <Stat

@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Plus,
   ChevronRight,
+  ChevronLeft,
   FolderOpen,
   TrendingUp,
   Shield,
@@ -432,15 +433,15 @@ export default function OrganizationView({
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/organization-dashboard", activeUser?.organizationId],
+    queryKey: ["/api/organization/dashboard", userId, activeUser?.organizationId],
     queryFn: async () => {
       const response = await fetch(
-        `/api/organization-dashboard?organizationId=${activeUser.organizationId}`
+        `/api/organization/dashboard?userId=${userId}`
       );
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
     },
-    enabled: !!activeUser?.organizationId,
+    enabled: !!userId && !!activeUser?.organizationId,
   });
 
   // Fetch pending verifications
@@ -524,7 +525,7 @@ export default function OrganizationView({
       totalVolunteers: data.activeVolunteers || 0,
       totalHours: data.totalHours || 0,
       verifiedCount: data.verifiedCount || pendingVerifications.filter((v: any) => v.verificationStatus === 'approved').length || 0,
-      pendingVerifications: pendingVerifications.length,
+      pendingVerifications: data.pendingCount || pendingVerifications.length,
       impactScore: data.aiuEarned || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
     };
@@ -576,7 +577,7 @@ export default function OrganizationView({
       }
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
       toast({ title: "Verified!", description: "Impact log verified successfully." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to verify.", variant: "destructive" });
@@ -643,7 +644,7 @@ export default function OrganizationView({
       );
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
       toast({
         title: "All Verified!",
         description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} verified.`,
@@ -972,34 +973,10 @@ export default function OrganizationView({
       <>
         <main className="px-4 py-5 space-y-5" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Mobile Home Tab */}
-          {orgTab !== 'verify' && (
+          {orgTab === 'home' && (
             <>
               {/* Core Metrics - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setOrgTab?.('verify')}
-                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-amber-300 hover:shadow-md transition-all active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Pending</span>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.pendingVerifications}</p>
-                  <p className="text-xs text-gray-500 mt-1">to verify</p>
-                </button>
-
-                <button
-                  onClick={() => navigate('/ngo/log-hours')}
-                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Verified</span>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.verifiedCount || 0}</p>
-                  <p className="text-xs text-gray-500 mt-1">outcomes verified</p>
-                </button>
-
                 <button
                   onClick={() => navigate('/ngo/projects')}
                   className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98]"
@@ -1013,7 +990,7 @@ export default function OrganizationView({
                 </button>
 
                 <button
-                  onClick={() => navigate('/ngo/projects')}
+                  onClick={() => setOrgTab?.('volunteers')}
                   className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -1023,12 +1000,36 @@ export default function OrganizationView({
                   <p className="text-3xl font-bold text-gray-900">{stats.totalVolunteers}</p>
                   <p className="text-xs text-gray-500 mt-1">contributing</p>
                 </button>
+
+                <button
+                  onClick={() => setOrgTab?.('hours')}
+                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.totalHours}</p>
+                  <p className="text-xs text-gray-500 mt-1">logged</p>
+                </button>
+
+                <button
+                  onClick={() => { setHistoryFilter('verified'); setOrgTab?.('verify'); }}
+                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-amber-300 hover:shadow-md transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-600" />
+                    <span className="text-xs font-medium text-gray-500 uppercase">Verified</span>
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.verifiedCount || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">outcomes</p>
+                </button>
               </div>
 
               {/* Verification Queue Preview */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <button
-                  onClick={() => setOrgTab?.('verify')}
+                  onClick={() => { setHistoryFilter('pending'); setOrgTab?.('verify'); }}
                   className="w-full px-4 py-3 border-b border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -1105,19 +1106,28 @@ export default function OrganizationView({
                     <button
                       key={project.id}
                       onClick={() => navigate(`/ngo/projects/${project.id}`)}
-                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                     >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{project.name}</p>
-                        <p className="text-xs text-gray-500">{project.volunteerCount || 0} volunteers</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          project.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {project.status || 'active'}
-                        </span>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{project.name}</p>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              project.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {project.status || 'active'}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {project.volunteerCount || 0}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {project.totalHours || 0}h
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
                       </div>
                     </button>
                   ))}
@@ -1142,6 +1152,180 @@ export default function OrganizationView({
                 <h2 className="text-lg font-semibold text-stone-800">Verification History</h2>
               </div>
               {renderHistoryContent(true)}
+            </>
+          )}
+
+          {/* Mobile Volunteers View */}
+          {orgTab === 'volunteers' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => setOrgTab?.('home')}
+                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <h2 className="text-lg font-semibold text-stone-800">Volunteers</h2>
+              </div>
+
+              {/* Summary stat */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalVolunteers}</p>
+                    <p className="text-xs text-gray-500">Total Volunteers</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Volunteer list */}
+              <div className="space-y-3">
+                {dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0 ? (
+                  dashboardData.volunteerSummaries.map((vol: any) => (
+                    <div key={vol.id || vol.volunteerId} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
+                          {(vol.name || vol.displayName || 'V').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{vol.name || vol.displayName || 'Volunteer'}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {vol.totalHours || vol.hours || 0}h logged
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <FolderOpen className="h-3 w-3" />
+                              {vol.projectsCount || vol.projects || 1} project{(vol.projectsCount || vol.projects || 1) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          {vol.lastActive && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Last active: {new Date(vol.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : volunteers.length > 0 ? (
+                  volunteers.map((vol: any) => (
+                    <div key={vol.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
+                          {(vol.displayName || vol.name || 'V').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{vol.displayName || vol.name || 'Volunteer'}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {vol.totalHours || 0}h logged
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <FolderOpen className="h-3 w-3" />
+                              {vol.projectsCount || 1} project{(vol.projectsCount || 1) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+                    <Users className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-900">No volunteers yet</p>
+                    <p className="text-xs text-gray-500 mt-1">Volunteers will appear here when they join your projects.</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Mobile Hours Breakdown View */}
+          {orgTab === 'hours' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => setOrgTab?.('home')}
+                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <h2 className="text-lg font-semibold text-stone-800">Hours Breakdown</h2>
+              </div>
+
+              {/* Total hours summary */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+                    <p className="text-xs text-gray-500">Total Hours Logged</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* By Project */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4 text-indigo-600" />
+                    By Project
+                  </h3>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {(projects.length > 0 ? projects : dashboardData?.projects || []).length > 0 ? (
+                    (projects.length > 0 ? projects : dashboardData?.projects || []).map((proj: any) => (
+                      <div key={proj.id} className="px-4 py-3 flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{proj.name}</p>
+                          <p className="text-xs text-gray-500">{proj.volunteerCount || 0} volunteers</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-blue-600">{proj.totalHours || 0}h</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-sm text-gray-500">No project data</div>
+                  )}
+                </div>
+              </div>
+
+              {/* By Volunteer */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600" />
+                    By Volunteer
+                  </h3>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {(dashboardData?.volunteerSummaries || volunteers).length > 0 ? (
+                    (dashboardData?.volunteerSummaries || volunteers).map((vol: any) => (
+                      <div key={vol.id || vol.volunteerId} className="px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
+                            {(vol.name || vol.displayName || 'V').charAt(0).toUpperCase()}
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 truncate">{vol.name || vol.displayName || 'Volunteer'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-blue-600">{vol.totalHours || vol.hours || 0}h</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-sm text-gray-500">No volunteer data</div>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </main>
@@ -1188,16 +1372,16 @@ export default function OrganizationView({
           icon={<Users className="h-5 w-5 text-success" />}
         />
         <MetricCard
-          label="Outcomes Verified"
-          value={stats.verifiedCount || 0}
+          label="Total Hours"
+          value={stats.totalHours}
           accentColor="accent"
           icon={<Clock className="h-5 w-5 text-accent" />}
         />
         <MetricCard
-          label="Pending Verification"
-          value={stats.pendingVerifications}
+          label="Outcomes Verified"
+          value={stats.verifiedCount || 0}
           accentColor="cyan"
-          icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-[#22D3EE]" />}
         />
       </Grid>
 
@@ -1236,9 +1420,8 @@ export default function OrganizationView({
               <CardContent>
                 <div className="grid grid-cols-3 gap-6">
                   <Stat
-                    label="Impact Score"
-                    value={formatDecimal(stats.impactScore)}
-                    suffix="pts"
+                    label="Total Hours"
+                    value={stats.totalHours}
                     size="lg"
                   />
                   <Stat

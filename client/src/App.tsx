@@ -45,6 +45,7 @@ const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 // NGO project management (simplified)
 const NgoProjects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
+const ProjectEdit = lazy(() => import("@/pages/project-edit"));
 
 // ============================================================================
 // CORPORATE VIEW - ESG Dashboard (Desktop)
@@ -182,6 +183,8 @@ export default function App() {
           <Route path="/organization-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/ngo-verification" component={NgoVerification} />
           <Route path="/projects" component={NgoProjects} />
+          <Route path="/projects/:id/edit" component={ProjectEdit} />
+          <Route path="/ngo/projects/:id/edit" component={ProjectEdit} />
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />

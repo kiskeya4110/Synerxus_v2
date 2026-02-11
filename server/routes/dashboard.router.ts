@@ -499,6 +499,13 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
           projectAiuEarned = Math.round((projectHours / 50) * projectSdgMultiplier * 100) / 100;
         }
 
+        // Calculate unique volunteer count from assignments + activities
+        const projectAssigns = organizationAssignments.filter((a: any) => a.projectId === p.id);
+        const projectVolunteerIds = new Set([
+          ...projectAssigns.map((a: any) => a.volunteerId),
+          ...organizationActivities.filter((a: any) => a.projectId === p.id).map((a: any) => a.userId),
+        ]);
+
         return {
           id: p.id,
           name: p.name,
@@ -508,6 +515,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
           sdgGoals: p.sdgGoals || [],
           location: p.location,
           totalHours: projectHours,
+          volunteerCount: projectVolunteerIds.size,
           livesTouched: projectLivesTouched,
           aiuEarned: projectAiuEarned,
           // Milestone tracking data

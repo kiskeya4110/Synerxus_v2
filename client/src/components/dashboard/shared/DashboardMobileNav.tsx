@@ -31,8 +31,9 @@ function getNavItems(
 
   if (userType === 'organization') {
     return [
-      { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home') },
       { id: 'projects', label: 'Projects', icon: FolderOpen, action: () => navigate('/ngo/projects') },
+      { id: 'log', label: 'Log', icon: ClipboardList, action: () => navigate('/ngo/log-hours') },
+      { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home'), isPrimary: true },
       { id: 'verify', label: 'Verify', icon: ShieldCheck, action: () => onTabChange?.('verify') },
       { id: 'more', label: 'More', icon: MoreHorizontal, isMore: true },
     ];
@@ -53,7 +54,6 @@ function getMoreMenuItems(userType: string | null, navigate: (path: string) => v
   if (userType === 'organization') {
     return [
       { icon: Plus, label: 'New Project', path: '/post-core-opportunity' },
-      { icon: ClipboardList, label: 'Log Hours', path: '/ngo/log-hours' },
     ];
   }
   return [];
@@ -124,30 +124,33 @@ export default function DashboardMobileNav({
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 border-t border-stone-200"
-          style={{
-            background: '#FFFFFF',
-            boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
-            paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
-          }}
+          className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-1 pt-2 z-[160] shadow-lg"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
-          <div className="flex items-end justify-around py-2 px-1 max-w-[428px] mx-auto">
+          <div className="grid grid-cols-5 items-end max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = currentTab === item.id;
+              const isPrimary = (item as any).isPrimary;
 
               return (
                 <button
                   key={item.id}
-                  onClick={() => item.isMore ? setShowMore(true) : item.action()}
-                  className="flex flex-col items-center justify-end min-w-[56px] min-h-[48px] pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95"
+                  onClick={() => (item as any).isMore ? setShowMore(true) : item.action()}
+                  className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
+                    isPrimary
+                      ? isActive
+                        ? 'bg-indigo-600 text-white -mt-3 shadow-md'
+                        : 'text-stone-500 -mt-3 hover:bg-indigo-600 hover:text-white'
+                      : isActive
+                        ? 'text-indigo-700 bg-indigo-50'
+                        : 'text-stone-500 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <div className={`flex items-center justify-center h-8 w-8 rounded-lg pointer-events-none ${isActive ? 'bg-indigo-600' : ''}`}>
-                    <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-stone-600'}`} />
+                  <div className={`flex items-center justify-center ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                    <item.icon className={isPrimary ? 'w-6 h-6' : 'w-5 h-5'} />
                   </div>
-                  <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-indigo-600 font-semibold' : 'text-stone-600'}`}>
-                    {item.label}
-                  </span>
+                  <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
                 </button>
               );
             })}

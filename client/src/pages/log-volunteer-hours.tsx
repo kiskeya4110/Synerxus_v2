@@ -70,67 +70,71 @@ export default function LogVolunteerHoursPage() {
     enabled: !!userId
   });
 
-  // Fetch organization
+  // Derive organization ID from authenticated user
+  const organizationId = currentUser?.organizationId;
+
+  // Fetch organization details (for display purposes like name/logo)
   const { data: organization } = useQuery({
-    queryKey: ["/api/organizations/by-user", userId],
+    queryKey: ["/api/organizations", organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/organizations?userId=${userId}`);
+      const response = await fetch(`/api/organizations`);
       if (!response.ok) return null;
       const orgs = await response.json();
-      return orgs[0] || null;
+      const orgList = Array.isArray(orgs) ? orgs : [];
+      return orgList.find((o: any) => o.id === organizationId) || null;
     },
-    enabled: !!userId
+    enabled: !!organizationId
   });
 
   // Fetch organization profile for logo
   const { data: organizationProfile } = useQuery({
-    queryKey: ['/api/intake/organization-profile', organization?.id],
+    queryKey: ['/api/intake/organization-profile', organizationId],
     queryFn: async () => {
-      if (!organization?.id) return null;
-      const response = await fetch(`/api/intake/organization-profile?organizationId=${organization.id}`);
+      if (!organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${organizationId}`);
       return response.ok ? response.json() : null;
     },
-    enabled: !!organization?.id
+    enabled: !!organizationId
   });
 
   // Fetch organization's projects
   const { data: projects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/projects/organization", organization?.id],
+    queryKey: ["/api/projects/organization", organizationId],
     queryFn: async () => {
-      if (!organization?.id) return [];
-      const response = await fetch(`/api/projects?organizationId=${organization.id}`);
+      if (!organizationId) return [];
+      const response = await fetch(`/api/projects?organizationId=${organizationId}`);
       return response.ok ? response.json() : [];
     },
-    enabled: !!organization?.id
+    enabled: !!organizationId
   });
 
   // Fetch registered volunteers who have assignments with our organization's projects
   const { data: volunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/organizations/volunteers", organization?.id, userId],
+    queryKey: ["/api/organizations/volunteers", organizationId, userId],
     queryFn: async () => {
-      if (!organization?.id || !userId) return [];
-      const response = await fetch(`/api/organizations/${organization.id}/volunteers?userId=${userId}`);
+      if (!organizationId || !userId) return [];
+      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
       return response.ok ? response.json() : [];
     },
-    enabled: !!organization?.id && !!userId
+    enabled: !!organizationId && !!userId
   });
 
   // Fetch external volunteers
   const { data: externalVolunteers = [] } = useQuery<ExternalVolunteer[]>({
-    queryKey: ["/api/external-volunteers", organization?.id],
+    queryKey: ["/api/external-volunteers", organizationId],
     queryFn: async () => {
-      if (!organization?.id) return [];
-      const response = await fetch(`/api/external-volunteers?organizationId=${organization.id}`);
+      if (!organizationId) return [];
+      const response = await fetch(`/api/external-volunteers?organizationId=${organizationId}`);
       return response.ok ? response.json() : [];
     },
-    enabled: !!organization?.id
+    enabled: !!organizationId
   });
 
   // Fetch recent admin-logged activities
   const { data: recentActivities = [] } = useQuery<RecentActivity[]>({
-    queryKey: ["/api/volunteer-activities/recent", organization?.id],
+    queryKey: ["/api/volunteer-activities/recent", organizationId],
     queryFn: async () => {
-      if (!organization?.id) return [];
+      if (!organizationId) return [];
       // Get recent activities for organization's projects
       const activitiesPromises = projects.slice(0, 5).map(async (project: Project) => {
         const response = await fetch(`/api/volunteer-activities?projectId=${project.id}&limit=5`);
@@ -147,7 +151,7 @@ export default function LogVolunteerHoursPage() {
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10);
     },
-    enabled: !!organization?.id && projects.length > 0
+    enabled: !!organizationId && projects.length > 0
   });
 
   // Create activity mutation

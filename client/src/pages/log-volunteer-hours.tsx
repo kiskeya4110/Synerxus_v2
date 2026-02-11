@@ -106,13 +106,13 @@ export default function LogVolunteerHoursPage() {
 
   // Fetch registered volunteers who have assignments with our organization's projects
   const { data: volunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/organizations/volunteers", organization?.id],
+    queryKey: ["/api/organizations/volunteers", organization?.id, userId],
     queryFn: async () => {
-      if (!organization?.id) return [];
-      const response = await fetch(`/api/organizations/${organization.id}/volunteers`);
+      if (!organization?.id || !userId) return [];
+      const response = await fetch(`/api/organizations/${organization.id}/volunteers?userId=${userId}`);
       return response.ok ? response.json() : [];
     },
-    enabled: !!organization?.id
+    enabled: !!organization?.id && !!userId
   });
 
   // Fetch external volunteers

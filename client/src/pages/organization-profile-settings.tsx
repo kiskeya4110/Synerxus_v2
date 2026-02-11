@@ -631,7 +631,7 @@ export default function OrganizationProfileSettings() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-stone-500">Loading organization profile...</p>
           </div>
-          <OrganizationPWANav activeTab="home" />
+          <OrganizationPWANav activeTab="settings" />
         </div>
       );
     }
@@ -658,7 +658,7 @@ export default function OrganizationProfileSettings() {
             <p className="text-stone-600">Please log in to access your organization profile.</p>
             <Button onClick={() => setLocation("/login")}>Go to Login</Button>
           </div>
-          <OrganizationPWANav activeTab="home" />
+          <OrganizationPWANav activeTab="settings" />
         </div>
       );
     }
@@ -687,7 +687,7 @@ export default function OrganizationProfileSettings() {
             <p className="text-stone-600">There was an error loading your profile data.</p>
             <Button onClick={() => window.location.reload()}>Retry</Button>
           </div>
-          <OrganizationPWANav activeTab="home" />
+          <OrganizationPWANav activeTab="settings" />
         </div>
       );
     }
@@ -1215,7 +1215,7 @@ export default function OrganizationProfileSettings() {
         </div>
 
         {/* Bottom Navigation for mobile */}
-        {isMobile && <OrganizationPWANav activeTab="home" />}
+        {isMobile && <OrganizationPWANav activeTab="settings" />}
       </div>
     </OrganizationProfileErrorBoundary>
   );

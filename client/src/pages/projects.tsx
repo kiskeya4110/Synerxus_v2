@@ -179,10 +179,10 @@ export default function Projects() {
       const totalCommitted = assignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
       const totalCompleted = assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
 
-      // Calculate unique volunteers from assignments and activities
+      // Calculate unique volunteers from assignments and activities (filter out null userIds)
       const uniqueVolunteerIds = new Set([
         ...assignments.map(a => a.volunteerId),
-        ...projectActivities.map(a => a.userId)
+        ...projectActivities.filter(a => a.userId != null).map(a => a.userId)
       ]);
       const volunteerCount = uniqueVolunteerIds.size;
 
@@ -349,7 +349,10 @@ export default function Projects() {
     // Calculate stats for MVP display
     const activeProjectsCount = projects.filter(p => p.status === 'active').length;
     const completedProjectsCount = projects.filter(p => p.status === 'completed').length;
-    const totalVolunteers = Array.from(projectMetrics.values()).reduce((sum, m) => sum + m.metrics.volunteers, 0);
+    const totalVolunteers = new Set([
+      ...allAssignments.map(a => a.volunteerId),
+      ...allActivities.filter(a => a.userId != null).map(a => a.userId)
+    ]).size;
 
     return (
       <OrganizationPWALayout activeTab="projects">

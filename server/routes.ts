@@ -4306,11 +4306,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               (normalizedMilestonesWeight / 100) * milestoneProgress, 100));
           }
 
-          // Calculate unique volunteer count from assignments + activities
+          // Calculate unique volunteer count from assignments + activities (filter null userIds)
           const projAssigns = organizationAssignments.filter((a: any) => a.projectId === p.id);
           const projVolunteerIds = new Set([
             ...projAssigns.map((a: any) => a.volunteerId),
-            ...organizationActivities.filter((a: any) => a.projectId === p.id).map((a: any) => a.userId),
+            ...organizationActivities.filter((a: any) => a.projectId === p.id && a.userId != null).map((a: any) => a.userId),
           ]);
 
           return {

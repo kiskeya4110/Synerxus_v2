@@ -124,7 +124,7 @@ export default function MyTasks({ embedded = false, ...rest }: MyTasksProps) {
     queryKey: ["/api/organizations", currentUser?.organizationId, "volunteers"],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/organizations/${currentUser.organizationId}/volunteers`);
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}/volunteers?userId=${userId}`);
       return response.ok ? response.json() : [];
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === "organization"

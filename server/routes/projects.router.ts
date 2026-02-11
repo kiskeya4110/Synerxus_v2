@@ -125,7 +125,7 @@ projectsRouter.get("/", async (req: Request, res: Response) => {
       const uniqueVolunteers = new Set(projectAssignments.map((a: any) => a.volunteerId));
 
       const projectActivities = allActivities.filter((a: any) => a.projectId === project.id);
-      projectActivities.forEach((a: any) => uniqueVolunteers.add(a.userId));
+      projectActivities.forEach((a: any) => { if (a.userId != null) uniqueVolunteers.add(a.userId); });
 
       const totalHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
 

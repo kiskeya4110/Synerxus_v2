@@ -499,11 +499,11 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
           projectAiuEarned = Math.round((projectHours / 50) * projectSdgMultiplier * 100) / 100;
         }
 
-        // Calculate unique volunteer count from assignments + activities
+        // Calculate unique volunteer count from assignments + activities (filter null userIds)
         const projectAssigns = organizationAssignments.filter((a: any) => a.projectId === p.id);
         const projectVolunteerIds = new Set([
           ...projectAssigns.map((a: any) => a.volunteerId),
-          ...organizationActivities.filter((a: any) => a.projectId === p.id).map((a: any) => a.userId),
+          ...organizationActivities.filter((a: any) => a.projectId === p.id && a.userId != null).map((a: any) => a.userId),
         ]);
 
         return {

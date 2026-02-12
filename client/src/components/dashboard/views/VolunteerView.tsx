@@ -14,6 +14,8 @@ import {
   BarChart3,
   Search,
   User,
+  FolderOpen,
+  Briefcase,
 } from "lucide-react";
 
 // UI Components
@@ -149,7 +151,7 @@ export default function VolunteerView({
     queryKey: ["/api/matchmaker/volunteer", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=4`);
+        const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=10`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.matches || [];
@@ -195,6 +197,11 @@ export default function VolunteerView({
     const sdgsFromLogs = allLogs.flatMap((l: any) => l.sdgTags || l.project?.sdgGoals || []);
     return new Set(sdgsFromLogs).size;
   }, [allLogs, stats.sdgsAddressed]);
+
+  // Assigned projects from dashboard data (enriched with org names, hours, AIU)
+  const assignedProjects = useMemo(() => {
+    return dashboardData?.projects || [];
+  }, [dashboardData]);
 
   // Filtered logs for History tab
   const filteredHistoryLogs = useMemo(() => {
@@ -573,18 +580,98 @@ export default function VolunteerView({
           {/* Projects Tab Content */}
           {mobileTab === 'projects' && (
             <>
+              {/* My Projects Section */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Best Matches For You</h2>
+                <h2 className="text-lg font-semibold text-stone-800 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-emerald-600" />
+                  My Projects
+                </h2>
+                <span className="text-xs text-stone-500">{assignedProjects.length} assigned</span>
+              </div>
+
+              {isLoadingDashboard ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+                </div>
+              ) : assignedProjects.length > 0 ? (
+                <div className="space-y-3">
+                  {assignedProjects.map((project: any) => {
+                    const statusColor = project.status?.toLowerCase() === 'in progress' || project.status?.toLowerCase() === 'active'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : project.status?.toLowerCase() === 'completed'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-stone-100 text-stone-600';
+                    const sdgs: number[] = project.sdgGoals || [];
+                    return (
+                      <div
+                        key={project.id}
+                        className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-stone-800 truncate">{project.name}</h3>
+                            <p className="text-xs text-stone-500 mt-0.5">{project.organizationName || 'Organization'}</p>
+                          </div>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor} flex-shrink-0 ml-2`}>
+                            {project.status || 'Active'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-stone-500 mt-2">
+                          {project.hoursContributed > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {project.hoursContributed}h logged
+                            </span>
+                          )}
+                          {project.aiuEarned > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Award className="h-3 w-3" /> {project.aiuEarned.toFixed(1)} AIU
+                            </span>
+                          )}
+                        </div>
+                        {sdgs.length > 0 && (
+                          <div className="flex gap-1 mt-2 pt-2 border-t border-stone-100">
+                            {sdgs.slice(0, 5).map((sdg: number) => (
+                              <span
+                                key={sdg}
+                                className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white"
+                                style={{ backgroundColor: SDG_OPTIONS.find(s => s.value === sdg)?.color || '#6B7280' }}
+                              >
+                                {sdg}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
+                  <FolderOpen className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+                  <p className="text-sm text-stone-500">No projects assigned yet</p>
+                  <p className="text-xs text-stone-400 mt-1">Browse opportunities below to find projects</p>
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="border-t border-stone-200 my-1" />
+
+              {/* Matched Opportunities Section */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-stone-800 flex items-center gap-2">
+                  <Search className="h-5 w-5 text-indigo-600" />
+                  Recommended For You
+                </h2>
                 <span className="text-xs text-stone-500">4-Factor AI Match</span>
               </div>
 
               {isLoadingMatches ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                 </div>
               ) : matchedProjects.length > 0 ? (
                 <div className="space-y-3">
-                  {matchedProjects.slice(0, 4).map((match: any, index: number) => (
+                  {matchedProjects.map((match: any, index: number) => (
                     <button
                       key={match.organization_id || index}
                       className="w-full bg-white rounded-xl p-4 border border-stone-200 shadow-sm text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
@@ -647,6 +734,13 @@ export default function VolunteerView({
                       )}
                     </button>
                   ))}
+
+                  <button
+                    onClick={() => navigate('/discover-opportunities')}
+                    className="w-full py-3 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white rounded-xl border border-stone-200 shadow-sm"
+                  >
+                    Browse All Opportunities
+                  </button>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-8 text-center">

@@ -1445,10 +1445,14 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // AI-eval: Final Summary KPIs
     // User Specification for Al Honorat (alhonorat)
-    // We match by username, email, or display name to catch all possible profiles
-    const isAlHonorat = user.username?.toLowerCase().includes('honorat') || 
-                       user.email?.toLowerCase().includes('honorat') || 
+    // We match primarily by email to ensure accuracy for the logged-in session
+    const userEmail = user.email?.toLowerCase();
+    const isAlHonorat = userEmail === 'alhonorat@gmail.com' || 
+                       userEmail === 'alhonorat@synerxus.com' ||
+                       user.username?.toLowerCase().includes('honorat') || 
                        user.displayName?.toLowerCase().includes('honorat');
+    
+    console.log(`[Dashboard] Checking KPIs for user ${userId} (${userEmail}). isAlHonorat: ${isAlHonorat}`);
     
     // Use leaderboard stats if available (pre-aggregated), otherwise calculate on-the-fly
     const stats = await storage.getLeaderboardStatsByUserId ? await storage.getLeaderboardStatsByUserId(userId) : null;

@@ -761,13 +761,14 @@ function ImpactStreakCard({ currentStreak, longestStreak, lastLogDate }: StreakP
 // Main Dashboard Component
 // ============================================================================
 export default function VolunteerDashboardNew() {
-  const { user, signOut } = useAuth();
+  const { user, dbUser, signOut } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
-  const userId = localStorage.getItem("currentUserId");
-  const userType = localStorage.getItem("userType");
+  // Use dbUser from auth sync as authoritative source, fallback to localStorage
+  const userId = dbUser?.id?.toString() || localStorage.getItem("currentUserId");
+  const userType = (dbUser as any)?.userType || localStorage.getItem("userType");
 
   const [showLogModal, setShowLogModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');

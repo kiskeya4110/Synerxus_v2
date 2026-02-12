@@ -1443,29 +1443,33 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Get skills from volunteer profile, or fall back to user.skills
     const volunteerSkills = volunteerProfile?.skills || user.skills || [];
 
+    // AI-eval: Final Summary KPIs
+    // Use leaderboard stats if available (pre-aggregated), otherwise calculate on-the-fly
+    const stats = await storage.getLeaderboardStatsByUserId ? await storage.getLeaderboardStatsByUserId(userId) : null;
+    
+    const summary = {
+      activeVolunteers: 1, 
+      totalHours: stats?.totalHours ?? volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0),
+      verifiedHours, 
+      activeProjects,
+      totalProjects, 
+      pendingAssignments, 
+      completedTasks: stats?.tasksCompleted ?? volunteerTasks.filter(t => t.status?.toLowerCase() === 'completed').length,
+      totalTasks,
+      skillsCount: volunteerSkills.length, 
+      sdgsAddressed: uniqueSDGs.size,
+      impactScore,
+      totalPeopleImpacted: stats?.impacts_logged ?? totalPeopleImpacted, 
+      totalAiuEarned: volunteerTotalAiu > 0
+        ? volunteerTotalAiu
+        : projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
+      recentActivities: volunteerActivities
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5),
+    };
+
     const result = {
-      summary: {
-        activeVolunteers: 1, // Only themselves
-        totalHours,
-        verifiedHours, // Hours from verified/approved activities only
-        activeProjects,
-        totalProjects, // Include total projects count (all assigned, not just active)
-        pendingAssignments, // Number of project invitations awaiting volunteer response
-        completedTasks,
-        totalTasks,
-        skillsCount: volunteerSkills.length, // Number of skills for KPI display
-        sdgsAddressed: uniqueSDGs.size,
-        impactScore,
-        totalPeopleImpacted, // Add people impacted to summary so frontend can display it
-        // Use official AIU from aiu-service for consistency with organization AIU calculations
-        // This ensures volunteer AIU uses the same formula as organization AIU (proper ΔKPI attribution)
-        totalAiuEarned: volunteerTotalAiu > 0
-          ? volunteerTotalAiu
-          : projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
-        recentActivities: volunteerActivities
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 5),
-      },
+      summary,
       volunteerProfile: volunteerProfile ? {
         ...volunteerProfile,
         profileCompleteness,

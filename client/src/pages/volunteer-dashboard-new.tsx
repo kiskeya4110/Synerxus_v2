@@ -888,12 +888,12 @@ export default function VolunteerDashboardNew() {
 
   const activeUser = currentUser || demoUser;
 
-  // Calculate stats
+  // Calculate stats - only show approved/verified hours (not pending)
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
       impactScore: data.totalAiu || data.impactScore || 0,
-      hoursLogged: data.totalHours || 0,
+      hoursLogged: data.verifiedHours || data.totalHours || 0,
       projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active").length || 0,
       currentStreak: data.currentStreak || 0,
       longestStreak: data.longestStreak || 0,

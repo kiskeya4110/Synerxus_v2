@@ -1397,6 +1397,11 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
       }
     }
 
+    // Mark related pending_approval notifications as read
+    storage.markNotificationsReadByEntity("project_impact", impactId).catch(err => {
+      console.error("Failed to mark notifications as read:", err);
+    });
+
     // Send email notification to volunteer (non-blocking)
     sendImpactApprovalNotification(impactId, 'approved', reviewerId).catch(err => {
       console.error("Failed to send impact approval notification:", err);
@@ -1463,6 +1468,11 @@ activitiesRouter.post("/project-impacts/:id/reject", authMiddleware, async (req:
         console.error("Error updating AIU settings:", aiuErr);
       }
     }
+
+    // Mark related pending_approval notifications as read
+    storage.markNotificationsReadByEntity("project_impact", impactId).catch(err => {
+      console.error("Failed to mark notifications as read:", err);
+    });
 
     // Send email notification to volunteer (non-blocking)
     sendImpactApprovalNotification(impactId, 'rejected', req.user?.id).catch(err => {

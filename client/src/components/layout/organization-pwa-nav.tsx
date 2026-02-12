@@ -9,24 +9,24 @@ interface OrganizationPWANavProps {
 export default function OrganizationPWANav({ activeTab, userId: propUserId }: OrganizationPWANavProps) {
   const [location, navigate] = useLocation();
 
-  // Map desktop tab names to PWA tab names
-  const mapTabToPwaTab = (tab: string | undefined): string => {
-    if (!tab) return 'home';
-    if (tab === 'dashboard') return 'home';
-    if (tab === 'verify') return 'verify';
-    if (tab === 'projects') return 'projects';
-    if (tab === 'more') return 'settings';
-    return tab;
-  };
-
-  // Determine active tab from current location if not provided
-  const currentTab = mapTabToPwaTab(activeTab) || (() => {
-    if (location === '/organization-dashboard' || location === '/organization-dashboard/pwa') return 'home';
+  // Determine active tab from explicit prop or current location
+  const getActiveTab = (): string => {
+    // Map explicit activeTab prop to nav item ids
+    if (activeTab) {
+      if (activeTab === 'dashboard') return 'home';
+      if (activeTab === 'more') return 'settings';
+      return activeTab;
+    }
+    // Fall back to location-based detection
+    if (location.includes('/log-hours') || location.includes('/log-activity')) return 'log';
     if (location.includes('/projects') || location === '/my-work') return 'projects';
     if (location.includes('/ngo-verification') || location.includes('/ngo/verification')) return 'verify';
     if (location.includes('/settings') || location.includes('/ngo/settings')) return 'settings';
+    if (location === '/dashboard' || location.includes('/organization-dashboard')) return 'home';
     return 'home';
-  })();
+  };
+
+  const currentTab = getActiveTab();
 
   const navItems = [
     { id: 'projects' as const, label: 'Projects', icon: FolderOpen, path: '/ngo/projects' },

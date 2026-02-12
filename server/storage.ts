@@ -390,6 +390,7 @@ export interface IStorage {
   markAllNotificationsRead(userId: number): Promise<number>;
   markNotificationDeleted(notificationId: number): Promise<Notification | undefined>;
   markAllNotificationsDeleted(userId: number): Promise<number>;
+  markNotificationsReadByEntity(relatedEntityType: string, relatedEntityId: number): Promise<number>;
 
   // User Data Audit Log operations
   createUserDataAuditLog(log: InsertUserDataAuditLog): Promise<UserDataAuditLog>;
@@ -1927,6 +1928,22 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(notifications.userId, userId),
         eq(notifications.deleted, false)
+      ));
+    return result.rowCount || 0;
+  }
+
+  async markNotificationsReadByEntity(relatedEntityType: string, relatedEntityId: number): Promise<number> {
+    const result = await db
+      .update(notifications)
+      .set({
+        read: true,
+        readAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(notifications.relatedEntityType, relatedEntityType),
+        eq(notifications.relatedEntityId, relatedEntityId),
+        eq(notifications.read, false)
       ));
     return result.rowCount || 0;
   }

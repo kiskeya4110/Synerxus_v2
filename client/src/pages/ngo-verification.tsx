@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -100,10 +101,15 @@ export default function NgoVerification() {
     queryKey: ["/api/logs", { ngo_id: currentUser?.organizationId, status: "pending" }],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/logs?ngo_id=${currentUser.organizationId}&status=pending`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?ngo_id=${currentUser.organizationId}&status=pending`, {
+        headers, credentials: "include"
+      });
       if (!response.ok) {
         // Fallback to old endpoint
-        const fallbackResponse = await fetch(`/api/pending-approvals?organizationId=${currentUser.organizationId}`);
+        const fallbackResponse = await fetch(`/api/pending-approvals?organizationId=${currentUser.organizationId}`, {
+          headers, credentials: "include"
+        });
         if (!fallbackResponse.ok) return [];
         const data = await fallbackResponse.json();
         return data.activities || [];
@@ -117,15 +123,18 @@ export default function NgoVerification() {
   // Verify mutation
   const verifyMutation = useMutation({
     mutationFn: async ({ logId, editedData }: { logId: number; editedData?: any }) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/logs/${logId}/verify`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(editedData || {}),
       });
       if (!response.ok) {
         const fallbackResponse = await fetch(`/api/volunteer-activities/${logId}/approve`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (!fallbackResponse.ok) throw new Error("Failed to verify log");
         return fallbackResponse.json();
@@ -135,6 +144,8 @@ export default function NgoVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Log Verified",
         description: "The impact log has been verified successfully.",
@@ -157,15 +168,18 @@ export default function NgoVerification() {
   // Reject mutation
   const rejectMutation = useMutation({
     mutationFn: async ({ logId, reason }: { logId: number; reason: string }) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/logs/${logId}/reject`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ reason }),
       });
       if (!response.ok) {
         const fallbackResponse = await fetch(`/api/volunteer-activities/${logId}/reject`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (!fallbackResponse.ok) throw new Error("Failed to reject log");
         return fallbackResponse.json();
@@ -175,6 +189,8 @@ export default function NgoVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Log Rejected",
         description: "The impact log has been rejected with your feedback.",
@@ -227,7 +243,8 @@ export default function NgoVerification() {
 
     // Fetch suggested SDGs from server
     try {
-      const res = await fetch(`/api/logs/${log.id}/suggested-sdgs`);
+      const authH = await getAuthHeaders();
+      const res = await fetch(`/api/logs/${log.id}/suggested-sdgs`, { headers: authH, credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setSuggestedSdgs(data.merged || []);
@@ -396,11 +413,11 @@ export default function NgoVerification() {
           </div>
         )}
 
-        {/* 3-Button Action Row: Verify / Edit / Reject */}
+        {/* Action Row: Primary one-click Verify + secondary Edit/Reject */}
         <div className="flex gap-2">
           <Button
             size={compact ? "sm" : "default"}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white"
             onClick={() => handleVerify(log.id)}
             disabled={isVerifying === log.id}
           >

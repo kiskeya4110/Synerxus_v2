@@ -34,7 +34,7 @@ import { Stat } from "@/components/ui/stat";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid } from "@/components/ui/section";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { formatDecimal } from "@/lib/format-utils";
 import { getSDGColor } from "@shared/sdg-goals";
 
@@ -51,6 +51,7 @@ interface PendingVerification {
   sdgGoals?: number[];
   submittedAt: string;
   status: "pending" | "verified" | "rejected";
+  itemType: "activity" | "impact";
 }
 
 interface Project {
@@ -74,7 +75,7 @@ interface Volunteer {
   status: "active" | "inactive";
 }
 
-// Verification Item Component
+// Verification Item Component - one-click verify
 interface VerificationItemProps {
   item: PendingVerification;
   onApprove: (id: number) => void;
@@ -84,73 +85,45 @@ interface VerificationItemProps {
 
 function VerificationItem({ item, onApprove, onReject, isProcessing }: VerificationItemProps) {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-all">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border hover:border-primary/30 transition-all">
       <UserAvatar
         src={item.volunteerAvatar}
         name={item.volunteerName}
-        size="default"
+        size="sm"
       />
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <div>
-            <h4 className="font-semibold text-foreground">{item.volunteerName}</h4>
-            <p className="text-sm text-muted-foreground">{item.projectName}</p>
-          </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {new Date(item.submittedAt).toLocaleDateString()}
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-foreground truncate">{item.volunteerName}</h4>
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+            {new Date(item.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         </div>
-
-        <div className="flex items-center gap-3 mt-2">
-          <Badge variant="outline-primary" size="sm">
-            <Clock className="h-3 w-3 mr-1" />
-            {item.hours}h
-          </Badge>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-muted-foreground truncate">{item.projectName}</span>
+          {item.hours > 0 && (
+            <Badge variant="outline-primary" size="sm" className="text-[10px] px-1.5 py-0">
+              {item.hours}h
+            </Badge>
+          )}
           {item.outcomeType && item.outcomeValue && (
-            <Badge variant="secondary" size="sm">
+            <Badge variant="secondary" size="sm" className="text-[10px] px-1.5 py-0">
               {item.outcomeValue} {item.outcomeType.replace(/_/g, " ")}
             </Badge>
           )}
         </div>
-
-        {item.sdgGoals && item.sdgGoals.length > 0 && (
-          <div className="flex gap-1 mt-2">
-            {item.sdgGoals.slice(0, 3).map((sdg) => (
-              <SDGBadge key={sdg} sdg={sdg as any} size="sm" />
-            ))}
-          </div>
-        )}
-
-        {item.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {item.description}
-          </p>
-        )}
       </div>
 
-      <div className="flex flex-col gap-2 flex-shrink-0">
-        <Button
-          size="sm"
-          variant="success"
-          onClick={() => onApprove(item.id)}
-          disabled={isProcessing}
-          className="w-24"
-        >
-          <CheckCircle2 className="h-4 w-4 mr-1" />
-          Verify
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onReject(item.id)}
-          disabled={isProcessing}
-          className="w-24"
-        >
-          <XCircle className="h-4 w-4 mr-1" />
-          Reject
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="success"
+        onClick={() => onApprove(item.id)}
+        disabled={isProcessing}
+        className="h-8 px-3 flex-shrink-0"
+      >
+        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+        Verify
+      </Button>
     </div>
   );
 }
@@ -435,8 +408,10 @@ export default function OrganizationView({
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
     queryKey: ["/api/organization/dashboard", userId, activeUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/organization/dashboard?userId=${userId}`
+        `/api/organization/dashboard?userId=${userId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
@@ -448,8 +423,10 @@ export default function OrganizationView({
   const { data: pendingData, isLoading: isLoadingPending, refetch: refetchPending } = useQuery({
     queryKey: ["/api/pending-approvals", activeUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/pending-approvals?organizationId=${activeUser.organizationId}`
+        `/api/pending-approvals?organizationId=${activeUser.organizationId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load pending approvals");
       return response.json();
@@ -503,6 +480,7 @@ export default function OrganizationView({
         sdgGoals: a.sdgGoals || [],
         submittedAt: a.createdAt || new Date().toISOString(),
         status: "pending" as const,
+        itemType: "activity" as const,
       })),
       ...impacts.map((i: any) => ({
         id: i.id,
@@ -513,6 +491,7 @@ export default function OrganizationView({
         sdgGoals: i.sdgGoals || [],
         submittedAt: i.createdAt || new Date().toISOString(),
         status: "pending" as const,
+        itemType: "impact" as const,
       })),
     ];
   }, [pendingData]);
@@ -524,8 +503,8 @@ export default function OrganizationView({
       activeProjects: data.activeProjects || 0,
       totalVolunteers: data.activeVolunteers || 0,
       totalHours: data.totalHours || 0,
-      verifiedCount: data.verifiedCount || pendingVerifications.filter((v: any) => v.verificationStatus === 'approved').length || 0,
-      pendingVerifications: data.pendingCount || pendingVerifications.length,
+      verifiedCount: data.verifiedCount || 0,
+      pendingVerifications: pendingVerifications.length,
       impactScore: data.aiuEarned || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
     };
@@ -535,7 +514,10 @@ export default function OrganizationView({
   const { data: allOrgLogs = [], isLoading: isLoadingAllLogs } = useQuery({
     queryKey: ["/api/logs/org-all", activeUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/logs?ngo_id=${activeUser.organizationId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?ngo_id=${activeUser.organizationId}`, {
+        headers, credentials: "include"
+      });
       if (!response.ok) return [];
       const logs = await response.json();
       return Array.isArray(logs) ? logs : [];
@@ -563,22 +545,41 @@ export default function OrganizationView({
     setVisibleCount(20);
   };
 
-  // Approval handlers (use new /api/logs endpoints)
+  // Approval handlers - route to correct endpoint based on item type
   const handleApprove = async (id: number) => {
+    const item = pendingVerifications.find(v => v.id === id);
+    const isImpact = item?.itemType === "impact";
     setProcessingIds((prev) => new Set(prev).add(id));
     try {
-      const response = await fetch(`/api/logs/${id}/verify`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) {
-        await apiRequest("POST", `/api/volunteer-activities/${id}/approve`, { reviewerId: userId });
+      const authHeaders = await getAuthHeaders();
+      if (isImpact) {
+        // Impact items use the project-impacts approve endpoint
+        const response = await fetch(`/api/project-impacts/${id}/approve`, {
+          method: "POST",
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({}),
+        });
+        if (!response.ok) throw new Error("Failed to approve impact");
+      } else {
+        // Activity items use the logs verify endpoint
+        const response = await fetch(`/api/logs/${id}/verify`, {
+          method: "PATCH",
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({}),
+        });
+        if (!response.ok) {
+          await apiRequest("POST", `/api/volunteer-activities/${id}/approve`, { reviewerId: userId });
+        }
       }
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
-      toast({ title: "Verified!", description: "Impact log verified successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({ title: "Verified!", description: isImpact ? "Impact approved successfully." : "Activity verified successfully." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to verify.", variant: "destructive" });
     } finally {
@@ -602,14 +603,20 @@ export default function OrganizationView({
     }
     setProcessingIds((prev) => new Set(prev).add(rejectState.logId));
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/logs/${rejectState.logId}/reject`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ reason: rejectState.reason.trim() }),
       });
       if (!response.ok) throw new Error("Failed to reject");
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({ title: "Rejected", description: "Impact log rejected with feedback." });
       setRejectState(null);
     } catch (err) {
@@ -629,25 +636,37 @@ export default function OrganizationView({
     if (pendingVerifications.length === 0) return;
 
     setIsApprovingAll(true);
-    const ids = pendingVerifications.map((p) => p.id);
-    ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)));
+    pendingVerifications.forEach((p) => setProcessingIds((prev) => new Set(prev).add(p.id)));
 
     try {
+      const authHeaders = await getAuthHeaders();
       await Promise.all(
-        ids.map((id) =>
-          fetch(`/api/logs/${id}/verify`, {
+        pendingVerifications.map((item) => {
+          if (item.itemType === "impact") {
+            return fetch(`/api/project-impacts/${item.id}/approve`, {
+              method: "POST",
+              headers: { ...authHeaders, "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({}),
+            });
+          }
+          return fetch(`/api/logs/${item.id}/verify`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: { ...authHeaders, "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({}),
-          })
-        )
+          });
+        })
       );
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "All Verified!",
-        description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} verified.`,
+        description: `${pendingVerifications.length} submission${pendingVerifications.length !== 1 ? "s" : ""} verified.`,
       });
     } catch (err) {
       toast({ title: "Error", description: "Failed to verify some items.", variant: "destructive" });
@@ -657,7 +676,7 @@ export default function OrganizationView({
     }
   };
 
-  // Shared history log card renderer for both mobile and desktop
+  // Shared history log card renderer for both mobile and desktop - compact layout
   const renderHistoryLogCard = (log: any, compact: boolean) => {
     const logDate = new Date(log.date || log.createdAt);
     const status = log.verificationStatus || 'pending';
@@ -668,98 +687,68 @@ export default function OrganizationView({
       <div
         key={log.id}
         className={compact
-          ? "bg-white rounded-xl border border-stone-200 shadow-sm p-4 space-y-2"
-          : "flex items-center gap-6 px-6 py-4 hover:bg-secondary/30 transition-colors"
+          ? "bg-white rounded-lg border border-stone-200 shadow-sm px-3 py-2.5"
+          : "flex items-center gap-4 px-4 py-2.5 hover:bg-secondary/30 transition-colors"
         }
       >
         {compact ? (
           <>
-            {/* Mobile card layout */}
-            {/* Row 1: Volunteer + Status */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
-                  {(log.volunteer?.displayName || 'V').charAt(0)}
-                </div>
-                <span className="text-sm font-medium text-stone-800 truncate">
-                  {log.volunteer?.displayName || 'Volunteer'}
-                </span>
+            {/* Mobile compact: single row with verify button */}
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
+                {(log.volunteer?.displayName || 'V').charAt(0)}
               </div>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
-                status === 'approved'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : status === 'rejected'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-amber-100 text-amber-700'
-              }`}>
-                {status === 'approved' ? '✓ Verified' : status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
-              </span>
-            </div>
-
-            {/* Row 2: Date + Hours */}
-            <div className="flex items-center gap-3 text-sm text-stone-600">
-              <span>{logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-              {log.hours != null && (
-                <>
-                  <span className="text-stone-300">|</span>
-                  <span>{log.hours} hrs</span>
-                </>
-              )}
-            </div>
-
-            {/* Row 3: Outcome + SDG */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {(log.outcomes || log.outcomeQuantity) && (
-                <span className="text-sm text-stone-700">
-                  {log.outcomes || 'Outcome'}{log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ''}
-                </span>
-              )}
-              {firstSdg && (
-                <span
-                  className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
-                  style={{ backgroundColor: getSDGColor(firstSdg) }}
-                >
-                  SDG {firstSdg}
-                </span>
-              )}
-            </div>
-
-            {/* Row 4: Project name */}
-            <p className="text-xs text-stone-500">{log.project?.name || 'Unknown Project'}</p>
-
-            {/* Rejection reason */}
-            {status === 'rejected' && log.rejectedReason && (
-              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
-                Reason: "{log.rejectedReason}"
-              </p>
-            )}
-
-            {/* Action buttons for pending */}
-            {status === 'pending' && (
-              <div className="flex gap-2 pt-1">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-stone-800 truncate">
+                    {log.volunteer?.displayName || 'Volunteer'}
+                  </span>
+                  <span className="text-[11px] text-stone-400">
+                    {logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                  <span className="truncate">{log.project?.name || 'Unknown Project'}</span>
+                  {log.hours != null && <span className="font-medium">{log.hours}h</span>}
+                  {firstSdg && (
+                    <span
+                      className="px-1.5 py-0 rounded-full text-[9px] font-bold text-white"
+                      style={{ backgroundColor: getSDGColor(firstSdg) }}
+                    >
+                      SDG {firstSdg}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {status === 'pending' ? (
                 <button
                   onClick={() => handleApprove(log.id)}
                   disabled={processingIds.has(log.id)}
-                  className="flex-1 py-2 px-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                  className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors flex-shrink-0"
                 >
                   {processingIds.has(log.id) ? '...' : '✓ Verify'}
                 </button>
-                <button
-                  onClick={() => handleReject(log.id)}
-                  disabled={processingIds.has(log.id)}
-                  className="flex-1 py-2 px-3 bg-stone-100 text-stone-700 text-sm font-medium rounded-lg hover:bg-stone-200 disabled:opacity-50 transition-colors"
-                >
-                  ✗ Reject
-                </button>
-              </div>
+              ) : (
+                <span className={`text-[10px] font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+                  status === 'approved'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
+                </span>
+              )}
+            </div>
+            {status === 'rejected' && log.rejectedReason && (
+              <p className="text-[11px] text-red-600 mt-1 ml-8">
+                Reason: "{log.rejectedReason}"
+              </p>
             )}
           </>
         ) : (
           <>
-            {/* Desktop row layout */}
-            {/* Volunteer avatar + name */}
-            <div className="w-36 flex-shrink-0 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
+            {/* Desktop compact row */}
+            <div className="w-32 flex-shrink-0 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
                 {(log.volunteer?.displayName || 'V').charAt(0)}
               </div>
               <span className="text-sm font-medium text-foreground truncate">
@@ -767,81 +756,63 @@ export default function OrganizationView({
               </span>
             </div>
 
-            {/* Date */}
-            <div className="w-16 flex-shrink-0 text-center">
-              <p className="text-sm font-semibold text-foreground">
+            <div className="w-14 flex-shrink-0 text-center">
+              <p className="text-xs text-muted-foreground">
                 {logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </p>
             </div>
 
-            {/* Hours */}
-            <div className="w-16 flex-shrink-0 text-center">
-              <p className="text-sm font-medium text-muted-foreground">
-                {log.hours != null ? `${log.hours} hrs` : '—'}
+            <div className="w-12 flex-shrink-0 text-center">
+              <p className="text-xs font-medium text-muted-foreground">
+                {log.hours != null ? `${log.hours}h` : '—'}
               </p>
             </div>
 
-            {/* Outcome + Project */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
                 {(log.outcomes || log.outcomeQuantity) && (
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-xs font-medium text-foreground">
                     {log.outcomes || 'Outcome'}{log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ''}
                   </span>
                 )}
                 {firstSdg && (
                   <span
-                    className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                    className="px-1.5 py-0 rounded-full text-[9px] font-bold text-white"
                     style={{ backgroundColor: getSDGColor(firstSdg) }}
                   >
                     SDG {firstSdg}
                   </span>
                 )}
+                <span className="text-xs text-muted-foreground truncate">
+                  {log.project?.name || 'Unknown Project'}
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {log.project?.name || 'Unknown Project'}
-              </p>
               {status === 'rejected' && log.rejectedReason && (
-                <p className="text-xs text-red-600 mt-1">
-                  Reason: &ldquo;{log.rejectedReason}&rdquo;
+                <p className="text-[11px] text-red-600 mt-0.5 truncate">
+                  Reason: "{log.rejectedReason}"
                 </p>
               )}
             </div>
 
-            {/* Status + Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {status === 'pending' ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="success"
-                    onClick={() => handleApprove(log.id)}
-                    disabled={processingIds.has(log.id)}
-                    className="h-8"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                    Verify
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleReject(log.id)}
-                    disabled={processingIds.has(log.id)}
-                    className="h-8"
-                  >
-                    <XCircle className="h-3.5 w-3.5 mr-1" />
-                    Reject
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={() => handleApprove(log.id)}
+                  disabled={processingIds.has(log.id)}
+                  className="h-7 text-xs px-3"
+                >
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Verify
+                </Button>
               ) : (
-                <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${
+                <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
                   status === 'approved'
                     ? 'bg-emerald-100 text-emerald-700'
-                    : status === 'rejected'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-amber-100 text-amber-700'
+                    : 'bg-red-100 text-red-700'
                 }`}>
-                  {status === 'approved' ? '✓ Verified' : status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                  {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
                 </span>
               )}
             </div>
@@ -889,33 +860,33 @@ export default function OrganizationView({
   // Shared history content for both mobile and desktop
   const renderHistoryContent = (compact: boolean) => (
     <>
-      {/* Filter Pills */}
-      <div className="flex gap-2">
-        {(['all', 'pending', 'verified', 'rejected'] as const).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => handleHistoryFilterChange(filter)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              historyFilter === filter
-                ? 'bg-indigo-600 text-white'
-                : compact
-                  ? 'bg-white text-stone-600 border border-stone-200'
-                  : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-            }`}
-          >
-            {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-            {filter !== 'all' && (
-              <span className="ml-1.5 opacity-70">
-                ({filter === 'pending'
-                  ? allOrgLogs.filter((l: any) => l.verificationStatus === 'pending').length
-                  : filter === 'verified'
-                    ? allOrgLogs.filter((l: any) => l.verificationStatus === 'approved').length
-                    : allOrgLogs.filter((l: any) => l.verificationStatus === 'rejected').length
-                })
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Filter Pills - compact */}
+      <div className="flex gap-1.5">
+        {(['all', 'pending', 'verified', 'rejected'] as const).map((filter) => {
+          const count = filter === 'pending'
+            ? allOrgLogs.filter((l: any) => l.verificationStatus === 'pending').length
+            : filter === 'verified'
+              ? allOrgLogs.filter((l: any) => l.verificationStatus === 'approved').length
+              : filter === 'rejected'
+                ? allOrgLogs.filter((l: any) => l.verificationStatus === 'rejected').length
+                : allOrgLogs.length;
+          return (
+            <button
+              key={filter}
+              onClick={() => handleHistoryFilterChange(filter)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                historyFilter === filter
+                  ? 'bg-indigo-600 text-white'
+                  : compact
+                    ? 'bg-white text-stone-600 border border-stone-200'
+                    : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+              }`}
+            >
+              {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+              <span className="ml-1 opacity-70">{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Log list */}
@@ -938,7 +909,7 @@ export default function OrganizationView({
       ) : (
         <>
           {compact ? (
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {filteredHistoryLogs.slice(0, visibleCount).map((log: any) => renderHistoryLogCard(log, true))}
             </div>
           ) : (
@@ -1047,34 +1018,21 @@ export default function OrganizationView({
                 </button>
                 <div className="divide-y divide-gray-100">
                   {pendingVerifications.slice(0, 3).map((item) => (
-                    <div key={item.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
-                            {item.volunteerName.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{item.volunteerName}</p>
-                            <p className="text-xs text-gray-500">{item.hours}h - {item.projectName}</p>
-                          </div>
-                        </div>
+                    <div key={item.id} className="px-4 py-2.5 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0">
+                        {item.volunteerName.charAt(0)}
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(item.id)}
-                          disabled={processingIds.has(item.id)}
-                          className="flex-1 py-2 px-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          Verify
-                        </button>
-                        <button
-                          onClick={() => handleReject(item.id)}
-                          disabled={processingIds.has(item.id)}
-                          className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{item.volunteerName}</p>
+                        <p className="text-xs text-gray-500">{item.hours}h - {item.projectName}</p>
                       </div>
+                      <button
+                        onClick={() => handleApprove(item.id)}
+                        disabled={processingIds.has(item.id)}
+                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex-shrink-0"
+                      >
+                        {processingIds.has(item.id) ? '...' : '✓ Verify'}
+                      </button>
                     </div>
                   ))}
                   {pendingVerifications.length === 0 && (
@@ -1501,11 +1459,11 @@ export default function OrganizationView({
                     size="sm"
                   />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {pendingVerifications.slice(0, 3).map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30"
+                        className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30"
                       >
                         <UserAvatar src={item.volunteerAvatar} name={item.volunteerName} size="sm" />
                         <div className="flex-1 min-w-0">
@@ -1516,7 +1474,16 @@ export default function OrganizationView({
                             {item.hours}h - {item.projectName}
                           </p>
                         </div>
-                        <Badge variant="pending" size="sm">Pending</Badge>
+                        <Button
+                          size="sm"
+                          variant="success"
+                          onClick={() => handleApprove(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="h-7 text-xs px-3 flex-shrink-0"
+                        >
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Verify
+                        </Button>
                       </div>
                     ))}
                   </div>

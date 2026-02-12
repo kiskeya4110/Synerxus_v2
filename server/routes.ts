@@ -4224,7 +4224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Count verified and pending activities for KPI display
       const verifiedCount = organizationActivities.filter(a => a.verificationStatus === 'approved' || a.verificationStatus === 'verified').length;
-      const pendingCount = organizationActivities.filter(a => a.verificationStatus === 'pending').length;
+      const pendingCount = organizationActivities.filter(a => a.verificationStatus === 'pending' || a.verificationStatus === 'self_reported' || !a.verificationStatus).length;
 
       res.json({
         keyMetrics: {

@@ -589,6 +589,11 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
       }
     }
 
+    // Mark related pending_approval notifications as read
+    storage.markNotificationsReadByEntity("volunteer_activity", logId).catch(err => {
+      console.error("Failed to mark notifications as read:", err);
+    });
+
     // Send email notification to volunteer
     sendActivityApprovalNotification(logId, 'approved', reviewerId).catch(err => {
       console.error("Failed to send verification notification:", err);
@@ -658,6 +663,11 @@ logsRouter.patch("/logs/:id/reject", authMiddleware, async (req: Request, res: R
       verifiedBy: reviewerId,
       verifiedAt: new Date()
     } as any);
+
+    // Mark related pending_approval notifications as read
+    storage.markNotificationsReadByEntity("volunteer_activity", logId).catch(err => {
+      console.error("Failed to mark notifications as read:", err);
+    });
 
     // Send email notification to volunteer
     sendActivityApprovalNotification(logId, 'rejected', reviewerId).catch(err => {

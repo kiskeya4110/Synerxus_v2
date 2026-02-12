@@ -17,6 +17,7 @@ import Footer from "@/components/layout/footer";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
 import { useViewportDetection } from "@/hooks/use-mobile";
+import { getAuthHeaders } from "@/lib/queryClient";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
@@ -108,13 +109,16 @@ export default function Projects() {
   const { data: allActivities = [] } = useQuery<VolunteerActivity[]>({
     queryKey: ["/api/volunteer-activities", userId, projects.map(p => p.id).join(',')],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       // For organizations, fetch activities for their projects
       const projectIds = projects.map(p => p.id);
       if (projectIds.length === 0) return [];
       // Fetch activities for each project
       const allActivities: VolunteerActivity[] = [];
       for (const projectId of projectIds) {
-        const response = await fetch(`/api/volunteer-activities?projectId=${projectId}`);
+        const response = await fetch(`/api/volunteer-activities?projectId=${projectId}`, {
+          headers, credentials: "include"
+        });
         if (response.ok) {
           const activities = await response.json();
           allActivities.push(...activities);
@@ -177,7 +181,8 @@ export default function Projects() {
       const progress = projectTasks.length === 0 ? 0 : Math.round((completedTasks / projectTasks.length) * 100);
 
       const totalCommitted = assignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
-      const totalCompleted = assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
+      const activityHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+      const totalCompleted = activityHours > 0 ? activityHours : assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
 
       // Calculate unique volunteers from assignments and activities (filter out null userIds)
       const uniqueVolunteerIds = new Set([
@@ -347,8 +352,11 @@ export default function Projects() {
   // Mobile organization PWA view - MVP Layout
   if (isOrganization && isMobile) {
     // Calculate stats for MVP display
-    const activeProjectsCount = projects.filter(p => p.status === 'active').length;
-    const completedProjectsCount = projects.filter(p => p.status === 'completed').length;
+    const activeProjectsCount = projects.filter(p => {
+      const s = (p.status || '').toLowerCase();
+      return s === 'active' || s === 'in progress';
+    }).length;
+    const completedProjectsCount = projects.filter(p => (p.status || '').toLowerCase() === 'completed').length;
     const totalVolunteers = new Set([
       ...allAssignments.map(a => a.volunteerId),
       ...allActivities.filter(a => a.userId != null).map(a => a.userId)

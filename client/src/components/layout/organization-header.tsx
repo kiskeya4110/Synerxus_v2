@@ -174,7 +174,14 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
         return; // Don't navigate, show in panel
       }
 
-      // Navigate to dashboard for all non-application notifications
+      // For pending approval notifications, navigate to verification page
+      if (notificationType === 'pending_approval') {
+        navigate('/ngo-verification');
+        setNotificationPanelOpen(false);
+        return;
+      }
+
+      // Navigate to dashboard for all other notifications
       navigate('/organization-dashboard');
       setNotificationPanelOpen(false);
     } catch (error) {
@@ -556,6 +563,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                           const timeAgo = notification.createdAt ?
                             getRelativeTime(new Date(notification.createdAt)) : '';
                           const isApplicationNotification = notification.type === 'new_application';
+                          const isPendingApproval = notification.type === 'pending_approval';
 
                           return (
                             <div
@@ -565,10 +573,12 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                             >
                               <div className="flex items-start gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                  isApplicationNotification ? 'bg-green-100' : 'bg-blue-100'
+                                  isApplicationNotification ? 'bg-green-100' : isPendingApproval ? 'bg-amber-100' : 'bg-blue-100'
                                 }`}>
                                   {isApplicationNotification ? (
                                     <User className="h-4 w-4 text-green-600" />
+                                  ) : isPendingApproval ? (
+                                    <Clock className="h-4 w-4 text-amber-600" />
                                   ) : (
                                     <Bell className="h-4 w-4 text-blue-600" />
                                   )}
@@ -592,6 +602,11 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                                         Review
                                       </Badge>
                                     )}
+                                    {isPendingApproval && (
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0 text-amber-600 border-amber-200">
+                                        Verify
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -608,9 +623,12 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                         variant="ghost"
                         size="sm"
                         className="w-full text-blue-600"
-                        onClick={handleViewFullApplication}
+                        onClick={() => {
+                          setNotificationPanelOpen(false);
+                          navigate('/ngo-verification');
+                        }}
                       >
-                        View all applications
+                        View verification queue
                       </Button>
                     </div>
                   )}

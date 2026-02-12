@@ -180,6 +180,10 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
 
     const totalHours = organizationActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
+    // Count verified and pending activities for KPI display
+    const verifiedCount = organizationActivities.filter((a: any) => a.verificationStatus === 'approved' || a.verificationStatus === 'verified').length;
+    const pendingCount = organizationActivities.filter((a: any) => a.verificationStatus === 'pending' || a.verificationStatus === 'self_reported' || !a.verificationStatus).length;
+
     const uniqueSDGs = new Set<number>();
     organizationProjects.forEach(project => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
@@ -407,6 +411,8 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
         aiuEarned: totalAiuEarned, // Properly calculated AIU replacing raw livesTouched
         livesTouched: totalPeopleImpacted, // Keep for backwards compatibility
         activeVolunteers: organizationVolunteers.length,
+        verifiedCount,
+        pendingCount,
       },
       sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({
         goal: parseInt(goal),

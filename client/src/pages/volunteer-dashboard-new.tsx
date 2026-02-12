@@ -597,9 +597,11 @@ interface ImpactLog {
 interface RecentLogsProps {
   logs: ImpactLog[];
   isLoading?: boolean;
+  selectedLogId?: number | null;
+  onToggleLog?: (logId: number) => void;
 }
 
-function RecentLogs({ logs, isLoading }: RecentLogsProps) {
+function RecentLogs({ logs, isLoading, selectedLogId, onToggleLog }: RecentLogsProps) {
   if (isLoading) {
     return <LoadingState message="Loading activity..." />;
   }
@@ -616,25 +618,66 @@ function RecentLogs({ logs, isLoading }: RecentLogsProps) {
 
   return (
     <div className="space-y-3">
-      {logs.map((log) => (
-        <div
-          key={log.id}
-          className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-        >
-          <div className="flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-primary" />
+      {logs.map((log) => {
+        const isExpanded = selectedLogId === log.id;
+        return (
+          <button
+            key={log.id}
+            onClick={() => onToggleLog?.(log.id)}
+            className={`w-full flex flex-col p-4 rounded-lg transition-all text-left cursor-pointer ${
+              isExpanded ? 'bg-secondary shadow-md ring-1 ring-primary/20' : 'bg-secondary/50 hover:bg-secondary hover:shadow-md'
+            }`}
+          >
+            <div className="flex items-center gap-4 w-full">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{log.projectName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {log.hours}h logged on {new Date(log.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <StatusBadge status={log.status} size="sm" />
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
             </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{log.projectName}</p>
-            <p className="text-xs text-muted-foreground">
-              {log.hours}h logged on {new Date(log.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-          <StatusBadge status={log.status} size="sm" />
-        </div>
-      ))}
+            {isExpanded && (
+              <div className="mt-3 pt-3 border-t border-border space-y-2 pl-14">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{new Date(log.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                {(log.outcomeType || log.outcomeValue) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <Target className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-foreground font-medium">
+                      {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
+                    </span>
+                  </div>
+                )}
+                {log.sdgGoals && log.sdgGoals.length > 0 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {log.sdgGoals.map((sdg: number) => {
+                      const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                      return sdgInfo ? (
+                        <span
+                          key={sdg}
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                          style={{ backgroundColor: sdgInfo.color }}
+                        >
+                          SDG {sdg}: {sdgInfo.label}
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -675,7 +718,7 @@ function ActiveProjects({ projects, isLoading }: ActiveProjectsProps) {
 
   return (
     <div className="space-y-4">
-      {projects.slice(0, 4).map((project) => (
+      {projects.map((project) => (
         <Card key={project.id} variant="default" interactive className="p-4">
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
@@ -784,6 +827,11 @@ export default function VolunteerDashboardNew() {
   const [showLogModal, setShowLogModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
+
+  const toggleLogDetail = (logId: number) => {
+    setSelectedLogId(prev => prev === logId ? null : logId);
+  };
 
   // Redirect non-volunteers
   useEffect(() => {
@@ -912,7 +960,7 @@ export default function VolunteerDashboardNew() {
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
-      impactScore: data.totalAiuEarned || data.impactScore || 0,
+      impactScore: 0, // AIU removed - using calculated metrics instead
       hoursLogged: data.totalHours || data.verifiedHours || 0,
       verifiedHours: data.verifiedHours || 0,
       projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active" || p.status === "in progress").length || 0,
@@ -1151,20 +1199,61 @@ export default function VolunteerDashboardNew() {
                     </button>
                   </div>
                   <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100 shadow-sm">
-                    {recentLogs.slice(0, 3).map((log: any) => (
-                      <div key={log.id} className="px-4 py-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
-                          <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                    {recentLogs.slice(0, 5).map((log: any) => (
+                      <button
+                        key={log.id}
+                        onClick={() => toggleLogDetail(log.id)}
+                        className="w-full px-4 py-3 text-left hover:bg-stone-50 transition-colors active:scale-[0.99]"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
+                            <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                              log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                              log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-amber-100 text-amber-700'
+                            }`}>
+                              {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
+                            </span>
+                            <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
+                          </div>
                         </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          log.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
-                          log.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }`}>
-                          {log.status || 'pending'}
-                        </span>
-                      </div>
+                        {selectedLogId === log.id && (
+                          <div className="mt-3 pt-3 border-t border-stone-100 space-y-2">
+                            <div className="flex items-center gap-2 text-xs text-stone-600">
+                              <Clock className="h-3 w-3" />
+                              <span>Logged on {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            </div>
+                            {(log.outcomeType || log.outcomeValue) && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <Target className="h-3 w-3 text-emerald-600" />
+                                <span className="text-emerald-700 font-medium">
+                                  {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
+                                </span>
+                              </div>
+                            )}
+                            {log.sdgGoals && log.sdgGoals.length > 0 && (
+                              <div className="flex gap-1 flex-wrap">
+                                {log.sdgGoals.map((sdg: number) => {
+                                  const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                                  return sdgInfo ? (
+                                    <span
+                                      key={sdg}
+                                      className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+                                      style={{ backgroundColor: sdgInfo.color }}
+                                    >
+                                      SDG {sdg}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1197,14 +1286,14 @@ export default function VolunteerDashboardNew() {
                   <p className="text-xs text-stone-500 mt-1">people impacted</p>
                 </div>
 
-                {/* Impact Score / AIU */}
+                {/* SDGs Addressed */}
                 <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Impact</span>
+                    <Globe className="h-4 w-4 text-amber-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">SDGs</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{typeof stats.impactScore === 'number' ? stats.impactScore.toFixed(1) : stats.impactScore}</p>
-                  <p className="text-xs text-stone-500 mt-1">AIU earned</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.sdgsAddressed}</p>
+                  <p className="text-xs text-stone-500 mt-1">goals addressed</p>
                 </div>
 
                 {/* Projects */}
@@ -1232,30 +1321,75 @@ export default function VolunteerDashboardNew() {
 
               {/* Recent Logs */}
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-stone-100">
+                <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-stone-800">Recent Activity</h2>
+                  <span className="text-xs text-stone-400">Tap for details</span>
                 </div>
                 <div className="divide-y divide-stone-100">
                   {recentLogs.slice(0, 5).map((log: any) => (
-                    <div key={log.id} className="px-4 py-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
-                        <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                    <button
+                      key={log.id}
+                      onClick={() => toggleLogDetail(log.id)}
+                      className="w-full px-4 py-3 text-left hover:bg-stone-50 transition-colors active:scale-[0.99]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
+                          <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                            log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
+                          </span>
+                          <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
+                        </div>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        log.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
-                        log.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-amber-100 text-amber-700'
-                      }`}>
-                        {log.status || 'pending'}
-                      </span>
-                    </div>
+                      {selectedLogId === log.id && (
+                        <div className="mt-3 pt-3 border-t border-stone-100 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-stone-600">
+                            <Clock className="h-3 w-3" />
+                            <span>Logged on {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
+                          {(log.outcomeType || log.outcomeValue) && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <Target className="h-3 w-3 text-emerald-600" />
+                              <span className="text-emerald-700 font-medium">
+                                {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
+                              </span>
+                            </div>
+                          )}
+                          {log.sdgGoals && log.sdgGoals.length > 0 && (
+                            <div className="flex gap-1 flex-wrap">
+                              {log.sdgGoals.map((sdg: number) => {
+                                const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                                return sdgInfo ? (
+                                  <span
+                                    key={sdg}
+                                    className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+                                    style={{ backgroundColor: sdgInfo.color }}
+                                  >
+                                    SDG {sdg}
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </button>
                   ))}
                   {recentLogs.length === 0 && (
-                    <div className="px-4 py-8 text-center">
+                    <button
+                      onClick={() => setShowLogModal(true)}
+                      className="w-full px-4 py-8 text-center hover:bg-stone-50 transition-colors"
+                    >
                       <p className="text-sm text-stone-500">No activity yet</p>
-                      <p className="text-xs text-stone-400 mt-1">Log your first impact to get started</p>
-                    </div>
+                      <p className="text-xs text-indigo-600 mt-1">Tap to log your first impact →</p>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1276,7 +1410,7 @@ export default function VolunteerDashboardNew() {
                 </div>
               ) : matchedProjects.length > 0 ? (
                 <div className="space-y-3">
-                  {matchedProjects.slice(0, 4).map((match: any, index: number) => (
+                  {matchedProjects.map((match: any, index: number) => (
                     <div
                       key={match.organization_id || index}
                       className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
@@ -1457,11 +1591,11 @@ export default function VolunteerDashboardNew() {
         {/* Quick Stats Row */}
         <Grid columns={4} gap="default">
           <MetricCard
-            label="Impact Score"
-            value={formatDecimal(stats.impactScore)}
-            subtitle="AIU earned"
+            label="SDGs Addressed"
+            value={stats.sdgsAddressed}
+            subtitle={`${stats.skillsCount} skills applied`}
             accentColor="primary"
-            icon={<Award className="h-5 w-5 text-primary" />}
+            icon={<Globe className="h-5 w-5 text-primary" />}
           />
           <MetricCard
             label="Hours Logged"
@@ -1491,7 +1625,7 @@ export default function VolunteerDashboardNew() {
           {/* Left Column - Impact Score & Streak */}
           <div className="space-y-6">
             <ImpactScoreCard
-              score={stats.impactScore}
+              score={stats.totalPeopleImpacted}
               trend={15}
               hoursLogged={stats.hoursLogged}
               projectsActive={stats.projectsActive}
@@ -1537,7 +1671,7 @@ export default function VolunteerDashboardNew() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} />
+                <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} selectedLogId={selectedLogId} onToggleLog={toggleLogDetail} />
               </CardContent>
             </Card>
           </div>

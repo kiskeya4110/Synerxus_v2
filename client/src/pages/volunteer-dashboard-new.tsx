@@ -761,7 +761,7 @@ function ImpactStreakCard({ currentStreak, longestStreak, lastLogDate }: StreakP
 // Main Dashboard Component
 // ============================================================================
 export default function VolunteerDashboardNew() {
-  const { user, dbUser, signOut } = useAuth();
+  const { user, dbUser, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
@@ -769,6 +769,17 @@ export default function VolunteerDashboardNew() {
   // Use dbUser from auth sync as authoritative source, fallback to localStorage
   const userId = dbUser?.id?.toString() || localStorage.getItem("currentUserId");
   const userType = (dbUser as any)?.userType || localStorage.getItem("userType");
+
+  // Keep localStorage in sync when dbUser resolves (prevents stale userId on next load)
+  useEffect(() => {
+    if (dbUser?.id) {
+      const storedId = localStorage.getItem("currentUserId");
+      if (storedId !== String(dbUser.id)) {
+        console.log("[VolunteerDashboard] Syncing localStorage userId:", storedId, "->", dbUser.id);
+        localStorage.setItem("currentUserId", String(dbUser.id));
+      }
+    }
+  }, [dbUser]);
 
   const [showLogModal, setShowLogModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');
@@ -783,7 +794,7 @@ export default function VolunteerDashboardNew() {
     }
   }, [userType, navigate]);
 
-  // Fetch user data
+  // Fetch user data - wait for auth to resolve to use correct userId
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -796,7 +807,7 @@ export default function VolunteerDashboardNew() {
         return null;
       }
     },
-    enabled: !!userId,
+    enabled: !!userId && !authLoading,
   });
 
   // Fetch dashboard data
@@ -815,7 +826,8 @@ export default function VolunteerDashboardNew() {
         return null;
       }
     },
-    enabled: !!userId,
+    enabled: !!userId && !authLoading,
+    staleTime: 30000,
   });
 
   // Fetch projects
@@ -914,8 +926,8 @@ export default function VolunteerDashboardNew() {
     };
   }, [dashboardData, projects, recentLogs]);
 
-  // Loading state - wait for viewport detection and user data
-  if ((isLoadingUser && !demoUser) || isViewportLoading) {
+  // Loading state - wait for auth, viewport detection, and user data
+  if (authLoading || (isLoadingUser && !demoUser) || isViewportLoading) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />

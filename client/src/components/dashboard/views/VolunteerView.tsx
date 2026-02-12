@@ -162,39 +162,39 @@ export default function VolunteerView({
     retry: 1,
   });
 
-  // Calculate stats - only from actual data, no fallbacks that could show fake numbers
+  // Calculate stats from server dashboard data
   const stats = useMemo(() => {
     const data = dashboardData || {};
-    // Only count hours from verified logs
-    const verifiedHours = allLogs
-      .filter((l: any) => l.verificationStatus === 'approved')
-      .reduce((sum: number, l: any) => sum + (l.hours || 0), 0);
-
     return {
-      impactScore: data.totalAiu || data.impactScore || 0,
+      impactScore: data.totalAiuEarned || data.impactScore || 0,
+      hoursLogged: data.totalHours || data.verifiedHours || 0,
+      verifiedHours: data.verifiedHours || 0,
       outcomesVerified: allLogs.filter((l: any) => l.verificationStatus === 'approved').length,
       projectsActive: data.activeProjects || 0,
-      currentStreak: data.currentStreak || 0,
-      longestStreak: data.longestStreak || 0,
+      totalProjects: data.totalProjects || projects.length || 0,
+      totalPeopleImpacted: data.totalPeopleImpacted || 0,
+      skillsCount: data.skillsCount || data.volunteerProfile?.skills?.length || 0,
+      sdgsAddressed: data.sdgsAddressed || 0,
+      completedTasks: data.completedTasks || 0,
+      totalTasks: data.totalTasks || 0,
       pendingVerifications: allLogs.filter((l: any) => l.verificationStatus === "pending").length,
     };
-  }, [dashboardData, allLogs]);
+  }, [dashboardData, allLogs, projects]);
 
-  // Calculate metrics - only from actual logged data
+  // Calculate metrics from server data with log-based fallback
   const totalOutcomes = allLogs
     .filter((l: any) => l.verificationStatus === 'approved')
     .reduce((sum: number, log: any) => sum + (log.outcomeQuantity || 0), 0);
 
-  // Skills used - count only if user has logged activities with skills
-  const skillsUsed = allLogs.length > 0
-    ? (dashboardData?.volunteerProfile?.skills?.length || 0)
-    : 0;
+  // Skills - prefer server-computed count
+  const skillsUsed = stats.skillsCount;
 
-  // SDGs - only count from actual logged activities, not from all projects
+  // SDGs - prefer server-computed count, fallback to logs
   const sdgsContributed = useMemo(() => {
+    if (stats.sdgsAddressed > 0) return stats.sdgsAddressed;
     const sdgsFromLogs = allLogs.flatMap((l: any) => l.sdgTags || l.project?.sdgGoals || []);
     return new Set(sdgsFromLogs).size;
-  }, [allLogs]);
+  }, [allLogs, stats.sdgsAddressed]);
 
   // Filtered logs for History tab
   const filteredHistoryLogs = useMemo(() => {
@@ -242,16 +242,16 @@ export default function VolunteerView({
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.outcomesVerified}</p>
-                    <p className="text-xs text-indigo-200">Verified</p>
+                    <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
+                    <p className="text-xs text-indigo-200">Hours</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.projectsActive}</p>
+                    <p className="text-3xl font-bold text-white">{stats.totalProjects}</p>
                     <p className="text-xs text-indigo-200">Projects</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{sdgsContributed}</p>
-                    <p className="text-xs text-indigo-200">SDGs</p>
+                    <p className="text-3xl font-bold text-white">{stats.totalPeopleImpacted}</p>
+                    <p className="text-xs text-indigo-200">People Helped</p>
                   </div>
                 </div>
               </button>
@@ -286,7 +286,7 @@ export default function VolunteerView({
                     </div>
                     <div className="flex-1 text-left">
                       <span className="text-sm font-semibold text-stone-800 block">Impact Wallet</span>
-                      <span className="text-xs text-stone-500">{stats.outcomesVerified} verified • {sdgsContributed} SDGs</span>
+                      <span className="text-xs text-stone-500">{stats.hoursLogged}h logged • {sdgsContributed} SDGs</span>
                     </div>
                     <ChevronRight className={`w-5 h-5 text-stone-400 transition-transform ${expandedSection === 'wallet' ? 'rotate-90' : ''}`} />
                   </button>
@@ -295,31 +295,31 @@ export default function VolunteerView({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white rounded-lg p-3 border border-stone-200">
                           <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs text-stone-500">Verified</span>
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            <span className="text-xs text-stone-500">Hours</span>
                           </div>
-                          <p className="text-2xl font-bold text-stone-800">{stats.outcomesVerified}</p>
+                          <p className="text-2xl font-bold text-stone-800">{stats.hoursLogged}</p>
                         </div>
                         <div className="bg-white rounded-lg p-3 border border-stone-200">
                           <div className="flex items-center gap-2 mb-1">
-                            <Globe className="h-4 w-4 text-indigo-600" />
-                            <span className="text-xs text-stone-500">SDGs</span>
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <span className="text-xs text-stone-500">People</span>
                           </div>
-                          <p className="text-2xl font-bold text-stone-800">{sdgsContributed}</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-3 border border-stone-200">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Target className="h-4 w-4 text-emerald-600" />
-                            <span className="text-xs text-stone-500">Projects</span>
-                          </div>
-                          <p className="text-2xl font-bold text-stone-800">{stats.projectsActive}</p>
+                          <p className="text-2xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
                         </div>
                         <div className="bg-white rounded-lg p-3 border border-stone-200">
                           <div className="flex items-center gap-2 mb-1">
                             <Award className="h-4 w-4 text-amber-600" />
-                            <span className="text-xs text-stone-500">Skills</span>
+                            <span className="text-xs text-stone-500">AIU</span>
                           </div>
-                          <p className="text-2xl font-bold text-stone-800">{skillsUsed}</p>
+                          <p className="text-2xl font-bold text-stone-800">{typeof stats.impactScore === 'number' ? stats.impactScore.toFixed(1) : stats.impactScore}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-stone-200">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Globe className="h-4 w-4 text-indigo-600" />
+                            <span className="text-xs text-stone-500">Projects</span>
+                          </div>
+                          <p className="text-2xl font-bold text-stone-800">{stats.totalProjects}</p>
                         </div>
                       </div>
                       <button
@@ -463,11 +463,11 @@ export default function VolunteerView({
                   className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Verified</span>
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.outcomesVerified}</p>
-                  <p className="text-xs text-stone-500 mt-1">verified outcomes →</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
+                  <p className="text-xs text-stone-500 mt-1">{stats.verifiedHours} verified →</p>
                 </button>
 
                 <button
@@ -476,10 +476,10 @@ export default function VolunteerView({
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Outcomes</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">People</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{totalOutcomes}</p>
-                  <p className="text-xs text-stone-500 mt-1">total outcomes →</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
+                  <p className="text-xs text-stone-500 mt-1">people impacted →</p>
                 </button>
 
                 <button
@@ -488,10 +488,10 @@ export default function VolunteerView({
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Skills</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">Impact</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{skillsUsed}</p>
-                  <p className="text-xs text-stone-500 mt-1">skills applied →</p>
+                  <p className="text-3xl font-bold text-stone-800">{typeof stats.impactScore === 'number' ? stats.impactScore.toFixed(1) : stats.impactScore}</p>
+                  <p className="text-xs text-stone-500 mt-1">AIU earned →</p>
                 </button>
 
                 <button
@@ -500,10 +500,10 @@ export default function VolunteerView({
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-indigo-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">SDGs</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">Projects</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{sdgsContributed}</p>
-                  <p className="text-xs text-stone-500 mt-1">goals impacted →</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.totalProjects}</p>
+                  <p className="text-xs text-stone-500 mt-1">{stats.projectsActive} active →</p>
                 </button>
               </div>
 
@@ -830,36 +830,36 @@ export default function VolunteerView({
               <MetricCard
                 label="Impact Score"
                 value={formatDecimal(stats.impactScore)}
-                subtitle="points earned"
+                subtitle="AIU earned"
                 accentColor="primary"
                 icon={<Award className="h-5 w-5 text-primary" />}
               />
             </div>
             <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
-                label="Outcomes Verified"
-                value={stats.outcomesVerified}
-                subtitle="by NGOs"
+                label="Hours Logged"
+                value={stats.hoursLogged}
+                subtitle={`${stats.verifiedHours} verified`}
                 accentColor="accent"
-                icon={<CheckCircle2 className="h-5 w-5 text-accent" />}
+                icon={<Clock className="h-5 w-5 text-accent" />}
               />
             </div>
             <div onClick={() => navigate('/discover-opportunities')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
-                label="Active Projects"
-                value={stats.projectsActive}
-                subtitle="contributing to"
+                label="People Impacted"
+                value={stats.totalPeopleImpacted}
+                subtitle={`${stats.totalProjects} projects`}
                 accentColor="success"
                 icon={<Target className="h-5 w-5 text-success" />}
               />
             </div>
             <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
-                label="Pending Verification"
-                value={stats.pendingVerifications}
-                subtitle="awaiting review"
+                label="Active Projects"
+                value={stats.projectsActive}
+                subtitle={`${stats.sdgsAddressed} SDGs addressed`}
                 accentColor="cyan"
-                icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
+                icon={<Globe className="h-5 w-5 text-[#22D3EE]" />}
               />
             </div>
           </Grid>
@@ -894,9 +894,9 @@ export default function VolunteerView({
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span className="text-xs">Outcomes Verified</span>
+                        <span className="text-xs">Hours Logged</span>
                       </div>
-                      <p className="text-xl font-semibold text-foreground">{stats.outcomesVerified}</p>
+                      <p className="text-xl font-semibold text-foreground">{stats.hoursLogged}</p>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); navigate('/discover-opportunities'); }}
@@ -904,9 +904,9 @@ export default function VolunteerView({
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Target className="h-4 w-4" />
-                        <span className="text-xs">Active Projects</span>
+                        <span className="text-xs">People Impacted</span>
                       </div>
-                      <p className="text-xl font-semibold text-foreground">{stats.projectsActive}</p>
+                      <p className="text-xl font-semibold text-foreground">{stats.totalPeopleImpacted}</p>
                     </button>
                   </div>
                 </CardContent>

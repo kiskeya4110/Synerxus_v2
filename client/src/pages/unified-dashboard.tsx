@@ -34,13 +34,13 @@ import { LoadingState, ErrorState } from "@/components/ui/empty-state";
  * - Corporate: Verified Outcomes (read-only), ESG Reports
  */
 export default function UnifiedDashboard() {
-  const { user, signOut } = useAuth();
+  const { user, dbUser, loading: authLoading, signOut } = useAuth();
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
-  // Get user info from localStorage (set during signup/login)
-  const userId = localStorage.getItem("currentUserId");
-  const userType = localStorage.getItem("userType");
+  // Use dbUser from auth sync as authoritative source, fallback to localStorage
+  const userId = dbUser?.id?.toString() || localStorage.getItem("currentUserId");
+  const userType = (dbUser as any)?.userType || localStorage.getItem("userType");
 
   // Volunteer-specific state
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects' | 'history'>('home');
@@ -51,7 +51,7 @@ export default function UnifiedDashboard() {
   // Corporate-specific state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch current user data
+  // Fetch current user data - wait for auth to resolve to use correct userId
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -64,7 +64,7 @@ export default function UnifiedDashboard() {
         return null;
       }
     },
-    enabled: !!userId,
+    enabled: !!userId && !authLoading,
   });
 
   // Fetch organization data (for organization users)
@@ -116,8 +116,8 @@ export default function UnifiedDashboard() {
 
   const activeUser = currentUser || demoUser;
 
-  // Loading state - wait for viewport detection and user data
-  if (isViewportLoading || (isLoadingUser && !demoUser)) {
+  // Loading state - wait for auth, viewport detection, and user data
+  if (authLoading || isViewportLoading || (isLoadingUser && !demoUser)) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />

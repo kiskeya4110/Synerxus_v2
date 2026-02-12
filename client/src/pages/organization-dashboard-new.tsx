@@ -363,7 +363,7 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
 
   return (
     <div className="space-y-2">
-      {volunteers.slice(0, 5).map((volunteer) => (
+      {volunteers.map((volunteer) => (
         <div
           key={volunteer.id}
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
@@ -764,7 +764,7 @@ export default function OrganizationDashboardNew() {
               )}
             </div>
             <div className="divide-y divide-gray-100">
-              {pendingVerifications.slice(0, 3).map((item) => (
+              {pendingVerifications.map((item) => (
                 <div key={item.id} className="px-4 py-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -777,6 +777,18 @@ export default function OrganizationDashboardNew() {
                       </div>
                     </div>
                   </div>
+                  {item.description && (
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">{item.description}</p>
+                  )}
+                  {item.sdgGoals && item.sdgGoals.length > 0 && (
+                    <div className="flex gap-1 mb-2">
+                      {item.sdgGoals.map((sdg) => (
+                        <span key={sdg} className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white bg-emerald-600">
+                          SDG {sdg}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApprove(item.id)}
@@ -814,7 +826,7 @@ export default function OrganizationDashboardNew() {
               </h2>
             </div>
             <div className="divide-y divide-gray-100">
-              {projects.slice(0, 3).map((project: any) => (
+              {projects.map((project: any) => (
                 <div key={project.id} className="px-4 py-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{project.name}</p>
@@ -1018,10 +1030,11 @@ export default function OrganizationDashboardNew() {
                     />
                   ) : (
                     <div className="space-y-3">
-                      {pendingVerifications.slice(0, 3).map((item) => (
+                      {pendingVerifications.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30"
+                          className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
+                          onClick={() => setActiveTab("verify")}
                         >
                           <UserAvatar src={item.volunteerAvatar} name={item.volunteerName} size="sm" />
                           <div className="flex-1 min-w-0">
@@ -1033,6 +1046,7 @@ export default function OrganizationDashboardNew() {
                             </p>
                           </div>
                           <Badge variant="pending" size="sm">Pending</Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       ))}
                     </div>

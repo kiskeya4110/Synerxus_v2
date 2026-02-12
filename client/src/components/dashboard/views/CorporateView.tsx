@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   RefreshCw, Download, Filter,
-  CheckCircle, Globe, ChevronDown, ChevronUp,
-  MapPin, Image as ImageIcon,
+  CheckCircle, Globe, ChevronDown, ChevronUp, ChevronRight,
+  MapPin, Image as ImageIcon, Clock, Target,
 } from "lucide-react";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { format } from "date-fns";
@@ -63,6 +63,13 @@ export default function CorporateView({
   const [filterOutcomeType, setFilterOutcomeType] = useState<string>("");
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
+
+  // Selected outcome for detail expansion
+  const [selectedOutcomeId, setSelectedOutcomeId] = useState<number | null>(null);
+
+  const toggleOutcomeDetail = (outcomeId: number) => {
+    setSelectedOutcomeId(prev => prev === outcomeId ? null : outcomeId);
+  };
 
   // Build query string for filters
   const queryParams = useMemo(() => {
@@ -338,66 +345,101 @@ export default function CorporateView({
           </div>
         ) : (
           <div className="space-y-2">
-            {outcomes.map((outcome) => (
-              <button
-                key={outcome.id}
-                onClick={() => outcome.projectId && navigate(`/projects/${outcome.projectId}`)}
-                className="w-full bg-white rounded-xl p-3 border border-slate-200 shadow-sm text-left hover:border-slate-300 hover:shadow-md transition-all"
-              >
-                {/* Outcome text */}
-                {outcome.outcomeText && (
-                  <p className="text-sm font-medium text-slate-800 mb-2">
-                    {outcome.outcomeText}
-                  </p>
-                )}
-
-                {/* Type + Quantity + SDGs row */}
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  {outcome.outcomeQuantity && (
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                      {outcome.outcomeQuantity} {outcome.outcomeType || 'units'}
-                    </span>
-                  )}
-                  {outcome.sdgTags && outcome.sdgTags.map(sdg => (
-                    <span
-                      key={sdg}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
-                      style={{ backgroundColor: getSDGColor(sdg) }}
-                    >
-                      SDG {sdg}
-                    </span>
-                  ))}
-                  {outcome.geolocation && (
-                    <MapPin className="w-3 h-3 text-blue-500" />
-                  )}
-                  {outcome.evidenceUrls && outcome.evidenceUrls.length > 0 && (
-                    <span className="flex items-center gap-0.5 text-[10px] text-blue-500">
-                      <ImageIcon className="w-3 h-3" /> {outcome.evidenceUrls.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Meta row */}
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-600">{outcome.ngoName}</span>
-                    <span>|</span>
-                    <span>{outcome.volunteerName}</span>
-                    <span>|</span>
-                    <span>{outcome.projectName}</span>
+            {outcomes.map((outcome) => {
+              const isExpanded = selectedOutcomeId === outcome.id;
+              return (
+                <button
+                  key={outcome.id}
+                  onClick={() => toggleOutcomeDetail(outcome.id)}
+                  className={`w-full bg-white rounded-xl p-3 border shadow-sm text-left transition-all active:scale-[0.99] cursor-pointer ${
+                    isExpanded ? 'border-blue-300 shadow-md' : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
+                  }`}
+                >
+                  {/* Summary row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800">
+                        {outcome.outcomeText || outcome.outcomeType || 'Impact recorded'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
+                        <span className="font-medium text-slate-600">{outcome.ngoName}</span>
+                        <span>|</span>
+                        <span>{outcome.projectName}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {outcome.outcomeQuantity && (
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                          {outcome.outcomeQuantity} {outcome.outcomeType || 'units'}
+                        </span>
+                      )}
+                      <ChevronRight className={`h-4 w-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3 text-emerald-500" />
-                    {outcome.verifiedAt
-                      ? format(new Date(outcome.verifiedAt), "MMM d")
-                      : outcome.date
-                        ? format(new Date(outcome.date), "MMM d")
-                        : ""
-                    }
-                  </div>
-                </div>
-              </button>
-            ))}
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                      {/* Full outcome text */}
+                      {outcome.outcomeText && outcome.outcomeText !== (outcome.outcomeType || 'Impact recorded') && (
+                        <p className="text-xs text-slate-700 bg-slate-50 rounded-lg px-3 py-2">{outcome.outcomeText}</p>
+                      )}
+
+                      {/* Volunteer & date */}
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {outcome.date ? format(new Date(outcome.date), "EEEE, MMMM d, yyyy") : 'Unknown date'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <Target className="h-3 w-3 text-emerald-600" />
+                        <span>Volunteer: {outcome.volunteerName}</span>
+                        {outcome.hours && <span className="font-medium">({outcome.hours}h)</span>}
+                      </div>
+
+                      {/* Verification info */}
+                      {outcome.verifiedAt && (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Verified on {format(new Date(outcome.verifiedAt), "MMM d, yyyy")}</span>
+                          {outcome.verifierName && <span>by {outcome.verifierName}</span>}
+                        </div>
+                      )}
+
+                      {/* SDG tags with labels */}
+                      {outcome.sdgTags && outcome.sdgTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {outcome.sdgTags.map(sdg => (
+                            <span
+                              key={sdg}
+                              className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
+                              style={{ backgroundColor: getSDGColor(sdg) }}
+                            >
+                              SDG {sdg}: {getSDGName(sdg)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Evidence */}
+                      <div className="flex items-center gap-3">
+                        {outcome.geolocation && (
+                          <span className="flex items-center gap-1 text-[10px] text-blue-500">
+                            <MapPin className="w-3 h-3" /> Location verified
+                          </span>
+                        )}
+                        {outcome.evidenceUrls && outcome.evidenceUrls.length > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-blue-500">
+                            <ImageIcon className="w-3 h-3" /> {outcome.evidenceUrls.length} photo{outcome.evidenceUrls.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </main>
@@ -574,54 +616,145 @@ export default function CorporateView({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {outcomes.map((outcome) => (
-                <tr key={outcome.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-slate-800 line-clamp-2">
-                      {outcome.outcomeText || outcome.outcomeType || 'Impact recorded'}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">{outcome.volunteerName}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    {outcome.outcomeQuantity ? (
-                      <span className="text-sm font-semibold text-emerald-700">
-                        {outcome.outcomeQuantity} {outcome.outcomeType || 'units'}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-400">-</span>
+              {outcomes.map((outcome) => {
+                const isExpanded = selectedOutcomeId === outcome.id;
+                return (
+                  <tr
+                    key={outcome.id}
+                    onClick={() => toggleOutcomeDetail(outcome.id)}
+                    className={`cursor-pointer transition-colors ${isExpanded ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <td className="px-4 py-3" colSpan={isExpanded ? 6 : undefined}>
+                      {isExpanded ? (
+                        <div className="space-y-3">
+                          {/* Summary row when expanded */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <ChevronRight className="h-4 w-4 text-blue-500 rotate-90 transition-transform" />
+                              <div>
+                                <p className="text-sm font-medium text-slate-800">
+                                  {outcome.outcomeText || outcome.outcomeType || 'Impact recorded'}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{outcome.volunteerName}</p>
+                              </div>
+                            </div>
+                            {outcome.outcomeQuantity && (
+                              <span className="text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                {outcome.outcomeQuantity} {outcome.outcomeType || 'units'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Expanded detail */}
+                          <div className="ml-7 space-y-2 pb-1">
+                            {outcome.outcomeText && (
+                              <p className="text-xs text-slate-700 bg-slate-50 rounded-lg px-3 py-2">{outcome.outcomeText}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <Clock className="h-3 w-3" />
+                              <span>{outcome.date ? format(new Date(outcome.date), "EEEE, MMMM d, yyyy") : 'Unknown date'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <Target className="h-3 w-3 text-emerald-600" />
+                              <span>Volunteer: {outcome.volunteerName}</span>
+                              {outcome.hours && <span className="font-medium">({outcome.hours}h)</span>}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <span className="font-medium">Organization:</span> {outcome.ngoName}
+                              <span className="mx-1">•</span>
+                              <span className="font-medium">Project:</span> {outcome.projectName}
+                            </div>
+                            {outcome.verifiedAt && (
+                              <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                <span>Verified on {format(new Date(outcome.verifiedAt), "MMM d, yyyy")}</span>
+                                {outcome.verifierName && <span>by {outcome.verifierName}</span>}
+                              </div>
+                            )}
+                            {outcome.sdgTags && outcome.sdgTags.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {outcome.sdgTags.map(sdg => (
+                                  <span
+                                    key={sdg}
+                                    className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
+                                    style={{ backgroundColor: getSDGColor(sdg) }}
+                                  >
+                                    SDG {sdg}: {getSDGName(sdg)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3">
+                              {outcome.geolocation && (
+                                <span className="flex items-center gap-1 text-[10px] text-blue-500">
+                                  <MapPin className="w-3 h-3" /> Location verified
+                                </span>
+                              )}
+                              {outcome.evidenceUrls && outcome.evidenceUrls.length > 0 && (
+                                <span className="flex items-center gap-1 text-[10px] text-blue-500">
+                                  <ImageIcon className="w-3 h-3" /> {outcome.evidenceUrls.length} photo{outcome.evidenceUrls.length !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <ChevronRight className="h-4 w-4 text-slate-400 transition-transform" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-800 line-clamp-2">
+                              {outcome.outcomeText || outcome.outcomeType || 'Impact recorded'}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">{outcome.volunteerName}</p>
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    {!isExpanded && (
+                      <>
+                        <td className="px-4 py-3">
+                          {outcome.outcomeQuantity ? (
+                            <span className="text-sm font-semibold text-emerald-700">
+                              {outcome.outcomeQuantity} {outcome.outcomeType || 'units'}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {outcome.sdgTags && outcome.sdgTags.map(sdg => (
+                              <span
+                                key={sdg}
+                                className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+                                style={{ backgroundColor: getSDGColor(sdg) }}
+                              >
+                                {sdg}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-slate-700">{outcome.ngoName}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-slate-700">{outcome.projectName}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                            <span className="text-sm text-slate-600">
+                              {outcome.verifiedAt
+                                ? format(new Date(outcome.verifiedAt), "MMM d, yyyy")
+                                : '-'}
+                            </span>
+                          </div>
+                        </td>
+                      </>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {outcome.sdgTags && outcome.sdgTags.slice(0, 3).map(sdg => (
-                        <span
-                          key={sdg}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
-                          style={{ backgroundColor: getSDGColor(sdg) }}
-                        >
-                          {sdg}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm text-slate-700">{outcome.ngoName}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm text-slate-700">{outcome.projectName}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-500" />
-                      <span className="text-sm text-slate-600">
-                        {outcome.verifiedAt
-                          ? format(new Date(outcome.verifiedAt), "MMM d, yyyy")
-                          : '-'}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

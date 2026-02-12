@@ -301,7 +301,7 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
 
   return (
     <div className="space-y-2">
-      {volunteers.slice(0, 5).map((volunteer) => (
+      {volunteers.map((volunteer) => (
         <div
           key={volunteer.id}
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
@@ -403,6 +403,13 @@ export default function OrganizationView({
   const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [visibleCount, setVisibleCount] = useState(20);
   const [rejectState, setRejectState] = useState<{ logId: number; reason: string } | null>(null);
+
+  // Selected log for detail expansion
+  const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
+
+  const toggleLogDetail = (logId: number) => {
+    setSelectedLogId(prev => prev === logId ? null : logId);
+  };
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
@@ -676,19 +683,21 @@ export default function OrganizationView({
     }
   };
 
-  // Shared history log card renderer for both mobile and desktop - compact layout
+  // Shared history log card renderer for both mobile and desktop - compact layout with expand/collapse
   const renderHistoryLogCard = (log: any, compact: boolean) => {
     const logDate = new Date(log.date || log.createdAt);
     const status = log.verificationStatus || 'pending';
     const sdgTags: number[] = log.sdgTags || log.project?.sdgGoals || [];
     const firstSdg = sdgTags.length > 0 ? sdgTags[0] : null;
+    const isExpanded = selectedLogId === log.id;
 
     return (
-      <div
+      <button
         key={log.id}
+        onClick={() => toggleLogDetail(log.id)}
         className={compact
-          ? "bg-white rounded-lg border border-stone-200 shadow-sm px-3 py-2.5"
-          : "flex items-center gap-4 px-4 py-2.5 hover:bg-secondary/30 transition-colors"
+          ? `w-full bg-white rounded-lg border shadow-sm px-3 py-2.5 text-left transition-all active:scale-[0.99] cursor-pointer ${isExpanded ? 'border-indigo-300 shadow-md' : 'border-stone-200 hover:border-indigo-200 hover:shadow-md'}`
+          : `w-full text-left px-4 py-2.5 transition-all cursor-pointer ${isExpanded ? 'bg-secondary/50' : 'hover:bg-secondary/30'}`
         }
       >
         {compact ? (
@@ -720,105 +729,184 @@ export default function OrganizationView({
                   )}
                 </div>
               </div>
-              {status === 'pending' ? (
-                <button
-                  onClick={() => handleApprove(log.id)}
-                  disabled={processingIds.has(log.id)}
-                  className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors flex-shrink-0"
-                >
-                  {processingIds.has(log.id) ? '...' : '✓ Verify'}
-                </button>
-              ) : (
-                <span className={`text-[10px] font-medium px-2 py-1 rounded-full flex-shrink-0 ${
-                  status === 'approved'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {status === 'pending' ? (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
+                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    {processingIds.has(log.id) ? '...' : '✓ Verify'}
+                  </span>
+                ) : (
+                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
+                    status === 'approved'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
+                  </span>
+                )}
+                <ChevronRight className={`h-3.5 w-3.5 text-stone-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </div>
             </div>
-            {status === 'rejected' && log.rejectedReason && (
-              <p className="text-[11px] text-red-600 mt-1 ml-8">
-                Reason: "{log.rejectedReason}"
-              </p>
+            {/* Expanded detail */}
+            {isExpanded && (
+              <div className="mt-2 pt-2 border-t border-stone-100 space-y-2 ml-8">
+                <div className="flex items-center gap-2 text-xs text-stone-600">
+                  <Clock className="h-3 w-3" />
+                  <span>{logDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                {(log.outcomes || log.outcomeQuantity) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <Target className="h-3 w-3 text-emerald-600" />
+                    <span className="text-emerald-700 font-medium">
+                      {log.outcomes || 'Outcome'}{log.outcomeQuantity ? ` — Qty: ${log.outcomeQuantity}` : ''}
+                    </span>
+                  </div>
+                )}
+                {sdgTags.length > 0 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {sdgTags.map((sdg: number) => (
+                      <span
+                        key={sdg}
+                        className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+                        style={{ backgroundColor: getSDGColor(sdg) }}
+                      >
+                        SDG {sdg}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {log.description && (
+                  <p className="text-xs text-stone-600 bg-stone-50 rounded px-2 py-1.5">{log.description}</p>
+                )}
+                {status === 'rejected' && log.rejectedReason && (
+                  <p className="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1.5">
+                    Reason: &ldquo;{log.rejectedReason}&rdquo;
+                  </p>
+                )}
+              </div>
             )}
           </>
         ) : (
           <>
             {/* Desktop compact row */}
-            <div className="w-32 flex-shrink-0 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
-                {(log.volunteer?.displayName || 'V').charAt(0)}
-              </div>
-              <span className="text-sm font-medium text-foreground truncate">
-                {log.volunteer?.displayName || 'Volunteer'}
-              </span>
-            </div>
-
-            <div className="w-14 flex-shrink-0 text-center">
-              <p className="text-xs text-muted-foreground">
-                {logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </p>
-            </div>
-
-            <div className="w-12 flex-shrink-0 text-center">
-              <p className="text-xs font-medium text-muted-foreground">
-                {log.hours != null ? `${log.hours}h` : '—'}
-              </p>
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                {(log.outcomes || log.outcomeQuantity) && (
-                  <span className="text-xs font-medium text-foreground">
-                    {log.outcomes || 'Outcome'}{log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ''}
-                  </span>
-                )}
-                {firstSdg && (
-                  <span
-                    className="px-1.5 py-0 rounded-full text-[9px] font-bold text-white"
-                    style={{ backgroundColor: getSDGColor(firstSdg) }}
-                  >
-                    SDG {firstSdg}
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground truncate">
-                  {log.project?.name || 'Unknown Project'}
+            <div className="flex items-center gap-4">
+              <div className="w-32 flex-shrink-0 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
+                  {(log.volunteer?.displayName || 'V').charAt(0)}
+                </div>
+                <span className="text-sm font-medium text-foreground truncate">
+                  {log.volunteer?.displayName || 'Volunteer'}
                 </span>
               </div>
-              {status === 'rejected' && log.rejectedReason && (
-                <p className="text-[11px] text-red-600 mt-0.5 truncate">
-                  Reason: "{log.rejectedReason}"
+
+              <div className="w-14 flex-shrink-0 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </p>
-              )}
+              </div>
+
+              <div className="w-12 flex-shrink-0 text-center">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {log.hours != null ? `${log.hours}h` : '—'}
+                </p>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  {(log.outcomes || log.outcomeQuantity) && (
+                    <span className="text-xs font-medium text-foreground">
+                      {log.outcomes || 'Outcome'}{log.outcomeQuantity ? ` (${log.outcomeQuantity})` : ''}
+                    </span>
+                  )}
+                  {firstSdg && (
+                    <span
+                      className="px-1.5 py-0 rounded-full text-[9px] font-bold text-white"
+                      style={{ backgroundColor: getSDGColor(firstSdg) }}
+                    >
+                      SDG {firstSdg}
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground truncate">
+                    {log.project?.name || 'Unknown Project'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {status === 'pending' ? (
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApprove(log.id); }}
+                    disabled={processingIds.has(log.id)}
+                    className="h-7 text-xs px-3"
+                  >
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Verify
+                  </Button>
+                ) : (
+                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
+                    status === 'approved'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
+                  </span>
+                )}
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {status === 'pending' ? (
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => handleApprove(log.id)}
-                  disabled={processingIds.has(log.id)}
-                  className="h-7 text-xs px-3"
-                >
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Verify
-                </Button>
-              ) : (
-                <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
-                  status === 'approved'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  {status === 'approved' ? '✓ Verified' : '✗ Rejected'}
-                </span>
-              )}
-            </div>
+            {/* Expanded detail panel */}
+            {isExpanded && (
+              <div className="mt-2 pt-2 border-t border-border space-y-2 ml-[10rem]">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{logDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                {(log.outcomes || log.outcomeQuantity) && (
+                  <div className="bg-secondary/50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground">
+                        {log.outcomes || 'Outcome'}
+                      </span>
+                      {log.outcomeQuantity && (
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          Qty: {log.outcomeQuantity}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {sdgTags.length > 0 && (
+                  <div className="flex gap-1.5 flex-wrap">
+                    {sdgTags.map((sdg: number) => (
+                      <span
+                        key={sdg}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                        style={{ backgroundColor: getSDGColor(sdg) }}
+                      >
+                        SDG {sdg}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {log.description && (
+                  <p className="text-xs text-muted-foreground bg-secondary/30 rounded-lg px-3 py-2">{log.description}</p>
+                )}
+                {status === 'rejected' && log.rejectedReason && (
+                  <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                    Reason: &ldquo;{log.rejectedReason}&rdquo;
+                  </p>
+                )}
+              </div>
+            )}
           </>
         )}
-      </div>
+      </button>
     );
   };
 
@@ -1017,7 +1105,7 @@ export default function OrganizationView({
                   </div>
                 </button>
                 <div className="divide-y divide-gray-100">
-                  {pendingVerifications.slice(0, 3).map((item) => (
+                  {pendingVerifications.map((item) => (
                     <div key={item.id} className="px-4 py-2.5 flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0">
                         {item.volunteerName.charAt(0)}
@@ -1060,7 +1148,7 @@ export default function OrganizationView({
                   </div>
                 </button>
                 <div className="divide-y divide-gray-100">
-                  {projects.slice(0, 3).map((project: any) => (
+                  {projects.map((project: any) => (
                     <button
                       key={project.id}
                       onClick={() => navigate(`/ngo/projects/${project.id}`)}
@@ -1460,7 +1548,7 @@ export default function OrganizationView({
                   />
                 ) : (
                   <div className="space-y-2">
-                    {pendingVerifications.slice(0, 3).map((item) => (
+                    {pendingVerifications.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30"

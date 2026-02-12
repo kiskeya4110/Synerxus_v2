@@ -85,10 +85,10 @@ export default function VolunteerView({
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/dashboard", userId],
+    queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/dashboard?userId=${userId}`);
+        const response = await fetch(`/api/dashboard/summary?userId=${userId}`);
         if (!response.ok) return null;
         return response.json();
       } catch (error) {

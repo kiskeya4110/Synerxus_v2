@@ -53,6 +53,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import { formatDecimal } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // SDG Data
 const SDG_OPTIONS = [
@@ -240,7 +241,7 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
     onSuccess: () => {
       toast({ title: "Impact Logged!", description: "Your contribution has been submitted for verification." });
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       setFormData({ projectId: "", hours: "", sector: "", activity: "", outcome: "", outcomeValue: "", description: "", sdgs: [] });
       setShowSdgOverride(false);
       onSuccess?.();
@@ -799,10 +800,13 @@ export default function VolunteerDashboardNew() {
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/dashboard", userId],
+    queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/dashboard?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/dashboard/summary?userId=${userId}`, {
+          headers, credentials: "include"
+        });
         if (!response.ok) return null;
         return response.json();
       } catch (error) {
@@ -834,18 +838,21 @@ export default function VolunteerDashboardNew() {
     queryKey: ["/api/logs", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/logs?user_id=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/logs?user_id=${userId}`, {
+          headers, credentials: "include"
+        });
         if (!response.ok) return [];
         const logs = await response.json();
         return logs.slice(0, 5).map((log: any) => ({
           id: log.id,
-          projectName: log.project_name || "Unknown Project",
+          projectName: log.project?.name || log.project_name || "Unknown Project",
           hours: log.hours,
-          status: log.verification_status || log.status || "pending",
-          createdAt: log.created_at,
-          outcomeType: log.outcome_type,
-          outcomeValue: log.outcome_value,
-          sdgGoals: log.sdg_goals,
+          status: log.verificationStatus || log.verification_status || log.status || "pending",
+          createdAt: log.createdAt || log.created_at,
+          outcomeType: log.outcomes || log.outcome_type,
+          outcomeValue: log.outcomeQuantity || log.outcome_value,
+          sdgGoals: log.sdgTags || log.sdg_goals,
         }));
       } catch (error) {
         console.warn("Failed to fetch logs:", error);
@@ -892,7 +899,7 @@ export default function VolunteerDashboardNew() {
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
-      impactScore: data.totalAiu || data.impactScore || 0,
+      impactScore: data.totalAiuEarned || data.totalAiu || data.impactScore || 0,
       hoursLogged: data.verifiedHours || data.totalHours || 0,
       projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active").length || 0,
       currentStreak: data.currentStreak || 0,

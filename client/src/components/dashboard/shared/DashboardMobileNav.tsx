@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import {
   Home, Target, BarChart3, Plus, FileText, FolderOpen,
-  Shield as ShieldCheck, MoreHorizontal, X, ClipboardList, Download
+  Shield as ShieldCheck, MoreHorizontal, X, ClipboardList, Download, Settings
 } from "lucide-react";
 
 interface DashboardMobileNavProps {
@@ -35,7 +35,7 @@ function getNavItems(
       { id: 'log', label: 'Log', icon: ClipboardList, action: () => navigate('/ngo/log-hours') },
       { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home'), isPrimary: true },
       { id: 'verify', label: 'Verify', icon: ShieldCheck, action: () => onTabChange?.('verify') },
-      { id: 'more', label: 'More', icon: MoreHorizontal, isMore: true },
+      { id: 'settings', label: 'Options', icon: Settings, action: () => navigate('/organization-profile-settings') },
     ];
   }
 
@@ -175,7 +175,7 @@ export default function DashboardMobileNav({
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-semibold text-slate-800">More Options</h3>
+                <h3 className="text-lg font-semibold text-slate-800">Options</h3>
                 <button
                   onClick={() => setShowMore(false)}
                   className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors touch-manipulation cursor-pointer active:scale-95"

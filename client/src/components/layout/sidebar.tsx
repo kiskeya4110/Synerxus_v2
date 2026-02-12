@@ -149,7 +149,7 @@ export default function Sidebar() {
       ],
     },
     {
-      label: "More",
+      label: "Options",
       items: [
         { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
       ],
@@ -183,7 +183,7 @@ export default function Sidebar() {
       ],
     },
     {
-      label: "More",
+      label: "Options",
       items: [
         { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
         { href: "/organization-leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

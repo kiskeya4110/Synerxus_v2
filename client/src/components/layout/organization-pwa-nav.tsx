@@ -33,7 +33,7 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
     { id: 'log' as const, label: 'Log', icon: ClipboardList, path: '/ngo/log-hours' },
     { id: 'home' as const, label: 'Home', icon: Home, path: '/dashboard', isPrimary: true },
     { id: 'verify' as const, label: 'Verify', icon: ShieldCheck, path: '/ngo-verification' },
-    { id: 'settings' as const, label: 'Settings', icon: Settings, path: '/ngo/settings' },
+    { id: 'settings' as const, label: 'Options', icon: Settings, path: '/ngo/settings' },
   ];
 
   return (

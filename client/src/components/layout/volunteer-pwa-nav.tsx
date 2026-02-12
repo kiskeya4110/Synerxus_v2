@@ -61,7 +61,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
     },
     {
       id: 'more' as const,
-      label: 'More',
+      label: 'Options',
       icon: MoreHorizontal,
       action: () => setShowMore(true)
     },

@@ -131,7 +131,7 @@ function BottomNav({
     { id: "verify" as const, icon: Shield, label: "Verify", badge: pendingCount },
     { id: "projects" as const, icon: FolderOpen, label: "Projects" },
     { id: "team" as const, icon: Users, label: "Team" },
-    { id: "more" as const, icon: Menu, label: "More" },
+    { id: "more" as const, icon: Menu, label: "Options" },
   ];
 
   return (

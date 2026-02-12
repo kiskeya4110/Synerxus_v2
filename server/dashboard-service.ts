@@ -1450,9 +1450,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const isAlHonorat = userEmail === 'alhonorat@gmail.com' || 
                        userEmail === 'alhonorat@synerxus.com' ||
                        user.username?.toLowerCase().includes('honorat') || 
-                       user.displayName?.toLowerCase().includes('honorat');
+                       user.displayName?.toLowerCase().includes('honorat') ||
+                       userId === 4;
     
-    console.log(`[Dashboard] Checking KPIs for user ${userId} (${userEmail}). isAlHonorat: ${isAlHonorat}`);
+    // FORCED LOGGING - this MUST appear in logs
+    console.log(`[KPI_DEBUG] UserID: ${userId}, Email: ${userEmail}, isAlHonorat: ${isAlHonorat}`);
     
     // Use leaderboard stats if available (pre-aggregated), otherwise calculate on-the-fly
     const stats = await storage.getLeaderboardStatsByUserId ? await storage.getLeaderboardStatsByUserId(userId) : null;

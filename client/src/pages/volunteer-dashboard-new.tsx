@@ -895,15 +895,20 @@ export default function VolunteerDashboardNew() {
 
   const activeUser = currentUser || demoUser;
 
-  // Calculate stats - only show approved/verified hours (not pending)
+  // Calculate stats from server dashboard data
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
-      impactScore: data.totalAiuEarned || data.totalAiu || data.impactScore || 0,
-      hoursLogged: data.verifiedHours || data.totalHours || 0,
-      projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active").length || 0,
-      currentStreak: data.currentStreak || 0,
-      longestStreak: data.longestStreak || 0,
+      impactScore: data.totalAiuEarned || data.impactScore || 0,
+      hoursLogged: data.totalHours || data.verifiedHours || 0,
+      verifiedHours: data.verifiedHours || 0,
+      projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active" || p.status === "in progress").length || 0,
+      totalProjects: data.totalProjects || projects.length || 0,
+      completedTasks: data.completedTasks || 0,
+      totalTasks: data.totalTasks || 0,
+      skillsCount: data.skillsCount || data.volunteerProfile?.skills?.length || 0,
+      sdgsAddressed: data.sdgsAddressed || 0,
+      totalPeopleImpacted: data.totalPeopleImpacted || 0,
       pendingVerifications: recentLogs.filter((l: any) => l.status === "pending").length,
     };
   }, [dashboardData, projects, recentLogs]);
@@ -932,10 +937,10 @@ export default function VolunteerDashboardNew() {
 
   // Mobile PWA View - Simple Impact Wallet per redesign spec
   if (isMobile === true) {
-    // Calculate simple metrics for Impact Wallet
-    const totalOutcomes = recentLogs.reduce((sum: number, log: any) => sum + (log.outcomeQuantity || 0), 0);
-    const skillsUsed = dashboardData?.volunteerProfile?.skills?.length || 0;
-    const sdgsContributed = new Set(projects.flatMap((p: any) => p.sdgGoals || [])).size;
+    // Calculate simple metrics for Impact Wallet - prefer server-computed values
+    const totalOutcomes = recentLogs.reduce((sum: number, log: any) => sum + (log.outcomeValue || 0), 0);
+    const skillsUsed = stats.skillsCount;
+    const sdgsContributed = stats.sdgsAddressed || new Set(projects.flatMap((p: any) => p.sdgGoals || [])).size;
 
     return (
       <div className="min-h-screen pwa-gradient-bg pb-20">
@@ -1067,12 +1072,12 @@ export default function VolunteerDashboardNew() {
                     <p className="text-xs text-indigo-200">Hours</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.projectsActive}</p>
+                    <p className="text-3xl font-bold text-white">{stats.totalProjects}</p>
                     <p className="text-xs text-indigo-200">Projects</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{sdgsContributed}</p>
-                    <p className="text-xs text-indigo-200">SDGs</p>
+                    <p className="text-3xl font-bold text-white">{stats.totalPeopleImpacted}</p>
+                    <p className="text-xs text-indigo-200">People Helped</p>
                   </div>
                 </div>
               </div>
@@ -1166,37 +1171,37 @@ export default function VolunteerDashboardNew() {
                     <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
                   <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
-                  <p className="text-xs text-stone-500 mt-1">verified hours</p>
+                  <p className="text-xs text-stone-500 mt-1">{stats.verifiedHours} verified</p>
                 </div>
 
-                {/* Total Outcomes */}
+                {/* People Impacted */}
                 <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Outcomes</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">People</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{totalOutcomes}</p>
-                  <p className="text-xs text-stone-500 mt-1">total outcomes</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
+                  <p className="text-xs text-stone-500 mt-1">people impacted</p>
                 </div>
 
-                {/* Skills Used */}
+                {/* Impact Score / AIU */}
                 <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">Skills</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">Impact</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{skillsUsed}</p>
-                  <p className="text-xs text-stone-500 mt-1">skills applied</p>
+                  <p className="text-3xl font-bold text-stone-800">{typeof stats.impactScore === 'number' ? stats.impactScore.toFixed(1) : stats.impactScore}</p>
+                  <p className="text-xs text-stone-500 mt-1">AIU earned</p>
                 </div>
 
-                {/* SDGs */}
+                {/* Projects */}
                 <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-indigo-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">SDGs</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">Projects</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{sdgsContributed}</p>
-                  <p className="text-xs text-stone-500 mt-1">goals impacted</p>
+                  <p className="text-3xl font-bold text-stone-800">{stats.totalProjects}</p>
+                  <p className="text-xs text-stone-500 mt-1">{stats.projectsActive} active</p>
                 </div>
               </div>
 
@@ -1441,28 +1446,28 @@ export default function VolunteerDashboardNew() {
           <MetricCard
             label="Impact Score"
             value={formatDecimal(stats.impactScore)}
-            subtitle="points earned"
+            subtitle="AIU earned"
             accentColor="primary"
             icon={<Award className="h-5 w-5 text-primary" />}
           />
           <MetricCard
             label="Hours Logged"
             value={stats.hoursLogged}
-            subtitle="total hours"
+            subtitle={`${stats.verifiedHours} verified`}
             accentColor="accent"
             icon={<Clock className="h-5 w-5 text-accent" />}
           />
           <MetricCard
-            label="Active Projects"
-            value={stats.projectsActive}
-            subtitle="contributing to"
+            label="People Impacted"
+            value={stats.totalPeopleImpacted}
+            subtitle={`${stats.totalProjects} projects`}
             accentColor="success"
             icon={<Target className="h-5 w-5 text-success" />}
           />
           <MetricCard
-            label="Pending Verification"
-            value={stats.pendingVerifications}
-            subtitle="awaiting review"
+            label="Active Projects"
+            value={stats.projectsActive}
+            subtitle={`${stats.sdgsAddressed} SDGs addressed`}
             accentColor="cyan"
             icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
           />
@@ -1478,10 +1483,31 @@ export default function VolunteerDashboardNew() {
               hoursLogged={stats.hoursLogged}
               projectsActive={stats.projectsActive}
             />
-            <ImpactStreakCard
-              currentStreak={stats.currentStreak}
-              longestStreak={stats.longestStreak}
-            />
+            <Card variant="metric" className="border-l-accent">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  Volunteer Summary
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Skills Applied</span>
+                    <span className="text-sm font-semibold">{stats.skillsCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">SDGs Addressed</span>
+                    <span className="text-sm font-semibold">{stats.sdgsAddressed}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Tasks Completed</span>
+                    <span className="text-sm font-semibold">{stats.completedTasks}/{stats.totalTasks}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Pending Reviews</span>
+                    <span className="text-sm font-semibold">{stats.pendingVerifications}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Center Column - Recent Activity */}

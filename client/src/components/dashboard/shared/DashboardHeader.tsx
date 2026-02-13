@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
+import { getAuthHeaders } from "@/lib/queryClient";
 import type { Notification } from "@shared/schema";
 
 interface DashboardHeaderProps {
@@ -25,6 +26,7 @@ interface DashboardHeaderProps {
   };
   onRefresh?: () => Promise<void>;
   isRefreshing?: boolean;
+  pendingCount?: number;
 }
 
 // Role label mapping
@@ -116,6 +118,7 @@ export default function DashboardHeader({
   metrics,
   onRefresh,
   isRefreshing = false,
+  pendingCount = 0,
 }: DashboardHeaderProps) {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
@@ -136,6 +139,27 @@ export default function DashboardHeader({
     staleTime: 30000,
     refetchInterval: 60000,
   });
+
+  // Fetch pending approvals count for organization users
+  const { data: pendingData } = useQuery({
+    queryKey: ["/api/pending-approvals", userId],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/pending-approvals`, {
+        headers,
+        credentials: "include",
+      });
+      return response.ok ? response.json() : { pendingActivities: [], pendingImpacts: [] };
+    },
+    enabled: !!userId && userType === 'organization',
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
+  const fetchedPendingCount = userType === 'organization'
+    ? (pendingData?.pendingActivities?.length || 0) + (pendingData?.pendingImpacts?.length || 0)
+    : 0;
+  const effectivePendingCount = pendingCount || fetchedPendingCount;
 
   // Mark notification as read mutation
   const markAsReadMutation = useMutation({
@@ -181,7 +205,8 @@ export default function DashboardHeader({
     }
   });
 
-  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+  const unreadNotifications = notifications.filter((n: Notification) => !n.read).length;
+  const unreadCount = unreadNotifications + effectivePendingCount;
 
   // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
@@ -481,9 +506,9 @@ export default function DashboardHeader({
                 </button>
               </div>
               {/* Action Buttons */}
-              {notifications.length > 0 && (
+              {(notifications.length > 0 || effectivePendingCount > 0) && (
                 <div className="mt-3 flex gap-2">
-                  {unreadCount > 0 && (
+                  {unreadNotifications > 0 && (
                     <button
                       onClick={() => clearAllNotificationsMutation.mutate()}
                       disabled={clearAllNotificationsMutation.isPending}
@@ -497,7 +522,7 @@ export default function DashboardHeader({
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          Mark Read ({unreadCount})
+                          Mark Read ({unreadNotifications})
                         </>
                       )}
                     </button>
@@ -519,7 +544,33 @@ export default function DashboardHeader({
 
             {/* Notifications List */}
             <div className="overflow-y-auto max-h-[60vh] p-4 space-y-3">
-              {notifications.length === 0 ? (
+              {/* Pending approvals banner for org users */}
+              {effectivePendingCount > 0 && userType === 'organization' && (
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    // Navigate to verify tab by dispatching a custom approach
+                    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'verify' }));
+                  }}
+                  className="w-full rounded-xl p-3 border border-amber-200 bg-amber-50 text-left transition-colors hover:bg-amber-100"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-amber-800">
+                        {effectivePendingCount} item{effectivePendingCount !== 1 ? 's' : ''} awaiting verification
+                      </p>
+                      <p className="text-amber-600 text-xs mt-0.5">
+                        Tap to review pending hours and impact reports
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-amber-400 flex-shrink-0 mt-1" />
+                  </div>
+                </button>
+              )}
+              {notifications.length === 0 && effectivePendingCount === 0 ? (
                 <div className="text-center py-8">
                   <Bell className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-500 text-sm">No notifications yet</p>

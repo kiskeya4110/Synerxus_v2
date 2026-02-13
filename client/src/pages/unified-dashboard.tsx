@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
@@ -50,6 +50,18 @@ export default function UnifiedDashboard() {
 
   // Corporate-specific state
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Listen for tab navigation events from notification bell
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (userType === 'organization' && tab === 'verify') {
+        setOrgTab('verify');
+      }
+    };
+    window.addEventListener('navigate-tab', handler);
+    return () => window.removeEventListener('navigate-tab', handler);
+  }, [userType]);
 
   // Fetch current user data - wait for auth to resolve to use correct userId
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({

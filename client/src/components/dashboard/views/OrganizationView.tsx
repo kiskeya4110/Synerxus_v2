@@ -27,9 +27,7 @@ import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/avatar";
 import { Progress, ProgressWithLabel } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Stat } from "@/components/ui/stat";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid } from "@/components/ui/section";
@@ -414,8 +412,6 @@ export default function OrganizationView({
   // History/Verification tab state
   const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [visibleCount, setVisibleCount] = useState(20);
-  const [rejectState, setRejectState] = useState<{ logId: number; reason: string } | null>(null);
-
   // Selected log for detail expansion
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
 
@@ -611,23 +607,14 @@ export default function OrganizationView({
   };
 
   const handleReject = async (id: number) => {
-    // Open reject modal instead of rejecting immediately
-    setRejectState({ logId: id, reason: "" });
-  };
-
-  const handleRejectSubmit = async () => {
-    if (!rejectState || !rejectState.reason.trim()) {
-      toast({ title: "Required", description: "Please provide a reason for rejection.", variant: "destructive" });
-      return;
-    }
-    setProcessingIds((prev) => new Set(prev).add(rejectState.logId));
+    setProcessingIds((prev) => new Set(prev).add(id));
     try {
       const authHeaders = await getAuthHeaders();
-      const response = await fetch(`/api/logs/${rejectState.logId}/reject`, {
+      const response = await fetch(`/api/logs/${id}/reject`, {
         method: "PATCH",
         headers: { ...authHeaders, "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ reason: rejectState.reason.trim() }),
+        body: JSON.stringify({ reason: "Rejected by reviewer" }),
       });
       if (!response.ok) throw new Error("Failed to reject");
       refetchPending();
@@ -636,18 +623,15 @@ export default function OrganizationView({
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({ title: "Rejected", description: "Impact log rejected with feedback." });
-      setRejectState(null);
+      toast({ title: "Rejected", description: "Impact log has been rejected." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to reject.", variant: "destructive" });
     } finally {
-      if (rejectState) {
-        setProcessingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(rejectState.logId);
-          return next;
-        });
-      }
+      setProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -857,26 +841,18 @@ export default function OrganizationView({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {status === 'pending' ? (
                   <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleReject(log.id); }}
-                      disabled={processingIds.has(log.id)}
-                      className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
+                    <span
+                      onClick={(e) => { e.stopPropagation(); handleReject(log.id); }}
+                      className="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
                     >
-                      <XCircle className="h-3 w-3 mr-1" />
-                      Deny
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="success"
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApprove(log.id); }}
-                      disabled={processingIds.has(log.id)}
-                      className="h-7 text-xs px-2.5"
+                      {processingIds.has(log.id) ? '...' : '✗ Deny'}
+                    </span>
+                    <span
+                      onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
+                      className="px-2.5 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
                     >
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Accept
-                    </Button>
+                      {processingIds.has(log.id) ? '...' : '✓ Accept'}
+                    </span>
                   </>
                 ) : (
                   <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
@@ -941,41 +917,6 @@ export default function OrganizationView({
       </button>
     );
   };
-
-  // Shared reject modal
-  const rejectModal = (
-    <Dialog open={rejectState !== null} onOpenChange={(open) => !open && setRejectState(null)}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <XCircle className="h-5 w-5 text-red-500" />
-            Reject Impact Log
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 py-2">
-          <Textarea
-            value={rejectState?.reason || ''}
-            onChange={(e) => setRejectState(prev => prev ? { ...prev, reason: e.target.value } : null)}
-            placeholder="Please explain why this log is being rejected..."
-            rows={3}
-            className="resize-none"
-          />
-          <p className="text-xs text-muted-foreground">This feedback will be sent to the volunteer.</p>
-        </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setRejectState(null)}>Cancel</Button>
-          <Button
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={handleRejectSubmit}
-            disabled={!rejectState?.reason.trim() || processingIds.has(rejectState?.logId || 0)}
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Reject Log
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 
   // Shared history content for both mobile and desktop
   const renderHistoryContent = (compact: boolean) => (
@@ -1476,8 +1417,6 @@ export default function OrganizationView({
           )}
         </main>
 
-        {/* Reject Modal */}
-        {rejectModal}
       </>
     );
   }
@@ -1825,8 +1764,6 @@ export default function OrganizationView({
         </TabsContent>
       </Tabs>
 
-      {/* Reject Modal */}
-      {rejectModal}
     </main>
   );
 }

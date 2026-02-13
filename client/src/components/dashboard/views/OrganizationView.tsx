@@ -114,16 +114,28 @@ function VerificationItem({ item, onApprove, onReject, isProcessing }: Verificat
         </div>
       </div>
 
-      <Button
-        size="sm"
-        variant="success"
-        onClick={() => onApprove(item.id)}
-        disabled={isProcessing}
-        className="h-8 px-3 flex-shrink-0"
-      >
-        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-        Verify
-      </Button>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onReject(item.id)}
+          disabled={isProcessing}
+          className="h-8 px-2.5 text-red-600 border-red-200 hover:bg-red-50"
+        >
+          <XCircle className="h-3.5 w-3.5 mr-1" />
+          Deny
+        </Button>
+        <Button
+          size="sm"
+          variant="success"
+          onClick={() => onApprove(item.id)}
+          disabled={isProcessing}
+          className="h-8 px-2.5"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+          Accept
+        </Button>
+      </div>
     </div>
   );
 }
@@ -731,12 +743,20 @@ export default function OrganizationView({
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {status === 'pending' ? (
-                  <span
-                    onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
-                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
-                  >
-                    {processingIds.has(log.id) ? '...' : '✓ Verify'}
-                  </span>
+                  <>
+                    <span
+                      onClick={(e) => { e.stopPropagation(); handleReject(log.id); }}
+                      className="px-2 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
+                    >
+                      {processingIds.has(log.id) ? '...' : '✗ Deny'}
+                    </span>
+                    <span
+                      onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
+                      className="px-2 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
+                    >
+                      {processingIds.has(log.id) ? '...' : '✓ Accept'}
+                    </span>
+                  </>
                 ) : (
                   <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
                     status === 'approved'
@@ -836,16 +856,28 @@ export default function OrganizationView({
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {status === 'pending' ? (
-                  <Button
-                    size="sm"
-                    variant="success"
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApprove(log.id); }}
-                    disabled={processingIds.has(log.id)}
-                    className="h-7 text-xs px-3"
-                  >
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Verify
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleReject(log.id); }}
+                      disabled={processingIds.has(log.id)}
+                      className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Deny
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="success"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApprove(log.id); }}
+                      disabled={processingIds.has(log.id)}
+                      className="h-7 text-xs px-2.5"
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Accept
+                    </Button>
+                  </>
                 ) : (
                   <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
                     status === 'approved'
@@ -1114,13 +1146,22 @@ export default function OrganizationView({
                         <p className="text-sm font-medium text-gray-900 truncate">{item.volunteerName}</p>
                         <p className="text-xs text-gray-500">{item.hours}h - {item.projectName}</p>
                       </div>
-                      <button
-                        onClick={() => handleApprove(item.id)}
-                        disabled={processingIds.has(item.id)}
-                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex-shrink-0"
-                      >
-                        {processingIds.has(item.id) ? '...' : '✓ Verify'}
-                      </button>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => handleReject(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 border border-red-200"
+                        >
+                          {processingIds.has(item.id) ? '...' : '✗ Deny'}
+                        </button>
+                        <button
+                          onClick={() => handleApprove(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="px-2.5 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          {processingIds.has(item.id) ? '...' : '✓ Accept'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {pendingVerifications.length === 0 && (
@@ -1194,6 +1235,65 @@ export default function OrganizationView({
           {/* Mobile Verify/History Tab */}
           {orgTab === 'verify' && (
             <>
+              {/* Pending Verification Queue */}
+              {pendingVerifications.length > 0 && (
+                <div className="bg-white rounded-xl border border-amber-200 shadow-sm">
+                  <div className="px-4 py-3 border-b border-amber-100 flex items-center justify-between bg-amber-50 rounded-t-xl">
+                    <h2 className="text-sm font-semibold text-amber-800 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600" />
+                      Awaiting Your Review
+                    </h2>
+                    <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                      {pendingVerifications.length} pending
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {pendingVerifications.map((item) => (
+                      <div key={item.id} className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
+                            {item.volunteerName.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{item.volunteerName}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-gray-500">{item.projectName}</span>
+                              {item.hours > 0 && (
+                                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0 rounded">
+                                  {item.hours}h
+                                </span>
+                              )}
+                              {item.description && (
+                                <span className="text-xs text-gray-400 truncate max-w-[120px]">{item.description}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 ml-10">
+                          <button
+                            onClick={() => handleReject(item.id)}
+                            disabled={processingIds.has(item.id)}
+                            className="flex-1 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 border border-red-200 flex items-center justify-center gap-1"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            {processingIds.has(item.id) ? '...' : 'Deny'}
+                          </button>
+                          <button
+                            onClick={() => handleApprove(item.id)}
+                            disabled={processingIds.has(item.id)}
+                            className="flex-1 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-1"
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            {processingIds.has(item.id) ? '...' : 'Accept'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Verification History */}
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-stone-800">Verification History</h2>
               </div>
@@ -1562,16 +1662,28 @@ export default function OrganizationView({
                             {item.hours}h - {item.projectName}
                           </p>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="success"
-                          onClick={() => handleApprove(item.id)}
-                          disabled={processingIds.has(item.id)}
-                          className="h-7 text-xs px-3 flex-shrink-0"
-                        >
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Verify
-                        </Button>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReject(item.id)}
+                            disabled={processingIds.has(item.id)}
+                            className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Deny
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="success"
+                            onClick={() => handleApprove(item.id)}
+                            disabled={processingIds.has(item.id)}
+                            className="h-7 text-xs px-2.5"
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Accept
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1581,8 +1693,86 @@ export default function OrganizationView({
           </div>
         </TabsContent>
 
-        {/* Verify Tab — History view with inline actions */}
-        <TabsContent value="verify" className="mt-6 space-y-4">
+        {/* Verify Tab — Pending queue + History view with inline actions */}
+        <TabsContent value="verify" className="mt-6 space-y-6">
+          {/* Pending Verification Queue */}
+          {pendingVerifications.length > 0 && (
+            <Card className="border-amber-200">
+              <CardHeader className="flex flex-row items-center justify-between bg-amber-50 rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-amber-800">
+                  <Shield className="h-5 w-5 text-amber-600" />
+                  Awaiting Your Review
+                  <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full ml-2">
+                    {pendingVerifications.length}
+                  </span>
+                </CardTitle>
+                {pendingVerifications.length > 1 && (
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleApproveAll}
+                    disabled={isApprovingAll}
+                    loading={isApprovingAll}
+                  >
+                    <CheckCheck className="h-4 w-4 mr-1" />
+                    Accept All
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {pendingVerifications.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                      <UserAvatar src={item.volunteerAvatar} name={item.volunteerName} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">{item.volunteerName}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(item.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground">{item.projectName}</span>
+                          {item.hours > 0 && (
+                            <Badge variant="outline-primary" size="sm" className="text-[10px] px-1.5 py-0">
+                              {item.hours}h
+                            </Badge>
+                          )}
+                          {item.description && (
+                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">{item.description}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleReject(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Deny
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="success"
+                          onClick={() => handleApprove(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="h-7 text-xs px-2.5"
+                        >
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Accept
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Verification History */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />

@@ -8,6 +8,7 @@ import { eq, desc } from "drizzle-orm";
 import { notifyProjectVolunteersAiuVerification } from "../notification-service";
 import { calculateProjectAIU } from "../aiu-service";
 import { authMiddleware } from "../middleware/auth";
+import { persistOrganizationKPIs } from "../kpi-persistence-service";
 
 export const projectsRouter = Router();
 
@@ -198,6 +199,13 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
 
     // Sync project to opportunities table - each project is discoverable as an opportunity
     await syncProjectToOpportunity(project);
+
+    // Persist org KPIs (fire-and-forget)
+    if (project.organizationId) {
+      persistOrganizationKPIs(project.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after project creation:", err)
+      );
+    }
 
     broadcastUpdate("project_created", project);
     res.status(201).json(project);
@@ -397,6 +405,13 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
 
     // Sync project to opportunities table - keep opportunity in sync with project
     await syncProjectToOpportunity(updatedProject);
+
+    // Persist org KPIs (fire-and-forget)
+    if (updatedProject.organizationId) {
+      persistOrganizationKPIs(updatedProject.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after project update:", err)
+      );
+    }
 
     broadcastUpdate("project_updated", updatedProject);
     res.json(updatedProject);

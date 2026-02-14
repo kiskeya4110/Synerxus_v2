@@ -137,7 +137,13 @@ import {
   type UserBadge,
   type InsertUserBadge,
   type ExternalVolunteer,
-  type InsertExternalVolunteer
+  type InsertExternalVolunteer,
+  kpiSnapshots,
+  leaderboardStats,
+  type KpiSnapshot,
+  type InsertKpiSnapshot,
+  type LeaderboardStats,
+  type InsertLeaderboardStats
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -497,6 +503,13 @@ export interface IStorage {
   createUserBadge(userBadge: InsertUserBadge): Promise<UserBadge>;
   updateUserBadge(id: number, userBadge: Partial<InsertUserBadge>): Promise<UserBadge | undefined>;
   countUserBadges(userId: number): Promise<number>;
+
+  // KPI Snapshot operations
+  upsertKpiSnapshot(data: InsertKpiSnapshot): Promise<KpiSnapshot>;
+  getKpiSnapshot(entityType: string, entityId: number): Promise<KpiSnapshot | undefined>;
+
+  // Leaderboard Stats operations
+  upsertLeaderboardStats(userId: number, data: Partial<InsertLeaderboardStats>): Promise<LeaderboardStats>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2632,6 +2645,75 @@ export class DatabaseStorage implements IStorage {
       .from(userBadges)
       .where(eq(userBadges.userId, userId));
     return Number(result[0]?.count || 0);
+  }
+
+  // KPI Snapshot operations
+  async upsertKpiSnapshot(data: InsertKpiSnapshot): Promise<KpiSnapshot> {
+    const [result] = await db.insert(kpiSnapshots)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [kpiSnapshots.entityType, kpiSnapshots.entityId],
+        set: {
+          totalHours: data.totalHours,
+          verifiedHours: data.verifiedHours,
+          totalProjects: data.totalProjects,
+          activeProjects: data.activeProjects,
+          completedProjects: data.completedProjects,
+          sdgsAddressed: data.sdgsAddressed,
+          peopleImpacted: data.peopleImpacted,
+          aiuEarned: data.aiuEarned,
+          impactScore: data.impactScore,
+          activeVolunteers: data.activeVolunteers,
+          tasksCompleted: data.tasksCompleted,
+          totalTasks: data.totalTasks,
+          engagementScore: data.engagementScore,
+          pendingActivities: data.pendingActivities,
+          pendingImpacts: data.pendingImpacts,
+          computedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async getKpiSnapshot(entityType: string, entityId: number): Promise<KpiSnapshot | undefined> {
+    const [result] = await db.select()
+      .from(kpiSnapshots)
+      .where(
+        and(
+          eq(kpiSnapshots.entityType, entityType),
+          eq(kpiSnapshots.entityId, entityId)
+        )
+      );
+    return result || undefined;
+  }
+
+  // Leaderboard Stats operations
+  async upsertLeaderboardStats(userId: number, data: Partial<InsertLeaderboardStats>): Promise<LeaderboardStats> {
+    const [existing] = await db.select()
+      .from(leaderboardStats)
+      .where(eq(leaderboardStats.userId, userId));
+
+    if (existing) {
+      const [updated] = await db.update(leaderboardStats)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(leaderboardStats.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(leaderboardStats)
+        .values({
+          userId,
+          userType: data.userType || 'volunteer',
+          ...data,
+        })
+        .returning();
+      return created;
+    }
   }
 }
 

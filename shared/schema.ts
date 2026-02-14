@@ -1883,3 +1883,46 @@ export type InsertInvitationCodeUsage = z.infer<typeof insertInvitationCodeUsage
 
 export type PlatformSetting = typeof platformSettings.$inferSelect;
 export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;
+
+// =====================================================
+// KPI Snapshots Schema
+// =====================================================
+
+// KPI Snapshots - Persisted computed dashboard KPIs for volunteers and organizations
+export const kpiSnapshots = pgTable("kpi_snapshots", {
+  id: serial("id").primaryKey(),
+  entityType: text("entity_type").notNull(), // 'volunteer' | 'organization'
+  entityId: integer("entity_id").notNull(),  // userId or organizationId
+  // Core KPIs
+  totalHours: doublePrecision("total_hours").default(0),
+  verifiedHours: doublePrecision("verified_hours").default(0),
+  totalProjects: integer("total_projects").default(0),
+  activeProjects: integer("active_projects").default(0),
+  completedProjects: integer("completed_projects").default(0),
+  sdgsAddressed: integer("sdgs_addressed").default(0),
+  peopleImpacted: integer("people_impacted").default(0),
+  aiuEarned: doublePrecision("aiu_earned").default(0),
+  impactScore: integer("impact_score").default(0),
+  activeVolunteers: integer("active_volunteers").default(0),
+  tasksCompleted: integer("tasks_completed").default(0),
+  totalTasks: integer("total_tasks").default(0),
+  engagementScore: integer("engagement_score").default(0),
+  // Approval tracking
+  pendingActivities: integer("pending_activities").default(0),
+  pendingImpacts: integer("pending_impacts").default(0),
+  // Metadata
+  computedAt: timestamp("computed_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueEntitySnapshot: uniqueIndex("unique_entity_snapshot").on(table.entityType, table.entityId),
+}));
+
+export const insertKpiSnapshotSchema = createInsertSchema(kpiSnapshots).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type KpiSnapshot = typeof kpiSnapshots.$inferSelect;
+export type InsertKpiSnapshot = z.infer<typeof insertKpiSnapshotSchema>;

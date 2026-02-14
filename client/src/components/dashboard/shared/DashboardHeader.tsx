@@ -121,12 +121,12 @@ export default function DashboardHeader({
   pendingCount = 0,
 }: DashboardHeaderProps) {
   const [, navigate] = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, dbUser } = useAuth();
   const { toast } = useToast();
   const [showMenu, setShowMenu] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const queryClient = useQueryClient();
-  const userId = localStorage.getItem('currentUserId');
+  const userId = dbUser?.id?.toString() || localStorage.getItem('currentUserId');
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<Notification[]>({

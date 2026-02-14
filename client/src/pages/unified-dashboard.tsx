@@ -38,8 +38,12 @@ export default function UnifiedDashboard() {
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
-  // Use dbUser from auth sync as authoritative source, fallback to localStorage
-  const userId = dbUser?.id?.toString() || localStorage.getItem("currentUserId");
+  // Use dbUser from auth sync as authoritative source
+  // Only fall back to localStorage when auth is fully resolved and no Firebase user exists (legacy mode)
+  // This prevents stale localStorage userId from being used before Firebase auth resolves
+  const userId = dbUser?.id?.toString() || (
+    !authLoading && !user ? localStorage.getItem("currentUserId") : null
+  );
   const userType = (dbUser as any)?.userType || localStorage.getItem("userType");
 
   // Volunteer-specific state
@@ -128,8 +132,8 @@ export default function UnifiedDashboard() {
 
   const activeUser = currentUser || demoUser;
 
-  // Loading state - wait for auth, viewport detection, and user data
-  if (authLoading || isViewportLoading || (isLoadingUser && !demoUser)) {
+  // Loading state - wait for auth, viewport detection, user data, and Firebase sync
+  if (authLoading || isViewportLoading || (user && !dbUser) || (isLoadingUser && !demoUser)) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />

@@ -29,6 +29,7 @@ import {
   notifyPendingImpact,
   notifyPendingActivity,
 } from "../notification-service";
+import { persistKPIsForActivity } from "../kpi-persistence-service";
 
 export const activitiesRouter = Router();
 
@@ -263,6 +264,14 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
         console.error("Error sending pending activity notification:", notifyErr);
         // Don't fail activity creation if notification fails
       }
+    }
+
+    // Persist KPIs (fire-and-forget)
+    if (activity.userId) {
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after activity creation:", err)
+      );
     }
 
     broadcastUpdate("volunteer_activity_created", activity);
@@ -590,6 +599,13 @@ activitiesRouter.post("/admin/volunteer-activities", optionalAuthMiddleware, asy
       }
     }
 
+    // Persist KPIs (fire-and-forget)
+    if (activity.userId) {
+      persistKPIsForActivity(activity.userId, userOrg.id).catch(err =>
+        console.error("[KPI] Error persisting KPIs after admin activity creation:", err)
+      );
+    }
+
     broadcastUpdate("volunteer_activity_created", activity);
     res.status(201).json({
       ...activity,
@@ -691,6 +707,14 @@ activitiesRouter.patch("/volunteer-activities/:id", async (req: Request, res: Re
         console.error("Error updating employee engagement hours on activity update:", csrErr);
         // Non-critical, don't fail the activity update
       }
+    }
+
+    // Persist KPIs (fire-and-forget)
+    if (updatedActivity.userId) {
+      const project = updatedActivity.projectId ? await storage.getProject(updatedActivity.projectId) : null;
+      persistKPIsForActivity(updatedActivity.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after activity update:", err)
+      );
     }
 
     broadcastUpdate("volunteer_activity_updated", updatedActivity);
@@ -905,6 +929,14 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
       }
     }
 
+    // Persist KPIs (fire-and-forget)
+    if (impact.userId) {
+      const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
+      persistKPIsForActivity(impact.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after impact creation:", err)
+      );
+    }
+
     broadcastUpdate("project_impact_created", {
       ...impact,
       deduplicationAlert: dedup.isDuplicate ? {
@@ -941,6 +973,14 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
         console.error("Error updating AIU settings:", aiuErr);
         // Don't fail impact update if AIU update fails
       }
+    }
+
+    // Persist KPIs (fire-and-forget)
+    if (updatedImpact.userId) {
+      const project = updatedImpact.projectId ? await storage.getProject(updatedImpact.projectId) : null;
+      persistKPIsForActivity(updatedImpact.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after impact update:", err)
+      );
     }
 
     broadcastUpdate("project_impact_updated", updatedImpact);
@@ -1224,6 +1264,14 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
       });
     }
 
+    // Persist KPIs (fire-and-forget)
+    if (activity.userId) {
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after activity approval:", err)
+      );
+    }
+
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
@@ -1274,6 +1322,14 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
     sendActivityApprovalNotification(activityId, 'rejected', req.user?.id).catch(err => {
       console.error("Failed to send rejection notification:", err);
     });
+
+    // Persist KPIs (fire-and-forget)
+    if (activity?.userId) {
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after activity rejection:", err)
+      );
+    }
 
     broadcastUpdate("activity_rejected", updatedActivity);
     res.json(updatedActivity);
@@ -1414,6 +1470,14 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
       });
     }
 
+    // Persist KPIs (fire-and-forget)
+    if (impact.userId) {
+      const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
+      persistKPIsForActivity(impact.userId, project?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after impact approval:", err)
+      );
+    }
+
     broadcastUpdate("impact_approved", updatedImpact);
     res.json(updatedImpact);
   } catch (err) {
@@ -1478,6 +1542,14 @@ activitiesRouter.post("/project-impacts/:id/reject", authMiddleware, async (req:
     sendImpactApprovalNotification(impactId, 'rejected', req.user?.id).catch(err => {
       console.error("Failed to send impact rejection notification:", err);
     });
+
+    // Persist KPIs (fire-and-forget)
+    if (impact?.userId) {
+      const impactProject = impact.projectId ? await storage.getProject(impact.projectId) : null;
+      persistKPIsForActivity(impact.userId, impactProject?.organizationId).catch(err =>
+        console.error("[KPI] Error persisting KPIs after impact rejection:", err)
+      );
+    }
 
     broadcastUpdate("impact_rejected", updatedImpact);
     res.json(updatedImpact);

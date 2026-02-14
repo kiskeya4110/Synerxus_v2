@@ -8,6 +8,7 @@ import {
 import { calculateOrganizationAIU, calculateProjectAIU } from "../aiu-service";
 import { authMiddleware } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
+import { persistVolunteerKPIs, persistOrganizationKPIs } from "../kpi-persistence-service";
 
 export const dashboardRouter = Router();
 
@@ -546,6 +547,11 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
         availableProjects: allOrganizationProjects.map(p => ({ id: p.id, name: p.name })),
       },
     });
+
+    // Persist KPIs after dashboard computation (fire-and-forget)
+    persistOrganizationKPIs(organizationId).catch(err =>
+      console.error("[KPI] Error persisting org KPIs after dashboard load:", err)
+    );
   } catch (err) {
     console.error("Error fetching organization dashboard:", err);
     res.status(500).json({ message: "Failed to fetch organization dashboard" });
@@ -591,6 +597,12 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
         totalPeopleImpacted: dashboardData.totalPeopleImpacted,
         projects: dashboardData.projects,
       });
+
+      // Persist org KPIs after dashboard computation (fire-and-forget)
+      const orgId = user.organizationId || userIdNum;
+      persistOrganizationKPIs(orgId).catch(err =>
+        console.error("[KPI] Error persisting org KPIs after summary load:", err)
+      );
     } else if (user.userType === 'volunteer') {
       const dashboardData = await getDashboardDataForVolunteer(userIdNum);
       // Return full dashboard data with all arrays needed for charts
@@ -610,6 +622,11 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
         matchedOpportunities: dashboardData.matchedOpportunities,
         projectAssignments: dashboardData.projectAssignments,
       });
+
+      // Persist volunteer KPIs after dashboard computation (fire-and-forget)
+      persistVolunteerKPIs(userIdNum).catch(err =>
+        console.error("[KPI] Error persisting volunteer KPIs after summary load:", err)
+      );
     } else {
       return res.status(400).json({ message: "Invalid user type" });
     }
@@ -650,5 +667,32 @@ dashboardRouter.get("/sdg-contributions", async (req: Request, res: Response) =>
   } catch (err) {
     console.error("Error fetching SDG contributions:", err);
     res.status(500).json({ message: "Failed to fetch SDG contributions" });
+  }
+});
+
+// GET /api/dashboard/kpis/:entityType/:entityId - Read persisted KPI snapshot
+// Returns pre-computed KPIs for a volunteer or organization
+dashboardRouter.get("/dashboard/kpis/:entityType/:entityId", async (req: Request, res: Response) => {
+  try {
+    const { entityType, entityId } = req.params;
+
+    if (entityType !== 'volunteer' && entityType !== 'organization') {
+      return res.status(400).json({ message: "entityType must be 'volunteer' or 'organization'" });
+    }
+
+    const entityIdNum = parseInt(entityId);
+    if (isNaN(entityIdNum)) {
+      return res.status(400).json({ message: "entityId must be a valid number" });
+    }
+
+    const snapshot = await storage.getKpiSnapshot(entityType, entityIdNum);
+    if (!snapshot) {
+      return res.status(404).json({ message: "No KPI snapshot found for this entity" });
+    }
+
+    res.json(snapshot);
+  } catch (err) {
+    console.error("Error fetching KPI snapshot:", err);
+    res.status(500).json({ message: "Failed to fetch KPI snapshot" });
   }
 });

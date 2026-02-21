@@ -4393,6 +4393,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             monthlyHours: 12,
             verificationRate: 92,
             pendingHours: 4,
+            summary: {
+              hoursLogged: 62,
+              totalProjects: 3,
+              totalPeopleImpacted: 44,
+              sdgsAddressed: 5,
+              skillsApplied: 3,
+              impactScore: 48,
+              monthlyHours: 12,
+              verificationRate: 92,
+              pendingHours: 4,
+            },
             recentActivities: [
               { id: 1, type: 'hours_logged', description: 'Logistics support for Solar Village', date: new Date().toISOString(), value: '8h' },
               { id: 2, type: 'impact_verified', description: 'NGO verified 12 people impacted', date: new Date().toISOString(), value: 'Verified' }

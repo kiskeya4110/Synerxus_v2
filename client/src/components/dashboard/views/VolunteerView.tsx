@@ -186,7 +186,7 @@ export default function VolunteerView({
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
-      hoursLogged: data.totalHours || data.verifiedHours || 0,
+      hoursLogged: data.hoursLogged || data.totalHours || data.verifiedHours || 0,
       verifiedHours: data.verifiedHours || 0,
       outcomesVerified: allLogs.filter((l: any) => l.verificationStatus === 'approved').length,
       projectsActive: data.activeProjects || 0,

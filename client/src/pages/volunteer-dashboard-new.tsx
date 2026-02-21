@@ -847,7 +847,8 @@ export default function VolunteerDashboardNew() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/users/me?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
         if (!response.ok) return null;
         return response.json();
       } catch (error) {
@@ -864,7 +865,7 @@ export default function VolunteerDashboardNew() {
     queryFn: async () => {
       try {
         const headers = await getAuthHeaders();
-        const response = await fetch(`/api/dashboard/summary?userId=${userId}`, {
+        const response = await fetch(`/api/dashboard/summary`, {
           headers, credentials: "include"
         });
         if (!response.ok) return null;
@@ -883,7 +884,8 @@ export default function VolunteerDashboardNew() {
     queryKey: ["/api/projects", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/projects?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/projects`, { headers, credentials: "include" });
         if (!response.ok) return [];
         return response.json();
       } catch (error) {

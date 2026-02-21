@@ -89,9 +89,8 @@ export default function NgoVerification() {
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch('/api/users/me', { headers, credentials: "include" });
       return response.json();
     },
   });

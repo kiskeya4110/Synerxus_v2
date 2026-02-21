@@ -44,7 +44,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import Logo from "@/components/ui/logo";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, getAuthHeaders } from "@/lib/queryClient";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -138,9 +138,8 @@ export default function Header() {
   const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return [];
-      const response = await fetch(`/api/notifications?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },

@@ -1,4 +1,4 @@
-import { Router, Request } from "express";
+import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -8,6 +8,8 @@ import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { sendInvitationEmail } from "../email-digest-service";
 import { notifyNewAssignment } from "../notification-service";
 import { queueMiddleware } from "../request-queue";
+import { authMiddleware } from "../middleware/auth";
+import { getAuthenticatedUser } from "./utils";
 
 export const miscRouter = Router();
 
@@ -648,20 +650,12 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
  * Get notifications for a user
  * GET /notifications
  */
-miscRouter.get("/notifications", async (req, res) => {
+miscRouter.get("/notifications", authMiddleware, async (req, res) => {
   try {
-    const userIdParam = req.query.userId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
-
-    const notifications = await storage.getNotifications(userId);
+    const notifications = await storage.getNotifications(authUser.id);
 
     res.json(notifications);
   } catch (err) {

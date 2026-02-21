@@ -51,7 +51,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDecimal } from "@/lib/format-utils";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -467,7 +467,8 @@ export default function OrganizationDashboardNew() {
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/me?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("User not found");
       return response.json();
     },
@@ -490,9 +491,10 @@ export default function OrganizationDashboardNew() {
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
     queryKey: ["/api/organization/dashboard", userId, currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/organization/dashboard?userId=${userId}`
-      );
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/organization/dashboard`, {
+        headers, credentials: "include"
+      });
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
     },

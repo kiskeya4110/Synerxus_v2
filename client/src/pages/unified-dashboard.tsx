@@ -20,6 +20,7 @@ import CorporateView from "@/components/dashboard/views/CorporateView";
 import { useAuth } from "@/hooks/use-auth";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import { LoadingState, ErrorState } from "@/components/ui/empty-state";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 /**
  * UnifiedDashboard - Single entry point that renders role-appropriate content
@@ -72,7 +73,8 @@ export default function UnifiedDashboard() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/users/me?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
         if (!response.ok) return null;
         return response.json();
       } catch (error) {

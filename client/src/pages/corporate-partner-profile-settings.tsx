@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import {
   PROFILE_QUERY_CONFIG,
   cacheCorporatePartnerProfile,
@@ -140,7 +140,8 @@ export default function CorporatePartnerProfileSettings() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) throw new Error("No user ID found");
-      const response = await fetch(`/api/users/me?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) {
         // Demo mode: return fallback user data when API fails
         console.log("[CSRProfileSettings] Using demo mode - API user fetch failed");

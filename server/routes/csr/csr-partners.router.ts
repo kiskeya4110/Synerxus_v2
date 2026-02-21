@@ -6,6 +6,8 @@
 import { Router, Request, Response } from "express";
 import { storage } from "../../storage";
 import { safeParseInt, handleValidationError, createErrorResponse } from "./csr-utils";
+import { authMiddleware } from "../../middleware/auth";
+import { getAuthenticatedUser } from "../utils";
 
 export const csrPartnersRouter = Router();
 
@@ -43,12 +45,12 @@ csrPartnersRouter.post("/csr/partners", async (req: Request, res: Response) => {
  * GET /csr/partners
  * Get CSR Partner for current user
  */
-csrPartnersRouter.get("/csr/partners", async (req: Request, res: Response) => {
+csrPartnersRouter.get("/csr/partners", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = safeParseInt(req.query.userId);
-    if (!userId) {
-      return res.status(400).json({ error: "User ID required" });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
+
     const allPartners = await storage.listCSRPartners?.() || [];
     const userPartners = allPartners.filter((p: any) => p.userId === userId);
 

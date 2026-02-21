@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // Desktop nav items - MVP only
 const VOLUNTEER_NAV_ITEMS = [
@@ -118,7 +119,8 @@ export default function VolunteerNav() {
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/notifications?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       return response.ok ? response.json() : [];
     },
     enabled: !!userId,

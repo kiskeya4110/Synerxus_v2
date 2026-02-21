@@ -28,6 +28,8 @@ import {
   getLinkedEmployeeUserIds,
   getTimeAgo
 } from "./csr-utils";
+import { authMiddleware } from "../../middleware/auth";
+import { getAuthenticatedUser } from "../utils";
 
 export const csrEngagementRouter = Router();
 
@@ -57,19 +59,20 @@ csrEngagementRouter.post("/employee-engagement/log-hours", async (req: Request, 
  * GET /employee-engagement/commitments
  * Get employee commitments for a CSR partner
  */
-csrEngagementRouter.get("/employee-engagement/commitments", async (req: Request, res: Response) => {
+csrEngagementRouter.get("/employee-engagement/commitments", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const partnerId = safeParseInt(req.query.partnerId);
-    const userId = safeParseInt(req.query.userId);
 
     let commitments = await storage.listEmployeeCommitments?.() || [];
 
     if (partnerId) {
       commitments = commitments.filter((c: any) => c.partnerId === partnerId);
     }
-    if (userId) {
-      commitments = commitments.filter((c: any) => c.userId === userId);
-    }
+    // Filter to authenticated user's commitments only
+    commitments = commitments.filter((c: any) => c.userId === authUser.id);
 
     res.json(commitments);
   } catch (err) {

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAIUDisplay } from "@/hooks/use-feature-flags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
+import { getAuthHeaders } from "@/lib/queryClient";
 import type { Notification, User as UserType } from "@shared/schema";
 
 interface OrganizationPWAHeaderProps {
@@ -59,7 +60,8 @@ export default function OrganizationPWAHeader({
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/notifications?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       return response.ok ? response.json() : [];
     },
     enabled: !!userId,

@@ -89,6 +89,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
 
     const organizationId = user.organizationId || userIdNum;
 
+    // Use a single transaction or consistent snapshot if possible, but for now, just ensure IDs are used correctly
     // Fetch organization-specific data using efficient filtered queries (not full table scans)
     const allOrganizationProjects = await storage.listProjectsByOrganization(organizationId);
 
@@ -560,18 +561,12 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
 
 // GET /api/dashboard/summary - General dashboard summary
 // Delegates to service layer based on user type (organization or volunteer)
-dashboardRouter.get("/summary", async (req: Request, res: Response) => {
+dashboardRouter.get("/summary", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string | undefined;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userIdNum = parseInt(userId);
-    if (isNaN(userIdNum)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    const userIdNum = authUser.id;
 
     // Get user to determine type
     const user = await storage.getUser(userIdNum);
@@ -638,18 +633,12 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
 
 // GET /api/dashboard/sdg-contributions - SDG contributions overview
 // Organization-only endpoint for SDG impact tracking
-dashboardRouter.get("/sdg-contributions", async (req: Request, res: Response) => {
+dashboardRouter.get("/sdg-contributions", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string | undefined;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(400).json({ message: "userId parameter is required" });
-    }
-
-    const userIdNum = parseInt(userId);
-    if (isNaN(userIdNum)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
+    const userIdNum = authUser.id;
 
     // Get user to determine type
     const user = await storage.getUser(userIdNum);

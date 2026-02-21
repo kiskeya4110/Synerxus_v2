@@ -60,23 +60,13 @@ usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/users/me - Get current user by userId query param
-// Note: This uses userId from query param for backward compatibility with the client
-usersRouter.get("/me", async (req: Request, res: Response) => {
+// GET /api/users/me - Get current authenticated user
+usersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userIdParam = req.query.userId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userIdParam) {
-      return res.status(400).json({ message: "userId query parameter is required" });
-    }
-
-    const userId = parseInt(userIdParam);
-
-    if (isNaN(userId)) {
-      return res.status(400).json({ message: "userId must be a valid number" });
-    }
-
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(authUser.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

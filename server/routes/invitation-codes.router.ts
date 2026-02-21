@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import { insertInvitationCodeSchema } from "@shared/schema";
 import { randomBytes } from "crypto";
+import { authMiddleware } from "../middleware/auth";
+import { getAuthenticatedUser } from "./utils";
 
 export const invitationCodesRouter = Router();
 
@@ -11,14 +13,12 @@ function generateInviteCode(length: number = 8): string {
 }
 
 // GET /api/invitation-codes - List all invitation codes (admin only)
-invitationCodesRouter.get("/", async (req: Request, res: Response) => {
+invitationCodesRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string;
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    const user = await storage.getUser(parseInt(userId));
+    const user = await storage.getUser(authUser.id);
     if (!user || user.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can view invitation codes" });
     }
@@ -32,15 +32,14 @@ invitationCodesRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/invitation-codes - Create a new invitation code
-invitationCodesRouter.post("/", async (req: Request, res: Response) => {
+invitationCodesRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, email, userType, maxUses, expiresAt, notes, customCode } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const { email, userType, maxUses, expiresAt, notes, customCode } = req.body;
 
-    const user = await storage.getUser(parseInt(userId));
+    const user = await storage.getUser(authUser.id);
     if (!user || user.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can create invitation codes" });
     }
@@ -119,16 +118,13 @@ invitationCodesRouter.post("/:code/use", async (req: Request, res: Response) => 
 });
 
 // DELETE /api/invitation-codes/:id - Deactivate an invitation code
-invitationCodesRouter.delete("/:id", async (req: Request, res: Response) => {
+invitationCodesRouter.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.query.userId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    const user = await storage.getUser(parseInt(userId));
+    const user = await storage.getUser(authUser.id);
     if (!user || user.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can delete invitation codes" });
     }
@@ -158,15 +154,14 @@ invitationCodesRouter.get("/settings", async (req: Request, res: Response) => {
 });
 
 // PUT /api/invitation-codes/settings - Update platform invite-only setting
-invitationCodesRouter.put("/settings", async (req: Request, res: Response) => {
+invitationCodesRouter.put("/settings", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, inviteOnlyMode } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const { inviteOnlyMode } = req.body;
 
-    const user = await storage.getUser(parseInt(userId));
+    const user = await storage.getUser(authUser.id);
     if (!user || user.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can change platform settings" });
     }

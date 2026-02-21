@@ -41,7 +41,8 @@ export default function Projects() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) throw new Error("No user ID found");
-      const response = await fetch(`/api/users/me?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("User not found");
       return response.json();
     },
@@ -54,7 +55,8 @@ export default function Projects() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
-      const response = await fetch(`/api/projects?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/projects`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch projects");
       return response.json();
     },
@@ -68,7 +70,8 @@ export default function Projects() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
-      const response = await fetch(`/api/tasks?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/tasks`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },
@@ -135,7 +138,8 @@ export default function Projects() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
-      const response = await fetch(`/api/opportunities?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/opportunities`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },

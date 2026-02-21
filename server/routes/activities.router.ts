@@ -8,6 +8,7 @@ import {
   type VolunteerActivity,
   type ProjectImpact,
   type ExternalVolunteer,
+  type InsertVerificationAuditLog,
 } from "@shared/schema";
 import {
   handleValidationError,
@@ -1122,9 +1123,33 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
       }
     }
 
+    const previousStatus = activity.verificationStatus || 'pending';
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
       verificationStatus: 'approved'
     });
+
+    // Write immutable audit log entry
+    try {
+      const auditEntry: InsertVerificationAuditLog = {
+        activityId,
+        projectId: activity.projectId || undefined,
+        organizationId: req.user?.organizationId || undefined,
+        action: 'approved',
+        previousStatus,
+        newStatus: 'approved',
+        performedBy: reviewerId!,
+        performedByRole: req.user?.userType || 'organization',
+        volunteerId: activity.userId,
+        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+        userAgent: req.headers['user-agent'] || undefined,
+        geolocation: activity.geolocation || undefined,
+        evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
+      };
+      await storage.createVerificationAuditLog?.(auditEntry);
+    } catch (auditErr) {
+      console.error("[Audit] Failed to write audit log for activity approval:", auditErr);
+      // Don't fail the approval if audit log fails - log and continue
+    }
 
     // **CSR Dashboard KPI Tracking**: Update employee engagement when activity is approved
     // This ensures verified hours flow to CSR corporate dashboards
@@ -1314,9 +1339,31 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
       }
     }
 
+    const previousStatus = activity.verificationStatus || 'pending';
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
       verificationStatus: 'rejected'
     });
+
+    // Write immutable audit log entry
+    try {
+      const auditEntry: InsertVerificationAuditLog = {
+        activityId,
+        projectId: activity.projectId || undefined,
+        organizationId: req.user?.organizationId || undefined,
+        action: 'rejected',
+        previousStatus,
+        newStatus: 'rejected',
+        performedBy: req.user!.id,
+        performedByRole: req.user?.userType || 'organization',
+        volunteerId: activity.userId,
+        reason: req.body.reason || undefined,
+        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+        userAgent: req.headers['user-agent'] || undefined,
+      };
+      await storage.createVerificationAuditLog?.(auditEntry);
+    } catch (auditErr) {
+      console.error("[Audit] Failed to write audit log for activity rejection:", auditErr);
+    }
 
     // Send email notification to volunteer (non-blocking)
     sendActivityApprovalNotification(activityId, 'rejected', req.user?.id).catch(err => {

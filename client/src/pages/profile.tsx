@@ -26,6 +26,7 @@ import {
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -84,8 +85,8 @@ export default function Profile() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch('/api/users/me', { headers, credentials: "include" });
       const data = await response.json();
       // Cache user data for instant loading
       if (id) cacheUserProfile(id, data);
@@ -102,8 +103,8 @@ export default function Profile() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
-      const url = `/api/intake/volunteer-profile?userId=${id}`;
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const data = await response.json();
       // Cache profile for instant loading
@@ -126,8 +127,8 @@ export default function Profile() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
-      const url = `/api/profile/organization?userId=${id}`;
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/profile/organization?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const data = await response.json();
       // Cache organization profile for instant loading
@@ -145,7 +146,8 @@ export default function Profile() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
-      const response = await fetch(`/api/volunteer-activities?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/volunteer-activities?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },

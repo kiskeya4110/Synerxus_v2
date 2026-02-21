@@ -70,7 +70,13 @@ export interface ActivitySummary {
 // ============================================
 
 const fetchJSON = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url);
+  const headers: Record<string, string> = {};
+  const token = await getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const currentUserId = localStorage.getItem('currentUserId');
+  if (currentUserId) headers["x-user-id"] = currentUserId;
+
+  const response = await fetch(url, { headers, credentials: "include" });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
   }
@@ -101,6 +107,21 @@ const QUERY_CONFIG = {
 // ============================================
 // VOLUNTEER DASHBOARD HOOK
 // ============================================
+
+// =/api/dashboard/summary Query hook
+export function useDashboardSummary(userId: number | string | null) {
+  return useQuery<any>({
+    queryKey: ["/api/dashboard/summary", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 30000,
+  });
+}
 
 export function useVolunteerDashboard(config: DashboardQueryConfig) {
   const { userId } = config;

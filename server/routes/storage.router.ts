@@ -22,6 +22,34 @@ export const storageRouter = Router();
 // Apply optional auth to all storage routes - extracts user if token present
 storageRouter.use(optionalAuthMiddleware);
 
+/**
+ * Sanitize and validate a storage file path to prevent path traversal.
+ * Returns null if path is invalid/dangerous.
+ */
+function sanitizeStoragePath(rawPath: string): string | null {
+  if (!rawPath || typeof rawPath !== "string") return null;
+
+  // Decode to catch encoded traversal attempts
+  const decoded = decodeURIComponent(rawPath);
+
+  // Block path traversal patterns (including double-encoded)
+  if (
+    decoded.includes("..") || decoded.includes("\0") ||
+    rawPath.includes("..") || rawPath.includes("%2e%2e") ||
+    rawPath.includes("%252e") || rawPath.includes("~") ||
+    decoded.startsWith("/") || decoded.startsWith("\\")
+  ) {
+    return null;
+  }
+
+  // Only allow alphanumeric, hyphens, underscores, dots, and forward slashes
+  if (!/^[a-zA-Z0-9_\-./]+$/.test(decoded)) {
+    return null;
+  }
+
+  return decoded;
+}
+
 // Configure multer for memory storage (process in memory before saving)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -92,6 +120,13 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
     if (!pathParam) {
       logger.warn(`[Storage] Upload rejected: missing path parameter`);
       return res.status(400).json({ message: "path is required" });
+    }
+
+    // SECURITY: Sanitize upload path to prevent traversal attacks
+    const sanitizedUploadPath = sanitizeStoragePath(pathParam);
+    if (!sanitizedUploadPath) {
+      logger.warn(`[Storage] Path traversal attempt blocked on upload: ${pathParam}`);
+      return res.status(403).json({ message: "Invalid file path" });
     }
 
     // Security: Require authentication for uploads
@@ -249,6 +284,15 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "path is required" });
     }
 
+    // SECURITY: Sanitize path to prevent traversal attacks
+    // Extract the relative path portion (strip /api/storage/ prefix if present)
+    const relativePath = filePath.replace(/^\/api\/storage\//, '');
+    const sanitizedPath = sanitizeStoragePath(relativePath);
+    if (!sanitizedPath) {
+      logger.warn(`[Storage] Path traversal attempt blocked on delete: ${filePath}`);
+      return res.status(403).json({ message: "Invalid file path" });
+    }
+
     // Security: Require authentication for file deletion
     if (!req.user) {
       logger.warn(`[Storage] Unauthenticated delete attempt for path: ${filePath}`);
@@ -258,7 +302,7 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
     // Security: Validate the file belongs to the user/org
     // Files are stored with user/org identifiers in path
     // Format: profiles/profile-u{userId}-{timestamp}-{random}.jpg or profile-o{orgId}-{timestamp}-{random}.jpg
-    const pathLower = filePath.toLowerCase();
+    const pathLower = sanitizedPath.toLowerCase();
     const isOwnFile =
       pathLower.includes(`-u${req.user.id}-`) ||  // User ID format: -u123-
       pathLower.includes(`-${req.user.id}-`) ||   // Legacy format: -123-
@@ -269,13 +313,13 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
       ));
 
     if (!isOwnFile) {
-      logger.warn(`[Storage] User ${req.user.id} attempted to delete file they don't own: ${filePath}`);
+      logger.warn(`[Storage] User ${req.user.id} attempted to delete file they don't own: ${sanitizedPath}`);
       return res.status(403).json({ message: "Cannot delete files belonging to other users" });
     }
 
-    logger.info(`[Storage] User ${req.user.id} deleting file: ${filePath}`);
+    logger.info(`[Storage] User ${req.user.id} deleting file: ${sanitizedPath}`);
 
-    const deleted = await deleteImage(filePath);
+    const deleted = await deleteImage(sanitizedPath);
 
     res.json({
       message: deleted ? "File deleted successfully" : "File not found or already deleted",
@@ -309,29 +353,24 @@ storageRouter.get("/storage/:filePath(*)", async (req: Request, res: Response) =
       return res.status(400).json({ message: "File path is required" });
     }
 
-    // SECURITY: Strengthen path traversal protection
-    // 1. Decode URL-encoded characters first
-    const decodedPath = decodeURIComponent(filePath);
-
-    // 2. Check for path traversal patterns (including encoded variants)
-    if (decodedPath.includes("..") || decodedPath.includes("\0") ||
-        filePath.includes("..") || filePath.includes("%2e%2e") ||
-        filePath.includes("%252e")) {
+    // SECURITY: Sanitize and validate path to prevent traversal attacks
+    const sanitizedPath = sanitizeStoragePath(filePath);
+    if (!sanitizedPath) {
       logger.warn(`[Storage] Path traversal attempt blocked: ${filePath}`);
       return res.status(403).json({ message: "Invalid file path" });
     }
 
-    // 3. Resolve and validate the path is within uploads directory
+    // Resolve and validate the path is within uploads directory
     const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-    const resolvedPath = path.resolve(UPLOAD_DIR, decodedPath);
+    const resolvedPath = path.resolve(UPLOAD_DIR, sanitizedPath);
 
-    // 4. Ensure resolved path is still within UPLOAD_DIR
+    // Ensure resolved path is still within UPLOAD_DIR
     if (!resolvedPath.startsWith(UPLOAD_DIR + path.sep) && resolvedPath !== UPLOAD_DIR) {
       logger.warn(`[Storage] Path escape attempt blocked: ${filePath} -> ${resolvedPath}`);
       return res.status(403).json({ message: "Invalid file path" });
     }
 
-    const imageUrl = `/api/storage/${decodedPath}`;
+    const imageUrl = `/api/storage/${sanitizedPath}`;
     const buffer = getImageBuffer(imageUrl);
 
     if (!buffer) {
@@ -377,7 +416,14 @@ storageRouter.get("/storage/info/:filePath(*)", async (req: Request, res: Respon
       return res.status(400).json({ message: "File path is required" });
     }
 
-    const imageUrl = `/api/storage/${filePath}`;
+    // SECURITY: Sanitize and validate path to prevent traversal attacks
+    const sanitizedPath = sanitizeStoragePath(filePath);
+    if (!sanitizedPath) {
+      logger.warn(`[Storage] Path traversal attempt blocked on info: ${filePath}`);
+      return res.status(403).json({ message: "Invalid file path" });
+    }
+
+    const imageUrl = `/api/storage/${sanitizedPath}`;
     const buffer = getImageBuffer(imageUrl);
 
     if (!buffer) {
@@ -387,7 +433,7 @@ storageRouter.get("/storage/info/:filePath(*)", async (req: Request, res: Respon
     res.json({
       exists: true,
       size: buffer.length,
-      mimeType: getMimeType(filePath),
+      mimeType: getMimeType(sanitizedPath),
     });
   } catch (err) {
     console.error("Error getting file info:", err);

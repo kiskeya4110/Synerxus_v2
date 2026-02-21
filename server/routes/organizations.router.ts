@@ -1,9 +1,10 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertOrganizationSchema, insertOrganizationMemberSchema } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { cache, CACHE_TTL } from "../cache";
 import { isPreapprovedEmail } from "../config/preapproved-emails";
+import { authMiddleware } from "../middleware/auth";
 
 export const organizationsRouter = Router();
 
@@ -763,14 +764,13 @@ organizationsRouter.delete("/:id/members/:memberId", async (req: Request, res: R
 });
 
 // GET /api/organizations/:id/my-permissions - Get current user's permissions for this org
-organizationsRouter.get("/:id/my-permissions", async (req: Request, res: Response) => {
+organizationsRouter.get("/:id/my-permissions", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
-    const userId = parseInt(req.query.userId as string);
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
+    const userId = authUser.id;
 
     // First check if this user IS the organization (organization account owner)
     const user = await storage.getUser(userId);

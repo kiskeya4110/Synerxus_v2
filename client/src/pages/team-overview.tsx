@@ -37,6 +37,7 @@ import { getSDGIcon } from "@/assets/un-sdg-icons";
 import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Logo from "@/components/ui/logo";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 interface MLInsight {
   type: "success" | "warning" | "prediction" | "recommendation";
@@ -102,7 +103,8 @@ export default function TeamOverview() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
-      const response = await fetch(`/api/users/me?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) return null;
       return response.json();
     },
@@ -120,8 +122,9 @@ export default function TeamOverview() {
   const { data: teamData, isLoading, refetch } = useQuery<TeamOverviewData>({
     queryKey: ["/api/team-overview", userId, selectedSDGs],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const sdgParam = selectedSDGs.length > 0 ? `&sdgs=${selectedSDGs.join(',')}` : '';
-      const response = await fetch(`/api/team-overview?userId=${userId}${sdgParam}`);
+      const response = await fetch(`/api/team-overview?${sdgParam.replace(/^&/, '')}`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch team overview");
       return response.json();
     },

@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, User,
   Bell, LogOut, Menu, X, MoreVertical, Home, ClipboardList,
@@ -72,9 +72,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return [];
-      const response = await fetch(`/api/notifications?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },

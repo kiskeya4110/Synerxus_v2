@@ -10,6 +10,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 export default function OrganizationMessages() {
   const [, navigate] = useLocation();
@@ -24,7 +25,8 @@ export default function OrganizationMessages() {
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/notifications?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       return response.ok ? response.json() : [];
     },
     enabled: !!userId,

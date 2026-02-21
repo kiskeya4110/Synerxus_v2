@@ -181,10 +181,18 @@ function handleValidationError(err: unknown) {
 }
 
 // Authorization helper to extract userId from request
+// SECURITY: Prefer authenticated user from middleware over query params
 function extractUserId(req: Request): number | null {
+  if ((req as any).user?.id) {
+    return (req as any).user.id;
+  }
+  // Legacy fallback - should be migrated to use auth middleware
   const userIdStr = (req.body as Record<string, any>).userId || (req.query.userId as string) || (req.headers['x-user-id'] as string);
   if (!userIdStr) return null;
   const userId = parseInt(userIdStr);
+  if (!isNaN(userId)) {
+    console.warn(`[Security] DEPRECATED: Legacy userId extraction for ${userId} in routes.ts. Migrate to JWT auth.`);
+  }
   return isNaN(userId) ? null : userId;
 }
 
@@ -419,30 +427,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current user - uses userId from query parameter or defaults to user ID 1 for backward compatibility
-  app.get("/api/users/me", async (req, res) => {
-    try {
-      const userIdParam = req.query.userId as string;
-      
-      // Default to user ID 1 for backward compatibility if userId not provided
-      const userId = userIdParam ? parseInt(userIdParam) : 1;
-      
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "userId must be a valid number" });
-      }
-      
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json(user);
-    } catch (err) {
-      console.error("Error fetching current user:", err);
-      res.status(500).json({ message: "Failed to fetch current user" });
-    }
-  });
+  // REMOVED: Legacy /api/users/me route that accepted userId from query param and defaulted to user ID 1.
+  // This was a critical security vulnerability. The modular usersRouter.get("/me", authMiddleware, ...)
+  // now handles this route with proper authentication.
 
   app.get("/api/users/:id", async (req, res) => {
     try {

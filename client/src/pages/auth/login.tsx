@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,7 @@ export default function LoginAuth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
 
@@ -156,15 +159,39 @@ export default function LoginAuth() {
                   <a
                     href="#"
                     className="text-sm text-indigo-600 hover:text-indigo-500"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
-                      toast({
-                        title: "Password Reset",
-                        description: "Password reset functionality coming soon.",
-                      });
+                      const email = form.getValues("email");
+                      if (!email) {
+                        toast({
+                          title: "Enter your email",
+                          description: "Please enter your email address above, then click Forgot password.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setIsResetLoading(true);
+                      try {
+                        await sendPasswordResetEmail(auth, email);
+                        toast({
+                          title: "Reset email sent",
+                          description: `A password reset link has been sent to ${email}. Check your inbox.`,
+                        });
+                      } catch (error: any) {
+                        const message = error?.code === "auth/user-not-found"
+                          ? "No account found with this email."
+                          : "Failed to send reset email. Please try again.";
+                        toast({
+                          title: "Password Reset Failed",
+                          description: message,
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsResetLoading(false);
+                      }
                     }}
                   >
-                    Forgot password?
+                    {isResetLoading ? "Sending..." : "Forgot password?"}
                   </a>
                 </div>
                 <div className="relative mt-1">

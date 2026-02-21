@@ -9,6 +9,8 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { queueMiddleware } from "../request-queue";
+import { authMiddleware } from "../middleware/auth";
+import { getAuthenticatedUser } from "./utils";
 
 export const csrRouter = Router();
 
@@ -173,15 +175,15 @@ async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>>
  * Diagnostic endpoint for CSR Dashboard system verification
  * Returns user profile, partner info, and engagement records
  */
-csrRouter.get("/csr/diagnostic", async (req: Request, res: Response) => {
+csrRouter.get("/csr/diagnostic", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string;
-    if (!userId) {
-      return res.status(400).json({ error: "userId required" });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = String(authUser.id);
 
     const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-    const profile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId));
+    const profile = volunteerProfiles.find((v: any) => v.userId === authUser.id);
 
     const employeeEngagement = (await storage.listEmployeeEngagement?.()) || [];
     const csrPartners = (await storage.listCSRPartners?.()) || [];
@@ -218,25 +220,24 @@ csrRouter.get("/csr/diagnostic", async (req: Request, res: Response) => {
  * Get CSR Dashboard Summary with engagement metrics, SDG progress, and challenges
  * Supports both corporate admin and employee users
  */
-csrRouter.get("/csr/dashboard", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/dashboard", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const userId = String(authUser.id);
     const startDateStr = req.query.startDate as string;
     const endDateStr = req.query.endDate as string;
     const timePeriod = req.query.timePeriod as string;
 
-    if (!userId) {
-      return res.status(400).json({ error: "userId required" });
-    }
-
     // Get the CSR partner for this user - handles both corporate admin and employee users
     const allPartners = await storage.listCSRPartners?.() || [];
-    let userPartner = allPartners.find((p: any) => p.userId === parseInt(userId));
+    let userPartner = allPartners.find((p: any) => p.userId === authUser.id);
 
     // If not a corporate admin, check if user is an employee linked to a CSR partner
     if (!userPartner) {
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const employeeProfile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId));
+      const employeeProfile = volunteerProfiles.find((v: any) => v.userId === authUser.id);
 
       if (employeeProfile?.employerId) {
         // User is an employee linked to a CSR partner
@@ -874,11 +875,12 @@ csrRouter.get("/csr/dashboard", queueMiddleware('heavy'), async (req: Request, r
  * CSR Engagement Funnel - Employee progression stages
  * Returns funnel stages and conversion rates
  */
-csrRouter.get("/csr/engagement-funnel", async (req: Request, res: Response) => {
+csrRouter.get("/csr/engagement-funnel", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
     const timePeriod = req.query.timePeriod as string;
-    if (!userId) return res.status(400).json({ error: "User ID required" });
 
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
@@ -941,12 +943,14 @@ csrRouter.get("/csr/engagement-funnel", async (req: Request, res: Response) => {
  * Get employees for specific stage in the engagement funnel
  * Query params: userId, stage (0=all, 1=started, 2=active, 3=top performers)
  */
-csrRouter.get("/csr/engagement-funnel-stage", async (req: Request, res: Response) => {
+csrRouter.get("/csr/engagement-funnel-stage", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
     const stage = req.query.stage ? parseInt(req.query.stage as string) : null;
     const timePeriod = req.query.timePeriod as string;
-    if (!userId || stage === null) return res.status(400).json({ error: "User ID and stage required" });
+    if (stage === null) return res.status(400).json({ error: "Stage required" });
 
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
@@ -1029,11 +1033,12 @@ csrRouter.get("/csr/engagement-funnel-stage", async (req: Request, res: Response
  * CSR Pending Admin Actions - Reviews, Insights, Flagging
  * Returns actionable items for CSR administrators
  */
-csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
+csrRouter.get("/csr/pending-actions", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
     const timePeriod = req.query.timePeriod as string;
-    if (!userId) return res.status(400).json({ error: "User ID required" });
 
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
@@ -1237,10 +1242,11 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
  * - SDG goal updates
  * - Top contributor recognition
  */
-csrRouter.get("/csr/notifications", async (req: Request, res: Response) => {
+csrRouter.get("/csr/notifications", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    if (!userId) return res.status(400).json({ error: "User ID required" });
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
 
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.json({ notifications: [] });
@@ -1406,10 +1412,11 @@ csrRouter.get("/csr/notifications", async (req: Request, res: Response) => {
  * CSR Impact Reporting - Comprehensive KPI metrics
  * Returns engagement, impact, financial, SDG, and compliance metrics
  */
-csrRouter.get("/csr/impact-reporting", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    if (!userId) return res.status(400).json({ error: "User ID required" });
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
 
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
@@ -1568,19 +1575,22 @@ csrRouter.get("/csr/impact-reporting", queueMiddleware('heavy'), async (req: Req
  * GET /csr/impact-reporting/export/csv
  * Export CSR Impact Report as CSV file
  */
-csrRouter.get("/csr/impact-reporting/export/csv", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    if (!userId || isNaN(userId)) return res.status(400).json({ error: "Valid User ID required" });
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
 
     const partners = await storage.listCSRPartners?.() || [];
     const userPartner = partners.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
-    // Fetch impact data using internal function instead of HTTP call
+    // Fetch impact data using internal function - forward auth headers
     const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
-    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting?userId=${userId}`, {
-      headers: { 'Content-Type': 'application/json' }
+    const internalHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (req.headers.authorization) internalHeaders['Authorization'] = req.headers.authorization;
+    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting`, {
+      headers: internalHeaders
     });
     if (!impactResponse.ok) {
       console.error(`Impact reporting API returned ${impactResponse.status}`);
@@ -1653,21 +1663,24 @@ csrRouter.get("/csr/impact-reporting/export/csv", queueMiddleware('heavy'), asyn
  * GET /csr/impact-reporting/export/pdf
  * Export CSR Impact Report as PDF (HTML format for browser printing)
  */
-csrRouter.get("/csr/impact-reporting/export/pdf", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
     const reportTitle = (req.query.title as string) || "CSR Impact Report";
     const reportTimeline = (req.query.timeline as string) || "Annual";
-    if (!userId || isNaN(userId)) return res.status(400).json({ error: "Valid User ID required" });
 
     const partners = await storage.listCSRPartners?.() || [];
     const userPartner = partners.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
-    // Fetch impact data using environment-aware URL
+    // Fetch impact data using environment-aware URL - forward auth headers
     const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
-    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting?userId=${userId}`, {
-      headers: { 'Content-Type': 'application/json' }
+    const pdfHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (req.headers.authorization) pdfHeaders['Authorization'] = req.headers.authorization;
+    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting`, {
+      headers: pdfHeaders
     });
     if (!impactResponse.ok) {
       console.error(`Impact reporting API returned ${impactResponse.status}`);
@@ -1909,12 +1922,12 @@ csrRouter.post("/csr/partners", async (req: Request, res: Response) => {
  * GET /csr/partners
  * Get CSR Partner for current user
  */
-csrRouter.get("/csr/partners", async (req: Request, res: Response) => {
+csrRouter.get("/csr/partners", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    if (!userId) {
-      return res.status(400).json({ error: "User ID required" });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const userId = authUser.id;
+
     const allPartners = await storage.listCSRPartners?.() || [];
     const userPartners = allPartners.filter((p: any) => p.userId === userId);
 

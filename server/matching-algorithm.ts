@@ -5,6 +5,7 @@ interface MatchResult {
   score: number;
   breakdown: {
     skillMatch: number;
+    sectorMatch: number;
     trustScore: number;
     availabilityMatch: number;
     missionMatch: number;
@@ -23,6 +24,7 @@ interface MatchResult {
 
 interface MatchingWeights {
   skillWeight: number;
+  sectorWeight: number;
   locationWeight: number;
   sdgWeight: number;
   interestWeight: number;
@@ -30,17 +32,18 @@ interface MatchingWeights {
   experienceWeight: number;
 }
 
-// 4-Factor Matching (MVP Spec):
-// Skills (35%), Trust (30%), Availability (25%), Mission (10%)
+// 4-Factor Matching (CSRD Impact Assurance Engine):
+// Skills (30%), Sector Relevance (15%), Geography/Trust (25%), SDG/Mission (15%), Availability (15%)
 // Trust = engagement boost + experience + location reliability
 // Mission = SDG alignment + interest overlap
 const DEFAULT_WEIGHTS: MatchingWeights = {
-  skillWeight: 0.35,
+  skillWeight: 0.30,
+  sectorWeight: 0.15,
   locationWeight: 0.05,
-  sdgWeight: 0.10,
+  sdgWeight: 0.15,
   interestWeight: 0.00,
-  availabilityWeight: 0.25,
-  experienceWeight: 0.25,
+  availabilityWeight: 0.15,
+  experienceWeight: 0.20,
 };
 
 // Cache for matching weights from database
@@ -68,6 +71,7 @@ export async function getMatchingWeights(): Promise<MatchingWeights> {
     if (dbWeights) {
       cachedWeights = {
         skillWeight: dbWeights.skillWeight ?? DEFAULT_WEIGHTS.skillWeight,
+        sectorWeight: (dbWeights as any).sectorWeight ?? DEFAULT_WEIGHTS.sectorWeight,
         locationWeight: dbWeights.locationWeight ?? DEFAULT_WEIGHTS.locationWeight,
         sdgWeight: dbWeights.sdgWeight ?? DEFAULT_WEIGHTS.sdgWeight,
         interestWeight: DEFAULT_WEIGHTS.interestWeight, // Not in DB schema yet
@@ -189,6 +193,7 @@ function calculateMatchConfidence(
   // Boost confidence if we have strong signals in multiple dimensions
   const strongSignals = [
     breakdown.skillMatch >= 70,
+    breakdown.sectorMatch >= 70,
     breakdown.sdgMatch >= 70,
     breakdown.availabilityMatch >= 70,
     breakdown.locationMatch >= 70,
@@ -438,6 +443,7 @@ export function calculateMatchScore(
   const matchWeights = weights || DEFAULT_WEIGHTS;
   const breakdown = {
     skillMatch: 0,
+    sectorMatch: 0,
     trustScore: 0,
     availabilityMatch: 0,
     missionMatch: 0,
@@ -553,7 +559,35 @@ export function calculateMatchScore(
     reasons.push("Complete your skills profile for better matches");
   }
 
-  // 2. Location Matching (25% weight)
+  // 2. Industry Sector Matching (15% weight)
+  const volunteerSectors = (volunteer.profile?.sectorExpertise as string[] || []).map(s => s.toLowerCase().trim());
+  const opportunitySectors = ((opportunity as any).sectorRequirements as string[] || []).map(s => s.toLowerCase().trim());
+  // Also consider the opportunity category as a sector signal
+  const oppCategory = (opportunity.category || '').toLowerCase().trim();
+
+  if (volunteerSectors.length > 0 && (opportunitySectors.length > 0 || oppCategory)) {
+    const targetSectors = opportunitySectors.length > 0 ? opportunitySectors : (oppCategory ? [oppCategory] : []);
+    const matchingSectors = volunteerSectors.filter(sector =>
+      targetSectors.some(target =>
+        target.includes(sector) || sector.includes(target) || target === sector
+      )
+    );
+
+    if (matchingSectors.length > 0) {
+      breakdown.sectorMatch = Math.min((matchingSectors.length / targetSectors.length) * 100, 100);
+      reasons.push(`${matchingSectors.length} sector match${matchingSectors.length > 1 ? "es" : ""}: ${matchingSectors.slice(0, 2).join(", ")}`);
+    } else {
+      breakdown.sectorMatch = 10;
+    }
+  } else if (opportunitySectors.length === 0 && !oppCategory) {
+    // No sector requirements - neutral match
+    breakdown.sectorMatch = 50;
+  } else if (volunteerSectors.length === 0) {
+    breakdown.sectorMatch = 30;
+    reasons.push("Add industry sectors to your profile for better matches");
+  }
+
+  // 3. Location Matching (25% weight)
   if (opportunity.isRemote || opportunity.engagementType === "remote") {
     breakdown.locationMatch = 100;
     reasons.push("Remote opportunity - location flexible");
@@ -772,16 +806,18 @@ export function calculateMatchScore(
   // - Mission: 10% (SDG alignment)
 
   breakdown.trustScore = Math.min(
-    Math.round(breakdown.experienceMatch * 0.833 + breakdown.locationMatch * 0.167 + breakdown.engagementBoost),
+    Math.round(breakdown.experienceMatch * 0.75 + breakdown.locationMatch * 0.15 + breakdown.engagementBoost * 0.10),
     100
   );
   breakdown.missionMatch = breakdown.sdgMatch;
 
+  // 4-Factor Score: Skills (30%) + Sector (15%) + Trust/Geo (25%) + SDG/Mission (15%) + Availability (15%)
   const finalScore = Math.min(Math.round(
-    breakdown.skillMatch * 0.35 +
-    breakdown.trustScore * 0.30 +
-    breakdown.availabilityMatch * 0.25 +
-    breakdown.missionMatch * 0.10
+    breakdown.skillMatch * matchWeights.skillWeight +
+    breakdown.sectorMatch * matchWeights.sectorWeight +
+    breakdown.trustScore * (matchWeights.experienceWeight + matchWeights.locationWeight) +
+    breakdown.missionMatch * matchWeights.sdgWeight +
+    breakdown.availabilityMatch * matchWeights.availabilityWeight
   ), 100);
 
   // Add overall assessment reason

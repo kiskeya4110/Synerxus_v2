@@ -316,6 +316,7 @@ export const opportunities = pgTable("opportunities", {
   benefits: text("benefits"), // What volunteers will gain
   requirements: text("requirements"), // Specific requirements or qualifications
   isUrgent: boolean("is_urgent").default(false), // For urgent needs/events
+  sectorRequirements: text("sector_requirements").array(), // Industry sectors relevant to this opportunity (e.g., ["healthcare", "education"])
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -578,6 +579,41 @@ export const verifiedOutputs = pgTable("verified_outputs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Verification Audit Log - Immutable append-only log for CSRD compliance
+// Records every verification action with full context for audit readiness
+export const verificationAuditLog = pgTable("verification_audit_log", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").references(() => volunteerActivities.id),
+  verifiedOutputId: integer("verified_output_id").references(() => verifiedOutputs.id),
+  projectId: integer("project_id").references(() => projects.id),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  action: text("action").notNull(), // approved, rejected, edited, submitted, reverted
+  previousStatus: text("previous_status"), // Status before this action
+  newStatus: text("new_status"), // Status after this action
+  performedBy: integer("performed_by").references(() => users.id).notNull(), // Who performed the action
+  performedByRole: text("performed_by_role"), // volunteer, organization, corporate-partner
+  volunteerId: integer("volunteer_id").references(() => users.id), // The volunteer whose work is being verified
+  // Context fields for complete audit trail
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  deviceId: text("device_id"),
+  geolocation: text("geolocation"), // lat,lng or location name
+  // Change details
+  changeDetails: jsonb("change_details"), // What was changed: {field, oldValue, newValue}
+  reason: text("reason"), // Reason for rejection or edit
+  evidenceSnapshot: jsonb("evidence_snapshot"), // Snapshot of evidence at time of action
+  // Immutability: no updatedAt - records are append-only
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVerificationAuditLogSchema = createInsertSchema(verificationAuditLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type VerificationAuditLog = typeof verificationAuditLog.$inferSelect;
+export type InsertVerificationAuditLog = z.infer<typeof insertVerificationAuditLogSchema>;
+
 // Volunteer Employer Links - Connect volunteers to their corporate employers
 export const volunteerEmployerLinks = pgTable("volunteer_employer_links", {
   id: serial("id").primaryKey(),
@@ -675,6 +711,8 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   jobTitleAtCompany: text("job_title_at_company"), // Job title at employer
   // Experience level for opportunity matching
   experienceLevel: text("experience_level"), // entry-level, intermediate, expert
+  // Industry sector expertise for 4-factor matching
+  sectorExpertise: text("sector_expertise").array(), // e.g., ["healthcare", "education", "fintech", "agriculture"]
   // Diaspora profile (Phase 3)
   countryOfOrigin: text("country_of_origin"), // Separate from current residence country
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
+import { getAuthHeaders } from "@/lib/queryClient";
 import type { Notification } from "@shared/schema";
 
 interface CSRPWAHeaderProps {
@@ -58,7 +59,8 @@ export default function CSRPWAHeader({
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/notifications?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
       return response.ok ? response.json() : [];
     },
     enabled: !!userId,

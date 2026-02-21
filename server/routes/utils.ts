@@ -153,21 +153,21 @@ export function handleValidationError(err: unknown) {
 
 /**
  * Extract userId from request
- * @deprecated Use getVerifiedUserId from middleware/auth for secure extraction
+ * @deprecated Use getAuthenticatedUser() instead for secure extraction
  */
 export function extractUserId(req: Request): number | null {
-  // First check if user was authenticated via middleware
+  // SECURITY: Only use authenticated user from middleware
   if ((req as any).user?.id) {
     return (req as any).user.id;
   }
 
-  // Legacy fallback - log warning in development
+  // Legacy fallback - log warning, will be removed in future
   const userIdStr = (req.body as Record<string, any>).userId || (req.query.userId as string) || (req.headers['x-user-id'] as string);
   if (!userIdStr) return null;
   const userId = parseInt(userIdStr);
 
-  if (!isNaN(userId) && process.env.NODE_ENV !== 'production') {
-    console.warn(`[Security] Legacy userId extraction for ${userId}. Migrate to JWT authentication.`);
+  if (!isNaN(userId)) {
+    console.warn(`[Security] DEPRECATED: Legacy userId extraction for ${userId}. Migrate to JWT authentication.`);
   }
 
   return isNaN(userId) ? null : userId;

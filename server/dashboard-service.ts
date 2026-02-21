@@ -199,13 +199,15 @@ function calculateOrganizationImpactScore(params: {
   const sdgScore = maxSDGs > 0 ? (sdgCount / maxSDGs) * 100 : 0;
 
   // Updated weights (65% for hours + people as primary drivers): Hours 35%, Beneficiaries 30%, Tasks 20%, SDG 10%, Engagement 5%
-  return Math.round(
+  const score = Math.round(
     hoursScore * 0.35 +         // Hours contributed (35%)
     beneficiariesScore * 0.30 + // People/beneficiaries impacted - MAJOR DRIVER (30%)
     completionsScore * 0.20 +   // Task completion (20%)
     sdgScore * 0.10 +           // SDG coverage (10%)
     engagementScore * 0.05      // Volunteer engagement (5%)
   );
+
+  return Math.min(Math.max(score, 0), 100);
 }
 
 /**

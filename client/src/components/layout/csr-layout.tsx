@@ -25,6 +25,7 @@ import {
   Trash2,
 } from "lucide-react";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // Notification types
 interface Notification {
@@ -227,7 +228,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
     queryFn: async () => {
       if (!userId) return { notifications: [] };
       try {
-        const res = await fetch(`/api/csr/notifications?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/csr/notifications`, { headers, credentials: "include" });
         if (!res.ok) return { notifications: [] };
         return res.json();
       } catch {

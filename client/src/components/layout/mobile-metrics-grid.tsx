@@ -71,14 +71,14 @@ export default function MobileMetricsGrid({
       tooltip: "UN SDGs addressed"
     },
     {
-      label: isAIUEnabled ? "AIU Score" : "Impact Score",
+      label: "Impact Score",
       value: typeof aiuEarned === 'number' ? formatDecimal(aiuEarned) : aiuEarned,
-      subValue: `${totalHours.toLocaleString()}h total`,
+      subValue: `${totalHours.toLocaleString()} verified`,
       icon: Award,
       color: "#0ea5e9",
       onClick: onTotalHoursClick,
       testId: "mobile-metric-impact",
-      tooltip: isAIUEnabled ? "Attributable Impact Units" : "Verified social impact score"
+      tooltip: "Verified social impact score"
     },
   ];
 

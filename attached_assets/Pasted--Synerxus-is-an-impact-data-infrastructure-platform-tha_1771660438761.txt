@@ -1,0 +1,10 @@
+**Synerxus** is an impact data infrastructure platform that operates as a "CSRD Impact Assurance Engine". It is designed to solve the verification crisis in corporate volunteering by replacing self-reported volunteer hours with ground-truth outcomes that are directly confirmed by non-governmental organizations (NGOs).
+
+Here is exactly what Synerxus does through its unified, single-codebase platform:
+
+*   **4-Factor Volunteer Matching:** The platform connects corporate volunteers to specific NGO needs based on four precise criteria: professional skill alignment, industry sector relevance, geographic proximity, and UN Sustainable Development Goal (SDG) mapping.
+*   **Real-Time Impact Verification:** When a volunteer completes a task, they log the outcome description in the system. The receiving NGO then gets a notification and confirms the delivered outcome with a single tap. Crucially, this workflow is designed to be "SMS-first," allowing it to function in low-connectivity environments to include NGOs in the Global South, which are often excluded by existing corporate platforms.
+*   **Audit-Ready ESG Reporting:** Upon NGO confirmation, Synerxus generates an immutable audit trail that captures the user, timestamp, device ID, and geolocation. This transforms volunteer tracking into structured, third-party verified data that satisfies strict auditor requirements and new regulations, such as the European Union's Corporate Sustainability Reporting Directive (CSRD).
+*   **Value Generation for NGOs:** Rather than just creating administrative work for nonprofits, every verification automatically generates a branded "Verified Impact Summary" PDF. NGOs can use these verifiable summaries with their own donors, turning the verification process into a valuable fundraising asset. 
+
+Ultimately, Synerxus provides distinct role-optimized interfaces to serve three groups simultaneously: corporations receive audit-ready compliance dashboards, volunteers get curated project matches, and NGOs gain frictionless verification workflows.

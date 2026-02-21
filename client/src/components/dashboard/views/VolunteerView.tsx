@@ -275,7 +275,7 @@ export default function VolunteerView({
                   </div>
                   <div>
                     <p className="text-3xl font-bold text-white">{stats.totalPeopleImpacted}</p>
-                    <p className="text-xs text-indigo-200">People Helped</p>
+                    <p className="text-xs text-indigo-200">Verified Outcomes</p>
                   </div>
                 </div>
               </button>

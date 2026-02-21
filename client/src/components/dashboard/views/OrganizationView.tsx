@@ -269,7 +269,7 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{project.totalHours}h</p>
-          <p className="text-xs text-muted-foreground">Hours</p>
+          <p className="text-xs text-muted-foreground">Verified Outcomes</p>
         </div>
       </div>
 

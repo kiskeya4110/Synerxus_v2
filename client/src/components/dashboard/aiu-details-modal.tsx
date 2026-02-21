@@ -147,11 +147,11 @@ export default function AIUDetailsModal({
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div className="bg-emerald-500/20 rounded-lg p-2 text-center border border-emerald-500/30">
                       <p className="text-lg font-bold text-emerald-400">{formatDecimal(verifiedHours)}</p>
-                      <p className="text-[10px] text-emerald-400">Verified Hours</p>
+                      <p className="text-[10px] text-emerald-400">Verified Outcomes</p>
                     </div>
                     <div className="bg-amber-500/20 rounded-lg p-2 text-center border border-amber-500/30">
                       <p className="text-lg font-bold text-amber-400">{formatDecimal(pendingHours)}</p>
-                      <p className="text-[10px] text-amber-400">Pending Approval</p>
+                      <p className="text-[10px] text-amber-400">Pending Verification</p>
                     </div>
                   </div>
                 )}

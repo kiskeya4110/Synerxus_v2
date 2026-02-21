@@ -210,7 +210,7 @@ export default function ProjectCard({
             <Clock className="h-3 w-3 text-blue-500" />
             <span className="text-sm font-bold text-blue-600">{hoursLogged}</span>
           </div>
-          <span className="text-[10px] text-muted-foreground">Hours</span>
+          <span className="text-[10px] text-muted-foreground">Verified Outcomes</span>
         </div>
         <div className="text-center border-l border-stone-200">
           <div className="flex items-center justify-center gap-1">

@@ -350,10 +350,10 @@ export default function OrganizationPWAHeader({
                 <div className="flex items-center justify-center gap-3 mt-2 text-xs">
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="font-medium text-slate-700">{metrics.totalAiu?.toLocaleString() || 0} {isAIUEnabled ? 'AIU' : 'Impact'}</span>
+                    <span className="font-medium text-stone-700">{metrics.totalAiu?.toLocaleString() || 0} Impact Score</span>
                   </div>
-                  <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
-                    <span className="font-medium text-slate-700">{metrics.totalHours?.toLocaleString() || 0} Hrs</span>
+                  <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-stone-200">
+                    <span className="font-medium text-stone-700">{metrics.totalHours?.toLocaleString() || 0} Verified Outcomes</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-white rounded-full border border-slate-200">
                     <Target className="w-3 h-3 text-teal-500" />

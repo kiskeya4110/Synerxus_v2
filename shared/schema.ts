@@ -350,7 +350,7 @@ export const volunteerOrganizationRelationships = pgTable("volunteer_organizatio
   totalApplications: integer("total_applications").default(1), // Number of applications to this org
   totalProjectsCompleted: integer("total_projects_completed").default(0),
   totalHoursContributed: integer("total_hours_contributed").default(0),
-  totalAiuEarned: doublePrecision("total_aiu_earned").default(0),
+  totalAiuEarned: doublePrecision("total_aiu_earned").default(0), // Attributable Impact Units - reserved for full platform
   isActive: boolean("is_active").default(true), // Currently engaged with organization
   notes: text("notes"), // Organization notes about volunteer relationship
   createdAt: timestamp("created_at").defaultNow().notNull(),

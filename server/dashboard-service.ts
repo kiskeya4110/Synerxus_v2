@@ -95,7 +95,7 @@ function buildMonthlyImpactSeries(
   scopedActivities: any[],
   scopedImpacts: any[],
   peopleMetricIds: Set<number>,
-  totalAiu: number = 0 // Server-calculated total AIU to distribute proportionally
+  totalAiu: number = 0 // Server-calculated total Attributable Impact Units to distribute proportionally
 ): MonthlyImpactSeries {
   // OPTIMIZATION: Single pass - group activities and impacts by month instead of filtering multiple times
   const activitiesByMonth: Record<string, any[]> = {};

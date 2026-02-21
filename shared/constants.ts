@@ -239,16 +239,14 @@ export const FEATURE_FLAGS = {
   /**
    * Controls visibility of AIU (Attributable Impact Units) in the UI
    * When FALSE (Shadow Mode):
-   * - AIU calculations continue running in the background
-   * - AIU data is saved to the database for internal use
+   * - AIU tracking is reserved for the full platform and NOT included in this pilot
+   * - AIU calculations continue running in the background for data validation
    * - AIU is hidden from all user-facing UI
-   * - AIU is excluded from API responses to prevent network inspection exposure
-   * - Generic "Social Value Estimate" or "Impact Score" may be shown instead
+   * - AIU is excluded from API responses
+   * - "Impact Score" is used as the primary metric instead
    *
    * When TRUE:
-   * - Full AIU display is enabled
-   * - All AIU-related UI components are visible
-   * - API responses include AIU data
+   * - Full AIU display is enabled (Reserved for future release)
    */
   ENABLE_AIU_DISPLAY: false,
 } as const;

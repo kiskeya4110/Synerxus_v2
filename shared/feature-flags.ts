@@ -55,7 +55,7 @@ export function getFeatureFlag(flagName: keyof typeof FEATURE_FLAGS): boolean {
 export const SHADOW_MODE_LABELS = {
   // Replace "AIU" with these generic terms
   AIU_REPLACEMENT: 'Impact Score',
-  AIU_FULL_NAME_REPLACEMENT: 'Verified Social Impact',
+  AIU_FULL_NAME_REPLACEMENT: 'Impact Score',
   AIU_DESCRIPTION: 'A measure of your verified contribution to social and environmental outcomes',
 
   // Alternative metric labels

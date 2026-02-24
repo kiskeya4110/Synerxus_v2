@@ -1142,10 +1142,10 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
         volunteerId: activity.userId,
         ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
         userAgent: req.headers['user-agent'] || undefined,
-        geolocation: activity.geolocation || undefined,
+        geolocation: typeof activity.geolocation === 'string' ? activity.geolocation : undefined,
         evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
       };
-      await storage.createVerificationAuditLog?.(auditEntry);
+      await (storage as any).createVerificationAuditLog?.(auditEntry);
     } catch (auditErr) {
       console.error("[Audit] Failed to write audit log for activity approval:", auditErr);
       // Don't fail the approval if audit log fails - log and continue
@@ -1360,7 +1360,7 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
         ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
         userAgent: req.headers['user-agent'] || undefined,
       };
-      await storage.createVerificationAuditLog?.(auditEntry);
+      await (storage as any).createVerificationAuditLog?.(auditEntry);
     } catch (auditErr) {
       console.error("[Audit] Failed to write audit log for activity rejection:", auditErr);
     }

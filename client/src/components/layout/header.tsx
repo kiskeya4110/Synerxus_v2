@@ -46,6 +46,7 @@ import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import Logo from "@/components/ui/logo";
 import { queryClient, getAuthHeaders } from "@/lib/queryClient";
+import type { User as DBUser } from "@shared/schema";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -101,7 +102,7 @@ export default function Header() {
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   // Fetch current user via the default authenticated query function
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me"],
     enabled: !!userId,
   });

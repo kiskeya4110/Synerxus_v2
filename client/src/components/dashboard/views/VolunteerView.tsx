@@ -83,6 +83,8 @@ const VolunteerView = memo(function VolunteerView({
       }
     },
     enabled: !!userId,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   });
 
   // Fetch projects
@@ -99,6 +101,8 @@ const VolunteerView = memo(function VolunteerView({
       }
     },
     enabled: !!userId,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Derive all logs from dashboard data (activities are included in the dashboard response)
@@ -160,6 +164,8 @@ const VolunteerView = memo(function VolunteerView({
     },
     enabled: !!userId,
     retry: 1,
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
   });
 
   // Calculate stats from server dashboard data

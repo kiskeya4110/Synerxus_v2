@@ -106,6 +106,8 @@ const CorporateView = memo(function CorporateView({
     },
     enabled: !!userId,
     refetchInterval: 60000,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   });
 
   const outcomes = outcomesData?.logs || [];

@@ -5,19 +5,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { getSDGColor } from "@/lib/sdg-utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EditProjectDialog, DeleteProjectDialog } from "./project-dialogs";
 import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "./task-dialogs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { Project, Task } from "@shared/schema";
 
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A"
-};
 
 // Helper to get engagement level color
 const getEngagementColor = (score: number) => {
@@ -62,7 +56,7 @@ export const ProjectListCard = memo(function ProjectListCard({
   const sdgGoals = (project as any).sdgGoals || [];
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-200 overflow-hidden border-l-4" style={{ borderLeftColor: primarySdg ? SDG_COLORS[primarySdg] : '#6366f1' }}>
+    <Card className="hover:shadow-lg transition-all duration-200 overflow-hidden border-l-4" style={{ borderLeftColor: primarySdg ? getSDGColor(primarySdg) : '#6366f1' }}>
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CardHeader className="pb-3">
           {/* Top Row: Title, Status, Actions */}
@@ -201,7 +195,7 @@ export const ProjectListCard = memo(function ProjectListCard({
                   <div
                     key={sdg}
                     className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: SDG_COLORS[sdg] }}
+                    style={{ backgroundColor: getSDGColor(sdg) }}
                     title={`SDG ${sdg}`}
                   >
                     {sdg}

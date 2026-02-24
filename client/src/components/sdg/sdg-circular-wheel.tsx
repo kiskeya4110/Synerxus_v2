@@ -2,49 +2,9 @@ import { useState } from "react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDGDetailDialog } from "@/components/sdg/sdg-detail-dialog";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 import synerxusLogo from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
-// Official UN SDG Colors
-const SDG_COLORS: Record<number, string> = {
-  1: "#E5243B",  // No Poverty
-  2: "#DDA63A",  // Zero Hunger
-  3: "#4C9F38",  // Good Health
-  4: "#C5192D",  // Quality Education
-  5: "#FF3A21",  // Gender Equality
-  6: "#26BDE2",  // Clean Water
-  7: "#FCC30B",  // Affordable Energy
-  8: "#A21942",  // Decent Work
-  9: "#FD6925",  // Industry Innovation
-  10: "#DD1367", // Reduced Inequalities
-  11: "#FD9D24", // Sustainable Cities
-  12: "#BF8B2E", // Responsible Consumption
-  13: "#3F7E44", // Climate Action
-  14: "#0A97D9", // Life Below Water
-  15: "#56C02B", // Life on Land
-  16: "#00689D", // Peace Justice
-  17: "#19486A", // Partnerships
-};
-
-// Short labels for the wheel
-const SDG_SHORT_LABELS: Record<number, string> = {
-  1: "NO POVERTY",
-  2: "ZERO HUNGER",
-  3: "GOOD HEALTH",
-  4: "EDUCATION",
-  5: "GENDER EQUALITY",
-  6: "CLEAN WATER",
-  7: "CLEAN ENERGY",
-  8: "DECENT WORK",
-  9: "INNOVATION",
-  10: "REDUCED INEQUALITY",
-  11: "SUSTAINABLE CITIES",
-  12: "RESPONSIBLE CONSUMPTION",
-  13: "CLIMATE ACTION",
-  14: "LIFE BELOW WATER",
-  15: "LIFE ON LAND",
-  16: "PEACE & JUSTICE",
-  17: "PARTNERSHIPS",
-};
 
 interface SDGCircularWheelProps {
   scale?: number; // 1.0 = default, 1.5 = 150% larger, etc.
@@ -126,7 +86,7 @@ export function SDGCircularWheel({ scale = 1.0 }: SDGCircularWheelProps = {}) {
                     {/* Wedge */}
                     <path
                       d={createWedgePath(index)}
-                      fill={SDG_COLORS[sdg.id] || sdg.color}
+                      fill={getSDGColor(sdg.id)}
                       stroke="white"
                       strokeWidth="2"
                       className="cursor-pointer transition-all duration-200"
@@ -263,12 +223,12 @@ export function SDGCircularWheel({ scale = 1.0 }: SDGCircularWheelProps = {}) {
                   ) : (
                     <div
                       className="absolute inset-0 flex flex-col items-center justify-center p-2 text-white"
-                      style={{ backgroundColor: SDG_COLORS[sdg.id] || sdg.color }}
+                      style={{ backgroundColor: getSDGColor(sdg.id) }}
                     >
                       <div className="text-2xl mb-1">{getSDGEmoji(sdg.id)}</div>
                       <div className="text-lg font-bold">{sdg.id}</div>
                       <div className="text-[10px] font-semibold text-center leading-tight">
-                        {SDG_SHORT_LABELS[sdg.id]}
+                        {getSDGName(sdg.id).toUpperCase()}
                       </div>
                     </div>
                   )}

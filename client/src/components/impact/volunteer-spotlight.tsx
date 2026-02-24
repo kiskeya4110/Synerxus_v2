@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Clock, Award, Target } from "lucide-react";
-import { getSDGName } from "@shared/sdg-goals";
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
 interface VolunteerSpotlightProps {
   volunteer: {
@@ -23,14 +23,6 @@ interface VolunteerSpotlightProps {
   variant?: "compact" | "full";
 }
 
-// SDG Colors for badges
-const SDG_COLORS: Record<number, string> = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A",
-};
 
 export function VolunteerSpotlight({
   volunteer,
@@ -164,7 +156,7 @@ export function VolunteerSpotlight({
                   key={sdgId}
                   variant="secondary"
                   className="text-white text-xs px-2 py-0.5"
-                  style={{ backgroundColor: SDG_COLORS[sdgId] || "#6b7280" }}
+                  style={{ backgroundColor: getSDGColor(sdgId) }}
                 >
                   SDG {sdgId}
                 </Badge>

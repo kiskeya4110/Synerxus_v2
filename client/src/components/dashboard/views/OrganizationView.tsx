@@ -432,6 +432,8 @@ const OrganizationView = memo(function OrganizationView({
       return response.json();
     },
     enabled: !!userId && !!activeUser?.organizationId,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   });
 
   // Fetch pending verifications
@@ -447,6 +449,8 @@ const OrganizationView = memo(function OrganizationView({
       return response.json();
     },
     enabled: !!activeUser?.organizationId,
+    staleTime: 15_000,
+    gcTime: 2 * 60_000,
   });
 
   // Fetch projects
@@ -460,6 +464,8 @@ const OrganizationView = memo(function OrganizationView({
       return response.json();
     },
     enabled: !!activeUser?.organizationId,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Fetch volunteers
@@ -473,6 +479,8 @@ const OrganizationView = memo(function OrganizationView({
       return response.json();
     },
     enabled: !!activeUser?.organizationId,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Process pending items
@@ -538,7 +546,17 @@ const OrganizationView = memo(function OrganizationView({
       return Array.isArray(logs) ? logs : [];
     },
     enabled: !!activeUser?.organizationId,
+    staleTime: 15_000,
+    gcTime: 5 * 60_000,
   });
+
+  // Pre-compute filter counts once (avoids repeated .filter() inside render)
+  const logFilterCounts = useMemo(() => ({
+    all: allOrgLogs.length,
+    pending: allOrgLogs.filter((l: any) => l.verificationStatus === 'pending').length,
+    verified: allOrgLogs.filter((l: any) => l.verificationStatus === 'approved').length,
+    rejected: allOrgLogs.filter((l: any) => l.verificationStatus === 'rejected').length,
+  }), [allOrgLogs]);
 
   // Filtered + sorted logs for history view
   const filteredHistoryLogs = useMemo(() => {
@@ -924,13 +942,7 @@ const OrganizationView = memo(function OrganizationView({
       {/* Filter Pills - compact */}
       <div className="flex gap-1.5">
         {(['all', 'pending', 'verified', 'rejected'] as const).map((filter) => {
-          const count = filter === 'pending'
-            ? allOrgLogs.filter((l: any) => l.verificationStatus === 'pending').length
-            : filter === 'verified'
-              ? allOrgLogs.filter((l: any) => l.verificationStatus === 'approved').length
-              : filter === 'rejected'
-                ? allOrgLogs.filter((l: any) => l.verificationStatus === 'rejected').length
-                : allOrgLogs.length;
+          const count = logFilterCounts[filter];
           return (
             <button
               key={filter}

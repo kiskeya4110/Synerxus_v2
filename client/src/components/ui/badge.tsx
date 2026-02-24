@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils"
 
 const badgeVariants = cva(
   "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -74,45 +75,6 @@ interface SDGBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "default" | "lg"
 }
 
-const SDG_COLORS: Record<number, string> = {
-  1: "#E5243B",   // No Poverty
-  2: "#DDA63A",   // Zero Hunger
-  3: "#4C9F38",   // Good Health
-  4: "#C5192D",   // Quality Education
-  5: "#FF3A21",   // Gender Equality
-  6: "#26BDE2",   // Clean Water
-  7: "#FCC30B",   // Affordable Energy
-  8: "#A21942",   // Decent Work
-  9: "#FD6925",   // Industry Innovation
-  10: "#DD1367", // Reduced Inequalities
-  11: "#FD9D24", // Sustainable Cities
-  12: "#BF8B2E", // Responsible Consumption
-  13: "#3F7E44", // Climate Action
-  14: "#0A97D9", // Life Below Water
-  15: "#56C02B", // Life on Land
-  16: "#00689D", // Peace Justice
-  17: "#19486A", // Partnerships
-}
-
-const SDG_NAMES: Record<number, string> = {
-  1: "No Poverty",
-  2: "Zero Hunger",
-  3: "Good Health",
-  4: "Quality Education",
-  5: "Gender Equality",
-  6: "Clean Water",
-  7: "Affordable Energy",
-  8: "Decent Work",
-  9: "Industry Innovation",
-  10: "Reduced Inequalities",
-  11: "Sustainable Cities",
-  12: "Responsible Consumption",
-  13: "Climate Action",
-  14: "Life Below Water",
-  15: "Life on Land",
-  16: "Peace Justice",
-  17: "Partnerships",
-}
 
 function SDGBadge({ sdg, showNumber = true, size = "default", className, ...props }: SDGBadgeProps) {
   const sizeClasses = {
@@ -128,12 +90,12 @@ function SDGBadge({ sdg, showNumber = true, size = "default", className, ...prop
         sizeClasses[size],
         className
       )}
-      style={{ backgroundColor: SDG_COLORS[sdg] }}
-      title={SDG_NAMES[sdg]}
+      style={{ backgroundColor: getSDGColor(sdg) }}
+      title={getSDGName(sdg)}
       {...props}
     >
       {showNumber && <span>SDG {sdg}</span>}
-      {!showNumber && <span>{SDG_NAMES[sdg]}</span>}
+      {!showNumber && <span>{getSDGName(sdg)}</span>}
     </div>
   )
 }
@@ -162,4 +124,4 @@ function StatusBadge({ status, size = "default", className, ...props }: StatusBa
   )
 }
 
-export { Badge, badgeVariants, SDGBadge, StatusBadge, SDG_COLORS, SDG_NAMES }
+export { Badge, badgeVariants, SDGBadge, StatusBadge }

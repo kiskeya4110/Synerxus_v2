@@ -218,7 +218,8 @@
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/organizations ===\")",
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/volunteer-activities ===\")",
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/opportunities ===\")",
-      "Bash(find /home/runner/workspace/client/src/components/ -type f -name \"*.tsx\" -o -name \"*.ts\" | while read f; do wc -l \"$f\"; done | sort -rn | head -10)"
+      "Bash(find /home/runner/workspace/client/src/components/ -type f -name \"*.tsx\" -o -name \"*.ts\" | while read f; do wc -l \"$f\"; done | sort -rn | head -10)",
+      "Bash(git add client/src/App.tsx client/src/components/layout/sidebar.tsx client/src/pages/admin-pilot-dashboard.tsx && git commit -m \"$\\(cat <<'EOF'\nAdd admin pilot dashboard for site administrator\n\n- New standalone page at /admin/pilot-dashboard with full MVP pilot\n  metrics: verification health by country, action queue, live feed,\n  corporate pilots, and audit trail integrity\n- Sidebar shows \"Admin > Pilot Dashboard\" link only when isAdmin=true\n- Admin guard redirects non-admin users back to /dashboard\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []

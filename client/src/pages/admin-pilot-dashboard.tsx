@@ -13,6 +13,7 @@ interface VerificationCountry {
   country: string;
   rate: number;
   outcomes: number;
+  pending: number;
   hours: number;
   silentNGOs: number;
   orgCount: number;
@@ -35,7 +36,7 @@ interface CorporatePilot {
   outcomes: number;
   hours: number;
   countries: number;
-  beneficiaries: number;
+  employees: number;
   status: "active" | "pilot" | "onboarding";
   health: "good" | "warning" | "new";
 }
@@ -86,7 +87,7 @@ function ProgressRing({ value, target = 80, size = 100 }: { value: number; targe
       </svg>
       <div className="absolute flex flex-col items-center">
         <span className="text-2xl font-bold text-white">{value}%</span>
-        <span className="text-xs text-cyan-100">avg rate</span>
+        <span className="text-xs text-cyan-100">overall</span>
       </div>
     </div>
   );
@@ -186,16 +187,25 @@ function CountryRow({ data }: { data: VerificationCountry }) {
     <div className={`flex items-center gap-3 p-4 rounded-xl border ${style.border} ${style.bg} hover:shadow-sm transition-all`}>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-slate-800 text-sm">{data.country}</div>
-        <div className="text-xs text-slate-500">{data.silentNGOs} silent NGO{data.silentNGOs !== 1 ? 's' : ''} · {data.orgCount} total</div>
+        <div className="text-xs text-slate-500">
+          {data.orgCount > 0 ? `${data.orgCount} NGO${data.orgCount !== 1 ? 's' : ''}` : ''}
+          {data.silentNGOs > 0 ? ` · ${data.silentNGOs} silent` : ''}
+        </div>
       </div>
       <div className="text-center px-3 flex-shrink-0">
         <div className={`text-xl font-bold ${style.text}`}>{data.rate}%</div>
-        <div className="text-xs text-slate-500">verify rate</div>
+        <div className="text-xs text-slate-500">verified</div>
       </div>
       <div className="text-center px-3 border-l border-slate-200 flex-shrink-0">
-        <div className="text-lg font-semibold text-slate-700">{data.outcomes}</div>
-        <div className="text-xs text-slate-500">outcomes</div>
+        <div className="text-lg font-semibold text-emerald-700">{data.outcomes}</div>
+        <div className="text-xs text-slate-500">approved</div>
       </div>
+      {data.pending > 0 && (
+        <div className="text-center px-3 border-l border-slate-200 flex-shrink-0">
+          <div className="text-lg font-semibold text-violet-600">{data.pending}</div>
+          <div className="text-xs text-slate-500">pending</div>
+        </div>
+      )}
       <div className="text-center px-3 border-l border-slate-200 flex-shrink-0">
         <div className="text-lg font-semibold text-slate-700">{data.hours}h</div>
         <div className="text-xs text-slate-500">hours</div>
@@ -238,8 +248,8 @@ function PilotCard({ pilot }: { pilot: CorporatePilot }) {
           <div className="text-xs text-slate-500">hours</div>
         </div>
         <div>
-          <div className="text-xl font-bold text-slate-800">{pilot.beneficiaries.toLocaleString()}</div>
-          <div className="text-xs text-slate-500">beneficiaries</div>
+          <div className="text-xl font-bold text-slate-800">{pilot.employees}</div>
+          <div className="text-xs text-slate-500">employees</div>
         </div>
       </div>
       {pilot.outcomes > 0 && (

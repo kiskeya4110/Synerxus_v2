@@ -1347,18 +1347,19 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       projectOrgMap.set(p.id, p.organization_id);
     }
 
-    // Map activities to orgs
-    const orgActivityMap = new Map<number, { total: number; verified: number; lastVerified: Date | null; pending: number }>();
+    // Map activities to orgs (SENTINEL_ORG_ID=0 for activities with no project/org)
+    const UNASSIGNED = 0;
+    const orgActivityMap = new Map<number, { total: number; verified: number; lastVerified: Date | null; pending: number; hours: number }>();
     for (const a of allActivities) {
-      const orgId = a.projectId ? projectOrgMap.get(a.projectId) : undefined;
-      if (!orgId) continue;
+      const orgId = (a.projectId ? projectOrgMap.get(a.projectId) : undefined) ?? UNASSIGNED;
       if (!orgActivityMap.has(orgId)) {
-        orgActivityMap.set(orgId, { total: 0, verified: 0, lastVerified: null, pending: 0 });
+        orgActivityMap.set(orgId, { total: 0, verified: 0, lastVerified: null, pending: 0, hours: 0 });
       }
       const entry = orgActivityMap.get(orgId)!;
       entry.total++;
       if (a.verificationStatus === 'approved') {
         entry.verified++;
+        entry.hours += (a.hours || 0);
         if (a.verifiedAt && (!entry.lastVerified || a.verifiedAt > entry.lastVerified)) {
           entry.lastVerified = a.verifiedAt;
         }
@@ -1367,20 +1368,23 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       }
     }
 
-    // Silent = has activities but no verification in past 14 days
+    // Silent = has activities but no verification in past 14 days (exclude unassigned bucket)
     let silentNGOCount = 0;
-    for (const stats of Array.from(orgActivityMap.values())) {
+    for (const [orgId, stats] of Array.from(orgActivityMap.entries())) {
+      if (orgId === UNASSIGNED) continue;
       if (stats.total > 0 && (!stats.lastVerified || stats.lastVerified < silentCutoff)) {
         silentNGOCount++;
       }
     }
 
     // --- Verification health by country ---
+    // Every activity is bucketed so country totals reconcile with stat cards
     const orgMap = new Map(allOrgs.map(o => [o.id, o]));
     interface CountryEntry {
       country: string;
       total: number;
       verified: number;
+      pending: number;
       hours: number;
       silentNGOs: number;
       orgIdSet: number[];
@@ -1388,26 +1392,18 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     const countryStats = new Map<string, CountryEntry>();
 
     for (const [orgId, stats] of Array.from(orgActivityMap.entries())) {
-      const org = orgMap.get(orgId);
-      const country = org?.country || 'Unknown';
+      const country = orgId === UNASSIGNED ? 'Unassigned' : (orgMap.get(orgId)?.country || 'Unknown');
       if (!countryStats.has(country)) {
-        countryStats.set(country, { country, total: 0, verified: 0, hours: 0, silentNGOs: 0, orgIdSet: [] });
+        countryStats.set(country, { country, total: 0, verified: 0, pending: 0, hours: 0, silentNGOs: 0, orgIdSet: [] });
       }
       const cs = countryStats.get(country)!;
       cs.total += stats.total;
       cs.verified += stats.verified;
-      if (!cs.orgIdSet.includes(orgId)) cs.orgIdSet.push(orgId);
-      if (!stats.lastVerified || stats.lastVerified < silentCutoff) cs.silentNGOs++;
-    }
-
-    // Add hours per country
-    for (const a of verifiedActivities) {
-      const orgId = a.projectId ? projectOrgMap.get(a.projectId) : undefined;
-      if (!orgId) continue;
-      const org = orgMap.get(orgId);
-      const country = org?.country || 'Unknown';
-      if (countryStats.has(country)) {
-        countryStats.get(country)!.hours += (a.hours || 0);
+      cs.pending += stats.pending;
+      cs.hours += stats.hours;
+      if (orgId !== UNASSIGNED) {
+        if (!cs.orgIdSet.includes(orgId)) cs.orgIdSet.push(orgId);
+        if (!stats.lastVerified || stats.lastVerified < silentCutoff) cs.silentNGOs++;
       }
     }
 
@@ -1415,6 +1411,7 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       country: cs.country,
       rate: cs.total > 0 ? Math.round((cs.verified / cs.total) * 100) : 0,
       outcomes: cs.verified,
+      pending: cs.pending,
       hours: Math.round(cs.hours),
       silentNGOs: cs.silentNGOs,
       orgCount: cs.orgIdSet.length,
@@ -1472,13 +1469,30 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     const partners = await storage.listCSRPartners();
     const engagements = await db.select().from(employeeEngagement);
 
+    // Build project→country map for engagement country counts
+    const allProjectsWithOrg = allProjects.rows as Array<{ id: number; organization_id: number }>;
+    const projectCountryMap = new Map<number, string>();
+    for (const p of allProjectsWithOrg) {
+      const org = orgMap.get(p.organization_id);
+      if (org?.country) projectCountryMap.set(p.id, org.country);
+    }
+
     const corporatePilots = partners.map(p => {
-      const pEngagements = engagements.filter(e => e.partnerId === p.id && e.completionStatus === 'completed');
-      const outcomes = pEngagements.length;
-      const hours = pEngagements.reduce((sum, e) => sum + (e.hoursVolunteered ?? 0), 0);
-      const countrySet = new Set<string>();
-      // Approximate beneficiaries = outcomes * avg impact factor
-      const beneficiaries = outcomes * 52;
+      const allPEngagements = engagements.filter(e => e.partnerId === p.id);
+      const completedEngagements = allPEngagements.filter(e => e.completionStatus === 'completed');
+      const outcomes = completedEngagements.length;
+      const hours = completedEngagements.reduce((sum, e) => sum + (e.hoursVolunteered ?? 0), 0);
+      // Count distinct countries from projects linked to this partner's engagements
+      const countryNames = new Set<string>();
+      for (const e of allPEngagements) {
+        if (e.projectId) {
+          const c = projectCountryMap.get(e.projectId);
+          if (c) countryNames.add(c);
+        }
+      }
+      // Count unique employees (by email) engaged with this partner
+      const uniqueEmployees = new Set(allPEngagements.map(e => e.employeeEmail)).size;
+
       let status: 'active' | 'pilot' | 'onboarding' = 'onboarding';
       if (outcomes >= 10) status = 'active';
       else if (outcomes >= 1) status = 'pilot';
@@ -1491,26 +1505,15 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
         name: p.companyName,
         outcomes,
         hours,
-        countries: countrySet.size,
-        beneficiaries,
+        countries: countryNames.size,
+        employees: uniqueEmployees,
         status,
         health,
       };
     });
 
     // --- Audit metrics ---
-    const auditRows = await db.select().from(verificationAuditLog).limit(500);
-    const totalAudit = auditRows.length;
-    const withTimestamp = auditRows.filter(r => r.createdAt).length;
-    const withGeolocation = auditRows.filter(r => r.geolocation && r.geolocation !== 'null').length;
-
-    // SDG mapping: activities with sdgTags set
-    const withSdg = verifiedActivities.filter(a => a.sdgTags && a.sdgTags.length > 0).length;
-    const sdgRate = verifiedActivities.length > 0
-      ? Math.round((withSdg / verifiedActivities.length) * 100)
-      : 0;
-
-    // Verification completeness
+    // Metric 1: Full audit trail completeness — verified activities with both outcome text AND hours
     const withBothFieldsCount = verifiedActivities.filter(a =>
       (a.outcomeText || a.outcomes) && a.hours
     ).length;
@@ -1518,11 +1521,37 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       ? Math.round((withBothFieldsCount / verifiedActivities.length) * 100)
       : 0;
 
+    // Metric 2: Verified within 72h of submission — measures NGO responsiveness
+    const seventyTwoHours = 72 * 60 * 60 * 1000;
+    const verifiedWithin72h = verifiedActivities.filter(a =>
+      a.verifiedAt && a.createdAt &&
+      (a.verifiedAt.getTime() - a.createdAt.getTime()) <= seventyTwoHours
+    ).length;
+    const within72hRate = verifiedActivities.length > 0
+      ? Math.round((verifiedWithin72h / verifiedActivities.length) * 100)
+      : 0;
+
+    // Metric 3: SDG auto-mapping — verified activities with sdgTags set
+    const withSdg = verifiedActivities.filter(a => a.sdgTags && a.sdgTags.length > 0).length;
+    const sdgRate = verifiedActivities.length > 0
+      ? Math.round((withSdg / verifiedActivities.length) * 100)
+      : 0;
+
+    // Metric 4: NGO identity verified — verified activities linked to a known org via their project
+    const withKnownOrg = verifiedActivities.filter(a => {
+      if (!a.projectId) return false;
+      const orgId = projectOrgMap.get(a.projectId);
+      return !!orgId && orgMap.has(orgId);
+    }).length;
+    const ngoIdentityRate = verifiedActivities.length > 0
+      ? Math.round((withKnownOrg / verifiedActivities.length) * 100)
+      : 0;
+
     const auditMetrics = [
       { label: "Full audit trail (outcome + hours)", value: completenessRate, target: 100 },
-      { label: "Timestamp accuracy (±5 min)", value: totalAudit > 0 ? Math.round((withTimestamp / totalAudit) * 100) : 100, target: 100 },
+      { label: "Verified within 72h of submission", value: within72hRate, target: 80 },
       { label: "SDG auto-mapping", value: sdgRate, target: 100 },
-      { label: "NGO identity verified", value: 100, target: 100 },
+      { label: "NGO identity verified", value: ngoIdentityRate, target: 100 },
     ];
 
     // --- Overall verification rate ---

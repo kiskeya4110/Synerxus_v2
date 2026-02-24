@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { 
-  Home, 
-  CheckSquare, 
-  Users, 
-  Building2, 
-  PieChart, 
-  Globe, 
+import {
+  Home,
+  CheckSquare,
+  Users,
+  Building2,
+  PieChart,
+  Globe,
   Calendar,
   LayoutList,
   Smartphone,
@@ -21,7 +21,8 @@ import {
   FileText,
   Mail,
   Award,
-  Trophy
+  Trophy,
+  ShieldCheck
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -240,6 +241,29 @@ export default function Sidebar() {
                 </div>
               </div>
             ))}
+            {currentUser?.isAdmin && (
+              <div className="mt-4 pt-3 border-t border-stone-100">
+                <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-stone-400">
+                  Admin
+                </p>
+                <div className="space-y-0.5">
+                  <Link
+                    href="/admin/pilot-dashboard"
+                    className={cn(
+                      "flex items-center px-3 py-3 min-h-[44px] text-sm font-medium rounded-lg transition-colors",
+                      location === "/admin/pilot-dashboard"
+                        ? "bg-primary-50 text-primary-700"
+                        : "text-stone-700 hover:bg-stone-100"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                    data-testid="nav-admin-pilot-dashboard"
+                  >
+                    <ShieldCheck className="w-5 h-5 sm:w-4 sm:h-4 mr-3" />
+                    <span className="truncate">Pilot Dashboard</span>
+                  </Link>
+                </div>
+              </div>
+            )}
         </nav>
       </aside>
 

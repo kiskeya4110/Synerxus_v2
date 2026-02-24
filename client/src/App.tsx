@@ -59,6 +59,9 @@ const VolunteerProfileSettings = lazy(() => import("@/pages/volunteer-profile-se
 const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
 const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
 
+// Admin pages
+const AdminPilotDashboard = lazy(() => import("@/pages/admin-pilot-dashboard"));
+
 // Legal pages
 const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
@@ -205,6 +208,11 @@ export default function App() {
           <Route path="/csr-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
           <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
+
+          {/* ================================================================ */}
+          {/* ADMIN ROUTES */}
+          {/* ================================================================ */}
+          <Route path="/admin/pilot-dashboard" component={AdminPilotDashboard} />
 
           {/* ================================================================ */}
           {/* UTILITY ROUTES */}

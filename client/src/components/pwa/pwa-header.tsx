@@ -37,8 +37,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch('/api/users/me', { headers, credentials: 'include' });
       return response.ok ? response.json() : null;
     },
     enabled: !!userId
@@ -356,7 +356,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
     { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
     // Admin dashboard - only shown for admin users (uses PWA version on mobile)
-    ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Admin Dashboard", path: "/admin/dashboard/pwa", isAdmin: true }] : []),
+    ...(currentUser?.isAdmin ? [{ icon: Shield, label: "Pilot Dashboard", path: "/admin/pilot-dashboard", isAdmin: true }] : []),
   ];
 
   return (

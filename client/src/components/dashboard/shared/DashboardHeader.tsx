@@ -460,7 +460,7 @@ export default function DashboardHeader({
               ))}
 
               {/* Admin Section */}
-              {(dbUser as any)?.isAdmin && (
+              {dbUser?.isAdmin && (
                 <div className="py-2 border-t border-slate-200 mt-2">
                   <p className="px-4 py-2 text-[10px] font-bold text-cyan-500 uppercase tracking-wider">
                     Admin

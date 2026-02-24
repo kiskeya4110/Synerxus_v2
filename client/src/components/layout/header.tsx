@@ -555,7 +555,7 @@ export default function Header() {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
-                {(currentUser as any)?.isAdmin && (
+                {currentUser?.isAdmin && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

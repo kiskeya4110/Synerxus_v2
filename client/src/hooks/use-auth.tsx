@@ -18,6 +18,7 @@ interface DbUser {
   displayName: string;
   username: string;
   userType: string;
+  isAdmin: boolean;
   profileImageUrl?: string;
   createdAt: string;
 }

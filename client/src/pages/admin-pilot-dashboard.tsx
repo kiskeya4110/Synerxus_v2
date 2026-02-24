@@ -290,7 +290,7 @@ export default function AdminPilotDashboard() {
       if (!res.ok) throw new Error("Failed to load dashboard data");
       return res.json();
     },
-    enabled: !authLoading && !!dbUser && !!(dbUser as any).isAdmin,
+    enabled: !authLoading && !!dbUser && !!dbUser.isAdmin,
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
@@ -303,7 +303,7 @@ export default function AdminPilotDashboard() {
     );
   }
 
-  if (dbUser && !(dbUser as any).isAdmin) {
+  if (dbUser && !dbUser.isAdmin) {
     navigate("/dashboard");
     return null;
   }

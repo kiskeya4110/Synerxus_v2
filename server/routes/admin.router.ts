@@ -5,8 +5,8 @@ import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest 
 import OpenAI from "openai";
 import { queueMiddleware } from "../request-queue";
 import { db } from "../db";
-import { volunteerActivities, organizations, users, csrPartners, employeeEngagement, verificationAuditLog } from "@shared/schema";
-import { eq, and, desc, sql, count, gte, lt, isNull, isNotNull } from "drizzle-orm";
+import { volunteerActivities, organizations, employeeEngagement } from "@shared/schema";
+import { sql, gte } from "drizzle-orm";
 import { DATA_CUTOFF } from "@shared/constants";
 
 export const adminRouter = Router();

@@ -178,16 +178,9 @@ export default function LogActivity() {
     return getDeviceFingerprint();
   });
 
-  // Fetch current user
-  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
+  // Fetch current user via the default authenticated query function
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me", storedUserId],
-    queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
-      return response.json();
-    },
+    queryKey: ["/api/users/me"],
   });
 
   // Fetch all projects for this user

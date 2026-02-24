@@ -37,15 +37,10 @@ export default function Sidebar() {
   const isMobile = useIsMobile();
   const userId = useCurrentUserId();
 
-  // Fetch current user to determine role
+  // Fetch current user via the default authenticated query function
   const { data: currentUser, isError: isUserError, refetch: refetchUser } = useQuery<User>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
-      const response = await fetch(url);
-      return response.json();
-    },
-    enabled: !!userId
+    queryKey: ["/api/users/me"],
+    enabled: !!userId,
   });
 
   // Close sidebar when clicking outside (on all screen sizes now)

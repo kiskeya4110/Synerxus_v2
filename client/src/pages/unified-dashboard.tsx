@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
@@ -11,16 +11,23 @@ import Footer from "@/components/layout/footer";
 import DashboardHeader from "@/components/dashboard/shared/DashboardHeader";
 import DashboardMobileNav from "@/components/dashboard/shared/DashboardMobileNav";
 
-// Role-Specific View Components
-import VolunteerView from "@/components/dashboard/views/VolunteerView";
-import OrganizationView from "@/components/dashboard/views/OrganizationView";
-import CorporateView from "@/components/dashboard/views/CorporateView";
+// Role-Specific View Components (lazy-loaded - only the relevant view is downloaded)
+const VolunteerView = lazy(() => import("@/components/dashboard/views/VolunteerView"));
+const OrganizationView = lazy(() => import("@/components/dashboard/views/OrganizationView"));
+const CorporateView = lazy(() => import("@/components/dashboard/views/CorporateView"));
 
 // Hooks
 import { useAuth } from "@/hooks/use-auth";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import { LoadingState, ErrorState } from "@/components/ui/empty-state";
 import { getAuthHeaders } from "@/lib/queryClient";
+
+// Loading fallback for lazy-loaded views
+const ViewLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]" />
+  </div>
+);
 
 /**
  * UnifiedDashboard - Single entry point that renders role-appropriate content
@@ -176,35 +183,41 @@ export default function UnifiedDashboard() {
         {/* Spacer for sticky header */}
         <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
-        {/* Role-specific content - only one renders */}
+        {/* Role-specific content - only one renders, each lazy-loaded */}
         {userType === 'volunteer' && (
-          <VolunteerView
-            userId={userId}
-            isMobile={true}
-            activeUser={activeUser}
-            mobileTab={mobileTab}
-            setMobileTab={setMobileTab}
-          />
+          <Suspense fallback={<ViewLoader />}>
+            <VolunteerView
+              userId={userId}
+              isMobile={true}
+              activeUser={activeUser}
+              mobileTab={mobileTab}
+              setMobileTab={setMobileTab}
+            />
+          </Suspense>
         )}
 
         {userType === 'organization' && (
-          <OrganizationView
-            userId={userId}
-            isMobile={true}
-            activeUser={activeUser}
-            organization={organization}
-            orgTab={orgTab}
-            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
-          />
+          <Suspense fallback={<ViewLoader />}>
+            <OrganizationView
+              userId={userId}
+              isMobile={true}
+              activeUser={activeUser}
+              organization={organization}
+              orgTab={orgTab}
+              setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
+            />
+          </Suspense>
         )}
 
         {userType === 'corporate-partner' && (
-          <CorporateView
-            userId={userId}
-            isMobile={true}
-            activeUser={activeUser}
-            isRefreshing={isRefreshing}
-          />
+          <Suspense fallback={<ViewLoader />}>
+            <CorporateView
+              userId={userId}
+              isMobile={true}
+              activeUser={activeUser}
+              isRefreshing={isRefreshing}
+            />
+          </Suspense>
         )}
 
         {/* Shared Bottom Nav - adapts based on userType */}
@@ -232,35 +245,41 @@ export default function UnifiedDashboard() {
       {userType === 'organization' && <OrganizationNav />}
       {userType === 'corporate-partner' && <VolunteerNav />} {/* Corporate uses simpler nav */}
 
-      {/* Role-specific content - only one renders */}
+      {/* Role-specific content - only one renders, each lazy-loaded */}
       {userType === 'volunteer' && (
-        <VolunteerView
-          userId={userId}
-          isMobile={false}
-          activeUser={activeUser}
-          mobileTab={mobileTab}
-          setMobileTab={setMobileTab}
-        />
+        <Suspense fallback={<ViewLoader />}>
+          <VolunteerView
+            userId={userId}
+            isMobile={false}
+            activeUser={activeUser}
+            mobileTab={mobileTab}
+            setMobileTab={setMobileTab}
+          />
+        </Suspense>
       )}
 
       {userType === 'organization' && (
-        <OrganizationView
-          userId={userId}
-          isMobile={false}
-          activeUser={activeUser}
-          organization={organization}
-          orgTab={orgTab}
-          setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
-        />
+        <Suspense fallback={<ViewLoader />}>
+          <OrganizationView
+            userId={userId}
+            isMobile={false}
+            activeUser={activeUser}
+            organization={organization}
+            orgTab={orgTab}
+            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
+          />
+        </Suspense>
       )}
 
       {userType === 'corporate-partner' && (
-        <CorporateView
-          userId={userId}
-          isMobile={false}
-          activeUser={activeUser}
-          isRefreshing={isRefreshing}
-        />
+        <Suspense fallback={<ViewLoader />}>
+          <CorporateView
+            userId={userId}
+            isMobile={false}
+            activeUser={activeUser}
+            isRefreshing={isRefreshing}
+          />
+        </Suspense>
       )}
 
       {/* Footer */}

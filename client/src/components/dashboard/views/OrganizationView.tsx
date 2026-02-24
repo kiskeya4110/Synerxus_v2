@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -393,7 +393,7 @@ interface OrganizationViewProps {
   setOrgTab?: (tab: string) => void;
 }
 
-export default function OrganizationView({
+const OrganizationView = memo(function OrganizationView({
   userId,
   isMobile,
   activeUser,
@@ -1766,4 +1766,6 @@ export default function OrganizationView({
 
     </main>
   );
-}
+});
+
+export default OrganizationView;

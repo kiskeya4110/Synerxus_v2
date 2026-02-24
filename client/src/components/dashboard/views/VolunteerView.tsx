@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -25,27 +25,7 @@ import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { PageHeader, Grid } from "@/components/ui/section";
 import { cn } from "@/lib/utils";
-
-// SDG Data
-const SDG_OPTIONS = [
-  { value: 1, label: "No Poverty", color: "#E5243B" },
-  { value: 2, label: "Zero Hunger", color: "#DDA63A" },
-  { value: 3, label: "Good Health", color: "#4C9F38" },
-  { value: 4, label: "Quality Education", color: "#C5192D" },
-  { value: 5, label: "Gender Equality", color: "#FF3A21" },
-  { value: 6, label: "Clean Water", color: "#26BDE2" },
-  { value: 7, label: "Affordable Energy", color: "#FCC30B" },
-  { value: 8, label: "Decent Work", color: "#A21942" },
-  { value: 9, label: "Industry Innovation", color: "#FD6925" },
-  { value: 10, label: "Reduced Inequalities", color: "#DD1367" },
-  { value: 11, label: "Sustainable Cities", color: "#FD9D24" },
-  { value: 12, label: "Responsible Consumption", color: "#BF8B2E" },
-  { value: 13, label: "Climate Action", color: "#3F7E44" },
-  { value: 14, label: "Life Below Water", color: "#0A97D9" },
-  { value: 15, label: "Life on Land", color: "#56C02B" },
-  { value: 16, label: "Peace Justice", color: "#00689D" },
-  { value: 17, label: "Partnerships", color: "#19486A" },
-];
+import { getSDGColor, getSDGName, isValidSDG } from "@/lib/sdg-utils";
 
 
 // Main VolunteerView Component
@@ -57,7 +37,7 @@ interface VolunteerViewProps {
   setMobileTab: (tab: 'home' | 'wallet' | 'projects' | 'history') => void;
 }
 
-export default function VolunteerView({
+const VolunteerView = memo(function VolunteerView({
   userId,
   isMobile,
   activeUser,
@@ -469,12 +449,11 @@ export default function VolunteerView({
                                   {log.sdgGoals && log.sdgGoals.length > 0 && (
                                     <div className="flex gap-1 flex-wrap">
                                       {log.sdgGoals.map((sdg: number) => {
-                                        const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                        return sdgInfo ? (
+                                        return isValidSDG(sdg) ? (
                                           <span
                                             key={sdg}
                                             className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
-                                            style={{ backgroundColor: sdgInfo.color }}
+                                            style={{ backgroundColor: getSDGColor(sdg) }}
                                           >
                                             SDG {sdg}
                                           </span>
@@ -642,12 +621,11 @@ export default function VolunteerView({
                           {log.sdgGoals && log.sdgGoals.length > 0 && (
                             <div className="flex gap-1 flex-wrap">
                               {log.sdgGoals.map((sdg: number) => {
-                                const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                return sdgInfo ? (
+                                return isValidSDG(sdg) ? (
                                   <span
                                     key={sdg}
                                     className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
-                                    style={{ backgroundColor: sdgInfo.color }}
+                                    style={{ backgroundColor: getSDGColor(sdg) }}
                                   >
                                     SDG {sdg}
                                   </span>
@@ -730,7 +708,7 @@ export default function VolunteerView({
                               <span
                                 key={sdg}
                                 className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white"
-                                style={{ backgroundColor: SDG_OPTIONS.find(s => s.value === sdg)?.color || '#6B7280' }}
+                                style={{ backgroundColor: getSDGColor(sdg) }}
                               >
                                 {sdg}
                               </span>
@@ -821,7 +799,7 @@ export default function VolunteerView({
                             <span
                               key={sdg}
                               className="w-6 h-6 rounded text-[10px] font-bold flex items-center justify-center text-white"
-                              style={{ backgroundColor: SDG_OPTIONS.find(s => s.value === sdg)?.color || '#6B7280' }}
+                              style={{ backgroundColor: getSDGColor(sdg) }}
                             >
                               {sdg}
                             </span>
@@ -1036,14 +1014,13 @@ export default function VolunteerView({
                             {sdgTags.length > 0 && (
                               <div className="flex gap-1 flex-wrap">
                                 {sdgTags.map((sdg: number) => {
-                                  const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                  return sdgInfo ? (
+                                  return isValidSDG(sdg) ? (
                                     <span
                                       key={sdg}
                                       className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
-                                      style={{ backgroundColor: sdgInfo.color }}
+                                      style={{ backgroundColor: getSDGColor(sdg) }}
                                     >
-                                      SDG {sdg}: {sdgInfo.label}
+                                      SDG {sdg}: {getSDGName(sdg)}
                                     </span>
                                   ) : null;
                                 })}
@@ -1264,14 +1241,13 @@ export default function VolunteerView({
                               {log.sdgGoals && log.sdgGoals.length > 0 && (
                                 <div className="flex gap-1 flex-wrap">
                                   {log.sdgGoals.map((sdg: number) => {
-                                    const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                    return sdgInfo ? (
+                                    return isValidSDG(sdg) ? (
                                       <span
                                         key={sdg}
                                         className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
-                                        style={{ backgroundColor: sdgInfo.color }}
+                                        style={{ backgroundColor: getSDGColor(sdg) }}
                                       >
-                                        SDG {sdg}: {sdgInfo.label}
+                                        SDG {sdg}: {getSDGName(sdg)}
                                       </span>
                                     ) : null;
                                   })}
@@ -1498,14 +1474,13 @@ export default function VolunteerView({
                             {sdgTags.length > 0 && (
                               <div className="flex gap-1.5 flex-wrap">
                                 {sdgTags.map((sdg: number) => {
-                                  const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                  return sdgInfo ? (
+                                  return isValidSDG(sdg) ? (
                                     <span
                                       key={sdg}
                                       className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white"
-                                      style={{ backgroundColor: sdgInfo.color }}
+                                      style={{ backgroundColor: getSDGColor(sdg) }}
                                     >
-                                      SDG {sdg}: {sdgInfo.label}
+                                      SDG {sdg}: {getSDGName(sdg)}
                                     </span>
                                   ) : null;
                                 })}
@@ -1551,4 +1526,6 @@ export default function VolunteerView({
 
     </main>
   );
-}
+});
+
+export default VolunteerView;

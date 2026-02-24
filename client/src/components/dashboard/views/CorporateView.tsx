@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -47,7 +47,7 @@ interface CorporateViewProps {
   isRefreshing?: boolean;
 }
 
-export default function CorporateView({
+const CorporateView = memo(function CorporateView({
   userId,
   isMobile,
   activeUser,
@@ -761,4 +761,6 @@ export default function CorporateView({
       )}
     </main>
   );
-}
+});
+
+export default CorporateView;

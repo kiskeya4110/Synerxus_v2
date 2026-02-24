@@ -21,6 +21,7 @@ import {
   Trash2,
   RefreshCw,
   Clock,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -99,15 +100,10 @@ export default function Header() {
   const userId = useCurrentUserId();
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
-  // Fetch current user to determine user type
+  // Fetch current user via the default authenticated query function
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
-      const response = await fetch(url);
-      return response.json();
-    },
-    enabled: !!userId
+    queryKey: ["/api/users/me"],
+    enabled: !!userId,
   });
 
   // Fetch organization profile if user is organization
@@ -558,6 +554,19 @@ export default function Header() {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
+                {(currentUser as any)?.isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-cyan-700 focus:text-cyan-700 focus:bg-cyan-50"
+                      onClick={() => setLocation('/admin/pilot-dashboard')}
+                      data-testid="menu-admin-pilot-dashboard"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      <span>Pilot Dashboard</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut} data-testid="menu-logout">
                   <LogOut className="mr-2 h-4 w-4" />

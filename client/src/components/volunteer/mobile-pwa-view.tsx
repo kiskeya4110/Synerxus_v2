@@ -9,7 +9,7 @@ import ImpactLogHistory from "@/components/dashboard/impact-log-history";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { formatDecimal } from "@/lib/format-utils";
-import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
+import { getSDGColor, getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import { isValidSdg, filterValidSdgs, extractSdgsFromProjects, compareSdgArrays } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,22 +63,6 @@ interface AIUSummary {
     sdgIndicator: string;
   }[];
 }
-
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A"
-};
-
-const SDG_NAMES: { [key: number]: string } = {
-  1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
-  5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
-  9: "Industry Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
-  12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
-  15: "Life on Land", 16: "Peace and Justice", 17: "Partnerships"
-};
 
 // Format number to 2 decimal places if decimal, otherwise show as whole number
 // For values less than 1 (like small pts scores), always show 2 decimal places
@@ -486,10 +470,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     const result = Object.entries(sdgHours)
       .map(([sdg, hours]) => ({
         sdg: parseInt(sdg),
-        name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
+        name: getSDGName(parseInt(sdg)),
         value: Math.round(hours * 10) / 10, // Round to 1 decimal
         projectCount: sdgProjects[parseInt(sdg)]?.size || 0,
-        color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
+        color: getSDGColor(parseInt(sdg))
       }))
       .filter(item => item.projectCount > 0) // Only show SDGs with actual projects
       .sort((a, b) => b.value - a.value)
@@ -508,10 +492,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         return Array.from(allProjectSdgs)
           .map(sdg => ({
             sdg,
-            name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+            name: getSDGName(sdg),
             value: 1, // Minimal value to show in chart
             projectCount: 1,
-            color: SDG_COLORS[sdg] || '#6B7280'
+            color: getSDGColor(sdg)
           }))
           .sort((a, b) => a.sdg - b.sdg)
           .slice(0, 8);
@@ -525,10 +509,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         return preferredSdgs
           .map(sdg => ({
             sdg,
-            name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+            name: getSDGName(sdg),
             value: 1, // Minimal value to indicate interest
             projectCount: 0, // No actual project work yet
-            color: SDG_COLORS[sdg] || '#6B7280'
+            color: getSDGColor(sdg)
           }))
           .sort((a, b) => a.sdg - b.sdg)
           .slice(0, 8);
@@ -607,10 +591,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     const result = Object.entries(sdgHours)
       .map(([sdg, hours]) => ({
         sdg: parseInt(sdg),
-        name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
+        name: getSDGName(parseInt(sdg)),
         value: Math.round(hours * 10) / 10,
         projectCount: sdgProjects[parseInt(sdg)]?.size || 0,
-        color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
+        color: getSDGColor(parseInt(sdg))
       }))
       .filter(item => item.projectCount > 0)
       .sort((a, b) => b.value - a.value)
@@ -1489,11 +1473,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             onClick={() => (isCommitted || hasContributed) && setShowSdgModal(sdgNum)}
                             className={`flex-1 h-3 rounded-sm transition-all ${(isCommitted || hasContributed) ? 'hover:scale-y-150 cursor-pointer' : 'cursor-default'}`}
                             style={{
-                              backgroundColor: isCommitted ? SDG_COLORS[sdgNum] : hasContributed ? SDG_COLORS[sdgNum] : '#e5e7eb',
+                              backgroundColor: isCommitted ? getSDGColor(sdgNum) : hasContributed ? getSDGColor(sdgNum) : '#e5e7eb',
                               opacity: isCommitted ? 1 : hasContributed ? 0.5 : 0.3,
-                              border: hasContributed && !isCommitted ? `1px solid ${SDG_COLORS[sdgNum]}` : 'none'
+                              border: hasContributed && !isCommitted ? `1px solid ${getSDGColor(sdgNum)}` : 'none'
                             }}
-                            title={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}${sdgData ? ` (${sdgData.value} hrs)` : ''}`}
+                            title={`SDG ${sdgNum}: ${getSDGName(sdgNum)}${sdgData ? ` (${sdgData.value} hrs)` : ''}`}
                           />
                         );
                       })}
@@ -1737,7 +1721,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             <div
                               key={sdg}
                               className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-md"
-                              style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                              style={{ backgroundColor: getSDGColor(sdg) }}
                             >
                               {sdg}
                             </div>
@@ -1903,7 +1887,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           <div
                             key={sdg}
                             className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                            style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                            style={{ backgroundColor: getSDGColor(sdg) }}
                           >
                             {sdg}
                           </div>
@@ -2085,7 +2069,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div
                           key={sdgNum}
                           className="flex items-center gap-1 px-2 py-1 rounded-full text-white text-[10px] font-medium"
-                          style={{ backgroundColor: SDG_COLORS[sdgNum] }}
+                          style={{ backgroundColor: getSDGColor(sdgNum) }}
                         >
                           SDG {sdgNum}
                           <span className="bg-white/30 px-1 rounded">+{Math.floor(Math.random() * 20 + 10)}%</span>
@@ -2377,7 +2361,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                                     <div
                                       key={sdg}
                                       className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-                                      style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                                      style={{ backgroundColor: getSDGColor(sdg) }}
                                     >
                                       {sdg}
                                     </div>
@@ -2529,7 +2513,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <div className="relative aspect-square rounded-lg overflow-hidden shadow-md border-2 border-white">
                           <img
                             src={getSDGIcon(sdgNum)}
-                            alt={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}`}
+                            alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
                             className="w-full h-full object-cover"
                           />
                           {/* Real-time checkmark indicator for contributed SDGs */}
@@ -2754,7 +2738,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             formatter={(value: number, name: string, props: any) => {
                               const sdgData = filteredSdgDistribution.find(s => s.sdg === props.payload.sdg);
-                              return [`${value} hours (${sdgData?.projectCount || 0} projects)`, SDG_NAMES[props.payload.sdg] || ''];
+                              return [`${value} hours (${sdgData?.projectCount || 0} projects)`, getSDGName(props.payload.sdg)];
                             }}
                             labelFormatter={(label) => `SDG ${label}`}
                           />
@@ -3326,7 +3310,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               <div
                                 key={sdg}
                                 className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
-                                style={{ backgroundColor: SDG_COLORS[sdg] }}
+                                style={{ backgroundColor: getSDGColor(sdg) }}
                               >
                                 {sdg}
                               </div>
@@ -3469,10 +3453,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div
                       key={sdgNum}
                       className="rounded-lg p-2 text-center"
-                      style={{ backgroundColor: SDG_COLORS[sdgNum] || '#6B7280' }}
+                      style={{ backgroundColor: getSDGColor(sdgNum) }}
                     >
                       <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
-                      <div className="text-white/80 text-[10px] leading-tight">{SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                      <div className="text-white/80 text-[10px] leading-tight">{getSDGName(sdgNum)?.split(' ').slice(0, 2).join(' ')}</div>
                     </div>
                   ))}
                 </div>
@@ -3870,10 +3854,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               key={sdgNum}
                               onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
                               className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity ring-2 ring-emerald-400"
-                              style={{ backgroundColor: SDG_COLORS[sdgNum] }}
+                              style={{ backgroundColor: getSDGColor(sdgNum) }}
                             >
                               <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
-                              <div className="text-white/80 text-[10px]">{sdgData ? `${sdgData.value} hrs` : SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                              <div className="text-white/80 text-[10px]">{sdgData ? `${sdgData.value} hrs` : getSDGName(sdgNum)?.split(' ').slice(0, 2).join(' ')}</div>
                             </button>
                           );
                         })}
@@ -3895,10 +3879,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                             key={sdgNum}
                             onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
                             className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity border-2 border-dashed border-amber-400"
-                            style={{ backgroundColor: SDG_COLORS[sdgNum], opacity: 0.7 }}
+                            style={{ backgroundColor: getSDGColor(sdgNum), opacity: 0.7 }}
                           >
                             <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
-                            <div className="text-white/80 text-[10px]">{SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                            <div className="text-white/80 text-[10px]">{getSDGName(sdgNum)?.split(' ').slice(0, 2).join(' ')}</div>
                           </button>
                         ))}
                       </div>
@@ -3921,7 +3905,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                               key={sdgNum}
                               onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
                               className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity ring-2 ring-purple-400"
-                              style={{ backgroundColor: SDG_COLORS[sdgNum] }}
+                              style={{ backgroundColor: getSDGColor(sdgNum) }}
                             >
                               <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
                               <div className="text-white/80 text-[10px]">{sdgData ? `${sdgData.value} hrs` : 'Bonus'}</div>
@@ -4216,7 +4200,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               <h2 className="text-white text-lg font-semibold flex items-center gap-2">
                 <span>SDG {showSdgModal}</span>
                 <span className="text-sm font-normal text-slate-500">
-                  {SDG_NAMES[showSdgModal]}
+                  {getSDGName(showSdgModal)}
                 </span>
               </h2>
               <button
@@ -4228,15 +4212,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
             <div className="p-4">
               {/* SDG Header with smaller icon */}
-              <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[showSdgModal] + '15' }}>
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ backgroundColor: getSDGColor(showSdgModal) + '15' }}>
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
-                  style={{ backgroundColor: SDG_COLORS[showSdgModal] }}
+                  style={{ backgroundColor: getSDGColor(showSdgModal) }}
                 >
                   {showSdgModal}
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-semibold">{SDG_NAMES[showSdgModal]}</div>
+                  <div className="text-white font-semibold">{getSDGName(showSdgModal)}</div>
                   <div className="text-slate-400 text-xs">
                     {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length} projects contributing
                   </div>
@@ -4474,11 +4458,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           return (
                             <div key={sdgNum} className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: getSDGColor(sdgNum) }}>
                                   {sdgNum}
                                 </div>
                                 <div className="flex-1">
-                                  <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-white font-medium text-sm">{getSDGName(sdgNum)}</div>
                                   <div className="text-xs text-emerald-600">{sdgData ? `${sdgData.value} hrs contributed` : 'Committed & Contributing'}</div>
                                 </div>
                               </div>
@@ -4500,11 +4484,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         {kpis.uncommittedWork.map((sdgNum: number) => (
                           <div key={sdgNum} className="bg-amber-50 rounded-lg p-3 border border-amber-200 border-dashed">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs opacity-70" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs opacity-70" style={{ backgroundColor: getSDGColor(sdgNum) }}>
                                 {sdgNum}
                               </div>
                               <div className="flex-1">
-                                <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                <div className="text-white font-medium text-sm">{getSDGName(sdgNum)}</div>
                                 <div className="text-xs text-amber-600">Committed - find projects to start!</div>
                               </div>
                             </div>
@@ -4527,11 +4511,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                           return (
                             <div key={sdgNum} className="bg-purple-50 rounded-lg p-3 border border-purple-200">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: getSDGColor(sdgNum) }}>
                                   {sdgNum}
                                 </div>
                                 <div className="flex-1">
-                                  <div className="text-white font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-white font-medium text-sm">{getSDGName(sdgNum)}</div>
                                   <div className="text-xs text-purple-600">{sdgData ? `${sdgData.value} hrs` : ''} - Extra impact!</div>
                                 </div>
                               </div>

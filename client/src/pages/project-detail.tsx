@@ -22,22 +22,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import { useViewportDetection } from "@/hooks/use-mobile";
-
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A"
-};
-
-const SDG_NAMES: { [key: number]: string } = {
-  1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
-  5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
-  9: "Industry Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
-  12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
-  15: "Life on Land", 16: "Peace and Justice", 17: "Partnerships"
-};
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
 interface Project {
   id: number;
@@ -636,8 +621,8 @@ export default function ProjectDetail() {
                     <div
                       key={sdg}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                      style={{ backgroundColor: SDG_COLORS[sdg] || '#6b7280' }}
-                      title={SDG_NAMES[sdg]}
+                      style={{ backgroundColor: getSDGColor(sdg) }}
+                      title={getSDGName(sdg)}
                     >
                       {sdg}
                     </div>
@@ -893,13 +878,13 @@ export default function ProjectDetail() {
                       <div
                         key={sdg}
                         className="flex items-center gap-3 p-3 rounded-lg text-white"
-                        style={{ backgroundColor: SDG_COLORS[sdg] }}
+                        style={{ backgroundColor: getSDGColor(sdg) }}
                       >
                         <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
                           {sdg}
                         </div>
                         <div>
-                          <div className="font-semibold">{SDG_NAMES[sdg]}</div>
+                          <div className="font-semibold">{getSDGName(sdg)}</div>
                           {project.primarySdg === sdg && (
                             <div className="text-xs opacity-80">Primary Goal</div>
                           )}
@@ -1253,7 +1238,7 @@ export default function ProjectDetail() {
                     <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">SDG Alignment</div>
                     <div className="flex flex-wrap gap-1.5">
                       {(project.sdgGoals as number[]).slice(0, 6).map((sdg: number) => (
-                        <div key={sdg} className="px-2.5 py-1 rounded-full text-white text-xs font-medium" style={{ backgroundColor: SDG_COLORS[sdg] }}>
+                        <div key={sdg} className="px-2.5 py-1 rounded-full text-white text-xs font-medium" style={{ backgroundColor: getSDGColor(sdg) }}>
                           SDG {sdg}
                         </div>
                       ))}
@@ -1676,7 +1661,7 @@ export default function ProjectDetail() {
                       <h4 className="font-semibold text-sm">SDG Alignment</h4>
                       <div className="flex flex-wrap gap-2">
                         {project.sdgGoals.map(sdg => (
-                          <div key={sdg} className="px-3 py-1.5 rounded-full text-white text-sm font-medium" style={{ backgroundColor: SDG_COLORS[sdg] }}>
+                          <div key={sdg} className="px-3 py-1.5 rounded-full text-white text-sm font-medium" style={{ backgroundColor: getSDGColor(sdg) }}>
                             SDG {sdg}
                           </div>
                         ))}

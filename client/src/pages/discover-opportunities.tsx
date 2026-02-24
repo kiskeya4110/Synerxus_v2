@@ -14,6 +14,7 @@ import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getSDGColor } from "@/lib/sdg-utils";
 
 interface EnrichedOpportunity {
   id: number;
@@ -49,14 +50,6 @@ interface OpportunityStatus {
   rejectedIds: number[];
   appliedIds: number[];
 }
-
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A"
-};
 
 export default function DiscoverOpportunities() {
   const [location, navigate] = useLocation();
@@ -558,7 +551,7 @@ export default function DiscoverOpportunities() {
                               <div
                                 key={sdg}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                                style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                                style={{ backgroundColor: getSDGColor(sdg) }}
                               >
                                 {sdg}
                               </div>

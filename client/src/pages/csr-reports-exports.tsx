@@ -46,6 +46,7 @@ import {
 import Footer from "@/components/layout/footer";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { useToast } from "@/hooks/use-toast";
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
 // Lazy load heavy chart components for better initial load
 const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
@@ -355,22 +356,6 @@ export default function CSRReportsExports() {
   };
 
   const generatePDFContent = (template: ReportTemplate, data: any) => {
-    // SDG colors for the wheel
-    const sdgColors: Record<number, string> = {
-      1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D", 5: "#FF3A21",
-      6: "#26BDE2", 7: "#FCC30B", 8: "#A21942", 9: "#FD6925", 10: "#DD1367",
-      11: "#FD9D24", 12: "#BF8B2E", 13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B",
-      16: "#00689D", 17: "#19486A"
-    };
-
-    const sdgNames: Record<number, string> = {
-      1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
-      5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
-      9: "Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
-      12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
-      15: "Life on Land", 16: "Peace & Justice", 17: "Partnerships"
-    };
-
     return `
       <!DOCTYPE html>
       <html>
@@ -674,7 +659,7 @@ export default function CSRReportsExports() {
                 const y3 = center + outerRadius * Math.sin(endAngle);
                 const x4 = center + innerRadius * Math.cos(endAngle);
                 const y4 = center + innerRadius * Math.sin(endAngle);
-                return `<path d="M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z" fill="${sdgColors[sdg]}" />`;
+                return `<path d="M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z" fill="${getSDGColor(sdg)}" />`;
               }).join("")}
               <circle cx="100" cy="100" r="28" fill="white"/>
             </svg>
@@ -757,8 +742,8 @@ export default function CSRReportsExports() {
               ${(data?.sdgMetrics || []).slice(0, 8).map((sdg: any) => `
                 <tr>
                   <td>
-                    <span class="sdg-badge" style="background-color: ${sdgColors[sdg.goal] || '#888'}">${sdg.goal}</span>
-                    <span class="sdg-name">${sdgNames[sdg.goal] || `Goal ${sdg.goal}`}</span>
+                    <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
+                    <span class="sdg-name">${getSDGName(sdg.goal)}</span>
                   </td>
                   <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
                   <td>

@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { getSDGColor } from "@/lib/sdg-utils";
 
 interface EnrichedOpportunity {
   id: number;
@@ -54,14 +55,6 @@ interface OpportunityStatus {
   rejectedIds: number[];
   appliedIds: number[];
 }
-
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
-  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
-  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
-  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
-  17: "#19486A"
-};
 
 export default function DiscoverOpportunitiesPWA() {
   const [location, navigate] = useLocation();
@@ -538,7 +531,7 @@ export default function DiscoverOpportunitiesPWA() {
                               <div
                                 key={sdg}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                                style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                                style={{ backgroundColor: getSDGColor(sdg) }}
                               >
                                 {sdg}
                               </div>

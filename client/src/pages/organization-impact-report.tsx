@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
@@ -82,46 +83,6 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Pie } from "react-chartjs-2";
-
-const SDG_COLORS: { [key: number]: string } = {
-  1: "#e5243b",
-  2: "#dda63b",
-  3: "#4c9f38",
-  4: "#c6192b",
-  5: "#e5243b",
-  6: "#26bde2",
-  7: "#fccc0a",
-  8: "#a21942",
-  9: "#dd1c3b",
-  10: "#dd1c3b",
-  11: "#fd6925",
-  12: "#bf8b2e",
-  13: "#3f7e44",
-  14: "#0a97d9",
-  15: "#56c596",
-  16: "#00689d",
-  17: "#e1405a",
-};
-
-const SDG_NAMES: { [key: number]: string } = {
-  1: "No Poverty",
-  2: "Zero Hunger",
-  3: "Good Health",
-  4: "Quality Education",
-  5: "Gender Equality",
-  6: "Clean Water",
-  7: "Affordable Energy",
-  8: "Decent Work",
-  9: "Industry Innovation",
-  10: "Reduced Inequalities",
-  11: "Sustainable Cities",
-  12: "Responsible Consumption",
-  13: "Climate Action",
-  14: "Life Below Water",
-  15: "Life on Land",
-  16: "Peace Justice",
-  17: "Partnerships",
-};
 
 ChartJS.register(
   CategoryScale,
@@ -667,9 +628,9 @@ export default function OrganizationImpactReport() {
   const totalSdgHours = Array.from(sdgHoursMap.values()).reduce((a, b) => a + b, 0) || 1;
   const programDistribution = Array.from(sdgHoursMap.entries())
     .map(([sdg, hours]) => ({
-      name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+      name: getSDGName(sdg),
       value: Math.round((hours / totalSdgHours) * 100),
-      color: SDG_COLORS[sdg] || "#888888",
+      color: getSDGColor(sdg),
       sdg: sdg,
     }))
     .sort((a, b) => b.value - a.value)
@@ -1290,9 +1251,9 @@ export default function OrganizationImpactReport() {
                       {[...organization.primarySdgs].sort((a: number, b: number) => a - b).map((sdg: number) => (
                         <div
                           key={sdg}
-                          title={SDG_NAMES[sdg] || `SDG ${sdg}`}
+                          title={getSDGName(sdg)}
                           className="flex items-center justify-center w-10 h-10 rounded font-bold text-white text-xs print:w-8 print:h-8 print:text-xs"
-                          style={{ backgroundColor: SDG_COLORS[sdg] || "#888888" }}
+                          style={{ backgroundColor: getSDGColor(sdg) }}
                         >
                           {sdg}
                         </div>

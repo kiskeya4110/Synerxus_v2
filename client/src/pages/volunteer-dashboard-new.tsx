@@ -24,6 +24,7 @@ import {
   LogOut,
   Briefcase,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 
 // UI Components
@@ -811,7 +812,7 @@ export default function VolunteerDashboardNew() {
 
   // Use dbUser from auth sync as authoritative source, fallback to localStorage
   const userId = dbUser?.id?.toString() || localStorage.getItem("currentUserId");
-  const userType = (dbUser as any)?.userType || localStorage.getItem("userType");
+  const userType = dbUser?.userType || localStorage.getItem("userType");
 
   // Keep localStorage in sync when dbUser resolves (prevents stale userId on next load)
   useEffect(() => {
@@ -1091,6 +1092,23 @@ export default function VolunteerDashboardNew() {
                   </button>
                 ))}
               </div>
+
+              {/* Admin Section */}
+              {dbUser?.isAdmin && (
+                <div className="border-t border-stone-200 px-3 pt-2 pb-1">
+                  <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider px-1 py-1.5">Admin</p>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate('/admin/pilot-dashboard'); }}
+                    className="w-full flex items-center gap-3 px-1 py-2.5 transition-colors text-left text-cyan-700 hover:bg-cyan-50 rounded-lg"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4 text-cyan-600" />
+                    </div>
+                    <span className="font-medium text-sm flex-1">Pilot Dashboard</span>
+                    <ChevronRight className="w-4 h-4 text-cyan-400" />
+                  </button>
+                </div>
+              )}
 
               {/* Logout */}
               <div className="border-t border-stone-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">

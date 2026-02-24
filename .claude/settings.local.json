@@ -217,7 +217,8 @@
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/projects ===\")",
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/organizations ===\")",
       "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/volunteer-activities ===\")",
-      "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/opportunities ===\")"
+      "Bash(1 __NEW_LINE_9857b448d93246c9__ echo \"=== /api/opportunities ===\")",
+      "Bash(find /home/runner/workspace/client/src/components/ -type f -name \"*.tsx\" -o -name \"*.ts\" | while read f; do wc -l \"$f\"; done | sort -rn | head -10)"
     ],
     "deny": [],
     "ask": []

@@ -73,6 +73,7 @@ import { invitationCodesRouter } from "./routes/invitation-codes.router";
 import { calculateOrganizationAIU } from "./aiu-service";
 import { aiRecommendationsRouter } from "./routes/ai-recommendations.router";
 import { externalVolunteersRouter } from "./routes/external-volunteers.router";
+import { smsRouter } from "./routes/sms.router";
 import uptimeMonitor from "./services/uptime-monitor";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
@@ -391,6 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime
   app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform
   app.use("/api", externalVolunteersRouter); // Handles /external-volunteers for org admin volunteer logging
+  app.use("/api", smsRouter); // Handles /sms/webhook (Twilio), /sms/status
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.

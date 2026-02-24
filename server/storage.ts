@@ -143,7 +143,13 @@ import {
   type KpiSnapshot,
   type InsertKpiSnapshot,
   type LeaderboardStats,
-  type InsertLeaderboardStats
+  type InsertLeaderboardStats,
+  verificationAuditLog,
+  type VerificationAuditLog,
+  type InsertVerificationAuditLog,
+  verificationTokens,
+  type VerificationToken,
+  type InsertVerificationToken
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db, withTransaction, type Transaction } from "./db";
@@ -405,6 +411,10 @@ export interface IStorage {
   getDiscrepancyById(id: number): Promise<UserDataAuditLog | undefined>;
   resolveDiscrepancy(id: number, resolvedBy: number): Promise<UserDataAuditLog | undefined>;
 
+  // Verification Audit Log operations (immutable)
+  createVerificationAuditLog(log: InsertVerificationAuditLog): Promise<VerificationAuditLog>;
+  listVerificationAuditLogs(activityId?: number, projectId?: number): Promise<VerificationAuditLog[]>;
+
   // CSR Partner operations
   createCSRPartner(partner: InsertCSRPartner): Promise<CSRPartner>;
   listCSRPartners(): Promise<CSRPartner[]>;
@@ -510,6 +520,15 @@ export interface IStorage {
 
   // Leaderboard Stats operations
   upsertLeaderboardStats(userId: number, data: Partial<InsertLeaderboardStats>): Promise<LeaderboardStats>;
+
+  // Verification Token operations
+  createVerificationToken(token: InsertVerificationToken): Promise<VerificationToken>;
+  getVerificationTokenByToken(token: string): Promise<VerificationToken | undefined>;
+  markVerificationTokenUsed(id: number): Promise<VerificationToken | undefined>;
+  listVerificationTokensByActivity(activityId: number): Promise<VerificationToken[]>;
+
+  // Account deletion
+  deleteUserAndData(userId: number): Promise<{ deletedTables: string[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2714,6 +2733,164 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  async deleteUserAndData(userId: number): Promise<{ deletedTables: string[] }> {
+    const deletedTables: string[] = [];
+
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    try {
+      await db.delete(notifications).where(eq(notifications.userId, userId));
+      deletedTables.push("notifications");
+    } catch (err) {
+      console.error("Error deleting notifications:", err);
+    }
+
+    try {
+      await db.delete(orgMessages).where(or(eq(orgMessages.senderId, userId), eq(orgMessages.receiverId, userId)));
+      deletedTables.push("orgMessages");
+    } catch (err) {
+      console.error("Error deleting orgMessages:", err);
+    }
+
+    try {
+      await db.delete(storyLikes).where(eq(storyLikes.userId, userId));
+      deletedTables.push("storyLikes");
+    } catch (err) {
+      console.error("Error deleting storyLikes:", err);
+    }
+
+    try {
+      await db.delete(volunteerStories).where(eq(volunteerStories.volunteerId, userId));
+      deletedTables.push("volunteerStories");
+    } catch (err) {
+      console.error("Error deleting volunteerStories:", err);
+    }
+
+    try {
+      await db.delete(userBadges).where(eq(userBadges.userId, userId));
+      deletedTables.push("userBadges");
+    } catch (err) {
+      console.error("Error deleting userBadges:", err);
+    }
+
+    try {
+      await db.delete(applications).where(eq(applications.volunteerId, userId));
+      deletedTables.push("applications");
+    } catch (err) {
+      console.error("Error deleting applications:", err);
+    }
+
+    try {
+      await db.delete(savedOpportunities).where(eq(savedOpportunities.volunteerId, userId));
+      deletedTables.push("savedOpportunities");
+    } catch (err) {
+      console.error("Error deleting savedOpportunities:", err);
+    }
+
+    try {
+      await db.delete(rejectedOpportunities).where(eq(rejectedOpportunities.volunteerId, userId));
+      deletedTables.push("rejectedOpportunities");
+    } catch (err) {
+      console.error("Error deleting rejectedOpportunities:", err);
+    }
+
+    try {
+      await db.delete(projectAssignments).where(eq(projectAssignments.volunteerId, userId));
+      deletedTables.push("projectAssignments");
+    } catch (err) {
+      console.error("Error deleting projectAssignments:", err);
+    }
+
+    try {
+      await db.delete(volunteerActivities).where(eq(volunteerActivities.userId, userId));
+      deletedTables.push("volunteerActivities");
+    } catch (err) {
+      console.error("Error deleting volunteerActivities:", err);
+    }
+
+    try {
+      await db.delete(volunteerProfiles).where(eq(volunteerProfiles.userId, userId));
+      deletedTables.push("volunteerProfiles");
+    } catch (err) {
+      console.error("Error deleting volunteerProfiles:", err);
+    }
+
+    try {
+      await db.delete(organizationMembers).where(eq(organizationMembers.userId, userId));
+      deletedTables.push("organizationMembers");
+    } catch (err) {
+      console.error("Error deleting organizationMembers:", err);
+    }
+
+    if (user.email) {
+      try {
+        const volunteer = await this.getVolunteerByEmail(user.email);
+        if (volunteer) {
+          await db.delete(matches).where(eq(matches.volunteerId, volunteer.id));
+          deletedTables.push("matches");
+
+          await db.delete(volunteers).where(eq(volunteers.email, user.email));
+          deletedTables.push("volunteers");
+        }
+      } catch (err) {
+        console.error("Error deleting matches/volunteers:", err);
+      }
+    }
+
+    try {
+      await db.delete(users).where(eq(users.id, userId));
+      deletedTables.push("users");
+    } catch (err) {
+      console.error("Error deleting user:", err);
+    }
+
+    return { deletedTables };
+  }
+
+  async createVerificationAuditLog(log: InsertVerificationAuditLog): Promise<VerificationAuditLog> {
+    const [result] = await db.insert(verificationAuditLog).values(log).returning();
+    return result;
+  }
+
+  async listVerificationAuditLogs(activityId?: number, projectId?: number): Promise<VerificationAuditLog[]> {
+    const conditions = [];
+    if (activityId !== undefined) {
+      conditions.push(eq(verificationAuditLog.activityId, activityId));
+    }
+    if (projectId !== undefined) {
+      conditions.push(eq(verificationAuditLog.projectId, projectId));
+    }
+    if (conditions.length > 0) {
+      return await db.select().from(verificationAuditLog).where(and(...conditions)).orderBy(desc(verificationAuditLog.createdAt));
+    }
+    return await db.select().from(verificationAuditLog).orderBy(desc(verificationAuditLog.createdAt));
+  }
+
+  async createVerificationToken(token: InsertVerificationToken): Promise<VerificationToken> {
+    const [result] = await db.insert(verificationTokens).values(token).returning();
+    return result;
+  }
+
+  async getVerificationTokenByToken(token: string): Promise<VerificationToken | undefined> {
+    const [result] = await db.select().from(verificationTokens).where(eq(verificationTokens.token, token));
+    return result || undefined;
+  }
+
+  async markVerificationTokenUsed(id: number): Promise<VerificationToken | undefined> {
+    const [result] = await db.update(verificationTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(verificationTokens.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async listVerificationTokensByActivity(activityId: number): Promise<VerificationToken[]> {
+    return await db.select().from(verificationTokens).where(eq(verificationTokens.activityId, activityId));
   }
 }
 

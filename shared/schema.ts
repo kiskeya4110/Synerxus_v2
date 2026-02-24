@@ -1964,3 +1964,23 @@ export const insertKpiSnapshotSchema = createInsertSchema(kpiSnapshots).omit({
 
 export type KpiSnapshot = typeof kpiSnapshots.$inferSelect;
 export type InsertKpiSnapshot = z.infer<typeof insertKpiSnapshotSchema>;
+
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  activityId: integer("activity_id").references(() => volunteerActivities.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  action: text("action").notNull(), // approve, reject
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVerificationTokenSchema = createInsertSchema(verificationTokens).omit({
+  id: true,
+  usedAt: true,
+  createdAt: true,
+});
+
+export type VerificationToken = typeof verificationTokens.$inferSelect;
+export type InsertVerificationToken = z.infer<typeof insertVerificationTokenSchema>;

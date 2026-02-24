@@ -476,6 +476,15 @@ app.use((req, res, next) => {
     logger.info('Skipping digest scheduler in development mode');
   }
 
+  // Start SMS verification fallback service
+  try {
+    const { smsVerificationService } = await import('./services/sms-verification');
+    smsVerificationService.start();
+    logger.info('[Server] SMS verification fallback service started');
+  } catch (err) {
+    logger.error('Failed to start SMS verification service:', err);
+  }
+
   // Initialize cache warming for faster response times
   try {
     const { initCacheWarming } = await import('./cache-warmer');

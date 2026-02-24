@@ -8,6 +8,8 @@
  * In production, configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER.
  */
 
+import { storage } from "../storage";
+
 interface SMSVerificationConfig {
   timeoutHours: number;
   maxRetries: number;
@@ -125,6 +127,44 @@ export class SMSVerificationService {
     } catch (error) {
       console.error('[SMS Verification] Error sending SMS:', error);
       return false;
+    }
+  }
+
+  async processWebhookReply(from: string, body: string): Promise<{ success: boolean; action: 'approved' | 'rejected' | 'unknown'; logId: number | null }> {
+    const trimmed = body.trim().toUpperCase();
+
+    if (trimmed !== 'Y' && trimmed !== 'N') {
+      return { success: false, action: 'unknown', logId: null };
+    }
+
+    let matchedVerification: PendingVerification | null = null;
+    const entries = Array.from(this.pendingQueue.entries());
+    for (const [, verification] of entries) {
+      if (verification.ngoContactPhone === from) {
+        matchedVerification = verification;
+        break;
+      }
+    }
+
+    if (!matchedVerification) {
+      return { success: false, action: 'unknown', logId: null };
+    }
+
+    const action = trimmed === 'Y' ? 'approved' : 'rejected';
+
+    try {
+      await storage.updateVolunteerActivity(matchedVerification.logId, {
+        verificationStatus: action,
+        verifiedAt: new Date(),
+      } as any);
+
+      this.removeFromQueue(matchedVerification.logId);
+
+      console.log(`[SMS Verification] Log #${matchedVerification.logId} ${action} via SMS from ${from}`);
+      return { success: true, action, logId: matchedVerification.logId };
+    } catch (err) {
+      console.error(`[SMS Verification] Failed to process webhook reply:`, err);
+      return { success: false, action, logId: matchedVerification.logId };
     }
   }
 

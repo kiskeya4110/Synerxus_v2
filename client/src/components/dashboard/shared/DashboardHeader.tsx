@@ -4,7 +4,8 @@ import {
   Menu, LogOut, X, Bell, Settings, ChevronRight,
   Home, Target, FolderOpen, Users, Plus, Shield, Clock,
   BarChart3, FileText, Briefcase, Award, Flame,
-  CheckCircle, Sparkles, Heart, RefreshCw, Trash2, ClipboardList
+  CheckCircle, Sparkles, Heart, RefreshCw, Trash2, ClipboardList,
+  ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -457,6 +458,27 @@ export default function DashboardHeader({
                   ))}
                 </div>
               ))}
+
+              {/* Admin Section */}
+              {(dbUser as any)?.isAdmin && (
+                <div className="py-2 border-t border-slate-200 mt-2">
+                  <p className="px-4 py-2 text-[10px] font-bold text-cyan-500 uppercase tracking-wider">
+                    Admin
+                  </p>
+                  <button
+                    onClick={() => { setShowMenu(false); navigate('/admin/pilot-dashboard'); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cyan-50 active:bg-cyan-100"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-5 h-5 text-cyan-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold text-cyan-700">Pilot Dashboard</span>
+                      <p className="text-xs text-cyan-500 truncate">Admin analytics &amp; actions</p>
+                    </div>
+                  </button>
+                </div>
+              )}
 
               {/* Logout */}
               <div className="py-2 border-t border-slate-200 mt-2">

@@ -53,6 +53,9 @@ interface DashboardStats {
   silentNGOs: number;
   totalPending: number;
   avgVerificationRate: number;
+  totalVolunteers: number;
+  totalOrganizations: number;
+  totalActivities: number;
 }
 
 interface PilotDashboardData {
@@ -372,6 +375,13 @@ export default function AdminPilotDashboard() {
               <div className="text-xl font-bold">NGO verification rate ≥80% within 72 hours</div>
               <div className="text-cyan-100 text-sm mt-2">
                 Both outcomes AND hours are NGO-verified in a single tap — audit-ready for ESG reporting
+              </div>
+              <div className="flex flex-wrap gap-4 mt-3 text-sm text-cyan-100">
+                <span><span className="font-bold text-white">{stats?.totalActivities ?? 0}</span> total activities</span>
+                <span>·</span>
+                <span><span className="font-bold text-white">{stats?.totalVolunteers ?? 0}</span> volunteers</span>
+                <span>·</span>
+                <span><span className="font-bold text-white">{stats?.totalOrganizations ?? 0}</span> NGOs</span>
               </div>
             </div>
             <ProgressRing value={stats?.avgVerificationRate ?? 0} target={80} size={100} />

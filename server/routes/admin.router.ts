@@ -6,8 +6,6 @@ import OpenAI from "openai";
 import { queueMiddleware } from "../request-queue";
 import { db } from "../db";
 import { volunteerActivities, organizations, employeeEngagement, projects } from "@shared/schema";
-import { gte } from "drizzle-orm";
-import { DATA_CUTOFF } from "@shared/constants";
 
 export const adminRouter = Router();
 
@@ -1324,87 +1322,102 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     const adminUser = await storage.getUser(adminUserId);
     if (!adminUser?.isAdmin) return res.status(403).json({ message: "Admin access required" });
 
-    const cutoff = DATA_CUTOFF.DATE;
+    // Admin sees ALL data — no date cutoff
     const silentCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
-    // --- Summary stats ---
-    const allActivities = await db
-      .select()
-      .from(volunteerActivities)
-      .where(gte(volunteerActivities.date, cutoff));
+    // --- Fetch all core data in parallel ---
+    const [allActivities, allOrgs, allProjects, allUsers, partners, engagements] = await Promise.all([
+      db.select().from(volunteerActivities),
+      db.select().from(organizations),
+      db.select({ id: projects.id, name: projects.name, organizationId: projects.organizationId }).from(projects),
+      storage.listUsers(),
+      storage.listCSRPartners(),
+      db.select().from(employeeEngagement),
+    ]);
 
     const verifiedActivities = allActivities.filter(a => a.verificationStatus === 'approved');
-    const pendingActivities = allActivities.filter(a => a.verificationStatus === 'pending');
+    const pendingActivities  = allActivities.filter(a => a.verificationStatus === 'pending');
 
     const totalVerifiedOutcomes = verifiedActivities.length;
-    const totalVerifiedHours = verifiedActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+    const totalVerifiedHours    = verifiedActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+    const totalVolunteers       = allUsers.filter(u => u.userType === 'volunteer').length;
 
-    // Get projects for org mapping
-    const allOrgs = await db.select().from(organizations);
-    const allProjects = await db.select({ id: projects.id, name: projects.name, organizationId: projects.organizationId }).from(projects);
+    // --- Project → org map ---
     const projectOrgMap = new Map<number, number>();
     for (const p of allProjects) {
       if (p.organizationId != null) projectOrgMap.set(p.id, p.organizationId);
     }
+    const orgMap = new Map(allOrgs.map(o => [o.id, o]));
 
-    // Map activities to orgs (SENTINEL_ORG_ID=0 for activities with no project/org)
+    // --- Org activity stats (use activity date for silent detection, not verifiedAt) ---
     const UNASSIGNED = 0;
-    const orgActivityMap = new Map<number, { total: number; verified: number; lastVerified: Date | null; pending: number; hours: number }>();
+    const orgActivityMap = new Map<number, {
+      total: number; verified: number; pending: number; hours: number; lastActivity: Date | null;
+    }>();
     for (const a of allActivities) {
       const orgId = (a.projectId ? projectOrgMap.get(a.projectId) : undefined) ?? UNASSIGNED;
       if (!orgActivityMap.has(orgId)) {
-        orgActivityMap.set(orgId, { total: 0, verified: 0, lastVerified: null, pending: 0, hours: 0 });
+        orgActivityMap.set(orgId, { total: 0, verified: 0, pending: 0, hours: 0, lastActivity: null });
       }
       const entry = orgActivityMap.get(orgId)!;
       entry.total++;
       if (a.verificationStatus === 'approved') {
         entry.verified++;
         entry.hours += (a.hours || 0);
-        if (a.verifiedAt && (!entry.lastVerified || a.verifiedAt > entry.lastVerified)) {
-          entry.lastVerified = a.verifiedAt;
-        }
       } else if (a.verificationStatus === 'pending') {
         entry.pending++;
       }
-    }
-
-    // Silent = has activities but no verification in past 14 days (exclude unassigned bucket)
-    let silentNGOCount = 0;
-    for (const [orgId, stats] of Array.from(orgActivityMap.entries())) {
-      if (orgId === UNASSIGNED) continue;
-      if (stats.total > 0 && (!stats.lastVerified || stats.lastVerified < silentCutoff)) {
-        silentNGOCount++;
+      // Track most recent activity by logged date (verifiedAt is often null)
+      const actDate = a.date instanceof Date ? a.date : (a.date ? new Date(a.date as string) : null);
+      if (actDate && (!entry.lastActivity || actDate > entry.lastActivity)) {
+        entry.lastActivity = actDate;
       }
     }
 
+    // Silent NGO = has projects on platform but no activity in past 14 days (or no activity at all)
+    const orgsWithProjects = new Set<number>();
+    for (const p of allProjects) {
+      if (p.organizationId != null) orgsWithProjects.add(p.organizationId);
+    }
+    let silentNGOCount = 0;
+    for (const orgId of Array.from(orgsWithProjects)) {
+      const stats = orgActivityMap.get(orgId);
+      if (!stats || !stats.lastActivity || stats.lastActivity < silentCutoff) silentNGOCount++;
+    }
+
     // --- Verification health by country ---
-    // Every activity is bucketed so country totals reconcile with stat cards
-    const orgMap = new Map(allOrgs.map(o => [o.id, o]));
+    // Include ALL orgs that have projects, even those with zero activities
     interface CountryEntry {
-      country: string;
-      total: number;
-      verified: number;
-      pending: number;
-      hours: number;
-      silentNGOs: number;
-      orgIdSet: number[];
+      country: string; total: number; verified: number; pending: number;
+      hours: number; silentNGOs: number; orgIdSet: number[];
     }
     const countryStats = new Map<string, CountryEntry>();
 
-    for (const [orgId, stats] of Array.from(orgActivityMap.entries())) {
-      const country = orgId === UNASSIGNED ? 'Unassigned' : (orgMap.get(orgId)?.country || 'Unknown');
+    for (const orgId of Array.from(orgsWithProjects)) {
+      const org = orgMap.get(orgId);
+      const country = org?.country || 'Unknown';
       if (!countryStats.has(country)) {
         countryStats.set(country, { country, total: 0, verified: 0, pending: 0, hours: 0, silentNGOs: 0, orgIdSet: [] });
       }
       const cs = countryStats.get(country)!;
-      cs.total += stats.total;
-      cs.verified += stats.verified;
-      cs.pending += stats.pending;
-      cs.hours += stats.hours;
-      if (orgId !== UNASSIGNED) {
-        if (!cs.orgIdSet.includes(orgId)) cs.orgIdSet.push(orgId);
-        if (!stats.lastVerified || stats.lastVerified < silentCutoff) cs.silentNGOs++;
+      if (!cs.orgIdSet.includes(orgId)) cs.orgIdSet.push(orgId);
+      const stats = orgActivityMap.get(orgId);
+      if (stats) {
+        cs.total    += stats.total;
+        cs.verified += stats.verified;
+        cs.pending  += stats.pending;
+        cs.hours    += stats.hours;
       }
+      if (!stats || !stats.lastActivity || stats.lastActivity < silentCutoff) cs.silentNGOs++;
+    }
+
+    // Add "Unassigned" bucket for activities with no project link
+    const unassigned = orgActivityMap.get(UNASSIGNED);
+    if (unassigned && unassigned.total > 0) {
+      countryStats.set('Unassigned', {
+        country: 'Unassigned', total: unassigned.total, verified: unassigned.verified,
+        pending: unassigned.pending, hours: unassigned.hours, silentNGOs: 0, orgIdSet: [],
+      });
     }
 
     const verificationHealth = Array.from(countryStats.values()).map(cs => ({
@@ -1415,43 +1428,46 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       hours: Math.round(cs.hours),
       silentNGOs: cs.silentNGOs,
       orgCount: cs.orgIdSet.length,
-    })).sort((a, b) => a.rate - b.rate);
+    })).sort((a, b) => b.outcomes - a.outcomes || a.rate - b.rate);
 
     // --- Recent verifications (live feed) ---
-    const recentVerified = verifiedActivities
-      .sort((a, b) => (b.verifiedAt?.getTime() ?? 0) - (a.verifiedAt?.getTime() ?? 0))
+    // Sort by date DESC — verifiedAt is often null, date is always set
+    const recentVerified = [...verifiedActivities]
+      .sort((a, b) => {
+        const bTime = (b.verifiedAt ?? b.date)?.getTime() ?? 0;
+        const aTime = (a.verifiedAt ?? a.date)?.getTime() ?? 0;
+        return bTime - aTime;
+      })
       .slice(0, 10);
 
     const volunteerIdSet = new Set<number>();
     for (const a of recentVerified) { if (a.userId) volunteerIdSet.add(a.userId); }
-    const volunteerIds = Array.from(volunteerIdSet);
-    const volunteerUsers = volunteerIds.length > 0 ? await storage.getUsersByIds(volunteerIds) : [];
+    const volunteerUsers = volunteerIdSet.size > 0 ? await storage.getUsersByIds(Array.from(volunteerIdSet)) : [];
     const userMap = new Map(volunteerUsers.map(u => [u.id, u]));
 
     const projectIdSet = new Set<number>();
     for (const a of recentVerified) { if (a.projectId) projectIdSet.add(a.projectId); }
-    const projectIds = Array.from(projectIdSet);
-    const projectDetails = projectIds.length > 0
-      ? allProjects.filter(p => projectIds.includes(p.id))
-      : [];
+    const projectDetails = allProjects.filter(p => projectIdSet.has(p.id));
     const projectMap = new Map(projectDetails.map(p => [p.id, p]));
 
     const ngoIdSet = new Set<number>();
     for (const p of projectDetails) { if (p.organizationId != null) ngoIdSet.add(p.organizationId); }
-    const ngoIds = Array.from(ngoIdSet);
-    const ngoOrgs = ngoIds.length > 0 ? allOrgs.filter(o => ngoIds.includes(o.id)) : [];
+    const ngoOrgs = allOrgs.filter(o => ngoIdSet.has(o.id));
     const ngoMap = new Map(ngoOrgs.map(o => [o.id, o]));
 
     const recentVerifications = recentVerified.map(a => {
       const volunteer = a.userId ? userMap.get(a.userId) : undefined;
-      const project = a.projectId ? projectMap.get(a.projectId) : undefined;
-      const ngo = project ? ngoMap.get(project.organizationId ?? 0) : undefined;
-      const now = Date.now();
-      const diffMs = now - (a.verifiedAt?.getTime() ?? now);
-      const diffMin = Math.floor(diffMs / 60000);
-      const timeLabel = diffMin < 60
-        ? diffMin <= 1 ? 'just now' : `${diffMin} min ago`
-        : `${Math.floor(diffMin / 60)}h ago`;
+      const project   = a.projectId ? projectMap.get(a.projectId) : undefined;
+      const ngo       = project ? ngoMap.get(project.organizationId ?? 0) : undefined;
+      const refTime   = a.verifiedAt ?? a.date;
+      const diffMs    = Date.now() - (refTime?.getTime() ?? Date.now());
+      const diffMin   = Math.floor(diffMs / 60000);
+      const diffH     = Math.floor(diffMin / 60);
+      const diffD     = Math.floor(diffH / 24);
+      const timeLabel = diffMin < 1 ? 'just now'
+        : diffMin < 60  ? `${diffMin}m ago`
+        : diffH   < 24  ? `${diffH}h ago`
+        : `${diffD}d ago`;
 
       return {
         id: a.id,
@@ -1466,10 +1482,7 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     });
 
     // --- Corporate pilots ---
-    const partners = await storage.listCSRPartners();
-    const engagements = await db.select().from(employeeEngagement);
-
-    // Build project→country map for engagement country counts
+    // Outcomes = verified activities by this partner's engaged employees (via email match)
     const projectCountryMap = new Map<number, string>();
     for (const p of allProjects) {
       if (p.organizationId == null) continue;
@@ -1477,12 +1490,25 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       if (org?.country) projectCountryMap.set(p.id, org.country);
     }
 
+    // Build email → user map for matching engagements to activities
+    const userByEmail = new Map(allUsers.map(u => [u.email, u]));
+
     const corporatePilots = partners.map(p => {
       const allPEngagements = engagements.filter(e => e.partnerId === p.id);
-      const completedEngagements = allPEngagements.filter(e => e.completionStatus === 'completed');
-      const outcomes = completedEngagements.length;
-      const hours = completedEngagements.reduce((sum, e) => sum + (e.hoursVolunteered ?? 0), 0);
-      // Count distinct countries from projects linked to this partner's engagements
+      const employeeEmails  = new Set(allPEngagements.map(e => e.employeeEmail).filter(Boolean) as string[]);
+
+      // Count verified activities logged by this partner's employees
+      let outcomes = 0;
+      let hours    = 0;
+      for (const email of Array.from(employeeEmails)) {
+        const user = userByEmail.get(email);
+        if (!user) continue;
+        const userVerified = verifiedActivities.filter(a => a.userId === user.id);
+        outcomes += userVerified.length;
+        hours    += userVerified.reduce((s, a) => s + (a.hours || 0), 0);
+      }
+
+      // Distinct countries from this partner's engagement projects
       const countryNames = new Set<string>();
       for (const e of allPEngagements) {
         if (e.projectId) {
@@ -1490,82 +1516,67 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
           if (c) countryNames.add(c);
         }
       }
-      // Count unique employees (by email) engaged with this partner
-      const uniqueEmployees = new Set(allPEngagements.map(e => e.employeeEmail)).size;
 
-      let status: 'active' | 'pilot' | 'onboarding' = 'onboarding';
-      if (outcomes >= 10) status = 'active';
-      else if (outcomes >= 1) status = 'pilot';
-      let health: 'good' | 'warning' | 'new' = 'new';
-      if (outcomes >= 10) health = 'good';
-      else if (outcomes >= 1) health = 'warning';
+      const uniqueEmployees = employeeEmails.size;
+      const status: 'active' | 'pilot' | 'onboarding' = outcomes >= 10 ? 'active' : outcomes >= 1 ? 'pilot' : 'onboarding';
+      const health: 'good' | 'warning' | 'new'        = outcomes >= 10 ? 'good'   : outcomes >= 1 ? 'warning' : 'new';
 
       return {
-        id: p.id,
-        name: p.companyName,
-        outcomes,
-        hours,
-        countries: countryNames.size,
-        employees: uniqueEmployees,
-        status,
-        health,
+        id: p.id, name: p.companyName, outcomes, hours: Math.round(hours),
+        countries: countryNames.size, employees: uniqueEmployees, status, health,
       };
     });
 
     // --- Audit metrics ---
-    // Metric 1: Full audit trail completeness — verified activities with both outcome text AND hours
+    // Completeness: activities with any outcome text (outcomeText, outcomes, or description) + hours
     const withBothFieldsCount = verifiedActivities.filter(a =>
-      (a.outcomeText || a.outcomes) && a.hours
+      (a.outcomeText || a.outcomes || a.description) && a.hours
     ).length;
     const completenessRate = verifiedActivities.length > 0
-      ? Math.round((withBothFieldsCount / verifiedActivities.length) * 100)
-      : 0;
+      ? Math.round((withBothFieldsCount / verifiedActivities.length) * 100) : 0;
 
-    // Metric 2: Verified within 72h of submission — measures NGO responsiveness
-    const seventyTwoHours = 72 * 60 * 60 * 1000;
+    // Verified within 72h (only meaningful when verifiedAt is set)
+    const seventyTwoHours  = 72 * 60 * 60 * 1000;
     const verifiedWithin72h = verifiedActivities.filter(a =>
       a.verifiedAt && a.createdAt &&
       (a.verifiedAt.getTime() - a.createdAt.getTime()) <= seventyTwoHours
     ).length;
     const within72hRate = verifiedActivities.length > 0
-      ? Math.round((verifiedWithin72h / verifiedActivities.length) * 100)
-      : 0;
+      ? Math.round((verifiedWithin72h / verifiedActivities.length) * 100) : 0;
 
-    // Metric 3: SDG auto-mapping — verified activities with sdgTags set
     const withSdg = verifiedActivities.filter(a => a.sdgTags && a.sdgTags.length > 0).length;
     const sdgRate = verifiedActivities.length > 0
-      ? Math.round((withSdg / verifiedActivities.length) * 100)
-      : 0;
+      ? Math.round((withSdg / verifiedActivities.length) * 100) : 0;
 
-    // Metric 4: NGO identity verified — verified activities linked to a known org via their project
     const withKnownOrg = verifiedActivities.filter(a => {
       if (!a.projectId) return false;
       const orgId = projectOrgMap.get(a.projectId);
       return !!orgId && orgMap.has(orgId);
     }).length;
     const ngoIdentityRate = verifiedActivities.length > 0
-      ? Math.round((withKnownOrg / verifiedActivities.length) * 100)
-      : 0;
+      ? Math.round((withKnownOrg / verifiedActivities.length) * 100) : 0;
 
     const auditMetrics = [
       { label: "Full audit trail (outcome + hours)", value: completenessRate, target: 100 },
-      { label: "Verified within 72h of submission", value: within72hRate, target: 80 },
-      { label: "SDG auto-mapping", value: sdgRate, target: 100 },
-      { label: "NGO identity verified", value: ngoIdentityRate, target: 100 },
+      { label: "Verified within 72h of submission",  value: within72hRate,    target: 80  },
+      { label: "SDG auto-mapping",                   value: sdgRate,          target: 100 },
+      { label: "NGO identity verified",              value: ngoIdentityRate,  target: 100 },
     ];
 
     // --- Overall verification rate ---
     const avgRate = allActivities.length > 0
-      ? Math.round((verifiedActivities.length / allActivities.length) * 100)
-      : 0;
+      ? Math.round((verifiedActivities.length / allActivities.length) * 100) : 0;
 
     res.json({
       stats: {
         totalVerifiedOutcomes,
-        totalVerifiedHours: Math.round(totalVerifiedHours),
-        silentNGOs: silentNGOCount,
-        totalPending: pendingActivities.length,
-        avgVerificationRate: avgRate,
+        totalVerifiedHours:    Math.round(totalVerifiedHours),
+        silentNGOs:            silentNGOCount,
+        totalPending:          pendingActivities.length,
+        avgVerificationRate:   avgRate,
+        totalVolunteers,
+        totalOrganizations:    allOrgs.length,
+        totalActivities:       allActivities.length,
       },
       verificationHealth,
       recentVerifications,

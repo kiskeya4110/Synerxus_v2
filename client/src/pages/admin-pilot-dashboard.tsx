@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { ShieldCheck, RefreshCw, ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { getAuthToken } from "@/lib/queryClient";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // ============================================
 // TYPES
@@ -286,11 +286,10 @@ export default function AdminPilotDashboard() {
   const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery<PilotDashboardData>({
     queryKey: ["/api/pilot-dashboard"],
     queryFn: async () => {
-      const token = await getAuthToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const headers = await getAuthHeaders();
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/pilot-dashboard", { headers });
-      if (!res.ok) throw new Error("Failed to load dashboard data");
+      if (!res.ok) throw new Error(`Dashboard fetch failed: ${res.status}`);
       return res.json();
     },
     enabled: !authLoading && !!dbUser && !!dbUser.isAdmin,

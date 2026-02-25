@@ -1395,7 +1395,8 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
 
     for (const orgId of Array.from(orgsWithProjects)) {
       const org = orgMap.get(orgId);
-      const country = org?.country || 'Unknown';
+      // Use country when set; fall back to org name so each org is identifiable
+      const country = org?.country || org?.name || 'Unknown';
       if (!countryStats.has(country)) {
         countryStats.set(country, { country, total: 0, verified: 0, pending: 0, hours: 0, silentNGOs: 0, orgIdSet: [] });
       }

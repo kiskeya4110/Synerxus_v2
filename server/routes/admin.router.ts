@@ -5,8 +5,8 @@ import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest 
 import OpenAI from "openai";
 import { queueMiddleware } from "../request-queue";
 import { db } from "../db";
-import { volunteerActivities, organizations, employeeEngagement } from "@shared/schema";
-import { sql, gte } from "drizzle-orm";
+import { volunteerActivities, organizations, employeeEngagement, projects } from "@shared/schema";
+import { gte } from "drizzle-orm";
 import { DATA_CUTOFF } from "@shared/constants";
 
 export const adminRouter = Router();
@@ -1341,10 +1341,10 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
 
     // Get projects for org mapping
     const allOrgs = await db.select().from(organizations);
-    const allProjects = await db.execute(sql`SELECT id, organization_id FROM projects`);
+    const allProjects = await db.select({ id: projects.id, name: projects.name, organizationId: projects.organizationId }).from(projects);
     const projectOrgMap = new Map<number, number>();
-    for (const p of allProjects.rows as any[]) {
-      projectOrgMap.set(p.id, p.organization_id);
+    for (const p of allProjects) {
+      if (p.organizationId != null) projectOrgMap.set(p.id, p.organizationId);
     }
 
     // Map activities to orgs (SENTINEL_ORG_ID=0 for activities with no project/org)
@@ -1432,12 +1432,12 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     for (const a of recentVerified) { if (a.projectId) projectIdSet.add(a.projectId); }
     const projectIds = Array.from(projectIdSet);
     const projectDetails = projectIds.length > 0
-      ? await db.execute(sql`SELECT id, name, organization_id FROM projects WHERE id = ANY(${projectIds})`)
-      : { rows: [] };
-    const projectMap = new Map((projectDetails.rows as any[]).map(p => [p.id, p]));
+      ? allProjects.filter(p => projectIds.includes(p.id))
+      : [];
+    const projectMap = new Map(projectDetails.map(p => [p.id, p]));
 
     const ngoIdSet = new Set<number>();
-    for (const p of projectDetails.rows as any[]) { if (p.organization_id) ngoIdSet.add(p.organization_id); }
+    for (const p of projectDetails) { if (p.organizationId != null) ngoIdSet.add(p.organizationId); }
     const ngoIds = Array.from(ngoIdSet);
     const ngoOrgs = ngoIds.length > 0 ? allOrgs.filter(o => ngoIds.includes(o.id)) : [];
     const ngoMap = new Map(ngoOrgs.map(o => [o.id, o]));
@@ -1445,7 +1445,7 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     const recentVerifications = recentVerified.map(a => {
       const volunteer = a.userId ? userMap.get(a.userId) : undefined;
       const project = a.projectId ? projectMap.get(a.projectId) : undefined;
-      const ngo = project ? ngoMap.get(project.organization_id) : undefined;
+      const ngo = project ? ngoMap.get(project.organizationId ?? 0) : undefined;
       const now = Date.now();
       const diffMs = now - (a.verifiedAt?.getTime() ?? now);
       const diffMin = Math.floor(diffMs / 60000);
@@ -1470,10 +1470,10 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
     const engagements = await db.select().from(employeeEngagement);
 
     // Build project→country map for engagement country counts
-    const allProjectsWithOrg = allProjects.rows as Array<{ id: number; organization_id: number }>;
     const projectCountryMap = new Map<number, string>();
-    for (const p of allProjectsWithOrg) {
-      const org = orgMap.get(p.organization_id);
+    for (const p of allProjects) {
+      if (p.organizationId == null) continue;
+      const org = orgMap.get(p.organizationId);
       if (org?.country) projectCountryMap.set(p.id, org.country);
     }
 

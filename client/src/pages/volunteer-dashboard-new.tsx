@@ -886,7 +886,7 @@ export default function VolunteerDashboardNew() {
     queryFn: async () => {
       try {
         const headers = await getAuthHeaders();
-        const response = await fetch(`/api/projects`, { headers, credentials: "include" });
+        const response = await fetch(`/api/projects?userId=${userId}`, { headers, credentials: "include" });
         if (!response.ok) return [];
         return response.json();
       } catch (error) {
@@ -942,6 +942,27 @@ export default function VolunteerDashboardNew() {
     },
     enabled: !!userId,
     retry: 1, // Only retry once to avoid excessive API calls
+  });
+
+  // Fetch assigned projects with enriched KPI data
+  const { data: assignedProjects = [], isLoading: isLoadingAssigned } = useQuery({
+    queryKey: ["/api/project-assignments/details", userId],
+    queryFn: async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/project-assignments/details?volunteerId=${userId}`, {
+          headers, credentials: "include"
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.filter((a: any) => a.status !== 'declined');
+      } catch (error) {
+        console.warn("Failed to fetch assigned projects:", error);
+        return [];
+      }
+    },
+    enabled: !!userId,
+    staleTime: 30000,
   });
 
   // Demo data fallback
@@ -1416,17 +1437,100 @@ export default function VolunteerDashboardNew() {
             </>
           )}
 
-          {/* Projects Tab Content - Top 4 Matched Projects */}
+          {/* Projects Tab Content */}
           {mobileTab === 'projects' && (
             <>
+              {/* ── Section 1: My Assigned Projects ── */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Best Matches For You</h2>
+                <h2 className="text-lg font-semibold text-stone-800">My Projects</h2>
+                <span className="text-xs text-stone-500">{assignedProjects.length} assigned</span>
+              </div>
+
+              {isLoadingAssigned ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-emerald-600"></div>
+                </div>
+              ) : assignedProjects.length > 0 ? (
+                <div className="space-y-3">
+                  {assignedProjects.map((assignment: any) => {
+                    const hoursLogged = (assignment.activities || []).reduce(
+                      (sum: number, a: any) => sum + (a.hours || 0), 0
+                    );
+                    const teamSize = (assignment.teamMembers || []).length + 1;
+                    const statusColors: Record<string, string> = {
+                      active: 'bg-emerald-100 text-emerald-700',
+                      pending: 'bg-amber-100 text-amber-700',
+                      completed: 'bg-blue-100 text-blue-700',
+                      'on-hold': 'bg-stone-100 text-stone-600',
+                    };
+                    const statusLabel = (assignment.status || 'pending').toLowerCase();
+                    const badgeClass = statusColors[statusLabel] || 'bg-stone-100 text-stone-600';
+
+                    return (
+                      <div
+                        key={assignment.id}
+                        className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between mb-1">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <h3 className="text-sm font-semibold text-stone-800 truncate">
+                              {assignment.project?.name || 'Project'}
+                            </h3>
+                            <p className="text-xs text-stone-500 mt-0.5 truncate">
+                              {assignment.organization?.name || ''}
+                            </p>
+                          </div>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
+                            {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
+                          </span>
+                        </div>
+
+                        {/* KPI row */}
+                        <div className="flex gap-4 mt-3 pt-3 border-t border-stone-100">
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-stone-800">{hoursLogged}</p>
+                            <p className="text-[10px] text-stone-500">hrs logged</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-stone-800">{assignment.hoursCommitted || '—'}</p>
+                            <p className="text-[10px] text-stone-500">hrs committed</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-stone-800">{teamSize}</p>
+                            <p className="text-[10px] text-stone-500">team</p>
+                          </div>
+                          <div className="ml-auto">
+                            <button
+                              onClick={() => navigate('/volunteer/log')}
+                              className="text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                            >
+                              Log Hours
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
+                  <Target className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-stone-800">No projects yet</p>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Apply to opportunities below to get assigned to projects
+                  </p>
+                </div>
+              )}
+
+              {/* ── Section 2: Suggested For You (AI matches) ── */}
+              <div className="flex items-center justify-between mt-2">
+                <h2 className="text-lg font-semibold text-stone-800">Suggested For You</h2>
                 <span className="text-xs text-stone-500">4-Factor AI Match</span>
               </div>
 
               {isLoadingMatches ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-600"></div>
                 </div>
               ) : matchedProjects.length > 0 ? (
                 <div className="space-y-3">
@@ -1495,15 +1599,13 @@ export default function VolunteerDashboardNew() {
                   ))}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-8 text-center">
-                  <Target className="h-12 w-12 text-stone-300 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-stone-800">No matches yet</p>
-                  <p className="text-xs text-stone-500 mt-1">
-                    Complete your profile to get personalized project matches
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
+                  <p className="text-xs text-stone-500">
+                    Complete your profile to get personalised suggestions
                   </p>
                   <button
                     onClick={() => navigate('/volunteer-profile-settings')}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="mt-3 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
                   >
                     Complete Profile
                   </button>

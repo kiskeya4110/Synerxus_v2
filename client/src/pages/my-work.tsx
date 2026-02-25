@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { ArrowLeft, Plus, FileText } from "lucide-react";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -25,7 +26,10 @@ export default function MyWork() {
   const { data: allLogs = [], isLoading } = useQuery({
     queryKey: ["/api/logs", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/logs?user_id=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?user_id=${userId}`, {
+        headers, credentials: "include"
+      });
       if (!response.ok) return [];
       const logs = await response.json();
       return Array.isArray(logs) ? logs : [];

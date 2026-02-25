@@ -938,9 +938,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivities(options?: PaginationOptions): Promise<VolunteerActivity[]> {
-    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(gte(volunteerActivities.date, DATA_CUTOFF.DATE))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -950,12 +948,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivitiesByUser(userId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
-    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(and(
-        eq(volunteerActivities.userId, userId),
-        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
-      ))
+      .where(eq(volunteerActivities.userId, userId))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -964,22 +958,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async countVolunteerActivitiesByUser(userId: number): Promise<number> {
-    // Filter to only count data from December 15, 2025 onwards
     const [result] = await db.select({ count: count() }).from(volunteerActivities)
-      .where(and(
-        eq(volunteerActivities.userId, userId),
-        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
-      ));
+      .where(eq(volunteerActivities.userId, userId));
     return result?.count || 0;
   }
 
   async listVolunteerActivitiesByProject(projectId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
-    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(and(
-        eq(volunteerActivities.projectId, projectId),
-        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
-      ))
+      .where(eq(volunteerActivities.projectId, projectId))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -1031,12 +1017,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivitiesByExternalVolunteer(externalVolunteerId: number, options?: PaginationOptions): Promise<VolunteerActivity[]> {
-    // Filter to only include data from December 15, 2025 onwards
     const query = db.select().from(volunteerActivities)
-      .where(and(
-        eq(volunteerActivities.externalVolunteerId, externalVolunteerId),
-        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
-      ))
+      .where(eq(volunteerActivities.externalVolunteerId, externalVolunteerId))
       .orderBy(desc(volunteerActivities.date));
     if (options?.limit) {
       return await query.limit(options.limit).offset(options.offset || 0);
@@ -1462,12 +1444,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]> {
-    return await db.select().from(projectAssignments).where(
-      and(
-        eq(projectAssignments.volunteerId, volunteerId),
-        gte(projectAssignments.createdAt, DATA_CUTOFF.DATE)
-      )
-    );
+    return await db.select().from(projectAssignments)
+      .where(eq(projectAssignments.volunteerId, volunteerId));
   }
 
   async deleteProjectAssignment(id: number): Promise<boolean> {
@@ -1490,12 +1468,8 @@ export class DatabaseStorage implements IStorage {
 
   async listVolunteerActivitiesByProjectIds(projectIds: number[]): Promise<VolunteerActivity[]> {
     if (projectIds.length === 0) return [];
-    // Filter to only include data from December 15, 2025 onwards
     return await db.select().from(volunteerActivities)
-      .where(and(
-        inArray(volunteerActivities.projectId, projectIds),
-        gte(volunteerActivities.date, DATA_CUTOFF.DATE)
-      ));
+      .where(inArray(volunteerActivities.projectId, projectIds));
   }
 
   async listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]> {

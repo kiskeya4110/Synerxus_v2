@@ -35,6 +35,15 @@ const MyWork = lazy(() => import("@/pages/my-work"));
 const LogActivity = lazy(() => import("@/pages/log-activity"));
 
 // ============================================================================
+// OPPORTUNITIES - Discover & detail views
+// ============================================================================
+const DiscoverOpportunities = lazy(() => import("@/pages/discover-opportunities"));
+const DiscoverOpportunitiesPWA = lazy(() => import("@/pages/discover-opportunities-pwa"));
+const OpportunityDetail = lazy(() => import("@/pages/opportunity-detail"));
+const OpportunityDetailPWA = lazy(() => import("@/pages/opportunity-detail-pwa"));
+const Opportunities = lazy(() => import("@/pages/opportunities"));
+
+// ============================================================================
 // NGO VIEW - Project Pipeline + Verification Queue (Desktop/Tablet)
 // ============================================================================
 const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard-new"));
@@ -170,6 +179,15 @@ export default function App() {
           <Route path="/my-work" component={MyWork} />
           <Route path="/log-activity" component={LogActivity} />
           <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
+
+          {/* ================================================================ */}
+          {/* OPPORTUNITIES - Discover & detail views (volunteer + general) */}
+          {/* ================================================================ */}
+          <Route path="/discover-opportunities" component={DiscoverOpportunities} />
+          <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
+          <Route path="/opportunities" component={Opportunities} />
+          <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
+          <Route path="/opportunities/:id" component={OpportunityDetail} />
 
           {/* ================================================================ */}
           {/* NGO ROUTES - Project Pipeline + Verification Queue */}

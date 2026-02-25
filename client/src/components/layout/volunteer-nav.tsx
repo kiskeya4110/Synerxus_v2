@@ -377,6 +377,22 @@ export default function VolunteerNav() {
                         })}
                       </div>
 
+                      {/* Admin Section */}
+                      {currentUser?.isAdmin && (
+                        <div className="border-t border-border py-2">
+                          <p className="px-4 pt-1 pb-0.5 text-[10px] font-bold text-cyan-500 uppercase tracking-wider">Admin</p>
+                          <Link href="/admin/pilot-dashboard">
+                            <button
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-cyan-700 hover:bg-cyan-50 transition-colors"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <Shield className="h-4 w-4 text-cyan-600" />
+                              <span className="text-sm font-medium">Pilot Dashboard</span>
+                            </button>
+                          </Link>
+                        </div>
+                      )}
+
                       {/* Logout */}
                       <div className="border-t border-border py-2">
                         <button

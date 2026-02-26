@@ -82,6 +82,15 @@ export const organizations = pgTable("organizations", {
   approvalNotes: text("approval_notes"), // Admin notes when approving/rejecting
   approvedBy: integer("approved_by"), // User ID of admin who approved/rejected
   approvedAt: timestamp("approved_at"), // When approval decision was made
+  // Connectivity & verification metadata (Synerxus MVP)
+  primaryConnectivity: text("primary_connectivity"), // mobile_data, wifi, limited
+  preferredVerificationMethod: text("preferred_verification_method"), // photo, voice_note, numeric_entry, checkbox
+  consentAnonymizedBenchmarks: boolean("consent_anonymized_benchmarks").default(false),
+  consentTimestamp: timestamp("consent_timestamp"),
+  consentVersion: text("consent_version"),
+  lastVerificationAt: timestamp("last_verification_at"),
+  verificationRate30d: doublePrecision("verification_rate_30d"), // 0–1 rolling 30-day rate
+  silentDays: integer("silent_days").default(0), // days without any activity
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -224,6 +233,24 @@ export const volunteerActivities = pgTable("volunteer_activities", {
   externalVolunteerId: integer("external_volunteer_id"), // FK to external_volunteers for non-registered volunteers
   loggedBy: integer("logged_by"), // User ID of admin who logged this (null if self-logged)
   loggedByType: text("logged_by_type").default("self"), // "self" | "admin" | "system"
+  // Enriched beneficiary context (Synerxus MVP)
+  beneficiaryCount: integer("beneficiary_count"), // Number of people directly impacted this session
+  beneficiaryType: text("beneficiary_type"), // student, patient, farmer, community_member, etc.
+  sdgMappingMethod: text("sdg_mapping_method").default("manual"), // manual, ai_suggested, inherited
+  // Verifier identity (field verification)
+  verifierPhone: text("verifier_phone"),
+  verifierName: text("verifier_name"),
+  verifierRole: text("verifier_role"), // project_manager, ngo_staff, community_leader
+  // Device & network context for fraud/trust signals
+  deviceType: text("device_type"), // mobile, desktop, tablet
+  ipAddress: text("ip_address"),
+  geoLatitude: doublePrecision("geo_latitude"),
+  geoLongitude: doublePrecision("geo_longitude"),
+  geoAccuracyMeters: doublePrecision("geo_accuracy_meters"),
+  // Temporal context (submission behaviour analysis)
+  hoursSinceSubmission: doublePrecision("hours_since_submission"), // delay between activity end and log submission
+  localTimeOfDay: text("local_time_of_day"), // morning, afternoon, evening, night
+  dayOfWeek: text("day_of_week"), // Monday … Sunday
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -489,6 +516,15 @@ export const csrPartners = pgTable("csr_partners", {
   rosterSyncStatus: text("roster_sync_status").default("pending"), // pending, synced, failed
   lastRosterSyncDate: timestamp("last_roster_sync_date"),
   vtoTrackingEnabled: boolean("vto_tracking_enabled").default(false),
+  // Program & subscription metadata (Synerxus MVP)
+  programName: text("program_name"),
+  programType: text("program_type"), // employee_giving, skills_based, vto, community
+  esgFrameworks: text("esg_frameworks").array(), // GRI, SASB, TCFD, UN_SDGs, B_Impact
+  fiscalYearEnd: text("fiscal_year_end"), // e.g. 'December', 'March'
+  bCorpCertified: boolean("b_corp_certified").default(false),
+  subscriptionTier: text("subscription_tier").default("free"), // free, starter, growth, enterprise
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -715,6 +751,10 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   sectorExpertise: text("sector_expertise").array(), // e.g., ["healthcare", "education", "fintech", "agriculture"]
   // Diaspora profile (Phase 3)
   countryOfOrigin: text("country_of_origin"), // Separate from current residence country
+  // Professional context for skills-based matching (Synerxus MVP)
+  phoneCountryCode: text("phone_country_code"), // e.g. '+260', '+1'
+  currentOccupation: text("current_occupation"), // free-text job title / occupation
+  industry: text("industry"), // healthcare, education, finance, tech, agriculture, etc.
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1984,3 +2024,78 @@ export const insertVerificationTokenSchema = createInsertSchema(verificationToke
 
 export type VerificationToken = typeof verificationTokens.$inferSelect;
 export type InsertVerificationToken = z.infer<typeof insertVerificationTokenSchema>;
+
+// =====================================================
+// Synerxus MVP — New Tables
+// =====================================================
+
+// Value Flip Events — track when a beneficiary becomes an active contributor
+export const valueFlipEvents = pgTable("value_flip_events", {
+  id: serial("id").primaryKey(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  projectId: integer("project_id").references(() => projects.id),
+  // event_type: first_log | repeat_log | streak_3 | streak_5 | milestone | role_flip
+  eventType: text("event_type").notNull(),
+  eventDate: timestamp("event_date").notNull(),
+  metadata: jsonb("metadata"), // e.g. { previousRole, newRole, streakCount }
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Consent Log — immutable audit trail of every consent action
+export const consentLog = pgTable("consent_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  // consent_type: data_processing | anonymized_benchmarks | marketing | third_party_sharing
+  consentType: text("consent_type").notNull(),
+  consentVersion: text("consent_version").notNull(),
+  consentGiven: boolean("consent_given").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  // No updatedAt — records are append-only
+});
+
+// Outcome Types — per-organization library of reusable outcome definitions
+export const outcomeTypes = pgTable("outcome_types", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  name: text("name").notNull(), // e.g. "Students Tutored", "Meals Served"
+  description: text("description"),
+  unit: text("unit"), // e.g. "students", "meals", "households"
+  category: text("category"), // education, health, environment, economic, etc.
+  sdgGoal: integer("sdg_goal"), // primary SDG this outcome maps to
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas
+export const insertValueFlipEventSchema = createInsertSchema(valueFlipEvents).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  eventDate: z.coerce.date(),
+});
+
+export const insertConsentLogSchema = createInsertSchema(consentLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOutcomeTypeSchema = createInsertSchema(outcomeTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types
+export type ValueFlipEvent = typeof valueFlipEvents.$inferSelect;
+export type InsertValueFlipEvent = z.infer<typeof insertValueFlipEventSchema>;
+
+export type ConsentLog = typeof consentLog.$inferSelect;
+export type InsertConsentLog = z.infer<typeof insertConsentLogSchema>;
+
+export type OutcomeType = typeof outcomeTypes.$inferSelect;
+export type InsertOutcomeType = z.infer<typeof insertOutcomeTypeSchema>;

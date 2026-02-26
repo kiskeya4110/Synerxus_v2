@@ -18,6 +18,7 @@ import {
   mapOutcomeTypeToSDGs,
 } from "@shared/sdg-goals";
 import { smsVerificationService } from "../services/sms-verification";
+import { invalidateCache } from "../dashboard-service";
 import crypto from "crypto";
 
 export const logsRouter = Router();
@@ -678,6 +679,8 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
       checkAndAwardBadges(activity.userId).catch(err => {
         console.error("Failed to check badges:", err);
       });
+      // Invalidate the volunteer's dashboard cache so verifiedHours updates immediately
+      invalidateCache.forUser(activity.userId);
     }
 
     smsVerificationService.removeFromQueue(logId);

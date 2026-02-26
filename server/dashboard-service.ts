@@ -1449,6 +1449,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       activeVolunteers: 1,
       totalHours: volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0),
       verifiedHours: verifiedHours,
+      verifiedCount: verifiedActivities.length,
       activeProjects: activeProjects,
       totalProjects: totalProjects,
       pendingAssignments,

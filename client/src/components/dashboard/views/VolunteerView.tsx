@@ -25,6 +25,7 @@ import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { PageHeader, Grid } from "@/components/ui/section";
 import { cn } from "@/lib/utils";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { getSDGColor, getSDGName, isValidSDG } from "@/lib/sdg-utils";
 
 
@@ -74,7 +75,11 @@ const VolunteerView = memo(function VolunteerView({
     queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/dashboard/summary?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/dashboard/summary?userId=${userId}`, {
+          headers,
+          credentials: "include",
+        });
         if (!response.ok) return null;
         return response.json();
       } catch (error) {
@@ -174,7 +179,7 @@ const VolunteerView = memo(function VolunteerView({
     return {
       hoursLogged: data.hoursLogged || data.totalHours || data.verifiedHours || 0,
       verifiedHours: data.verifiedHours || 0,
-      outcomesVerified: allLogs.filter((l: any) => l.verificationStatus === 'approved').length,
+      outcomesVerified: data.verifiedCount ?? allLogs.filter((l: any) => l.verificationStatus === 'approved').length,
       projectsActive: data.activeProjects || 0,
       totalProjects: data.totalProjects || projects.length || 0,
       totalPeopleImpacted: data.totalPeopleImpacted || 0,

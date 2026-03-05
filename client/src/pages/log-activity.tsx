@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Target, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin } from "lucide-react";
+import { Target, Clock, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -136,6 +136,7 @@ export default function LogActivity() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>(preselectedProjectId || "");
   const [selectedKpi, setSelectedKpi] = useState<string>("");
   const [kpiQuantity, setKpiQuantity] = useState<string>("");
+  const [hoursWorked, setHoursWorked] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -274,6 +275,7 @@ export default function LogActivity() {
   useEffect(() => {
     setSelectedKpi("");
     setKpiQuantity("");
+    setHoursWorked("");
   }, [selectedProjectId]);
 
   // Auto-select project if only one available
@@ -316,6 +318,7 @@ export default function LogActivity() {
       setSelectedProjectId("");
       setSelectedKpi("");
       setKpiQuantity("");
+      setHoursWorked("");
       setPhotoUrl("");
       setDate(new Date());
       setIsSubmitting(false);
@@ -348,6 +351,11 @@ export default function LogActivity() {
       return;
     }
 
+    if (!hoursWorked || parseFloat(hoursWorked) <= 0) {
+      toast({ title: "Missing Information", description: "Please enter the number of hours you worked.", variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Build SDG tags from the selected template + project SDGs
@@ -363,7 +371,7 @@ export default function LogActivity() {
       userId: currentUser?.id,
       projectId: parseInt(selectedProjectId),
       date: format(date, "yyyy-MM-dd"),
-      hours: 0,
+      hours: parseFloat(hoursWorked),
       outcomes: selectedKpi,
       outcomeText: selectedKpi,
       outcomeQuantity: parseFloat(kpiQuantity),
@@ -381,7 +389,7 @@ export default function LogActivity() {
         await saveActivityOffline({
           userId: currentUser?.id || 0,
           projectId: parseInt(selectedProjectId),
-          hours: 0,
+          hours: parseFloat(hoursWorked) || 0,
           date: format(date, "yyyy-MM-dd"),
           description: selectedKpi || '',
           skillsApplied: [],
@@ -398,6 +406,7 @@ export default function LogActivity() {
         setSelectedProjectId("");
         setSelectedKpi("");
         setKpiQuantity("");
+        setHoursWorked("");
         setPhotoUrl("");
         setDate(new Date());
         setIsSubmitting(false);
@@ -449,7 +458,7 @@ export default function LogActivity() {
   };
 
   const isVolunteer = currentUser?.userType === 'volunteer';
-  const canSubmit = !!selectedProjectId && !!selectedKpi && !!kpiQuantity && parseFloat(kpiQuantity) > 0;
+  const canSubmit = !!selectedProjectId && !!selectedKpi && !!kpiQuantity && parseFloat(kpiQuantity) > 0 && !!hoursWorked && parseFloat(hoursWorked) > 0;
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 pb-24' : 'bg-stone-50'}`}>
@@ -552,6 +561,26 @@ export default function LogActivity() {
                   )}
                 </div>
               )}
+
+              {/* 3. Hours Worked */}
+              <div className="space-y-2">
+                <Label htmlFor="hours" className="text-slate-700 font-medium flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  Hours Worked <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="hours"
+                  type="number"
+                  min="0.5"
+                  max="24"
+                  step="0.5"
+                  value={hoursWorked}
+                  onChange={(e) => setHoursWorked(e.target.value)}
+                  placeholder="e.g. 2.5"
+                  className="h-12 bg-slate-50 border-slate-200 text-slate-800"
+                />
+                <p className="text-xs text-slate-400">How many hours did you spend on this activity?</p>
+              </div>
 
               {/* 4. Date Selection */}
               <div className="space-y-2">

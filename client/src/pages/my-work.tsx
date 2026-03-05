@@ -136,7 +136,7 @@ export default function MyWork() {
               <span className="font-medium">
                 {logDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </span>
-              {log.hours != null && (
+              {log.hours != null && log.hours > 0 && (
                 <>
                   <span className="text-stone-300">|</span>
                   <span>{log.hours} hrs</span>
@@ -200,7 +200,7 @@ export default function MyWork() {
         {/* Hours */}
         <div className="w-16 flex-shrink-0 text-center">
           <p className="text-sm font-medium text-gray-600">
-            {log.hours != null ? `${log.hours} hrs` : "—"}
+            {log.hours != null && log.hours > 0 ? `${log.hours} hrs` : "—"}
           </p>
         </div>
 

@@ -871,29 +871,26 @@ export default function VolunteerDashboardNew() {
   const { data: recentLogs = [], isLoading: isLoadingLogs } = useQuery({
     queryKey: ["/api/logs", userId],
     queryFn: async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`/api/logs?user_id=${userId}`, {
-          headers, credentials: "include"
-        });
-        if (!response.ok) return [];
-        const logs = await response.json();
-        return logs.slice(0, 5).map((log: any) => ({
-          id: log.id,
-          projectName: log.project?.name || log.project_name || "Unknown Project",
-          hours: log.hours,
-          status: log.verificationStatus || log.verification_status || log.status || "pending",
-          createdAt: log.createdAt || log.created_at,
-          outcomeType: log.outcomes || log.outcome_type,
-          outcomeValue: log.outcomeQuantity || log.outcome_value,
-          sdgGoals: log.sdgTags || log.sdg_goals,
-        }));
-      } catch (error) {
-        console.warn("Failed to fetch logs:", error);
-        return [];
-      }
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?user_id=${userId}`, {
+        headers, credentials: "include"
+      });
+      if (!response.ok) throw new Error(`Failed to fetch logs: ${response.status}`);
+      const logs = await response.json();
+      return logs.slice(0, 5).map((log: any) => ({
+        id: log.id,
+        projectName: log.project?.name || log.project_name || "Unknown Project",
+        hours: log.hours,
+        status: log.verificationStatus || log.verification_status || log.status || "pending",
+        createdAt: log.createdAt || log.created_at,
+        outcomeType: log.outcomes || log.outcome_type,
+        outcomeValue: log.outcomeQuantity || log.outcome_value,
+        sdgGoals: log.sdgTags || log.sdg_goals,
+      }));
     },
     enabled: !!userId,
+    staleTime: 0,
+    retry: 2,
   });
 
   // Fetch matched projects using 4-factor matchmaking
@@ -918,21 +915,17 @@ export default function VolunteerDashboardNew() {
   const { data: assignedProjects = [], isLoading: isLoadingAssigned } = useQuery({
     queryKey: ["/api/project-assignments/details", userId],
     queryFn: async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`/api/project-assignments/details?volunteerId=${userId}`, {
-          headers, credentials: "include"
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.filter((a: any) => a.status !== 'declined');
-      } catch (error) {
-        console.warn("Failed to fetch assigned projects:", error);
-        return [];
-      }
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/project-assignments/details?volunteerId=${userId}`, {
+        headers, credentials: "include"
+      });
+      if (!response.ok) throw new Error(`Failed to fetch assignments: ${response.status}`);
+      const data = await response.json();
+      return data.filter((a: any) => a.status !== 'declined');
     },
     enabled: !!userId,
-    staleTime: 30000,
+    staleTime: 0,
+    retry: 2,
   });
 
   // Demo data fallback
@@ -1319,7 +1312,12 @@ export default function VolunteerDashboardNew() {
                   <button onClick={() => navigate('/my-work')} className="text-xs text-indigo-600 hover:text-indigo-700">View All →</button>
                 </div>
                 <div className="divide-y divide-stone-100">
-                  {recentLogs.slice(0, 5).map((log: any) => (
+                  {isLoadingLogs && (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
+                    </div>
+                  )}
+                  {!isLoadingLogs && recentLogs.slice(0, 5).map((log: any) => (
                     <div key={log.id} className="px-4 py-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1357,7 +1355,7 @@ export default function VolunteerDashboardNew() {
                       )}
                     </div>
                   ))}
-                  {recentLogs.length === 0 && (
+                  {!isLoadingLogs && recentLogs.length === 0 && (
                     <button
                       onClick={() => setShowLogModal(true)}
                       className="w-full px-4 py-8 text-center hover:bg-stone-50 transition-colors"

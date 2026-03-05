@@ -598,11 +598,9 @@ interface ImpactLog {
 interface RecentLogsProps {
   logs: ImpactLog[];
   isLoading?: boolean;
-  selectedLogId?: number | null;
-  onToggleLog?: (logId: number) => void;
 }
 
-function RecentLogs({ logs, isLoading, selectedLogId, onToggleLog }: RecentLogsProps) {
+function RecentLogs({ logs, isLoading }: RecentLogsProps) {
   if (isLoading) {
     return <LoadingState message="Loading activity..." />;
   }
@@ -618,67 +616,44 @@ function RecentLogs({ logs, isLoading, selectedLogId, onToggleLog }: RecentLogsP
   }
 
   return (
-    <div className="space-y-3">
-      {logs.map((log) => {
-        const isExpanded = selectedLogId === log.id;
-        return (
-          <button
-            key={log.id}
-            onClick={() => onToggleLog?.(log.id)}
-            className={`w-full flex flex-col p-4 rounded-lg transition-all text-left cursor-pointer ${
-              isExpanded ? 'bg-secondary shadow-md ring-1 ring-primary/20' : 'bg-secondary/50 hover:bg-secondary hover:shadow-md'
-            }`}
-          >
-            <div className="flex items-center gap-4 w-full">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
+    <div className="divide-y divide-border">
+      {logs.map((log) => (
+        <div key={log.id} className="py-3 space-y-1.5">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="h-4 w-4 text-primary" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{log.projectName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {log.hours}h logged on {new Date(log.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <StatusBadge status={log.status} size="sm" />
-              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
             </div>
-            {isExpanded && (
-              <div className="mt-3 pt-3 border-t border-border space-y-2 pl-14">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>{new Date(log.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                </div>
-                {(log.outcomeType || log.outcomeValue) && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Target className="h-3.5 w-3.5 text-emerald-600" />
-                    <span className="text-foreground font-medium">
-                      {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
-                    </span>
-                  </div>
-                )}
-                {log.sdgGoals && log.sdgGoals.length > 0 && (
-                  <div className="flex gap-1 flex-wrap">
-                    {log.sdgGoals.map((sdg: number) => {
-                      const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                      return sdgInfo ? (
-                        <span
-                          key={sdg}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
-                          style={{ backgroundColor: sdgInfo.color }}
-                        >
-                          SDG {sdg}: {sdgInfo.label}
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </button>
-        );
-      })}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{log.projectName}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {log.hours != null && log.hours > 0 ? ` · ${log.hours}h` : ''}
+              </p>
+            </div>
+            <StatusBadge status={log.status} size="sm" />
+          </div>
+          {(log.outcomeType || log.outcomeValue) && (
+            <div className="flex items-center gap-2 text-xs text-emerald-700 pl-13">
+              <Target className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>{log.outcomeType}{log.outcomeValue ? ` — ${log.outcomeValue}` : ''}</span>
+            </div>
+          )}
+          {log.sdgGoals && log.sdgGoals.length > 0 && (
+            <div className="flex gap-1 flex-wrap pl-13">
+              {log.sdgGoals.map((sdg: number) => {
+                const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                return sdgInfo ? (
+                  <span key={sdg} className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: sdgInfo.color }}>
+                    SDG {sdg}: {sdgInfo.label}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -828,11 +803,6 @@ export default function VolunteerDashboardNew() {
   const [showLogModal, setShowLogModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects'>('home');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
-
-  const toggleLogDetail = (logId: number) => {
-    setSelectedLogId(prev => prev === logId ? null : logId);
-  };
 
   // Redirect non-volunteers
   useEffect(() => {
@@ -1241,60 +1211,42 @@ export default function VolunteerDashboardNew() {
                   </div>
                   <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100 shadow-sm">
                     {recentLogs.slice(0, 5).map((log: any) => (
-                      <button
-                        key={log.id}
-                        onClick={() => toggleLogDetail(log.id)}
-                        className="w-full px-4 py-3 text-left hover:bg-stone-50 transition-colors active:scale-[0.99]"
-                      >
+                      <div key={log.id} className="px-4 py-3 space-y-1.5">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
-                            <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                            <p className="text-sm font-medium text-stone-800">{log.projectName || 'Project'}</p>
+                            <p className="text-xs text-stone-500">
+                              {log.createdAt ? new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                              {log.hours != null && log.hours > 0 ? ` · ${log.hours}h` : ''}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                              log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                              log.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                              'bg-amber-100 text-amber-700'
-                            }`}>
-                              {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
-                            </span>
-                            <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
-                          </div>
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+                            log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                            log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {log.status === 'approved' ? 'Verified' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
+                          </span>
                         </div>
-                        {selectedLogId === log.id && (
-                          <div className="mt-3 pt-3 border-t border-stone-100 space-y-2">
-                            <div className="flex items-center gap-2 text-xs text-stone-600">
-                              <Clock className="h-3 w-3" />
-                              <span>Logged on {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                            </div>
-                            {(log.outcomeType || log.outcomeValue) && (
-                              <div className="flex items-center gap-2 text-xs">
-                                <Target className="h-3 w-3 text-emerald-600" />
-                                <span className="text-emerald-700 font-medium">
-                                  {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
-                                </span>
-                              </div>
-                            )}
-                            {log.sdgGoals && log.sdgGoals.length > 0 && (
-                              <div className="flex gap-1 flex-wrap">
-                                {log.sdgGoals.map((sdg: number) => {
-                                  const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                  return sdgInfo ? (
-                                    <span
-                                      key={sdg}
-                                      className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
-                                      style={{ backgroundColor: sdgInfo.color }}
-                                    >
-                                      SDG {sdg}
-                                    </span>
-                                  ) : null;
-                                })}
-                              </div>
-                            )}
+                        {(log.outcomeType || log.outcomeValue) && (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+                            <Target className="h-3 w-3 flex-shrink-0" />
+                            <span>{log.outcomeType}{log.outcomeValue ? ` — ${log.outcomeValue}` : ''}</span>
                           </div>
                         )}
-                      </button>
+                        {log.sdgGoals && log.sdgGoals.length > 0 && (
+                          <div className="flex gap-1 flex-wrap">
+                            {log.sdgGoals.map((sdg: number) => {
+                              const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                              return sdgInfo ? (
+                                <span key={sdg} className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ backgroundColor: sdgInfo.color }}>
+                                  SDG {sdg}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -1364,64 +1316,46 @@ export default function VolunteerDashboardNew() {
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
                 <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-stone-800">Recent Activity</h2>
-                  <span className="text-xs text-stone-400">Tap for details</span>
+                  <button onClick={() => navigate('/my-work')} className="text-xs text-indigo-600 hover:text-indigo-700">View All →</button>
                 </div>
                 <div className="divide-y divide-stone-100">
                   {recentLogs.slice(0, 5).map((log: any) => (
-                    <button
-                      key={log.id}
-                      onClick={() => toggleLogDetail(log.id)}
-                      className="w-full px-4 py-3 text-left hover:bg-stone-50 transition-colors active:scale-[0.99]"
-                    >
+                    <div key={log.id} className="px-4 py-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-stone-800">{log.hours}h logged</p>
-                          <p className="text-xs text-stone-500">{log.projectName || 'Project'}</p>
+                          <p className="text-sm font-medium text-stone-800">{log.projectName || 'Project'}</p>
+                          <p className="text-xs text-stone-500">
+                            {log.createdAt ? new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                            {log.hours != null && log.hours > 0 ? ` · ${log.hours}h` : ''}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                            log.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-amber-100 text-amber-700'
-                          }`}>
-                            {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
-                          </span>
-                          <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
-                        </div>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+                          log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                          log.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          'bg-amber-100 text-amber-700'
+                        }`}>
+                          {log.status === 'approved' ? 'Verified' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
+                        </span>
                       </div>
-                      {selectedLogId === log.id && (
-                        <div className="mt-3 pt-3 border-t border-stone-100 space-y-2">
-                          <div className="flex items-center gap-2 text-xs text-stone-600">
-                            <Clock className="h-3 w-3" />
-                            <span>Logged on {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          </div>
-                          {(log.outcomeType || log.outcomeValue) && (
-                            <div className="flex items-center gap-2 text-xs">
-                              <Target className="h-3 w-3 text-emerald-600" />
-                              <span className="text-emerald-700 font-medium">
-                                {log.outcomeType}{log.outcomeValue ? ` — Qty: ${log.outcomeValue}` : ''}
-                              </span>
-                            </div>
-                          )}
-                          {log.sdgGoals && log.sdgGoals.length > 0 && (
-                            <div className="flex gap-1 flex-wrap">
-                              {log.sdgGoals.map((sdg: number) => {
-                                const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
-                                return sdgInfo ? (
-                                  <span
-                                    key={sdg}
-                                    className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
-                                    style={{ backgroundColor: sdgInfo.color }}
-                                  >
-                                    SDG {sdg}
-                                  </span>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
+                      {(log.outcomeType || log.outcomeValue) && (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+                          <Target className="h-3 w-3 flex-shrink-0" />
+                          <span>{log.outcomeType}{log.outcomeValue ? ` — ${log.outcomeValue}` : ''}</span>
                         </div>
                       )}
-                    </button>
+                      {log.sdgGoals && log.sdgGoals.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {log.sdgGoals.map((sdg: number) => {
+                            const sdgInfo = SDG_OPTIONS.find(s => s.value === sdg);
+                            return sdgInfo ? (
+                              <span key={sdg} className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ backgroundColor: sdgInfo.color }}>
+                                SDG {sdg}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
                   ))}
                   {recentLogs.length === 0 && (
                     <button
@@ -1793,7 +1727,7 @@ export default function VolunteerDashboardNew() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} selectedLogId={selectedLogId} onToggleLog={toggleLogDetail} />
+                <RecentLogs logs={recentLogs} isLoading={isLoadingLogs} />
               </CardContent>
             </Card>
           </div>

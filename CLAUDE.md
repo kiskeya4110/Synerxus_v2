@@ -1,1 +1,2 @@
 - make sure once a change is made to fix an error like producing more hooks than before  that it continues so that the error does not come back
+- NEVER make changes to code, UI, styling, or any files unless the user explicitly requests them. Do not add unrequested improvements, refactors, comments, cleanups, extra features, or "nice to have" additions. Only touch what was directly asked for — nothing more.

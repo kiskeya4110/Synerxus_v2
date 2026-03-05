@@ -1387,6 +1387,11 @@ export default function VolunteerDashboardNew() {
               ) : assignedProjects.length > 0 ? (
                 <div className="space-y-3">
                   {assignedProjects.map((assignment: any) => {
+                    // Fallback: look up project from projects array if enrichment didn't provide it
+                    const projectData = assignment.project || projects.find((p: any) => p.id === assignment.projectId);
+                    const projectName = projectData?.name || 'Unknown Project';
+                    const orgName = assignment.organization?.name || '';
+
                     const hoursLogged = (assignment.activities || []).reduce(
                       (sum: number, a: any) => sum + (a.hours || 0), 0
                     );
@@ -1408,11 +1413,11 @@ export default function VolunteerDashboardNew() {
                         <div className="flex items-start justify-between mb-1">
                           <div className="flex-1 min-w-0 pr-2">
                             <h3 className="text-sm font-semibold text-stone-800 truncate">
-                              {assignment.project?.name || 'Project'}
+                              {projectName}
                             </h3>
-                            <p className="text-xs text-stone-500 mt-0.5 truncate">
-                              {assignment.organization?.name || ''}
-                            </p>
+                            {orgName && (
+                              <p className="text-xs text-stone-500 mt-0.5 truncate">{orgName}</p>
+                            )}
                           </div>
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
                             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
@@ -1435,7 +1440,7 @@ export default function VolunteerDashboardNew() {
                           </div>
                           <div className="ml-auto">
                             <button
-                              onClick={() => navigate('/volunteer/log')}
+                              onClick={() => navigate(`/log-activity?projectId=${assignment.projectId}`)}
                               className="text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                             >
                               Log Hours

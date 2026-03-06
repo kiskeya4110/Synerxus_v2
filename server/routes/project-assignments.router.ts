@@ -125,12 +125,9 @@ projectAssignmentsRouter.get("/details", async (req: Request, res: Response) => 
           );
 
           // Get recent activities for this volunteer on this project
-          const allActivities = await storage.listVolunteerActivities();
-          const activities = allActivities
-            .filter((activity: any) =>
-              activity.projectId === assignment.projectId &&
-              activity.userId === volId
-            )
+          const volunteerActivities = await storage.listVolunteerActivitiesByUser(volId);
+          const activities = volunteerActivities
+            .filter((activity: any) => activity.projectId === assignment.projectId)
             .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .slice(0, 5); // Last 5 activities
 

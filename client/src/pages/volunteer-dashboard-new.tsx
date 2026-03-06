@@ -834,20 +834,16 @@ export default function VolunteerDashboardNew() {
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
     queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`/api/dashboard/summary`, {
-          headers, credentials: "include"
-        });
-        if (!response.ok) return null;
-        return response.json();
-      } catch (error) {
-        console.warn("Failed to fetch dashboard:", error);
-        return null;
-      }
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/dashboard/summary?userId=${userId}`, {
+        headers, credentials: "include"
+      });
+      if (!response.ok) throw new Error(`Failed to fetch dashboard: ${response.status}`);
+      return response.json();
     },
     enabled: !!userId && !authLoading,
-    staleTime: 30000,
+    staleTime: 0,
+    retry: 2,
   });
 
   // Fetch projects
@@ -877,7 +873,7 @@ export default function VolunteerDashboardNew() {
       });
       if (!response.ok) throw new Error(`Failed to fetch logs: ${response.status}`);
       const logs = await response.json();
-      return logs.slice(0, 5).map((log: any) => ({
+      return logs.slice(0, 10).map((log: any) => ({
         id: log.id,
         projectName: log.project?.name || log.project_name || "Unknown Project",
         hours: log.hours,
@@ -893,23 +889,9 @@ export default function VolunteerDashboardNew() {
     retry: 2,
   });
 
-  // Fetch matched projects using 4-factor matchmaking
-  const { data: matchedProjects = [], isLoading: isLoadingMatches } = useQuery({
-    queryKey: ["/api/matchmaker/volunteer", userId],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=4`);
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.matches || [];
-      } catch (error) {
-        console.warn("Failed to fetch matched projects:", error);
-        return [];
-      }
-    },
-    enabled: !!userId,
-    retry: 1, // Only retry once to avoid excessive API calls
-  });
+  // Use matched opportunities from dashboard data (works for all volunteers via main users table)
+  const matchedProjects = (dashboardData?.matchedOpportunities || []).slice(0, 4);
+  const isLoadingMatches = isLoadingDashboard;
 
   // Fetch assigned projects with enriched KPI data
   const { data: assignedProjects = [], isLoading: isLoadingAssigned } = useQuery({
@@ -1317,7 +1299,7 @@ export default function VolunteerDashboardNew() {
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
                     </div>
                   )}
-                  {!isLoadingLogs && recentLogs.slice(0, 5).map((log: any) => (
+                  {!isLoadingLogs && recentLogs.map((log: any) => (
                     <div key={log.id} className="px-4 py-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1473,55 +1455,55 @@ export default function VolunteerDashboardNew() {
                 <div className="space-y-3">
                   {matchedProjects.map((match: any, index: number) => (
                     <div
-                      key={match.organization_id || index}
+                      key={match.id || index}
                       className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
-                      onClick={() => navigate(`/opportunities/${match.organization_id}`)}
+                      onClick={() => navigate(`/opportunities/${match.id}`)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <h3 className="text-sm font-semibold text-stone-800">
-                            {match.organization_name || 'Organization'}
+                            {match.organizationName || 'Organization'}
                           </h3>
                           <p className="text-xs text-stone-500 mt-0.5">
-                            {match.cause_area || match.focus_area || 'Community Impact'}
+                            {match.title || 'Community Impact'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded-full">
                           <TrendingUp className="h-3 w-3 text-indigo-600" />
                           <span className="text-xs font-semibold text-indigo-600">
-                            {Math.round(match.match_score || match.score || 0)}%
+                            {Math.round(match.matchScore || match.matchPercentage || 0)}%
                           </span>
                         </div>
                       </div>
 
                       {/* Match Factors */}
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {match.skills_match > 0 && (
+                        {(match.matchBreakdown?.skillMatch || 0) > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                            Skills +{Math.round(match.skills_match)}
+                            Skills +{Math.round(match.matchBreakdown.skillMatch)}
                           </span>
                         )}
-                        {match.sdg_match > 0 && (
+                        {(match.matchBreakdown?.sdgMatch || 0) > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            SDG +{Math.round(match.sdg_match)}
+                            SDG +{Math.round(match.matchBreakdown.sdgMatch)}
                           </span>
                         )}
-                        {match.location_match > 0 && (
+                        {(match.matchBreakdown?.locationMatch || 0) > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Location +{Math.round(match.location_match)}
+                            Location +{Math.round(match.matchBreakdown.locationMatch)}
                           </span>
                         )}
-                        {match.availability_match > 0 && (
+                        {(match.matchBreakdown?.interestMatch || 0) > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                            Availability +{Math.round(match.availability_match)}
+                            Interests +{Math.round(match.matchBreakdown.interestMatch)}
                           </span>
                         )}
                       </div>
 
                       {/* SDG Tags */}
-                      {match.sdg_goals && match.sdg_goals.length > 0 && (
+                      {match.sdgGoals && match.sdgGoals.length > 0 && (
                         <div className="flex gap-1 mt-3 pt-3 border-t border-stone-100">
-                          {match.sdg_goals.slice(0, 4).map((sdg: number) => (
+                          {match.sdgGoals.slice(0, 4).map((sdg: number) => (
                             <span
                               key={sdg}
                               className="w-6 h-6 rounded text-[10px] font-bold flex items-center justify-center text-white"

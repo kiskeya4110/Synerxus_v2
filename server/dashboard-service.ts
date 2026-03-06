@@ -1464,7 +1464,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         : projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
       recentActivities: volunteerActivities
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5),
+        .slice(0, 10),
     };
 
     const result = {

@@ -132,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("currentUserId", String(user.id));
       localStorage.setItem("userType", user.userType);
       localStorage.setItem("sessionType", "firebase");
+      // Store the Firebase UID so stale sessions from other users can be detected
+      localStorage.setItem("sessionFirebaseUid", firebaseUser.uid);
 
       // Store JWT token for authenticated API calls (used as fallback when Firebase is unavailable)
       if (data.jwtToken) {
@@ -162,12 +164,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const sessionType = localStorage.getItem("sessionType");
+      const storedFirebaseUid = localStorage.getItem("sessionFirebaseUid");
 
       if (firebaseUser) {
-        // FIREWALL: If a demo session is active, a Firebase auth event means a stale
-        // session from a different user was detected. Sign it out and keep the demo user.
-        if (sessionType === "demo") {
-          console.log("[Auth] Stale Firebase session detected during demo session — clearing Firebase.");
+        // FIREWALL: Block stale Firebase sessions from other users.
+        // Triggers when a stored UID exists and doesn't match the incoming Firebase user.
+        // This covers both demo sessions ("demo_no_firebase") and real-Firebase mismatches
+        // (e.g. iDream's cached session appearing while GFA is logged in).
+        const isUidMismatch = storedFirebaseUid && firebaseUser.uid !== storedFirebaseUid;
+        const isDemoSession = sessionType === "demo";
+
+        if (isUidMismatch || isDemoSession) {
+          console.log("[Auth] Stale/wrong Firebase session detected — clearing Firebase.", { storedFirebaseUid, incomingUid: firebaseUser.uid, sessionType });
           ignoreNextNullAuthRef.current = true;
           try { await firebaseSignOut(auth); } catch (_) { ignoreNextNullAuthRef.current = false; }
           await restoreDemoUser();
@@ -311,6 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem("currentUserId", String(user.id));
               localStorage.setItem("userType", user.userType || "volunteer");
               localStorage.setItem("sessionType", "demo");
+              localStorage.setItem("sessionFirebaseUid", "demo_no_firebase");
               if (data.jwtToken) {
                 localStorage.setItem("authToken", data.jwtToken);
               }
@@ -412,6 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem("currentUserId", String(data.user?.id || data.id));
           localStorage.setItem("userType", userType || "volunteer");
           localStorage.setItem("sessionType", "demo");
+          localStorage.setItem("sessionFirebaseUid", "demo_no_firebase");
           if (data.jwtToken) {
             localStorage.setItem("authToken", data.jwtToken);
           }
@@ -464,6 +474,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('userType');
       localStorage.removeItem('authToken');
       localStorage.removeItem('sessionType');
+      localStorage.removeItem('sessionFirebaseUid');
       localStorage.removeItem('profileComplete');
       localStorage.removeItem('isNewSignup');
       localStorage.removeItem('rememberMe');

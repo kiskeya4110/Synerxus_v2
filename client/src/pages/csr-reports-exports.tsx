@@ -186,7 +186,7 @@ const sampleExpenses: ExpenseRecord[] = [
 ];
 
 export default function CSRReportsExports() {
-  const { user } = useAuth();
+  const { user, dbUser } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -240,18 +240,9 @@ export default function CSRReportsExports() {
     enabled: !!userId,
   });
 
-  // Fetch current user to determine user type
-  const { data: currentUser } = useQuery<any>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) throw new Error("No user ID found");
-      const response = await fetch(`/api/users/me?userId=${id}`);
-      if (!response.ok) throw new Error("User not found");
-      return response.json();
-    },
-    enabled: !!userId
-  });
+  // Use dbUser from auth context as the authoritative identity (immune to localStorage contamination)
+  const currentUser = dbUser as any;
+  const isOrganization = currentUser?.userType === 'organization';
 
   // Fetch organization dashboard data for organizations
   const { data: orgDashboardData } = useQuery<any>({
@@ -262,10 +253,8 @@ export default function CSRReportsExports() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser && currentUser.userType === 'organization'
+    enabled: isOrganization && !!userId
   });
-
-  const isOrganization = currentUser?.userType === 'organization';
 
   // On desktop, org users go to the org dashboard reports tab (not CSR layout)
   useEffect(() => {

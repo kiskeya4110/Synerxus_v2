@@ -528,7 +528,7 @@ export default function OrganizationDashboardNew() {
 
   // Fetch report data (only when Reports tab is active)
   const { data: reportData, isLoading: isLoadingReport, refetch: refetchReport } = useQuery({
-    queryKey: ["/api/organization/report", reportProjectFilter, reportTimePeriod, reportStartDate, reportEndDate],
+    queryKey: ["/api/organization/report", userId, reportProjectFilter, reportTimePeriod, reportStartDate, reportEndDate],
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const params = new URLSearchParams();

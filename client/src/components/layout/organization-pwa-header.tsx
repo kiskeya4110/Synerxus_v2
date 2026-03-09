@@ -5,7 +5,7 @@ import {
   FolderOpen, Users, Target,
   Home, Bell, X,
   Award, Flame,
-  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, ClipboardList, Trash2
+  CheckCircle, Clock, Sparkles, Briefcase, Heart, ChevronRight, ClipboardList, Trash2, BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -243,6 +243,7 @@ export default function OrganizationPWAHeader({
     {
       title: "ACTIONS",
       items: [
+        { icon: BarChart3, label: "Reports", desc: "Analytics & Synerxus reports", action: () => navigate('/csr-reports-exports') },
         { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours') },
         { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
       ]

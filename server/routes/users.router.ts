@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { authRateLimiter } from "../middleware/security";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, optionalAuthMiddleware, generateToken } from "../middleware/auth";
 import { isPreapprovedEmail } from "../config/preapproved-emails";
 
 export const usersRouter = Router();
@@ -61,12 +61,24 @@ usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
 });
 
 // GET /api/users/me - Get current authenticated user
-usersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
+usersRouter.get("/me", optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthenticatedUser(req, res);
-    if (!authUser) return;
+    // Try auth middleware user first, then fall back to userId query param
+    let userId: number | null = req.user?.id || null;
 
-    const user = await storage.getUser(authUser.id);
+    if (!userId) {
+      const qUserId = req.query.userId as string;
+      if (qUserId) {
+        const parsed = parseInt(qUserId);
+        if (!isNaN(parsed)) userId = parsed;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const user = await storage.getUser(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -134,7 +146,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     if (user) {
       // Existing user - return with isNewUser: false
       console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
-      return res.json({ ...user, isNewUser: false });
+      const jwtToken = generateToken({ ...user, userType: user.userType || "volunteer" });
+      return res.json({ ...user, isNewUser: false, jwtToken });
     }
 
     user = await storage.getUserByEmail(email);
@@ -146,7 +159,9 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
         displayName: displayName || user.displayName
       });
       // Existing user (linking account) - return with isNewUser: false
-      return res.json({ ...updatedUser, isNewUser: false });
+      const tokenUser = updatedUser || user;
+      const jwtToken = generateToken({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
+      return res.json({ ...updatedUser, isNewUser: false, jwtToken });
     }
 
     console.log(`[firebase-sync] No existing user found for email: ${email}, userType: ${userType || 'not provided'}`);
@@ -228,7 +243,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
 
     broadcastUpdate("user_created", user);
     // New user - return with isNewUser: true
-    res.status(201).json({ ...user, isNewUser: true });
+    const jwtToken = generateToken({ ...user, userType: user.userType || "volunteer" });
+    res.status(201).json({ ...user, isNewUser: true, jwtToken });
   } catch (err) {
     console.error("[firebase-sync] Error creating user:", err);
     const error = handleValidationError(err);

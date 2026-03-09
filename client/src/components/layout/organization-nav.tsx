@@ -10,6 +10,7 @@ import {
   LogOut,
   HelpCircle,
   Building2,
+  FileBarChart2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
@@ -29,25 +30,16 @@ const getOrgNavItems = () => [
 
 // Dropdown menu items - MVP only
 const MENU_ITEMS = [
+  { href: "/organization-dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
   { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
 export default function OrganizationNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { signOut } = useAuth();
-  const userId = localStorage.getItem("currentUserId");
-
-  // Fetch current user
-  const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : "/api/users/me";
-      const response = await fetch(url);
-      return response.ok ? response.json() : null;
-    },
-    enabled: !!userId,
-  });
+  const { signOut, dbUser } = useAuth();
+  // Use the authenticated dbUser as the authoritative current user — avoids stale localStorage
+  const currentUser = dbUser as any;
 
   // Fetch organization
   const { data: organization } = useQuery({

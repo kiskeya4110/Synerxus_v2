@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
 import DOMPurify from "dompurify";
 import Logo from "@/components/ui/logo";
@@ -256,9 +257,8 @@ export default function CSRReportsExports() {
   const { data: orgDashboardData } = useQuery<any>({
     queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return null;
-      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/dashboard/summary`, { headers });
       if (!response.ok) return null;
       return response.json();
     },
@@ -266,6 +266,13 @@ export default function CSRReportsExports() {
   });
 
   const isOrganization = currentUser?.userType === 'organization';
+
+  // On desktop, org users go to the org dashboard reports tab (not CSR layout)
+  useEffect(() => {
+    if (isOrganization && !isMobile) {
+      navigate('/organization-dashboard?tab=reports');
+    }
+  }, [isOrganization, isMobile, navigate]);
 
   const handleOrgRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["/api/users/me", userId] });
@@ -303,7 +310,9 @@ export default function CSRReportsExports() {
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // PDF generation only for MVP
-      const htmlContent = generatePDFContent(template, reportData);
+      const htmlContent = isOrganization
+        ? generateOrgPDFContent(template)
+        : generatePDFContent(template, reportData);
       const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
@@ -353,6 +362,234 @@ export default function CSRReportsExports() {
     }
 
     return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+  };
+
+  const generateOrgPDFContent = (template: ReportTemplate) => {
+    const orgName = currentUser?.name || currentUser?.displayName || "Organization";
+    const totalHours = orgDashboardData?.totalHours || 0;
+    const activeVolunteers = orgDashboardData?.activeVolunteers || 0;
+    const activeProjects = orgDashboardData?.activeProjects || 0;
+    const sdgsAddressed = orgDashboardData?.sdgsAddressed || 0;
+    const sdgMetrics = reportData?.sdgMetrics || [];
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${template.name} - ${orgName}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 40px; color: #333; background: #fff; }
+
+            .report-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 32px;
+              padding-bottom: 24px;
+              border-bottom: 3px solid #f59e0b;
+            }
+            .header-left { flex: 2; }
+            .header-right {
+              flex: 1;
+              background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+              padding: 16px;
+              border-radius: 12px;
+              border: 2px solid #f59e0b;
+            }
+
+            .logo-container {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 16px;
+            }
+            .synerxus-logo { display: flex; align-items: center; gap: 2px; }
+            .synerxus-logo .syner { font-size: 28px; font-weight: 800; color: #1e3a5f; letter-spacing: -1px; }
+            .synerxus-logo .xus { font-size: 28px; font-weight: 800; color: #f59e0b; letter-spacing: -1px; }
+            .company-divider { width: 2px; height: 32px; background: #d1d5db; margin: 0 8px; }
+            .company-name { font-size: 18px; font-weight: 600; color: #374151; }
+
+            .report-title { font-size: 32px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+            .report-subtitle { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+            .verified-badge {
+              background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+              color: white; font-size: 10px; font-weight: 700;
+              padding: 4px 12px; border-radius: 20px;
+              text-transform: uppercase; letter-spacing: 0.5px;
+            }
+            .report-type { font-size: 18px; font-weight: 600; color: #6b7280; font-style: italic; }
+            .report-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #6b7280; margin-top: 8px; }
+            .meta-divider { color: #d1d5db; }
+            .blockchain-verified { display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: 600; }
+
+            .impact-score-box h4 { font-size: 11px; color: #d97706; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+            .impact-score-value { font-size: 36px; font-weight: 800; color: #92400e; }
+            .impact-score-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+            h2 {
+              font-size: 20px; font-weight: 700; color: #92400e;
+              margin: 32px 0 16px 0; padding-bottom: 8px;
+              border-bottom: 2px solid #f59e0b;
+            }
+
+            .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+            .metric-card {
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+              border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;
+            }
+            .metric-card.orange { border-left: 4px solid #f59e0b; }
+            .metric-card.green { border-left: 4px solid #10b981; }
+            .metric-card.blue { border-left: 4px solid #3b82f6; }
+            .metric-card.purple { border-left: 4px solid #8b5cf6; }
+            .metric-value { font-size: 28px; font-weight: 800; color: #92400e; }
+            .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; }
+            th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; }
+            td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+            tr:nth-child(even) { background: #f9fafb; }
+            .sdg-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; color: white; font-weight: 700; font-size: 12px; margin-right: 8px; }
+            .sdg-name { font-weight: 500; }
+            .progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+            .progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); border-radius: 4px; }
+
+            .report-footer { margin-top: 48px; padding-top: 24px; border-top: 2px solid #e5e7eb; text-align: center; }
+            .footer-logo { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 12px; }
+            .footer-logo .syner { font-size: 20px; font-weight: 800; color: #1e3a5f; }
+            .footer-logo .xus { font-size: 20px; font-weight: 800; color: #f59e0b; }
+            .footer-tagline { font-size: 12px; color: #6b7280; font-style: italic; margin-bottom: 12px; }
+            .footer-generated { font-size: 13px; color: #374151; margin-bottom: 8px; }
+            .footer-confidential { font-size: 11px; color: #9ca3af; padding: 8px 16px; background: #f9fafb; border-radius: 6px; display: inline-block; }
+            .footer-copyright { font-size: 11px; color: #9ca3af; margin-top: 16px; }
+
+            .sdg-watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.03; pointer-events: none; z-index: -1; }
+          </style>
+        </head>
+        <body>
+          <div class="sdg-watermark">
+            <svg viewBox="0 0 200 200" width="600" height="600">
+              ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map((sdg, index) => {
+                const anglePerSegment = (2 * Math.PI) / 17;
+                const startAngle = index * anglePerSegment - Math.PI / 2;
+                const endAngle = startAngle + anglePerSegment;
+                const center = 100, outerRadius = 95, innerRadius = 30;
+                const x1 = center + innerRadius * Math.cos(startAngle);
+                const y1 = center + innerRadius * Math.sin(startAngle);
+                const x2 = center + outerRadius * Math.cos(startAngle);
+                const y2 = center + outerRadius * Math.sin(startAngle);
+                const x3 = center + outerRadius * Math.cos(endAngle);
+                const y3 = center + outerRadius * Math.sin(endAngle);
+                const x4 = center + innerRadius * Math.cos(endAngle);
+                const y4 = center + innerRadius * Math.sin(endAngle);
+                return `<path d="M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z" fill="${getSDGColor(sdg)}" />`;
+              }).join("")}
+              <circle cx="100" cy="100" r="28" fill="white"/>
+            </svg>
+          </div>
+
+          <div class="report-header">
+            <div class="header-left">
+              <div class="logo-container">
+                <div class="synerxus-logo">
+                  <span class="syner">SYNER</span><span class="xus">XUS</span>
+                </div>
+                <div class="company-divider"></div>
+                <div class="company-name">${orgName}</div>
+              </div>
+              <div class="report-title">${orgName}</div>
+              <div class="report-subtitle">
+                <span class="verified-badge">✓ Verified</span>
+                <span class="report-type">${template.name}</span>
+              </div>
+              <div class="report-meta">
+                <span>📅 ${currentDate}</span>
+                <span class="meta-divider">|</span>
+                <span class="blockchain-verified">✓ Blockchain Verified</span>
+              </div>
+            </div>
+            <div class="header-right">
+              <div class="impact-score-box">
+                <h4>SDGs Addressed</h4>
+                <div class="impact-score-value">${sdgsAddressed}</div>
+                <div class="impact-score-label">UN Global Goals</div>
+              </div>
+            </div>
+          </div>
+
+          <h2>Key Performance Metrics</h2>
+          <div class="metric-grid">
+            <div class="metric-card orange">
+              <div class="metric-value">${totalHours.toLocaleString()}</div>
+              <div class="metric-label">Total Volunteer Hours</div>
+            </div>
+            <div class="metric-card green">
+              <div class="metric-value">${activeVolunteers.toLocaleString()}</div>
+              <div class="metric-label">Active Volunteers</div>
+            </div>
+            <div class="metric-card blue">
+              <div class="metric-value">${activeProjects}</div>
+              <div class="metric-label">Active Projects</div>
+            </div>
+            <div class="metric-card purple">
+              <div class="metric-value">${sdgsAddressed}</div>
+              <div class="metric-label">SDGs Addressed</div>
+            </div>
+          </div>
+
+          <h2>SDG Alignment & Impact</h2>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40%">SDG Goal</th>
+                <th style="width: 25%">Hours Contributed</th>
+                <th style="width: 20%">Progress</th>
+                <th style="width: 15%">% of Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sdgMetrics.slice(0, 8).map((sdg: any) => `
+                <tr>
+                  <td>
+                    <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
+                    <span class="sdg-name">${getSDGName(sdg.goal)}</span>
+                  </td>
+                  <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
+                  <td>
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: ${sdg.percentage || 0}%"></div>
+                    </div>
+                  </td>
+                  <td><strong>${sdg.percentage || 0}%</strong></td>
+                </tr>
+              `).join("") || `
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #6b7280; padding: 24px;">
+                    No SDG data available for this period
+                  </td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+
+          <div class="report-footer">
+            <div class="footer-logo">
+              <span class="syner">SYNER</span><span class="xus">XUS</span>
+            </div>
+            <div class="footer-tagline">Connect. Manage. Impact Globally.</div>
+            <div class="footer-generated">
+              Generated on ${currentDate} • ${template.name}
+            </div>
+            <div class="footer-confidential">
+              This report contains confidential information. Distribution is restricted to authorized personnel.
+            </div>
+            <div class="footer-copyright">
+              © ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const generatePDFContent = (template: ReportTemplate, data: any) => {
@@ -815,7 +1052,7 @@ export default function CSRReportsExports() {
 
     return (
       <OrganizationPWALayout
-        activeTab="home"
+        activeTab="reports"
         onRefresh={handleOrgRefresh}
         metrics={{
           activeProjects: orgDashboardData?.activeProjects || 0,

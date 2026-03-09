@@ -23,7 +23,10 @@ import {
   Globe,
   Home,
   Menu,
+  FileText,
 } from "lucide-react";
+import DOMPurify from "dompurify";
+import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "@/components/ui/card";
@@ -452,7 +455,16 @@ export default function OrganizationDashboardNew() {
 
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [isApprovingAll, setIsApprovingAll] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") || "overview";
+  });
+
+  // Report filter state
+  const [reportProjectFilter, setReportProjectFilter] = useState("all");
+  const [reportTimePeriod, setReportTimePeriod] = useState("30d");
+  const [reportStartDate, setReportStartDate] = useState("");
+  const [reportEndDate, setReportEndDate] = useState("");
 
   // Redirect non-organizations
   useEffect(() => {
@@ -512,6 +524,28 @@ export default function OrganizationDashboardNew() {
       return response.json();
     },
     enabled: !!currentUser?.organizationId,
+  });
+
+  // Fetch report data (only when Reports tab is active)
+  const { data: reportData, isLoading: isLoadingReport, refetch: refetchReport } = useQuery({
+    queryKey: ["/api/organization/report", reportProjectFilter, reportTimePeriod, reportStartDate, reportEndDate],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      if (reportProjectFilter && reportProjectFilter !== 'all') params.set('projectId', reportProjectFilter);
+      if (reportStartDate && reportEndDate) {
+        params.set('startDate', reportStartDate);
+        params.set('endDate', reportEndDate);
+      } else {
+        params.set('timePeriod', reportTimePeriod);
+      }
+      const response = await fetch(`/api/organization/report?${params.toString()}`, {
+        headers, credentials: "include"
+      });
+      if (!response.ok) throw new Error("Failed to load report");
+      return response.json();
+    },
+    enabled: activeTab === 'reports' && !!userId,
   });
 
   // Fetch projects
@@ -602,6 +636,90 @@ export default function OrganizationDashboardNew() {
       sdgsAddressed: data.sdgsAddressed || 0,
     };
   }, [dashboardData, projects, volunteers, pendingVerifications]);
+
+  // Generate Synerxus-branded org PDF report
+  const generateSynerxusReport = () => {
+    const orgName = (organization as any)?.name || currentUser?.displayName || "Organization";
+    const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const summary = (reportData as any)?.summary || {};
+    const sdgDist: any[] = (reportData as any)?.sdgDistribution || [];
+    const totalHours = summary.totalHours || 0;
+    const htmlContent = `<!DOCTYPE html><html><head><title>${orgName} – Synerxus Impact Report</title><style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Arial,sans-serif;padding:40px;color:#333;background:#fff}
+      .report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:3px solid #f59e0b}
+      .header-left{flex:2}.header-right{flex:1;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:16px;border-radius:12px;border:2px solid #f59e0b}
+      .logo{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+      .syner{font-size:28px;font-weight:800;color:#1e3a5f;letter-spacing:-1px}
+      .xus{font-size:28px;font-weight:800;color:#f59e0b;letter-spacing:-1px}
+      .divider{width:2px;height:32px;background:#d1d5db;margin:0 8px}
+      .org-name{font-size:18px;font-weight:600;color:#374151}
+      .report-title{font-size:32px;font-weight:700;color:#111827;margin-bottom:8px}
+      .badge{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;margin-right:8px}
+      .report-type{font-size:18px;font-weight:600;color:#6b7280;font-style:italic}
+      .meta{font-size:13px;color:#6b7280;margin-top:8px}
+      .score-label{font-size:11px;color:#d97706;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+      .score-value{font-size:36px;font-weight:800;color:#92400e}
+      .score-sub{font-size:12px;color:#6b7280;margin-top:4px}
+      h2{font-size:20px;font-weight:700;color:#92400e;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #f59e0b}
+      .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+      .metric{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center}
+      .metric.o{border-left:4px solid #f59e0b}.metric.g{border-left:4px solid #10b981}.metric.b{border-left:4px solid #3b82f6}.metric.p{border-left:4px solid #8b5cf6}
+      .mv{font-size:28px;font-weight:800;color:#92400e}.ml{font-size:12px;color:#6b7280;margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
+      table{width:100%;border-collapse:collapse;margin:24px 0;border-radius:8px;overflow:hidden}
+      th{background:linear-gradient(135deg,#92400e,#b45309);color:#fff;padding:14px 16px;text-align:left;font-size:13px}
+      td{padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px}
+      tr:nth-child(even){background:#f9fafb}
+      .sdg-dot{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:#fff;font-weight:700;font-size:12px;margin-right:8px}
+      .bar{width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+      .bar-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:4px}
+      .footer{margin-top:48px;padding-top:24px;border-top:2px solid #e5e7eb;text-align:center}
+      .f-syner{font-size:20px;font-weight:800;color:#1e3a5f}.f-xus{font-size:20px;font-weight:800;color:#f59e0b}
+      .f-tag{font-size:12px;color:#6b7280;font-style:italic;margin:8px 0}
+      .f-conf{font-size:11px;color:#9ca3af;padding:8px 16px;background:#f9fafb;border-radius:6px;display:inline-block}
+      .f-copy{font-size:11px;color:#9ca3af;margin-top:12px}
+    </style></head><body>
+      <div class="report-header">
+        <div class="header-left">
+          <div class="logo"><span class="syner">SYNER</span><span class="xus">XUS</span><div class="divider"></div><span class="org-name">${orgName}</span></div>
+          <div class="report-title">${orgName}</div>
+          <div style="margin-bottom:12px"><span class="badge">✓ Verified</span><span class="report-type">Impact Report</span></div>
+          <div class="meta">📅 ${currentDate} &nbsp;|&nbsp; <span style="color:#f59e0b;font-weight:600">✓ Blockchain Verified</span></div>
+        </div>
+        <div class="header-right">
+          <div class="score-label">SDGs Addressed</div>
+          <div class="score-value">${summary.sdgsAddressed || 0}</div>
+          <div class="score-sub">UN Global Goals</div>
+        </div>
+      </div>
+      <h2>Key Performance Metrics</h2>
+      <div class="metrics">
+        <div class="metric o"><div class="mv">${totalHours.toLocaleString()}</div><div class="ml">Total Volunteer Hours</div></div>
+        <div class="metric g"><div class="mv">${(summary.totalVolunteers || 0).toLocaleString()}</div><div class="ml">Active Volunteers</div></div>
+        <div class="metric b"><div class="mv">${summary.activeProjects || 0}</div><div class="ml">Active Projects</div></div>
+        <div class="metric p"><div class="mv">${(summary.peopleImpacted || 0).toLocaleString()}</div><div class="ml">People Impacted</div></div>
+      </div>
+      <h2>SDG Alignment &amp; Impact</h2>
+      <table><thead><tr><th style="width:40%">SDG Goal</th><th style="width:25%">Hours Contributed</th><th style="width:20%">Progress</th><th style="width:15%">% of Total</th></tr></thead>
+      <tbody>${sdgDist.length > 0 ? sdgDist.slice(0, 8).map((s: any) => {
+        const pct = totalHours > 0 ? Math.round((s.hours / totalHours) * 100) : 0;
+        return `<tr><td><span class="sdg-dot" style="background:${getSDGColor(s.sdg)}">${s.sdg}</span>${getSDGName(s.sdg)}</td><td>${(s.hours || 0).toLocaleString()} hrs</td><td><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></td><td><strong>${pct}%</strong></td></tr>`;
+      }).join("") : `<tr><td colspan="4" style="text-align:center;color:#6b7280;padding:24px">No SDG data available for this period</td></tr>`}</tbody></table>
+      <div class="footer">
+        <div style="display:flex;justify-content:center;gap:2px;margin-bottom:8px"><span class="f-syner">SYNER</span><span class="f-xus">XUS</span></div>
+        <div class="f-tag">Connect. Manage. Impact Globally.</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:8px">Generated on ${currentDate} · Impact Report</div>
+        <div class="f-conf">This report contains confidential information. Distribution is restricted to authorized personnel.</div>
+        <div class="f-copy">© ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com</div>
+      </div>
+    </body></html>`;
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
+      win.document.close();
+      win.print();
+    }
+  };
 
   // Approval handlers
   const handleApprove = async (id: number) => {
@@ -912,7 +1030,7 @@ export default function OrganizationDashboardNew() {
 
         {/* Main Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full max-w-md">
+          <TabsList className="w-full max-w-2xl">
             <TabsTrigger value="overview" className="flex-1">
               <BarChart3 className="h-4 w-4 mr-2" />
               Overview
@@ -929,6 +1047,10 @@ export default function OrganizationDashboardNew() {
             <TabsTrigger value="projects" className="flex-1">
               <FolderOpen className="h-4 w-4 mr-2" />
               Projects
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex-1">
+              <Calendar className="h-4 w-4 mr-2" />
+              Reports
             </TabsTrigger>
           </TabsList>
 
@@ -1121,6 +1243,228 @@ export default function OrganizationDashboardNew() {
                 </Grid>
               )}
             </Section>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports" className="mt-6 space-y-6">
+            {/* Filter Controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Generate Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="flex-1 min-w-[160px]">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Project</label>
+                    <Select value={reportProjectFilter} onValueChange={setReportProjectFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Projects" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Projects</SelectItem>
+                        {(projects as any[]).map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Time Period</label>
+                    <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportStartDate(""); setReportEndDate(""); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7d">Last 7 days</SelectItem>
+                        <SelectItem value="30d">Last 30 days</SelectItem>
+                        <SelectItem value="90d">Last 90 days</SelectItem>
+                        <SelectItem value="1y">Last year</SelectItem>
+                        <SelectItem value="all">All time</SelectItem>
+                        <SelectItem value="custom">Custom range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {reportTimePeriod === "custom" && (
+                    <>
+                      <div className="flex-1 min-w-[140px]">
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">From</label>
+                        <Input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} />
+                      </div>
+                      <div className="flex-1 min-w-[140px]">
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">To</label>
+                        <Input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} />
+                      </div>
+                    </>
+                  )}
+                  <Button onClick={() => refetchReport()} disabled={isLoadingReport} variant="default">
+                    {isLoadingReport ? "Loading..." : "Run Report"}
+                  </Button>
+                  {reportData && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const rows = [
+                          ["Project", "Status", "Total Hours", "Verified Hours", "Volunteers", "People Impacted", "Completion %"],
+                          ...(reportData.projects || []).map((p: any) => [
+                            p.name, p.status, p.totalHours, p.verifiedHours, p.volunteerCount, p.peopleImpacted, p.completionPercentage
+                          ]),
+                        ];
+                        const csv = rows.map(r => r.join(",")).join("\n");
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `report-${new Date().toISOString().split("T")[0]}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      Export CSV
+                    </Button>
+                  )}
+                  <Button
+                    variant="default"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={generateSynerxusReport}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Synerxus Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Summary Metrics */}
+            {reportData && (
+              <>
+                <Grid columns={4}>
+                  <MetricCard label="Total Hours" value={reportData.summary?.totalHours || 0} />
+                  <MetricCard label="Verified Hours" value={reportData.summary?.verifiedHours || 0} />
+                  <MetricCard label="Volunteers" value={reportData.summary?.totalVolunteers || 0} />
+                  <MetricCard label="People Impacted" value={reportData.summary?.peopleImpacted || 0} />
+                  <MetricCard label="Projects" value={reportData.summary?.totalProjects || 0} />
+                  <MetricCard label="Active Projects" value={reportData.summary?.activeProjects || 0} />
+                  <MetricCard label="SDGs Addressed" value={reportData.summary?.sdgsAddressed || 0} />
+                  <MetricCard label="AIU Earned" value={reportData.summary?.aiuEarned || 0} />
+                </Grid>
+
+                {/* Project Breakdown */}
+                {(reportData.projects || []).length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Project Breakdown</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Project</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Status</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Hours</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Verified</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Volunteers</th>
+                              <th className="text-right py-2 font-medium text-muted-foreground">People Impacted</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData.projects as any[]).map((p: any) => (
+                              <tr key={p.id} className="border-b last:border-0 hover:bg-secondary/20">
+                                <td className="py-2.5 pr-4 font-medium">{p.name}</td>
+                                <td className="py-2.5 pr-4 text-right">
+                                  <Badge variant={p.status === 'completed' ? 'success' : 'secondary'} size="sm">
+                                    {p.status}
+                                  </Badge>
+                                </td>
+                                <td className="py-2.5 pr-4 text-right">{p.totalHours}h</td>
+                                <td className="py-2.5 pr-4 text-right text-green-600">{p.verifiedHours}h</td>
+                                <td className="py-2.5 pr-4 text-right">{p.volunteerCount}</td>
+                                <td className="py-2.5 text-right">{p.peopleImpacted}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Volunteer Contributions */}
+                {(reportData.volunteers || []).length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Volunteer Contributions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {(reportData.volunteers as any[]).slice(0, 10).map((v: any) => (
+                          <div key={v.id} className="flex items-center gap-3">
+                            <UserAvatar src={v.avatar} name={v.displayName} size="sm" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{v.displayName}</p>
+                              <p className="text-xs text-muted-foreground">{v.activitiesCount} activities</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold">{v.hours}h</p>
+                              <p className="text-xs text-green-600">{v.verifiedHours}h verified</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* SDG Distribution */}
+                {(reportData.sdgDistribution || []).length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>SDG Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {(reportData.sdgDistribution as any[]).map((s: any) => (
+                          <div key={s.sdg} className="flex items-center gap-3">
+                            <SDGBadge sdg={s.sdg} size="sm" />
+                            <div className="flex-1">
+                              <div className="flex justify-between text-xs mb-0.5">
+                                <span className="text-muted-foreground">SDG {s.sdg}</span>
+                                <span className="font-medium">{s.hours}h · {s.projects} project{s.projects !== 1 ? 's' : ''}</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                                <div
+                                  className="h-full bg-primary rounded-full"
+                                  style={{ width: `${Math.min((s.hours / (reportData.summary?.totalHours || 1)) * 100, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <p className="text-xs text-muted-foreground text-right">
+                  Report generated at {new Date(reportData.generatedAt).toLocaleString()}
+                </p>
+              </>
+            )}
+
+            {!reportData && !isLoadingReport && (
+              <EmptyState
+                title="No report generated yet"
+                description="Select your filters above and click Run Report to generate a report."
+                size="sm"
+              />
+            )}
+
+            {isLoadingReport && (
+              <LoadingState message="Generating report..." />
+            )}
           </TabsContent>
         </Tabs>
       </main>

@@ -29,6 +29,12 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    // Fallback: use stored JWT token for demo/non-Firebase users
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) {
+      headers["Authorization"] = `Bearer ${storedToken}`;
+    }
   }
 
   // Development fallback: Include user ID for servers without Firebase Admin configured

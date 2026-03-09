@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import {
   User,
   signInWithEmailAndPassword,
@@ -50,6 +50,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   const { toast } = useToast();
+  // Prevents onAuthStateChanged from overwriting state during demo login
+  const ignoreNextNullAuthRef = useRef(false);
+
+  /**
+   * Restore demo user from stored JWT token (used on page load when no Firebase session exists).
+   * If no token is available, the session is stale and gets cleared to force re-login.
+   */
+  const restoreDemoUser = useCallback(async () => {
+    const storedToken = localStorage.getItem('authToken');
+    if (!storedToken) {
+      // No JWT stored — clear stale demo session so user is sent to login
+      localStorage.removeItem('sessionType');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('userType');
+      return;
+    }
+    try {
+      const response = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${storedToken}` },
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setDbUser(userData);
+      } else {
+        // Token is expired/invalid — clear demo session
+        localStorage.removeItem('sessionType');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUserId');
+        localStorage.removeItem('userType');
+      }
+    } catch (err) {
+      console.error('[Auth] Failed to restore demo user:', err);
+    }
+  }, []);
 
   /**
    * Sync Firebase user with backend database
@@ -97,6 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store in localStorage for persistence
       localStorage.setItem("currentUserId", String(user.id));
       localStorage.setItem("userType", user.userType);
+      localStorage.setItem("sessionType", "firebase");
+
+      // Store JWT token for authenticated API calls (used as fallback when Firebase is unavailable)
+      if (data.jwtToken) {
+        localStorage.setItem("authToken", data.jwtToken);
+      }
 
       return { user, isNewUser };
     } catch (error) {
@@ -113,9 +153,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
+      // When demo login signs out of Firebase to clear a stale session,
+      // skip this null state change to avoid overwriting the demo user
+      if (!firebaseUser && ignoreNextNullAuthRef.current) {
+        ignoreNextNullAuthRef.current = false;
+        setLoading(false);
+        return;
+      }
+
+      const sessionType = localStorage.getItem("sessionType");
 
       if (firebaseUser) {
+        // FIREWALL: If a demo session is active, a Firebase auth event means a stale
+        // session from a different user was detected. Sign it out and keep the demo user.
+        if (sessionType === "demo") {
+          console.log("[Auth] Stale Firebase session detected during demo session — clearing Firebase.");
+          ignoreNextNullAuthRef.current = true;
+          try { await firebaseSignOut(auth); } catch (_) { ignoreNextNullAuthRef.current = false; }
+          await restoreDemoUser();
+          setLoading(false);
+          return;
+        }
+
+        setUser(firebaseUser);
         // Try to sync with backend to get DB user
         // Don't pass userType here - just check if user exists
         const syncResult = await syncWithBackend(firebaseUser);
@@ -123,14 +183,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setDbUser(syncResult.user);
         }
       } else {
-        setDbUser(null);
+        setUser(null);
+        // If a demo session is stored, restore from JWT rather than clearing the user
+        if (sessionType === "demo") {
+          await restoreDemoUser();
+        } else {
+          setDbUser(null);
+        }
       }
 
       setLoading(false);
     });
 
     return unsubscribe;
-  }, [syncWithBackend]);
+  }, [syncWithBackend, restoreDemoUser]);
 
   const signInWithGoogle = async (userType?: string) => {
     try {
@@ -237,9 +303,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Check if it's an existing user (isNewUser: false)
             if (data && !data.isNewUser) {
               const user = data.user || data;
+              // Sign out from Firebase first to clear any stale session from a different user.
+              // Set the ignore flag so onAuthStateChanged(null) doesn't wipe our new user.
+              ignoreNextNullAuthRef.current = true;
+              try { await firebaseSignOut(auth); } catch (_) { ignoreNextNullAuthRef.current = false; }
               setDbUser(user);
               localStorage.setItem("currentUserId", String(user.id));
               localStorage.setItem("userType", user.userType || "volunteer");
+              localStorage.setItem("sessionType", "demo");
+              if (data.jwtToken) {
+                localStorage.setItem("authToken", data.jwtToken);
+              }
               console.log("[Auth] Demo login successful for existing user:", user.email);
 
               return {
@@ -337,6 +411,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setDbUser(data.user || data);
           localStorage.setItem("currentUserId", String(data.user?.id || data.id));
           localStorage.setItem("userType", userType || "volunteer");
+          localStorage.setItem("sessionType", "demo");
+          if (data.jwtToken) {
+            localStorage.setItem("authToken", data.jwtToken);
+          }
 
           // Return a mock user object for compatibility
           return {
@@ -384,6 +462,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear all auth-related localStorage items
       localStorage.removeItem('currentUserId');
       localStorage.removeItem('userType');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('sessionType');
       localStorage.removeItem('profileComplete');
       localStorage.removeItem('isNewSignup');
       localStorage.removeItem('rememberMe');

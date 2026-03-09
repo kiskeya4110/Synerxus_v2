@@ -9,6 +9,9 @@ import { calculateOrganizationAIU, calculateProjectAIU } from "../aiu-service";
 import { authMiddleware } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
 import { persistVolunteerKPIs, persistOrganizationKPIs } from "../kpi-persistence-service";
+import { db } from "../db";
+import { projectAiuSettings } from "@shared/schema";
+import { eq, inArray } from "drizzle-orm";
 
 export const dashboardRouter = Router();
 
@@ -683,5 +686,352 @@ dashboardRouter.get("/dashboard/kpis/:entityType/:entityId", async (req: Request
   } catch (err) {
     console.error("Error fetching KPI snapshot:", err);
     res.status(500).json({ message: "Failed to fetch KPI snapshot" });
+  }
+});
+
+// GET /api/organization/kpi-status - Returns KPI setup status for all org projects
+dashboardRouter.get("/organization/kpi-status", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const user = await storage.getUser(authUser.id);
+    if (!user || user.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organizations can access this endpoint" });
+    }
+
+    const organizationId = user.organizationId || authUser.id;
+    const projects = await storage.listProjectsByOrganization(organizationId);
+
+    if (projects.length === 0) {
+      return res.json({ projects: [], missingKpiCount: 0, totalProjects: 0 });
+    }
+
+    const projectIds = projects.map(p => p.id);
+    const existingSettings = await db
+      .select({ projectId: projectAiuSettings.projectId })
+      .from(projectAiuSettings)
+      .where(inArray(projectAiuSettings.projectId, projectIds));
+
+    const projectsWithSettings = new Set(existingSettings.map(s => s.projectId));
+
+    const kpiSnapshot = await storage.getKpiSnapshot('organization', organizationId);
+
+    const projectStatuses = projects.map(p => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      hasKpiSettings: projectsWithSettings.has(p.id),
+      impactMetricName: p.impactMetricName || null,
+      impactMetricUnit: p.impactMetricUnit || null,
+    }));
+
+    res.json({
+      projects: projectStatuses,
+      missingKpiCount: projectStatuses.filter(p => !p.hasKpiSettings).length,
+      totalProjects: projects.length,
+      lastSync: kpiSnapshot?.computedAt || null,
+    });
+  } catch (err) {
+    console.error("Error fetching KPI status:", err);
+    res.status(500).json({ message: "Failed to fetch KPI status" });
+  }
+});
+
+// POST /api/organization/sync-kpis - Recalculate and persist KPIs for org + auto-seed missing project KPI settings
+dashboardRouter.post("/organization/sync-kpis", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const user = await storage.getUser(authUser.id);
+    if (!user || user.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organizations can access this endpoint" });
+    }
+
+    const organizationId = user.organizationId || authUser.id;
+    const projects = await storage.listProjectsByOrganization(organizationId);
+
+    // Auto-seed project_aiu_settings for projects that have impactMetricName but no settings yet
+    let seeded = 0;
+    for (const project of projects) {
+      if (!project.impactMetricName) continue;
+
+      const [existing] = await db
+        .select({ id: projectAiuSettings.id })
+        .from(projectAiuSettings)
+        .where(eq(projectAiuSettings.projectId, project.id))
+        .limit(1);
+
+      if (!existing) {
+        const primarySdg = project.primarySdg || (project.sdgGoals && project.sdgGoals[0]) || 4;
+        await db.insert(projectAiuSettings).values({
+          projectId: project.id,
+          sdgIndicator: `SDG ${primarySdg}.1.1`,
+          kpiName: project.impactMetricName,
+          kpiUnit: project.impactMetricUnit || 'units',
+          kpiBefore: 0,
+          kpiAfter: null,
+          attributionFactor: 0.2,
+          verificationStatus: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        seeded++;
+      }
+    }
+
+    // Recalculate and persist org KPIs
+    await persistOrganizationKPIs(organizationId);
+
+    const kpiSnapshot = await storage.getKpiSnapshot('organization', organizationId);
+
+    res.json({
+      success: true,
+      message: `KPIs synced successfully. ${seeded} new KPI setting(s) created.`,
+      seeded,
+      totalProjects: projects.length,
+      snapshot: kpiSnapshot,
+    });
+  } catch (err) {
+    console.error("Error syncing KPIs:", err);
+    res.status(500).json({ message: "Failed to sync KPIs" });
+  }
+});
+
+// GET /api/organization/report - Generate structured report data for organizations
+// Supports filtering by projectId and/or date range (startDate+endDate or timePeriod)
+dashboardRouter.get("/organization/report", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    if (authUser.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organizations can access this report" });
+    }
+
+    const user = await storage.getUser(authUser.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const organizationId = user.organizationId || authUser.id;
+    const projectFilter = req.query.projectId as string | undefined;
+    const timePeriod = req.query.timePeriod as string | undefined;
+    const startDateParam = req.query.startDate as string | undefined;
+    const endDateParam = req.query.endDate as string | undefined;
+
+    // Resolve date range
+    let startDate = new Date(0);
+    let endDate = new Date();
+    let filterByDate = false;
+
+    if (startDateParam && endDateParam) {
+      const s = new Date(startDateParam);
+      const e = new Date(endDateParam);
+      if (isValidDate(s) && isValidDate(e)) {
+        startDate = s;
+        endDate = new Date(e.setHours(23, 59, 59, 999));
+        filterByDate = true;
+      }
+    } else if (timePeriod && timePeriod !== 'all') {
+      filterByDate = true;
+      if (timePeriod === '7d') {
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '30d') {
+        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '90d') {
+        startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      } else if (timePeriod === '1y') {
+        startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+      }
+    }
+
+    // Fetch all org projects then filter
+    const allProjects = await storage.listProjectsByOrganization(organizationId);
+    let reportProjects = allProjects;
+    if (projectFilter && projectFilter !== 'all') {
+      const fId = parseInt(projectFilter);
+      if (!isNaN(fId)) reportProjects = reportProjects.filter(p => p.id === fId);
+    }
+    const projectIds = reportProjects.map(p => p.id);
+
+    if (projectIds.length === 0) {
+      return res.json({
+        summary: { totalHours: 0, verifiedHours: 0, totalVolunteers: 0, totalProjects: 0, activeProjects: 0, completedProjects: 0, peopleImpacted: 0, sdgsAddressed: 0, aiuEarned: 0 },
+        projects: [],
+        volunteers: [],
+        sdgDistribution: [],
+        activityLog: [],
+        generatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Batch fetch
+    const [allActivities, allImpacts, allAssignments, allImpactMetrics] = await Promise.all([
+      storage.listVolunteerActivitiesByProjectIds(projectIds),
+      storage.listProjectImpactsByProjectIds(projectIds),
+      storage.listProjectAssignmentsByProjectIds(projectIds),
+      storage.listImpactMetrics(),
+    ]);
+
+    // Apply date filter
+    const activities = filterByDate
+      ? allActivities.filter(a => { const d = new Date(a.date); return isValidDate(d) && d >= startDate && d <= endDate; })
+      : allActivities;
+    const impacts = filterByDate
+      ? allImpacts.filter(i => { const d = new Date((i as any).date || (i as any).createdAt); return isValidDate(d) && d >= startDate && d <= endDate; })
+      : allImpacts;
+
+    // People-related metrics
+    const peopleMetricIds = new Set(
+      allImpactMetrics
+        .filter(m => {
+          const kw = ['people', 'person', 'beneficiar', 'student', 'child', 'family', 'participant', 'recipient', 'meal', 'service'];
+          return kw.some(k => (m.unit || '').toLowerCase().includes(k) || (m.name || '').toLowerCase().includes(k));
+        })
+        .map(m => m.id)
+    );
+
+    // Summary metrics
+    const totalHours = activities.reduce((s, a) => s + safeNumber(a.hours), 0);
+    const verifiedHours = activities
+      .filter(a => (a as any).verificationStatus === 'approved' || (a as any).verificationStatus === 'verified')
+      .reduce((s, a) => s + safeNumber(a.hours), 0);
+    const uniqueVolunteerIds = new Set(allAssignments.map(a => a.volunteerId));
+    const peopleImpacted = impacts
+      .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
+      .reduce((s, i) => s + safeNumber(i.value), 0);
+    const uniqueSDGs = new Set<number>(reportProjects.flatMap(p => (p.sdgGoals as number[]) || []));
+    const activeProjects = reportProjects.filter(p => ['active', 'in progress'].includes((p.status || '').toLowerCase())).length;
+    const completedProjects = reportProjects.filter(p => (p.status || '').toLowerCase() === 'completed').length;
+
+    // AIU calculation
+    let aiuEarned = 0;
+    try {
+      const aiuResult = await calculateOrganizationAIU(organizationId, {
+        projectId: projectFilter && projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
+        startDate: filterByDate ? startDate : undefined,
+        endDate: filterByDate ? endDate : undefined,
+      });
+      aiuEarned = aiuResult?.totalAiu || 0;
+    } catch { /* fallback below */ }
+    if (aiuEarned === 0 && totalHours > 0) {
+      aiuEarned = Math.round((totalHours / 50) * Math.min(1 + uniqueSDGs.size * 0.1, 2.0) * 100) / 100;
+    }
+
+    // Per-project breakdown
+    const projectsBreakdown = reportProjects.map(p => {
+      const pActivities = activities.filter(a => a.projectId === p.id);
+      const pHours = pActivities.reduce((s, a) => s + safeNumber(a.hours), 0);
+      const pVerifiedHours = pActivities
+        .filter(a => ['approved', 'verified'].includes((a as any).verificationStatus || ''))
+        .reduce((s, a) => s + safeNumber(a.hours), 0);
+      const pVolunteers = new Set(allAssignments.filter(a => a.projectId === p.id).map(a => a.volunteerId)).size;
+      const pImpact = impacts
+        .filter(i => i.projectId === p.id && i.metricId && peopleMetricIds.has(i.metricId))
+        .reduce((s, i) => s + safeNumber(i.value), 0);
+      return {
+        id: p.id,
+        name: p.name,
+        status: p.status || 'active',
+        sdgGoals: (p.sdgGoals as number[]) || [],
+        totalHours: Math.round(pHours * 10) / 10,
+        verifiedHours: Math.round(pVerifiedHours * 10) / 10,
+        volunteerCount: pVolunteers,
+        peopleImpacted: pImpact,
+        completionPercentage: p.completionPercentage || 0,
+        location: p.location || null,
+        startDate: p.startDate || null,
+        endDate: p.endDate || null,
+      };
+    });
+
+    // Volunteer contributions
+    const volunteerActivityMap: Record<number, { hours: number; activities: number; verifiedHours: number }> = {};
+    activities.forEach(a => {
+      if (a.userId == null) return;
+      const uid = a.userId;
+      if (!volunteerActivityMap[uid]) volunteerActivityMap[uid] = { hours: 0, activities: 0, verifiedHours: 0 };
+      volunteerActivityMap[uid].hours += safeNumber(a.hours);
+      volunteerActivityMap[uid].activities += 1;
+      if (['approved', 'verified'].includes((a as any).verificationStatus || '')) {
+        volunteerActivityMap[uid].verifiedHours += safeNumber(a.hours);
+      }
+    });
+    const volunteerIds = Array.from(uniqueVolunteerIds);
+    const volunteerUsers = await storage.getUsersByIds(volunteerIds);
+    const volunteersBreakdown = volunteerUsers.map(u => ({
+      id: u.id,
+      displayName: u.displayName || u.username,
+      avatar: u.avatar || null,
+      hours: Math.round((volunteerActivityMap[u.id]?.hours || 0) * 10) / 10,
+      verifiedHours: Math.round((volunteerActivityMap[u.id]?.verifiedHours || 0) * 10) / 10,
+      activitiesCount: volunteerActivityMap[u.id]?.activities || 0,
+    })).sort((a, b) => b.hours - a.hours);
+
+    // SDG distribution
+    const sdgMap: Record<number, { hours: number; projects: number; volunteers: number }> = {};
+    reportProjects.forEach(p => {
+      const pHours = activities.filter(a => a.projectId === p.id).reduce((s, a) => s + safeNumber(a.hours), 0);
+      const pVols = new Set(allAssignments.filter(a => a.projectId === p.id).map(a => a.volunteerId)).size;
+      ((p.sdgGoals as number[]) || []).forEach(goal => {
+        if (!sdgMap[goal]) sdgMap[goal] = { hours: 0, projects: 0, volunteers: 0 };
+        sdgMap[goal].hours += pHours;
+        sdgMap[goal].projects += 1;
+        sdgMap[goal].volunteers += pVols;
+      });
+    });
+    const sdgDistribution = Object.entries(sdgMap).map(([goal, data]) => ({
+      sdg: parseInt(goal),
+      hours: Math.round(data.hours * 10) / 10,
+      projects: data.projects,
+      volunteers: data.volunteers,
+    })).sort((a, b) => b.hours - a.hours);
+
+    // Recent activity log (last 50 entries)
+    const activityLog = activities
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 50)
+      .map(a => {
+        const project = reportProjects.find(p => p.id === a.projectId);
+        return {
+          id: a.id,
+          userId: a.userId,
+          projectId: a.projectId,
+          projectName: project?.name || 'Unknown',
+          hours: a.hours || 0,
+          date: a.date,
+          description: a.description || '',
+          verificationStatus: (a as any).verificationStatus || 'pending',
+          skillsApplied: (a as any).skillsApplied || [],
+        };
+      });
+
+    res.json({
+      summary: {
+        totalHours: Math.round(totalHours * 10) / 10,
+        verifiedHours: Math.round(verifiedHours * 10) / 10,
+        totalVolunteers: uniqueVolunteerIds.size,
+        totalProjects: reportProjects.length,
+        activeProjects,
+        completedProjects,
+        peopleImpacted,
+        sdgsAddressed: uniqueSDGs.size,
+        aiuEarned,
+      },
+      projects: projectsBreakdown,
+      volunteers: volunteersBreakdown,
+      sdgDistribution,
+      activityLog,
+      filters: {
+        projectId: projectFilter || 'all',
+        timePeriod: timePeriod || 'all',
+        startDate: filterByDate ? startDate.toISOString() : null,
+        endDate: filterByDate ? endDate.toISOString() : null,
+      },
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("Error generating organization report:", err);
+    res.status(500).json({ message: "Failed to generate report" });
   }
 });

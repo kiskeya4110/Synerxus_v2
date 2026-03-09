@@ -1,8 +1,8 @@
 import { useLocation } from "wouter";
-import { Home, FolderOpen, ClipboardList, Shield as ShieldCheck, Settings } from "lucide-react";
+import { Home, FolderOpen, ClipboardList, Shield as ShieldCheck, BarChart3 } from "lucide-react";
 
 interface OrganizationPWANavProps {
-  activeTab?: 'home' | 'projects' | 'verify' | 'more' | 'settings' | 'dashboard';
+  activeTab?: 'home' | 'projects' | 'verify' | 'more' | 'settings' | 'dashboard' | 'reports';
   userId?: string;
 }
 
@@ -21,7 +21,7 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
     if (location.includes('/log-hours') || location.includes('/log-activity')) return 'log';
     if (location.includes('/projects') || location === '/my-work') return 'projects';
     if (location.includes('/ngo-verification') || location.includes('/ngo/verification')) return 'verify';
-    if (location.includes('/settings') || location.includes('/ngo/settings')) return 'settings';
+    if (location.includes('/csr-reports-exports')) return 'reports';
     if (location === '/dashboard' || location.includes('/organization-dashboard')) return 'home';
     return 'home';
   };
@@ -30,10 +30,10 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
 
   const navItems = [
     { id: 'projects' as const, label: 'Projects', icon: FolderOpen, path: '/ngo/projects' },
-    { id: 'log' as const, label: 'Log', icon: ClipboardList, path: '/ngo/log-hours' },
-    { id: 'home' as const, label: 'Home', icon: Home, path: '/dashboard', isPrimary: true },
     { id: 'verify' as const, label: 'Verify', icon: ShieldCheck, path: '/ngo-verification' },
-    { id: 'settings' as const, label: 'Options', icon: Settings, path: '/ngo/settings' },
+    { id: 'home' as const, label: 'Home', icon: Home, path: '/dashboard', isPrimary: true },
+    { id: 'reports' as const, label: 'Reports', icon: BarChart3, path: '/csr-reports-exports' },
+    { id: 'log' as const, label: 'Log', icon: ClipboardList, path: '/ngo/log-hours' },
   ];
 
   return (

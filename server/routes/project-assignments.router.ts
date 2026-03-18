@@ -1,11 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import { storage, DuplicateAssignmentError } from "../storage";
 import { insertProjectAssignmentSchema } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
+import { authMiddleware } from "../middleware/auth";
 import { notifyNewAssignment } from "../notification-service";
-import { extractUserId } from "../user-validation";
 
 export const projectAssignmentsRouter = Router();
+
+// SECURITY: Require authentication for all project assignment routes
+projectAssignmentsRouter.use(authMiddleware);
 
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -70,16 +73,14 @@ projectAssignmentsRouter.get("/", async (req: Request, res: Response) => {
 // Returns assignments with team members, activities, and full project info
 projectAssignmentsRouter.get("/details", async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     let volunteerId = req.query.volunteerId as string;
 
-    // If volunteerId not provided, try to extract from request
+    // If volunteerId not provided, use the authenticated user's ID
     if (!volunteerId || volunteerId === 'undefined' || volunteerId === 'null') {
-      const requestingUserId = extractUserId(req);
-      if (requestingUserId) {
-        volunteerId = requestingUserId.toString();
-      } else {
-        return res.status(400).json({ message: "volunteerId is required and must be a valid number" });
-      }
+      volunteerId = authUser.id.toString();
     }
 
     const volId = parseInt(volunteerId);

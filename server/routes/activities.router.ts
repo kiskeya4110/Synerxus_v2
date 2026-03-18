@@ -309,29 +309,10 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
  *   autoApprove?: boolean (default: true)
  * }
  */
-activitiesRouter.post("/admin/volunteer-activities", optionalAuthMiddleware, async (req: Request, res: Response) => {
+activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req: Request, res: Response) => {
   try {
-    // Try token-based auth first, fall back to x-user-id header for demo mode
-    // Note: Cannot use req.body.userId for admin identity because that field
-    // contains the target volunteer's userId in this endpoint
-    let user = req.user;
-    if (!user) {
-      const headerUserId = req.headers['x-user-id'] as string;
-      const fallbackUserId = headerUserId ? parseInt(headerUserId) : null;
-      if (fallbackUserId && !isNaN(fallbackUserId)) {
-        const fallbackUser = await storage.getUser(fallbackUserId);
-        if (fallbackUser) {
-          user = {
-            id: fallbackUser.id,
-            email: fallbackUser.email,
-            userType: fallbackUser.userType || 'volunteer',
-            organizationId: fallbackUser.organizationId,
-            firebaseUid: fallbackUser.firebaseUid,
-          };
-          req.user = user;
-        }
-      }
-    }
+    // SECURITY: Use authenticated user from middleware only - no header fallbacks
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });

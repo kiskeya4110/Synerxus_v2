@@ -37,12 +37,6 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
     }
   }
 
-  // Development fallback: Include user ID for servers without Firebase Admin configured
-  const currentUserId = localStorage.getItem('currentUserId');
-  if (currentUserId) {
-    headers["x-user-id"] = currentUserId;
-  }
-
   return headers;
 }
 

@@ -14,7 +14,7 @@ import { DeleteConfirmDialog } from "@/components/ui/dialog-factory";
 import { CreateTaskDialog, EditTaskDialog } from "@/components/projects/task-dialogs";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDecimal } from "@/lib/format-utils";
 import OrganizationNav from "@/components/layout/organization-nav";
@@ -111,9 +111,8 @@ export default function ProjectDetail() {
   const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },

@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { extractUserId } from "./utils";
+import { extractUserId, getAuthenticatedUser } from "./utils";
+import { authMiddleware } from "../middleware/auth";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "../email-digest-service";
 import OpenAI from "openai";
 import { queueMiddleware } from "../request-queue";
@@ -8,6 +9,9 @@ import { db } from "../db";
 import { volunteerActivities, organizations, employeeEngagement, projects } from "@shared/schema";
 
 export const adminRouter = Router();
+
+// SECURITY: Require authentication for all admin routes
+adminRouter.use(authMiddleware);
 
 // ===== USER ACCOUNT MANAGEMENT =====
 
@@ -764,21 +768,22 @@ adminRouter.get("/organizations", async (req: Request, res: Response) => {
 adminRouter.post("/organizations/:orgId/approval", async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.orgId);
-    const { userId, status, notes } = req.body;
+    const { status, notes } = req.body;
 
     if (isNaN(orgId)) {
       return res.status(400).json({ message: "Invalid organization ID" });
     }
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    // SECURITY: Use authenticated user from middleware, not request body
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
     // Check if user is a platform admin
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(authUser.id);
     if (!user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
     }
+    const userId = authUser.id;
 
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });

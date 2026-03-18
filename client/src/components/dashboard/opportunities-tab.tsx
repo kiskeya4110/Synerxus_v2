@@ -80,7 +80,6 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   const saveOpportunityMutation = useMutation({
     mutationFn: async (opportunityId: number) => {
       return await apiRequest("POST", "/api/saved-opportunities", {
-        volunteerId: Number(userId),
         opportunityId
       });
     },
@@ -102,7 +101,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
 
   const unsaveOpportunityMutation = useMutation({
     mutationFn: async (opportunityId: number) => {
-      return await apiRequest("DELETE", `/api/saved-opportunities?volunteerId=${userId}&opportunityId=${opportunityId}`, undefined);
+      return await apiRequest("DELETE", `/api/saved-opportunities?opportunityId=${opportunityId}`, undefined);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities/status", userId] });
@@ -116,7 +115,6 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   const rejectOpportunityMutation = useMutation({
     mutationFn: async (opportunityId: number) => {
       return await apiRequest("POST", "/api/rejected-opportunities", {
-        volunteerId: Number(userId),
         opportunityId
       });
     },

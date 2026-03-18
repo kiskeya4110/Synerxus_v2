@@ -89,13 +89,19 @@ const SDG_DATA = [
  * Save an opportunity for a volunteer
  * POST /saved-opportunities
  */
-miscRouter.post("/saved-opportunities", async (req, res) => {
+miscRouter.post("/saved-opportunities", authMiddleware, async (req, res) => {
   try {
-    const { volunteerId, opportunityId, notes } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId || !opportunityId) {
-      return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+    const { opportunityId, notes } = req.body;
+
+    if (!opportunityId) {
+      return res.status(400).json({ message: "opportunityId is required" });
     }
+
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    const volunteerId = authUser.id;
 
     // Check if already saved
     const alreadySaved = await storage.isSavedOpportunity(volunteerId, opportunityId);
@@ -115,15 +121,19 @@ miscRouter.post("/saved-opportunities", async (req, res) => {
  * Remove a saved opportunity for a volunteer
  * DELETE /saved-opportunities
  */
-miscRouter.delete("/saved-opportunities", async (req, res) => {
+miscRouter.delete("/saved-opportunities", authMiddleware, async (req, res) => {
   try {
-    const { volunteerId, opportunityId } = req.query;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId || !opportunityId) {
-      return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+    const { opportunityId } = req.query;
+
+    if (!opportunityId) {
+      return res.status(400).json({ message: "opportunityId is required" });
     }
 
-    await storage.unsaveOpportunity(Number(volunteerId), Number(opportunityId));
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    await storage.unsaveOpportunity(authUser.id, Number(opportunityId));
     res.status(204).send();
   } catch (err) {
     const error = handleValidationError(err);
@@ -135,15 +145,13 @@ miscRouter.delete("/saved-opportunities", async (req, res) => {
  * Get all saved opportunities for a volunteer
  * GET /saved-opportunities
  */
-miscRouter.get("/saved-opportunities", async (req, res) => {
+miscRouter.get("/saved-opportunities", authMiddleware, async (req, res) => {
   try {
-    const volunteerId = req.query.volunteerId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId) {
-      return res.status(400).json({ message: "volunteerId is required" });
-    }
-
-    const saved = await storage.listSavedOpportunitiesByVolunteer(Number(volunteerId));
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    const saved = await storage.listSavedOpportunitiesByVolunteer(authUser.id);
     res.json(saved);
   } catch (err) {
     const error = handleValidationError(err);
@@ -157,13 +165,19 @@ miscRouter.get("/saved-opportunities", async (req, res) => {
  * Reject an opportunity for a volunteer
  * POST /rejected-opportunities
  */
-miscRouter.post("/rejected-opportunities", async (req, res) => {
+miscRouter.post("/rejected-opportunities", authMiddleware, async (req, res) => {
   try {
-    const { volunteerId, opportunityId, reason } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId || !opportunityId) {
-      return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+    const { opportunityId, reason } = req.body;
+
+    if (!opportunityId) {
+      return res.status(400).json({ message: "opportunityId is required" });
     }
+
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    const volunteerId = authUser.id;
 
     // Check if already rejected
     const alreadyRejected = await storage.isRejectedOpportunity(volunteerId, opportunityId);
@@ -183,15 +197,19 @@ miscRouter.post("/rejected-opportunities", async (req, res) => {
  * Remove a rejected opportunity (unreject)
  * DELETE /rejected-opportunities
  */
-miscRouter.delete("/rejected-opportunities", async (req, res) => {
+miscRouter.delete("/rejected-opportunities", authMiddleware, async (req, res) => {
   try {
-    const { volunteerId, opportunityId } = req.query;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId || !opportunityId) {
-      return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+    const { opportunityId } = req.query;
+
+    if (!opportunityId) {
+      return res.status(400).json({ message: "opportunityId is required" });
     }
 
-    await storage.unrejectOpportunity(Number(volunteerId), Number(opportunityId));
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    await storage.unrejectOpportunity(authUser.id, Number(opportunityId));
     res.status(204).send();
   } catch (err) {
     const error = handleValidationError(err);
@@ -203,15 +221,13 @@ miscRouter.delete("/rejected-opportunities", async (req, res) => {
  * Get all rejected opportunities for a volunteer
  * GET /rejected-opportunities
  */
-miscRouter.get("/rejected-opportunities", async (req, res) => {
+miscRouter.get("/rejected-opportunities", authMiddleware, async (req, res) => {
   try {
-    const volunteerId = req.query.volunteerId as string;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId) {
-      return res.status(400).json({ message: "volunteerId is required" });
-    }
-
-    const rejected = await storage.listRejectedOpportunitiesByVolunteer(Number(volunteerId));
+    // SECURITY: Use authenticated user's ID, not client-provided volunteerId
+    const rejected = await storage.listRejectedOpportunitiesByVolunteer(authUser.id);
     res.json(rejected);
   } catch (err) {
     const error = handleValidationError(err);
@@ -433,7 +449,7 @@ miscRouter.get("/projects/:projectId/recommended-volunteers", queueMiddleware('h
  * Automatically link SDGs to a project using AI analysis
  * POST /projects/:id/auto-link-sdgs
  */
-miscRouter.post("/projects/:id/auto-link-sdgs", async (req, res) => {
+miscRouter.post("/projects/:id/auto-link-sdgs", authMiddleware, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const project = await storage.getProject(projectId);
@@ -527,7 +543,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
  * Batch auto-link SDGs to all projects that don't have them
  * POST /projects/batch/auto-link-sdgs
  */
-miscRouter.post("/projects/batch/auto-link-sdgs", async (req, res) => {
+miscRouter.post("/projects/batch/auto-link-sdgs", authMiddleware, async (req, res) => {
   try {
     const projects = await storage.listProjects();
     const results = {
@@ -668,8 +684,11 @@ miscRouter.get("/notifications", authMiddleware, async (req, res) => {
  * Mark a notification as read
  * POST /notifications/:id/read
  */
-miscRouter.post("/notifications/:id/read", async (req, res) => {
+miscRouter.post("/notifications/:id/read", authMiddleware, async (req, res) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const notificationId = parseInt(req.params.id);
 
     if (isNaN(notificationId)) {

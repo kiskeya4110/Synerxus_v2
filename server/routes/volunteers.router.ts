@@ -2,7 +2,6 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
-import { extractUserId } from "../user-validation";
 import { findTopVolunteers } from "../matching-algorithm";
 import { authMiddleware } from "../middleware/auth";
 
@@ -54,7 +53,7 @@ volunteersRouter.get("/me", authMiddleware, async (req: Request, res: Response) 
 
 // GET /api/volunteers/profile/:userId - Get volunteer profile by user ID (for organizations)
 // Allows organizations to view volunteer profiles of their accepted volunteers
-volunteersRouter.get("/profile/:userId", async (req: Request, res: Response) => {
+volunteersRouter.get("/profile/:userId", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
 

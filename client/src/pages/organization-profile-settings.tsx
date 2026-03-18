@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import {
   PROFILE_QUERY_CONFIG,
   cacheOrganizationProfile,
@@ -148,19 +148,9 @@ export default function OrganizationProfileSettings() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) {
-        // Demo mode: return fallback user data when API fails
-        console.log("[OrgProfileSettings] Using demo mode - API user fetch failed");
-        return {
-          id: parseInt(userId) || 1,
-          email: `demo_organization@synerxus.com`,
-          displayName: 'Demo Organization',
-          userType: storedUserType || 'organization',
-          dataConsent: true,
-          dataConsentDate: new Date().toISOString(),
-        };
-      }
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
+      if (!response.ok) return null;
       const data = await response.json();
       // Cache user data for instant loading
       cacheUserProfile(userId, data);

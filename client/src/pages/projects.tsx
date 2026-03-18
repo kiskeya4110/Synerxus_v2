@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Search, Plus, Briefcase, AlertCircle } from "lucide-react";
+import { Search, Plus, Briefcase, AlertCircle, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,8 @@ export default function Projects() {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/projects`, { headers, credentials: "include" });
+      // Pass userId so the endpoint can scope projects to this org/volunteer
+      const response = await fetch(`/api/projects?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch projects");
       return response.json();
     },
@@ -71,7 +72,7 @@ export default function Projects() {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/tasks`, { headers, credentials: "include" });
+      const response = await fetch(`/api/tasks?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) return [];
       return response.json();
     },
@@ -146,6 +147,50 @@ export default function Projects() {
     enabled: !!currentUser && !!userId
   });
 
+  const queryClient = useQueryClient();
+
+  // KPI status for org users - shows which projects are missing KPI settings
+  const { data: kpiStatus, refetch: refetchKpiStatus } = useQuery<{
+    projects: Array<{ id: number; name: string; status: string; hasKpiSettings: boolean; impactMetricName: string | null; impactMetricUnit: string | null }>;
+    missingKpiCount: number;
+    totalProjects: number;
+    lastSync: string | null;
+  }>({
+    queryKey: ["/api/organization/kpi-status"],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/organization/kpi-status", { headers, credentials: "include" });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser && currentUser.userType === 'organization',
+  });
+
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const syncKpisMutation = useMutation({
+    mutationFn: async () => {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/organization/sync-kpis", {
+        method: "POST",
+        headers,
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Sync failed");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSyncMessage({ type: 'success', text: data.message || "KPIs synced successfully." });
+      refetchKpiStatus();
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setTimeout(() => setSyncMessage(null), 5000);
+    },
+    onError: () => {
+      setSyncMessage({ type: 'error', text: "Failed to sync KPIs. Please try again." });
+      setTimeout(() => setSyncMessage(null), 5000);
+    },
+  });
+
   const toggleProject = useCallback((projectId: number) => {
     setExpandedProjects(prev => {
       const newExpanded = new Set(prev);
@@ -186,14 +231,19 @@ export default function Projects() {
 
       const totalCommitted = assignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
       const activityHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-      const totalCompleted = activityHours > 0 ? activityHours : assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
+      const assignmentHours = assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
+      // Fall back to pre-computed totalHours from /api/projects if local fetches returned nothing
+      const precomputedHours = (project as any).totalHours || 0;
+      const totalCompleted = activityHours > 0 ? activityHours : assignmentHours > 0 ? assignmentHours : precomputedHours;
 
       // Calculate unique volunteers from assignments and activities (filter out null userIds)
       const uniqueVolunteerIds = new Set([
         ...assignments.map(a => a.volunteerId),
         ...projectActivities.filter(a => a.userId != null).map(a => a.userId)
       ]);
-      const volunteerCount = uniqueVolunteerIds.size;
+      // Fall back to pre-computed volunteerCount from /api/projects if local fetches returned nothing
+      const precomputedVolunteers = (project as any).volunteerCount || 0;
+      const volunteerCount = uniqueVolunteerIds.size > 0 ? uniqueVolunteerIds.size : precomputedVolunteers;
 
       // Calculate engagement score (0-100)
       const volunteerScore = Math.min((volunteerCount / 10) * 25, 25);
@@ -201,7 +251,7 @@ export default function Projects() {
       const taskScore = taskCompletionRate * 0.30;
       const hoursScore = totalCommitted > 0
         ? Math.min((totalCompleted / totalCommitted) * 25, 25)
-        : 0;
+        : totalCompleted > 0 ? Math.min((totalCompleted / 50) * 25, 25) : 0;
 
       // Recent activity score
       const recentActivities = projectActivities.filter(a => new Date(a.createdAt) >= thirtyDaysAgo);
@@ -457,7 +507,26 @@ export default function Projects() {
                 New Project
               </button>
             </Link>
+            <button
+              onClick={() => syncKpisMutation.mutate()}
+              disabled={syncKpisMutation.isPending}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap shadow-sm active:scale-95 transition-all disabled:opacity-50 ${
+                kpiStatus && kpiStatus.missingKpiCount > 0
+                  ? 'bg-amber-500 text-white hover:bg-amber-600'
+                  : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-50'
+              }`}
+            >
+              <RefreshCw className={`h-4 w-4 ${syncKpisMutation.isPending ? 'animate-spin' : ''}`} />
+              {syncKpisMutation.isPending ? "Syncing..." : kpiStatus && kpiStatus.missingKpiCount > 0 ? `Sync KPIs (${kpiStatus.missingKpiCount})` : "Sync KPIs"}
+            </button>
           </div>
+
+          {/* KPI sync message */}
+          {syncMessage && (
+            <div className={`px-3 py-2 rounded-xl text-sm font-medium ${syncMessage.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+              {syncMessage.text}
+            </div>
+          )}
 
           {/* Search Bar */}
           <div className="relative">
@@ -715,6 +784,83 @@ export default function Projects() {
                 </Link>
               </div>
             </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* KPI Data Sync Panel - org users only */}
+      {currentUser?.userType === "organization" && kpiStatus && (
+        <div className="mb-6">
+          <Card className={kpiStatus.missingKpiCount > 0 ? "border-amber-300 bg-amber-50/40" : "border-emerald-300 bg-emerald-50/30"}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {kpiStatus.missingKpiCount > 0 ? (
+                    <XCircle className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  )}
+                  <CardTitle className="text-base">
+                    {kpiStatus.missingKpiCount > 0
+                      ? `${kpiStatus.missingKpiCount} project${kpiStatus.missingKpiCount !== 1 ? 's' : ''} missing KPI settings`
+                      : "All project KPIs are up to date"}
+                  </CardTitle>
+                </div>
+                <button
+                  onClick={() => syncKpisMutation.mutate()}
+                  disabled={syncKpisMutation.isPending}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncKpisMutation.isPending ? 'animate-spin' : ''}`} />
+                  {syncKpisMutation.isPending ? "Syncing..." : "Sync KPIs"}
+                </button>
+              </div>
+              {kpiStatus.lastSync && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Last synced: {new Date(kpiStatus.lastSync).toLocaleString()}
+                </p>
+              )}
+            </CardHeader>
+            {(kpiStatus.missingKpiCount > 0 || syncMessage) && (
+              <CardContent className="pt-0">
+                {syncMessage && (
+                  <div className={`mb-3 px-3 py-2 rounded-lg text-sm font-medium ${syncMessage.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                    {syncMessage.text}
+                  </div>
+                )}
+                {kpiStatus.missingKpiCount > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-600">
+                      Projects below have an impact metric defined but no KPI baseline set. Click <strong>Sync KPIs</strong> to auto-create settings, or edit each project to set custom values.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {kpiStatus.projects.filter(p => !p.hasKpiSettings && p.impactMetricName).map(p => (
+                        <div key={p.id} className="flex items-center justify-between px-3 py-2 bg-white border border-amber-200 rounded-lg">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                            <p className="text-xs text-amber-700">{p.impactMetricName} · {p.impactMetricUnit || 'units'}</p>
+                          </div>
+                          <Link href={`/projects/${p.id}/edit`}>
+                            <button className="ml-2 text-xs text-indigo-600 hover:underline whitespace-nowrap">Set KPI</button>
+                          </Link>
+                        </div>
+                      ))}
+                      {kpiStatus.projects.filter(p => !p.hasKpiSettings && !p.impactMetricName).map(p => (
+                        <div key={p.id} className="flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded-lg opacity-70">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                            <p className="text-xs text-gray-500">No impact metric defined</p>
+                          </div>
+                          <Link href={`/projects/${p.id}/edit`}>
+                            <button className="ml-2 text-xs text-indigo-600 hover:underline whitespace-nowrap">Add KPI</button>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            )}
           </Card>
         </div>
       )}

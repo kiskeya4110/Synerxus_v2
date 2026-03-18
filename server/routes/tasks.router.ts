@@ -2,7 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
 import { insertTaskSchema } from "@shared/schema";
-import { handleValidationError, requireOrgUser, verifyOwnership, calculateProjectProgress } from "./utils";
+import { handleValidationError, requireOrgUser, verifyOwnership, calculateProjectProgress, getAuthenticatedUser } from "./utils";
+import { authMiddleware } from "../middleware/auth";
 import { notifyTaskAssigned } from "../notification-service";
 import { checkAndAwardBadges } from "../badge-service";
 
@@ -171,7 +172,7 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/tasks/:id - Update task
-tasksRouter.patch("/:id", async (req: Request, res: Response) => {
+tasksRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
 
@@ -180,20 +181,11 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    let currentUser;
+    // SECURITY: Use authenticated user from middleware only
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    try {
-      currentUser = await requireOrgUser(req);
-    } catch (err) {
-      const userIdFromQuery = req.query.userId ? parseInt(req.query.userId as string) : null;
-      const userIdFromBody = req.body.userId ? parseInt(req.body.userId) : null;
-      const currentUserId = userIdFromQuery || userIdFromBody;
-
-      if (currentUserId && !isNaN(currentUserId)) {
-        currentUser = await storage.getUser(currentUserId);
-      }
-    }
-
+    const currentUser = await storage.getUser(authUser.id);
     if (!currentUser) {
       return res.status(401).json({ message: "Unauthorized - please log in" });
     }

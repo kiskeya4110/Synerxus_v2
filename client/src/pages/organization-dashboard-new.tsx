@@ -637,18 +637,43 @@ export default function OrganizationDashboardNew() {
     };
   }, [dashboardData, projects, volunteers, pendingVerifications]);
 
-  // Generate Synerxus-branded org PDF report
+  // Helper: redact volunteer name to initials for external report privacy
+  const redactName = (name: string): string => {
+    if (!name || name === "Unknown") return "Volunteer";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase() + ".";
+    return parts.map(p => p.charAt(0).toUpperCase() + ".").join("");
+  };
+
+  // Generate Synerxus-branded org PDF report (fully formatted, volunteer names redacted for external sharing)
   const generateSynerxusReport = () => {
     const orgName = (organization as any)?.name || currentUser?.displayName || "Organization";
     const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     const summary = (reportData as any)?.summary || {};
     const sdgDist: any[] = (reportData as any)?.sdgDistribution || [];
+    const reportProjects: any[] = (reportData as any)?.projects || [];
+    const reportVolunteers: any[] = (reportData as any)?.volunteers || [];
+    const activityLog: any[] = (reportData as any)?.activityLog || [];
+    const filters = (reportData as any)?.filters || {};
     const totalHours = summary.totalHours || 0;
+
+    // Build filter label for header
+    const periodLabels: Record<string, string> = { "7d": "Last 7 Days", "30d": "Last 30 Days", "90d": "Last 90 Days", "1y": "Last Year", "all": "All Time" };
+    let periodLabel = "All Time";
+    if (filters.startDate && filters.endDate) {
+      periodLabel = `${new Date(filters.startDate).toLocaleDateString()} – ${new Date(filters.endDate).toLocaleDateString()}`;
+    } else if (filters.timePeriod && periodLabels[filters.timePeriod]) {
+      periodLabel = periodLabels[filters.timePeriod];
+    }
+    const selectedProject = reportProjectFilter !== 'all'
+      ? (projects as any[]).find((p: any) => String(p.id) === reportProjectFilter)?.name || "Selected Project"
+      : "All Projects";
+
     const htmlContent = `<!DOCTYPE html><html><head><title>${orgName} – Synerxus Impact Report</title><style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Arial,sans-serif;padding:40px;color:#333;background:#fff}
       .report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:3px solid #f59e0b}
-      .header-left{flex:2}.header-right{flex:1;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:16px;border-radius:12px;border:2px solid #f59e0b}
+      .header-left{flex:2}.header-right{flex:1;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:16px;border-radius:12px;border:2px solid #f59e0b;margin-left:24px}
       .logo{display:flex;align-items:center;gap:16px;margin-bottom:16px}
       .syner{font-size:28px;font-weight:800;color:#1e3a5f;letter-spacing:-1px}
       .xus{font-size:28px;font-weight:800;color:#f59e0b;letter-spacing:-1px}
@@ -658,59 +683,143 @@ export default function OrganizationDashboardNew() {
       .badge{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;margin-right:8px}
       .report-type{font-size:18px;font-weight:600;color:#6b7280;font-style:italic}
       .meta{font-size:13px;color:#6b7280;margin-top:8px}
+      .filter-pill{display:inline-block;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:12px;padding:3px 10px;font-size:12px;color:#374151;margin-right:6px;margin-top:6px}
       .score-label{font-size:11px;color:#d97706;text-transform:uppercase;font-weight:700;margin-bottom:8px}
       .score-value{font-size:36px;font-weight:800;color:#92400e}
       .score-sub{font-size:12px;color:#6b7280;margin-top:4px}
       h2{font-size:20px;font-weight:700;color:#92400e;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #f59e0b}
       .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
       .metric{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center}
-      .metric.o{border-left:4px solid #f59e0b}.metric.g{border-left:4px solid #10b981}.metric.b{border-left:4px solid #3b82f6}.metric.p{border-left:4px solid #8b5cf6}
+      .metric.o{border-left:4px solid #f59e0b}.metric.g{border-left:4px solid #10b981}.metric.b{border-left:4px solid #3b82f6}.metric.p{border-left:4px solid #8b5cf6}.metric.r{border-left:4px solid #ef4444}
       .mv{font-size:28px;font-weight:800;color:#92400e}.ml{font-size:12px;color:#6b7280;margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
-      table{width:100%;border-collapse:collapse;margin:24px 0;border-radius:8px;overflow:hidden}
-      th{background:linear-gradient(135deg,#92400e,#b45309);color:#fff;padding:14px 16px;text-align:left;font-size:13px}
-      td{padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px}
-      tr:nth-child(even){background:#f9fafb}
-      .sdg-dot{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:#fff;font-weight:700;font-size:12px;margin-right:8px}
+      table{width:100%;border-collapse:collapse;margin:16px 0;border-radius:8px;overflow:hidden}
+      th{background:linear-gradient(135deg,#92400e,#b45309);color:#fff;padding:12px 14px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+      td{padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:13px}
+      tr:nth-child(even) td{background:#fafafa}
+      .status-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:capitalize}
+      .status-active{background:#dcfce7;color:#166534}.status-completed{background:#dbeafe;color:#1e40af}.status-planning{background:#fef9c3;color:#854d0e}
+      .sdg-dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;color:#fff;font-weight:700;font-size:11px;margin-right:8px;vertical-align:middle}
       .bar{width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}
       .bar-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:4px}
+      .redacted{background:#1f2937;color:#1f2937;border-radius:3px;padding:0 2px;font-size:12px;letter-spacing:2px;user-select:none}
+      .privacy-note{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 16px;font-size:12px;color:#92400e;margin:16px 0}
       .footer{margin-top:48px;padding-top:24px;border-top:2px solid #e5e7eb;text-align:center}
       .f-syner{font-size:20px;font-weight:800;color:#1e3a5f}.f-xus{font-size:20px;font-weight:800;color:#f59e0b}
       .f-tag{font-size:12px;color:#6b7280;font-style:italic;margin:8px 0}
       .f-conf{font-size:11px;color:#9ca3af;padding:8px 16px;background:#f9fafb;border-radius:6px;display:inline-block}
       .f-copy{font-size:11px;color:#9ca3af;margin-top:12px}
+      @media print{body{padding:20px}h2{page-break-before:auto}table{page-break-inside:avoid}}
     </style></head><body>
       <div class="report-header">
         <div class="header-left">
           <div class="logo"><span class="syner">SYNER</span><span class="xus">XUS</span><div class="divider"></div><span class="org-name">${orgName}</span></div>
           <div class="report-title">${orgName}</div>
-          <div style="margin-bottom:12px"><span class="badge">✓ Verified</span><span class="report-type">Impact Report</span></div>
-          <div class="meta">📅 ${currentDate} &nbsp;|&nbsp; <span style="color:#f59e0b;font-weight:600">✓ Blockchain Verified</span></div>
+          <div style="margin-bottom:8px"><span class="badge">&#10003; Verified</span><span class="report-type">Impact Report</span></div>
+          <div class="meta">Generated: ${currentDate} &nbsp;|&nbsp; <span style="color:#f59e0b;font-weight:600">&#10003; Blockchain Verified</span></div>
+          <div style="margin-top:8px">
+            <span class="filter-pill">Period: ${periodLabel}</span>
+            <span class="filter-pill">Scope: ${selectedProject}</span>
+          </div>
         </div>
         <div class="header-right">
           <div class="score-label">SDGs Addressed</div>
           <div class="score-value">${summary.sdgsAddressed || 0}</div>
           <div class="score-sub">UN Global Goals</div>
+          <div style="margin-top:12px;font-size:12px;color:#6b7280">${summary.aiuEarned || 0} AIU Earned</div>
         </div>
       </div>
+
       <h2>Key Performance Metrics</h2>
       <div class="metrics">
-        <div class="metric o"><div class="mv">${totalHours.toLocaleString()}</div><div class="ml">Total Volunteer Hours</div></div>
-        <div class="metric g"><div class="mv">${(summary.totalVolunteers || 0).toLocaleString()}</div><div class="ml">Active Volunteers</div></div>
-        <div class="metric b"><div class="mv">${summary.activeProjects || 0}</div><div class="ml">Active Projects</div></div>
+        <div class="metric o"><div class="mv">${totalHours.toLocaleString()}</div><div class="ml">Total Vol. Hours</div></div>
+        <div class="metric g"><div class="mv">${(summary.verifiedHours || 0).toLocaleString()}</div><div class="ml">Verified Hours</div></div>
+        <div class="metric b"><div class="mv">${(summary.totalVolunteers || 0).toLocaleString()}</div><div class="ml">Volunteers</div></div>
         <div class="metric p"><div class="mv">${(summary.peopleImpacted || 0).toLocaleString()}</div><div class="ml">People Impacted</div></div>
+        <div class="metric r"><div class="mv">${summary.totalProjects || 0}</div><div class="ml">Total Projects</div></div>
+        <div class="metric o"><div class="mv">${summary.activeProjects || 0}</div><div class="ml">Active Projects</div></div>
+        <div class="metric g"><div class="mv">${summary.completedProjects || 0}</div><div class="ml">Completed Projects</div></div>
+        <div class="metric b"><div class="mv">${summary.aiuEarned || 0}</div><div class="ml">AIU Earned</div></div>
       </div>
+
+      <h2>Project Breakdown</h2>
+      <table><thead><tr>
+        <th style="width:28%">Project Name</th>
+        <th style="width:12%">Status</th>
+        <th style="width:12%">Total Hours</th>
+        <th style="width:12%">Verified Hrs</th>
+        <th style="width:12%">Volunteers</th>
+        <th style="width:12%">People Impacted</th>
+        <th style="width:12%">Completion</th>
+      </tr></thead>
+      <tbody>${reportProjects.length > 0 ? reportProjects.map((p: any) => {
+        const statusClass = p.status === 'completed' ? 'status-completed' : p.status === 'active' ? 'status-active' : 'status-planning';
+        return `<tr>
+          <td><strong>${p.name}</strong>${p.location ? `<br><span style="font-size:11px;color:#6b7280">${p.location}</span>` : ''}</td>
+          <td><span class="status-pill ${statusClass}">${p.status}</span></td>
+          <td>${(p.totalHours || 0).toLocaleString()} h</td>
+          <td style="color:#166534">${(p.verifiedHours || 0).toLocaleString()} h</td>
+          <td>${p.volunteerCount || 0}</td>
+          <td>${(p.peopleImpacted || 0).toLocaleString()}</td>
+          <td>${p.completionPercentage || 0}%</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:20px">No project data for selected period</td></tr>`}</tbody>
+      </table>
+
       <h2>SDG Alignment &amp; Impact</h2>
-      <table><thead><tr><th style="width:40%">SDG Goal</th><th style="width:25%">Hours Contributed</th><th style="width:20%">Progress</th><th style="width:15%">% of Total</th></tr></thead>
-      <tbody>${sdgDist.length > 0 ? sdgDist.slice(0, 8).map((s: any) => {
+      <table><thead><tr><th style="width:40%">SDG Goal</th><th style="width:20%">Hours Contributed</th><th style="width:20%">Progress</th><th style="width:10%">Projects</th><th style="width:10%">% of Total</th></tr></thead>
+      <tbody>${sdgDist.length > 0 ? sdgDist.slice(0, 10).map((s: any) => {
         const pct = totalHours > 0 ? Math.round((s.hours / totalHours) * 100) : 0;
-        return `<tr><td><span class="sdg-dot" style="background:${getSDGColor(s.sdg)}">${s.sdg}</span>${getSDGName(s.sdg)}</td><td>${(s.hours || 0).toLocaleString()} hrs</td><td><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></td><td><strong>${pct}%</strong></td></tr>`;
-      }).join("") : `<tr><td colspan="4" style="text-align:center;color:#6b7280;padding:24px">No SDG data available for this period</td></tr>`}</tbody></table>
+        return `<tr><td><span class="sdg-dot" style="background:${getSDGColor(s.sdg)}">${s.sdg}</span>${getSDGName(s.sdg)}</td><td>${(s.hours || 0).toLocaleString()} hrs</td><td><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></td><td>${s.projects || 0}</td><td><strong>${pct}%</strong></td></tr>`;
+      }).join("") : `<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:20px">No SDG data for selected period</td></tr>`}</tbody></table>
+
+      <h2>Volunteer Contributions</h2>
+      <div class="privacy-note">&#128274; Volunteer identities are redacted in this report to protect personal privacy. Initials are shown in place of full names.</div>
+      <table><thead><tr>
+        <th style="width:25%">Volunteer</th>
+        <th style="width:20%">Total Hours</th>
+        <th style="width:20%">Verified Hours</th>
+        <th style="width:20%">Activities</th>
+        <th style="width:15%">Verification Rate</th>
+      </tr></thead>
+      <tbody>${reportVolunteers.length > 0 ? reportVolunteers.slice(0, 20).map((v: any, i: number) => {
+        const rate = v.hours > 0 ? Math.round((v.verifiedHours / v.hours) * 100) : 0;
+        return `<tr>
+          <td><span class="redacted">${redactName(v.displayName)}</span></td>
+          <td>${(v.hours || 0).toLocaleString()} h</td>
+          <td style="color:#166534">${(v.verifiedHours || 0).toLocaleString()} h</td>
+          <td>${v.activitiesCount || 0}</td>
+          <td>${rate}%</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:20px">No volunteer data for selected period</td></tr>`}</tbody>
+      </table>
+
+      ${activityLog.length > 0 ? `
+      <h2>Recent Activity Log</h2>
+      <table><thead><tr>
+        <th style="width:20%">Date</th>
+        <th style="width:35%">Project</th>
+        <th style="width:15%">Hours</th>
+        <th style="width:15%">Status</th>
+        <th style="width:15%">Description</th>
+      </tr></thead>
+      <tbody>${activityLog.slice(0, 30).map((a: any) => {
+        const statusClass = a.verificationStatus === 'approved' || a.verificationStatus === 'verified' ? 'status-active' : a.verificationStatus === 'rejected' ? 'status-planning' : '';
+        const dateStr = a.date ? new Date(a.date).toLocaleDateString() : '—';
+        return `<tr>
+          <td>${dateStr}</td>
+          <td>${a.projectName || '—'}</td>
+          <td>${(a.hours || 0).toLocaleString()} h</td>
+          <td><span class="status-pill ${statusClass}">${a.verificationStatus || 'pending'}</span></td>
+          <td style="font-size:11px;color:#6b7280">${(a.description || '').slice(0, 60)}${(a.description || '').length > 60 ? '…' : ''}</td>
+        </tr>`;
+      }).join("")}</tbody></table>` : ''}
+
       <div class="footer">
         <div style="display:flex;justify-content:center;gap:2px;margin-bottom:8px"><span class="f-syner">SYNER</span><span class="f-xus">XUS</span></div>
         <div class="f-tag">Connect. Manage. Impact Globally.</div>
-        <div style="font-size:13px;color:#374151;margin-bottom:8px">Generated on ${currentDate} · Impact Report</div>
-        <div class="f-conf">This report contains confidential information. Distribution is restricted to authorized personnel.</div>
-        <div class="f-copy">© ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:8px">Generated on ${currentDate} &middot; ${orgName} Impact Report &middot; Period: ${periodLabel}</div>
+        <div class="f-conf">CONFIDENTIAL &mdash; This report is intended for authorized recipients only. Volunteer data has been redacted.</div>
+        <div class="f-copy">&copy; ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com</div>
       </div>
     </body></html>`;
     const win = window.open("", "_blank");

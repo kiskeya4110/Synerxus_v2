@@ -141,7 +141,7 @@ organizationsRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/organizations - Create new organization
-organizationsRouter.post("/", async (req: Request, res: Response) => {
+organizationsRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgData = insertOrganizationSchema.parse(req.body);
 
@@ -179,9 +179,18 @@ organizationsRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/organizations/:id - Update organization
-organizationsRouter.patch("/:id", async (req: Request, res: Response) => {
+organizationsRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
+
+    // SECURITY: Only organization members can update their own org; admins can update any
+    if (authUser.userType !== 'admin' && authUser.organizationId !== orgId) {
+      return res.status(403).json({ message: "You can only update your own organization" });
+    }
+
     const orgData = insertOrganizationSchema.partial().parse(req.body);
 
     const updatedOrg = await storage.updateOrganization(orgId, orgData);
@@ -202,7 +211,7 @@ organizationsRouter.patch("/:id", async (req: Request, res: Response) => {
 // ============================================
 
 // GET /api/organizations/:id/members - List all members of an organization
-organizationsRouter.get("/:id/members", async (req: Request, res: Response) => {
+organizationsRouter.get("/:id/members", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
     const organization = await storage.getOrganization(orgId);
@@ -240,7 +249,7 @@ organizationsRouter.get("/:id/members", async (req: Request, res: Response) => {
 });
 
 // GET /api/organizations/:id/members/:memberId - Get specific member
-organizationsRouter.get("/:id/members/:memberId", async (req: Request, res: Response) => {
+organizationsRouter.get("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
@@ -268,7 +277,7 @@ organizationsRouter.get("/:id/members/:memberId", async (req: Request, res: Resp
 });
 
 // POST /api/organizations/:id/members - Add a new member to organization
-organizationsRouter.post("/:id/members", async (req: Request, res: Response) => {
+organizationsRouter.post("/:id/members", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
     const organization = await storage.getOrganization(orgId);
@@ -306,17 +315,16 @@ organizationsRouter.post("/:id/members", async (req: Request, res: Response) => 
 });
 
 // POST /api/organizations/:id/members/invite - Invite a new member by email
-organizationsRouter.post("/:id/members/invite", async (req: Request, res: Response) => {
+organizationsRouter.post("/:id/members/invite", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
-    const { email, role, title, department, permissions, invitedBy, invitationMethod, customMessage } = req.body;
+    const { email, role, title, department, permissions, invitationMethod, customMessage } = req.body;
 
-    // Verify that the inviting user belongs to this organization
-    if (!invitedBy) {
-      return res.status(401).json({ message: "Authentication required - invitedBy is missing" });
-    }
-
-    const invitingUser = await storage.getUser(parseInt(invitedBy));
+    // SECURITY: Use authenticated user ID, not client-provided invitedBy
+    const invitingUser = await storage.getUser(authUser.id);
     if (!invitingUser) {
       return res.status(401).json({ message: "Inviting user not found" });
     }
@@ -330,6 +338,8 @@ organizationsRouter.post("/:id/members/invite", async (req: Request, res: Respon
     if (invitingUser.userType !== 'organization') {
       return res.status(403).json({ message: "Only organization admins can invite members" });
     }
+
+    const invitedBy = authUser.id;
 
     const organization = await storage.getOrganization(orgId);
     if (!organization) {
@@ -569,14 +579,12 @@ organizationsRouter.get("/team-invitations/by-token/:token", async (req: Request
 });
 
 // POST /api/team-invitations/:token/accept - Accept invitation via token
-organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req: Request, res: Response) => {
+organizationsRouter.post("/team-invitations/by-token/:token/accept", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { token } = req.params;
-    const { userId } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const { token } = req.params;
 
     const invitation = await storage.getTeamInvitationByToken(token);
 
@@ -592,7 +600,8 @@ organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req:
       return res.status(400).json({ message: "Invitation has expired" });
     }
 
-    const user = await storage.getUser(parseInt(userId));
+    // SECURITY: Use authenticated user's ID, not client-provided userId
+    const user = await storage.getUser(authUser.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -659,10 +668,12 @@ organizationsRouter.post("/team-invitations/by-token/:token/accept", async (req:
 });
 
 // POST /api/team-invitations/:token/decline - Decline invitation via token
-organizationsRouter.post("/team-invitations/by-token/:token/decline", async (req: Request, res: Response) => {
+organizationsRouter.post("/team-invitations/by-token/:token/decline", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const { token } = req.params;
-    const { userId } = req.body;
 
     const invitation = await storage.getTeamInvitationByToken(token);
 
@@ -679,10 +690,11 @@ organizationsRouter.post("/team-invitations/by-token/:token/decline", async (req
     }
 
     // Update invitation status to declined
+    // SECURITY: Use authenticated user's ID, not client-provided userId
     await storage.updateTeamInvitation(invitation.id, {
       status: "declined",
       respondedAt: new Date(),
-      inviteeId: userId ? parseInt(userId) : undefined
+      inviteeId: authUser.id
     });
 
     // If there's an associated organization member record with "invited" status, remove it
@@ -712,7 +724,7 @@ organizationsRouter.post("/team-invitations/by-token/:token/decline", async (req
 });
 
 // PATCH /api/organizations/:id/members/:memberId - Update member role/permissions
-organizationsRouter.patch("/:id/members/:memberId", async (req: Request, res: Response) => {
+organizationsRouter.patch("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
@@ -735,7 +747,7 @@ organizationsRouter.patch("/:id/members/:memberId", async (req: Request, res: Re
 });
 
 // DELETE /api/organizations/:id/members/:memberId - Remove member from organization
-organizationsRouter.delete("/:id/members/:memberId", async (req: Request, res: Response) => {
+organizationsRouter.delete("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
@@ -942,10 +954,19 @@ organizationsRouter.get("/:id/invitation-templates", async (req: Request, res: R
 });
 
 // POST /api/organizations/:id/invitation-templates - Create a custom invitation template
-organizationsRouter.post("/:id/invitation-templates", async (req: Request, res: Response) => {
+organizationsRouter.post("/:id/invitation-templates", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
-    const { name, description, subject, content, templateType, forRole, forDepartment, isDefault, createdBy } = req.body;
+
+    // SECURITY: Only org members can create templates for their org
+    if (authUser.organizationId !== orgId) {
+      return res.status(403).json({ message: "You can only create templates for your own organization" });
+    }
+
+    const { name, description, subject, content, templateType, forRole, forDepartment, isDefault } = req.body;
 
     if (!name || !subject || !content) {
       return res.status(400).json({ message: "Name, subject, and content are required" });
@@ -963,7 +984,7 @@ organizationsRouter.post("/:id/invitation-templates", async (req: Request, res: 
       isDefault: isDefault || false,
       isActive: true,
       usageCount: 0,
-      createdBy
+      createdBy: authUser.id  // SECURITY: Use authenticated user's ID
     });
 
     broadcastUpdate("invitation_template_created", { organizationId: orgId, template });

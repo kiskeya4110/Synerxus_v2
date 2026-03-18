@@ -61,24 +61,12 @@ usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
 });
 
 // GET /api/users/me - Get current authenticated user
-usersRouter.get("/me", optionalAuthMiddleware, async (req: Request, res: Response) => {
+usersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
   try {
-    // Try auth middleware user first, then fall back to userId query param
-    let userId: number | null = req.user?.id || null;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      const qUserId = req.query.userId as string;
-      if (qUserId) {
-        const parsed = parseInt(qUserId);
-        if (!isNaN(parsed)) userId = parsed;
-      }
-    }
-
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(authUser.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -252,11 +240,13 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
   }
 });
 
-// POST /api/users - Create new user
-usersRouter.post("/", async (req: Request, res: Response) => {
+// POST /api/users - Create new user (rate limited; use /firebase-sync for registration)
+usersRouter.post("/", authRateLimiter, async (req: Request, res: Response) => {
   try {
     const userData = insertUserSchema.parse(req.body);
-    const user = await storage.createUser(userData);
+    // SECURITY: Prevent setting admin privileges via this endpoint
+    const { isAdmin, ...safeData } = userData as any;
+    const user = await storage.createUser(safeData);
 
     broadcastUpdate("user_created", user);
     res.status(201).json(user);

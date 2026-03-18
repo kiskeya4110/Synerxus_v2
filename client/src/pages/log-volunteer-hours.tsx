@@ -87,11 +87,9 @@ export default function LogVolunteerHoursPage() {
   const { data: organization } = useQuery({
     queryKey: ["/api/organizations", organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/organizations`);
+      const response = await fetch(`/api/organizations/${organizationId}`);
       if (!response.ok) return null;
-      const orgs = await response.json();
-      const orgList = Array.isArray(orgs) ? orgs : [];
-      return orgList.find((o: any) => o.id === organizationId) || null;
+      return await response.json();
     },
     enabled: !!organizationId
   });

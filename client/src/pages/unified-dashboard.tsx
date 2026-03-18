@@ -137,7 +137,8 @@ export default function UnifiedDashboard() {
         displayName: "Demo Organization",
         email: "demo-org@example.com",
         userType: "organization",
-        organizationId: 1,
+        // No organizationId — prevents org-scoped queries from firing with wrong ID
+        // while the real currentUser is still loading from the server
       };
     }
 
@@ -156,7 +157,9 @@ export default function UnifiedDashboard() {
   const activeUser = currentUser || demoUser;
 
   // Loading state - wait for auth, viewport detection, user data, and Firebase sync
-  if (authLoading || isViewportLoading || (user && !dbUser) || (isLoadingUser && !demoUser)) {
+  // When a Firebase user exists, always wait for currentUser to load before rendering
+  // This prevents org-scoped queries from firing with stale/demo data
+  if (authLoading || isViewportLoading || (user && !dbUser) || (user && userId && isLoadingUser)) {
     return (
       <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />

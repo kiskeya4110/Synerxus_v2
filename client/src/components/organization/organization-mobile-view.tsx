@@ -624,10 +624,9 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     queryKey: ["/api/organizations", organizationId],
     queryFn: async () => {
       if (!organizationId) return null;
-      const response = await fetch(`/api/organizations?id=${organizationId}`);
+      const response = await fetch(`/api/organizations/${organizationId}`);
       if (!response.ok) return null;
-      const data = await response.json();
-      return Array.isArray(data) ? data[0] : data;
+      return await response.json();
     },
     enabled: !!organizationId,
   });

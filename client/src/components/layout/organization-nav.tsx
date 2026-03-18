@@ -45,10 +45,9 @@ export default function OrganizationNav() {
   const { data: organization } = useQuery({
     queryKey: ["/api/organizations", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/organizations?id=${currentUser?.organizationId}`);
+      const response = await fetch(`/api/organizations/${currentUser?.organizationId}`);
       if (!response.ok) return null;
-      const data = await response.json();
-      return Array.isArray(data) ? data[0] : data;
+      return await response.json();
     },
     enabled: !!currentUser?.organizationId,
   });

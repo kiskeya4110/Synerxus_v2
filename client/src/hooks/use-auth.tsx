@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { clearAllProfileCaches } from "@/lib/profile-cache";
 
 // Database user type from backend
 interface DbUser {
@@ -469,6 +470,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local state
       setDbUser(null);
       setIsNewUser(false);
+      // Clear all profile caches to prevent cross-user data contamination
+      clearAllProfileCaches();
       // Clear all auth-related localStorage items
       localStorage.removeItem('currentUserId');
       localStorage.removeItem('userType');

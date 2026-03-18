@@ -4,11 +4,8 @@ import {
   PROFILE_QUERY_CONFIG,
   PROFILE_ACTIVITY_QUERY_CONFIG,
   cacheVolunteerProfile,
-  getCachedVolunteerProfile,
   cacheOrganizationProfile,
-  getCachedOrganizationProfile,
   cacheUserProfile,
-  getCachedUserProfile
 } from "@/lib/profile-cache";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -80,7 +77,7 @@ export default function Profile() {
   const isMobile = useIsMobile();
   const userId = localStorage.getItem('currentUserId');
   
-  // First, fetch basic user info to determine userType - use caching for instant loading
+  // First, fetch basic user info to determine userType
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -88,15 +85,13 @@ export default function Profile() {
       const headers = await getAuthHeaders();
       const response = await fetch('/api/users/me', { headers, credentials: "include" });
       const data = await response.json();
-      // Cache user data for instant loading
       if (id) cacheUserProfile(id, data);
       return data;
     },
-    initialData: () => getCachedUserProfile(userId),
     ...PROFILE_QUERY_CONFIG,
   });
   
-  // Fetch volunteer profile data - use intake endpoint to get weeklyAvailability
+  // Fetch volunteer profile data
   const { data: volunteerData, isLoading: isLoadingVolunteer } = useQuery({
     queryKey: ["/api/intake/volunteer-profile", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
@@ -107,15 +102,10 @@ export default function Profile() {
       const response = await fetch(`/api/intake/volunteer-profile?userId=${id}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const data = await response.json();
-      // Cache profile for instant loading
       if (data?.volunteerProfile) {
         cacheVolunteerProfile(id, data.volunteerProfile);
       }
       return data;
-    },
-    initialData: () => {
-      const cached = getCachedVolunteerProfile(userId);
-      return cached ? { volunteerProfile: cached } : undefined;
     },
     ...PROFILE_QUERY_CONFIG,
   });
@@ -128,14 +118,12 @@ export default function Profile() {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/profile/organization?userId=${id}`, { headers, credentials: "include" });
+      const response = await fetch(`/api/profile/organization`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const data = await response.json();
-      // Cache organization profile for instant loading
       if (data) cacheOrganizationProfile(id, data);
       return data;
     },
-    initialData: () => getCachedOrganizationProfile(userId),
     ...PROFILE_QUERY_CONFIG,
   });
 

@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -18,6 +18,8 @@ import {
   BarChart3,
   Search,
   CheckCheck,
+  FileText,
+  Download,
 } from "lucide-react";
 
 // UI Components
@@ -415,9 +417,42 @@ const OrganizationView = memo(function OrganizationView({
   // Selected log for detail expansion
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
 
+  // Mobile reports state
+  const [reportGenerating, setReportGenerating] = useState(false);
+  const [reportGenerated, setReportGenerated] = useState(false);
+
   const toggleLogDetail = (logId: number) => {
     setSelectedLogId(prev => prev === logId ? null : logId);
   };
+
+  const generateMobileReport = async () => {
+    setReportGenerating(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/reports/ngo-impact-summary?userId=${userId}`, { headers, credentials: "include" });
+      if (!response.ok) throw new Error("Failed to generate report");
+      const html = await response.text();
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 800);
+      }
+      setReportGenerated(true);
+    } catch (err) {
+      console.error("Report generation failed:", err);
+      toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
+    } finally {
+      setReportGenerating(false);
+    }
+  };
+
+  // Auto-generate report when reports tab is activated on mobile
+  useEffect(() => {
+    if (orgTab === 'reports' && isMobile && !reportGenerated) {
+      generateMobileReport();
+    }
+  }, [orgTab]);
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
@@ -1423,6 +1458,80 @@ const OrganizationView = memo(function OrganizationView({
                   ) : (
                     <div className="px-4 py-6 text-center text-sm text-gray-500">No volunteer data</div>
                   )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Mobile Reports Tab */}
+          {orgTab === 'reports' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => setOrgTab?.('home')}
+                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <h2 className="text-lg font-semibold text-stone-800">Impact Reports</h2>
+              </div>
+
+              {/* Status card */}
+              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-7 w-7 text-indigo-600" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">NGO Impact Summary</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Verified hours · SDG alignment · CSRD compliance metrics
+                </p>
+                {reportGenerating ? (
+                  <div className="flex items-center justify-center gap-2 text-indigo-600">
+                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-medium">Generating report…</span>
+                  </div>
+                ) : reportGenerated ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-2 text-emerald-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-sm font-medium">Report opened for download</span>
+                    </div>
+                    <button
+                      onClick={() => { setReportGenerated(false); generateMobileReport(); }}
+                      className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Generate Again
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={generateMobileReport}
+                    className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Generate Report
+                  </button>
+                )}
+              </div>
+
+              {/* Quick stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Hours Logged</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Verified</p>
+                  <p className="text-2xl font-bold text-emerald-600">{stats.verifiedCount || 0}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Volunteers</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalVolunteers}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Projects</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
                 </div>
               </div>
             </>

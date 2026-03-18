@@ -57,8 +57,13 @@ export default function UnifiedDashboard() {
   // Volunteer-specific state
   const [mobileTab, setMobileTab] = useState<'home' | 'wallet' | 'projects' | 'history'>('home');
 
-  // Organization-specific state
-  const [orgTab, setOrgTab] = useState<'home' | 'verify' | 'volunteers' | 'hours'>('home');
+  // Organization-specific state (initialize from URL param so ?tab=reports works)
+  const [orgTab, setOrgTab] = useState<'home' | 'verify' | 'volunteers' | 'hours' | 'reports'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'reports' || tab === 'verify' || tab === 'volunteers' || tab === 'hours') return tab;
+    return 'home';
+  });
 
   // Corporate-specific state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -204,7 +209,7 @@ export default function UnifiedDashboard() {
               activeUser={activeUser}
               organization={organization}
               orgTab={orgTab}
-              setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
+              setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours' | 'reports')}
             />
           </Suspense>
         )}
@@ -229,7 +234,7 @@ export default function UnifiedDashboard() {
             userType === 'volunteer'
               ? (tab: string) => setMobileTab(tab as 'home' | 'wallet' | 'projects' | 'history')
               : userType === 'organization'
-                ? (tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')
+                ? (tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours' | 'reports')
                 : undefined
           }
         />
@@ -266,7 +271,7 @@ export default function UnifiedDashboard() {
             activeUser={activeUser}
             organization={organization}
             orgTab={orgTab}
-            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours')}
+            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours' | 'reports')}
           />
         </Suspense>
       )}

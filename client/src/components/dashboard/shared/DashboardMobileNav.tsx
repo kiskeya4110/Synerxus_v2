@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import {
   Home, Target, BarChart3, Plus, FileText, FolderOpen,
-  Shield as ShieldCheck, MoreHorizontal, X, ClipboardList, Download, Settings
+  Shield as ShieldCheck, MoreHorizontal, X, ClipboardList, Download
 } from "lucide-react";
 
 interface DashboardMobileNavProps {
@@ -32,10 +32,10 @@ function getNavItems(
   if (userType === 'organization') {
     return [
       { id: 'projects', label: 'Projects', icon: FolderOpen, action: () => navigate('/ngo/projects') },
-      { id: 'log', label: 'Log', icon: ClipboardList, action: () => navigate('/ngo/log-hours') },
-      { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home'), isPrimary: true },
       { id: 'verify', label: 'Verify', icon: ShieldCheck, action: () => onTabChange?.('verify') },
-      { id: 'settings', label: 'Options', icon: Settings, action: () => navigate('/organization-profile-settings') },
+      { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home'), isPrimary: true },
+      { id: 'reports', label: 'Reports', icon: Download, action: () => onTabChange?.('reports') },
+      { id: 'log', label: 'Log', icon: ClipboardList, action: () => navigate('/ngo/log-hours') },
     ];
   }
 

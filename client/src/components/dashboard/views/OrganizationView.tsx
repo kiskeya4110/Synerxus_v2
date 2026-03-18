@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useEffect, useRef } from "react";
+import { useState, useMemo, memo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -419,18 +419,16 @@ const OrganizationView = memo(function OrganizationView({
 
   // Mobile reports state
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportBlobUrl, setReportBlobUrl] = useState<string | null>(null);
-  const reportIframeRef = useRef<HTMLIFrameElement>(null);
+  const [reportHtml, setReportHtml] = useState<string | null>(null);
 
   const toggleLogDetail = (logId: number) => {
     setSelectedLogId(prev => prev === logId ? null : logId);
   };
 
   const closeReport = () => {
-    if (reportBlobUrl) {
-      URL.revokeObjectURL(reportBlobUrl);
-      setReportBlobUrl(null);
-    }
+    // Remove print isolation style
+    document.getElementById('synerxus-print-style')?.remove();
+    setReportHtml(null);
   };
 
   const generateMobileReport = async () => {
@@ -440,11 +438,15 @@ const OrganizationView = memo(function OrganizationView({
       const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
-      // Revoke any previous blob URL
-      if (reportBlobUrl) URL.revokeObjectURL(reportBlobUrl);
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      setReportBlobUrl(url);
+      // Inject print isolation: hides everything except the report overlay during print
+      let printStyle = document.getElementById('synerxus-print-style');
+      if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'synerxus-print-style';
+        document.head.appendChild(printStyle);
+      }
+      printStyle.textContent = `@media print { body > *:not(#synerxus-report-overlay) { display: none !important; } #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; } }`;
+      setReportHtml(html);
     } catch (err) {
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
@@ -454,17 +456,20 @@ const OrganizationView = memo(function OrganizationView({
   };
 
   const printReport = () => {
-    try {
-      reportIframeRef.current?.contentWindow?.print();
-    } catch (_) {
-      // Fallback: download the blob
-      if (reportBlobUrl) {
-        const a = document.createElement('a');
-        a.href = reportBlobUrl;
-        a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
-        a.click();
-      }
-    }
+    window.print();
+  };
+
+  const downloadReport = () => {
+    if (!reportHtml) return;
+    const blob = new Blob([reportHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   // Reset when leaving reports tab
@@ -1494,11 +1499,11 @@ const OrganizationView = memo(function OrganizationView({
                 <h2 className="text-lg font-semibold text-stone-800">Impact Reports</h2>
               </div>
 
-              {/* Full-screen in-app report viewer */}
-              {reportBlobUrl && (
-                <div className="fixed inset-0 z-[300] bg-white flex flex-col">
+              {/* Full-screen in-app report viewer — dangerouslySetInnerHTML works in all contexts */}
+              {reportHtml && (
+                <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
                   {/* Header bar */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
                     <button
                       onClick={closeReport}
                       className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -1507,20 +1512,27 @@ const OrganizationView = memo(function OrganizationView({
                       Close
                     </button>
                     <span className="text-sm font-semibold text-gray-900">Impact Report</span>
-                    <button
-                      onClick={printReport}
-                      className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Download className="h-4 w-4" />
-                      Print / Save
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={downloadReport}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-2 py-1"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </button>
+                      <button
+                        onClick={printReport}
+                        className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-2 py-1"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Print / PDF
+                      </button>
+                    </div>
                   </div>
-                  {/* Report iframe — renders blob URL, no popup needed */}
-                  <iframe
-                    ref={reportIframeRef}
-                    src={reportBlobUrl}
-                    className="flex-1 w-full border-0"
-                    title="NGO Impact Report"
+                  {/* Report rendered directly — no blob URLs, works in Replit iframe and PWA */}
+                  <div
+                    className="flex-1 overflow-y-auto"
+                    dangerouslySetInnerHTML={{ __html: reportHtml }}
                   />
                 </div>
               )}

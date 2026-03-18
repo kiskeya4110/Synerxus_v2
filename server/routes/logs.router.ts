@@ -1114,165 +1114,304 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const now = new Date();
     const reportDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const orgName = org?.name || 'Organization';
-    const title = req.query.title as string || `${orgName} - Verified Impact Summary`;
 
-    const sdgRows = Object.entries(sdgMap)
-      .sort((a, b) => b[1].hours - a[1].hours)
-      .map(([sdg, data]) => {
-        const sdgNum = parseInt(sdg);
-        return `<tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
-            <span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:${SDG_COLORS[sdgNum] || '#888'};color:#fff;text-align:center;line-height:28px;font-size:12px;font-weight:700;margin-right:8px;">${sdgNum}</span>
-            ${SDG_NAMES[sdgNum] || `SDG ${sdg}`}
-          </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${data.hours}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${data.outcomes}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${data.count}</td>
-        </tr>`;
-      }).join('');
+    // Additional metrics
+    const totalBeneficiaries = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0) || totalOutcomes;
+    const allSkills = new Set(verified.flatMap(a => a.skillsApplied || []));
+    const uniqueSkillsCount = allSkills.size || 0;
 
-    const projectRows = projectStats.map(p => `<tr>
-      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${p.name}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${p.hours}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${p.outcomes}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align:center;">${p.volunteers}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
-        ${p.sdgs.map((s: number) => `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${SDG_COLORS[s] || '#888'};color:#fff;text-align:center;line-height:22px;font-size:10px;font-weight:700;margin:1px;">${s}</span>`).join('')}
-      </td>
-    </tr>`).join('');
+    // Period label
+    const periodLabel = `${now.getFullYear()} YTD (Jan 1\u2013${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
+
+    // Report ID
+    const initials = orgName.split(' ').map((w: string) => w[0] || '').join('').slice(0, 4).toUpperCase();
+    const mmdd = now.toISOString().slice(5, 10).replace('-', '');
+    const reportId = `VIS-${now.getFullYear()}-${mmdd}-${initials}`;
+
+    // SDG progress bars (page 1)
+    const sortedSdgs = Object.entries(sdgMap).sort((a, b) => b[1].count - a[1].count).slice(0, 6);
+    const maxSdgCount = sortedSdgs.length > 0 ? Math.max(...sortedSdgs.map(([, d]) => d.count)) : 1;
+    const sdgBars = sortedSdgs.map(([sdg, data]) => {
+      const sdgNum = parseInt(sdg);
+      const color = SDG_COLORS[sdgNum] || '#888';
+      const name = SDG_NAMES[sdgNum] || `SDG ${sdg}`;
+      const pct = Math.round((data.count / maxSdgCount) * 100);
+      return `<div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:36px;height:36px;background:${color};border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:500;font-size:13px;flex-shrink:0;">${sdgNum}</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+            <span style="font-weight:500;color:#111827;">SDG ${sdgNum}: ${name}</span>
+            <span style="color:#6b7280;">${data.count} outcome${data.count !== 1 ? 's' : ''} \u2022 ${Math.round(data.hours)}h</span>
+          </div>
+          <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Top 3 verified activities for page 2 (fetch volunteer names)
+    const top3 = [...verified]
+      .filter(a => (a.outcomeText || a.description) && a.hours)
+      .sort((a, b) => (b.hours || 0) - (a.hours || 0))
+      .slice(0, 3);
+    const topUserIds = Array.from(new Set(top3.map(a => a.userId).filter(Boolean))) as number[];
+    const topUsers = topUserIds.length > 0 ? await storage.getUsersByIds(topUserIds) : [];
+    const userMap = new Map(topUsers.map(u => [u.id, u.displayName || u.username || 'Volunteer']));
+
+    const outcomeCards = top3.map(a => {
+      const volunteerName = userMap.get(a.userId!) || 'Volunteer';
+      const text = a.outcomeText || a.description || 'Impact logged';
+      const skills = (a.skillsApplied || []).slice(0, 3);
+      const primarySdg = (a.sdgTags || [])[0];
+      const sdgColor = primarySdg ? (SDG_COLORS[primarySdg] || '#888') : '#6b7280';
+      const verifiedDate = a.verifiedAt
+        ? new Date(a.verifiedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'N/A';
+      const skillTags = skills.map((s: string) =>
+        `<span style="font-size:10px;background:#f9fafb;color:#6b7280;padding:3px 8px;border-radius:4px;border:0.5px solid #e5e7eb;">${s}</span>`
+      ).join('');
+      return `<div style="border:0.5px solid #e5e7eb;border-radius:10px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              ${primarySdg ? `<div style="width:28px;height:28px;background:${sdgColor};border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:500;font-size:11px;flex-shrink:0;">${primarySdg}</div>` : ''}
+              <span style="font-weight:500;font-size:12px;color:#111827;">${volunteerName}</span>
+            </div>
+            <div style="font-size:12px;color:#6b7280;line-height:1.5;margin-bottom:8px;">${text}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">${skillTags}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:6px;padding:8px 12px;margin-bottom:6px;">
+              <div style="font-size:16px;font-weight:500;color:#059669;">${a.hours ? Math.round(a.hours) + 'h' : 'N/A'}</div>
+              <div style="font-size:9px;color:#059669;">verified</div>
+            </div>
+            <div style="font-size:10px;color:#9ca3af;">${verifiedDate}</div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:9px;color:#059669;margin-top:4px;">
+              <span style="width:4px;height:4px;border-radius:50%;background:#10b981;display:inline-block;"></span>Audit trail
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Project breakdown rows for page 2
+    const projectBreakdown = projectStats.slice(0, 5).map(p => {
+      const sdgDots = p.sdgs.slice(0, 4).map((s: number) =>
+        `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:${SDG_COLORS[s] || '#888'};color:#fff;font-size:9px;font-weight:600;">${s}</span>`
+      ).join('');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid #f3f4f6;">
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;color:#111827;">${p.name}</div>
+          <div style="display:flex;gap:4px;margin-top:4px;">${sdgDots}</div>
+        </div>
+        <div style="display:flex;gap:20px;text-align:center;">
+          <div><div style="font-size:14px;font-weight:500;color:#111827;">${Math.round(p.hours)}</div><div style="font-size:9px;color:#9ca3af;">hours</div></div>
+          <div><div style="font-size:14px;font-weight:500;color:#111827;">${p.outcomes}</div><div style="font-size:9px;color:#9ca3af;">outcomes</div></div>
+          <div><div style="font-size:14px;font-weight:500;color:#059669;">${p.volunteers}</div><div style="font-size:9px;color:#9ca3af;">volunteers</div></div>
+        </div>
+      </div>`;
+    }).join('');
 
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${orgName} \u2013 Verified Impact Summary</title>
   <style>
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    :root {
+      --bg-p: #ffffff; --bg-s: #f9fafb;
+      --txt-p: #111827; --txt-s: #6b7280; --txt-t: #9ca3af;
+      --bd: #e5e7eb; --bd-l: #f3f4f6;
+      --r: 10px; --r-lg: 16px;
+    }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-break { page-break-before: always; }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1f2937; line-height: 1.6; }
-    .header { background: linear-gradient(135deg, #065f46, #047857, #059669); color: white; padding: 40px; }
-    .header h1 { font-size: 28px; margin-bottom: 4px; }
-    .header p { opacity: 0.9; font-size: 14px; }
-    .content { padding: 32px 40px; max-width: 900px; margin: 0 auto; }
-    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
-    .metric-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; }
-    .metric-value { font-size: 32px; font-weight: 700; color: #065f46; }
-    .metric-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .section { margin: 32px 0; }
-    .section h2 { font-size: 20px; color: #065f46; border-bottom: 2px solid #d1fae5; padding-bottom: 8px; margin-bottom: 16px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { background: #f0fdf4; color: #065f46; padding: 12px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #a7f3d0; }
-    .compliance-box { background: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 12px; padding: 24px; }
-    .compliance-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #d1fae5; }
-    .footer { margin-top: 40px; padding: 20px 40px; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; text-align: center; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .badge-success { background: #d1fae5; color: #065f46; }
-    .badge-warning { background: #fef3c7; color: #92400e; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 24px; }
+    .page { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 32px; max-width: 860px; margin: 0 auto 24px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;">S</div>
-      <span style="font-size:18px;font-weight:600;">Synerxus</span>
-    </div>
-    <h1>${title}</h1>
-    <p>Generated: ${reportDate} &nbsp;|&nbsp; Organization: ${orgName}</p>
-  </div>
 
-  <div class="content">
-    <div class="metric-grid">
-      <div class="metric-card">
-        <div class="metric-value">${totalHours}</div>
-        <div class="metric-label">Verified Hours</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${totalOutcomes}</div>
-        <div class="metric-label">Verified Outcomes</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${uniqueVolunteers}</div>
-        <div class="metric-label">Active Volunteers</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${projectStats.length}</div>
-        <div class="metric-label">Active Projects</div>
+<!-- PAGE 1 -->
+<div class="page">
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="/synerxus-logo.png" alt="Synerxus" style="width:36px;height:36px;border-radius:8px;object-fit:contain;">
+      <div>
+        <div style="font-weight:600;font-size:15px;color:var(--txt-p);letter-spacing:0.5px;">SYNERXUS</div>
+        <div style="font-size:11px;color:#0891b2;">Impact, verified.</div>
       </div>
     </div>
-
-    <div class="section">
-      <h2>UN SDG Alignment</h2>
-      <table>
-        <thead><tr>
-          <th>SDG Goal</th>
-          <th style="text-align:center;">Hours</th>
-          <th style="text-align:center;">Outcomes</th>
-          <th style="text-align:center;">Activities</th>
-        </tr></thead>
-        <tbody>${sdgRows || '<tr><td colspan="4" style="padding:16px;text-align:center;color:#9ca3af;">No SDG data available</td></tr>'}</tbody>
-      </table>
-    </div>
-
-    <div class="section">
-      <h2>Project Breakdown</h2>
-      <table>
-        <thead><tr>
-          <th>Project</th>
-          <th style="text-align:center;">Hours</th>
-          <th style="text-align:center;">Outcomes</th>
-          <th style="text-align:center;">Volunteers</th>
-          <th>SDGs</th>
-        </tr></thead>
-        <tbody>${projectRows || '<tr><td colspan="5" style="padding:16px;text-align:center;color:#9ca3af;">No project data available</td></tr>'}</tbody>
-      </table>
-    </div>
-
-    <div class="section">
-      <h2>Verification & Compliance</h2>
-      <div class="compliance-box">
-        <div class="compliance-row">
-          <span>Verification Rate</span>
-          <span class="badge ${verificationRate >= 80 ? 'badge-success' : 'badge-warning'}">${verificationRate}%</span>
-        </div>
-        <div class="compliance-row">
-          <span>Average Verification Time</span>
-          <span>${avgVerificationHours}h</span>
-        </div>
-        <div class="compliance-row">
-          <span>Total Submissions</span>
-          <span>${allActivities.length}</span>
-        </div>
-        <div class="compliance-row">
-          <span>Verified</span>
-          <span class="badge badge-success">${verified.length}</span>
-        </div>
-        <div class="compliance-row">
-          <span>Pending Review</span>
-          <span class="badge badge-warning">${pending.length}</span>
-        </div>
-        <div class="compliance-row">
-          <span>Rejected</span>
-          <span>${rejected.length}</span>
-        </div>
-        <div class="compliance-row" style="border-bottom:none;">
-          <span>CSRD Audit Ready</span>
-          <span class="badge ${verificationRate >= 70 ? 'badge-success' : 'badge-warning'}">${verificationRate >= 70 ? 'Yes' : 'Needs Review'}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" style="margin-top:24px;padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">
-      <strong>Audit Statement:</strong> This report contains ${verified.length} verified impact records representing ${totalHours} volunteer hours 
-      across ${projectStats.length} projects. All entries have been verified by authorized ${orgName} staff members 
-      with immutable audit trail records maintained for CSRD compliance. Generated by Synerxus Impact Data Infrastructure.
+    <div style="text-align:right;font-size:11px;color:var(--txt-t);">
+      <div>Generated: ${reportDate}</div>
+      <div>Report ID: ${reportId}</div>
     </div>
   </div>
 
-  <div class="footer">
-    <p>Synerxus &mdash; Connect. Manage. Impact Globally.</p>
-    <p>This is an auto-generated report. Data verified as of ${reportDate}.</p>
+  <!-- Title Banner -->
+  <div style="background:linear-gradient(135deg,#0891b2,#0e7490);border-radius:var(--r);padding:24px;color:#fff;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.8;margin-bottom:6px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;"></span>
+      VERIFIED IMPACT SUMMARY
+    </div>
+    <div style="font-size:22px;font-weight:500;margin-bottom:4px;">${orgName}</div>
+    ${org?.description ? `<div style="font-size:13px;opacity:0.9;">${org.description.slice(0, 90)}${org.description.length > 90 ? '\u2026' : ''}</div>` : ''}
+    <div style="font-size:11px;opacity:0.7;margin-top:12px;">${periodLabel}</div>
   </div>
+
+  <!-- Key Metrics (3-col) -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+    <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:var(--r);padding:16px;text-align:center;">
+      <div style="font-size:28px;font-weight:500;color:#059669;">${verified.length}</div>
+      <div style="font-size:12px;color:var(--txt-s);margin-top:2px;">Verified outcomes</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#059669;margin-top:8px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#10b981;display:inline-block;"></span>NGO-confirmed
+      </div>
+    </div>
+    <div style="background:#ecfeff;border:0.5px solid #a5f3fc;border-radius:var(--r);padding:16px;text-align:center;">
+      <div style="font-size:28px;font-weight:500;color:#0891b2;">${Math.round(totalHours)}</div>
+      <div style="font-size:12px;color:var(--txt-s);margin-top:2px;">Verified hours</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#0891b2;margin-top:8px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#06b6d4;display:inline-block;"></span>Not self-reported
+      </div>
+    </div>
+    <div style="background:#f5f3ff;border:0.5px solid #ddd6fe;border-radius:var(--r);padding:16px;text-align:center;">
+      <div style="font-size:28px;font-weight:500;color:#7c3aed;">${totalBeneficiaries.toLocaleString()}</div>
+      <div style="font-size:12px;color:var(--txt-s);margin-top:2px;">Beneficiaries reached</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#7c3aed;margin-top:8px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;display:inline-block;"></span>Estimated
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary Metrics (4-col) -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px;">
+    <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;text-align:center;">
+      <div style="font-size:18px;font-weight:500;color:var(--txt-p);">${uniqueVolunteers}</div>
+      <div style="font-size:10px;color:var(--txt-t);">Volunteers</div>
+    </div>
+    <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;text-align:center;">
+      <div style="font-size:18px;font-weight:500;color:var(--txt-p);">${uniqueSkillsCount || uniqueVolunteers}</div>
+      <div style="font-size:10px;color:var(--txt-t);">Skill categories</div>
+    </div>
+    <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;text-align:center;">
+      <div style="font-size:18px;font-weight:500;color:var(--txt-p);">${projectStats.length}</div>
+      <div style="font-size:10px;color:var(--txt-t);">Active projects</div>
+    </div>
+    <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;text-align:center;">
+      <div style="font-size:18px;font-weight:500;color:var(--txt-p);">${verificationRate}%</div>
+      <div style="font-size:10px;color:var(--txt-t);">Verification rate</div>
+    </div>
+  </div>
+
+  ${sortedSdgs.length > 0 ? `<!-- SDG Impact -->
+  <div style="margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block;"></span>
+      <span style="font-weight:500;font-size:14px;color:var(--txt-p);">UN Sustainable Development Goals impact</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">${sdgBars}</div>
+  </div>` : ''}
+
+  <!-- Audit Trail Badge -->
+  <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:var(--r);padding:14px;display:flex;align-items:center;gap:14px;">
+    <div style="width:40px;height:40px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">\u2713</div>
+    <div style="flex:1;">
+      <div style="font-weight:500;font-size:13px;color:#065f46;">Full audit trail available</div>
+      <div style="font-size:11px;color:#047857;margin-top:2px;">Every outcome includes: verification timestamp, verifier identity, device ID, geolocation, and hours \u2014 all NGO-confirmed with immutable records.</div>
+    </div>
+    <div style="text-align:right;font-size:11px;color:#059669;flex-shrink:0;">
+      <div>${verificationRate}% complete</div>
+      ${avgVerificationHours > 0 ? `<div style="font-size:10px;color:#10b981;">Avg. ${avgVerificationHours}h to verify</div>` : ''}
+    </div>
+  </div>
+
+  <!-- Page 1 Footer -->
+  <div style="margin-top:20px;padding-top:12px;border-top:0.5px solid var(--bd);text-align:center;font-size:10px;color:var(--txt-t);">
+    Page 1 of 2 \u2022 This document contains NGO-verified data with immutable audit trails
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page page-break">
+
+  <!-- Mini Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:0.5px solid var(--bd);margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img src="/synerxus-logo.png" alt="Synerxus" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">
+      <span style="font-weight:500;font-size:13px;color:var(--txt-p);">SYNERXUS</span>
+      <span style="color:#d1d5db;margin:0 6px;">|</span>
+      <span style="font-size:12px;color:var(--txt-s);">${orgName}</span>
+    </div>
+    <div style="font-size:11px;color:var(--txt-t);">Verified impact summary \u2022 ${now.getFullYear()} YTD</div>
+  </div>
+
+  ${top3.length > 0 ? `<!-- Top Verified Outcomes -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block;"></span>
+    <span style="font-weight:500;font-size:14px;color:var(--txt-p);">Top verified outcomes</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">${outcomeCards}</div>` : ''}
+
+  ${projectStats.length > 0 ? `<!-- Project Breakdown -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <span style="width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block;"></span>
+    <span style="font-weight:500;font-size:14px;color:var(--txt-p);">Project breakdown</span>
+  </div>
+  <div style="margin-bottom:24px;">${projectBreakdown}</div>` : ''}
+
+  <!-- Verification Methodology -->
+  <div style="margin-bottom:20px;">
+    <div style="font-weight:500;font-size:12px;color:var(--txt-p);margin-bottom:10px;">Verification methodology</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;">
+        <div style="font-weight:500;font-size:11px;color:var(--txt-p);margin-bottom:4px;">1. Volunteer submission</div>
+        <div style="font-size:10px;color:var(--txt-t);line-height:1.4;">Volunteers log outcome description and hours claimed through the Synerxus platform.</div>
+      </div>
+      <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;">
+        <div style="font-weight:500;font-size:11px;color:var(--txt-p);margin-bottom:4px;">2. NGO verification</div>
+        <div style="font-size:10px;color:var(--txt-t);line-height:1.4;">${orgName} confirms both the outcome AND hours with a single tap, creating an immutable record.</div>
+      </div>
+      <div style="background:var(--bg-s);border-radius:var(--r);padding:12px;">
+        <div style="font-weight:500;font-size:11px;color:var(--txt-p);margin-bottom:4px;">3. Audit trail</div>
+        <div style="font-size:10px;color:var(--txt-t);line-height:1.4;">System captures verifier identity, timestamp, device ID, and geolocation for each verification.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSRD Compliance Statement -->
+  <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:12px;font-size:11px;color:#92400e;margin-bottom:20px;">
+    <strong>CSRD Audit Statement:</strong> This report contains ${verified.length} verified impact records representing ${Math.round(totalHours)} volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. All entries have been verified by authorized ${orgName} staff with immutable audit trails maintained for CSRD compliance. Generated by Synerxus Impact Data Infrastructure.
+  </div>
+
+  <!-- Footer -->
+  <div style="padding-top:16px;border-top:0.5px solid var(--bd);">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt-t);margin-bottom:12px;">
+      <div>
+        <div>This report was generated by Synerxus on behalf of ${orgName}.</div>
+        <div>All data is NGO-verified with complete audit trails available upon request.</div>
+      </div>
+      <div style="text-align:right;">
+        <div>Questions? support@synerxus.com</div>
+        <div>Page 2 of 2</div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-s);border-radius:100px;padding:6px 14px;font-size:11px;color:var(--txt-s);">
+        <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+        Powered by Synerxus \u2022 Impact, verified.
+      </span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>`;
 

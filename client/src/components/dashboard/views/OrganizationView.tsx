@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useEffect } from "react";
+import { useState, useMemo, memo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -419,44 +419,33 @@ const OrganizationView = memo(function OrganizationView({
 
   // Mobile reports state
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportGenerated, setReportGenerated] = useState(false);
+  const [reportBlobUrl, setReportBlobUrl] = useState<string | null>(null);
+  const reportIframeRef = useRef<HTMLIFrameElement>(null);
 
   const toggleLogDetail = (logId: number) => {
     setSelectedLogId(prev => prev === logId ? null : logId);
   };
 
+  const closeReport = () => {
+    if (reportBlobUrl) {
+      URL.revokeObjectURL(reportBlobUrl);
+      setReportBlobUrl(null);
+    }
+  };
+
   const generateMobileReport = async () => {
     setReportGenerating(true);
-    // Open window synchronously BEFORE async call to avoid popup blocker
-    const win = window.open('about:blank', '_blank');
-    if (win) {
-      win.document.write('<html><head><title>Generating Report…</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f9fa"><p style="font-size:18px;color:#6b7280">⏳ Generating your impact report…</p></body></html>');
-    }
     try {
       const headers = await getAuthHeaders();
       const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
-      if (!response.ok) throw new Error("Failed to generate report");
+      if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
-      if (win && !win.closed) {
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
-        setTimeout(() => { try { win.print(); } catch(_) {} }, 900);
-      } else {
-        // Fallback: blob download if popup was closed
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-      }
-      setReportGenerated(true);
+      // Revoke any previous blob URL
+      if (reportBlobUrl) URL.revokeObjectURL(reportBlobUrl);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      setReportBlobUrl(url);
     } catch (err) {
-      if (win && !win.closed) win.close();
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
     } finally {
@@ -464,11 +453,23 @@ const OrganizationView = memo(function OrganizationView({
     }
   };
 
-  // Reset generated state when leaving reports tab
-  useEffect(() => {
-    if (orgTab !== 'reports') {
-      setReportGenerated(false);
+  const printReport = () => {
+    try {
+      reportIframeRef.current?.contentWindow?.print();
+    } catch (_) {
+      // Fallback: download the blob
+      if (reportBlobUrl) {
+        const a = document.createElement('a');
+        a.href = reportBlobUrl;
+        a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
+        a.click();
+      }
     }
+  };
+
+  // Reset when leaving reports tab
+  useEffect(() => {
+    if (orgTab !== 'reports') closeReport();
   }, [orgTab]);
 
   // Fetch dashboard stats
@@ -1493,6 +1494,37 @@ const OrganizationView = memo(function OrganizationView({
                 <h2 className="text-lg font-semibold text-stone-800">Impact Reports</h2>
               </div>
 
+              {/* Full-screen in-app report viewer */}
+              {reportBlobUrl && (
+                <div className="fixed inset-0 z-[300] bg-white flex flex-col">
+                  {/* Header bar */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
+                    <button
+                      onClick={closeReport}
+                      className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Close
+                    </button>
+                    <span className="text-sm font-semibold text-gray-900">Impact Report</span>
+                    <button
+                      onClick={printReport}
+                      className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                    >
+                      <Download className="h-4 w-4" />
+                      Print / Save
+                    </button>
+                  </div>
+                  {/* Report iframe — renders blob URL, no popup needed */}
+                  <iframe
+                    ref={reportIframeRef}
+                    src={reportBlobUrl}
+                    className="flex-1 w-full border-0"
+                    title="NGO Impact Report"
+                  />
+                </div>
+              )}
+
               {/* Status card */}
               <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-4 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
@@ -1506,20 +1538,6 @@ const OrganizationView = memo(function OrganizationView({
                   <div className="flex items-center justify-center gap-2 text-indigo-600">
                     <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm font-medium">Generating report…</span>
-                  </div>
-                ) : reportGenerated ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-2 text-emerald-600">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span className="text-sm font-medium">Report opened for download</span>
-                    </div>
-                    <button
-                      onClick={() => { setReportGenerated(false); generateMobileReport(); }}
-                      className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Generate Again
-                    </button>
                   </div>
                 ) : (
                   <button

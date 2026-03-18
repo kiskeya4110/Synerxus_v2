@@ -32,7 +32,7 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
     { id: 'projects' as const, label: 'Projects', icon: FolderOpen, path: '/ngo/projects' },
     { id: 'verify' as const, label: 'Verify', icon: ShieldCheck, path: '/ngo-verification' },
     { id: 'home' as const, label: 'Home', icon: Home, path: '/dashboard', isPrimary: true },
-    { id: 'reports' as const, label: 'Reports', icon: BarChart3, path: '/csr-reports-exports' },
+    { id: 'reports' as const, label: 'Reports', icon: BarChart3, path: '/organization-dashboard?tab=reports' },
     { id: 'log' as const, label: 'Log', icon: ClipboardList, path: '/ngo/log-hours' },
   ];
 

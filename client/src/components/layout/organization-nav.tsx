@@ -216,6 +216,38 @@ export default function OrganizationNav() {
                       </div>
                     </div>
 
+                    {/* Nav Items (mobile only — hidden on lg+ where top bar shows them) */}
+                    <div className="py-2 border-b border-stone-100 lg:hidden">
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive =
+                          (item.href.includes("tab=reports") &&
+                            (location + window.location.search).includes("tab=reports")) ||
+                          (!item.href.includes("tab=") &&
+                            item.href !== "/organization-dashboard" &&
+                            location.startsWith(item.href)) ||
+                          (item.href === "/organization-dashboard" &&
+                            !location.includes("tab=reports") &&
+                            location.startsWith("/organization-dashboard"));
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <button
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                isActive
+                                  ? "bg-indigo-50 text-indigo-600"
+                                  : "text-stone-700 hover:bg-stone-50"
+                              )}
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4" />
+                              <span className="text-sm font-medium">{item.label}</span>
+                            </button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+
                     {/* Menu Items */}
                     <div className="py-2">
                       {MENU_ITEMS.map((item) => {

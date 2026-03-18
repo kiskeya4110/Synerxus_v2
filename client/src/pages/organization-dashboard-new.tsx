@@ -823,8 +823,13 @@ export default function OrganizationDashboardNew() {
         <div class="f-copy">&copy; ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com</div>
       </div>
     </body></html>`;
-    const sanitized = DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true });
-    setReportHtml(sanitized);
+    // Sanitize while explicitly preserving <style> blocks (stripped by DOMPurify default)
+    const sanitized = DOMPurify.sanitize(htmlContent, {
+      WHOLE_DOCUMENT: true,
+      ADD_TAGS: ["style"],
+      FORCE_BODY: false,
+    });
+    setReportHtml(sanitized || htmlContent);
   };
 
   // Approval handlers
@@ -1605,7 +1610,8 @@ export default function OrganizationDashboardNew() {
           {/* Report iframe */}
           <iframe
             id="report-iframe"
-            srcDoc={reportHtml}
+            srcDoc={reportHtml ?? undefined}
+            sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
             className="flex-1 w-full border-0"
             title="Impact Report"
           />

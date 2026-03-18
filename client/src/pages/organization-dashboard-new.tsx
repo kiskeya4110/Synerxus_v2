@@ -918,7 +918,8 @@ export default function OrganizationDashboardNew() {
   }
 
   // Mobile View - Simple NGO Dashboard per redesign spec
-  if (isMobile) {
+  // Skip simplified mobile view when on reports tab so the full reports UI renders
+  if (isMobile && activeTab !== 'reports') {
     return (
       <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-stone-100 text-stone-900 flex flex-col overflow-hidden">
         {/* Centered App Container */}
@@ -1092,7 +1093,7 @@ export default function OrganizationDashboardNew() {
       <OrganizationNav />
 
       {/* Main Content */}
-      <main className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <main className={`container max-w-7xl mx-auto px-4 py-8 space-y-8 ${isMobile ? 'pb-24' : ''}`}>
         {/* Page Header */}
         <PageHeader
           title={organization?.name || "Verify Hub"}
@@ -1581,7 +1582,10 @@ export default function OrganizationDashboardNew() {
       </main>
 
       {/* Footer */}
-      <Footer />
+      {!isMobile && <Footer />}
+
+      {/* PWA Bottom Nav on mobile (shown when reports tab bypasses the mobile early return) */}
+      {isMobile && <OrganizationPWANav activeTab="reports" />}
 
       {/* Inline Report Viewer Modal */}
       {reportHtml && (

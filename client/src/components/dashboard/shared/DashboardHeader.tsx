@@ -78,6 +78,7 @@ function getMenuSections(userType: string | null, navigate: (path: string) => vo
       {
         title: "ACTIONS",
         items: [
+          { icon: BarChart3, label: "Reports", desc: "Impact reports & analytics", action: () => navigate('/dashboard?tab=reports') },
           { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/ngo/log-hours') },
           { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
         ]

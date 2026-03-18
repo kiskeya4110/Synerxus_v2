@@ -243,7 +243,7 @@ export default function OrganizationPWAHeader({
     {
       title: "ACTIONS",
       items: [
-        { icon: BarChart3, label: "Reports", desc: "Analytics & Synerxus reports", action: () => navigate('/organization-dashboard?tab=reports') },
+        { icon: BarChart3, label: "Reports", desc: "Analytics & Synerxus reports", action: () => navigate('/dashboard?tab=reports') },
         { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/log-volunteer-hours') },
         { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
       ]

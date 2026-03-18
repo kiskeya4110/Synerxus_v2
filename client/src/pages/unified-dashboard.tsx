@@ -43,7 +43,7 @@ const ViewLoader = () => (
  */
 export default function UnifiedDashboard() {
   const { user, dbUser, loading: authLoading, signOut } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
   // Use dbUser from auth sync as authoritative source
@@ -67,6 +67,15 @@ export default function UnifiedDashboard() {
 
   // Corporate-specific state
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Watch URL search params so ?tab=reports (from side menu or nav) updates orgTab in-place
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'reports' || tab === 'verify' || tab === 'volunteers' || tab === 'hours') {
+      setOrgTab(tab as any);
+    }
+  }, [location]);
 
   // Listen for tab navigation events from notification bell
   useEffect(() => {
@@ -101,10 +110,10 @@ export default function UnifiedDashboard() {
   const { data: organization } = useQuery({
     queryKey: ["/api/organizations", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/organizations?id=${currentUser.organizationId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Organization not found");
-      const data = await response.json();
-      return Array.isArray(data) ? data[0] : data;
+      return response.json();
     },
     enabled: !!currentUser?.organizationId && userType === 'organization',
   });

@@ -427,19 +427,36 @@ const OrganizationView = memo(function OrganizationView({
 
   const generateMobileReport = async () => {
     setReportGenerating(true);
+    // Open window synchronously BEFORE async call to avoid popup blocker
+    const win = window.open('about:blank', '_blank');
+    if (win) {
+      win.document.write('<html><head><title>Generating Report…</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f9fa"><p style="font-size:18px;color:#6b7280">⏳ Generating your impact report…</p></body></html>');
+    }
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/reports/ngo-impact-summary?userId=${userId}`, { headers, credentials: "include" });
+      const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to generate report");
       const html = await response.text();
-      const win = window.open('', '_blank');
-      if (win) {
+      if (win && !win.closed) {
+        win.document.open();
         win.document.write(html);
         win.document.close();
-        setTimeout(() => win.print(), 800);
+        setTimeout(() => { try { win.print(); } catch(_) {} }, 900);
+      } else {
+        // Fallback: blob download if popup was closed
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
       }
       setReportGenerated(true);
     } catch (err) {
+      if (win && !win.closed) win.close();
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
     } finally {
@@ -447,10 +464,10 @@ const OrganizationView = memo(function OrganizationView({
     }
   };
 
-  // Auto-generate report when reports tab is activated on mobile
+  // Reset generated state when leaving reports tab
   useEffect(() => {
-    if (orgTab === 'reports' && isMobile && !reportGenerated) {
-      generateMobileReport();
+    if (orgTab !== 'reports') {
+      setReportGenerated(false);
     }
   }, [orgTab]);
 

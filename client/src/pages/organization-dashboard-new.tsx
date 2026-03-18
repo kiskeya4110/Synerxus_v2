@@ -465,6 +465,7 @@ export default function OrganizationDashboardNew() {
   const [reportTimePeriod, setReportTimePeriod] = useState("30d");
   const [reportStartDate, setReportStartDate] = useState("");
   const [reportEndDate, setReportEndDate] = useState("");
+  const [reportHtml, setReportHtml] = useState<string | null>(null);
 
   // Redirect non-organizations
   useEffect(() => {
@@ -822,12 +823,8 @@ export default function OrganizationDashboardNew() {
         <div class="f-copy">&copy; ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com</div>
       </div>
     </body></html>`;
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
-      win.document.close();
-      win.print();
-    }
+    const sanitized = DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true });
+    setReportHtml(sanitized);
   };
 
   // Approval handlers
@@ -1580,6 +1577,40 @@ export default function OrganizationDashboardNew() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Inline Report Viewer Modal */}
+      {reportHtml && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0">
+            <span className="text-sm font-semibold text-stone-800">Impact Report Preview</span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="default"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                onClick={() => {
+                  const frame = document.getElementById("report-iframe") as HTMLIFrameElement;
+                  frame?.contentWindow?.print();
+                }}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Print / Save as PDF
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setReportHtml(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+          {/* Report iframe */}
+          <iframe
+            id="report-iframe"
+            srcDoc={reportHtml}
+            className="flex-1 w-full border-0"
+            title="Impact Report"
+          />
+        </div>
+      )}
     </div>
   );
 }

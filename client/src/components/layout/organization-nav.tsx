@@ -26,11 +26,11 @@ const getOrgNavItems = () => [
   { href: "/organization-dashboard", label: "Verify Hub", icon: Home },
   { href: "/ngo-verification", label: "Verify", icon: Shield },
   { href: "/projects", label: "Projects", icon: FolderOpen },
+  { href: "/organization-dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
 ];
 
 // Dropdown menu items - MVP only
 const MENU_ITEMS = [
-  { href: "/organization-dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
   { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
@@ -106,15 +106,17 @@ export default function OrganizationNav() {
             <div className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const fullLocation = location + window.location.search;
                 const isActive =
-                  location === item.href ||
+                  (item.href === "/organization-dashboard?tab=reports" &&
+                    (fullLocation.includes("tab=reports") || location.includes("tab=reports"))) ||
                   (item.href === "/organization-dashboard" &&
+                    !location.includes("tab=reports") &&
                     location.startsWith("/organization-dashboard")) ||
                   (item.href === "/ngo-verification" &&
                     location.includes("ngo-verification")) ||
                   (item.href === "/projects" && location.startsWith("/projects")) ||
-                  (item.href === "/volunteers" && location.startsWith("/volunteers")) ||
-                  (item.href.includes("impact-report") && location.includes("impact-report"));
+                  location === item.href;
 
                 const isVerifyTab = item.label === "Verify";
 

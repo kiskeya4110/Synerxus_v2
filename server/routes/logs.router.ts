@@ -20,6 +20,24 @@ import {
 import { smsVerificationService } from "../services/sms-verification";
 import { invalidateCache } from "../dashboard-service";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+
+// Read logo once at module load time, embed as base64 data URI for print reliability
+function loadLogoDataUri(): string {
+  const candidates = [
+    path.resolve(import.meta.dirname, "../../dist/public/synerxus-logo.png"),
+    path.resolve(import.meta.dirname, "../../client/public/synerxus-logo.png"),
+  ];
+  for (const p of candidates) {
+    try {
+      const buf = fs.readFileSync(p);
+      return `data:image/png;base64,${buf.toString("base64")}`;
+    } catch { /* try next */ }
+  }
+  return "/synerxus-logo.png"; // fallback to URL if file not found
+}
+const LOGO_DATA_URI = loadLogoDataUri();
 
 export const logsRouter = Router();
 
@@ -1356,24 +1374,28 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px; --r-lg: 16px;
     }
-    @page { size: A4 portrait; margin: 0; }
+    @page { size: 8.5in 11in portrait; margin: 0; }
     @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0; background: #fff; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; }
       .page {
-        height: 297mm !important;
-        max-height: 297mm !important;
+        zoom: 0.85;
+        width: 254mm !important;
+        height: 329mm !important;
+        max-height: 329mm !important;
         overflow: hidden !important;
         border-radius: 0 !important;
         border: none !important;
         padding: 12mm 14mm !important;
         margin: 0 !important;
-        max-width: 100% !important;
         page-break-after: always;
+        break-after: page;
         page-break-inside: avoid;
+        break-inside: avoid;
         box-shadow: none !important;
+        background: #fff !important;
       }
-      .page:last-child { page-break-after: auto; }
-      .page-break { page-break-before: always; }
+      .page:last-child { page-break-after: auto; break-after: auto; }
+      .page-break { page-break-before: always; break-before: page; }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 24px; }
@@ -1394,7 +1416,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Header -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <img src="/synerxus-logo.png" alt="Synerxus" style="width:36px;height:36px;border-radius:8px;object-fit:contain;">
+      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:36px;height:36px;border-radius:8px;object-fit:contain;">
       <div>
         <div style="font-weight:600;font-size:15px;color:var(--txt-p);letter-spacing:0.5px;">SYNERXUS</div>
         <div style="font-size:11px;color:#0891b2;">Impact, verified.</div>
@@ -1508,7 +1530,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Mini Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--bd);margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:8px;">
-      <img src="/synerxus-logo.png" alt="Synerxus" style="width:22px;height:22px;border-radius:6px;object-fit:contain;">
+      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:22px;height:22px;border-radius:6px;object-fit:contain;">
       <span style="font-weight:600;font-size:12px;color:var(--txt-p);">SYNERXUS</span>
       <span style="color:#d1d5db;margin:0 6px;">|</span>
       <span style="font-size:11px;color:var(--txt-s);">${orgName}</span>
@@ -1564,7 +1586,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Mini Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--bd);margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:8px;">
-      <img src="/synerxus-logo.png" alt="Synerxus" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">
+      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">
       <span style="font-weight:600;font-size:13px;color:var(--txt-p);">SYNERXUS</span>
       <span style="color:#d1d5db;margin:0 6px;">|</span>
       <span style="font-size:12px;color:var(--txt-s);">${orgName}</span>

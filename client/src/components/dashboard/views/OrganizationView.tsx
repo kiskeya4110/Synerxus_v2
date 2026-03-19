@@ -451,7 +451,14 @@ const OrganizationView = memo(function OrganizationView({
   };
 
   const printReport = () => {
-    window.print();
+    if (!reportContent) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(reportContent.rawHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
   };
 
   const downloadReport = () => {

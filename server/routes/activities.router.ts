@@ -1278,6 +1278,11 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
       );
     }
 
+    // Clean up stale pending_approval notifications for this activity
+    storage.markNotificationsReadByEntity("volunteer_activity", activityId).catch(err =>
+      console.error("[Notification] Failed to clear stale pending_approval notifications:", err)
+    );
+
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
@@ -1358,6 +1363,11 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
         console.error("[KPI] Error persisting KPIs after activity rejection:", err)
       );
     }
+
+    // Clean up stale pending_approval notifications for this activity
+    storage.markNotificationsReadByEntity("volunteer_activity", activityId).catch(err =>
+      console.error("[Notification] Failed to clear stale pending_approval notifications:", err)
+    );
 
     broadcastUpdate("activity_rejected", updatedActivity);
     res.json(updatedActivity);

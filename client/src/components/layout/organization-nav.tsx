@@ -23,10 +23,10 @@ import Logo from "@/components/ui/logo";
 
 // Navigation items - MVP only
 const getOrgNavItems = () => [
-  { href: "/organization-dashboard", label: "Verify Hub", icon: Home },
+  { href: "/dashboard", label: "Verify Hub", icon: Home },
   { href: "/ngo-verification", label: "Verify", icon: Shield },
   { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/organization-dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
+  { href: "/dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
 ];
 
 // Dropdown menu items - MVP only
@@ -107,11 +107,10 @@ export default function OrganizationNav() {
                 const Icon = item.icon;
                 const fullLocation = location + window.location.search;
                 const isActive =
-                  (item.href === "/organization-dashboard?tab=reports" &&
+                  (item.href === "/dashboard?tab=reports" &&
                     (fullLocation.includes("tab=reports") || location.includes("tab=reports"))) ||
-                  (item.href === "/organization-dashboard" &&
-                    !location.includes("tab=reports") &&
-                    location.startsWith("/organization-dashboard")) ||
+                  (item.href === "/dashboard" &&
+                    location === "/dashboard" && !fullLocation.includes("tab=reports")) ||
                   (item.href === "/ngo-verification" &&
                     location.includes("ngo-verification")) ||
                   (item.href === "/projects" && location.startsWith("/projects")) ||
@@ -219,15 +218,14 @@ export default function OrganizationNav() {
                     <div className="py-2 border-b border-stone-100 lg:hidden">
                       {navItems.map((item) => {
                         const Icon = item.icon;
+                        const fullLoc = location + window.location.search;
                         const isActive =
                           (item.href.includes("tab=reports") &&
-                            (location + window.location.search).includes("tab=reports")) ||
-                          (!item.href.includes("tab=") &&
-                            item.href !== "/organization-dashboard" &&
-                            location.startsWith(item.href)) ||
-                          (item.href === "/organization-dashboard" &&
-                            !location.includes("tab=reports") &&
-                            location.startsWith("/organization-dashboard"));
+                            fullLoc.includes("tab=reports")) ||
+                          (item.href === "/dashboard" &&
+                            location === "/dashboard" && !fullLoc.includes("tab=reports")) ||
+                          (item.href !== "/dashboard" && !item.href.includes("tab=") &&
+                            location.startsWith(item.href));
                         return (
                           <Link key={item.href} href={item.href}>
                             <button

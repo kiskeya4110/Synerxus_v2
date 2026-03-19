@@ -409,7 +409,7 @@ const OrganizationView = memo(function OrganizationView({
 
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [isApprovingAll, setIsApprovingAll] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => orgTab === 'reports' ? 'reports' : 'overview');
 
   // History/Verification tab state
   const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
@@ -419,16 +419,14 @@ const OrganizationView = memo(function OrganizationView({
 
   // Mobile reports state
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportHtml, setReportHtml] = useState<string | null>(null);
+  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
 
   const toggleLogDetail = (logId: number) => {
     setSelectedLogId(prev => prev === logId ? null : logId);
   };
 
   const closeReport = () => {
-    // Remove print isolation style
-    document.getElementById('synerxus-print-style')?.remove();
-    setReportHtml(null);
+    setReportContent(null);
   };
 
   const generateMobileReport = async () => {
@@ -437,16 +435,13 @@ const OrganizationView = memo(function OrganizationView({
       const headers = await getAuthHeaders();
       const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
-      const html = await response.text();
-      // Inject print isolation: hides everything except the report overlay during print
-      let printStyle = document.getElementById('synerxus-print-style');
-      if (!printStyle) {
-        printStyle = document.createElement('style');
-        printStyle.id = 'synerxus-print-style';
-        document.head.appendChild(printStyle);
-      }
-      printStyle.textContent = `@media print { body > *:not(#synerxus-report-overlay) { display: none !important; } #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; } }`;
-      setReportHtml(html);
+      const rawHtml = await response.text();
+      // Parse out styles and body so we can render inline without an iframe
+      const parser = new DOMParser();
+      const parsedDoc = parser.parseFromString(rawHtml, 'text/html');
+      const styles = Array.from(parsedDoc.querySelectorAll('style')).map(s => s.textContent || '').join('\n');
+      const body = parsedDoc.body.innerHTML;
+      setReportContent({ rawHtml, styles, body });
     } catch (err) {
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
@@ -460,8 +455,8 @@ const OrganizationView = memo(function OrganizationView({
   };
 
   const downloadReport = () => {
-    if (!reportHtml) return;
-    const blob = new Blob([reportHtml], { type: 'text/html' });
+    if (!reportContent) return;
+    const blob = new Blob([reportContent.rawHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -472,9 +467,10 @@ const OrganizationView = memo(function OrganizationView({
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
-  // Reset when leaving reports tab
+  // Sync desktop activeTab when orgTab changes (e.g. from nav link)
   useEffect(() => {
-    if (orgTab !== 'reports') closeReport();
+    if (orgTab === 'reports') setActiveTab('reports');
+    else closeReport();
   }, [orgTab]);
 
   // Fetch dashboard stats
@@ -531,7 +527,7 @@ const OrganizationView = memo(function OrganizationView({
     queryKey: ["/api/volunteers", activeUser?.organizationId],
     queryFn: async () => {
       const response = await fetch(
-        `/api/projects/volunteers?organizationId=${activeUser.organizationId}`
+        `/api/volunteers?organizationId=${activeUser.organizationId}`
       );
       if (!response.ok) return [];
       return response.json();
@@ -1499,11 +1495,19 @@ const OrganizationView = memo(function OrganizationView({
                 <h2 className="text-lg font-semibold text-stone-800">Impact Reports</h2>
               </div>
 
-              {/* Full-screen in-app report viewer — dangerouslySetInnerHTML works in all contexts */}
-              {reportHtml && (
+              {/* Full-screen in-app report viewer — styles + body extracted via DOMParser, no iframe needed */}
+              {reportContent && (
                 <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
+                  {/* Inject report styles */}
+                  <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+                    @media print {
+                      body > *:not(#synerxus-report-overlay) { display: none !important; }
+                      #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+                      #synerxus-report-overlay .report-header-bar { display: none !important; }
+                    }
+                  `}} />
                   {/* Header bar */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
+                  <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
                     <button
                       onClick={closeReport}
                       className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -1529,10 +1533,10 @@ const OrganizationView = memo(function OrganizationView({
                       </button>
                     </div>
                   </div>
-                  {/* Report rendered directly — no blob URLs, works in Replit iframe and PWA */}
+                  {/* Report body rendered inline */}
                   <div
                     className="flex-1 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: reportHtml }}
+                    dangerouslySetInnerHTML={{ __html: reportContent.body }}
                   />
                 </div>
               )}
@@ -1639,7 +1643,7 @@ const OrganizationView = memo(function OrganizationView({
       </Grid>
 
       {/* Main Dashboard Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(tab) => { if (tab !== 'reports') closeReport(); setActiveTab(tab); }}>
         <TabsList className="w-full max-w-md">
           <TabsTrigger value="overview" className="flex-1">
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -1657,6 +1661,10 @@ const OrganizationView = memo(function OrganizationView({
           <TabsTrigger value="projects" className="flex-1">
             <FolderOpen className="h-4 w-4 mr-2" />
             Projects
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex-1">
+            <FileText className="h-4 w-4 mr-2" />
+            Reports
           </TabsTrigger>
         </TabsList>
 
@@ -1929,6 +1937,75 @@ const OrganizationView = memo(function OrganizationView({
               </Grid>
             )}
           </Section>
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="mt-6">
+          {/* Full-screen report viewer overlay */}
+          {reportContent && (
+            <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
+              <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+                @media print {
+                  body > *:not(#synerxus-report-overlay) { display: none !important; }
+                  #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+                  #synerxus-report-overlay .report-header-bar { display: none !important; }
+                }
+              `}} />
+              <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
+                <button
+                  onClick={closeReport}
+                  className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Close
+                </button>
+                <span className="text-sm font-semibold text-gray-900">Impact Report</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={downloadReport}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-2 py-1"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </button>
+                  <button
+                    onClick={printReport}
+                    className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-2 py-1"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Print / PDF
+                  </button>
+                </div>
+              </div>
+              <div
+                className="flex-1 overflow-y-auto"
+                dangerouslySetInnerHTML={{ __html: reportContent.body }}
+              />
+            </div>
+          )}
+
+          <Card className="max-w-lg mx-auto">
+            <CardContent className="pt-8 pb-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+                <FileText className="h-8 w-8 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Impact Summary</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                CSRD/ESRS-compliant report with verified hours, SDG alignment, audit trail, and diaspora volunteer impact.
+              </p>
+              {reportGenerating ? (
+                <div className="flex items-center justify-center gap-2 text-indigo-600">
+                  <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Generating report…</span>
+                </div>
+              ) : (
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={generateMobileReport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Generate Report
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

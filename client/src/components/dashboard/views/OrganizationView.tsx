@@ -29,6 +29,7 @@ import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/avatar";
 import { Progress, ProgressWithLabel } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Stat } from "@/components/ui/stat";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
@@ -420,6 +421,7 @@ const OrganizationView = memo(function OrganizationView({
   // Mobile reports state
   const [reportGenerating, setReportGenerating] = useState(false);
   const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
+  const [reportTimePeriod, setReportTimePeriod] = useState("all");
 
   const toggleLogDetail = (logId: number) => {
     setSelectedLogId(prev => prev === logId ? null : logId);
@@ -433,7 +435,10 @@ const OrganizationView = memo(function OrganizationView({
     setReportGenerating(true);
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
+      const params = new URLSearchParams();
+      if (reportTimePeriod !== 'all') params.set('timePeriod', reportTimePeriod);
+      const url = `/api/reports/ngo-impact-summary${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const rawHtml = await response.text();
       // Parse out styles and body so we can render inline without an iframe
@@ -1554,9 +1559,24 @@ const OrganizationView = memo(function OrganizationView({
                   <FileText className="h-7 w-7 text-indigo-600" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">NGO Impact Summary</h3>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-gray-500 mb-3">
                   Verified hours · SDG alignment · CSRD compliance metrics
                 </p>
+                <div className="flex items-center gap-2 justify-center mb-4">
+                  <label className="text-xs font-medium text-gray-500">Time Period</label>
+                  <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Last 7 days</SelectItem>
+                      <SelectItem value="30d">Last 30 days</SelectItem>
+                      <SelectItem value="90d">Last 90 days</SelectItem>
+                      <SelectItem value="1y">Last year</SelectItem>
+                      <SelectItem value="all">All time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {reportGenerating ? (
                   <div className="flex items-center justify-center gap-2 text-indigo-600">
                     <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -1608,16 +1628,10 @@ const OrganizationView = memo(function OrganizationView({
         title={organization?.name || "Verify Hub"}
         description="Verify volunteer outcomes, manage projects, and track your impact."
         actions={
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
-              <Clock className="h-4 w-4 mr-2" />
-              Log Outcomes
-            </Button>
-            <Button variant="accent" onClick={() => navigate("/post-core-opportunity")}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
+            <Clock className="h-4 w-4 mr-2" />
+            Log Outcomes
+          </Button>
         }
       />
 
@@ -1997,9 +2011,24 @@ const OrganizationView = memo(function OrganizationView({
                 <FileText className="h-8 w-8 text-indigo-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Impact Summary</h3>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 mb-4">
                 CSRD/ESRS-compliant report with verified hours, SDG alignment, audit trail, and diaspora volunteer impact.
               </p>
+              <div className="flex items-center gap-3 justify-center mb-6">
+                <label className="text-xs font-medium text-muted-foreground">Time Period</label>
+                <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 days</SelectItem>
+                    <SelectItem value="30d">Last 30 days</SelectItem>
+                    <SelectItem value="90d">Last 90 days</SelectItem>
+                    <SelectItem value="1y">Last year</SelectItem>
+                    <SelectItem value="all">All time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {reportGenerating ? (
                 <div className="flex items-center justify-center gap-2 text-indigo-600">
                   <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />

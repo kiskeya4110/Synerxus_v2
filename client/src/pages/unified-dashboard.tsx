@@ -77,12 +77,12 @@ export default function UnifiedDashboard() {
     }
   }, [location]);
 
-  // Listen for tab navigation events from notification bell
+  // Listen for tab navigation events from notification bell and nav links
   useEffect(() => {
     const handler = (e: Event) => {
       const tab = (e as CustomEvent).detail;
-      if (userType === 'organization' && tab === 'verify') {
-        setOrgTab('verify');
+      if (userType === 'organization' && (tab === 'verify' || tab === 'reports' || tab === 'volunteers' || tab === 'hours')) {
+        setOrgTab(tab as any);
       }
     };
     window.addEventListener('navigate-tab', handler);

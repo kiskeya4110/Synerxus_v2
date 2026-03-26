@@ -319,6 +319,8 @@ export interface IStorage {
 
   // Batch fetch activities by multiple project IDs
   listVolunteerActivitiesByProjectIds(projectIds: number[]): Promise<VolunteerActivity[]>;
+  // Batch fetch activities by multiple project IDs with optional date cutoff (for time-period reports)
+  listVolunteerActivitiesByProjectIdsFromDate(projectIds: number[], since?: Date): Promise<VolunteerActivity[]>;
 
   // Batch fetch impacts by multiple project IDs
   listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]>;
@@ -1472,6 +1474,17 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(volunteerActivities.projectId, projectIds));
   }
 
+  async listVolunteerActivitiesByProjectIdsFromDate(projectIds: number[], since?: Date): Promise<VolunteerActivity[]> {
+    if (projectIds.length === 0) return [];
+    const projectFilter = inArray(volunteerActivities.projectId, projectIds);
+    if (since) {
+      return await db.select().from(volunteerActivities)
+        .where(and(projectFilter, gte(volunteerActivities.date, since)));
+    }
+    return await db.select().from(volunteerActivities)
+      .where(projectFilter);
+  }
+
   async listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]> {
     if (projectIds.length === 0) return [];
     return await db.select().from(projectImpacts).where(inArray(projectImpacts.projectId, projectIds));
@@ -2239,6 +2252,10 @@ export class DatabaseStorage implements IStorage {
 
   async listVolunteerEmployerLinks(): Promise<VolunteerEmployerLink[]> {
     return await db.select().from(volunteerEmployerLinks);
+  }
+
+  async listVolunteerEmployerLinksByPartnerId(partnerId: number): Promise<VolunteerEmployerLink[]> {
+    return await db.select().from(volunteerEmployerLinks).where(eq(volunteerEmployerLinks.partnerId, partnerId));
   }
 
   async getVolunteerEmployerLink(volunteerId: number): Promise<VolunteerEmployerLink | undefined> {

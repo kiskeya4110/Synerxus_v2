@@ -324,9 +324,13 @@ export default function DashboardHeader({
           <div className="flex-shrink-0" style={{ width: '40%' }}>
             <Logo size="xs" variant="full" theme="light" />
           </div>
-          {/* Type label — 30% */}
-          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">{roleLabel}</span>
+          {/* Type label / Org name — 30% */}
+          <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: '30%' }}>
+            {userType === 'organization' && organizationName ? (
+              <span className="text-[12px] font-bold text-stone-700 truncate max-w-[100px] text-center leading-tight">{organizationName}</span>
+            ) : (
+              <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">{roleLabel}</span>
+            )}
           </div>
           {/* Actions — 20% */}
           <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '20%' }}>
@@ -391,9 +395,11 @@ export default function DashboardHeader({
             >
               <div>
                 <p className="font-bold text-lg text-slate-900">Menu</p>
-                {(displayName || organizationName) && (
-                  <p className="text-sm text-slate-600">{displayName || organizationName}</p>
-                )}
+                {userType === 'organization' && organizationName ? (
+                  <p className="text-sm text-slate-600">{organizationName}</p>
+                ) : displayName ? (
+                  <p className="text-sm text-slate-600">{displayName}</p>
+                ) : null}
               </div>
               <button
                 onClick={() => setShowMenu(false)}

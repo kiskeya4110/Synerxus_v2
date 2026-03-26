@@ -2,9 +2,12 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import {
   insertVolunteerActivitySchema,
+  volunteerActivities as volunteerActivitiesTable,
   type VolunteerActivity,
   type InsertVerificationAuditLog,
 } from "@shared/schema";
+import { and, gte, inArray } from "drizzle-orm";
+import { db } from "../db";
 import { authMiddleware } from "../middleware/auth";
 import { checkAndAwardBadges } from "../badge-service";
 import {
@@ -334,12 +337,34 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
  */
 logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) => {
   try {
-    const { sdg, start_date, end_date, outcome_type, project_id } = _req.query;
+    const { sdg, start_date, end_date, outcome_type, project_id, corporate_id } = _req.query;
+
+    // If corporate_id provided, filter to only volunteers linked to that corporate partner
+    let allowedUserIds: Set<number> | null = null;
+    if (corporate_id) {
+      const corporateUserId = parseInt(corporate_id as string);
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const partner = allPartners.find((p: any) => p.userId === corporateUserId);
+      if (partner) {
+        const allProfiles = await storage.listVolunteerProfiles?.() || [];
+        // Direct profile links (employerId = partner.id)
+        const directLinkedUserIds = allProfiles
+          .filter((p: any) => p.employerId && parseInt(String(p.employerId)) === partner.id)
+          .map((p: any) => p.userId as number);
+        // Explicit employer-link table (volunteerId references volunteerProfiles.id)
+        const explicitLinks = await (storage as any).listVolunteerEmployerLinksByPartnerId?.(partner.id) || [];
+        const explicitLinkedUserIds = allProfiles
+          .filter((p: any) => explicitLinks.some((l: any) => l.volunteerId === p.id))
+          .map((p: any) => p.userId as number);
+        allowedUserIds = new Set([...directLinkedUserIds, ...explicitLinkedUserIds]);
+      }
+    }
 
     // Get all approved activities
     const allActivities = await storage.listVolunteerActivities();
     const approvedActivities = allActivities.filter(
-      (a: any) => a.verificationStatus === 'approved'
+      (a: any) => a.verificationStatus === 'approved' &&
+        (allowedUserIds === null || (a.userId && allowedUserIds.has(a.userId)))
     );
 
     // Enrich each approved activity with project, volunteer, and verifier data
@@ -1074,10 +1099,34 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const projects = await storage.listProjectsByOrganization(organizationId);
     const projectIds = projects.map(p => p.id);
 
+    // Compute start date from timePeriod filter — used for DB-level date filtering
+    const timePeriod = req.query.timePeriod as string | undefined;
+    let reportSince: Date | undefined;
+    if (timePeriod && timePeriod !== 'all') {
+      const nowMs = Date.now();
+      switch (timePeriod) {
+        case '7d':  reportSince = new Date(nowMs - 7   * 24 * 60 * 60 * 1000); break;
+        case '30d': reportSince = new Date(nowMs - 30  * 24 * 60 * 60 * 1000); break;
+        case '90d': reportSince = new Date(nowMs - 90  * 24 * 60 * 60 * 1000); break;
+        case '1y':  reportSince = new Date(nowMs - 365 * 24 * 60 * 60 * 1000); break;
+      }
+    }
+
+    // Direct DB query with date filter — bypasses storage abstraction layer
+    console.log('[report] timePeriod:', timePeriod, '| reportSince:', reportSince?.toISOString(), '| projectIds:', projectIds);
     let allActivities: any[] = [];
-    for (const pid of projectIds) {
-      const acts = await storage.listVolunteerActivitiesByProject(pid);
-      allActivities.push(...acts);
+    if (projectIds.length > 0) {
+      const projectFilter = inArray(volunteerActivitiesTable.projectId, projectIds);
+      if (reportSince) {
+        const filteredQuery = db.select().from(volunteerActivitiesTable).where(and(projectFilter, gte(volunteerActivitiesTable.date, reportSince)));
+        console.log('[report] filtered SQL:', filteredQuery.toSQL());
+        const rows = await filteredQuery;
+        allActivities = rows as any[];
+      } else {
+        const rows = await db.select().from(volunteerActivitiesTable).where(projectFilter);
+        allActivities = rows as any[];
+      }
+      console.log('[report] total rows fetched:', allActivities.length, '| sample dates:', allActivities.slice(0, 3).map((r: any) => r.date));
     }
 
     const verified = allActivities.filter(a => a.verificationStatus === 'approved');
@@ -1091,9 +1140,15 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const verificationRate = allActivities.length > 0
       ? Math.round((verified.length / allActivities.length) * 100) : 0;
 
+    // Time-to-verify: average of (verifiedAt - createdAt) across verified records, in hours
     const verificationTimes = verified
       .filter(a => a.verifiedAt && a.createdAt)
-      .map(a => (new Date(a.verifiedAt!).getTime() - new Date(a.createdAt).getTime()) / (1000 * 60 * 60));
+      .map(a => {
+        const vMs = a.verifiedAt instanceof Date ? a.verifiedAt.getTime() : new Date(a.verifiedAt!).getTime();
+        const cMs = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+        return (vMs - cMs) / (1000 * 60 * 60);
+      })
+      .filter(h => h >= 0); // exclude negative values from bad data
     const avgVerificationHours = verificationTimes.length > 0
       ? Math.round(verificationTimes.reduce((s, t) => s + t, 0) / verificationTimes.length) : 0;
 
@@ -1134,12 +1189,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const orgName = org?.name || 'Organization';
 
     // Additional metrics
-    const totalBeneficiaries = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0) || totalOutcomes;
+    // beneficiaryCount is an explicit field — do not fall back to outcome count (would be misleading)
+    const totalBeneficiaries = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0);
     const allSkills = new Set(verified.flatMap(a => a.skillsApplied || []));
     const uniqueSkillsCount = allSkills.size || 0;
-
-    // Period label
-    const periodLabel = `${now.getFullYear()} YTD (Jan 1\u2013${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
 
     // Report ID
     const initials = orgName.split(' ').map((w: string) => w[0] || '').join('').slice(0, 4).toUpperCase();
@@ -1187,12 +1240,22 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const diasporaPct = allVolunteerUsers.length > 0 ? Math.round((diasporaVolunteers / allVolunteerUsers.length) * 100) : 0;
 
     // Additional benchmark metrics
-    const avgHoursPerOutcome = verified.length > 0 ? (totalHours / verified.length).toFixed(1) : '0';
-    const beneficiariesPerOutcome = verified.length > 0 ? Math.round(totalBeneficiaries / verified.length) : 0;
+    // Denominator is totalOutcomes (sum of outcomeQuantity), not the number of activity records
+    const avgHoursPerOutcome = totalOutcomes > 0 ? (totalHours / totalOutcomes).toFixed(1) : (verified.length > 0 ? (totalHours / verified.length).toFixed(1) : '0');
+    const beneficiariesPerOutcome = totalOutcomes > 0 ? Math.round(totalBeneficiaries / totalOutcomes) : 0;
 
-    // Period Q-style display
+    // Period Q-style display — reflects the selected time filter
     const qNum = Math.ceil((now.getMonth() + 1) / 3);
-    const periodDisplay = `Q${qNum} ${now.getFullYear()} (Jan 1 \u2013 ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
+    const endLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const periodDisplayMap: Record<string, string> = {
+      '7d': `Last 7 Days (through ${endLabel})`,
+      '30d': `Last 30 Days (through ${endLabel})`,
+      '90d': `Last 90 Days (through ${endLabel})`,
+      '1y': `Last 12 Months (through ${endLabel})`,
+    };
+    const periodDisplay = timePeriod && periodDisplayMap[timePeriod]
+      ? periodDisplayMap[timePeriod]
+      : `Q${qNum} ${now.getFullYear()} (Jan 1 \u2013 ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
 
     // CSRD/ESRS compliance rows
     const csrdRows = [
@@ -1238,6 +1301,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         ? new Date(a.verifiedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         : 'N/A';
       const verifiedTime = a.verifiedAt ? new Date(a.verifiedAt).toISOString().slice(11, 19) + ' UTC' : '';
+      const vMs = a.verifiedAt ? (a.verifiedAt instanceof Date ? a.verifiedAt.getTime() : new Date(a.verifiedAt).getTime()) : null;
+      const cMs = a.createdAt ? (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime()) : null;
+      const timeToVerifyHours = (vMs && cMs && vMs > cMs) ? Math.round((vMs - cMs) / (1000 * 60 * 60)) : null;
       const hasSms = !!(a as any).verifierPhone;
       const verificationMethod = hasSms ? 'SMS verification' : 'App verification';
       const rawPhone = (a as any).verifierPhone as string | undefined;
@@ -1265,8 +1331,8 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:5px;padding:5px 10px;margin-bottom:3px;">
-              <div style="font-size:14px;font-weight:600;color:#059669;">${a.hours ? Math.round(a.hours) + 'h' : 'N/A'}</div>
-              <div style="font-size:9px;color:#059669;">verified</div>
+              <div style="font-size:14px;font-weight:600;color:#059669;">${timeToVerifyHours !== null ? timeToVerifyHours + 'h' : 'N/A'}</div>
+              <div style="font-size:9px;color:#059669;">to verify</div>
             </div>
             <div style="font-size:9px;color:#9ca3af;">${verifiedDate}</div>
           </div>
@@ -1433,7 +1499,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- Title Banner -->
   <div style="background:linear-gradient(135deg,#0891b2,#0e7490);border-radius:var(--r);padding:12px 20px;color:#fff;margin-bottom:12px;">
-    <div style="font-size:9px;opacity:0.75;margin-bottom:2px;letter-spacing:0.5px;">CSRD-COMPLIANT \u2022 NGO-VERIFIED \u2022 AUDIT-READY \u2022 FILTERABLE BY TIMELINE &amp; PROJECT</div>
+    <div style="font-size:9px;opacity:0.75;margin-bottom:2px;letter-spacing:0.5px;">CSRD AUDIT READY DATA \u2022 NGO-VERIFIED \u2022 IMMUTABLE TRAIL \u2022 FILTERABLE BY TIMELINE &amp; PROJECT</div>
     <div style="font-size:18px;font-weight:600;margin-bottom:1px;">VERIFIED IMPACT SUMMARY</div>
     <div style="font-size:13px;font-weight:400;opacity:0.9;">${orgName}</div>
     ${org?.description ? `<div style="font-size:11px;opacity:0.8;margin-top:2px;">${org.description.slice(0, 100)}${org.description.length > 100 ? '\u2026' : ''}</div>` : ''}
@@ -1677,7 +1743,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt-t);margin-bottom:8px;">
       <div>
         <div>This report was generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
-        <div style="margin-top:1px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD-compliant impact verification</div>
+        <div style="margin-top:1px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD Audit Ready Data</div>
       </div>
       <div style="text-align:right;">Page 3 of 3</div>
     </div>
@@ -1694,11 +1760,481 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 </html>`;
 
     res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Disposition', `inline; filename="ngo-impact-summary-${new Date().toISOString().split('T')[0]}.html"`);
     res.send(html);
   } catch (err) {
     console.error("Error generating NGO impact summary:", err);
     res.status(500).json({ message: "Failed to generate impact summary report" });
+  }
+});
+
+// ─── CORPORATE ESG IMPACT REPORT ──────────────────────────────────────────────
+logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (req.user?.userType !== 'corporate-partner') {
+      return res.status(403).json({ message: "Only corporate users can generate ESG reports" });
+    }
+
+    const corporateUserId = req.user.id;
+
+    // Find CSR partner for this user
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const partner = allPartners.find((p: any) => p.userId === corporateUserId);
+
+    // Time period filter
+    const timePeriod = req.query.timePeriod as string | undefined;
+    let reportSince: Date | undefined;
+    if (timePeriod && timePeriod !== 'all') {
+      const nowMs = Date.now();
+      switch (timePeriod) {
+        case '7d':  reportSince = new Date(nowMs - 7   * 24 * 60 * 60 * 1000); break;
+        case '30d': reportSince = new Date(nowMs - 30  * 24 * 60 * 60 * 1000); break;
+        case '90d': reportSince = new Date(nowMs - 90  * 24 * 60 * 60 * 1000); break;
+        case '1y':  reportSince = new Date(nowMs - 365 * 24 * 60 * 60 * 1000); break;
+      }
+    }
+
+    // Get linked volunteer user IDs
+    const allProfiles = await storage.listVolunteerProfiles?.() || [];
+    let linkedUserIds: number[] = [];
+    if (partner) {
+      const directLinked = allProfiles
+        .filter((p: any) => p.employerId && parseInt(String(p.employerId)) === partner.id)
+        .map((p: any) => p.userId as number);
+      const explicitLinks = await (storage as any).listVolunteerEmployerLinksByPartnerId?.(partner.id) || [];
+      const explicitLinked = allProfiles
+        .filter((p: any) => explicitLinks.some((l: any) => l.volunteerId === p.id))
+        .map((p: any) => p.userId as number);
+      linkedUserIds = Array.from(new Set([...directLinked, ...explicitLinked]));
+    }
+
+    // Fetch activities for linked volunteers
+    let allActivities: any[] = [];
+    if (linkedUserIds.length > 0) {
+      const userFilter = inArray(volunteerActivitiesTable.userId, linkedUserIds);
+      const rows = reportSince
+        ? await db.select().from(volunteerActivitiesTable).where(and(userFilter, gte(volunteerActivitiesTable.date, reportSince)))
+        : await db.select().from(volunteerActivitiesTable).where(userFilter);
+      allActivities = rows as any[];
+    }
+
+    const verified = allActivities.filter((a: any) => a.verificationStatus === 'approved');
+    const rejected = allActivities.filter((a: any) => a.verificationStatus === 'rejected');
+
+    // Volunteer user details
+    const volunteerUsers = linkedUserIds.length > 0 ? await storage.getUsersByIds(linkedUserIds) : [];
+    const userMap = new Map(volunteerUsers.map((u: any) => [u.id, u]));
+
+    // Volunteer profile map (for department/job title)
+    const profileMap = new Map(allProfiles.map((p: any) => [p.userId, p]));
+
+    // NGO orgs from verifiers
+    const verifierIds = Array.from(new Set(verified.map((a: any) => a.verifiedBy).filter(Boolean))) as number[];
+    const verifierUsers = verifierIds.length > 0 ? await storage.getUsersByIds(verifierIds) : [];
+    const verifierOrgIds = Array.from(new Set(verifierUsers.map((u: any) => u.organizationId).filter(Boolean))) as number[];
+    const ngoOrgs: any[] = [];
+    for (const orgId of verifierOrgIds) {
+      const org = await storage.getOrganization(orgId);
+      if (org) ngoOrgs.push(org);
+    }
+    const ngoOrgMap = new Map(ngoOrgs.map((o: any) => [o.id, o]));
+    const verifierToOrgMap = new Map(verifierUsers.map((u: any) => [u.id, ngoOrgMap.get(u.organizationId)]));
+
+    // Metrics
+    const totalHours = verified.reduce((s: number, a: any) => s + (a.hours || 0), 0);
+    const totalOutcomes = verified.reduce((s: number, a: any) => s + (a.outcomeQuantity || 0), 0);
+    const totalBeneficiaries = verified.reduce((s: number, a: any) => s + (a.beneficiaryCount || 0), 0);
+    const uniqueVolunteerIds = new Set(verified.map((a: any) => a.userId));
+    const verificationRate = allActivities.length > 0
+      ? Math.round((verified.length / allActivities.length) * 100) : 0;
+
+    const verificationTimes = verified
+      .filter((a: any) => a.verifiedAt && a.createdAt)
+      .map((a: any) => {
+        const vMs = a.verifiedAt instanceof Date ? a.verifiedAt.getTime() : new Date(a.verifiedAt).getTime();
+        const cMs = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+        return (vMs - cMs) / (1000 * 60 * 60);
+      })
+      .filter((h: number) => h >= 0);
+    const avgVerificationHours = verificationTimes.length > 0
+      ? Math.round(verificationTimes.reduce((s: number, t: number) => s + t, 0) / verificationTimes.length) : 0;
+
+    // SDG map
+    const sdgMap: Record<number, { hours: number; outcomes: number; beneficiaries: number; count: number }> = {};
+    for (const act of verified) {
+      const sdgs: number[] = act.sdgTags || [];
+      sdgs.forEach((g: number) => {
+        if (!sdgMap[g]) sdgMap[g] = { hours: 0, outcomes: 0, beneficiaries: 0, count: 0 };
+        sdgMap[g].hours += act.hours || 0;
+        sdgMap[g].outcomes += act.outcomeQuantity || 0;
+        sdgMap[g].beneficiaries += act.beneficiaryCount || 0;
+        sdgMap[g].count++;
+      });
+    }
+    const sortedSdgs = Object.entries(sdgMap).sort((a, b) => b[1].count - a[1].count);
+
+    // NGO partner stats
+    const ngoStats: Record<number, { org: any; outcomes: number; hours: number; beneficiaries: number; activities: any[] }> = {};
+    for (const act of verified) {
+      if (!act.verifiedBy) continue;
+      const org = verifierToOrgMap.get(act.verifiedBy);
+      if (!org) continue;
+      if (!ngoStats[org.id]) ngoStats[org.id] = { org, outcomes: 0, hours: 0, beneficiaries: 0, activities: [] };
+      ngoStats[org.id].outcomes += act.outcomeQuantity || 0;
+      ngoStats[org.id].hours += act.hours || 0;
+      ngoStats[org.id].beneficiaries += act.beneficiaryCount || 0;
+      ngoStats[org.id].activities.push(act);
+    }
+
+    // Per-volunteer stats (top contributors)
+    const volunteerStats: Record<number, { name: string; dept: string; outcomes: number; hours: number; ngos: Set<string>; skills: Set<string> }> = {};
+    for (const act of verified) {
+      if (!act.userId) continue;
+      const user = userMap.get(act.userId);
+      const profile = profileMap.get(act.userId);
+      const name = user?.displayName || user?.email || 'Volunteer';
+      const dept = profile?.departmentName || profile?.jobTitleAtCompany || 'Employee';
+      const org = act.verifiedBy ? verifierToOrgMap.get(act.verifiedBy) : null;
+      if (!volunteerStats[act.userId]) volunteerStats[act.userId] = { name, dept, outcomes: 0, hours: 0, ngos: new Set(), skills: new Set() };
+      volunteerStats[act.userId].outcomes += act.outcomeQuantity || 0;
+      volunteerStats[act.userId].hours += act.hours || 0;
+      if (org) volunteerStats[act.userId].ngos.add(org.name);
+      (act.skillsApplied || []).forEach((s: string) => volunteerStats[act.userId].skills.add(s));
+    }
+    const topVolunteers = Object.values(volunteerStats).sort((a, b) => b.outcomes - a.outcomes).slice(0, 5);
+
+    const now = new Date();
+    const corpName = partner?.companyName || 'Corporation';
+    const reportDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const initials = corpName.split(' ').map((w: string) => w[0] || '').join('').slice(0, 4).toUpperCase();
+    const mmdd = now.toISOString().slice(5, 10).replace('-', '');
+    const reportId = `ESG-${now.getFullYear()}-${mmdd}-${initials}`;
+
+    const qNum = Math.ceil((now.getMonth() + 1) / 3);
+    const endLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const periodDisplayMap: Record<string, string> = {
+      '7d': `Last 7 Days (through ${endLabel})`,
+      '30d': `Last 30 Days (through ${endLabel})`,
+      '90d': `Last 90 Days (through ${endLabel})`,
+      '1y': `Last 12 Months (through ${endLabel})`,
+    };
+    const periodDisplay = timePeriod && periodDisplayMap[timePeriod]
+      ? periodDisplayMap[timePeriod]
+      : `Q${qNum} ${now.getFullYear()}`;
+
+    const avgHoursPerEmployee = uniqueVolunteerIds.size > 0 ? (totalHours / uniqueVolunteerIds.size).toFixed(1) : '0';
+    const beneficiariesPerOutcome = totalOutcomes > 0 ? Math.round(totalBeneficiaries / totalOutcomes) : 0;
+
+    const SDG_NAMES_LOCAL: Record<number, string> = {
+      1: 'No Poverty', 2: 'Zero Hunger', 3: 'Good Health & Well-being', 4: 'Quality Education',
+      5: 'Gender Equality', 6: 'Clean Water & Sanitation', 7: 'Affordable & Clean Energy',
+      8: 'Decent Work & Economic Growth', 9: 'Industry, Innovation & Infrastructure',
+      10: 'Reduced Inequalities', 11: 'Sustainable Cities & Communities',
+      12: 'Responsible Consumption & Production', 13: 'Climate Action',
+      14: 'Life Below Water', 15: 'Life on Land', 16: 'Peace, Justice & Strong Institutions',
+      17: 'Partnerships for the Goals'
+    };
+    const SDG_COLORS_LOCAL: Record<number, string> = {
+      1: '#E5243B', 2: '#DDA63A', 3: '#4C9F38', 4: '#C5192D', 5: '#FF3A21',
+      6: '#26BDE2', 7: '#FCC30B', 8: '#A21942', 9: '#FD6925', 10: '#DD1367',
+      11: '#FD9D24', 12: '#BF8B2E', 13: '#3F7E44', 14: '#0A97D9', 15: '#56C02B',
+      16: '#00689D', 17: '#19486A'
+    };
+
+    // NGO partner rows
+    const ngoRows = Object.values(ngoStats).map((n: any) => `
+      <tr style="border-bottom:0.5px solid #e5e7eb;">
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${n.org.name}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.org.location || '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.outcomes}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.beneficiaries}</td>
+        <td style="padding:6px 8px;font-size:11px;">
+          ${(n.org.sdgGoals || []).slice(0, 3).map((g: number) => `<span style="background:${SDG_COLORS_LOCAL[g] || '#888'};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-right:2px;">SDG ${g}</span>`).join('')}
+        </td>
+        <td style="padding:6px 8px;font-size:11px;"><span style="color:#059669;">&#10003; Complete</span></td>
+      </tr>`).join('');
+
+    // Employee contributor rows
+    const employeeRows = topVolunteers.map((v: any, i: number) => `
+      <tr style="border-bottom:0.5px solid #e5e7eb;${i % 2 === 1 ? 'background:#f9fafb;' : ''}">
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${v.name}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${v.dept}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${v.outcomes}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${Math.round(v.hours)}h</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${Array.from(v.ngos).join(', ') || '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${Array.from(v.skills).slice(0, 2).join(', ') || '—'}</td>
+      </tr>`).join('');
+
+    // SDG alignment rows
+    const sdgRows = sortedSdgs.slice(0, 7).map(([sdg, data]) => {
+      const n = parseInt(sdg);
+      const color = SDG_COLORS_LOCAL[n] || '#888';
+      return `<tr style="border-bottom:0.5px solid #e5e7eb;">
+        <td style="padding:6px 8px;">
+          <span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;">SDG ${n}</span>
+        </td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:500;color:#111827;">${SDG_NAMES_LOCAL[n] || `SDG ${n}`}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${data.outcomes}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${Math.round(data.hours)}h</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${data.beneficiaries}</td>
+      </tr>`;
+    }).join('');
+
+    // Audit trail rows (top 10)
+    const auditRows = verified.slice(0, 10).map((a: any) => {
+      const volunteer = userMap.get(a.userId);
+      const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
+      const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
+      return `<tr style="border-bottom:0.5px solid #e5e7eb;">
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${dateStr}</td>
+        <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${volunteer?.displayName || 'Volunteer'}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${org?.name || 'NGO'}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${(a.editedOutcomeText || a.outcomeText || a.description || '—').slice(0, 60)}${(a.editedOutcomeText || a.outcomeText || '')?.length > 60 ? '…' : ''}</td>
+        <td style="padding:5px 8px;font-size:10px;text-align:center;color:#374151;">${a.hours || 0}h</td>
+        <td style="padding:5px 8px;font-size:10px;"><span style="color:#059669;">&#10003; ${a.deviceId ? 'App' : 'Platform'}</span></td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.geolocation ? '&#x1F4CD; Located' : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Synerxus Corporate ESG Impact Report — ${corpName}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0A2463; --teal: #00A896; --gold: #F08A5D;
+    --teal-lt: #E0F4F2; --navy-lt: #EEF2FF;
+    --bd: #e5e7eb; --bg-s: #f9fafb; --txt: #111827; --txt-s: #6b7280;
+    --r: 8px;
+  }
+  body { font-family: 'Inter', sans-serif; color: var(--txt); background: #fff; font-size: 11px; line-height: 1.5; }
+  .page { max-width: 900px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 20px; font-weight: 800; }
+  h2 { font-size: 13px; font-weight: 700; color: #fff; }
+  h3 { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; padding: 7px 8px; }
+  .section { margin-bottom: 20px; border: 0.5px solid var(--bd); border-radius: var(--r); overflow: hidden; }
+  .section-header { background: var(--navy); padding: 10px 14px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .kpi { background: #fff; border: 0.5px solid var(--bd); border-radius: var(--r); padding: 12px 14px; }
+  .kpi-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--txt-s); margin-bottom: 4px; }
+  .kpi-value { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1.1; }
+  .kpi-sub { font-size: 9px; color: var(--txt-s); margin-top: 2px; }
+  .badge-ok { color: #059669; font-weight: 600; }
+  .badge-warn { color: #d97706; font-weight: 600; }
+  .note { background: var(--teal-lt); border-left: 3px solid var(--teal); padding: 8px 12px; font-size: 10px; color: #065f46; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; }
+  .warn-note { background: #fffbeb; border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: #92400e; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { padding: 12px; }
+    .kpi-grid { break-inside: avoid; }
+    .section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- REPORT HEADER -->
+<div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <div style="color:var(--teal);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">SYNERXUS · Impact, verified.</div>
+      <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
+      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">CSRD-Compliant · NGO-Verified Outcomes &amp; Hours · Dual Materiality Disclosure</div>
+    </div>
+    <div style="text-align:right;color:#cbd5e1;font-size:10px;">
+      <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>
+      <div>Generated: ${reportDate}</div>
+      <div style="margin-top:2px;">Corporation: <strong style="color:#fff;">${corpName}</strong></div>
+      <div>Reporting Period: <strong style="color:#fff;">${periodDisplay}</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: EXECUTIVE SNAPSHOT -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">${Object.keys(ngoStats).length}</div><div class="kpi-sub">organizations</div></div>
+    <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
+    <div class="kpi"><div class="kpi-label">Verified Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
+    <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${totalBeneficiaries.toLocaleString()}</div><div class="kpi-sub">individuals</div></div>
+    <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">NGO-verified</div></div>
+    <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">${sortedSdgs.length}</div><div class="kpi-sub">goals impacted</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><h2>ESRS Compliance Status</h2></div>
+    <table>
+      <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">ESRS Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
+      <tbody>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S1.4 — Workforce skills</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${uniqueVolunteerIds.size} employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.3 — Community engagement</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${Object.keys(ngoStats).length} NGO partners, ${verified.length} verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Actual community impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${totalBeneficiaries.toLocaleString()} beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Negative impacts (double materiality)</td><td style="padding:6px 8px;" class="${rejected.length > 0 ? 'badge-warn' : 'badge-ok'}">${rejected.length > 0 ? '&#9888; ' + rejected.length + ' disclosed' : '&#10003; None disclosed this period'}</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
+        <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS G1.3 — Monitoring processes</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${verificationRate}% verification rate, ${avgVerificationHours}h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — satisfying CSRD's requirement for third-party verified social impact data (ESRS S3).</div>
+</div>
+
+<!-- SECTION 2: NGO PARTNERSHIPS -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: NGO Partnership Impact</h3>
+  ${Object.keys(ngoStats).length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No NGO partners found for this reporting period.</p>' : `
+  <div class="section">
+    <div class="section-header"><h2>Sponsored NGO Partners — Verified Impact</h2></div>
+    <table>
+      <thead><tr><th>NGO Partner</th><th>Location</th><th>Verified Outcomes</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Audit Status</th></tr></thead>
+      <tbody>${ngoRows}</tbody>
+    </table>
+  </div>`}
+  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S3.3 requires disclosure of "operations with significant community impact." This section proves direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
+</div>
+
+<!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (ESRS S1.4)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+    <div class="section">
+      <div class="section-header"><h2>Participation Metrics</h2></div>
+      <table>
+        <tbody>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${uniqueVolunteerIds.size}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${Math.round(totalHours)}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${avgHoursPerEmployee}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. self-reported avg</td></tr>
+          <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${beneficiariesPerOutcome}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Platform-tracked</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-header"><h2>Industry Benchmarks</h2></div>
+      <table>
+        <tbody>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">Verification Rate</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${verificationRate}%</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. N/A (competitors)</td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;">Verification SLA</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${avgVerificationHours}h avg</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">target: ≤72h</td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">SDGs Addressed</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${sortedSdgs.length} goals</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 2.3 avg (Fortune 500)</td></tr>
+          <tr><td style="padding:7px 10px;font-size:11px;">NGO Partners</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${Object.keys(ngoStats).length}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8 avg (Benevity)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  ${topVolunteers.length > 0 ? `
+  <div class="section">
+    <div class="section-header"><h2>Top Employee Contributors (Verified Outcomes)</h2></div>
+    <table>
+      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Verified Outcomes</th><th style="text-align:center;">Hours</th><th>NGO Partners</th><th>Skills Deployed</th></tr></thead>
+      <tbody>${employeeRows}</tbody>
+    </table>
+  </div>` : ''}
+  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S1.4 requires disclosure of "workforce skills development." This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
+</div>
+
+<!-- SECTION 4: SDG ALIGNMENT -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 4: SDG Alignment &amp; Impact Attribution</h3>
+  ${sortedSdgs.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No SDG data found for this period.</p>' : `
+  <div class="section">
+    <div class="section-header"><h2>UN Sustainable Development Goals Contribution</h2></div>
+    <table>
+      <thead><tr><th>SDG</th><th>Goal</th><th style="text-align:center;">Outcomes</th><th style="text-align:center;">Hours</th><th style="text-align:center;">Beneficiaries</th></tr></thead>
+      <tbody>${sdgRows}</tbody>
+    </table>
+  </div>`}
+</div>
+
+<!-- SECTION 5: AUDIT TRAIL -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
+  ${verified.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No verified outcomes for this period.</p>' : `
+  <div class="section">
+    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Immutable Records for Auditor Sampling (showing ${Math.min(10, verified.length)} of ${verified.length})</h2></div>
+    <table>
+      <thead><tr><th>Date</th><th>Employee</th><th>NGO Partner</th><th>Outcome Verified</th><th style="text-align:center;">Hours</th><th>Method</th><th>Geolocation</th></tr></thead>
+      <tbody>${auditRows}</tbody>
+    </table>
+  </div>`}
+  <div style="background:#f0f9ff;border:0.5px solid #bae6fd;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#0369a1;margin-top:8px;">
+    &#128269; <strong>Auditor Use Case:</strong> Randomly sample 15–30% of outcomes for direct NGO confirmation. Each record includes verifier identity, timestamp, and contact information for the NGO programme director.
+  </div>
+</div>
+
+<!-- SECTION 6: DOUBLE MATERIALITY -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Double Materiality Disclosure (ESRS S3.4)</h3>
+  <div class="section">
+    <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Disclosures — Required for Full CSRD Compliance</h2></div>
+    ${rejected.length === 0
+      ? '<p style="padding:12px;font-size:11px;color:#374151;">&#10003; No negative impacts disclosed for this reporting period.</p>'
+      : `<table><thead><tr><th>Date</th><th>NGO Partner</th><th>Outcome</th><th>Negative Impact</th></tr></thead><tbody>${rejected.slice(0, 5).map((a: any) => {
+          const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
+          const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
+          return `<tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:10px;">${dateStr}</td><td style="padding:6px 8px;font-size:10px;">${org?.name || 'NGO'}</td><td style="padding:6px 8px;font-size:10px;">${(a.outcomeText || a.description || '—').slice(0, 50)}</td><td style="padding:6px 8px;font-size:10px;color:#b45309;">${a.rejectedReason || 'Not meeting verification standards'}</td></tr>`;
+        }).join('')}</tbody></table>`}
+  </div>
+  <div class="warn-note">&#9888; <strong>CSRD Requirement:</strong> ESRS S3.4 mandates disclosure of "actual and potential negative impacts on communities." This section satisfies double materiality — showing both positive outcomes AND unintended consequences.</div>
+</div>
+
+<!-- APPENDIX: METHODOLOGY -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Appendix A: Verification Methodology</h3>
+  <div class="section">
+    <div class="section-header"><h2>Three-Step NGO Verification Process</h2></div>
+    <div style="padding:12px;font-size:11px;color:#374151;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">1. Employee Submission</div>
+        Logs outcome description + hours claimed through Synerxus platform with optional photo/geolocation evidence.
+      </div>
+      <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">2. NGO Verification</div>
+        Partner confirms BOTH outcome AND hours with single tap → immutable record with verifier identity and timestamp.
+      </div>
+      <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">3. Audit Trail Capture</div>
+        System logs verifier identity, timestamp, device ID/SMS number, and geolocation for every verified outcome.
+      </div>
+    </div>
+  </div>
+  <div class="warn-note">&#9888; <strong>Honest Disclaimer:</strong> This verification trail provides raw materials for ESG assurance. Final limited assurance requires auditor procedures per ISAE 3000 (15–30% sampling, direct NGO confirmation). Synerxus reduces evidence-gathering burden by 60–70% but does not replace auditor judgment.</div>
+</div>
+
+<!-- FOOTER -->
+<div style="border-top:1px solid var(--bd);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+  <div style="font-size:10px;color:var(--txt-s);">
+    <div>Report ID: ${reportId} · Generated by Synerxus on behalf of ${corpName}</div>
+    <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · All data NGO-verified with immutable audit trails</div>
+    <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · CSRD Audit Ready Data</div>
+  </div>
+  <div style="text-align:center;">
+    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);border-radius:100px;padding:5px 12px;font-size:10px;color:#fff;">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
+      Powered by Synerxus · Impact, verified.
+    </span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Disposition', `inline; filename="corporate-esg-report-${now.toISOString().split('T')[0]}.html"`);
+    res.send(html);
+  } catch (err) {
+    console.error("Error generating corporate ESG report:", err);
+    res.status(500).json({ message: "Failed to generate ESG report" });
   }
 });
 

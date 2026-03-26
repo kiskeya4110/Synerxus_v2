@@ -3,11 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   RefreshCw, Download, Filter,
-  CheckCircle, Globe, ChevronDown, ChevronUp, ChevronRight,
-  MapPin, Image as ImageIcon, Clock, Target,
+  CheckCircle, Globe, ChevronDown, ChevronUp, ChevronRight, ChevronLeft,
+  MapPin, Image as ImageIcon, Clock, Target, FileText,
 } from "lucide-react";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 interface VerifiedOutcome {
   id: number;
@@ -55,6 +58,12 @@ const CorporateView = memo(function CorporateView({
   isRefreshing = false,
 }: CorporateViewProps) {
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+
+  // Report state
+  const [reportGenerating, setReportGenerating] = useState(false);
+  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
+  const [reportTimePeriod, setReportTimePeriod] = useState("all");
 
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
@@ -170,20 +179,150 @@ const CorporateView = memo(function CorporateView({
     onRefresh?.();
   };
 
+  const generateReport = async () => {
+    setReportGenerating(true);
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      if (reportTimePeriod !== 'all') params.set('timePeriod', reportTimePeriod);
+      params.set('corporateId', userId);
+      const url = `/api/reports/corporate-esg-summary?${params.toString()}`;
+      const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
+      if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
+      const rawHtml = await response.text();
+      const parser = new DOMParser();
+      const parsedDoc = parser.parseFromString(rawHtml, 'text/html');
+      const styles = Array.from(parsedDoc.querySelectorAll('style')).map(s => s.textContent || '').join('\n');
+      const body = parsedDoc.body.innerHTML;
+      setReportContent({ rawHtml, styles, body });
+    } catch (err) {
+      console.error("Report generation failed:", err);
+      toast({ title: "Report failed", description: "Could not generate the ESG report. Please try again.", variant: "destructive" });
+    } finally {
+      setReportGenerating(false);
+    }
+  };
+
+  const closeReport = () => setReportContent(null);
+
+  const printReport = () => {
+    if (!reportContent) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(reportContent.rawHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
+
+  const downloadReport = () => {
+    if (!reportContent) return;
+    const blob = new Blob([reportContent.rawHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `corporate-esg-report-${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  };
+
   // Mobile PWA View
   if (isMobile) {
     return (
       <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
+
+        {/* Report overlay */}
+        {reportContent && (
+          <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
+            <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+              @media print {
+                body > *:not(#synerxus-report-overlay) { display: none !important; }
+                #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+                #synerxus-report-overlay .report-header-bar { display: none !important; }
+              }
+            `}} />
+            <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
+              <button
+                onClick={closeReport}
+                className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Close
+              </button>
+              <span className="text-sm font-semibold text-gray-900">ESG Report</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={downloadReport}
+                  className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-2 py-1"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </button>
+                <button
+                  onClick={printReport}
+                  className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-2 py-1"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Print / PDF
+                </button>
+              </div>
+            </div>
+            <div
+              className="flex-1 overflow-y-auto"
+              dangerouslySetInnerHTML={{ __html: reportContent.body }}
+            />
+          </div>
+        )}
+
+        {/* ESG Report generation card */}
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Corporate ESG Report</h3>
+              <p className="text-xs text-gray-500">CSRD-compliant impact summary</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            <label className="text-xs font-medium text-gray-500">Period</label>
+            <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
+              <SelectTrigger className="flex-1 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {reportGenerating ? (
+            <div className="flex items-center justify-center gap-2 text-indigo-600 py-1">
+              <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium">Generating report…</span>
+            </div>
+          ) : (
+            <button
+              onClick={generateReport}
+              className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Generate ESG Report
+            </button>
+          )}
+        </div>
+
         {/* Summary Bar - Interactive */}
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-lg font-bold text-slate-900">Verified Outcomes</h1>
-            <button
-              onClick={() => navigate('/corporate/reports')}
-              className="text-xs text-blue-600 font-medium hover:underline"
-            >
-              Full Report →
-            </button>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <button
@@ -451,6 +590,50 @@ const CorporateView = memo(function CorporateView({
   // Desktop View
   return (
     <main className="container max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+      {/* Report overlay */}
+      {reportContent && (
+        <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
+          <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+            @media print {
+              body > *:not(#synerxus-report-overlay) { display: none !important; }
+              #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+              #synerxus-report-overlay .report-header-bar { display: none !important; }
+            }
+          `}} />
+          <div className="report-header-bar flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
+            <button
+              onClick={closeReport}
+              className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Close Report
+            </button>
+            <span className="text-sm font-semibold text-gray-900">Corporate ESG Report</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={downloadReport}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-3 py-1.5"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+              <button
+                onClick={printReport}
+                className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-3 py-1.5"
+              >
+                <FileText className="h-4 w-4" />
+                Print / PDF
+              </button>
+            </div>
+          </div>
+          <div
+            className="flex-1 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: reportContent.body }}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -469,11 +652,37 @@ const CorporateView = memo(function CorporateView({
           <button
             onClick={handleExportCSV}
             disabled={outcomes.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50 disabled:opacity-50 transition-colors"
           >
             <Download className="w-4 h-4" />
             Export CSV
           </button>
+          <div className="flex items-center gap-2">
+            <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
+              <SelectTrigger className="w-[140px] h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+            <button
+              onClick={generateReport}
+              disabled={reportGenerating}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {reportGenerating ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+              ESG Report
+            </button>
+          </div>
         </div>
       </div>
 

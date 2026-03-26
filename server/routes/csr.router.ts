@@ -2053,6 +2053,27 @@ csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) =>
   }
 });
 
+// ==================== PUBLIC CSR PARTNER LISTING ====================
+
+/**
+ * GET /csr/partners
+ * List all CSR partners (used by volunteers to select their employer)
+ */
+csrRouter.get("/csr/partners", authMiddleware, async (_req: Request, res: Response) => {
+  try {
+    const partners = await storage.listCSRPartners?.() || [];
+    res.json(partners.map((p: any) => ({
+      id: p.id,
+      companyName: p.companyName,
+      logoUrl: p.logoUrl || null,
+      industryType: p.industryType || null,
+    })));
+  } catch (err) {
+    console.error("Error fetching CSR partners:", err);
+    res.status(500).json({ error: "Failed to fetch partners" });
+  }
+});
+
 // ==================== VOLUNTEER EMPLOYER LINKING ROUTES ====================
 
 /**

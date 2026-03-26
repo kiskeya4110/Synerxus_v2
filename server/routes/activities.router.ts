@@ -1106,7 +1106,8 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
 
     const previousStatus = activity.verificationStatus || 'pending';
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
-      verificationStatus: 'approved'
+      verificationStatus: 'approved',
+      verifiedAt: new Date()
     });
 
     // Write immutable audit log entry

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient, getAuthHeaders } from "@/lib/queryClient";
-import { Loader2, Check, LogOut, User, Plus, X, Clock, Heart } from "lucide-react";
+import { Loader2, Check, LogOut, User, Plus, X, Clock, Heart, Building2, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -115,6 +115,8 @@ export default function VolunteerProfileSettings() {
   const [weeklyHours, setWeeklyHours] = useState(5);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedEmployerId, setSelectedEmployerId] = useState<number | null>(null);
+  const [employerSearch, setEmployerSearch] = useState("");
 
   // Fetch existing profile
   const { data: profileData, isLoading: isLoadingProfile } = useQuery({
@@ -135,6 +137,18 @@ export default function VolunteerProfileSettings() {
     refetchOnMount: "always",
   });
 
+  // Fetch CSR partners list for employer selection
+  const { data: csrPartners = [] } = useQuery<{ id: number; companyName: string; logoUrl: string | null; industryType: string | null }[]>({
+    queryKey: ["/api/csr/partners"],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/csr/partners", { headers, credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
   // Populate form when profile loads
   useEffect(() => {
     if (profileData && !isInitialized) {
@@ -145,6 +159,7 @@ export default function VolunteerProfileSettings() {
       setInterests(profileData.interests || []);
       setWeeklyHours(profileData.weeklyAvailability || 5);
       setAvailability(profileData.availability || []);
+      setSelectedEmployerId(profileData.employerId ? Number(profileData.employerId) : null);
       setIsInitialized(true);
     }
   }, [profileData, isInitialized]);
@@ -248,6 +263,7 @@ export default function VolunteerProfileSettings() {
             weeklyAvailability: weeklyHours,
             availability: availability,
             onboardingCompleted: true,
+            employerId: selectedEmployerId ?? undefined,
           }),
         }
       );
@@ -473,6 +489,88 @@ export default function VolunteerProfileSettings() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Corporate Employer */}
+            <div>
+              <Label className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                My Employer (Optional)
+              </Label>
+              <p className="text-xs text-gray-500 mb-2">
+                Link your volunteer hours to your employer's CSR programme so their team can track real-time impact.
+              </p>
+              {/* Search */}
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search companies…"
+                  value={employerSearch}
+                  onChange={(e) => setEmployerSearch(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full pl-8 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+                />
+              </div>
+              {/* Company list */}
+              <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                {/* "None" option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmployerId(null)}
+                  disabled={isLoading}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                    selectedEmployerId === null
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="text-sm font-medium">Not linked to an employer</span>
+                  {selectedEmployerId === null && <Check className="h-3.5 w-3.5 ml-auto" />}
+                </button>
+                {csrPartners
+                  .filter((p) =>
+                    !employerSearch.trim() ||
+                    p.companyName.toLowerCase().includes(employerSearch.toLowerCase())
+                  )
+                  .map((partner) => (
+                    <button
+                      key={partner.id}
+                      type="button"
+                      onClick={() => setSelectedEmployerId(partner.id)}
+                      disabled={isLoading}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                        selectedEmployerId === partner.id
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {partner.logoUrl ? (
+                        <img src={partner.logoUrl} alt="" className="h-6 w-6 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="h-6 w-6 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate block">{partner.companyName}</span>
+                        {partner.industryType && (
+                          <span className="text-xs text-gray-400">{partner.industryType}</span>
+                        )}
+                      </div>
+                      {selectedEmployerId === partner.id && <Check className="h-3.5 w-3.5 ml-auto flex-shrink-0" />}
+                    </button>
+                  ))}
+                {csrPartners.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-4">No companies registered yet.</p>
+                )}
+              </div>
+              {selectedEmployerId && (
+                <p className="text-xs text-indigo-600 mt-1.5 flex items-center gap-1">
+                  <Check className="h-3 w-3" />
+                  Linked — your verified impact will appear on their CSR dashboard.
+                </p>
+              )}
             </div>
 
             {/* Interests & Causes */}

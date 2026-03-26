@@ -11,11 +11,13 @@ import {
   HelpCircle,
   Building2,
   FileBarChart2,
+  Settings,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,14 +25,15 @@ import Logo from "@/components/ui/logo";
 
 // Navigation items - MVP only
 const getOrgNavItems = () => [
-  { href: "/dashboard", label: "Verify Hub", icon: Home },
-  { href: "/ngo-verification", label: "Verify", icon: Shield },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/dashboard?tab=reports", label: "Reports", icon: FileBarChart2 },
+  { href: "/dashboard", label: "Home", icon: Home, tabEvent: undefined as string | undefined },
+  { href: "/ngo-verification", label: "Verify", icon: Shield, tabEvent: undefined as string | undefined },
+  { href: "/projects", label: "Projects", icon: FolderOpen, tabEvent: undefined as string | undefined },
+  { href: "/dashboard?tab=reports", label: "Reports", icon: FileBarChart2, tabEvent: "reports" as string | undefined },
 ];
 
 // Dropdown menu items - MVP only
 const MENU_ITEMS = [
+  { href: "/organization-profile-settings", label: "Profile Settings", icon: Settings },
   { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 
@@ -45,7 +48,8 @@ export default function OrganizationNav() {
   const { data: organization } = useQuery({
     queryKey: ["/api/organizations", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/organizations/${currentUser?.organizationId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/organizations/${currentUser?.organizationId}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       return await response.json();
     },
@@ -92,6 +96,9 @@ export default function OrganizationNav() {
 
   const navItems = getOrgNavItems();
   const orgInitial = (organization?.name || "O").charAt(0).toUpperCase();
+  const orgMonogram = organization?.name
+    ? organization.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0].toUpperCase()).join("")
+    : "ORG";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
@@ -121,6 +128,11 @@ export default function OrganizationNav() {
                 return (
                   <Link key={item.href} href={item.href}>
                     <button
+                      onClick={() => {
+                        if (item.tabEvent) {
+                          window.dispatchEvent(new CustomEvent('navigate-tab', { detail: item.tabEvent }));
+                        }
+                      }}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
                         isActive
@@ -176,7 +188,7 @@ export default function OrganizationNav() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden md:block text-sm font-medium text-stone-900 max-w-[120px] truncate">
-                  {organization?.name || "Organization"}
+                  {orgMonogram}
                 </span>
                 {menuOpen ? (
                   <X className="h-4 w-4 text-stone-500" />
@@ -235,7 +247,12 @@ export default function OrganizationNav() {
                                   ? "bg-indigo-50 text-indigo-600"
                                   : "text-stone-700 hover:bg-stone-50"
                               )}
-                              onClick={() => setMenuOpen(false)}
+                              onClick={() => {
+                                setMenuOpen(false);
+                                if (item.tabEvent) {
+                                  window.dispatchEvent(new CustomEvent('navigate-tab', { detail: item.tabEvent }));
+                                }
+                              }}
                             >
                               <Icon className="h-4 w-4" />
                               <span className="text-sm font-medium">{item.label}</span>

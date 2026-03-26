@@ -25,8 +25,6 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
-import OrganizationHeader from "@/components/layout/organization-header";
-import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -94,15 +92,12 @@ class OrganizationProfileErrorBoundary extends Component<ErrorBoundaryProps, Err
   render() {
     if (this.state.hasError) {
       return (
-        <>
-          <OrganizationHeader activeTab="settings" />
-          <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
             <Building2 className="h-12 w-12 text-destructive" />
             <h2 className="text-xl font-semibold text-slate-900">Something Went Wrong</h2>
             <p className="text-slate-600">We encountered an error loading your profile.</p>
             <Button onClick={() => this.setState({ hasError: false })}>Try Again</Button>
           </div>
-        </>
       );
     }
     return this.props.children;
@@ -191,7 +186,8 @@ export default function OrganizationProfileSettings() {
   const { data: organizations, isLoading: loadingProfile, error: profileError } = useQuery<MatchableOrganization[]>({
     queryKey: ["/api/matchable-organizations"],
     queryFn: async () => {
-      const response = await fetch("/api/matchable-organizations");
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/matchable-organizations", { headers, credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch organizations");
       return response.json();
     },
@@ -199,11 +195,12 @@ export default function OrganizationProfileSettings() {
   });
 
   // Also fetch organization profile data directly for current user - use caching
-  const { data: orgProfileData } = useQuery<any>({
+  const { data: orgProfileData, isLoading: loadingOrgProfile } = useQuery<any>({
     queryKey: ["/api/profile/organization", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/profile/organization?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/profile/organization?userId=${userId}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const data = await response.json();
       // Cache organization profile for instant loading
@@ -354,7 +351,7 @@ export default function OrganizationProfileSettings() {
   // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
   // Guard against repeated resets to prevent infinite loops
   useEffect(() => {
-    if (userLoading || loadingProfile) return;
+    if (userLoading || loadingProfile || loadingOrgProfile) return;
     if (formResetAttemptedRef.current) return; // Prevent repeated form resets
 
     try {
@@ -433,7 +430,7 @@ export default function OrganizationProfileSettings() {
       console.error("Form reset error:", error);
       // Continue gracefully if form reset fails
     }
-  }, [existingProfile, orgProfileData, loadingProfile, currentUser, userLoading, form]);
+  }, [existingProfile, orgProfileData, loadingProfile, loadingOrgProfile, currentUser, userLoading, form]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -626,13 +623,10 @@ export default function OrganizationProfileSettings() {
       );
     }
     return (
-      <>
-        <OrganizationHeader activeTab="settings" />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-stone-500">Loading organization profile...</p>
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-stone-500">Loading organization profile...</p>
+      </div>
     );
   }
 
@@ -653,15 +647,12 @@ export default function OrganizationProfileSettings() {
       );
     }
     return (
-      <>
-        <OrganizationHeader activeTab="settings" />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Building2 className="h-12 w-12 text-stone-400" />
-          <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
-          <p className="text-stone-600">Please log in to access your organization profile.</p>
-          <Button onClick={() => setLocation("/login")}>Go to Login</Button>
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Building2 className="h-12 w-12 text-stone-400" />
+        <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
+        <p className="text-stone-600">Please log in to access your organization profile.</p>
+        <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+      </div>
     );
   }
 
@@ -682,15 +673,12 @@ export default function OrganizationProfileSettings() {
       );
     }
     return (
-      <>
-        <OrganizationHeader activeTab="settings" />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Building2 className="h-12 w-12 text-red-500" />
-          <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
-          <p className="text-stone-600">There was an error loading your profile data.</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Building2 className="h-12 w-12 text-red-500" />
+        <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
+        <p className="text-stone-600">There was an error loading your profile data.</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
     );
   }
 
@@ -745,9 +733,8 @@ export default function OrganizationProfileSettings() {
       />
 
       <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
-        {/* Header - Mobile PWA or Desktop */}
-        {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="settings" />}
-        {!isMobile && <OrganizationWelcomeBanner pageTitle="Profile & Settings" />}
+        {/* Header - Mobile PWA only; desktop uses organization-nav */}
+        {isMobile && <OrganizationPWAHeader />}
 
         {/* Content container matching header width */}
         <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>

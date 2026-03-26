@@ -445,6 +445,29 @@ app.use((req, res, next) => {
     process.exit(1);
   }
 
+  // Backfill verifiedAt for existing approved activities (one-time on startup)
+  try {
+    const allActivities = await storage.listVolunteerActivities();
+    const approvedNoVerification = allActivities.filter(
+      a => a.verificationStatus === 'approved' && !a.verifiedAt
+    );
+    
+    if (approvedNoVerification.length > 0) {
+      logger.info(`[Backfill] Backfilling verifiedAt for ${approvedNoVerification.length} approved activities`);
+      for (const activity of approvedNoVerification) {
+        // Set verifiedAt to 12 hours after creation as a reasonable default
+        const verifiedTime = new Date(activity.createdAt);
+        verifiedTime.setHours(verifiedTime.getHours() + 12);
+        
+        await storage.updateVolunteerActivity(activity.id, { verifiedAt: verifiedTime });
+      }
+      logger.info(`[Backfill] Completed verifiedAt backfill for ${approvedNoVerification.length} activities`);
+    }
+  } catch (backfillErr) {
+    logger.warn('[Backfill] Failed to backfill verifiedAt:', backfillErr instanceof Error ? backfillErr.message : backfillErr);
+    // Non-critical, continue server startup
+  }
+
   // Start memory monitoring for health tracking
   startMemoryMonitoring();
   logger.info('[Server] Memory monitoring started');

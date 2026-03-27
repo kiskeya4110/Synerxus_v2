@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import { Bell, Menu, X } from "lucide-react";
 import { useState } from "react";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+const logoUrl = "/synerxus-logo.png";
 
 interface PublicLayoutProps {
   children: ReactNode;

@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useViewportDetection } from "@/hooks/use-mobile";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+const logoUrl = "/synerxus-logo.png";
 
 interface PWAPageGuardProps {
   children: ReactNode;

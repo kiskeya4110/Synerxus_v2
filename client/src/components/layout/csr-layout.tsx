@@ -24,7 +24,7 @@ import {
   Menu,
   Trash2,
 } from "lucide-react";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+const logoUrl = "/synerxus-logo.png";
 import { getAuthHeaders } from "@/lib/queryClient";
 
 // Notification types

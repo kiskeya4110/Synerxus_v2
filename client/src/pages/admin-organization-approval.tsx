@@ -49,7 +49,7 @@ import {
   AlertTriangle,
   ArrowLeft,
 } from "lucide-react";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 
 interface Organization {
   id: number;
@@ -226,7 +226,7 @@ export default function AdminOrganizationApprovalPage() {
                 Back
               </Button>
               <div className="flex items-center gap-2">
-                <img src={logoUrl} alt="Synerxus" className="h-8" />
+                <Logo size="sm" clickable={false} />
                 <span className="text-lg font-semibold text-gray-900">Admin Panel</span>
               </div>
             </div>

@@ -6,7 +6,6 @@ import { getAuthHeaders } from "@/lib/queryClient";
 import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
 import DOMPurify from "dompurify";
 import Logo from "@/components/ui/logo";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
 import {
@@ -393,9 +392,6 @@ export default function CSRReportsExports() {
               gap: 16px;
               margin-bottom: 16px;
             }
-            .synerxus-logo { display: flex; align-items: center; gap: 2px; }
-            .synerxus-logo .syner { font-size: 28px; font-weight: 800; color: #1e3a5f; letter-spacing: -1px; }
-            .synerxus-logo .xus { font-size: 28px; font-weight: 800; color: #f59e0b; letter-spacing: -1px; }
             .company-divider { width: 2px; height: 32px; background: #d1d5db; margin: 0 8px; }
             .company-name { font-size: 18px; font-weight: 600; color: #374151; }
 
@@ -445,8 +441,6 @@ export default function CSRReportsExports() {
 
             .report-footer { margin-top: 48px; padding-top: 24px; border-top: 2px solid #e5e7eb; text-align: center; }
             .footer-logo { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 12px; }
-            .footer-logo .syner { font-size: 20px; font-weight: 800; color: #1e3a5f; }
-            .footer-logo .xus { font-size: 20px; font-weight: 800; color: #f59e0b; }
             .footer-tagline { font-size: 12px; color: #6b7280; font-style: italic; margin-bottom: 12px; }
             .footer-generated { font-size: 13px; color: #374151; margin-bottom: 8px; }
             .footer-confidential { font-size: 11px; color: #9ca3af; padding: 8px 16px; background: #f9fafb; border-radius: 6px; display: inline-block; }
@@ -480,9 +474,7 @@ export default function CSRReportsExports() {
           <div class="report-header">
             <div class="header-left">
               <div class="logo-container">
-                <div class="synerxus-logo">
-                  <span class="syner">SYNER</span><span class="xus">XUS</span>
-                </div>
+                <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
                 <div class="company-divider"></div>
                 <div class="company-name">${orgName}</div>
               </div>
@@ -563,7 +555,7 @@ export default function CSRReportsExports() {
 
           <div class="report-footer">
             <div class="footer-logo">
-              <span class="syner">SYNER</span><span class="xus">XUS</span>
+              <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
             <div class="footer-tagline">Connect. Manage. Impact Globally.</div>
             <div class="footer-generated">
@@ -615,23 +607,6 @@ export default function CSRReportsExports() {
               align-items: center;
               gap: 16px;
               margin-bottom: 16px;
-            }
-            .synerxus-logo {
-              display: flex;
-              align-items: center;
-              gap: 2px;
-            }
-            .synerxus-logo .syner {
-              font-size: 28px;
-              font-weight: 800;
-              color: #1e3a5f;
-              letter-spacing: -1px;
-            }
-            .synerxus-logo .xus {
-              font-size: 28px;
-              font-weight: 800;
-              color: #f59e0b;
-              letter-spacing: -1px;
             }
             .company-divider {
               width: 2px;
@@ -819,16 +794,6 @@ export default function CSRReportsExports() {
               gap: 4px;
               margin-bottom: 12px;
             }
-            .footer-logo .syner {
-              font-size: 20px;
-              font-weight: 800;
-              color: #1e3a5f;
-            }
-            .footer-logo .xus {
-              font-size: 20px;
-              font-weight: 800;
-              color: #f59e0b;
-            }
             .footer-tagline {
               font-size: 12px;
               color: #6b7280;
@@ -895,9 +860,7 @@ export default function CSRReportsExports() {
           <div class="report-header">
             <div class="header-left">
               <div class="logo-container">
-                <div class="synerxus-logo">
-                  <span class="syner">SYNER</span><span class="xus">XUS</span>
-                </div>
+                <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
                 <div class="company-divider"></div>
                 <div class="company-name">${companyName}</div>
               </div>
@@ -992,7 +955,7 @@ export default function CSRReportsExports() {
           <!-- Report Footer -->
           <div class="report-footer">
             <div class="footer-logo">
-              <span class="syner">SYNER</span><span class="xus">XUS</span>
+              <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
             <div class="footer-tagline">Connect. Manage. Impact Globally.</div>
             <div class="footer-generated">

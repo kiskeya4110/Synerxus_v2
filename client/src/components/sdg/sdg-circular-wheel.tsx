@@ -3,7 +3,6 @@ import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDGDetailDialog } from "@/components/sdg/sdg-detail-dialog";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
-import synerxusLogo from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 
 interface SDGCircularWheelProps {
@@ -173,7 +172,7 @@ export function SDGCircularWheel({ scale = 1.0 }: SDGCircularWheelProps = {}) {
                 />
                 {/* Logo */}
                 <img
-                  src={synerxusLogo}
+                  src="/synerxus-esg-logo.png"
                   alt="Synerxus"
                   className="relative z-10 w-4/5 h-4/5 object-contain"
                   style={{

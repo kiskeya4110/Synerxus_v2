@@ -70,6 +70,7 @@ export default function NgoVerification() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [viewMode, setViewMode] = useState<'pending' | 'history'>('pending');
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
@@ -118,6 +119,36 @@ export default function NgoVerification() {
     enabled: !!currentUser?.organizationId,
     refetchInterval: 30000,
   });
+
+  // Fetch past verified logs
+  const { data: approvedLogs = [] } = useQuery<PendingLog[]>({
+    queryKey: ["/api/logs", { ngo_id: currentUser?.organizationId, status: "approved" }],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?ngo_id=${currentUser.organizationId}&status=approved`, { headers, credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
+  // Fetch past rejected logs
+  const { data: rejectedLogs = [] } = useQuery<PendingLog[]>({
+    queryKey: ["/api/logs", { ngo_id: currentUser?.organizationId, status: "rejected" }],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/logs?ngo_id=${currentUser.organizationId}&status=rejected`, { headers, credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
+  const historyLogs = [...approvedLogs, ...rejectedLogs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   // Verify mutation
   const verifyMutation = useMutation({
@@ -454,47 +485,130 @@ export default function NgoVerification() {
     </Card>
   );
 
+  // History card renderer — read-only display of past verified/rejected logs
+  const renderHistoryCard = (log: PendingLog, compact: boolean) => {
+    const isApproved = log.verificationStatus === 'approved';
+    return (
+      <Card key={log.id} className={compact ? "bg-white" : "overflow-hidden"}>
+        <CardContent className={compact ? "p-4" : "p-4 md:p-6"}>
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Avatar className={compact ? "w-8 h-8" : "h-10 w-10"}>
+                <AvatarImage src={log.volunteer?.avatar || ''} />
+                <AvatarFallback className="bg-slate-100 text-slate-600 text-xs">
+                  {log.volunteer?.displayName?.charAt(0) || 'V'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className={`font-medium ${compact ? 'text-sm' : ''}`}>{log.volunteer?.displayName || 'Volunteer'}</p>
+                <p className="text-xs text-slate-500">{log.project?.name || 'Unknown Project'}</p>
+              </div>
+            </div>
+            <Badge variant="outline" className={`text-xs ${isApproved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+              {isApproved ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+              {isApproved ? 'Verified' : 'Rejected'}
+            </Badge>
+          </div>
+          {(log.outcomeText || log.description) && (
+            <div className={`rounded-lg p-3 mb-3 ${isApproved ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+              <p className={`text-sm font-medium ${isApproved ? 'text-emerald-800' : 'text-red-800'}`}>
+                {log.outcomeText || log.description}
+              </p>
+            </div>
+          )}
+          <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'} gap-2 mb-3`}>
+            <div className="bg-slate-50 rounded p-2">
+              <span className="text-xs text-slate-500">Date</span>
+              <p className="font-medium text-sm">{format(new Date(log.date), compact ? 'MMM d' : 'MMM d, yyyy')}</p>
+            </div>
+            {log.outcomeQuantity && (
+              <div className="bg-slate-50 rounded p-2">
+                <span className="text-xs text-slate-500">Outcome</span>
+                <p className="font-semibold text-sm">{log.outcomeQuantity} {log.outcomes || 'units'}</p>
+              </div>
+            )}
+            {log.hours != null && log.hours > 0 && (
+              <div className="bg-slate-50 rounded p-2">
+                <span className="text-xs text-slate-500">Hours</span>
+                <p className="font-medium text-sm text-slate-600">{log.hours}h</p>
+              </div>
+            )}
+          </div>
+          {log.sdgTags && log.sdgTags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {log.sdgTags.map((sdg) => (
+                <Badge key={sdg} variant="secondary" className="text-[10px] text-white px-1.5 py-0.5" style={{ backgroundColor: getSDGColor(sdg) }}>
+                  SDG {sdg}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   // Mobile Organization PWA View
   if (isMobile && isOrganization) {
     return (
       <OrganizationPWALayout activeTab="home">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">Verification Queue</h1>
-              <p className="text-sm text-slate-500">
-                {pendingLogs.length} pending {pendingLogs.length === 1 ? 'log' : 'logs'}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-bold text-slate-800">Verification</h1>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
-          {isLoading ? (
-            <div className="text-center py-12">
-              <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
-              <p className="text-slate-500">Loading pending logs...</p>
-            </div>
-          ) : pendingLogs.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Inbox className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-700 mb-2">All Caught Up!</h3>
-                <p className="text-slate-500">
-                  There are no pending logs to verify at the moment.
-                </p>
-              </CardContent>
-            </Card>
+          {/* Tabs */}
+          <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('pending')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${viewMode === 'pending' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+            >
+              Pending {pendingLogs.length > 0 && <span className="ml-1 bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">{pendingLogs.length}</span>}
+            </button>
+            <button
+              onClick={() => setViewMode('history')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${viewMode === 'history' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+            >
+              History {historyLogs.length > 0 && <span className="ml-1 text-xs text-slate-400">{historyLogs.length}</span>}
+            </button>
+          </div>
+
+          {viewMode === 'pending' ? (
+            isLoading ? (
+              <div className="text-center py-12">
+                <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
+                <p className="text-slate-500">Loading pending logs...</p>
+              </div>
+            ) : pendingLogs.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <Inbox className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-700 mb-2">All Caught Up!</h3>
+                  <p className="text-slate-500">No pending logs to verify.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {pendingLogs.map((log) => renderLogCard(log, true))}
+              </div>
+            )
           ) : (
-            <div className="space-y-3">
-              {pendingLogs.map((log) => renderLogCard(log, true))}
-            </div>
+            historyLogs.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-700 mb-2">No History Yet</h3>
+                  <p className="text-slate-500">Verified and rejected logs will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {historyLogs.map((log) => renderHistoryCard(log, true))}
+              </div>
+            )
           )}
         </div>
 
@@ -628,45 +742,79 @@ export default function NgoVerification() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-slate-800">Verification Queue</h1>
+              <h1 className="text-xl font-semibold text-slate-800">Verification</h1>
               <p className="text-sm text-slate-500">
-                {pendingLogs.length} pending {pendingLogs.length === 1 ? 'log' : 'logs'}
+                {viewMode === 'pending'
+                  ? `${pendingLogs.length} pending ${pendingLogs.length === 1 ? 'log' : 'logs'}`
+                  : `${historyLogs.length} past ${historyLogs.length === 1 ? 'record' : 'records'}`}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-3">
+              {/* Tab switcher */}
+              <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('pending')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${viewMode === 'pending' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Pending
+                  {pendingLogs.length > 0 && (
+                    <span className="ml-2 bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">{pendingLogs.length}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setViewMode('history')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${viewMode === 'history' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  History
+                  {historyLogs.length > 0 && (
+                    <span className="ml-2 text-xs text-slate-400">{historyLogs.length}</span>
+                  )}
+                </button>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-500">Loading pending logs...</p>
-          </div>
-        ) : pendingLogs.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Inbox className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-700 mb-2">All Caught Up!</h3>
-              <p className="text-slate-500">
-                There are no pending logs to verify at the moment.
-              </p>
-            </CardContent>
-          </Card>
+        {viewMode === 'pending' ? (
+          isLoading ? (
+            <div className="text-center py-12">
+              <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
+              <p className="text-slate-500">Loading pending logs...</p>
+            </div>
+          ) : pendingLogs.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Inbox className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-700 mb-2">All Caught Up!</h3>
+                <p className="text-slate-500">There are no pending logs to verify at the moment.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {pendingLogs.map((log) => renderLogCard(log, false))}
+            </div>
+          )
         ) : (
-          <div className="space-y-4">
-            {pendingLogs.map((log) => renderLogCard(log, false))}
-          </div>
+          historyLogs.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-700 mb-2">No History Yet</h3>
+                <p className="text-slate-500">Verified and rejected logs will appear here.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {historyLogs.map((log) => renderHistoryCard(log, false))}
+            </div>
+          )
         )}
       </div>
 

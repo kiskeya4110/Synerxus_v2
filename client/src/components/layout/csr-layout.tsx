@@ -24,7 +24,7 @@ import {
   Menu,
   Trash2,
 } from "lucide-react";
-const logoUrl = "/synerxus-logo.png";
+import Logo from "@/components/ui/logo";
 import { getAuthHeaders } from "@/lib/queryClient";
 
 // Notification types
@@ -77,8 +77,7 @@ const navSections = [
   {
     title: "ANALYTICS & REPORTS",
     items: [
-      { id: "impact", label: "Impact Reports", icon: BarChart3, href: "/csr-impact-reporting", description: "View detailed reports" },
-      { id: "exports", label: "Export Data", icon: FileText, href: "/csr-reports-exports", description: "Download CSV/PDF reports" },
+      { id: "impact", label: "Impact Report", icon: BarChart3, href: "/impact-report-generator", description: "Generate impact reports" },
       { id: "geographic", label: "Geographic Impact", icon: Building2, href: "/csr-dashboard?tab=geographic", description: "Map view of activities" },
     ]
   },
@@ -302,122 +301,53 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {/* Left: Site Logo */}
-        <button
-          onClick={() => navigate("/landing")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <img src={logoUrl} alt="Synerxus" style={{ height: "40px", width: "auto", filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
-        </button>
+        <Logo size="sm" />
 
-        {/* Center: Site Navigation - 4 Main Tabs */}
-        <nav className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
-          {headerNavItems.map((item) => {
-            const isActive = location === item.href ||
-              location.startsWith(item.href + "/") ||
-              location.startsWith(item.href + "?") ||
-              (item.href === "/landing" && location === "/") ||
-              (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
-            return (
-              <button
-                key={item.label}
-                onClick={() => navigate(item.href)}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: "8px",
-                  background: isActive ? "rgba(16, 185, 129, 0.25)" : "transparent",
-                  border: isActive ? "2px solid rgba(16, 185, 129, 0.5)" : "2px solid transparent",
-                  color: isActive ? "#047857" : "#065f46",
-                  fontSize: "14px",
-                  fontWeight: isActive ? "700" : "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  whiteSpace: "nowrap",
-                  boxShadow: isActive ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
-                    e.currentTarget.style.color = "#047857";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "#065f46";
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right: Notification Bell, Profile, Hamburger Menu */}
+        {/* Right: Navigation + Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Corporate Logo - clickable, routes to Dashboard */}
-          <button
-            onClick={() => navigate("/csr-dashboard")}
-            className="hidden md:flex"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              borderRadius: "10px",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = "0.8";
-              e.currentTarget.style.transform = "scale(1.02)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = "1";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-            title={companyName}
-          >
-            {companyLogo ? (
-              <img
-                src={companyLogo}
-                alt={companyName}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  objectFit: "cover",
-                  border: "2px solid rgba(16, 185, 129, 0.3)",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(16, 185, 129, 0.3)",
-                }}
-              >
-                <Building2 size={18} color="white" />
-              </div>
-            )}
-          </button>
-
+          {/* Site Navigation - 4 Main Tabs */}
+          <nav className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
+            {headerNavItems.map((item) => {
+              const isActive = location === item.href ||
+                location.startsWith(item.href + "/") ||
+                location.startsWith(item.href + "?") ||
+                (item.href === "/landing" && location === "/") ||
+                (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.href)}
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "8px",
+                    background: isActive ? "rgba(16, 185, 129, 0.25)" : "transparent",
+                    border: isActive ? "2px solid rgba(16, 185, 129, 0.5)" : "2px solid transparent",
+                    color: isActive ? "#047857" : "#065f46",
+                    fontSize: "14px",
+                    fontWeight: isActive ? "700" : "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    whiteSpace: "nowrap",
+                    boxShadow: isActive ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
+                      e.currentTarget.style.color = "#047857";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#065f46";
+                    }
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
           {/* Notifications */}
           <div ref={notificationRef} style={{ position: "relative" }}>
             <button
@@ -839,37 +769,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
           background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #fef3c7 100%)",
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {companyLogo ? (
-                <img
-                  src={companyLogo}
-                  alt={companyName}
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "10px",
-                    objectFit: "cover",
-                    border: "2px solid rgba(16, 185, 129, 0.3)",
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                  <Building2 size={20} color="white" />
-                </div>
-              )}
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#065f46" }}>{companyName}</div>
-                <div style={{ fontSize: "11px", color: "#059669" }}>ESG Console</div>
-              </div>
-            </div>
+            <Logo size="sm" />
             <button
               onClick={() => setShowMobileMenu(false)}
               style={{
@@ -890,187 +790,85 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
           </div>
         </div>
 
-        {/* Mobile Menu Navigation - Sectioned */}
+        {/* Mobile Menu Navigation */}
         <nav style={{ padding: "12px", flex: 1, overflowY: "auto" }}>
-          {navSections.map((section, sectionIndex) => (
-            <div key={section.title} style={{ marginBottom: sectionIndex < navSections.length - 1 ? "16px" : "0" }}>
-              {/* Section Title */}
-              <div style={{ padding: "6px 12px 4px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px" }}>
-                  {section.title}
-                </span>
-              </div>
-              {/* Section Items */}
-              {section.items.map((item: any) => {
-                const Icon = item.icon;
-                // Precise active check - only highlight exact matches
-                const itemPath = item.href.split("?")[0];
-                const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
-                const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            {headerNavItems.map((item) => {
+              const isActive = location === item.href ||
+                location.startsWith(item.href + "/") ||
+                location.startsWith(item.href + "?") ||
+                (item.href === "/landing" && location === "/") ||
+                (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => { navigate(item.href); setShowMobileMenu(false); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "13px 16px",
+                    borderRadius: "10px",
+                    background: isActive ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                    color: isActive ? "#047857" : "#475569",
+                    border: isActive ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid transparent",
+                    cursor: "pointer",
+                    fontWeight: isActive ? "600" : "500",
+                    fontSize: "15px",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
-                // Check if this item is active
-                let isActive = false;
-                if (itemTab) {
-                  // For tabs within csr-dashboard, match by tab parameter
-                  isActive = locationTab === itemTab || activeNav === itemTab;
-                } else if (item.id === "overview") {
-                  // Overview is active when no tab param and activeNav is overview or dashboard
-                  isActive = (!locationTab && (activeNav === "overview" || activeNav === "dashboard")) ||
-                             (location === "/csr-dashboard" && !locationTab);
-                } else if (itemPath !== "/csr-dashboard") {
-                  // For other pages (settings, reports, etc.), match by path
-                  isActive = location.startsWith(itemPath);
-                }
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      navigate(item.href);
-                      setShowMobileMenu(false);
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "12px 14px",
-                      borderRadius: "10px",
-                      background: isActive
-                        ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                        : "transparent",
-                      color: isActive ? "white" : "#475569",
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: isActive ? "600" : "500",
-                      fontSize: "13px",
-                      textAlign: "left",
-                      width: "100%",
-                      transition: "all 0.2s ease",
-                      boxShadow: isActive ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none",
-                      pointerEvents: "auto",
-                      position: "relative",
-                      zIndex: 5,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                        e.currentTarget.style.color = "#059669";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "#475569";
-                      }
-                    }}
-                    onMouseDown={(e) => {
-                      e.currentTarget.style.transform = "scale(0.98)";
-                    }}
-                    onMouseUp={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  >
-                    <Icon size={18} />
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    {item.hot && (
-                      <span style={{
-                        fontSize: "9px",
-                        fontWeight: "700",
-                        color: "#dc2626",
-                        background: "rgba(220, 38, 38, 0.1)",
-                        padding: "2px 5px",
-                        borderRadius: "4px",
-                        border: "1px solid rgba(220, 38, 38, 0.2)",
-                      }}>
-                        HOT
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-
-          {/* Main Navigation in Mobile */}
-          <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}>
-            <div style={{ marginBottom: "12px" }}>
-              <span style={{ fontSize: "11px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Main Navigation
-              </span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              {headerNavItems.map((item) => {
-                const isActive = location === item.href ||
-                  location.startsWith(item.href + "/") ||
-                  location.startsWith(item.href + "?") ||
-                  (item.href === "/landing" && location === "/") ||
-                  (item.href === "/csr-dashboard" && location.startsWith("/csr-"));
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => {
-                      navigate(item.href);
-                      setShowMobileMenu(false);
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      padding: "12px 16px",
-                      borderRadius: "10px",
-                      background: isActive ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                      color: isActive ? "#047857" : "#475569",
-                      border: isActive ? "1px solid rgba(16, 185, 129, 0.3)" : "none",
-                      cursor: "pointer",
-                      fontWeight: isActive ? "600" : "500",
-                      fontSize: "14px",
-                      textAlign: "left",
-                      width: "100%",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
+          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: "4px" }}>
+            {navSections.flatMap(s => s.items).map((item: any) => {
+              const Icon = item.icon;
+              const itemPath = item.href.split("?")[0];
+              const itemTab = item.href.includes("tab=") ? new URLSearchParams(item.href.split("?")[1]).get("tab") : null;
+              const locationTab = location.includes("tab=") ? new URLSearchParams(location.split("?")[1]).get("tab") : null;
+              let isActive = false;
+              if (itemTab) {
+                isActive = locationTab === itemTab || activeNav === itemTab;
+              } else if (item.id === "overview") {
+                isActive = (!locationTab && (activeNav === "overview" || activeNav === "dashboard")) || (location === "/csr-dashboard" && !locationTab);
+              } else if (itemPath !== "/csr-dashboard") {
+                isActive = location.startsWith(itemPath);
+              }
+              return (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => { navigate(item.href); setShowMobileMenu(false); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    background: isActive ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "transparent",
+                    color: isActive ? "white" : "#475569",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: isActive ? "600" : "500",
+                    fontSize: "14px",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "all 0.2s ease",
+                    boxShadow: isActive ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none",
+                  }}
+                >
+                  <Icon size={17} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </nav>
-
-        {/* Mobile Menu Footer Help */}
-        <div style={{
-          padding: "16px",
-          borderTop: "1px solid rgba(0, 0, 0, 0.06)",
-          background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-        }}>
-          <div style={{ fontSize: "13px", fontWeight: "600", color: "#92400e", marginBottom: "4px" }}>
-            Need Help?
-          </div>
-          <div style={{ fontSize: "12px", color: "#a16207", marginBottom: "12px" }}>
-            Access guides and support resources
-          </div>
-          <button
-            onClick={() => {
-              window.open("/help", "_blank");
-              setShowMobileMenu(false);
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              background: "white",
-              border: "1px solid rgba(245, 158, 11, 0.3)",
-              color: "#92400e",
-              fontSize: "12px",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}
-          >
-            View Resources
-          </button>
-        </div>
       </div>
       )}
 
@@ -1274,8 +1072,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "32px", marginBottom: "24px" }}>
             {/* Brand Section */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <img src={logoUrl} alt="Synerxus" style={{ height: "32px", width: "auto" }} />
+              <div style={{ marginBottom: "12px" }}>
+                <Logo size="xs" clickable={false} />
               </div>
               <p style={{ fontSize: "12px", color: "#1e293b", lineHeight: "1.5", marginBottom: "12px", fontWeight: "600" }}>
                 Connect. Manage. Impact Globally.
@@ -1294,14 +1092,11 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                 <button onClick={() => navigate("/csr-dashboard")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   Dashboard
                 </button>
-                <button onClick={() => navigate("/csr-impact-reporting")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
-                  Impact Reports
+                <button onClick={() => navigate("/impact-report-generator")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                  Impact Report
                 </button>
                 <button onClick={() => navigate("/project-portfolio")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   Projects
-                </button>
-                <button onClick={() => navigate("/csr-reports-exports")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
-                  Reports & Exports
                 </button>
               </div>
             </div>

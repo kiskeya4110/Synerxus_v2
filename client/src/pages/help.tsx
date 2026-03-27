@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link, useLocation } from "wouter";
 import { CSRLayout } from "@/components/layout/csr-layout";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import Logo from "@/components/ui/logo";
 
 interface FAQItem {
   question: string;
@@ -272,11 +272,7 @@ export default function Help() {
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           {/* Logo */}
-          <Link href="/landing">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2">
-              <img src={logoUrl} alt="Synerxus" className="h-8 w-auto" />
-            </div>
-          </Link>
+          <Logo size="sm" />
 
           {/* Center: Navigation Menu */}
           <div className="hidden md:flex items-center gap-1">

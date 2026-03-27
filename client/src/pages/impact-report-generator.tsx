@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Download, FileText } from "lucide-react";
+import Logo from "@/components/ui/logo";
 
 declare global {
   interface Window {
@@ -121,14 +122,7 @@ export default function ImpactReportGenerator() {
         {/* Header */}
         <div className="mb-8 pb-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">LOGO HERE</div>
-            <div className="text-right">
-              <h1 className="text-xl font-bold">
-                <span className="text-slate-900 dark:text-white">SYNER</span>
-                <span style={{ color: '#F59E0B' }}>XUS</span>
-              </h1>
-              <p className="text-xs text-orange-500">Connect. Manage. Impact Globally.</p>
-            </div>
+            <Logo size="sm" />
           </div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Impact Report Generator</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Provide structured inputs for a funder-ready, SDG-aligned report.</p>

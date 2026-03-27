@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import { Bell, Menu, X } from "lucide-react";
 import { useState } from "react";
-const logoUrl = "/synerxus-logo.png";
+import Logo from "@/components/ui/logo";
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -59,61 +59,48 @@ export function PublicLayout({ children, activeTab, showFooter = true }: PublicL
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "1400px", margin: "0 auto" }}>
           {/* Left: Site Logo */}
-          <button
-            onClick={() => navigate("/landing")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <img src={logoUrl} alt="Synerxus" style={{ height: "40px", width: "auto", filter: "brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }} />
-          </button>
+          <Logo size="sm" />
 
-          {/* Center: Site Navigation - Hidden on mobile */}
-          <nav className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            {topMenuItems.map((item) => {
-              const isActive = activeTab === item.id || location === item.href || location.startsWith(item.href + "/");
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => navigate(item.href)}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    background: isActive ? "rgba(16, 185, 129, 0.25)" : "transparent",
-                    border: isActive ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid transparent",
-                    color: isActive ? "#047857" : "#065f46",
-                    fontSize: "14px",
-                    fontWeight: isActive ? "700" : "600",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    boxShadow: isActive ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
-                      e.currentTarget.style.color = "#047857";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#065f46";
-                    }
-                  }}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Right: User Actions */}
+          {/* Right: Navigation + User Actions */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Site Navigation - Hidden on mobile */}
+            <nav className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              {topMenuItems.map((item) => {
+                const isActive = activeTab === item.id || location === item.href || location.startsWith(item.href + "/");
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => navigate(item.href)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      background: isActive ? "rgba(16, 185, 129, 0.25)" : "transparent",
+                      border: isActive ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid transparent",
+                      color: isActive ? "#047857" : "#065f46",
+                      fontSize: "14px",
+                      fontWeight: isActive ? "700" : "600",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      boxShadow: isActive ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
+                        e.currentTarget.style.color = "#047857";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "#065f46";
+                      }
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
             {/* Dashboard Link - Only show if logged in */}
             {userId && (
               <button
@@ -297,8 +284,8 @@ export function PublicLayout({ children, activeTab, showFooter = true }: PublicL
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "32px", marginBottom: "24px" }}>
               {/* Brand Section */}
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                  <img src={logoUrl} alt="Synerxus" style={{ height: "32px", width: "auto" }} />
+                <div style={{ marginBottom: "12px" }}>
+                  <Logo size="xs" clickable={false} />
                 </div>
                 <p style={{ fontSize: "12px", color: "#1e293b", lineHeight: "1.5", marginBottom: "12px", fontWeight: "600" }}>
                   Connect. Manage. Impact Globally.

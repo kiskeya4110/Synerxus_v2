@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { getSDGColor } from "@/lib/sdg-utils";
 
 interface EnrichedOpportunity {

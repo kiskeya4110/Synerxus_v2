@@ -232,7 +232,15 @@
       "Bash(PGPASSWORD=npg_PjTzc61iUvYd psql -h ep-wild-leaf-afikttq9.c-2.us-west-2.aws.neon.tech -U neondb_owner -d neondb -c \"SELECT COUNT\\(*\\) as activity_count, user_id FROM volunteer_activities WHERE user_id IN \\(55, 70\\) GROUP BY user_id;\" 2>&1 && PGPASSWORD=npg_PjTzc61iUvYd psql -h ep-wild-leaf-afikttq9.c-2.us-west-2.aws.neon.tech -U neondb_owner -d neondb -c \"SELECT COUNT\\(*\\) as assignment_count, volunteer_id FROM project_assignments WHERE volunteer_id IN \\(55, 60, 70, 71, 78\\) AND status != 'declined' GROUP BY volunteer_id;\" 2>&1)",
       "Bash(PGPASSWORD=npg_PjTzc61iUvYd psql -h ep-wild-leaf-afikttq9.c-2.us-west-2.aws.neon.tech -U neondb_owner -d neondb -c \"SELECT COUNT\\(*\\) as assignment_count, volunteer_id FROM project_assignments WHERE volunteer_id IN \\(55, 60, 70, 71, 78\\) AND status <> 'declined' GROUP BY volunteer_id;\" 2>&1)",
       "Bash(PGPASSWORD=npg_PjTzc61iUvYd psql -h ep-wild-leaf-afikttq9.c-2.us-west-2.aws.neon.tech -U neondb_owner -d neondb -c \"SELECT id, email, firebase_uid, user_type FROM users WHERE id IN \\(55, 70\\) LIMIT 5;\" 2>&1)",
-      "Bash(node /tmp/gen_token.mjs 2>&1 | head -20)"
+      "Bash(node /tmp/gen_token.mjs 2>&1 | head -20)",
+      "Bash(cp \"/home/runner/workspace/public/2026 - Synerxus ESG Logo.png\" /home/runner/workspace/client/public/synerxus-esg-logo.png)",
+      "Bash(cp \"/home/runner/workspace/public/2026 - Synerxus ESG Logo.png\" /home/runner/workspace/client/public/favicon.png)",
+      "Bash(find /home/runner/workspace/client/public -type f \\\\\\(-name *.png -o -name *.svg -o -name *.html \\\\\\))",
+      "Bash(cp synerxus-esg-logo.png favicon-16.png)",
+      "Bash(cp synerxus-esg-logo.png favicon-32.png)",
+      "Bash(cp synerxus-esg-logo.png favicon-192.png)",
+      "Bash(cp synerxus-esg-logo.png favicon-512.png)",
+      "Bash(cp synerxus-esg-logo.png apple-touch-icon.png)"
     ],
     "deny": [],
     "ask": []

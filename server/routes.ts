@@ -3116,24 +3116,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
       const projectIds = new Set(organizationProjects.map(p => p.id));
       
-      // Get all assignments for these projects with accepted statuses
-      // Include: accepted, active, completed, on-hold (all statuses where volunteer has agreed to participate)
+      // Get all assignments for these projects (all statuses to include all volunteers)
       const allAssignments = await storage.listProjectAssignments();
-      const organizationAssignments = allAssignments.filter(a => 
-        projectIds.has(a.projectId) && 
-        ['accepted', 'active', 'completed', 'on-hold'].includes(a.status?.toLowerCase() || '')
+      const organizationAssignments = allAssignments.filter(a =>
+        projectIds.has(a.projectId)
       );
       
       // Get unique volunteer IDs from assignments
       const volunteerIdsFromAssignments = new Set(organizationAssignments.map(a => a.volunteerId));
 
-      // Also get volunteers from organization relationships (applied, accepted, active, etc.)
-      // This includes volunteers who have applied to opportunities but may not have project assignments yet
+      // Also get volunteers from organization relationships (all statuses)
+      // This includes ALL volunteers who have any interaction with the organization
       const relationships = await storage.listVolunteerRelationshipsByOrganization(organizationId);
       const volunteerIdsFromRelationships = new Set(
-        relationships
-          .filter(r => ['applied', 'accepted', 'active', 'completed'].includes(r.relationshipType))
-          .map(r => r.volunteerId)
+        relationships.map(r => r.volunteerId)
       );
 
       // Merge both sets of volunteer IDs

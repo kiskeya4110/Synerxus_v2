@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useViewportDetection } from "@/hooks/use-mobile";
-const logoUrl = "/synerxus-logo.png";
+import Logo from "@/components/ui/logo";
 
 interface PWAPageGuardProps {
   children: ReactNode;
@@ -61,11 +61,7 @@ export default function PWAPageGuard({
     return (
       <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-4">
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            className="h-16 object-contain animate-pulse"
-          />
+          <Logo size="lg" clickable={false} className="animate-pulse" />
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
             <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -82,11 +78,7 @@ export default function PWAPageGuard({
     return (
       <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-4">
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            className="h-16 object-contain"
-          />
+          <Logo size="lg" clickable={false} />
           <p className="text-sm text-slate-500">Redirecting to full view...</p>
         </div>
       </div>

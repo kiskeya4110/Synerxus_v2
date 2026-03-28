@@ -102,19 +102,23 @@ function SDGBadge({ sdg, showNumber = true, size = "default", className, ...prop
 
 // Status Badge - for verification states
 interface StatusBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  status: "verified" | "pending" | "rejected" | "draft"
+  status: string
   size?: "sm" | "default" | "lg"
 }
 
 function StatusBadge({ status, size = "default", className, ...props }: StatusBadgeProps) {
-  const statusConfig = {
-    verified: { variant: "verified" as const, icon: "✓", label: "Verified" },
-    pending: { variant: "pending" as const, icon: "○", label: "Pending" },
-    rejected: { variant: "destructive" as const, icon: "✕", label: "Rejected" },
-    draft: { variant: "secondary" as const, icon: "◐", label: "Draft" },
+  const normalized = (status || "").toLowerCase();
+
+  const statusConfig: Record<string, { variant: "verified" | "pending" | "destructive" | "secondary"; icon: string; label: string }> = {
+    verified: { variant: "verified", icon: "✓", label: "Verified" },
+    approved: { variant: "verified", icon: "✓", label: "Approved" },
+    pending: { variant: "pending", icon: "○", label: "Pending" },
+    rejected: { variant: "destructive", icon: "✕", label: "Rejected" },
+    declined: { variant: "destructive", icon: "✕", label: "Declined" },
+    draft: { variant: "secondary", icon: "◐", label: "Draft" },
   }
 
-  const config = statusConfig[status]
+  const config = statusConfig[normalized] ?? { variant: "secondary" as const, icon: "◐", label: status || "Unknown" }
 
   return (
     <Badge variant={config.variant} size={size} className={className} {...props}>

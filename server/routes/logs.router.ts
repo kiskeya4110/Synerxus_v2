@@ -1663,7 +1663,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- INDUSTRY BENCHMARKING -->
   <div class="section-label"><span class="section-label-bar"></span><span class="section-label-text">Industry Benchmarking (Anonymized Synerxus Platform Data)</span></div>
-  <div style="border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:12px;">
+  <div style="border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:4px;">
     <table class="bench">
       <thead>
         <tr>
@@ -1675,6 +1675,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       </thead>
       <tbody>${benchmarkRowsHtml}</tbody>
     </table>
+  </div>
+  <div style="font-size:9px;color:#9ca3af;margin-bottom:12px;padding:0 4px;">
+    Data basis: ${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' outcome unit' + (totalOutcomes === 1 ? '' : 's') + ' logged' : verified.length + ' activities (outcome units not set)'} · ${totalBeneficiaries > 0 ? totalBeneficiaries.toLocaleString() + ' beneficiar' + (totalBeneficiaries === 1 ? 'y' : 'ies') + ' reached' : 'Beneficiary count: log via Synerxus app'}
   </div>
 
   ${top3.length > 0 ? `<!-- IMPACT ATTRIBUTION PATHWAYS -->
@@ -2115,9 +2118,10 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${uniqueVolunteerIds.size}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
           <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${Math.round(totalHours)}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${avgHoursPerEmployee}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. self-reported avg</td></tr>
-          <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${beneficiariesPerOutcome}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Platform-tracked</span></td></tr>
+          <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${totalBeneficiaries > 0 ? beneficiariesPerOutcome : 'N/A'}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">${totalBeneficiaries > 0 ? '<span class="badge-ok">&#10003; Platform-tracked</span>' : 'Log via Synerxus app'}</td></tr>
         </tbody>
       </table>
+      <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:0 2px;">${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' outcome unit' + (totalOutcomes === 1 ? '' : 's') : 'outcome units not set'} · ${totalBeneficiaries > 0 ? totalBeneficiaries.toLocaleString() + ' beneficiar' + (totalBeneficiaries === 1 ? 'y' : 'ies') : 'no beneficiary data yet'}</div>
     </div>
     <div class="section">
       <div class="section-header"><h2>Industry Benchmarks</h2></div>

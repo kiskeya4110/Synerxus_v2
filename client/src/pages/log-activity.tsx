@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Target, Clock, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin } from "lucide-react";
+import { Target, Clock, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin, Users } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
 import VolunteerNav from "@/components/layout/volunteer-nav";
@@ -137,6 +137,7 @@ export default function LogActivity() {
   const [selectedKpi, setSelectedKpi] = useState<string>("");
   const [kpiQuantity, setKpiQuantity] = useState<string>("");
   const [hoursWorked, setHoursWorked] = useState<string>("");
+  const [beneficiaryCount, setBeneficiaryCount] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -376,6 +377,7 @@ export default function LogActivity() {
       outcomeText: selectedKpi,
       outcomeQuantity: parseFloat(kpiQuantity),
       outcomeType: "individual",
+      beneficiaryCount: beneficiaryCount && parseFloat(beneficiaryCount) > 0 ? Math.round(parseFloat(beneficiaryCount)) : null,
       sdgTags: sdgTags.length > 0 ? sdgTags : null,
       geolocation: geolocation || null,
       deviceId: deviceId || null,
@@ -580,6 +582,25 @@ export default function LogActivity() {
                   className="h-12 bg-slate-50 border-slate-200 text-slate-800"
                 />
                 <p className="text-xs text-slate-400">How many hours did you spend on this activity?</p>
+              </div>
+
+              {/* 3b. Beneficiaries Reached (optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="beneficiaries" className="text-slate-700 font-medium flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-slate-500" />
+                  Beneficiaries Reached <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="beneficiaries"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={beneficiaryCount}
+                  onChange={(e) => setBeneficiaryCount(e.target.value)}
+                  placeholder="e.g. 30"
+                  className="h-12 bg-slate-50 border-slate-200 text-slate-800"
+                />
+                <p className="text-xs text-slate-400">How many people were directly impacted by this activity? Used to calculate SDG impact metrics.</p>
               </div>
 
               {/* 4. Date Selection */}

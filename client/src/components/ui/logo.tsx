@@ -101,7 +101,7 @@ export default function Logo({
         style={{ cursor: clickable ? 'pointer' : 'default', display: 'flex', alignItems: 'center' }}
       >
         <img
-          src="/synerxus-logo.png"
+          src="/2026 - Synerxus ESG Logo.png"
           alt="Synerxus"
           style={{ height: `${Math.round(config.height * 1.25)}px`, width: 'auto', display: 'block' }}
         />
@@ -123,7 +123,7 @@ export default function Logo({
 function LogoIcon({ size = 40, className }: { size?: number; className?: string }) {
   return (
     <img
-      src="/synerxus-logo.png"
+      src="/2026 - Synerxus ESG Logo.png"
       alt="Synerxus"
       style={{ height: `${size}px`, width: 'auto', display: 'block' }}
       className={className}

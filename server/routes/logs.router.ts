@@ -29,8 +29,8 @@ import path from "path";
 // Read logo once at module load time, embed as base64 data URI for print reliability
 function loadLogoDataUri(): string {
   const candidates = [
-    path.resolve(import.meta.dirname, "../../dist/public/synerxus-logo.png"),
-    path.resolve(import.meta.dirname, "../../public/synerxus-logo.png"),
+    path.resolve(import.meta.dirname, "../../dist/public/2026 - Synerxus ESG Logo.png"),
+    path.resolve(import.meta.dirname, "../../public/2026 - Synerxus ESG Logo.png"),
   ];
   for (const p of candidates) {
     try {
@@ -38,7 +38,7 @@ function loadLogoDataUri(): string {
       return `data:image/png;base64,${buf.toString("base64")}`;
     } catch { /* try next */ }
   }
-  return "/synerxus-logo.png"; // fallback to URL if file not found
+  return "/2026 - Synerxus ESG Logo.png"; // fallback to URL if file not found
 }
 const LOGO_DATA_URI = loadLogoDataUri();
 

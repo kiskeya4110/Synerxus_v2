@@ -1,26 +1,15 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { queryClient, getAuthHeaders, apiRequest } from "@/lib/queryClient";
-import { Loader2, Check, LogOut, User, Plus, X, Clock, Heart, Building2, Search, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { queryClient, getAuthHeaders } from "@/lib/queryClient";
+import { Loader2, Check, LogOut, User, Plus, X, Clock, Heart, Building2, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -28,8 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EmailAuthProvider, reauthenticateWithCredential, deleteUser as firebaseDeleteUser } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
@@ -130,8 +117,6 @@ export default function VolunteerProfileSettings() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [selectedEmployerId, setSelectedEmployerId] = useState<number | null>(null);
   const [employerSearch, setEmployerSearch] = useState("");
-  const [deletingAccount, setDeletingAccount] = useState(false);
-  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
 
   // Fetch existing profile
   const { data: profileData, isLoading: isLoadingProfile } = useQuery({
@@ -178,48 +163,6 @@ export default function VolunteerProfileSettings() {
       setIsInitialized(true);
     }
   }, [profileData, isInitialized]);
-
-  // Handle account deletion
-  const handleDeleteAccount = async () => {
-    if (!deleteConfirmPassword) {
-      toast({
-        title: "Password required",
-        description: "Please enter your password to confirm account deletion.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setDeletingAccount(true);
-    try {
-      const user = auth.currentUser;
-      if (!user || !user.email) {
-        throw new Error("No user is currently logged in");
-      }
-
-      const credential = EmailAuthProvider.credential(user.email, deleteConfirmPassword);
-      await reauthenticateWithCredential(user, credential);
-
-      await apiRequest("DELETE", "/api/users/me", {});
-
-      await firebaseDeleteUser(user);
-
-      toast({
-        title: "Account deleted",
-        description: "Your volunteer account has been permanently deleted.",
-      });
-
-      navigate("/");
-    } catch (error: any) {
-      console.error("Error deleting account:", error);
-      toast({
-        title: "Error deleting account",
-        description: error.message || "Please check your password and try again.",
-        variant: "destructive",
-      });
-      setDeletingAccount(false);
-    }
-  };
 
   // Handle logout
   const handleLogout = async () => {
@@ -844,75 +787,6 @@ export default function VolunteerProfileSettings() {
                 Sign Out
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Danger Zone - Delete Account */}
-        <Card className="mt-6 border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
-              Danger Zone
-            </CardTitle>
-            <CardDescription>
-              Permanently delete your volunteer account and all associated data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-3">
-                    <p>
-                      This action cannot be undone. This will permanently delete your volunteer account and remove all data from our servers, including:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Volunteer profile and skills</li>
-                      <li>All impact logs and verified outcomes</li>
-                      <li>Project assignments and applications</li>
-                      <li>Badges and achievements</li>
-                      <li>Messages and notifications</li>
-                    </ul>
-                    <div className="pt-4">
-                      <Label htmlFor="delete-password" className="text-destructive font-semibold">
-                        Enter your password to confirm:
-                      </Label>
-                      <Input
-                        id="delete-password"
-                        type="password"
-                        value={deleteConfirmPassword}
-                        onChange={(e) => setDeleteConfirmPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        className="mt-2"
-                      />
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteConfirmPassword("")}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    disabled={deletingAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {deletingAccount && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Delete Volunteer Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <p className="text-xs text-muted-foreground mt-2">
-              This action is irreversible and will permanently delete all your volunteer data.
-            </p>
           </CardContent>
         </Card>
       </div>

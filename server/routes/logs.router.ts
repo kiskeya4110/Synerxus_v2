@@ -1134,7 +1134,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const rejected = allActivities.filter(a => a.verificationStatus === 'rejected');
 
     const totalHours = verified.reduce((s, a) => s + (a.hours || 0), 0);
-    const totalOutcomes = verified.reduce((s, a) => s + (a.outcomeQuantity || 0), 0);
+    const totalOutcomes = verified.reduce((s, a) => s + ((a as any).editedOutcomeQuantity || a.outcomeQuantity || 0), 0);
     const uniqueVolunteers = new Set(verified.map(a => a.userId)).size;
 
     const verificationRate = allActivities.length > 0
@@ -1240,9 +1240,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const diasporaPct = allVolunteerUsers.length > 0 ? Math.round((diasporaVolunteers / allVolunteerUsers.length) * 100) : 0;
 
     // Additional benchmark metrics
-    // Denominator is totalOutcomes (sum of outcomeQuantity), not the number of activity records
-    const avgHoursPerOutcome = totalOutcomes > 0 ? (totalHours / totalOutcomes).toFixed(1) : (verified.length > 0 ? (totalHours / verified.length).toFixed(1) : '0');
-    const beneficiariesPerOutcome = totalOutcomes > 0 ? Math.round(totalBeneficiaries / totalOutcomes) : 0;
+    // Denominator is totalOutcomes (sum of editedOutcomeQuantity||outcomeQuantity); fall back to activity count when not set
+    const effectiveOutcomes = totalOutcomes > 0 ? totalOutcomes : verified.length;
+    const avgHoursPerOutcome = effectiveOutcomes > 0 ? (totalHours / effectiveOutcomes).toFixed(1) : '0';
+    const beneficiariesPerOutcome = totalBeneficiaries > 0 && effectiveOutcomes > 0 ? Math.round(totalBeneficiaries / effectiveOutcomes) : 0;
 
     // Period Q-style display — reflects the selected time filter
     const qNum = Math.ceil((now.getMonth() + 1) / 3);
@@ -1393,7 +1394,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       { metric: 'Verification Rate', orgVal: `${orgVerRate}%`, avgVal: `${INDUSTRY_AVG.verRate}%`, delta: orgVerRate - INDUSTRY_AVG.verRate, pct: true },
       { metric: 'Avg. Hours per Outcome', orgVal: `${avgHoursPerOutcome}h`, avgVal: `${INDUSTRY_AVG.hrsPerOutcome}h`, delta: INDUSTRY_AVG.hrsPerOutcome - orgHrsPerOutcome, pct: false },
       { metric: 'Completion Rate', orgVal: `${orgCompletionRate}%`, avgVal: `${INDUSTRY_AVG.completionRate}%`, delta: orgCompletionRate - INDUSTRY_AVG.completionRate, pct: true },
-      { metric: 'Beneficiaries per Outcome', orgVal: `${beneficiariesPerOutcome}`, avgVal: `${INDUSTRY_AVG.benePerOutcome}`, delta: beneficiariesPerOutcome - INDUSTRY_AVG.benePerOutcome, pct: false },
+      { metric: 'Beneficiaries per Outcome', orgVal: totalBeneficiaries > 0 ? `${beneficiariesPerOutcome}` : 'N/A', avgVal: `${INDUSTRY_AVG.benePerOutcome}`, delta: totalBeneficiaries > 0 ? beneficiariesPerOutcome - INDUSTRY_AVG.benePerOutcome : 0, pct: false },
       { metric: 'Time to Verify', orgVal: `${avgVerificationHours}h`, avgVal: `${INDUSTRY_AVG.timeToVerify}h`, delta: INDUSTRY_AVG.timeToVerify - avgVerificationHours, pct: false },
     ];
     const benchmarkRowsHtml = benchmarkRowsData.map(r => {
@@ -1499,7 +1500,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- Title Banner -->
   <div style="background:linear-gradient(135deg,#0891b2,#0e7490);border-radius:var(--r);padding:12px 20px;color:#fff;margin-bottom:12px;">
-    <div style="font-size:9px;opacity:0.75;margin-bottom:2px;letter-spacing:0.5px;">CSRD AUDIT READY DATA \u2022 NGO-VERIFIED \u2022 IMMUTABLE TRAIL \u2022 FILTERABLE BY TIMELINE &amp; PROJECT</div>
+    <div style="font-size:9px;opacity:0.75;margin-bottom:2px;letter-spacing:0.5px;">UN SDG-VERIFIED \u2022 NGO-CONFIRMED \u2022 ESG AUDIT-SUPPORTED \u2022 FILTERABLE BY TIMELINE &amp; PROJECT</div>
     <div style="font-size:18px;font-weight:600;margin-bottom:1px;">VERIFIED IMPACT SUMMARY</div>
     <div style="font-size:13px;font-weight:400;opacity:0.9;">${orgName}</div>
     ${org?.description ? `<div style="font-size:11px;opacity:0.8;margin-top:2px;">${org.description.slice(0, 100)}${org.description.length > 100 ? '\u2026' : ''}</div>` : ''}
@@ -1843,7 +1844,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 
     // Metrics
     const totalHours = verified.reduce((s: number, a: any) => s + (a.hours || 0), 0);
-    const totalOutcomes = verified.reduce((s: number, a: any) => s + (a.outcomeQuantity || 0), 0);
+    const totalOutcomes = verified.reduce((s: number, a: any) => s + (a.editedOutcomeQuantity || a.outcomeQuantity || 0), 0);
     const totalBeneficiaries = verified.reduce((s: number, a: any) => s + (a.beneficiaryCount || 0), 0);
     const uniqueVolunteerIds = new Set(verified.map((a: any) => a.userId));
     const verificationRate = allActivities.length > 0
@@ -1924,7 +1925,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       : `Q${qNum} ${now.getFullYear()}`;
 
     const avgHoursPerEmployee = uniqueVolunteerIds.size > 0 ? (totalHours / uniqueVolunteerIds.size).toFixed(1) : '0';
-    const beneficiariesPerOutcome = totalOutcomes > 0 ? Math.round(totalBeneficiaries / totalOutcomes) : 0;
+    const effectiveOutcomes2 = totalOutcomes > 0 ? totalOutcomes : verified.length;
+    const beneficiariesPerOutcome = totalBeneficiaries > 0 && effectiveOutcomes2 > 0 ? Math.round(totalBeneficiaries / effectiveOutcomes2) : 0;
 
     const SDG_NAMES_LOCAL: Record<number, string> = {
       1: 'No Poverty', 2: 'Zero Hunger', 3: 'Good Health & Well-being', 4: 'Quality Education',
@@ -2047,7 +2049,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     <div>
       <div style="color:var(--teal);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">SYNERXUS · Impact, verified.</div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
-      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">CSRD-Compliant · NGO-Verified Outcomes &amp; Hours · Dual Materiality Disclosure</div>
+      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Verified · NGO-Confirmed Outcomes · ESG Audit-Supported</div>
     </div>
     <div style="text-align:right;color:#cbd5e1;font-size:10px;">
       <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>

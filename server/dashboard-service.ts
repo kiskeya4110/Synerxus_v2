@@ -42,6 +42,21 @@ export async function getVisibleProjectIdsForVolunteer(
     }
   });
 
+  // Also include projects the volunteer has applied to (via applications with a direct projectId)
+  // Shows applied-but-not-yet-assigned projects in "My Projects"
+  try {
+    const volunteerApplications = await storage.listApplicationsByVolunteer(volunteerId);
+    volunteerApplications.forEach((app: any) => {
+      const appStatus = app.status?.toLowerCase() || '';
+      // Include pending and accepted applications; exclude rejected and withdrawn
+      if (app.projectId && appStatus !== 'rejected' && appStatus !== 'withdrawn') {
+        visibleProjectIds.add(app.projectId);
+      }
+    });
+  } catch (error) {
+    console.error("Error loading applications for visible project IDs:", error);
+  }
+
   // Optionally include AI-matched opportunities with high scores
   if (includeAIMatches) {
     try {
@@ -1152,6 +1167,23 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       allOrganizations.map(org => [org.id, { name: org.name, logo: org.logo }])
     );
 
+    // Build map of application status per project so we can badge applied-only projects
+    const applicationByProjectId = new Map<number, string>();
+    volunteerApplications.forEach((app: any) => {
+      if (app.projectId) {
+        const existing = applicationByProjectId.get(app.projectId);
+        // Prefer accepted > pending over any other status
+        if (!existing || (app.status === 'accepted' && existing !== 'accepted')) {
+          applicationByProjectId.set(app.projectId, app.status);
+        }
+      }
+    });
+
+    // Build set of assignment project IDs (volunteer has a formal ProjectAssignment)
+    const assignmentProjectIds = new Set(
+      volunteerAssignments.filter(pa => pa.status?.toLowerCase() !== 'declined').map(pa => pa.projectId)
+    );
+
     // Enrich assigned projects with organization information, hours, AIU, and volunteer count
     const projectsWithOrganization = assignedProjects.map(project => {
       // Calculate total hours logged for this project (from all activities, not just this volunteer's)
@@ -1195,6 +1227,10 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
       ) / 100; // Round to 2 decimal places
 
+      // Determine sourceType: 'assigned' if has a ProjectAssignment, 'applied' if only via application
+      const isAssigned = assignmentProjectIds.has(project.id);
+      const appStatus = applicationByProjectId.get(project.id);
+
       return {
         ...project,
         organizationName: project.organizationId
@@ -1207,6 +1243,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         volunteersCount,
         aiuEarned,
         livesImpacted,
+        sourceType: isAssigned ? 'assigned' : 'applied',
+        applicationStatus: appStatus || null,
       };
     });
 

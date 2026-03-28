@@ -153,25 +153,12 @@ const VolunteerView = memo(function VolunteerView({
       }));
   }, [allLogs]);
 
-  // Fetch matched projects
-  const { data: matchedProjects = [], isLoading: isLoadingMatches } = useQuery({
-    queryKey: ["/api/matchmaker/volunteer", userId],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/matchmaker/volunteer/${userId}?limit=10`);
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.matches || [];
-      } catch (error) {
-        console.warn("Failed to fetch matched projects:", error);
-        return [];
-      }
-    },
-    enabled: !!userId,
-    retry: 1,
-    staleTime: 5 * 60_000,
-    gcTime: 15 * 60_000,
-  });
+  // Use project-level AI matches already computed in the dashboard data
+  // These come from getProjectsForVolunteer (4-factor scoring: Skills, SDG, Location, Availability)
+  const matchedProjects = useMemo(() => {
+    return dashboardData?.matchedOpportunities || [];
+  }, [dashboardData]);
+  const isLoadingMatches = isLoadingDashboard;
 
   // Calculate stats from server dashboard data
   const stats = useMemo(() => {
@@ -681,11 +668,21 @@ const VolunteerView = memo(function VolunteerView({
               ) : assignedProjects.length > 0 ? (
                 <div className="space-y-3">
                   {assignedProjects.map((project: any) => {
-                    const statusColor = project.status?.toLowerCase() === 'in progress' || project.status?.toLowerCase() === 'active'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : project.status?.toLowerCase() === 'completed'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-stone-100 text-stone-600';
+                    const isAppliedOnly = project.sourceType === 'applied';
+                    const appStatus = project.applicationStatus?.toLowerCase();
+                    // Determine badge: for applied projects show application status; for assigned show project status
+                    const statusLabel = isAppliedOnly
+                      ? (appStatus === 'accepted' ? 'Accepted' : 'Applied')
+                      : (project.status || 'Active');
+                    const statusColor = isAppliedOnly
+                      ? (appStatus === 'accepted'
+                          ? 'bg-teal-100 text-teal-700'
+                          : 'bg-amber-100 text-amber-700')
+                      : project.status?.toLowerCase() === 'in progress' || project.status?.toLowerCase() === 'active'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : project.status?.toLowerCase() === 'completed'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-stone-100 text-stone-600';
                     const sdgs: number[] = project.sdgGoals || [];
                     return (
                       <div
@@ -698,13 +695,18 @@ const VolunteerView = memo(function VolunteerView({
                             <p className="text-xs text-stone-500 mt-0.5">{project.organizationName || 'Organization'}</p>
                           </div>
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor} flex-shrink-0 ml-2`}>
-                            {project.status || 'Active'}
+                            {statusLabel}
                           </span>
                         </div>
+                        {isAppliedOnly && (
+                          <p className="text-[10px] text-amber-600 mb-2">
+                            Application submitted — awaiting review
+                          </p>
+                        )}
                         <div className="flex items-center gap-4 text-xs text-stone-500 mt-2">
-                          {project.hoursContributed > 0 && (
+                          {(project.hoursContributed > 0 || project.totalHoursLogged > 0) && (
                             <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" /> {project.hoursContributed}h logged
+                              <Clock className="h-3 w-3" /> {project.hoursContributed || project.totalHoursLogged}h logged
                             </span>
                           )}
                           {project.tasksCompleted > 0 && (
@@ -756,57 +758,68 @@ const VolunteerView = memo(function VolunteerView({
                 </div>
               ) : matchedProjects.length > 0 ? (
                 <div className="space-y-3">
-                  {matchedProjects.map((match: any, index: number) => (
+                  {matchedProjects.map((match: any, index: number) => {
+                    const breakdown = match.matchBreakdown || {};
+                    const skillMatch = Math.round(breakdown.skillMatch || 0);
+                    const sdgMatch = Math.round(breakdown.sdgMatch || 0);
+                    const locationMatch = Math.round(breakdown.locationMatch || 0);
+                    const availMatch = Math.round(breakdown.availabilityMatch || 0);
+                    const score = Math.round(match.matchScore || match.matchPercentage || 0);
+                    const sdgList: number[] = match.sdgGoals || match.sdg_goals || [];
+                    const navTarget = match.projectId
+                      ? `/projects/${match.projectId}`
+                      : `/opportunities/${match.id}`;
+                    return (
                     <button
-                      key={match.organization_id || index}
+                      key={match.id || index}
                       className="w-full bg-white rounded-xl p-4 border border-stone-200 shadow-sm text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
-                      onClick={() => navigate(`/opportunities/${match.organization_id}`)}
+                      onClick={() => navigate(navTarget)}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-stone-800">
-                            {match.organization_name || 'Organization'}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-stone-800 truncate">
+                            {match.title || match.name || 'Opportunity'}
                           </h3>
-                          <p className="text-xs text-stone-500 mt-0.5">
-                            {match.cause_area || match.focus_area || 'Community Impact'}
+                          <p className="text-xs text-stone-500 mt-0.5 truncate">
+                            {match.organizationName || match.organization_name || 'Organization'}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded-full flex-shrink-0 ml-2">
                           <TrendingUp className="h-3 w-3 text-indigo-600" />
                           <span className="text-xs font-semibold text-indigo-600">
-                            {Math.round(match.match_score || match.score || 0)}%
+                            {score}%
                           </span>
                         </div>
                       </div>
 
                       {/* Match Factors */}
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {match.skills_match > 0 && (
+                        {skillMatch > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                            Skills +{Math.round(match.skills_match)}
+                            Skills +{skillMatch}
                           </span>
                         )}
-                        {match.sdg_match > 0 && (
+                        {sdgMatch > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            SDG +{Math.round(match.sdg_match)}
+                            SDG +{sdgMatch}
                           </span>
                         )}
-                        {match.location_match > 0 && (
+                        {locationMatch > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Location +{Math.round(match.location_match)}
+                            Location +{locationMatch}
                           </span>
                         )}
-                        {match.availability_match > 0 && (
+                        {availMatch > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                            Availability +{Math.round(match.availability_match)}
+                            Availability +{availMatch}
                           </span>
                         )}
                       </div>
 
                       {/* SDG Tags */}
-                      {match.sdg_goals && match.sdg_goals.length > 0 && (
+                      {sdgList.length > 0 && (
                         <div className="flex gap-1 mt-3 pt-3 border-t border-stone-100">
-                          {match.sdg_goals.slice(0, 4).map((sdg: number) => (
+                          {sdgList.slice(0, 4).map((sdg: number) => (
                             <span
                               key={sdg}
                               className="w-6 h-6 rounded text-[10px] font-bold flex items-center justify-center text-white"
@@ -818,7 +831,8 @@ const VolunteerView = memo(function VolunteerView({
                         </div>
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
 
                   <button
                     onClick={() => navigate('/discover-opportunities')}

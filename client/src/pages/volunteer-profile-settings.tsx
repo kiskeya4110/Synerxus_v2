@@ -139,12 +139,13 @@ export default function VolunteerProfileSettings() {
 
   // Fetch CSR partners list for employer selection
   const { data: csrPartners = [] } = useQuery<{ id: number; companyName: string; logoUrl: string | null; industryType: string | null }[]>({
-    queryKey: ["/api/csr/partners"],
+    queryKey: ["/api/csr/partners/list"],
     queryFn: async () => {
       const headers = await getAuthHeaders();
-      const response = await fetch("/api/csr/partners", { headers, credentials: "include" });
+      const response = await fetch("/api/csr/partners/list", { headers, credentials: "include" });
       if (!response.ok) return [];
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!userId,
   });
@@ -153,12 +154,12 @@ export default function VolunteerProfileSettings() {
   useEffect(() => {
     if (profileData && !isInitialized) {
       setName(profileData.volunteerName || "");
-      setSelectedSkills(profileData.skills || []);
-      setSelectedSdgs(profileData.preferredSdgs || []);
-      setSelectedDiaspora(profileData.diasporaConnections || []);
-      setInterests(profileData.interests || []);
+      setSelectedSkills(Array.isArray(profileData.skills) ? profileData.skills : []);
+      setSelectedSdgs(Array.isArray(profileData.preferredSdgs) ? profileData.preferredSdgs : []);
+      setSelectedDiaspora(Array.isArray(profileData.diasporaConnections) ? profileData.diasporaConnections : []);
+      setInterests(Array.isArray(profileData.interests) ? profileData.interests : []);
       setWeeklyHours(profileData.weeklyAvailability || 5);
-      setAvailability(profileData.availability || []);
+      setAvailability(Array.isArray(profileData.availability) ? profileData.availability : []);
       setSelectedEmployerId(profileData.employerId ? Number(profileData.employerId) : null);
       setIsInitialized(true);
     }
@@ -528,7 +529,7 @@ export default function VolunteerProfileSettings() {
                   <span className="text-sm font-medium">Not linked to an employer</span>
                   {selectedEmployerId === null && <Check className="h-3.5 w-3.5 ml-auto" />}
                 </button>
-                {csrPartners
+                {(csrPartners || [])
                   .filter((p) =>
                     !employerSearch.trim() ||
                     p.companyName.toLowerCase().includes(employerSearch.toLowerCase())
@@ -561,7 +562,7 @@ export default function VolunteerProfileSettings() {
                       {selectedEmployerId === partner.id && <Check className="h-3.5 w-3.5 ml-auto flex-shrink-0" />}
                     </button>
                   ))}
-                {csrPartners.length === 0 && (
+                {(csrPartners || []).length === 0 && (
                   <p className="text-xs text-gray-400 text-center py-4">No companies registered yet.</p>
                 )}
               </div>

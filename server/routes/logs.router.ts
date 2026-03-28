@@ -1189,8 +1189,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const orgName = org?.name || 'Organization';
 
     // Additional metrics
-    // beneficiaryCount is an explicit field — do not fall back to outcome count (would be misleading)
+    // effectiveBeneficiaries: prefer explicit beneficiaryCount; fall back to totalOutcomes (outcomeQuantity = people helped)
     const totalBeneficiaries = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0);
+    const effectiveBeneficiaries = totalBeneficiaries > 0 ? totalBeneficiaries : totalOutcomes;
     const allSkills = new Set(verified.flatMap(a => a.skillsApplied || []));
     const uniqueSkillsCount = allSkills.size || 0;
 
@@ -1240,10 +1241,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const diasporaPct = allVolunteerUsers.length > 0 ? Math.round((diasporaVolunteers / allVolunteerUsers.length) * 100) : 0;
 
     // Additional benchmark metrics
-    // Denominator is totalOutcomes (sum of editedOutcomeQuantity||outcomeQuantity); fall back to activity count when not set
+    // Denominator for per-activity metrics: verified.length = number of outcome events
     const effectiveOutcomes = totalOutcomes > 0 ? totalOutcomes : verified.length;
     const avgHoursPerOutcome = effectiveOutcomes > 0 ? (totalHours / effectiveOutcomes).toFixed(1) : '0';
-    const beneficiariesPerOutcome = totalBeneficiaries > 0 && effectiveOutcomes > 0 ? Math.round(totalBeneficiaries / effectiveOutcomes) : 0;
+    // beneficiariesPerOutcome: total people helped / number of verified activities
+    const beneficiariesPerOutcome = effectiveBeneficiaries > 0 && verified.length > 0 ? Math.round(effectiveBeneficiaries / verified.length) : 0;
 
     // Period Q-style display — reflects the selected time filter
     const qNum = Math.ceil((now.getMonth() + 1) / 3);
@@ -1261,7 +1263,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     // CSRD/ESRS compliance rows
     const csrdRows = [
       { code: 'ESRS S3.3', label: 'Community engagement', warn: false, value: `${verified.length} NGO-verified outcomes` },
-      { code: 'ESRS S3.4', label: 'Actual impacts', warn: false, value: `${totalBeneficiaries.toLocaleString()} beneficiaries reached` },
+      { code: 'ESRS S3.4', label: 'Actual impacts', warn: false, value: `${effectiveBeneficiaries.toLocaleString()} beneficiaries reached` },
       { code: 'ESRS S3.4', label: 'Negative impacts', warn: true, value: `${rejected.length} disclosed (see Page 2)` },
       { code: 'ESRS S1.4', label: 'Skills development', warn: false, value: `${uniqueSkillsCount || uniqueVolunteers} skill categories deployed` },
       { code: 'ESRS G1.3', label: 'Monitoring processes', warn: false, value: `${verificationRate}% verification rate, ${avgVerificationHours}h SLA` },
@@ -1394,7 +1396,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       { metric: 'Verification Rate', orgVal: `${orgVerRate}%`, avgVal: `${INDUSTRY_AVG.verRate}%`, delta: orgVerRate - INDUSTRY_AVG.verRate, pct: true },
       { metric: 'Avg. Hours per Outcome', orgVal: `${avgHoursPerOutcome}h`, avgVal: `${INDUSTRY_AVG.hrsPerOutcome}h`, delta: INDUSTRY_AVG.hrsPerOutcome - orgHrsPerOutcome, pct: false },
       { metric: 'Completion Rate', orgVal: `${orgCompletionRate}%`, avgVal: `${INDUSTRY_AVG.completionRate}%`, delta: orgCompletionRate - INDUSTRY_AVG.completionRate, pct: true },
-      { metric: 'Beneficiaries per Outcome', orgVal: totalBeneficiaries > 0 ? `${beneficiariesPerOutcome}` : 'N/A', avgVal: `${INDUSTRY_AVG.benePerOutcome}`, delta: totalBeneficiaries > 0 ? beneficiariesPerOutcome - INDUSTRY_AVG.benePerOutcome : 0, pct: false },
+      { metric: 'Beneficiaries per Outcome', orgVal: beneficiariesPerOutcome > 0 ? `${beneficiariesPerOutcome}` : 'N/A', avgVal: `${INDUSTRY_AVG.benePerOutcome}`, delta: beneficiariesPerOutcome > 0 ? beneficiariesPerOutcome - INDUSTRY_AVG.benePerOutcome : 0, pct: false },
       { metric: 'Time to Verify', orgVal: `${avgVerificationHours}h`, avgVal: `${INDUSTRY_AVG.timeToVerify}h`, delta: INDUSTRY_AVG.timeToVerify - avgVerificationHours, pct: false },
     ];
     const benchmarkRowsHtml = benchmarkRowsData.map(r => {
@@ -1520,9 +1522,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       <div style="font-size:10px;color:#0891b2;margin-top:4px;">Not self-reported</div>
     </div>
     <div style="background:#f5f3ff;border:0.5px solid #ddd6fe;border-radius:var(--r);padding:10px 16px;text-align:center;">
-      <div style="font-size:26px;font-weight:600;color:#7c3aed;">${totalBeneficiaries.toLocaleString()}</div>
+      <div style="font-size:26px;font-weight:600;color:#7c3aed;">${effectiveBeneficiaries.toLocaleString()}</div>
       <div style="font-size:11px;color:var(--txt-s);margin-top:1px;">Beneficiaries reached</div>
-      <div style="font-size:10px;color:#7c3aed;margin-top:4px;">Estimated</div>
+      <div style="font-size:10px;color:#7c3aed;margin-top:4px;">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'From outcomes'}</div>
     </div>
   </div>
 
@@ -1677,7 +1679,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </table>
   </div>
   <div style="font-size:9px;color:#9ca3af;margin-bottom:12px;padding:0 4px;">
-    Data basis: ${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' outcome unit' + (totalOutcomes === 1 ? '' : 's') + ' logged' : verified.length + ' activities (outcome units not set)'} · ${totalBeneficiaries > 0 ? totalBeneficiaries.toLocaleString() + ' beneficiar' + (totalBeneficiaries === 1 ? 'y' : 'ies') + ' reached' : 'Beneficiary count: log via Synerxus app'}
+    Data basis: ${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' total outcome units' : 'no outcome units set'} · ${effectiveBeneficiaries.toLocaleString()} beneficiar${effectiveBeneficiaries === 1 ? 'y' : 'ies'} reached${totalBeneficiaries === 0 && totalOutcomes > 0 ? ' (from outcome units)' : ''}
   </div>
 
   ${top3.length > 0 ? `<!-- IMPACT ATTRIBUTION PATHWAYS -->
@@ -1849,6 +1851,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     const totalHours = verified.reduce((s: number, a: any) => s + (a.hours || 0), 0);
     const totalOutcomes = verified.reduce((s: number, a: any) => s + (a.editedOutcomeQuantity || a.outcomeQuantity || 0), 0);
     const totalBeneficiaries = verified.reduce((s: number, a: any) => s + (a.beneficiaryCount || 0), 0);
+    // effectiveBeneficiaries: explicit beneficiaryCount wins; otherwise outcomeQuantity = people helped per outcome
+    const effectiveBeneficiaries = totalBeneficiaries > 0 ? totalBeneficiaries : totalOutcomes;
     const uniqueVolunteerIds = new Set(verified.map((a: any) => a.userId));
     const verificationRate = allActivities.length > 0
       ? Math.round((verified.length / allActivities.length) * 100) : 0;
@@ -1864,30 +1868,32 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     const avgVerificationHours = verificationTimes.length > 0
       ? Math.round(verificationTimes.reduce((s: number, t: number) => s + t, 0) / verificationTimes.length) : 0;
 
-    // SDG map
+    // SDG map — beneficiaries per activity: prefer beneficiaryCount, fall back to outcomeQuantity
     const sdgMap: Record<number, { hours: number; outcomes: number; beneficiaries: number; count: number }> = {};
     for (const act of verified) {
       const sdgs: number[] = act.sdgTags || [];
+      const actBenef = act.beneficiaryCount || act.editedOutcomeQuantity || act.outcomeQuantity || 0;
       sdgs.forEach((g: number) => {
         if (!sdgMap[g]) sdgMap[g] = { hours: 0, outcomes: 0, beneficiaries: 0, count: 0 };
         sdgMap[g].hours += act.hours || 0;
-        sdgMap[g].outcomes += act.outcomeQuantity || 0;
-        sdgMap[g].beneficiaries += act.beneficiaryCount || 0;
+        sdgMap[g].outcomes += act.editedOutcomeQuantity || act.outcomeQuantity || 0;
+        sdgMap[g].beneficiaries += actBenef;
         sdgMap[g].count++;
       });
     }
     const sortedSdgs = Object.entries(sdgMap).sort((a, b) => b[1].count - a[1].count);
 
-    // NGO partner stats
+    // NGO partner stats — same beneficiary fallback
     const ngoStats: Record<number, { org: any; outcomes: number; hours: number; beneficiaries: number; activities: any[] }> = {};
     for (const act of verified) {
       if (!act.verifiedBy) continue;
       const org = verifierToOrgMap.get(act.verifiedBy);
       if (!org) continue;
+      const actBenef = act.beneficiaryCount || act.editedOutcomeQuantity || act.outcomeQuantity || 0;
       if (!ngoStats[org.id]) ngoStats[org.id] = { org, outcomes: 0, hours: 0, beneficiaries: 0, activities: [] };
-      ngoStats[org.id].outcomes += act.outcomeQuantity || 0;
+      ngoStats[org.id].outcomes += act.editedOutcomeQuantity || act.outcomeQuantity || 0;
       ngoStats[org.id].hours += act.hours || 0;
-      ngoStats[org.id].beneficiaries += act.beneficiaryCount || 0;
+      ngoStats[org.id].beneficiaries += actBenef;
       ngoStats[org.id].activities.push(act);
     }
 
@@ -1928,8 +1934,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       : `Q${qNum} ${now.getFullYear()}`;
 
     const avgHoursPerEmployee = uniqueVolunteerIds.size > 0 ? (totalHours / uniqueVolunteerIds.size).toFixed(1) : '0';
-    const effectiveOutcomes2 = totalOutcomes > 0 ? totalOutcomes : verified.length;
-    const beneficiariesPerOutcome = totalBeneficiaries > 0 && effectiveOutcomes2 > 0 ? Math.round(totalBeneficiaries / effectiveOutcomes2) : 0;
+    // beneficiariesPerOutcome: total people helped / number of verified activities
+    const beneficiariesPerOutcome = effectiveBeneficiaries > 0 && verified.length > 0 ? Math.round(effectiveBeneficiaries / verified.length) : 0;
 
     const SDG_NAMES_LOCAL: Record<number, string> = {
       1: 'No Poverty', 2: 'Zero Hunger', 3: 'Good Health & Well-being', 4: 'Quality Education',
@@ -2071,7 +2077,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
     <div class="kpi"><div class="kpi-label">Verified Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
     <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${totalBeneficiaries.toLocaleString()}</div><div class="kpi-sub">individuals</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'from outcomes'}</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
     <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">NGO-verified</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">${sortedSdgs.length}</div><div class="kpi-sub">goals impacted</div></div>
@@ -2084,7 +2090,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       <tbody>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S1.4 — Workforce skills</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${uniqueVolunteerIds.size} employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.3 — Community engagement</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${Object.keys(ngoStats).length} NGO partners, ${verified.length} verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Actual community impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${totalBeneficiaries.toLocaleString()} beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Actual community impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Negative impacts (double materiality)</td><td style="padding:6px 8px;" class="${rejected.length > 0 ? 'badge-warn' : 'badge-ok'}">${rejected.length > 0 ? '&#9888; ' + rejected.length + ' disclosed' : '&#10003; None disclosed this period'}</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
         <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS G1.3 — Monitoring processes</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${verificationRate}% verification rate, ${avgVerificationHours}h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
       </tbody>
@@ -2118,10 +2124,10 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${uniqueVolunteerIds.size}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
           <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${Math.round(totalHours)}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${avgHoursPerEmployee}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. self-reported avg</td></tr>
-          <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${totalBeneficiaries > 0 ? beneficiariesPerOutcome : 'N/A'}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">${totalBeneficiaries > 0 ? '<span class="badge-ok">&#10003; Platform-tracked</span>' : 'Log via Synerxus app'}</td></tr>
+          <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${beneficiariesPerOutcome > 0 ? beneficiariesPerOutcome : 'N/A'}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">${beneficiariesPerOutcome > 0 ? '<span class="badge-ok">&#10003; Platform-tracked</span>' : 'Add outcomes to activate'}</td></tr>
         </tbody>
       </table>
-      <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:0 2px;">${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' outcome unit' + (totalOutcomes === 1 ? '' : 's') : 'outcome units not set'} · ${totalBeneficiaries > 0 ? totalBeneficiaries.toLocaleString() + ' beneficiar' + (totalBeneficiaries === 1 ? 'y' : 'ies') : 'no beneficiary data yet'}</div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:0 2px;">${verified.length} verified activit${verified.length === 1 ? 'y' : 'ies'} · ${totalOutcomes > 0 ? totalOutcomes.toLocaleString() + ' total outcome units' : 'no outcome units set'} · ${effectiveBeneficiaries.toLocaleString()} beneficiar${effectiveBeneficiaries === 1 ? 'y' : 'ies'} reached${totalBeneficiaries === 0 && totalOutcomes > 0 ? ' (from outcome units)' : ''}</div>
     </div>
     <div class="section">
       <div class="section-header"><h2>Industry Benchmarks</h2></div>

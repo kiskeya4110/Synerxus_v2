@@ -1518,28 +1518,24 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px;
     }
-    @page { size: 8.5in 11in portrait; margin: 0; }
+    @page { size: 8.5in 11in portrait; margin: 18mm 16mm; }
     @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; }
-      .page {
-        zoom: 0.85; width: 254mm !important; max-height: none !important; overflow: visible !important;
-        border-radius: 0 !important; border: none !important; padding: 12mm 14mm !important;
-        margin: 0 !important; page-break-after: always; break-after: page;
-        box-shadow: none !important; background: #fff !important;
-      }
-      .page:last-child { page-break-after: auto; break-after: auto; }
-      .page-break { page-break-before: always; break-before: page; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; font-size: 10px; }
+      .report-body { border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; }
+      .no-break { break-inside: avoid; page-break-inside: avoid; }
+      .page-after { break-after: page; page-break-after: always; }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 24px; }
-    .page { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 28px; max-width: 880px; margin: 0 auto 24px; }
-    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:14px; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 28px; }
+    .report-body { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 32px; max-width: 880px; margin: 0 auto; }
+    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:18px; }
     .slb { width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block; }
     .slt { font-weight:600;font-size:13px;color:var(--txt-p); }
     .cmn { font-size:10px;color:#6b7280;font-style:italic;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:7px 10px;margin-bottom:10px;line-height:1.6; }
     table { width:100%;border-collapse:collapse; }
     th { padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e5e7eb;background:#f9fafb; }
     td { vertical-align:top; }
+    .section-divider { border-top:1px solid #e5e7eb;margin:20px 0; }
   </style>
 </head>
 <body>
@@ -1547,7 +1543,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- PAGE 1: COVER + ASSURANCE SCOPE + VERIFIED IMPACT SNAPSHOT    -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="page">
+<div class="report-body">
 
   <!-- VERIFICATION METHODOLOGY heading -->
   <div style="font-size:13px;font-weight:700;color:#374151;letter-spacing:0.8px;margin-bottom:3px;">VERIFICATION METHODOLOGY</div>
@@ -1654,28 +1650,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </div>
   </div>
 
-  <!-- Page 1 Footer -->
-  <div style="padding-top:10px;border-top:0.5px solid var(--bd);text-align:center;font-size:10px;color:var(--txt-t);">
-    Page 1 of 3 \u2022 Confidential \u2014 for ESG assurance purposes only \u2022 ${orgName} \u2022 Synerxus Platform
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- PAGE 2: ENGAGEMENT METRICS + SDG ALIGNMENT + CSRD MAPPING     -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="page page-break">
-
-  <!-- Mini Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--bd);margin-bottom:14px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:22px;height:22px;border-radius:6px;object-fit:contain;">
-      <span style="font-weight:700;font-size:12px;color:var(--txt-p);">SYNERXUS</span>
-      <span style="color:#d1d5db;margin:0 4px;">|</span>
-      <span style="font-size:11px;color:var(--txt-s);">${orgName}</span>
-    </div>
-    <div style="font-size:10px;color:var(--txt-t);">Verified Impact Summary \u2022 ${periodDisplay}</div>
-  </div>
+  <div class="section-divider"></div>
 
   <!-- ENGAGEMENT METRICS — tabular format -->
   <div class="sl"><span class="slb"></span><span class="slt">Engagement Metrics</span></div>
@@ -1762,28 +1737,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </div>
   </div>
 
-  <!-- Page 2 Footer -->
-  <div style="padding-top:10px;border-top:0.5px solid var(--bd);text-align:center;font-size:10px;color:var(--txt-t);margin-top:14px;">
-    Page 2 of 3 \u2022 ${orgName} \u2022 Synerxus Verified Impact Summary
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- PAGE 3: TOP OUTCOMES + NEGATIVE DISCLOSURE + CONTRIBUTION     -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="page page-break">
-
-  <!-- Mini Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--bd);margin-bottom:14px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:22px;height:22px;border-radius:6px;object-fit:contain;">
-      <span style="font-weight:700;font-size:12px;color:var(--txt-p);">SYNERXUS</span>
-      <span style="color:#d1d5db;margin:0 4px;">|</span>
-      <span style="font-size:11px;color:var(--txt-s);">${orgName}</span>
-    </div>
-    <div style="font-size:10px;color:var(--txt-t);">Verified Impact Summary \u2022 ${periodDisplay}</div>
-  </div>
+  <div class="section-divider"></div>
 
   ${top3.length > 0 ? `<!-- TOP VERIFIED OUTCOMES -->
   <div class="sl"><span class="slb"></span><span class="slt">Top Verified Outcomes</span></div>
@@ -1806,12 +1760,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#92400e;margin-bottom:10px;">
       <strong>CSRD Audit Statement:</strong> This report contains ${verified.length} verified impact records representing ${Math.round(totalHours)} volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. All entries have been verified by authorized ${orgName} staff with immutable audit trails maintained for CSRD compliance. Generated by Synerxus Impact Data Infrastructure.
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt-t);margin-bottom:8px;align-items:flex-end;">
-      <div>
-        <div>Generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
-        <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD Audit Ready Data</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;margin-left:12px;">Page 3 of 3</div>
+    <div style="font-size:10px;color:var(--txt-t);margin-bottom:8px;">
+      <div>Generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
+      <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD Audit Ready Data</div>
     </div>
     <div style="text-align:center;">
       <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-s);border-radius:100px;padding:5px 14px;font-size:10px;color:var(--txt-s);border:0.5px solid var(--bd);">

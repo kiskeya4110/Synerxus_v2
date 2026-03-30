@@ -1340,27 +1340,37 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       const titleWords = text.split(' ').slice(0, 7).join(' ');
       const outcomeTitle = titleWords.length < text.length ? titleWords + '\u2026' : text;
       const fieldRow = (label: string, value: string) =>
-        `<div style="display:grid;grid-template-columns:130px 1fr;padding:5px 0;border-bottom:0.5px solid #f3f4f6;">
-          <div style="font-size:10px;font-weight:600;color:#374151;">${label}</div>
-          <div style="font-size:10px;color:#6b7280;">${value}</div>
-        </div>`;
-      return `<div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff;">
+        `<tr style="border-bottom:0.5px solid #f3f4f6;">
+          <td style="padding:6px 10px;font-size:10px;font-weight:600;color:#374151;white-space:nowrap;background:#f9fafb;width:150px;">${label}</td>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">${value}</td>
+        </tr>`;
+      return `<div class="outcome-card" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff;">
         <div style="background:#111827;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.3px;">Outcome ${idx + 1}: ${outcomeTitle}</div>
           ${primarySdg ? `<div style="width:24px;height:24px;background:${sdgColor};border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0;">${primarySdg}</div>` : ''}
         </div>
         <div style="padding:10px 14px;">
-          ${fieldRow('Volunteer', '[Redacted \u2014 privacy protected]')}
-          ${fieldRow('Description', text)}
-          ${skills.length > 0 ? fieldRow('Skills Applied', skillsDisplay) : ''}
-          ${sdgName ? fieldRow('SDG Primary', sdgName) : ''}
-          ${fieldRow('Time to Verify', timeToVerifyHours !== null ? timeToVerifyHours + ' hours' : 'N/A')}
-          ${fieldRow('Verification Date', verifiedDate)}
-          <div style="margin-top:10px;background:#f9fafb;border-radius:6px;padding:8px 10px;">
-            <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;letter-spacing:0.2px;">Audit Trail:</div>
-            <div style="font-size:10px;color:#6b7280;line-height:1.8;">
-              <strong style="color:#374151;">Method:</strong> ${verificationMethod} &nbsp;|&nbsp; <strong style="color:#374151;">Device:</strong> ${deviceDisplay} &nbsp;|&nbsp; <strong style="color:#374151;">Geolocation:</strong> ${geoDisplay}<br>
-              <strong style="color:#374151;">Timestamp:</strong> ${verifiedTime} &nbsp;|&nbsp; <strong style="color:#374151;">Verified by:</strong> ${verifierDisplay}
+          <table style="margin-bottom:10px;">
+            <thead>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <th style="width:150px;">Field</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fieldRow('Volunteer', '[Redacted \u2014 privacy protected]')}
+              ${fieldRow('Description', text)}
+              ${skills.length > 0 ? fieldRow('Skills Applied', skillsDisplay) : ''}
+              ${sdgName ? fieldRow('SDG Primary', sdgName) : ''}
+              ${fieldRow('Time to Verify', timeToVerifyHours !== null ? timeToVerifyHours + ' hours' : 'N/A')}
+              ${fieldRow('Verification Date', verifiedDate)}
+            </tbody>
+          </table>
+          <div style="background:#f9fafb;border-radius:6px;padding:8px 10px;border:0.5px solid #e5e7eb;">
+            <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:5px;letter-spacing:0.2px;">Audit Trail:</div>
+            <div style="font-size:10px;color:#6b7280;line-height:1.9;">
+              <strong style="color:#374151;">Method:</strong> ${verificationMethod} &nbsp;|&nbsp; <strong style="color:#374151;">Device:</strong> ${deviceDisplay} &nbsp;|&nbsp; <strong style="color:#374151;">Geolocation:</strong> ${geoDisplay} &nbsp;|&nbsp; <strong style="color:#374151;">Timestamp:</strong> ${verifiedTime}<br>
+              <strong style="color:#374151;">Verified by:</strong> ${verifierDisplay}
             </div>
           </div>
         </div>
@@ -1406,7 +1416,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         </div>
       </div>
       ${rejected.length === 0
-        ? `<div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+        ? `<div class="screen-result" style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
             <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:4px;letter-spacing:0.3px;">${periodDisplay} SCREENING RESULT</div>
             <div style="font-size:10px;color:#047857;line-height:1.6;">Zero 'Yes' responses recorded for this reporting period. All ${verified.length} verified outcomes passed negative impact screening without triggering disclosure requirements.</div>
           </div>`
@@ -1438,7 +1448,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         ? new Date(a.verifiedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : 'N/A';
       const verifier = (a as any).verifierName ? (a as any).verifierName : `${orgName} staff`;
-      return `<div style="border:0.5px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:10px;">
+      return `<div class="pathway-card" style="border:0.5px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:10px;">
         <div style="background:#f0f9ff;padding:7px 12px;border-bottom:0.5px solid #bae6fd;">
           <div style="font-size:10px;font-weight:700;color:#0c4a6e;letter-spacing:0.3px;">Pathway ${idx + 1}: ${projectName}</div>
         </div>
@@ -1518,24 +1528,32 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px;
     }
-    @page { size: 8.5in 11in portrait; margin: 18mm 16mm; }
+    @page { size: 8.5in 11in portrait; margin: 16mm 14mm; }
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; font-size: 10px; }
       .report-body { border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; }
-      .no-break { break-inside: avoid; page-break-inside: avoid; }
-      .page-after { break-after: page; page-break-after: always; }
+      /* Prevent any table, card, or keyed block from splitting across a page */
+      .nb, table, .outcome-card, .pathway-card, .scope-grid, .snap-grid,
+      .audit-banner, .csrd-note, .screen-result, .contrib-note {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      /* Keep section label + first element together */
+      .sl { break-after: avoid; page-break-after: avoid; }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 28px; }
     .report-body { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 32px; max-width: 880px; margin: 0 auto; }
-    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:18px; }
+    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:20px; }
     .slb { width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block; }
     .slt { font-weight:600;font-size:13px;color:var(--txt-p); }
-    .cmn { font-size:10px;color:#6b7280;font-style:italic;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:7px 10px;margin-bottom:10px;line-height:1.6; }
+    .cmn { font-size:10px;color:#374151;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6; }
     table { width:100%;border-collapse:collapse; }
-    th { padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e5e7eb;background:#f9fafb; }
+    th { padding:8px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e5e7eb;background:#f9fafb; }
     td { vertical-align:top; }
-    .section-divider { border-top:1px solid #e5e7eb;margin:20px 0; }
+    .section-divider { border-top:1px solid #e5e7eb;margin:22px 0; }
+    .tbl-wrap { border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px; }
+    .sub-heading { font-size:11px;font-weight:700;color:#374151;margin-bottom:8px;margin-top:12px; }
   </style>
 </head>
 <body>
@@ -1584,8 +1602,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </div>
     <!-- Scope Table -->
     <div style="padding:12px 14px;">
-      <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Scope of Verification</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:0.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+      <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;">Scope of Verification</div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:10px;line-height:1.6;">All outcomes verified during ${periodDisplay} by ${orgName} staff with signing authority under NGO bylaws.</div>
+      <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;letter-spacing:0.2px;">Verification Boundary</div>
+      <div class="scope-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:0.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
         <div style="background:#f0fdf4;padding:10px 12px;border-right:0.5px solid #e5e7eb;">
           <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:7px;">Included in Scope</div>
           <div style="font-size:10px;color:#374151;line-height:1.9;">
@@ -1623,7 +1643,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- VERIFIED IMPACT SNAPSHOT — 3 big numbers -->
   <div class="sl"><span class="slb"></span><span class="slt">Verified Impact Snapshot</span></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
+  <div class="snap-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
     <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#059669;line-height:1;">${verified.length}</div>
       <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Verified Outcomes</div>
@@ -1654,7 +1674,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- ENGAGEMENT METRICS — tabular format -->
   <div class="sl"><span class="slb"></span><span class="slt">Engagement Metrics</span></div>
-  <div style="border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
+  <div class="tbl-wrap nb">
     <table>
       <thead>
         <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
@@ -1696,8 +1716,8 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   ${sortedSdgs.length > 0 ? `<!-- SDG ALIGNMENT — tabular format -->
   <div class="sl"><span class="slb"></span><span class="slt">SDG Alignment (UN Sustainable Development Goals)</span></div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Primary SDG assigned based on direct outcome alignment per UN SDG Target Database v2.1.</div>
-  <div style="border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
+  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Primary SDG assigned based on direct outcome alignment per UN SDG Target Database v2.1. See Appendix D for full methodology.</div>
+  <div class="tbl-wrap nb">
     <table>
       <thead>
         <tr>
@@ -1715,7 +1735,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- CSRD/ESRS COMPLIANCE MAPPING -->
   <div class="sl"><span class="slb"></span><span class="slt">CSRD/ESRS Compliance Mapping</span></div>
   <div class="cmn"><strong>COMPLIANCE LANGUAGE NOTE</strong><br>This section shows how verified data <strong>SUPPORTS</strong> CSRD/ESRS requirements. It does not assert full compliance, which requires independent assurance.</div>
-  <div style="border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
+  <div class="tbl-wrap nb">
     <table>
       <thead>
         <tr>
@@ -1729,7 +1749,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   </div>
 
   <!-- AUDIT TRAIL COMPLETENESS BANNER -->
-  <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:14px;">
+  <div class="audit-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:14px;">
     <div style="width:38px;height:38px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#059669;flex-shrink:0;">\u2713</div>
     <div style="flex:1;">
       <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">AUDIT TRAIL COMPLETENESS: ${verificationRate}%</div>
@@ -1747,12 +1767,14 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- NEGATIVE IMPACT DISCLOSURE -->
   <div class="sl"><span class="slb" style="background:#d97706;"></span><span class="slt">Negative Impact Disclosure</span></div>
   <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Required for ESRS S3.4 compliance \u2014 all unintended consequences disclosed alongside positive outcomes.</div>
+  <div class="sub-heading">Negative Impact Screening Protocol</div>
   ${negativeDisclosureHtml}
 
   ${top3.length > 0 ? `<!-- CONTRIBUTION EVIDENCE -->
-  <div class="sl" style="margin-top:14px;"><span class="slb"></span><span class="slt">Contribution Evidence</span></div>
-  <div class="cmn" style="margin-bottom:10px;"><strong>METHODOLOGY NOTE: CONTRIBUTION VS. ATTRIBUTION</strong><br>This section documents verifiable CONTRIBUTION \u2014 the evidence chain showing how volunteer activities contributed to verified outcomes. It does NOT claim sole causality (attribution). Contribution evidence is legally defensible and audit-appropriate.</div>
-  <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Verified Contribution Pathways</div>
+  <div class="sl"><span class="slb"></span><span class="slt">Contribution Evidence</span></div>
+  <div class="cmn contrib-note"><strong>METHODOLOGY NOTE: CONTRIBUTION VS. ATTRIBUTION</strong><br>This section documents verifiable CONTRIBUTION \u2014 the evidence chain showing how volunteer activities contributed to verified outcomes. It does NOT claim sole causality (attribution), which would require randomized controlled trials or quasi-experimental evaluation design. Contribution evidence is legally defensible and audit-appropriate.</div>
+  <div class="sub-heading">Verified Contribution Pathways</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">How volunteer activities contributed to verified outcomes:</div>
   <div style="margin-bottom:14px;">${attributionHtml}</div>` : ''}
 
   <!-- Footer -->

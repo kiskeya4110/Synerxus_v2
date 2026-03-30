@@ -98,12 +98,12 @@ export default function Logo({
       {/* Clickable logo image */}
       <div
         onClick={handleLogoClick}
-        style={{ cursor: clickable ? 'pointer' : 'default', display: 'flex', alignItems: 'center' }}
+        style={{ cursor: clickable ? 'pointer' : 'default', display: 'flex', alignItems: 'center', flexShrink: 0 }}
       >
         <img
           src="/synerxus-esg-logo.png"
           alt="Synerxus"
-          style={{ height: `${Math.round(config.height * 1.25)}px`, width: 'auto', display: 'block' }}
+          style={{ height: `${Math.round(config.height * 1.25)}px`, width: 'auto', display: 'block', flexShrink: 0 }}
         />
       </div>
 

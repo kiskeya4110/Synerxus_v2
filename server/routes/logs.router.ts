@@ -1394,19 +1394,19 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     ).join('');
     const negativeDisclosureHtml = `
       <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.6;">All NGO partners complete mandatory negative impact screening at verification. This systematic process ensures negative impacts are actively identified, not passively overlooked.</div>
-      <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:6px;">Screening Questions Administered</div>
-      <div style="border:0.5px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:12px;">
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
-              <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;">Question</th>
-              <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:center;white-space:nowrap;">Response</th>
-              <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;white-space:nowrap;">Date Screened</th>
-            </tr>
-          </thead>
-          <tbody>${screeningRowsHtml}</tbody>
-        </table>
-      </div>
+      <table style="width:100%;border-collapse:collapse;border:0.5px solid #e5e7eb;border-radius:8px;margin-bottom:12px;page-break-inside:avoid;break-inside:avoid;">
+        <thead>
+          <tr style="background:#f9fafb;">
+            <th colspan="3" style="padding:8px 10px;font-size:11px;font-weight:600;color:#374151;text-align:left;border-bottom:0.5px solid #e5e7eb;">Screening Questions Administered</th>
+          </tr>
+          <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+            <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;">Question</th>
+            <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:center;white-space:nowrap;">Response</th>
+            <th style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;white-space:nowrap;">Date Screened</th>
+          </tr>
+        </thead>
+        <tbody>${screeningRowsHtml}</tbody>
+      </table>
       <div style="border:0.5px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:6px;">Screening Process</div>
         <div style="font-size:10px;color:#6b7280;line-height:1.8;">
@@ -1528,7 +1528,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px;
     }
-    @page { size: 8.5in 11in portrait; margin: 16mm 14mm; }
+    @page { size: 8.5in 11in portrait; margin: 22mm 44mm; }
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; font-size: 10px; }
       .report-body { border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; }
@@ -1538,22 +1538,44 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         break-inside: avoid;
         page-break-inside: avoid;
       }
-      /* Keep section label + first element together */
-      .sl { break-after: avoid; page-break-after: avoid; }
+      /* Keep section label pinned to its following content — never orphan a heading */
+      .sl {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      /* Wrap each section block (label + immediate content) together */
+      .sl + *, .sl + * + .cmn, .sl + .cmn + * {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
+      /* Sub-headings stay with their content */
+      .sub-heading {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .sub-heading + * {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
+      /* Section dividers always start fresh */
+      .section-divider + * {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 28px; }
     .report-body { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 32px; max-width: 880px; margin: 0 auto; }
-    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:20px; }
+    .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:20px; break-after:avoid; page-break-after:avoid; }
     .slb { width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block; }
     .slt { font-weight:600;font-size:13px;color:var(--txt-p); }
-    .cmn { font-size:10px;color:#374151;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6; }
+    .cmn { font-size:10px;color:#374151;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6; break-inside:avoid; page-break-inside:avoid; }
     table { width:100%;border-collapse:collapse; }
     th { padding:8px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e5e7eb;background:#f9fafb; }
     td { vertical-align:top; }
     .section-divider { border-top:1px solid #e5e7eb;margin:22px 0; }
-    .tbl-wrap { border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px; }
-    .sub-heading { font-size:11px;font-weight:700;color:#374151;margin-bottom:8px;margin-top:12px; }
+    .tbl-wrap { border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px; break-inside:avoid; page-break-inside:avoid; }
+    .sub-heading { font-size:11px;font-weight:700;color:#374151;margin-bottom:8px;margin-top:12px; break-after:avoid; page-break-after:avoid; }
   </style>
 </head>
 <body>
@@ -1565,8 +1587,14 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- VERIFICATION METHODOLOGY heading -->
   <div style="font-size:13px;font-weight:700;color:#374151;letter-spacing:0.8px;margin-bottom:3px;">VERIFICATION METHODOLOGY</div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Illustrative structure demonstrating audit-ready verification architecture</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Pilot-format sample report demonstrating audit-support verification architecture</div>
   <div style="border-top:2px solid #0891b2;margin-bottom:16px;"></div>
+
+  <!-- TEMPLATE CONTEXT NOTICE -->
+  <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:14px;break-inside:avoid;page-break-inside:avoid;">
+    <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:0.5px;margin-bottom:4px;">&#9888; TEMPLATE CONTEXT — VERIFICATION METHODOLOGY DEMONSTRATION</div>
+    <div style="font-size:10px;color:#78350f;line-height:1.6;">This is a <strong>pilot-format sample report</strong> demonstrating Synerxus verification architecture. Data shown reflects NGO-confirmed outcomes from the active pilot. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. For CSRD limited assurance, independent auditor procedures per ISAE 3000 are required. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70%; it does not replace auditor judgment.</div>
+  </div>
 
   <!-- Header: Logo + Report Meta -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
@@ -1574,14 +1602,14 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:36px;height:36px;border-radius:8px;object-fit:contain;">
       <div>
         <div style="font-weight:700;font-size:15px;color:var(--txt-p);letter-spacing:0.5px;">SYNERXUS</div>
-        <div style="font-size:11px;color:#0891b2;">Impact, verified.</div>
+        <div style="font-size:11px;color:#0891b2;">Impact, Verified.</div>
       </div>
     </div>
     <div style="text-align:right;font-size:10px;color:var(--txt-t);line-height:1.8;">
       <div><strong style="color:#374151;">Report Generated:</strong> ${reportDate}</div>
       <div><strong style="color:#374151;">Report ID:</strong> ${reportId}</div>
       <div><strong style="color:#374151;">Period:</strong> ${periodDisplay}</div>
-      <div><strong style="color:#374151;">Data Type:</strong> NGO-Verified Outcomes</div>
+      <div><strong style="color:#374151;">Data Type:</strong> Verification Methodology Template</div>
       ${(org?.city || org?.country) ? `<div><strong style="color:#374151;">Location:</strong> ${[org?.city, org?.country].filter(Boolean).join(', ')}</div>` : ''}
     </div>
   </div>
@@ -1631,7 +1659,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     <!-- Intended Use -->
     <div style="padding:10px 14px;border-top:0.5px solid #e5e7eb;">
       <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:4px;">Intended Use</div>
-      <div style="font-size:10px;color:#6b7280;line-height:1.6;">This report provides verified outcome data that supports CSRD/ESRS disclosure requirements. It reduces auditor evidence-gathering burden by 60\u201370% but does not replace auditor judgment. Final compliance determination requires independent assurance per ISAE 3000.</div>
+      <div style="font-size:10px;color:#6b7280;line-height:1.6;">This report provides NGO-confirmed outcome data structured to SUPPORT CSRD/ESRS disclosure requirements. It is DESIGNED to reduce auditor evidence-gathering by 60\u201370% but does not replace auditor judgment. Final compliance determination requires independent assurance per ISAE 3000. Classification: Management Reporting Verified (NOT formal assurance).</div>
     </div>
   </div>
 
@@ -1784,12 +1812,12 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </div>
     <div style="font-size:10px;color:var(--txt-t);margin-bottom:8px;">
       <div>Generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
-      <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD Audit Ready Data</div>
+      <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 Audit-Support Data (Management Reporting Verified)</div>
     </div>
     <div style="text-align:center;">
       <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-s);border-radius:100px;padding:5px 14px;font-size:10px;color:var(--txt-s);border:0.5px solid var(--bd);">
         <span style="width:5px;height:5px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-        Powered by Synerxus \u2022 Impact, verified.
+        Powered by Synerxus \u2022 Impact, Verified.
       </span>
     </div>
   </div>
@@ -2060,25 +2088,32 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   .page { max-width: 900px; margin: 0 auto; padding: 24px; }
   h1 { font-size: 20px; font-weight: 800; }
   h2 { font-size: 13px; font-weight: 700; color: #fff; }
-  h3 { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  h3 { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 8px; break-after: avoid; page-break-after: avoid; }
+  h3 + * { break-before: avoid; page-break-before: avoid; }
   table { width: 100%; border-collapse: collapse; }
   th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; padding: 7px 8px; }
-  .section { margin-bottom: 20px; border: 0.5px solid var(--bd); border-radius: var(--r); overflow: hidden; }
-  .section-header { background: var(--navy); padding: 10px 14px; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .kpi { background: #fff; border: 0.5px solid var(--bd); border-radius: var(--r); padding: 12px 14px; }
+  .section { margin-bottom: 20px; border: 0.5px solid var(--bd); border-radius: var(--r); overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
+  .section-header { background: var(--navy); padding: 10px 14px; break-after: avoid; page-break-after: avoid; }
+  .section-header + * { break-before: avoid; page-break-before: avoid; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; break-inside: avoid; page-break-inside: avoid; }
+  .kpi { background: #fff; border: 0.5px solid var(--bd); border-radius: var(--r); padding: 12px 14px; break-inside: avoid; page-break-inside: avoid; }
   .kpi-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--txt-s); margin-bottom: 4px; }
   .kpi-value { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1.1; }
   .kpi-sub { font-size: 9px; color: var(--txt-s); margin-top: 2px; }
   .badge-ok { color: #059669; font-weight: 600; }
   .badge-warn { color: #d97706; font-weight: 600; }
-  .note { background: var(--teal-lt); border-left: 3px solid var(--teal); padding: 8px 12px; font-size: 10px; color: #065f46; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; }
-  .warn-note { background: #fffbeb; border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: #92400e; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; }
+  .note { background: var(--teal-lt); border-left: 3px solid var(--teal); padding: 8px 12px; font-size: 10px; color: #065f46; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
+  .warn-note { background: #fffbeb; border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: #92400e; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
+  @page { size: A4 portrait; margin: 22mm 44mm; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { padding: 12px; }
-    .kpi-grid { break-inside: avoid; }
-    .section { break-inside: avoid; }
+    .page { padding: 0; }
+    .kpi-grid { break-inside: avoid; page-break-inside: avoid; }
+    .section { break-inside: avoid; page-break-inside: avoid; }
+    .section-header { break-after: avoid; page-break-after: avoid; }
+    .section-header + * { break-before: avoid; page-break-before: avoid; }
+    h3 { break-after: avoid; page-break-after: avoid; }
+    h3 + * { break-before: avoid; page-break-before: avoid; }
   }
 </style>
 </head>
@@ -2089,9 +2124,9 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
-      <div style="color:var(--teal);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">SYNERXUS · Impact, verified.</div>
+      <div style="color:var(--teal);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">SYNERXUS · Impact, Verified.</div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
-      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Verified · NGO-Confirmed Outcomes · ESG Audit-Supported</div>
+      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
     </div>
     <div style="text-align:right;color:#cbd5e1;font-size:10px;">
       <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>
@@ -2102,13 +2137,19 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   </div>
 </div>
 
+<!-- TEMPLATE CONTEXT NOTICE -->
+<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
+  <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:0.5px;margin-bottom:4px;">&#9888; TEMPLATE CONTEXT — DATA LAYER WARNING</div>
+  <div style="font-size:10px;color:#78350f;line-height:1.6;">This is an <strong>illustrative audit-support structure</strong> demonstrating how Synerxus verification architecture SUPPORTS CSRD disclosure requirements. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Data shown reflects NGO-confirmed outcomes from the active corporate pilot. Real production data requires direct NGO confirmation. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70%; it does not replace auditor judgment per ISAE 3000.</div>
+</div>
+
 <!-- SECTION 1: EXECUTIVE SNAPSHOT -->
 <div style="margin-bottom:20px;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">${Object.keys(ngoStats).length}</div><div class="kpi-sub">organizations</div></div>
     <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
-    <div class="kpi"><div class="kpi-label">Verified Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
+    <div class="kpi"><div class="kpi-label">NGO-Confirmed Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
     <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
     <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'from outcomes'}</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
@@ -2117,7 +2158,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   </div>
 
   <div class="section">
-    <div class="section-header"><h2>ESRS Compliance Status</h2></div>
+    <div class="section-header"><h2>ESRS Disclosure Support Status</h2></div>
     <table>
       <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">ESRS Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
       <tbody>
@@ -2129,7 +2170,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       </tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — satisfying CSRD's requirement for third-party verified social impact data (ESRS S3).</div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — DESIGNED to support CSRD disclosure requirements for third-party verified social impact data (ESRS S3).</div>
 </div>
 
 <!-- SECTION 2: NGO PARTNERSHIPS -->
@@ -2219,7 +2260,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div style="margin-bottom:20px;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Double Materiality Disclosure (ESRS S3.4)</h3>
   <div class="section">
-    <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Disclosures — Required for Full CSRD Compliance</h2></div>
+    <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Disclosures — SUPPORTS CSRD Double Materiality Requirements</h2></div>
     ${rejected.length === 0
       ? '<p style="padding:12px;font-size:11px;color:#374151;">&#10003; No negative impacts disclosed for this reporting period.</p>'
       : `<table><thead><tr><th>Date</th><th>NGO Partner</th><th>Outcome</th><th>Negative Impact</th></tr></thead><tbody>${rejected.slice(0, 5).map((a: any) => {
@@ -2251,7 +2292,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       </div>
     </div>
   </div>
-  <div class="warn-note">&#9888; <strong>Honest Disclaimer:</strong> This verification trail provides raw materials for ESG assurance. Final limited assurance requires auditor procedures per ISAE 3000 (15–30% sampling, direct NGO confirmation). Synerxus reduces evidence-gathering burden by 60–70% but does not replace auditor judgment.</div>
+  <div class="warn-note">&#9888; <strong>Honest Disclaimer:</strong> This verification trail provides raw materials for ESG assurance. Final limited assurance requires auditor procedures per ISAE 3000 (15–30% sampling, direct NGO confirmation). Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70% but does not replace auditor judgment.</div>
 </div>
 
 <!-- FOOTER -->
@@ -2259,12 +2300,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   <div style="font-size:10px;color:var(--txt-s);">
     <div>Report ID: ${reportId} · Generated by Synerxus on behalf of ${corpName}</div>
     <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · All data NGO-verified with immutable audit trails</div>
-    <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · CSRD Audit Ready Data</div>
+    <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · Audit-Support Data (Management Reporting Verified)</div>
   </div>
   <div style="text-align:center;">
     <span style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);border-radius:100px;padding:5px 12px;font-size:10px;color:#fff;">
       <span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
-      Powered by Synerxus · Impact, verified.
+      Powered by Synerxus · Impact, Verified.
     </span>
   </div>
 </div>

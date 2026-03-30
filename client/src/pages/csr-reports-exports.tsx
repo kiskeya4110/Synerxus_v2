@@ -366,16 +366,32 @@ export default function CSRReportsExports() {
         <head>
           <title>${template.name} - ${orgName}</title>
           <style>
+            @page {
+              size: A4 portrait;
+              margin: 28mm 60mm;
+            }
+            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
             * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: Arial, sans-serif; margin: 0; padding: 40px; color: #333; background: #fff; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
+
+            .report-section {
+              page-break-before: always;
+              break-before: page;
+            }
+            .report-section-cover {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
 
             .report-header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              margin-bottom: 32px;
-              padding-bottom: 24px;
+              margin-bottom: 48px;
+              padding-bottom: 32px;
               border-bottom: 3px solid #f59e0b;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .header-left { flex: 2; }
             .header-right {
@@ -414,14 +430,25 @@ export default function CSRReportsExports() {
 
             h2 {
               font-size: 20px; font-weight: 700; color: #92400e;
-              margin: 32px 0 16px 0; padding-bottom: 8px;
+              margin: 0 0 16px 0; padding-bottom: 8px;
               border-bottom: 2px solid #f59e0b;
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            h2 + * {
+              page-break-before: avoid;
+              break-before: avoid;
+            }
+            .report-section {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
 
-            .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+            .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; page-break-inside: avoid; break-inside: avoid; }
             .metric-card {
               background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
               border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;
+              page-break-inside: avoid; break-inside: avoid;
             }
             .metric-card.orange { border-left: 4px solid #f59e0b; }
             .metric-card.green { border-left: 4px solid #10b981; }
@@ -430,16 +457,17 @@ export default function CSRReportsExports() {
             .metric-value { font-size: 28px; font-weight: 800; color: #92400e; }
             .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
-            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; }
+            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
             th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; }
             td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+            tr { page-break-inside: avoid; break-inside: avoid; }
             tr:nth-child(even) { background: #f9fafb; }
             .sdg-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; color: white; font-weight: 700; font-size: 12px; margin-right: 8px; }
             .sdg-name { font-weight: 500; }
             .progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
             .progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); border-radius: 4px; }
 
-            .report-footer { margin-top: 48px; padding-top: 24px; border-top: 2px solid #e5e7eb; text-align: center; }
+            .report-footer { margin-top: 56px; padding-top: 32px; border-top: 2px solid #e5e7eb; text-align: center; page-break-inside: avoid; break-inside: avoid; }
             .footer-logo { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 12px; }
             .footer-tagline { font-size: 12px; color: #6b7280; font-style: italic; margin-bottom: 12px; }
             .footer-generated { font-size: 13px; color: #374151; margin-bottom: 8px; }
@@ -471,93 +499,102 @@ export default function CSRReportsExports() {
             </svg>
           </div>
 
-          <div class="report-header">
-            <div class="header-left">
-              <div class="logo-container">
-                <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
-                <div class="company-divider"></div>
-                <div class="company-name">${orgName}</div>
+          <!-- Report Header (Cover) -->
+          <div class="report-section-cover">
+            <div class="report-header">
+              <div class="header-left">
+                <div class="logo-container">
+                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
+                  <div class="company-divider"></div>
+                  <div class="company-name">${orgName}</div>
+                </div>
+                <div class="report-title">${orgName}</div>
+                <div class="report-subtitle">
+                  <span class="verified-badge">✓ Verified</span>
+                  <span class="report-type">${template.name}</span>
+                </div>
+                <div class="report-meta">
+                  <span>📅 ${currentDate}</span>
+                  <span class="meta-divider">|</span>
+                  <span class="blockchain-verified">✓ Blockchain Verified</span>
+                </div>
               </div>
-              <div class="report-title">${orgName}</div>
-              <div class="report-subtitle">
-                <span class="verified-badge">✓ Verified</span>
-                <span class="report-type">${template.name}</span>
-              </div>
-              <div class="report-meta">
-                <span>📅 ${currentDate}</span>
-                <span class="meta-divider">|</span>
-                <span class="blockchain-verified">✓ Blockchain Verified</span>
-              </div>
-            </div>
-            <div class="header-right">
-              <div class="impact-score-box">
-                <h4>SDGs Addressed</h4>
-                <div class="impact-score-value">${sdgsAddressed}</div>
-                <div class="impact-score-label">UN Global Goals</div>
+              <div class="header-right">
+                <div class="impact-score-box">
+                  <h4>SDGs Addressed</h4>
+                  <div class="impact-score-value">${sdgsAddressed}</div>
+                  <div class="impact-score-label">UN Global Goals</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <h2>Key Performance Metrics</h2>
-          <div class="metric-grid">
-            <div class="metric-card orange">
-              <div class="metric-value">${totalHours.toLocaleString()}</div>
-              <div class="metric-label">Total Volunteer Hours</div>
-            </div>
-            <div class="metric-card green">
-              <div class="metric-value">${activeVolunteers.toLocaleString()}</div>
-              <div class="metric-label">Active Volunteers</div>
-            </div>
-            <div class="metric-card blue">
-              <div class="metric-value">${activeProjects}</div>
-              <div class="metric-label">Active Projects</div>
-            </div>
-            <div class="metric-card purple">
-              <div class="metric-value">${sdgsAddressed}</div>
-              <div class="metric-label">SDGs Addressed</div>
+          <!-- Key Metrics -->
+          <div class="report-section">
+            <h2>Key Performance Metrics</h2>
+            <div class="metric-grid">
+              <div class="metric-card orange">
+                <div class="metric-value">${totalHours.toLocaleString()}</div>
+                <div class="metric-label">Total Volunteer Hours</div>
+              </div>
+              <div class="metric-card green">
+                <div class="metric-value">${activeVolunteers.toLocaleString()}</div>
+                <div class="metric-label">Active Volunteers</div>
+              </div>
+              <div class="metric-card blue">
+                <div class="metric-value">${activeProjects}</div>
+                <div class="metric-label">Active Projects</div>
+              </div>
+              <div class="metric-card purple">
+                <div class="metric-value">${sdgsAddressed}</div>
+                <div class="metric-label">SDGs Addressed</div>
+              </div>
             </div>
           </div>
 
-          <h2>SDG Alignment & Impact</h2>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 40%">SDG Goal</th>
-                <th style="width: 25%">Hours Contributed</th>
-                <th style="width: 20%">Progress</th>
-                <th style="width: 15%">% of Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sdgMetrics.slice(0, 8).map((sdg: any) => `
+          <!-- SDG Alignment -->
+          <div class="report-section">
+            <h2>SDG Alignment & Impact</h2>
+            <table>
+              <thead>
                 <tr>
-                  <td>
-                    <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
-                    <span class="sdg-name">${getSDGName(sdg.goal)}</span>
-                  </td>
-                  <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
-                  <td>
-                    <div class="progress-bar">
-                      <div class="progress-fill" style="width: ${sdg.percentage || 0}%"></div>
-                    </div>
-                  </td>
-                  <td><strong>${sdg.percentage || 0}%</strong></td>
+                  <th style="width: 40%">SDG Goal</th>
+                  <th style="width: 25%">Hours Contributed</th>
+                  <th style="width: 20%">Progress</th>
+                  <th style="width: 15%">% of Total</th>
                 </tr>
-              `).join("") || `
-                <tr>
-                  <td colspan="4" style="text-align: center; color: #6b7280; padding: 24px;">
-                    No SDG data available for this period
-                  </td>
-                </tr>
-              `}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${sdgMetrics.slice(0, 8).map((sdg: any) => `
+                  <tr>
+                    <td>
+                      <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
+                      <span class="sdg-name">${getSDGName(sdg.goal)}</span>
+                    </td>
+                    <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
+                    <td>
+                      <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${sdg.percentage || 0}%"></div>
+                      </div>
+                    </td>
+                    <td><strong>${sdg.percentage || 0}%</strong></td>
+                  </tr>
+                `).join("") || `
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: #6b7280; padding: 24px;">
+                      No SDG data available for this period
+                    </td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
 
           <div class="report-footer">
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline">Connect. Manage. Impact Globally.</div>
+            <div class="footer-tagline">Impact, Verified.</div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>
@@ -580,17 +617,34 @@ export default function CSRReportsExports() {
         <head>
           <title>${template.name}</title>
           <style>
+            @page {
+              size: A4 portrait;
+              margin: 28mm 60mm;
+            }
+            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
             * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: Arial, sans-serif; margin: 0; padding: 40px; color: #333; background: #fff; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
+
+            /* Section page breaks */
+            .report-section {
+              page-break-before: always;
+              break-before: page;
+            }
+            .report-section-cover {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
 
             /* Header Styles - Matching Volunteer/Org Reports */
             .report-header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              margin-bottom: 32px;
-              padding-bottom: 24px;
+              margin-bottom: 48px;
+              padding-bottom: 32px;
               border-bottom: 3px solid #10b981;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .header-left { flex: 2; }
             .header-right {
@@ -693,9 +747,19 @@ export default function CSRReportsExports() {
               font-size: 20px;
               font-weight: 700;
               color: #1e3a8a;
-              margin: 32px 0 16px 0;
+              margin: 0 0 16px 0;
               padding-bottom: 8px;
               border-bottom: 2px solid #10b981;
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            h2 + * {
+              page-break-before: avoid;
+              break-before: avoid;
+            }
+            .report-section {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
 
             /* Metric Grid */
@@ -704,6 +768,8 @@ export default function CSRReportsExports() {
               grid-template-columns: repeat(3, 1fr);
               gap: 16px;
               margin: 24px 0;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .metric-card {
               background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -711,6 +777,8 @@ export default function CSRReportsExports() {
               border-radius: 12px;
               padding: 20px;
               text-align: center;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .metric-card.blue { border-left: 4px solid #3b82f6; }
             .metric-card.green { border-left: 4px solid #10b981; }
@@ -736,6 +804,8 @@ export default function CSRReportsExports() {
               margin: 24px 0;
               border-radius: 8px;
               overflow: hidden;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             th {
               background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
@@ -749,6 +819,10 @@ export default function CSRReportsExports() {
               padding: 12px 16px;
               border-bottom: 1px solid #e5e7eb;
               font-size: 13px;
+            }
+            tr {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             tr:nth-child(even) { background: #f9fafb; }
             tr:hover { background: #f3f4f6; }
@@ -782,10 +856,12 @@ export default function CSRReportsExports() {
 
             /* Footer - Matching Volunteer/Org Reports */
             .report-footer {
-              margin-top: 48px;
-              padding-top: 24px;
+              margin-top: 56px;
+              padding-top: 32px;
               border-top: 2px solid #e5e7eb;
               text-align: center;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .footer-logo {
               display: flex;
@@ -856,108 +932,114 @@ export default function CSRReportsExports() {
             </svg>
           </div>
 
-          <!-- Report Header -->
-          <div class="report-header">
-            <div class="header-left">
-              <div class="logo-container">
-                <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
-                <div class="company-divider"></div>
-                <div class="company-name">${companyName}</div>
+          <!-- Report Header (Cover) -->
+          <div class="report-section-cover">
+            <div class="report-header">
+              <div class="header-left">
+                <div class="logo-container">
+                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
+                  <div class="company-divider"></div>
+                  <div class="company-name">${companyName}</div>
+                </div>
+
+                <div class="report-title">${companyName}</div>
+                <div class="report-subtitle">
+                  <span class="verified-badge">✓ Verified</span>
+                  <span class="report-type">${template.name}</span>
+                </div>
+
+                <div class="report-meta">
+                  <span>📅 ${currentDate}</span>
+                  <span class="meta-divider">|</span>
+                  <span class="blockchain-verified">✓ Blockchain Verified</span>
+                </div>
               </div>
 
-              <div class="report-title">${companyName}</div>
-              <div class="report-subtitle">
-                <span class="verified-badge">✓ Verified</span>
-                <span class="report-type">${template.name}</span>
-              </div>
-
-              <div class="report-meta">
-                <span>📅 ${currentDate}</span>
-                <span class="meta-divider">|</span>
-                <span class="blockchain-verified">✓ Blockchain Verified</span>
-              </div>
-            </div>
-
-            <div class="header-right">
-              <div class="impact-score-box">
-                <h4>Overall Impact Score</h4>
-                <div class="impact-score-value">${data?.impactMetrics?.impactScore || Math.round((data?.engagementMetrics?.participationRate || 0) * 0.8 + 20)}</div>
-                <div class="impact-score-label">out of 100</div>
+              <div class="header-right">
+                <div class="impact-score-box">
+                  <h4>Overall Impact Score</h4>
+                  <div class="impact-score-value">${data?.impactMetrics?.impactScore || Math.round((data?.engagementMetrics?.participationRate || 0) * 0.8 + 20)}</div>
+                  <div class="impact-score-label">out of 100</div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Key Metrics -->
-          <h2>Key Performance Metrics</h2>
-          <div class="metric-grid">
-            <div class="metric-card blue">
-              <div class="metric-value">${(data?.engagementMetrics?.totalHours || 0).toLocaleString()}</div>
-              <div class="metric-label">Total Volunteer Hours</div>
-            </div>
-            <div class="metric-card green">
-              <div class="metric-value">${data?.engagementMetrics?.activeEmployees || 0}</div>
-              <div class="metric-label">Active Employees</div>
-            </div>
-            <div class="metric-card purple">
-              <div class="metric-value">${data?.engagementMetrics?.participationRate || 0}%</div>
-              <div class="metric-label">Participation Rate</div>
-            </div>
-            <div class="metric-card orange">
-              <div class="metric-value">${(data?.impactMetrics?.directBeneficiaries || 0).toLocaleString()}</div>
-              <div class="metric-label">Direct Beneficiaries</div>
-            </div>
-            <div class="metric-card blue">
-              <div class="metric-value">$${Math.round((data?.financialMetrics?.volunteerHourValue || 0) / 1000)}K</div>
-              <div class="metric-label">Economic Value</div>
-            </div>
-            <div class="metric-card green">
-              <div class="metric-value">${data?.financialMetrics?.roi || 0}%</div>
-              <div class="metric-label">Return on Investment</div>
+          <div class="report-section">
+            <h2>Key Performance Metrics</h2>
+            <div class="metric-grid">
+              <div class="metric-card blue">
+                <div class="metric-value">${(data?.engagementMetrics?.totalHours || 0).toLocaleString()}</div>
+                <div class="metric-label">Total Volunteer Hours</div>
+              </div>
+              <div class="metric-card green">
+                <div class="metric-value">${data?.engagementMetrics?.activeEmployees || 0}</div>
+                <div class="metric-label">Active Employees</div>
+              </div>
+              <div class="metric-card purple">
+                <div class="metric-value">${data?.engagementMetrics?.participationRate || 0}%</div>
+                <div class="metric-label">Participation Rate</div>
+              </div>
+              <div class="metric-card orange">
+                <div class="metric-value">${(data?.impactMetrics?.directBeneficiaries || 0).toLocaleString()}</div>
+                <div class="metric-label">Direct Beneficiaries</div>
+              </div>
+              <div class="metric-card blue">
+                <div class="metric-value">$${Math.round((data?.financialMetrics?.volunteerHourValue || 0) / 1000)}K</div>
+                <div class="metric-label">Economic Value</div>
+              </div>
+              <div class="metric-card green">
+                <div class="metric-value">${data?.financialMetrics?.roi || 0}%</div>
+                <div class="metric-label">Return on Investment</div>
+              </div>
             </div>
           </div>
 
           <!-- SDG Alignment -->
-          <h2>SDG Alignment & Impact</h2>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 40%">SDG Goal</th>
-                <th style="width: 25%">Hours Contributed</th>
-                <th style="width: 20%">Progress</th>
-                <th style="width: 15%">% of Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(data?.sdgMetrics || []).slice(0, 8).map((sdg: any) => `
+          <div class="report-section">
+            <h2>SDG Alignment & Impact</h2>
+            <table>
+              <thead>
                 <tr>
-                  <td>
-                    <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
-                    <span class="sdg-name">${getSDGName(sdg.goal)}</span>
-                  </td>
-                  <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
-                  <td>
-                    <div class="progress-bar">
-                      <div class="progress-fill" style="width: ${sdg.percentage || 0}%"></div>
-                    </div>
-                  </td>
-                  <td><strong>${sdg.percentage || 0}%</strong></td>
+                  <th style="width: 40%">SDG Goal</th>
+                  <th style="width: 25%">Hours Contributed</th>
+                  <th style="width: 20%">Progress</th>
+                  <th style="width: 15%">% of Total</th>
                 </tr>
-              `).join("") || `
-                <tr>
-                  <td colspan="4" style="text-align: center; color: #6b7280; padding: 24px;">
-                    No SDG data available for this period
-                  </td>
-                </tr>
-              `}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${(data?.sdgMetrics || []).slice(0, 8).map((sdg: any) => `
+                  <tr>
+                    <td>
+                      <span class="sdg-badge" style="background-color: ${getSDGColor(sdg.goal)}">${sdg.goal}</span>
+                      <span class="sdg-name">${getSDGName(sdg.goal)}</span>
+                    </td>
+                    <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
+                    <td>
+                      <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${sdg.percentage || 0}%"></div>
+                      </div>
+                    </td>
+                    <td><strong>${sdg.percentage || 0}%</strong></td>
+                  </tr>
+                `).join("") || `
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: #6b7280; padding: 24px;">
+                      No SDG data available for this period
+                    </td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
 
           <!-- Report Footer -->
           <div class="report-footer">
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline">Connect. Manage. Impact Globally.</div>
+            <div class="footer-tagline">Impact, Verified.</div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>

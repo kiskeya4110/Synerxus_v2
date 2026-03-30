@@ -7813,39 +7813,44 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 <head>
   <style>
     @page { margin: 0; size: A4; }
+    @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; color: #333; background: #fff; }
-    .header { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 40px; position: relative; }
+    .header { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 48px 112px; position: relative; page-break-inside: avoid; break-inside: avoid; }
     .header-content { display: flex; justify-content: space-between; align-items: center; }
     .company-logo { max-width: 180px; max-height: 80px; background: white; padding: 12px; border-radius: 8px; }
     .report-title { text-align: right; }
     .report-title h1 { margin: 0; font-size: 28px; font-weight: 700; }
     .report-title p { margin: 8px 0 0 0; font-size: 14px; opacity: 0.9; }
-    .report-meta { background: #f8fafc; padding: 24px 40px; border-bottom: 3px solid #f97316; display: flex; justify-content: space-between; align-items: center; }
+    .report-meta { background: #f8fafc; padding: 28px 112px; border-bottom: 3px solid #f97316; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; break-inside: avoid; }
     .company-info h2 { margin: 0; font-size: 22px; color: #1e3a8a; }
     .company-info p { margin: 4px 0 0 0; font-size: 13px; color: #6b7280; }
     .rating-badge { text-align: center; background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .rating-score { font-size: 36px; font-weight: 800; color: ${impactStyleColor}; }
     .rating-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
     .rating-style { font-size: 14px; font-weight: 600; color: ${impactStyleColor}; margin-top: 4px; }
-    .content { padding: 40px; }
-    h2 { color: #1e3a8a; font-size: 18px; margin: 32px 0 16px 0; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .content { padding: 48px 112px; }
+    .section { page-break-before: always; break-before: page; padding-top: 8px; }
+    h2 { color: #1e3a8a; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; page-break-after: avoid; break-after: avoid; }
+    h2 + * { page-break-before: avoid; break-before: avoid; }
+    .section { page-break-inside: avoid; break-inside: avoid; }
     .section-icon { font-size: 20px; }
-    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
-    .metric-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 20px; border-radius: 10px; border-left: 4px solid #1e3a8a; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 0 0 32px 0; page-break-inside: avoid; break-inside: avoid; }
+    .metric-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 24px; border-radius: 10px; border-left: 4px solid #1e3a8a; page-break-inside: avoid; break-inside: avoid; }
     .metric-card.highlight { border-left-color: #059669; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
     .metric-value { font-size: 28px; font-weight: 700; color: #1e3a8a; }
     .metric-card.highlight .metric-value { color: #059669; }
-    .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-label { font-size: 12px; color: #6b7280; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
     .metric-benchmark { font-size: 11px; color: #9ca3af; margin-top: 8px; }
-    .compliance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .compliance-card { background: #f8fafc; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .compliance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; page-break-inside: avoid; break-inside: avoid; }
+    .compliance-card { background: #f8fafc; padding: 20px 24px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; break-inside: avoid; }
     .compliance-name { font-weight: 600; color: #374151; }
     .compliance-score { font-weight: 700; font-size: 18px; }
-    .sdg-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-    .sdg-table th { background: #1e3a8a; color: white; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; }
-    .sdg-table td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+    .sdg-table { width: 100%; border-collapse: collapse; margin: 0 0 32px 0; page-break-inside: avoid; break-inside: avoid; }
+    .sdg-table th { background: #1e3a8a; color: white; padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; }
+    .sdg-table td { padding: 13px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+    .sdg-table tr { page-break-inside: avoid; break-inside: avoid; }
     .sdg-table tr:nth-child(even) { background: #f9fafb; }
-    .footer { background: #111827; color: white; padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; margin-top: 40px; }
+    .footer { background: #111827; color: white; padding: 32px 112px; display: flex; justify-content: space-between; align-items: center; margin-top: 48px; page-break-inside: avoid; break-inside: avoid; }
     .footer-brand { display: flex; align-items: center; gap: 8px; }
     .footer-brand span { color: #f97316; font-weight: 700; font-size: 18px; }
     .footer-text { font-size: 11px; color: #9ca3af; }
@@ -7879,79 +7884,87 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
   <div class="content">
     <!-- Executive Summary -->
-    <h2><span class="section-icon">📊</span> Executive Summary</h2>
-    <div class="metrics-grid">
-      <div class="metric-card highlight">
-        <div class="metric-value">${impactData.engagementMetrics.totalHours.toLocaleString()}</div>
-        <div class="metric-label">Total Volunteer Hours</div>
-      </div>
-      <div class="metric-card highlight">
-        <div class="metric-value">${impactData.engagementMetrics.activeEmployees}</div>
-        <div class="metric-label">Active Employees</div>
-      </div>
-      <div class="metric-card highlight">
-        <div class="metric-value">${impactData.impactMetrics.estimatedLivesTouched.toLocaleString()}</div>
-        <div class="metric-label">Lives Impacted</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">$${(impactData.financialMetrics.volunteerHourValue || 0).toLocaleString()}</div>
-        <div class="metric-label">Economic Value Generated</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${impactData.financialMetrics.roi}%</div>
-        <div class="metric-label">Return on Investment</div>
-        <div class="metric-benchmark">Industry Avg: 250%</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${impactData.engagementMetrics.participationRate}%</div>
-        <div class="metric-label">Participation Rate</div>
-        <div class="metric-benchmark">Benchmark: ${impactData.benchmarks.participationRateBenchmark}%</div>
+    <div class="section">
+      <h2><span class="section-icon">📊</span> Executive Summary</h2>
+      <div class="metrics-grid">
+        <div class="metric-card highlight">
+          <div class="metric-value">${impactData.engagementMetrics.totalHours.toLocaleString()}</div>
+          <div class="metric-label">Total Volunteer Hours</div>
+        </div>
+        <div class="metric-card highlight">
+          <div class="metric-value">${impactData.engagementMetrics.activeEmployees}</div>
+          <div class="metric-label">Active Employees</div>
+        </div>
+        <div class="metric-card highlight">
+          <div class="metric-value">${impactData.impactMetrics.estimatedLivesTouched.toLocaleString()}</div>
+          <div class="metric-label">Lives Impacted</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">$${(impactData.financialMetrics.volunteerHourValue || 0).toLocaleString()}</div>
+          <div class="metric-label">Economic Value Generated</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${impactData.financialMetrics.roi}%</div>
+          <div class="metric-label">Return on Investment</div>
+          <div class="metric-benchmark">Industry Avg: 250%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${impactData.engagementMetrics.participationRate}%</div>
+          <div class="metric-label">Participation Rate</div>
+          <div class="metric-benchmark">Benchmark: ${impactData.benchmarks.participationRateBenchmark}%</div>
+        </div>
       </div>
     </div>
 
     <!-- Impact Analysis -->
-    <h2><span class="section-icon">🎯</span> Impact Analysis</h2>
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-value">${impactData.impactMetrics.directBeneficiaries.toLocaleString()}</div>
-        <div class="metric-label">Direct Beneficiaries</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">${impactData.impactMetrics.indirectBeneficiaries.toLocaleString()}</div>
-        <div class="metric-label">Indirect Beneficiaries</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value">$${impactData.financialMetrics.costPerBeneficiary}</div>
-        <div class="metric-label">Cost Per Beneficiary</div>
-        <div class="metric-benchmark">Benchmark: $${impactData.benchmarks.costPerBeneficiaryBenchmark}</div>
+    <div class="section">
+      <h2><span class="section-icon">🎯</span> Impact Analysis</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">${impactData.impactMetrics.directBeneficiaries.toLocaleString()}</div>
+          <div class="metric-label">Direct Beneficiaries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${impactData.impactMetrics.indirectBeneficiaries.toLocaleString()}</div>
+          <div class="metric-label">Indirect Beneficiaries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">$${impactData.financialMetrics.costPerBeneficiary}</div>
+          <div class="metric-label">Cost Per Beneficiary</div>
+          <div class="metric-benchmark">Benchmark: $${impactData.benchmarks.costPerBeneficiaryBenchmark}</div>
+        </div>
       </div>
     </div>
 
     <!-- SDG Alignment -->
-    <h2><span class="section-icon">🌍</span> UN SDG Alignment</h2>
-    <table class="sdg-table">
-      <tr><th>SDG Goal</th><th>Hours Contributed</th><th>% of Total</th><th>Status</th></tr>
-      ${impactData.sdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg.goal}</strong></td><td>${sdg.hours} hrs</td><td>${sdg.percentage}%</td><td>${sdg.percentage > 15 ? '✅ Strong' : sdg.percentage > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}
-    </table>
+    <div class="section">
+      <h2><span class="section-icon">🌍</span> UN SDG Alignment</h2>
+      <table class="sdg-table">
+        <tr><th>SDG Goal</th><th>Hours Contributed</th><th>% of Total</th><th>Status</th></tr>
+        ${impactData.sdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg.goal}</strong></td><td>${sdg.hours} hrs</td><td>${sdg.percentage}%</td><td>${sdg.percentage > 15 ? '✅ Strong' : sdg.percentage > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}
+      </table>
+    </div>
 
     <!-- Compliance & Certification -->
-    <h2><span class="section-icon">✅</span> Compliance & Certification Readiness</h2>
-    <div class="compliance-grid">
-      <div class="compliance-card">
-        <span class="compliance-name">B-Corp Alignment</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.bCorpScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.bCorpScore || 0}/100</span>
-      </div>
-      <div class="compliance-card">
-        <span class="compliance-name">GRI Standards</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.griScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.griScore || 0}/100</span>
-      </div>
-      <div class="compliance-card">
-        <span class="compliance-name">ISO 26000</span>
-        <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.isoScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.isoScore || 0}/100</span>
-      </div>
-      <div class="compliance-card">
-        <span class="compliance-name">ESG Rating</span>
-        <span class="compliance-score" style="color: ${impactData.complianceStatus.esGRating >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.esGRating}/100</span>
+    <div class="section">
+      <h2><span class="section-icon">✅</span> Compliance & Certification Readiness</h2>
+      <div class="compliance-grid">
+        <div class="compliance-card">
+          <span class="compliance-name">B-Corp Alignment</span>
+          <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.bCorpScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.bCorpScore || 0}/100</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-name">GRI Standards</span>
+          <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.griScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.griScore || 0}/100</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-name">ISO 26000</span>
+          <span class="compliance-score" style="color: ${(impactData.complianceStatus.complianceScores?.isoScore || 0) >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.complianceScores?.isoScore || 0}/100</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-name">ESG Rating</span>
+          <span class="compliance-score" style="color: ${impactData.complianceStatus.esGRating >= 80 ? '#059669' : '#f59e0b'}">${impactData.complianceStatus.esGRating}/100</span>
+        </div>
       </div>
     </div>
   </div>

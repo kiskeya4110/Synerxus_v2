@@ -1528,7 +1528,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px;
     }
-    @page { size: 8.5in 11in portrait; margin: 22mm 44mm; }
+    @page { size: 8.5in 11in portrait; margin: 11mm 22mm; }
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; font-size: 10px; }
       .report-body { border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; }
@@ -2104,7 +2104,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   .badge-warn { color: #d97706; font-weight: 600; }
   .note { background: var(--teal-lt); border-left: 3px solid var(--teal); padding: 8px 12px; font-size: 10px; color: #065f46; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
   .warn-note { background: #fffbeb; border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: #92400e; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
-  @page { size: A4 portrait; margin: 22mm 44mm; }
+  @page { size: A4 portrait; margin: 11mm 22mm; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { padding: 0; }

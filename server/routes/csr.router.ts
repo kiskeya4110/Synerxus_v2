@@ -1724,20 +1724,20 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, queueMiddlewar
     @page { margin: 0; size: A4; }
     @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; color: #333; background: #fff; }
-    .header { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 48px 112px; position: relative; page-break-inside: avoid; break-inside: avoid; }
+    .header { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 24px 56px; position: relative; page-break-inside: avoid; break-inside: avoid; }
     .header-content { display: flex; justify-content: space-between; align-items: center; }
     .company-logo { max-width: 180px; max-height: 80px; background: white; padding: 12px; border-radius: 8px; }
     .report-title { text-align: right; }
     .report-title h1 { margin: 0; font-size: 28px; font-weight: 700; }
     .report-title p { margin: 8px 0 0 0; font-size: 14px; opacity: 0.9; }
-    .report-meta { background: #f8fafc; padding: 28px 112px; border-bottom: 3px solid #f97316; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; break-inside: avoid; }
+    .report-meta { background: #f8fafc; padding: 14px 56px; border-bottom: 3px solid #f97316; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; break-inside: avoid; }
     .company-info h2 { margin: 0; font-size: 22px; color: #1e3a8a; }
     .company-info p { margin: 4px 0 0 0; font-size: 13px; color: #6b7280; }
     .rating-badge { text-align: center; background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .rating-score { font-size: 36px; font-weight: 800; color: ${impactStyleColor}; }
     .rating-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
     .rating-style { font-size: 14px; font-weight: 600; color: ${impactStyleColor}; margin-top: 4px; }
-    .content { padding: 48px 112px; }
+    .content { padding: 24px 56px; }
     .section { page-break-before: always; break-before: page; padding-top: 8px; }
     h2 { color: #1e3a8a; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; page-break-after: avoid; break-after: avoid; }
     h2 + * { page-break-before: avoid; break-before: avoid; }
@@ -1759,7 +1759,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, queueMiddlewar
     .sdg-table td { padding: 13px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
     .sdg-table tr { page-break-inside: avoid; break-inside: avoid; }
     .sdg-table tr:nth-child(even) { background: #f9fafb; }
-    .footer { background: #111827; color: white; padding: 32px 112px; display: flex; justify-content: space-between; align-items: center; margin-top: 48px; page-break-inside: avoid; break-inside: avoid; }
+    .footer { background: #111827; color: white; padding: 16px 56px; display: flex; justify-content: space-between; align-items: center; margin-top: 48px; page-break-inside: avoid; break-inside: avoid; }
     .footer-brand { display: flex; align-items: center; gap: 8px; }
     .footer-brand span { color: #f97316; font-weight: 700; font-size: 18px; }
     .footer-text { font-size: 11px; color: #9ca3af; }
@@ -1792,7 +1792,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, queueMiddlewar
   </div>
 
   <!-- TEMPLATE CONTEXT NOTICE -->
-  <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px 112px;break-inside:avoid;page-break-inside:avoid;">
+  <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:8px 56px;break-inside:avoid;page-break-inside:avoid;">
     <div style="max-width:100%;">
       <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;">&#9888; TEMPLATE CONTEXT — VERIFICATION METHODOLOGY DEMONSTRATION</div>
       <div style="font-size:11px;color:#78350f;line-height:1.6;">This is a <strong>pilot-format sample report</strong> demonstrating how Synerxus verification architecture SUPPORTS CSRD/ESRS disclosure requirements. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Data shown reflects NGO-confirmed outcomes from the active corporate pilot. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70% when paired with real pilot data; it does not replace auditor judgment. Final limited assurance requires independent auditor procedures per ISAE 3000.</div>

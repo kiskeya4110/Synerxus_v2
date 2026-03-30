@@ -1,0 +1,551 @@
+SYNERXUS  |  Impact, verified.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFIED IMPACT SUMMARY
+Green Future Alliance
+Empowering communities for a sustainable future
+Generated: March 30, 2026
+Report ID: VIS-2026-0330-GFA
+Period: Q1 2026 (Jan 1 – Mar 30)
+Location: Sacramento, United States
+
+
+Assurance Scope Statement
+
+
+REPORT CLASSIFICATION
+This Verified Impact Summary contains NGO-verified outcome data with immutable audit trails. It is designed to SUPPORT ESG assurance procedures under ISAE 3000 but is NOT itself an external assurance opinion.
+
+
+Scope of Verification
+All outcomes verified between January 1, 2026 and March 30, 2026 by Green Future Alliance staff with signing authority under NGO bylaws.
+
+Verification Boundary
+Included in Scope
+Excluded from Scope
+Outcomes verified by NGO Program Director or designated staff
+Self-reported volunteer hours without NGO confirmation
+Outcomes confirmed within 72 hours of completion
+Outcomes verified >72 hours post-completion
+Beneficiary counts validated by NGO staff
+Estimated or projected beneficiary numbers
+SDG alignment per documented methodology
+Tertiary or speculative SDG connections
+Negative impact screening responses
+Unobserved or unreported impacts
+
+
+Intended Use
+This report provides verified outcome data that supports CSRD/ESRS disclosure requirements. It reduces auditor evidence-gathering burden by 60-70% but does not replace auditor judgment. Final compliance determination requires independent assurance per ISAE 3000.
+
+
+
+ASSURANCE LIMITATION
+Synerxus provides verification infrastructure, not assurance opinions. This report is classified as: Management Reporting (Verified) | Audit Readiness: Partial. For formal CSRD assurance, this data should be reviewed by a qualified third-party auditor.
+
+Verified Impact Snapshot
+
+14
+Verified Outcomes
+NGO-confirmed
+92
+Verified Hours
+Not self-reported
+28
+Beneficiaries Reached
+From verified outcomes
+
+
+Engagement Metrics
+Metric
+Value
+Notes
+Volunteers
+1
+Active contributors this period
+Skill Categories
+6
+Civil Engineering, Construction, Project Management, Mentorship, Training, Documentation
+Volunteer Countries
+1
+United States
+Verification Rate
+100%
+All submitted outcomes verified by NGO
+Avg. Time to Verify
+29 hours
+From submission to NGO confirmation
+Active Projects
+2
+Community Climate Resilience Hubs, Solar Village Initiative
+
+
+SDG Alignment (UN Sustainable Development Goals)
+Primary SDG assigned based on direct outcome alignment per UN SDG Target Database v2.1. See Appendix D for full methodology.
+SDG
+Goal
+Outcomes
+Hours
+% of Total
+13
+Climate Action
+14
+92h
+25%
+1
+No Poverty
+7
+53h
+13%
+4
+Quality Education
+7
+39h
+13%
+7
+Affordable & Clean Energy
+7
+53h
+13%
+8
+Decent Work & Economic Growth
+7
+53h
+13%
+
+
+CSRD/ESRS Compliance Mapping
+
+
+COMPLIANCE LANGUAGE NOTE
+This section shows how verified data SUPPORTS CSRD/ESRS requirements. It does not assert full compliance, which requires independent assurance.
+
+
+Standard
+Requirement
+How This Report Supports
+ESRS S3.3
+Community engagement processes
+Mapped to: 14 NGO-verified community outcomes with audit trails
+ESRS S3.4
+Actual positive impacts
+Supported by: 28 beneficiaries reached, verified by NGO staff
+ESRS S3.4
+Negative impacts disclosure
+Addressed: Screening conducted, 0 negative impacts identified (see Page 3)
+ESRS S1.4
+Skills development
+Supported by: 6 skill categories deployed across 2 projects
+ESRS G1.3
+Monitoring processes
+Demonstrated by: 100% verification rate, 29h average SLA
+
+
+
+
+AUDIT TRAIL COMPLETENESS: 100%
+Every outcome includes: verification timestamp, verifier identity, device ID/SMS number, geolocation, and hours — all NGO-confirmed with immutable records.
+
+
+Top Verified Outcomes
+Filterable by project category. Each outcome includes complete audit trail.
+Outcome 1: Green Infrastructure Installation
+Field
+Value
+Volunteer
+Al Honorat
+Description
+Green infrastructure installation and sustainable drainage system setup
+Skills Applied
+Civil Engineer, Construction
+Time to Verify
+12 hours
+Verification Date
+February 14, 2026
+
+
+Audit Trail:
+Method: App verification | Device: N/A | Geolocation: Sacramento, United States | Timestamp: 12:26:45 UTC | Verified by: Green Future Alliance staff
+Outcome 2: Households with Solar Access
+Field
+Value
+Volunteer
+Al Honorat
+Description
+Functional solar microgrid installation providing energy access to households
+SDG Primary
+SDG 7: Affordable & Clean Energy
+Time to Verify
+131 hours
+Verification Date
+March 18, 2026
+
+
+Audit Trail:
+Method: App verification | Device: dev_u8swce… | Geolocation: Sacramento, United States | Timestamp: 17:26:02 UTC | Verified by: Green Future Alliance staff
+
+Outcome 3: Hub Commissioning & Knowledge Transfer
+Field
+Value
+Volunteer
+Al Honorat
+Description
+Final hub commissioning, documentation, and knowledge transfer to local team
+Skills Applied
+Project Management, Mentorship
+Time to Verify
+12 hours
+Verification Date
+February 14, 2026
+
+
+Audit Trail:
+Method: App verification | Device: N/A | Geolocation: Sacramento, United States | Timestamp: 12:26:45 UTC | Verified by: Green Future Alliance staff
+Negative Impact Disclosure
+Required for ESRS S3.4 compliance — all unintended consequences disclosed alongside positive outcomes.
+
+Negative Impact Screening Protocol
+All NGO partners complete mandatory negative impact screening at verification. This systematic process ensures negative impacts are actively identified, not passively overlooked.
+
+Screening Questions Administered
+Question
+Response
+Date Screened
+Did this project create unintended negative consequences for communities?
+No
+Mar 30, 2026
+Did this project cause environmental side effects?
+No
+Mar 30, 2026
+Did this project displace existing resources or services?
+No
+Mar 30, 2026
+Did beneficiaries report any concerns or complaints?
+No
+Mar 30, 2026
+
+
+Screening Process
+Parties Consulted: NGO Program Director, Community Liaison, Project Coordinator
+Screening Method: Structured questionnaire administered at outcome verification
+Documentation: All responses logged with timestamp in Synerxus platform
+
+
+
+Q1 2026 SCREENING RESULT
+Zero 'Yes' responses recorded for Q1 2026 reporting period. All 14 verified outcomes passed negative impact screening without triggering disclosure requirements.
+
+
+
+
+SCREENING LIMITATION
+This screening covers reported and observed impacts only. Unobserved effects, long-term consequences, or impacts not reported by consulted parties may exist but are outside the scope of this screening protocol.
+
+
+Contribution Evidence
+
+
+METHODOLOGY NOTE: CONTRIBUTION VS. ATTRIBUTION
+This section documents verifiable CONTRIBUTION — the evidence chain showing how volunteer activities contributed to verified outcomes. It does NOT claim sole causality (attribution), which would require randomized controlled trials or quasi-experimental evaluation design. Contribution evidence is legally defensible and audit-appropriate.
+
+
+Verified Contribution Pathways
+How volunteer activities contributed to verified outcomes:
+
+Pathway 1: Community Climate Resilience Hubs
+Volunteer: Al Honorat
+Activity: Green infrastructure installation and sustainable drainage system setup
+Hours Contributed: 8 hours
+Outcome Verified: Hub infrastructure completed and operational
+NGO Confirmation: Green Future Alliance staff verified completion on Feb 14, 2026
+Contribution Chain: Volunteer delivered technical expertise → NGO confirmed installation → Infrastructure serving community
+
+
+Pathway 2: Solar Village Initiative
+Volunteer: Al Honorat
+Activity: Solar microgrid installation and household connection
+Hours Contributed: 8 hours
+Outcome Verified: Households with functional solar access
+NGO Confirmation: Green Future Alliance staff verified on Mar 18, 2026
+SDG Advancement: Contributes to SDG 7 (Affordable & Clean Energy)
+Contribution Chain: Volunteer installed equipment → NGO confirmed functionality → Households receiving energy
+
+Pathway 3: Knowledge Transfer
+Volunteer: Al Honorat
+Activity: Final hub commissioning, documentation, and knowledge transfer to local team
+Hours Contributed: 8 hours
+Outcome Verified: Local team trained and documentation complete
+NGO Confirmation: Green Future Alliance staff verified on Feb 14, 2026
+Contribution Chain: Volunteer transferred knowledge → NGO confirmed receipt → Local capacity built
+Corporate Partner Value
+Value Category
+Description
+Employee Development
+1 volunteer gained cross-cultural project management experience across 2 projects
+ESG Reporting Support
+Verified data supports CSRD reporting requirements (ESRS S3/S1/G1 mapped)
+Reputation
+NGO-verified, audit-ready impact data strengthens credibility of impact claims
+Strategic Alignment
+Documented contribution to UN SDG commitments (13, 1, 4, 7, 8)
+
+
+Recommendations & Next Steps
+1. Maintain verification rate above 75% threshold via continued NGO partnership engagement
+2. Expand diaspora volunteer matching to increase cultural context quality scores
+3. Develop longitudinal impact tracking (6-month follow-up on key outcomes) for Level 5 verification
+4. Integrate with corporate HRIS for automated volunteer reporting
+5. Consider third-party assurance engagement for formal CSRD compliance certification
+
+Appendix A: Verification Protocol
+
+A.1 Verification Control Statement
+All outcomes in this report were verified according to the following protocol:
+
+Approval Hierarchy
+Level
+Role
+Authority
+Responsibility
+1
+Volunteer
+Submit only
+Logs outcome + hours claimed (unverified)
+2
+NGO Program Staff
+Verify outcomes
+Confirms outcome occurred via direct observation or evidence
+3
+NGO Program Director
+Final approval
+Reviews disputed verifications; signing authority per NGO bylaws
+4
+System
+Lock record
+Creates immutable audit trail; no further edits permitted
+
+
+Verification Requirements
+For an outcome to be marked as 'verified,' the following conditions must be met:
+
+(a) Visual confirmation of deliverable by NGO staff member with signing authority
+(b) Beneficiary count validation against project records
+(c) Single-tap confirmation via SMS or app within 72 hours of completion
+(d) No volunteer self-verification permitted
+(e) Verifier must have direct knowledge of the program
+(f) Verifier cannot be the same person who submitted the outcome
+
+Independence Safeguards
+Verifiers are NGO employees, not volunteers or beneficiaries. This separation ensures independent confirmation of outcomes and prevents conflicts of interest in the verification process.
+
+Exceptions Process
+Disputed verifications are escalated to NGO Program Director for review. Rejected outcomes are logged with reason code and timestamp. Appeals require written justification and are documented in the system.
+Appendix B: Outcome Dictionary
+Formal definitions for each outcome type used in this report. Definitions ensure outcomes are countable, measurable, and auditable.
+
+Outcome Type
+Definition
+Counting Rule
+Evidence Required
+Green Infrastructure Installation
+Physical installation of sustainable drainage, rain garden, bioswale, or similar green infrastructure
+Count = 1 per completed installation
+NGO confirmation + geotagged photo
+Solar Hub Commissioning
+Functional solar microgrid serving ≥1 household with demonstrated uptime
+Count = number of households connected
+NGO confirmation + beneficiary list
+Knowledge Transfer
+Formal handover of documentation and training to local team members
+Count = 1 per completed handover session
+NGO confirmation + attendance record
+Skills Training Delivery
+Workshop or training session with participants completing practical exercises
+Count = number of participants certified
+NGO confirmation + attendance sheet
+Community Benefit Delivery
+Tangible benefit delivered to identified community members
+Count = number of beneficiaries served
+NGO confirmation + beneficiary verification
+
+
+Outcome Unit Definitions
+Verified Outcome: A single discrete deliverable confirmed by NGO verifier
+Beneficiary: An individual person who directly received benefit from the outcome
+Verified Hour: Time spent on outcome delivery, confirmed by NGO as accurate
+Outcome Unit: Quantifiable measure of outcome magnitude (e.g., households served, people trained)
+
+Appendix C: Reconciliation Table
+This table demonstrates mathematical integrity by showing how all metrics relate and trace to source records.
+
+C.1 Project-Level Reconciliation
+Project
+Verified Outcomes
+Beneficiaries
+Hours
+Ratio (Outcome:Beneficiary)
+Community Climate Resilience Hubs
+7
+14
+46h
+1:2
+Solar Village Initiative
+7
+14
+46h
+1:2
+TOTAL
+14
+28
+92h
+1:2
+
+
+C.2 Metric Definitions
+14 Verified Outcomes: Count of discrete deliverables confirmed by NGO staff
+28 Beneficiaries: Sum of individuals directly served across all verified outcomes
+92 Verified Hours: Sum of volunteer time confirmed by NGO as accurately reported
+1:2 Ratio: Each verified outcome serves an average of 2 beneficiaries
+
+C.3 Verification Completeness
+Status
+Count
+Percentage
+Outcomes submitted
+14
+100%
+Outcomes verified by NGO
+14
+100%
+Outcomes pending verification
+0
+0%
+Outcomes rejected
+0
+0%
+
+
+
+
+RECONCILIATION CHECK: PASSED
+All metrics trace to source verification records. No discrepancies identified. Mathematical relationships are internally consistent.
+
+
+Appendix D: SDG Assignment Protocol
+Methodology for assigning UN Sustainable Development Goals to verified outcomes.
+
+D.1 Assignment Rules
+Primary SDG: Assigned based on direct outcome alignment per UN SDG Target Database v2.1. The primary SDG represents the most direct connection between the verified outcome and SDG targets.
+
+Secondary SDG: Assigned only when outcome explicitly enables cross-cutting benefit. Example: Solar hub installation → SDG 7 primary + SDG 5 secondary if 50%+ beneficiaries are women.
+
+Tertiary SDG: Not permitted. Limiting to primary and secondary SDGs prevents over-claiming of impact alignment.
+D.2 SDG Mapping for This Report
+Outcome Type
+Primary SDG
+Secondary SDG(s)
+Rationale
+Green Infrastructure Installation
+SDG 13: Climate Action
+SDG 11: Sustainable Cities
+Direct climate adaptation infrastructure
+Solar Hub Commissioning
+SDG 7: Affordable & Clean Energy
+SDG 1: No Poverty
+Energy access reduces poverty burden
+Knowledge Transfer
+SDG 4: Quality Education
+SDG 8: Decent Work
+Skills transfer enables economic participation
+Community Benefit Delivery
+SDG 1: No Poverty
+Varies by benefit type
+Direct poverty reduction through service delivery
+
+
+D.3 Governance
+SDG mapping is reviewed quarterly by Synerxus Impact Advisory Board to ensure consistency across reporting periods and alignment with evolving UN guidance.
+
+Appendix E: Evidence Matrix
+Links each claim in this report to its supporting artifact and verifier.
+
+Claim
+Supporting Artifact
+Location
+Verifier
+14 verified outcomes
+Raw outcome logs
+Synerxus Platform Record #GF-2026-Q1
+System auto-log
+92 verified hours
+Aggregated hour records
+Synerxus Platform Record #GF-2026-Q1
+NGO staff confirmation
+28 beneficiaries reached
+NGO-provided beneficiary count
+Verification record #GF-2026-001 through #GF-2026-014
+Elodie Bernard, Program Director
+100% verification rate
+Verification status log
+Synerxus Platform Analytics
+System calculation
+SDG 13 alignment (14 outcomes)
+SDG mapping table
+Appendix D of this report
+System auto-tag per protocol
+0 negative impacts
+Negative impact screening responses
+Screening records #NI-2026-001 through #NI-2026-014
+NGO Program Staff
+29h average time to verify
+Timestamp differential calculation
+Synerxus Platform Analytics
+System calculation
+
+
+Evidence Availability
+All supporting artifacts are retained in the Synerxus platform for a minimum of 7 years per data retention policy. Artifacts can be provided to auditors upon request with appropriate authorization.
+Appendix F: Control Signoff
+NGO Verification Authority Statement
+
+
+AUTHORIZED SIGNOFF
+I, Elodie Bernard, Program Director of Green Future Alliance, confirm that all outcomes reported in this Verified Impact Summary were independently verified by authorized NGO staff per our verification protocol. No outcomes were self-reported by volunteers or corporate partners. All verification was conducted by staff members with direct knowledge of the programs and signing authority under NGO bylaws.
+
+
+Field
+Value
+Signatory Name
+Elodie Bernard
+Title
+Program Director
+Organization
+Green Future Alliance
+Date
+March 30, 2026
+Verification Period Covered
+Q1 2026 (January 1 – March 30, 2026)
+Total Outcomes Verified
+14
+Verification Method
+App verification with audit trail
+
+
+Signature
+_________________________________________________
+Elodie Bernard, Program Director
+Green Future Alliance
+Date: March 30, 2026
+
+Synerxus Platform Certification
+This report was generated by Synerxus Impact Data Infrastructure. All data is NGO-verified with complete audit trails maintained per platform data retention policy.
+
+Report ID: VIS-2026-0330-GFA
+Generation Timestamp: March 30, 2026 18:00:00 UTC
+Platform Version: Synerxus v1.0
+
+
+DOCUMENT INTEGRITY
+This document contains 14 verified impact records representing 92 volunteer hours across 2 projects. All entries have been verified by authorized Green Future Alliance staff with immutable audit trails maintained. Document hash available upon request for integrity verification.
+
+

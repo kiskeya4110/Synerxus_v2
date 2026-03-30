@@ -37,7 +37,7 @@ import { Section, PageHeader, Grid } from "@/components/ui/section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { formatDecimal } from "@/lib/format-utils";
-import { getSDGColor } from "@shared/sdg-goals";
+import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 
 // Types
 interface PendingVerification {
@@ -346,7 +346,7 @@ interface SDGImpactProps {
 
 function SDGImpactSummary({ sdgData }: SDGImpactProps) {
   const sortedData = useMemo(() => {
-    return [...sdgData].sort((a, b) => b.hours - a.hours).slice(0, 6);
+    return [...sdgData].sort((a, b) => b.hours - a.hours);
   }, [sdgData]);
 
   const totalHours = useMemo(() => {
@@ -364,19 +364,24 @@ function SDGImpactSummary({ sdgData }: SDGImpactProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
       {sortedData.map((item) => {
         const percentage = totalHours > 0 ? (item.hours / totalHours) * 100 : 0;
+        const sdgGoal = SDG_GOALS[item.goal];
+        const sdgName = sdgGoal?.name ?? `SDG ${item.goal}`;
         return (
-          <div key={item.goal} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <SDGBadge sdg={item.goal as any} size="sm" />
-                <span className="text-sm text-muted-foreground">
-                  {item.projects} project{item.projects !== 1 ? "s" : ""}
-                </span>
+          <div key={item.goal} className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <SDGBadge sdg={item.goal as any} size="sm" className="shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-foreground truncate">{sdgName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {item.projects} project{item.projects !== 1 ? "s" : ""}
+                  </div>
+                </div>
               </div>
-              <span className="text-sm font-medium text-foreground">{item.hours}h</span>
+              <span className="text-xs font-medium text-foreground shrink-0">{item.hours}h</span>
             </div>
             <Progress value={percentage} size="xs" indicatorColor="primary" />
           </div>
@@ -1692,7 +1697,7 @@ const OrganizationView = memo(function OrganizationView({
         {/* Overview Tab */}
         <TabsContent value="overview" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card variant="glass" className="lg:col-span-2">
+            <Card variant="glass">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -1700,7 +1705,7 @@ const OrganizationView = memo(function OrganizationView({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-6">
+                <div className="flex flex-col gap-5">
                   <Stat
                     label="Total Hours"
                     value={stats.totalHours}
@@ -1721,7 +1726,7 @@ const OrganizationView = memo(function OrganizationView({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5 text-success" />

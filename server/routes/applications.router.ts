@@ -5,6 +5,7 @@ import { handleValidationError } from "./utils";
 import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
 import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication, sendNewApplicationEmail } from "../notification-service";
 import OpenAI from "openai";
+import { getPaginationParams, paginateArray } from "../pagination";
 
 export const applicationsRouter = Router();
 
@@ -69,7 +70,8 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
       };
     });
 
-    res.json(enrichedApplications);
+    const pagination = getPaginationParams(req);
+    res.json(paginateArray(enrichedApplications, pagination));
   } catch (err) {
     console.error("Error fetching applications:", err);
     res.status(500).json({ message: "Failed to fetch applications" });

@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import type { IncomingMessage } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
 import { db } from "./db";
 import { WebSocketServer } from "ws";
@@ -48,6 +49,8 @@ import { registerChatRoutes } from "./replit_integrations/chat";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { getPaginationParams, paginateArray } from "./pagination";
+import { verifyToken } from "./middleware/auth";
+import { logger } from "./logger";
 
 // ===== ROUTER MODULE IMPORTS =====
 import { usersRouter, setBroadcastFn as setUsersBroadcast } from "./routes/users.router";
@@ -320,20 +323,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   let wss: WebSocketServer | null = null;
-  
+
+  // Per-IP connection counter for WebSocket rate limiting
+  const wsConnectionsPerIp = new Map<string, number>();
+
   // Only set up WebSocket server in production to avoid conflicts with Vite's HMR
   if (process.env.NODE_ENV === "production") {
-    wss = new WebSocketServer({ server: httpServer });
-    
-    wss.on("connection", (ws) => {
-      console.log("WebSocket client connected");
-      
-      ws.on("message", (message) => {
-        console.log("Received message:", message);
+    wss = new WebSocketServer({ noServer: true });
+
+    // Authenticate on the HTTP upgrade event — before the socket is handed to ws
+    httpServer.on("upgrade", (req: IncomingMessage, socket, head) => {
+      // Extract token from ?token= query param
+      const url = new URL(req.url || "/", `http://${req.headers.host}`);
+      const token = url.searchParams.get("token");
+
+      if (!token || !verifyToken(token)) {
+        logger.warn(`[WS] Rejected unauthenticated upgrade from ${req.socket.remoteAddress}`);
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      // Per-IP connection rate limit: max 5 concurrent WS connections per IP
+      const ip = req.socket.remoteAddress || "unknown";
+      const current = wsConnectionsPerIp.get(ip) ?? 0;
+      const WS_MAX_PER_IP = parseInt(process.env.WS_MAX_CONNECTIONS_PER_IP || "5", 10);
+      if (current >= WS_MAX_PER_IP) {
+        logger.warn(`[WS] Rejected connection from ${ip} — limit of ${WS_MAX_PER_IP} reached`);
+        socket.write("HTTP/1.1 429 Too Many Connections\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      wss!.handleUpgrade(req, socket, head, (ws) => {
+        wsConnectionsPerIp.set(ip, (wsConnectionsPerIp.get(ip) ?? 0) + 1);
+        ws.on("close", () => {
+          const remaining = (wsConnectionsPerIp.get(ip) ?? 1) - 1;
+          if (remaining <= 0) wsConnectionsPerIp.delete(ip);
+          else wsConnectionsPerIp.set(ip, remaining);
+        });
+        wss!.emit("connection", ws, req);
       });
-      
+    });
+
+    wss.on("connection", (ws) => {
+      logger.info("[WS] Authenticated client connected");
+
+      ws.on("message", (message) => {
+        logger.debug("[WS] Received message:", message);
+      });
+
       ws.on("close", () => {
-        console.log("WebSocket client disconnected");
+        logger.info("[WS] Client disconnected");
       });
     });
   }

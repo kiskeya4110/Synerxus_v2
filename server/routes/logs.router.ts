@@ -1248,7 +1248,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     const beneficiariesPerOutcome = effectiveBeneficiaries > 0 && verified.length > 0 ? Math.round(effectiveBeneficiaries / verified.length) : 0;
 
     // Additional display variables for new report format
-    const skillCategoriesDisplay = allSkills.size > 0 ? [...allSkills].join(', ') : 'N/A';
+    const skillCategoriesDisplay = allSkills.size > 0 ? Array.from(allSkills).join(', ') : 'N/A';
     const activeProjectNames = projectStats.map(p => p.name).join(', ') || 'N/A';
     const totalSdgHours = Object.values(sdgMap).reduce((s: number, d: any) => s + d.hours, 0);
 

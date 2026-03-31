@@ -26,6 +26,7 @@ import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
 import { securityHeaders, sanitizeInput, cleanupSecurity } from "./middleware/security";
+import { closeRedis } from "./redis";
 import { exec } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
 import { initializeEnv } from "./utils/env";
@@ -203,7 +204,15 @@ async function gracefulShutdown(signal: string) {
       logger.warn('[Shutdown] Error flushing error tracking:', e);
     }
 
-    // 4. Close database connections
+    // 4. Close Redis connection
+    try {
+      await closeRedis();
+      logger.info('[Shutdown] Redis connection closed');
+    } catch (e) {
+      logger.warn('[Shutdown] Error closing Redis:', e);
+    }
+
+    // 5. Close database connections
     logger.info('[Shutdown] Closing database connections...');
     try {
       await pool.end();
@@ -522,10 +531,9 @@ app.use((req, res, next) => {
     await checkDatabaseSchema();
   });
 
-  // Fix organization user display names (deferred to avoid blocking startup)
-  setImmediate(() => {
-    fixOrganizationDisplayNames();
-  });
+  // fixOrganizationDisplayNames() was a one-time data migration that loaded all users
+  // and organizations on every boot. It has been removed from startup to avoid
+  // full-table scans at scale. Run it as a one-off migration script if needed.
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

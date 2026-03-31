@@ -5,6 +5,7 @@ import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { cache, CACHE_TTL } from "../cache";
 import { isPreapprovedEmail } from "../config/preapproved-emails";
 import { authMiddleware } from "../middleware/auth";
+import { getPaginationParams, paginateArray } from "../pagination";
 
 export const organizationsRouter = Router();
 
@@ -19,7 +20,8 @@ export function setBroadcastFn(fn: BroadcastFn) {
 organizationsRouter.get("/", async (req: Request, res: Response) => {
   try {
     const organizations = await storage.listOrganizations();
-    res.json(organizations);
+    const pagination = getPaginationParams(req);
+    res.json(paginateArray(organizations, pagination));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch organizations" });
   }

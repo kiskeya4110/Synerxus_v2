@@ -3,8 +3,10 @@ import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { authRateLimiter } from "../middleware/security";
-import { authMiddleware, optionalAuthMiddleware, generateToken } from "../middleware/auth";
+import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth";
+import { generateTokenPair, blacklistToken, verifyRefreshToken } from "../middleware/security";
 import { isPreapprovedEmail } from "../config/preapproved-emails";
+import { getPaginationParams, paginateArray } from "../pagination";
 
 export const usersRouter = Router();
 
@@ -54,7 +56,8 @@ usersRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
       users = users.filter((u: any) => u.userType === userType);
     }
 
-    res.json(users);
+    const pagination = getPaginationParams(req);
+    res.json(paginateArray(users, pagination));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch users" });
   }
@@ -134,8 +137,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     if (user) {
       // Existing user - return with isNewUser: false
       console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
-      const jwtToken = generateToken({ ...user, userType: user.userType || "volunteer" });
-      return res.json({ ...user, isNewUser: false, jwtToken });
+      const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+      return res.json({ ...user, isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
     user = await storage.getUserByEmail(email);
@@ -148,8 +151,8 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       });
       // Existing user (linking account) - return with isNewUser: false
       const tokenUser = updatedUser || user;
-      const jwtToken = generateToken({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
-      return res.json({ ...updatedUser, isNewUser: false, jwtToken });
+      const tokens = generateTokenPair({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
+      return res.json({ ...updatedUser, isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
     console.log(`[firebase-sync] No existing user found for email: ${email}, userType: ${userType || 'not provided'}`);
@@ -231,12 +234,56 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
 
     broadcastUpdate("user_created", user);
     // New user - return with isNewUser: true
-    const jwtToken = generateToken({ ...user, userType: user.userType || "volunteer" });
-    res.status(201).json({ ...user, isNewUser: true, jwtToken });
+    const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+    res.status(201).json({ ...user, isNewUser: true, jwtToken: tokens.accessToken, ...tokens });
   } catch (err) {
     console.error("[firebase-sync] Error creating user:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
+  }
+});
+
+// POST /api/users/logout - Revoke access + refresh tokens
+usersRouter.post("/logout", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      await blacklistToken(authHeader.slice(7));
+    }
+    const { refreshToken } = req.body;
+    if (refreshToken && typeof refreshToken === "string") {
+      await blacklistToken(refreshToken);
+    }
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Logout failed" });
+  }
+});
+
+// POST /api/users/token/refresh - Exchange a valid refresh token for a new access token
+usersRouter.post("/token/refresh", authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken || typeof refreshToken !== "string") {
+      return res.status(400).json({ error: "MISSING_REFRESH_TOKEN", message: "refreshToken is required" });
+    }
+
+    const payload = await verifyRefreshToken(refreshToken);
+    if (!payload) {
+      return res.status(401).json({ error: "INVALID_REFRESH_TOKEN", message: "Refresh token is invalid or expired" });
+    }
+
+    const user = await storage.getUser(payload.userId);
+    if (!user) {
+      return res.status(401).json({ error: "USER_NOT_FOUND", message: "User no longer exists" });
+    }
+
+    // Rotate: blacklist old refresh token, issue new pair
+    await blacklistToken(refreshToken);
+    const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+    res.json({ jwtToken: tokens.accessToken, ...tokens });
+  } catch (err) {
+    res.status(500).json({ message: "Token refresh failed" });
   }
 });
 

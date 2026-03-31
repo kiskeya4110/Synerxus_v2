@@ -241,7 +241,13 @@
       "Bash(cp synerxus-esg-logo.png favicon-192.png)",
       "Bash(cp synerxus-esg-logo.png favicon-512.png)",
       "Bash(cp synerxus-esg-logo.png apple-touch-icon.png)",
-      "Bash(find /home/runner/workspace/public -type f \\\\\\(-name *.png -o -name *.jpg -o -name *.jpeg -o -name *.gif -o -name *.svg -o -name *.webp -o -name *.ico \\\\\\))"
+      "Bash(find /home/runner/workspace/public -type f \\\\\\(-name *.png -o -name *.jpg -o -name *.jpeg -o -name *.gif -o -name *.svg -o -name *.webp -o -name *.ico \\\\\\))",
+      "Bash(node -e \"require\\(''ioredis''\\)\")",
+      "Bash(sed -n '388,410p' /home/runner/workspace/server/routes/admin.router.ts)",
+      "Bash(sed -n '580,600p' /home/runner/workspace/server/routes/admin.router.ts)",
+      "Bash(sed -n '980,1000p' /home/runner/workspace/server/routes/admin.router.ts)",
+      "Bash(sed -n '300,330p' /home/runner/workspace/server/routes/admin.router.ts)",
+      "Bash(sed -n '774,800p' /home/runner/workspace/server/routes/admin.router.ts)"
     ],
     "deny": [],
     "ask": []

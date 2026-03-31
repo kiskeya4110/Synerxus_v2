@@ -46,21 +46,20 @@ projectAssignmentsRouter.get("/", async (req: Request, res: Response) => {
       assignments = await storage.listProjectAssignments();
     }
 
-    // Enrich assignments with project and organization data
-    const enrichedAssignments = await Promise.all(
-      assignments.map(async (assignment: any) => {
-        if (!assignment.projectId) {
-          return { ...assignment, project: null, organization: null };
-        }
-        const project = await storage.getProject(assignment.projectId);
-        const organization = project?.organizationId ? await storage.getOrganization(project.organizationId) : null;
-        return {
-          ...assignment,
-          project,
-          organization
-        };
-      })
-    );
+    // Batch-fetch all projects and organizations to avoid N+1 queries
+    const projectIds = Array.from(new Set(assignments.map((a: any) => a.projectId).filter(Boolean)));
+    const projects = projectIds.length > 0 ? await storage.getProjectsByIds(projectIds) : [];
+    const projectMap = new Map(projects.map((p: any) => [p.id, p]));
+
+    const orgIds = Array.from(new Set(projects.map((p: any) => p.organizationId).filter(Boolean)));
+    const orgs = orgIds.length > 0 ? await storage.getOrganizationsByIds(orgIds) : [];
+    const orgMap = new Map(orgs.map((o: any) => [o.id, o]));
+
+    const enrichedAssignments = assignments.map((assignment: any) => {
+      const project = projectMap.get(assignment.projectId) ?? null;
+      const organization = project?.organizationId ? orgMap.get(project.organizationId) ?? null : null;
+      return { ...assignment, project, organization };
+    });
 
     res.json(enrichedAssignments);
   } catch (err) {
@@ -91,70 +90,55 @@ projectAssignmentsRouter.get("/details", async (req: Request, res: Response) => 
 
     const assignments = await storage.listProjectAssignmentsByVolunteer(volId);
 
-    // Enrich each assignment with team members, activities, and project info
+    // Batch-fetch all projects and organizations up front to avoid N+1 queries
+    const detailProjectIds = Array.from(new Set(assignments.map((a: any) => a.projectId).filter(Boolean)));
+    const detailProjects = detailProjectIds.length > 0 ? await storage.getProjectsByIds(detailProjectIds) : [];
+    const detailProjectMap = new Map(detailProjects.map((p: any) => [p.id, p]));
+
+    const detailOrgIds = Array.from(new Set(detailProjects.map((p: any) => p.organizationId).filter(Boolean)));
+    const detailOrgs = detailOrgIds.length > 0 ? await storage.getOrganizationsByIds(detailOrgIds) : [];
+    const detailOrgMap = new Map(detailOrgs.map((o: any) => [o.id, o]));
+
+    // Fetch all assignments for these projects in two queries (one per project batch is unavoidable
+    // here since listProjectAssignmentsByProject doesn't support multi-id yet — we cap at 5 per project)
+    const volunteerActivities = await storage.listVolunteerActivitiesByUser(volId);
+
     const enrichedAssignments = await Promise.all(
       assignments.map(async (assignment: any) => {
         try {
-          // Fetch project details (for fallback hoursCommitted and organization info)
-          const project = await storage.getProject(assignment.projectId);
-
-          // Fetch organization details
-          let organization = null;
-          if (project?.organizationId) {
-            organization = await storage.getOrganization(project.organizationId);
-          }
-
-          // Use hoursCommitted from assignment, or fallback to project's ongoingHoursPerWeek
+          const project = detailProjectMap.get(assignment.projectId) ?? null;
+          const organization = project?.organizationId ? detailOrgMap.get(project.organizationId) ?? null : null;
           const hoursCommitted = assignment.hoursCommitted || project?.ongoingHoursPerWeek || 0;
 
-          // Get team members (other volunteers on this project)
+          // Get team members — batch their user lookups
           const allAssignments = await storage.listProjectAssignmentsByProject(assignment.projectId);
-          const teamMembers = await Promise.all(
-            allAssignments
-              .filter((a: any) => a.volunteerId !== volId && a.status === 'active')
-              .slice(0, 5) // Limit to 5 team members for performance
-              .map(async (a: any) => {
-                const user = await storage.getUser(a.volunteerId);
-                return user ? {
-                  id: user.id,
-                  username: user.username,
-                  displayName: user.displayName,
-                  avatar: user.avatar,
-                  role: a.role
-                } : null;
-              })
-          );
+          const teamAssignments = allAssignments
+            .filter((a: any) => a.volunteerId !== volId && a.status === 'active')
+            .slice(0, 5);
+          const teamMemberIds = teamAssignments.map((a: any) => a.volunteerId).filter(Boolean);
+          const teamUsers = teamMemberIds.length > 0 ? await storage.getUsersByIds(teamMemberIds) : [];
+          const teamUserMap = new Map(teamUsers.map((u: any) => [u.id, u]));
+          const teamMembers = teamAssignments.map((a: any) => {
+            const user = teamUserMap.get(a.volunteerId);
+            return user ? { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar, role: a.role } : null;
+          }).filter(Boolean);
 
-          // Get recent activities for this volunteer on this project
-          const volunteerActivities = await storage.listVolunteerActivitiesByUser(volId);
           const activities = volunteerActivities
             .filter((activity: any) => activity.projectId === assignment.projectId)
             .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, 5); // Last 5 activities
+            .slice(0, 5);
 
           return {
             ...assignment,
-            hoursCommitted, // Use fallback value if not set
-            project: project ? {
-              id: project.id,
-              name: project.name,
-              description: project.description
-            } : null,
-            organization: organization ? {
-              id: organization.id,
-              name: organization.name
-            } : null,
-            teamMembers: teamMembers.filter((m: any) => m !== null),
+            hoursCommitted,
+            project: project ? { id: project.id, name: project.name, description: project.description } : null,
+            organization: organization ? { id: organization.id, name: organization.name } : null,
+            teamMembers,
             activities
           };
         } catch (error) {
           console.error(`Error enriching assignment ${assignment.id}:`, error);
-          return {
-            ...assignment,
-            hoursCommitted: assignment.hoursCommitted || 0,
-            teamMembers: [],
-            activities: []
-          };
+          return { ...assignment, hoursCommitted: assignment.hoursCommitted || 0, teamMembers: [], activities: [] };
         }
       })
     );

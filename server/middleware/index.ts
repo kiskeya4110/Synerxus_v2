@@ -8,7 +8,6 @@ export {
   verifyResourceAccess,
   getVerifiedUserId,
   extractUserIdSecure,
-  generateToken,
   verifyToken,
 } from "./auth";
 

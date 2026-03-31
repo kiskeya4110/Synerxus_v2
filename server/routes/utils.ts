@@ -60,8 +60,9 @@ export async function detectDuplicateImpact(
   storage: any
 ): Promise<{ isDuplicate: boolean; dedupGroupId?: number; matchingImpacts?: any[] }> {
   try {
-    const allImpacts = await storage.listProjectImpacts();
-    const projectImpacts = allImpacts.filter((i: any) => i.projectId === projectId && i.metricId === metricId);
+    // Use scoped query by projectId to avoid full-table scan
+    const allProjectImpacts = await storage.listProjectImpactsByProject(projectId);
+    const projectImpacts = allProjectImpacts.filter((i: any) => i.metricId === metricId);
 
     if (outcomeType === 'shared') {
       const timeWindowMs = 6 * 60 * 60 * 1000; // ±6 hours
@@ -152,25 +153,13 @@ export function handleValidationError(err: unknown) {
 }
 
 /**
- * Extract userId from request
- * @deprecated Use getAuthenticatedUser() instead for secure extraction
+ * Extract userId from request — only from verified JWT auth middleware.
+ * @deprecated Use getAuthenticatedUser() instead for full user object.
  */
 export function extractUserId(req: Request): number | null {
-  // SECURITY: Only use authenticated user from middleware
-  if ((req as any).user?.id) {
-    return (req as any).user.id;
-  }
-
-  // Legacy fallback - log warning, will be removed in future
-  const userIdStr = (req.body as Record<string, any>).userId || (req.query.userId as string) || (req.headers['x-user-id'] as string);
-  if (!userIdStr) return null;
-  const userId = parseInt(userIdStr);
-
-  if (!isNaN(userId)) {
-    console.warn(`[Security] DEPRECATED: Legacy userId extraction for ${userId}. Migrate to JWT authentication.`);
-  }
-
-  return isNaN(userId) ? null : userId;
+  // SECURITY: Only return the userId set by authMiddleware — never from user-controlled sources.
+  // Legacy fallback reading from req.body/query/headers removed: it allowed user impersonation.
+  return (req as any).user?.id ?? null;
 }
 
 /**
@@ -327,11 +316,9 @@ export async function updateAiuKpiFromImpacts(projectId: number): Promise<void> 
       return;
     }
 
-    // Get all non-duplicated impacts for this project
-    const allImpacts = await storage.listProjectImpacts();
-    const projectImpactsList = allImpacts.filter(
-      (i: any) => i.projectId === projectId && !i.isDuplicated
-    );
+    // Get non-duplicated impacts for this project using scoped query
+    const allProjectImpacts = await storage.listProjectImpactsByProject(projectId);
+    const projectImpactsList = allProjectImpacts.filter((i: any) => !i.isDuplicated);
 
     // Calculate total impact value (sum of all verified and pending impacts)
     // Verified impacts get full credit, pending get 70%

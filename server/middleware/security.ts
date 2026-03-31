@@ -3,54 +3,54 @@ import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { logger } from "../logger";
+import { getRedisClient } from "../redis";
 
 // ============================================
-// Token Blacklist (In-Memory)
-// For production, consider Redis or database
+// Token Blacklist (Redis-backed, in-memory fallback)
+// Uses Redis when REDIS_URL is set; falls back to in-memory
+// for single-instance dev/staging deployments.
 // ============================================
-
-interface BlacklistedToken {
-  expiresAt: number;
-}
 
 class TokenBlacklist {
-  private blacklist: Map<string, number> = new Map();
+  // In-memory fallback map (used when Redis is unavailable)
+  private fallback: Map<string, number> = new Map();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Clean up expired tokens every 5 minutes
-    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
+    // Periodically sweep the in-memory fallback
+    this.cleanupInterval = setInterval(() => this._sweepFallback(), 5 * 60 * 1000).unref();
   }
 
-  add(token: string, expiresAt: number): void {
-    this.blacklist.set(token, expiresAt);
+  async add(token: string, expiresAt: number): Promise<void> {
+    const ttlSeconds = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
+    try {
+      const redis = await getRedisClient();
+      await redis.set(`bl:${token}`, "1", "EX", ttlSeconds);
+    } catch {
+      this.fallback.set(token, expiresAt);
+    }
   }
 
-  isBlacklisted(token: string): boolean {
-    return this.blacklist.has(token);
+  async isBlacklisted(token: string): Promise<boolean> {
+    try {
+      const redis = await getRedisClient();
+      return (await redis.exists(`bl:${token}`)) === 1;
+    } catch {
+      const exp = this.fallback.get(token);
+      if (exp === undefined) return false;
+      if (exp < Date.now()) { this.fallback.delete(token); return false; }
+      return true;
+    }
   }
 
-  private cleanup(): void {
+  private _sweepFallback(): void {
     const now = Date.now();
-    let cleaned = 0;
-
-    // Convert to array to avoid iteration issues with Map
-    const entries = Array.from(this.blacklist.entries());
-    for (const [token, expiresAt] of entries) {
-      if (expiresAt < now) {
-        this.blacklist.delete(token);
-        cleaned++;
-      }
-    }
-
-    if (cleaned > 0) {
-      logger.info(`[TokenBlacklist] Cleaned up ${cleaned} expired tokens`);
-    }
+    Array.from(this.fallback.entries()).forEach(([token, expiresAt]) => {
+      if (expiresAt < now) this.fallback.delete(token);
+    });
   }
 
-  size(): number {
-    return this.blacklist.size;
-  }
+  size(): number { return this.fallback.size; }
 
   stop(): void {
     if (this.cleanupInterval) {
@@ -79,7 +79,17 @@ if (!JWT_SECRET) {
   console.warn("[SECURITY] Generating random JWT secret for this session - tokens will be invalid after restart");
 }
 const JWT_SECRET_VALUE = JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET_VALUE + "-refresh";
+
+// REFRESH_TOKEN_SECRET must be independent from JWT_SECRET
+if (!process.env.REFRESH_TOKEN_SECRET) {
+  const msg = "CRITICAL: REFRESH_TOKEN_SECRET environment variable is required and must be independent from JWT_SECRET";
+  console.error(`[SECURITY] ${msg}`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(msg);
+  }
+  console.warn("[SECURITY] Generating random REFRESH_TOKEN_SECRET for this session — tokens will be invalid after restart");
+}
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || crypto.randomBytes(64).toString('hex');
 
 interface TokenPair {
   accessToken: string;
@@ -131,15 +141,15 @@ export function generateTokenPair(user: {
 }
 
 /**
- * Verify refresh token
+ * Verify refresh token — async due to Redis blacklist check
  */
-export function verifyRefreshToken(token: string): TokenPayload | null {
+export async function verifyRefreshToken(token: string): Promise<TokenPayload | null> {
   try {
-    if (tokenBlacklist.isBlacklisted(token)) {
+    if (await tokenBlacklist.isBlacklisted(token)) {
       return null;
     }
 
-    const decoded = jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+    const decoded = jwt.verify(token, REFRESH_SECRET, { algorithms: ["HS256"] }) as TokenPayload;
     if (decoded.type !== "refresh") {
       return null;
     }
@@ -151,33 +161,32 @@ export function verifyRefreshToken(token: string): TokenPayload | null {
 }
 
 /**
- * Blacklist a token (for logout)
+ * Blacklist a token (for logout) — async, Redis-backed
  */
-export function blacklistToken(token: string): void {
+export async function blacklistToken(token: string): Promise<void> {
   try {
     const decoded = jwt.decode(token) as jwt.JwtPayload;
-    if (decoded?.exp) {
-      tokenBlacklist.add(token, decoded.exp * 1000);
-    }
+    const expiresAt = decoded?.exp ? decoded.exp * 1000 : Date.now() + 24 * 60 * 60 * 1000;
+    await tokenBlacklist.add(token, expiresAt);
   } catch {
-    tokenBlacklist.add(token, Date.now() + 24 * 60 * 60 * 1000);
+    await tokenBlacklist.add(token, Date.now() + 24 * 60 * 60 * 1000);
   }
 }
 
 /**
- * Middleware to check token blacklist
+ * Middleware to check token blacklist — async
  */
-export function checkTokenBlacklist(
+export async function checkTokenBlacklist(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    if (tokenBlacklist.isBlacklisted(token)) {
+    if (await tokenBlacklist.isBlacklisted(token)) {
       res.status(401).json({
         error: "TOKEN_REVOKED",
         message: "This token has been revoked. Please log in again.",
@@ -292,11 +301,13 @@ export function securityHeaders(
   // Prevent MIME type sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
 
-  // Enable XSS filter
-  res.setHeader("X-XSS-Protection", "1; mode=block");
+  // X-XSS-Protection is deprecated in modern browsers and removed — rely on CSP instead
 
   // Referrer policy
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Restrict access to browser features not needed by this app
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()");
 
   // Content Security Policy - Strengthened to reduce XSS attack surface
   // Note: 'unsafe-inline' for styles is kept for React's CSS-in-JS compatibility
@@ -315,8 +326,12 @@ export function securityHeaders(
     "img-src 'self' data: blob: https:",
     // Fonts: Self, data URIs, and Google Fonts
     "font-src 'self' data: https://fonts.gstatic.com",
-    // API connections: Self and any HTTPS (for external APIs)
-    "connect-src 'self' https: wss:",
+    // API connections: Self plus specific trusted external services only
+    // Restricting to known hosts prevents data exfiltration via XSS
+    // wss: is locked to the app's own origin; set APP_ORIGIN in production for the exact domain
+    ...(process.env.APP_ORIGIN
+      ? [`connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss://${new URL(process.env.APP_ORIGIN).host}`]
+      : ["connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss:"]),
     // Prevent clickjacking via frames
     "frame-ancestors 'none'",
     // Restrict form submissions to same origin
@@ -329,11 +344,11 @@ export function securityHeaders(
 
   res.setHeader("Content-Security-Policy", cspDirectives);
 
-  // Strict Transport Security (for HTTPS)
+  // Strict Transport Security (for HTTPS) — includeSubDomains + preload for maximum protection
   if (process.env.NODE_ENV === "production") {
     res.setHeader(
       "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains"
+      "max-age=31536000; includeSubDomains; preload"
     );
   }
 
@@ -427,10 +442,16 @@ export const corsOptions = {
       return;
     }
 
-    // In production, check against whitelist
+    // In production, check against whitelist — fail closed if not configured
     const whitelist = (process.env.CORS_WHITELIST || "").split(",").filter(Boolean);
 
-    if (whitelist.length === 0 || whitelist.includes(origin)) {
+    if (whitelist.length === 0) {
+      logger.error("[CORS] CORS_WHITELIST is not set in production — blocking all cross-origin requests");
+      callback(new Error("CORS not configured"));
+      return;
+    }
+
+    if (whitelist.includes(origin)) {
       callback(null, true);
     } else {
       logger.warn(`[CORS] Blocked request from origin: ${origin}`);
@@ -565,10 +586,8 @@ export function csrfValidationMiddleware(
     return next();
   }
 
-  // Skip CSRF for Firebase UID authenticated requests
-  if (req.headers["x-firebase-uid"]) {
-    return next();
-  }
+  // Note: x-firebase-uid header bypass removed — presence of an arbitrary header
+  // is not a sufficient trust signal. Bearer token bypass above is sufficient.
 
   const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME] as string;

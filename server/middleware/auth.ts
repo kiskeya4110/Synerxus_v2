@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { storage } from "../storage";
 import { logger } from "../logger";
 import { verifyFirebaseIdToken } from "../lib/firebase-admin";
+import { cache, CACHE_TTL, cacheKeys } from "../cache";
 
 // Extend Express Request to include user
 declare global {
@@ -33,38 +34,12 @@ if (!JWT_SECRET) {
   console.warn("[SECURITY] Generating random JWT secret for this session - tokens will be invalid after restart");
 }
 const JWT_SECRET_VALUE = JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
-// Token expiration in seconds (7 days)
-const JWT_EXPIRES_IN_SECONDS = parseInt(process.env.JWT_EXPIRES_IN_SECONDS || "604800", 10);
-
-/**
- * Generate JWT token for a user
- */
-export function generateToken(user: {
-  id: number;
-  email: string;
-  userType: string;
-  organizationId?: number | null;
-  firebaseUid?: string | null;
-}): string {
-  return jwt.sign(
-    {
-      userId: user.id,
-      email: user.email,
-      userType: user.userType,
-      organizationId: user.organizationId,
-      firebaseUid: user.firebaseUid,
-    },
-    JWT_SECRET_VALUE,
-    { expiresIn: JWT_EXPIRES_IN_SECONDS }
-  );
-}
-
 /**
  * Verify JWT token
  */
 export function verifyToken(token: string): jwt.JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET_VALUE);
+    const decoded = jwt.verify(token, JWT_SECRET_VALUE, { algorithms: ["HS256"] });
     return decoded as jwt.JwtPayload;
   } catch (error) {
     return null;
@@ -133,21 +108,27 @@ export async function authMiddleware(
       return;
     }
 
-    // Fetch user from database
-    const user = await storage.getUser(userId);
+    // Fetch user from cache or database
+    const userCacheKey = cacheKeys.userProfile(userId);
+    let user = cache.get<{ id: number; email: string; userType: string; organizationId: number | null; firebaseUid: string | null }>(userCacheKey);
     if (!user) {
-      res.status(401).json({
-        error: "UNAUTHORIZED",
-        message: "User not found. Please log in again.",
-      });
-      return;
+      const dbUser = await storage.getUser(userId);
+      if (!dbUser) {
+        res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "User not found. Please log in again.",
+        });
+        return;
+      }
+      user = { id: dbUser.id, email: dbUser.email, userType: dbUser.userType || "volunteer", organizationId: dbUser.organizationId ?? null, firebaseUid: dbUser.firebaseUid ?? null };
+      cache.set(userCacheKey, user, CACHE_TTL.USER_PROFILE);
     }
 
     // Attach user to request
     req.user = {
       id: user.id,
       email: user.email,
-      userType: user.userType || "volunteer",
+      userType: user.userType,
       organizationId: user.organizationId,
       firebaseUid: user.firebaseUid,
     };
@@ -182,17 +163,19 @@ export async function optionalAuthMiddleware(
       const jwtDecoded = verifyToken(token);
       if (jwtDecoded?.userId) {
         logger.debug(`[OptionalAuth] JWT verified, userId: ${jwtDecoded.userId}`);
-        const user = await storage.getUser(jwtDecoded.userId);
-        if (user) {
-          req.user = {
-            id: user.id,
-            email: user.email,
-            userType: user.userType || "volunteer",
-            organizationId: user.organizationId,
-            firebaseUid: user.firebaseUid,
-          };
-          req.userId = user.id;
-          logger.debug(`[OptionalAuth] User attached: ${user.id} (${user.email})`);
+        const optCacheKey = cacheKeys.userProfile(jwtDecoded.userId);
+        let optUser = cache.get<{ id: number; email: string; userType: string; organizationId: number | null; firebaseUid: string | null }>(optCacheKey);
+        if (!optUser) {
+          const dbUser = await storage.getUser(jwtDecoded.userId);
+          if (dbUser) {
+            optUser = { id: dbUser.id, email: dbUser.email, userType: dbUser.userType || "volunteer", organizationId: dbUser.organizationId ?? null, firebaseUid: dbUser.firebaseUid ?? null };
+            cache.set(optCacheKey, optUser, CACHE_TTL.USER_PROFILE);
+          }
+        }
+        if (optUser) {
+          req.user = { id: optUser.id, email: optUser.email, userType: optUser.userType, organizationId: optUser.organizationId, firebaseUid: optUser.firebaseUid };
+          req.userId = optUser.id;
+          logger.debug(`[OptionalAuth] User attached: ${optUser.id} (${optUser.email})`);
         }
       } else {
         // Try to verify as Firebase ID token (cryptographically signed)
@@ -367,8 +350,7 @@ export async function verifyResourceAccess(
 
       // Organizations can also access applications to their opportunities
       if (userType === "organization" && organizationId) {
-        const allApps = await storage.listApplications();
-        const targetApp = allApps.find((a) => a.id === resourceId);
+        const targetApp = await storage.getApplication(resourceId);
         if (targetApp) {
           const opportunity = await storage.getOpportunity(targetApp.opportunityId);
           return opportunity?.organizationId === organizationId;

@@ -9,7 +9,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { queueMiddleware } from "../request-queue";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requireCSRAccess } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
 
 export const csrRouter = Router();
@@ -175,7 +175,7 @@ async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>>
  * Diagnostic endpoint for CSR Dashboard system verification
  * Returns user profile, partner info, and engagement records
  */
-csrRouter.get("/csr/diagnostic", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/diagnostic", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -220,7 +220,7 @@ csrRouter.get("/csr/diagnostic", authMiddleware, async (req: Request, res: Respo
  * Get CSR Dashboard Summary with engagement metrics, SDG progress, and challenges
  * Supports both corporate admin and employee users
  */
-csrRouter.get("/csr/dashboard", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/dashboard", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -875,7 +875,7 @@ csrRouter.get("/csr/dashboard", authMiddleware, queueMiddleware('heavy'), async 
  * CSR Engagement Funnel - Employee progression stages
  * Returns funnel stages and conversion rates
  */
-csrRouter.get("/csr/engagement-funnel", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/engagement-funnel", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -943,7 +943,7 @@ csrRouter.get("/csr/engagement-funnel", authMiddleware, async (req: Request, res
  * Get employees for specific stage in the engagement funnel
  * Query params: userId, stage (0=all, 1=started, 2=active, 3=top performers)
  */
-csrRouter.get("/csr/engagement-funnel-stage", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/engagement-funnel-stage", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1033,7 +1033,7 @@ csrRouter.get("/csr/engagement-funnel-stage", authMiddleware, async (req: Reques
  * CSR Pending Admin Actions - Reviews, Insights, Flagging
  * Returns actionable items for CSR administrators
  */
-csrRouter.get("/csr/pending-actions", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/pending-actions", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1242,7 +1242,7 @@ csrRouter.get("/csr/pending-actions", authMiddleware, async (req: Request, res: 
  * - SDG goal updates
  * - Top contributor recognition
  */
-csrRouter.get("/csr/notifications", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/notifications", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1412,7 +1412,7 @@ csrRouter.get("/csr/notifications", authMiddleware, async (req: Request, res: Re
  * CSR Impact Reporting - Comprehensive KPI metrics
  * Returns engagement, impact, financial, SDG, and compliance metrics
  */
-csrRouter.get("/csr/impact-reporting", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1575,7 +1575,7 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, queueMiddleware('heavy'),
  * GET /csr/impact-reporting/export/csv
  * Export CSR Impact Report as CSV file
  */
-csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1663,7 +1663,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, queueMiddlewar
  * GET /csr/impact-reporting/export/pdf
  * Export CSR Impact Report as PDF (HTML format for browser printing)
  */
-csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;

@@ -389,6 +389,12 @@ function deduplicateMetrics(text: string): string {
  */
 adminRouter.post("/generate-impact-report", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
+    // Require authentication — prevents unauthenticated callers from burning AI API quota
+    const callingUser = await storage.getUser(req.user!.id);
+    if (!callingUser) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     const {
       projectTitle,
       reportingPeriod,
@@ -616,8 +622,8 @@ adminRouter.post("/email-digest/send-all", queueMiddleware('heavy'), async (req:
     }
 
     const user = await storage.getUser(userId);
-    if (!user || user.userType !== 'organization') {
-      return res.status(403).json({ message: "Only organization managers can use this endpoint" });
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
     const result = await sendWeeklyDigestsToAll();
@@ -826,6 +832,11 @@ adminRouter.post("/organizations/:orgId/approval", async (req: Request, res: Res
  */
 adminRouter.get("/admin/diagnose-volunteer-employer", async (req: Request, res: Response) => {
   try {
+    const adminUser = await storage.getUser(req.user!.id);
+    if (!adminUser?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
     const { volunteerName, volunteerEmail, employerName } = req.query;
 
     const users = await storage.listUsers();
@@ -977,6 +988,11 @@ adminRouter.get("/admin/diagnose-volunteer-employer", async (req: Request, res: 
  */
 adminRouter.post("/admin/link-volunteer-employer", async (req: Request, res: Response) => {
   try {
+    const linkingAdmin = await storage.getUser(req.user!.id);
+    if (!linkingAdmin?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
     const { volunteerId, userId, partnerId, method = 'profile' } = req.body;
 
     if (!partnerId) {
@@ -1046,6 +1062,11 @@ adminRouter.post("/admin/link-volunteer-employer", async (req: Request, res: Res
  */
 adminRouter.post("/admin/backfill-employer-engagement", queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
+    const backfillAdmin = await storage.getUser(req.user!.id);
+    if (!backfillAdmin?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
     const { userId, partnerId } = req.body;
 
     const users = await storage.listUsers();

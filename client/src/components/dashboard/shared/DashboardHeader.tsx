@@ -30,6 +30,15 @@ interface DashboardHeaderProps {
   pendingCount?: number;
 }
 
+// Abbreviate long org names to initials (e.g. "Green Future Alliance" → "GFA")
+function abbreviateOrgName(name: string): string {
+  if (!name) return "";
+  if (name.length <= 12) return name;
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return name.slice(0, 10) + "…";
+  return words.map((w) => w[0].toUpperCase()).join("");
+}
+
 // Role label mapping
 const ROLE_LABELS: Record<string, string> = {
   'volunteer': 'Impact Wallet',
@@ -327,7 +336,9 @@ export default function DashboardHeader({
           {/* Type label / Org name — 30% */}
           <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: '30%' }}>
             {userType === 'organization' && organizationName ? (
-              <span className="text-[12px] font-bold text-stone-700 truncate max-w-[100px] text-center leading-tight">{organizationName}</span>
+              <span className="text-[13px] font-bold text-stone-700 text-center leading-tight tracking-wide">
+                {abbreviateOrgName(organizationName)}
+              </span>
             ) : (
               <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">{roleLabel}</span>
             )}

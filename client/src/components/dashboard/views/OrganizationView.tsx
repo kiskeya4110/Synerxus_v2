@@ -1092,6 +1092,23 @@ const OrganizationView = memo(function OrganizationView({
           {/* Mobile Home Tab */}
           {orgTab === 'home' && (
             <>
+              {/* Log Hours — primary action, always visible */}
+              <button
+                onClick={() => navigate('/ngo/log-hours')}
+                className="w-full bg-gradient-to-r from-indigo-600 to-emerald-600 text-white rounded-xl p-4 flex items-center justify-between shadow-md active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold leading-tight">Log Volunteer Hours & Impact</p>
+                    <p className="text-[11px] text-white/80 mt-0.5">Record verified outcomes for your team</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />
+              </button>
+
               {/* Core Metrics - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -1339,6 +1356,23 @@ const OrganizationView = memo(function OrganizationView({
                 </button>
                 <h2 className="text-lg font-semibold text-stone-800">Volunteers</h2>
               </div>
+
+              {/* Log Hours — always visible at top of volunteers tab */}
+              <button
+                onClick={() => navigate('/ngo/log-hours')}
+                className="w-full bg-gradient-to-r from-indigo-600 to-emerald-600 text-white rounded-xl p-4 flex items-center justify-between shadow-md active:scale-[0.98] transition-all mb-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold leading-tight">Log Volunteer Hours & Impact</p>
+                    <p className="text-[11px] text-white/80 mt-0.5">Record verified outcomes for your team</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />
+              </button>
 
               {/* Summary stat */}
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-4">

@@ -21,6 +21,7 @@
     "synerxus": "./start-synerxus.sh",
     "seed": "tsx dummy/seed-data.ts",
     "seed:bulk": "tsx dummy/seed-bulk.ts",
+    "seed:gfa": "tsx dummy/seed-gfa.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

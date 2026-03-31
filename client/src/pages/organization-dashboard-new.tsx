@@ -502,16 +502,16 @@ export default function OrganizationDashboardNew() {
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/organization/dashboard", userId, currentUser?.organizationId],
+    queryKey: ["/api/organization", userId, currentUser?.organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/organization/dashboard`, {
+      const response = await fetch(`/api/organization`, {
         headers, credentials: "include"
       });
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
     },
-    enabled: !!userId && !!currentUser?.organizationId,
+    enabled: !!userId,
   });
 
   // Fetch pending verifications
@@ -566,8 +566,10 @@ export default function OrganizationDashboardNew() {
   const { data: volunteers = [], isLoading: isLoadingVolunteers } = useQuery({
     queryKey: ["/api/volunteers", currentUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/volunteers?organizationId=${currentUser.organizationId}`
+        `/api/volunteers?organizationId=${currentUser.organizationId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) return [];
       return response.json();
@@ -630,7 +632,7 @@ export default function OrganizationDashboardNew() {
     const data = dashboardData?.keyMetrics || {};
     return {
       activeProjects: data.activeProjects || projects.filter((p: any) => p.status === "active").length,
-      totalVolunteers: data.activeVolunteers || volunteers.length,
+      totalVolunteers: data.activeVolunteers || dashboardData?.volunteerSummaries?.length || volunteers.length,
       totalHours: data.totalHours || 0,
       pendingVerifications: pendingVerifications.length || data.pendingCount || 0,
       impactScore: data.aiuEarned || 0,
@@ -675,7 +677,7 @@ export default function OrganizationDashboardNew() {
     try {
       await apiRequest("POST", `/api/volunteer-activities/${id}/approve`, { reviewerId: userId });
       refetchPending();
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       toast({ title: "Verified!", description: "Hours have been verified successfully." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to verify hours.", variant: "destructive" });
@@ -719,7 +721,7 @@ export default function OrganizationDashboardNew() {
         )
       );
       refetchPending();
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       toast({
         title: "All Verified!",
         description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} verified.`,
@@ -937,7 +939,7 @@ export default function OrganizationDashboardNew() {
           description="Verify volunteer hours, manage projects, and track your impact."
           actions={
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate("/volunteers")}>
+              <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
                 <Users className="h-4 w-4 mr-2" />
                 Manage Team
               </Button>
@@ -1059,24 +1061,24 @@ export default function OrganizationDashboardNew() {
                     <Users className="h-5 w-5 text-primary" />
                     Active Volunteers
                   </CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => navigate("/volunteers")}>
+                  <Button variant="ghost" size="sm" onClick={() => navigate("/ngo/log-hours")}>
                     View All
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </CardHeader>
                 <CardContent>
                   <VolunteerRoster
-                    volunteers={volunteers.map((v: any) => ({
+                    volunteers={(dashboardData?.volunteerSummaries || volunteers).map((v: any) => ({
                       id: v.id,
                       name: v.displayName || v.name || "Volunteer",
                       avatar: v.avatar,
                       email: v.email || "",
-                      totalHours: v.totalHours || 0,
-                      projectsCount: v.projectsCount || 1,
+                      totalHours: v.totalHours || v.hours || 0,
+                      projectsCount: v.projectsCount || v.projects || 1,
                       lastActive: v.lastActive || new Date().toISOString(),
                       status: "active" as const,
                     }))}
-                    isLoading={isLoadingVolunteers}
+                    isLoading={isLoadingDashboard && isLoadingVolunteers}
                   />
                 </CardContent>
               </Card>

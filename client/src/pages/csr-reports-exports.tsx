@@ -305,7 +305,7 @@ export default function CSRReportsExports() {
       if (printWindow) {
         printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
         printWindow.document.close();
-        printWindow.print();
+        printWindow.onload = () => printWindow.print();
       }
 
       toast({
@@ -369,8 +369,13 @@ export default function CSRReportsExports() {
             @page {
               size: A4 portrait;
               margin: 28mm 60mm;
+              @top-center { content: none; }
+              @bottom-center { content: none; }
+              @bottom-left { content: none; }
+              @bottom-right { content: none; }
             }
-            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { -webkit-print-color-adjust: exact; } }
+            @media print { html, body { margin: 0 !important; } }
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
 
@@ -620,8 +625,13 @@ export default function CSRReportsExports() {
             @page {
               size: A4 portrait;
               margin: 28mm 60mm;
+              @top-center { content: none; }
+              @bottom-center { content: none; }
+              @bottom-left { content: none; }
+              @bottom-right { content: none; }
             }
-            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+            @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { -webkit-print-color-adjust: exact; } }
+            @media print { html, body { margin: 0 !important; } }
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
 

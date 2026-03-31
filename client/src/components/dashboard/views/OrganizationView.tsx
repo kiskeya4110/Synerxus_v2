@@ -543,8 +543,10 @@ const OrganizationView = memo(function OrganizationView({
   const { data: volunteers = [], isLoading: isLoadingVolunteers } = useQuery({
     queryKey: ["/api/volunteers", activeUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/volunteers?organizationId=${activeUser.organizationId}`
+        `/api/volunteers?organizationId=${activeUser.organizationId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) return [];
       return response.json();

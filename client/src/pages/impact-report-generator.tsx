@@ -323,21 +323,6 @@ export default function ImpactReportGenerator() {
                     >
                       <FileText className="w-4 h-4 mr-1" /> PDF
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const element = document.createElement("a");
-                        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(generatedReport));
-                        element.setAttribute("download", "impact-report.txt");
-                        element.style.display = "none";
-                        document.body.appendChild(element);
-                        element.click();
-                        document.body.removeChild(element);
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-1" /> TXT
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>

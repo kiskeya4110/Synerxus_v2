@@ -1377,21 +1377,43 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       </div>`;
     }).join('');
 
-    // Negative impact disclosure — new format with formal screening questions table
+    // Negative impact disclosure — each question answered independently based on
+    // specific keywords in rejectedReason, not a blanket flag on any rejection.
+    // Generic verification failures ("not verifiable", "insufficient evidence") do NOT
+    // trigger a "Yes" — only reasons that explicitly indicate that type of harm do.
+    const hasKeyword = (keywords: string[]) =>
+      rejected.some((a: any) => {
+        const reason = ((a.rejectedReason || '') + ' ' + (a.outcomeText || '')).toLowerCase();
+        return keywords.some(k => reason.includes(k));
+      });
+
+    const screeningAnswers = [
+      // Q1: Unintended negative consequences for communities
+      hasKeyword(['harm', 'negative consequence', 'unintended', 'adverse', 'community damage', 'community harm', 'negative impact on']),
+      // Q2: Environmental side effects
+      hasKeyword(['environmental', 'pollution', 'contamina', 'habitat', 'ecosystem', 'water quality', 'soil', 'deforest', 'erosion side']),
+      // Q3: Displaced existing resources or services
+      hasKeyword(['displace', 'replac', 'removed service', 'competition with', 'undermin', 'crowd out', 'shut down']),
+      // Q4: Beneficiary complaints
+      hasKeyword(['complaint', 'concern raised', 'dissatisf', 'opposition', 'objection', 'protest', 'grievance', 'beneficiar.*complain']),
+    ];
+
     const screeningQuestions = [
       'Did this project create unintended negative consequences for communities?',
       'Did this project cause environmental side effects?',
       'Did this project displace existing resources or services?',
       'Did beneficiaries report any concerns or complaints?',
     ];
+    const anyYes = screeningAnswers.some(Boolean);
     const screeningDate = reportDate;
-    const screeningRowsHtml = screeningQuestions.map((q, i) =>
-      `<tr style="border-bottom:0.5px solid #f3f4f6;background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+    const screeningRowsHtml = screeningQuestions.map((q, i) => {
+      const isYes = screeningAnswers[i];
+      return `<tr style="border-bottom:0.5px solid #f3f4f6;background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
         <td style="padding:7px 10px;font-size:10px;color:#374151;">${q}</td>
-        <td style="padding:7px 10px;font-size:10px;font-weight:600;color:${rejected.length === 0 ? '#059669' : '#dc2626'};text-align:center;">${rejected.length === 0 ? 'No' : 'Yes'}</td>
+        <td style="padding:7px 10px;font-size:10px;font-weight:600;color:${isYes ? '#dc2626' : '#059669'};text-align:center;">${isYes ? 'Yes' : 'No'}</td>
         <td style="padding:7px 10px;font-size:10px;color:#6b7280;white-space:nowrap;">${screeningDate}</td>
-      </tr>`
-    ).join('');
+      </tr>`;
+    }).join('');
     const negativeDisclosureHtml = `
       <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.6;">All NGO partners complete mandatory negative impact screening at verification. This systematic process ensures negative impacts are actively identified, not passively overlooked.</div>
       <table style="width:100%;border-collapse:collapse;border:0.5px solid #e5e7eb;border-radius:8px;margin-bottom:12px;page-break-inside:avoid;break-inside:avoid;">
@@ -1415,17 +1437,21 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
           <strong style="color:#374151;">Documentation:</strong> All responses logged with timestamp in Synerxus platform
         </div>
       </div>
-      ${rejected.length === 0
+      ${!anyYes
         ? `<div class="screen-result" style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
             <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:4px;letter-spacing:0.3px;">${periodDisplay} SCREENING RESULT</div>
             <div style="font-size:10px;color:#047857;line-height:1.6;">Zero 'Yes' responses recorded for this reporting period. All ${verified.length} verified outcomes passed negative impact screening without triggering disclosure requirements.</div>
           </div>`
-        : rejected.slice(0, 2).map((a, i) => {
-            const date = (a as any).updatedAt
-              ? new Date((a as any).updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : rejected.filter((a: any) => {
+            const reason = ((a.rejectedReason || '') + ' ' + (a.outcomeText || '')).toLowerCase();
+            const disclosureKeywords = ['harm', 'negative consequence', 'unintended', 'adverse', 'environmental', 'pollution', 'contamina', 'displace', 'replac', 'complaint', 'concern raised', 'dissatisf', 'opposition', 'grievance'];
+            return disclosureKeywords.some(k => reason.includes(k));
+          }).slice(0, 2).map((a: any, i: number) => {
+            const date = a.updatedAt
+              ? new Date(a.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
               : 'N/A';
-            const reason = (a as any).rejectedReason || 'Impact not verifiable as described';
-            const verifier = (a as any).verifierName ? `${(a as any).verifierName}` : orgName + ' staff';
+            const reason = a.rejectedReason || 'Impact not verifiable as described';
+            const verifier = a.verifierName ? `${a.verifierName}` : orgName + ' staff';
             return `<div style="padding:8px 12px;border:0.5px solid #fde68a;background:#fffbeb;border-radius:8px;margin-bottom:6px;">
               <div style="font-size:10px;font-weight:600;color:#92400e;margin-bottom:3px;">${i + 1}. ${date}</div>
               <div style="font-size:10px;color:#78350f;line-height:1.5;">\u201c${reason}\u201d</div>

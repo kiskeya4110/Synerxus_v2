@@ -404,7 +404,7 @@ export default function AdminPilotDashboard() {
                 icon="⏱"
                 value={`${stats?.totalVerifiedHours ?? 0}h`}
                 label="Verified Hours"
-                sublabel="NGO-confirmed (not self-reported)"
+                sublabel="NGO-confirmed (from self-reported)"
                 color="cyan"
               />
               <StatCard

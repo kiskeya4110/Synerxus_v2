@@ -365,26 +365,24 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
   }
 
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-border -mx-2">
       {volunteers.map((volunteer) => (
         <div
           key={volunteer.id}
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 transition-colors cursor-pointer rounded"
           onClick={() => onViewVolunteer?.(volunteer.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && onViewVolunteer?.(volunteer.id)}
         >
           <UserAvatar src={volunteer.avatar} name={volunteer.name} size="sm" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{volunteer.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {volunteer.totalHours}h across {volunteer.projectsCount} projects
+            <p className="text-sm font-medium text-foreground truncate leading-tight">{volunteer.name}</p>
+            <p className="text-xs text-muted-foreground leading-tight">
+              {volunteer.totalHours}h · {volunteer.projectsCount} project{volunteer.projectsCount !== 1 ? "s" : ""}
             </p>
           </div>
-          <Badge
-            variant={volunteer.status === "active" ? "success" : "secondary"}
-            size="sm"
-          >
-            {volunteer.status}
-          </Badge>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
         </div>
       ))}
     </div>

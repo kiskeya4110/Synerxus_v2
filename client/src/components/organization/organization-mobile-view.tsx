@@ -41,9 +41,19 @@ import Logo from "@/components/ui/logo";
 // Hooks & Utils
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+
 import { getSDGColor, getSDGName } from "@shared/sdg-goals";
+
+// Abbreviate a long org name to initials (e.g. "Green Future Alliance" → "GFA")
+function abbreviateOrgName(name: string): string {
+  if (!name) return "";
+  if (name.length <= 12) return name;
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return name.slice(0, 10) + "…";
+  return words.map((w) => w[0].toUpperCase()).join("");
+}
 
 // ============================================================================
 // Types
@@ -667,12 +677,15 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     enabled: !!organizationId,
   });
 
-  // Fetch team/volunteers
+  // Fetch team/volunteers (auth required)
   const { data: volunteers } = useQuery({
     queryKey: ["/api/volunteers", organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const response = await fetch(`/api/volunteers?organizationId=${organizationId}`);
+      const response = await fetch(`/api/volunteers?organizationId=${organizationId}`, {
+        headers: await getAuthHeaders(),
+        credentials: "include",
+      });
       if (!response.ok) return [];
       return response.json();
     },
@@ -751,10 +764,16 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     navigate("/");
   };
 
+  const orgShortName = organization?.displayName
+    ? abbreviateOrgName(organization.displayName)
+    : organization?.name
+    ? abbreviateOrgName(organization.name)
+    : "Verify Hub";
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <MobileHeader
-        title="Verify Hub"
+        title={orgShortName}
         pendingCount={pendingCount}
         onMenuClick={() => setMenuOpen(true)}
         onNotificationClick={() => setActiveTab("verify")}
@@ -777,6 +796,15 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
               <Button
                 variant="accent"
+                size="sm"
+                className="flex-shrink-0"
+                onClick={() => navigate("/ngo/log-hours")}
+              >
+                <Clock className="h-4 w-4 mr-1" />
+                Log Hours
+              </Button>
+              <Button
+                variant="outline"
                 size="sm"
                 className="flex-shrink-0"
                 onClick={() => navigate("/post-core-opportunity")}
@@ -953,8 +981,27 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
         {/* Team Tab */}
         {activeTab === "team" && (
           <section className="space-y-3">
+            {/* Log Hours — always visible at top of Team tab */}
+            <Card variant="glass" className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Log Volunteer Hours & Impact</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Record verified outcomes for your team</p>
+                </div>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => navigate("/ngo/log-hours")}
+                >
+                  <Clock className="h-4 w-4 mr-1" />
+                  Log Hours
+                </Button>
+              </div>
+            </Card>
+
+            {/* Volunteer list */}
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Team</h2>
+              <h2 className="text-base font-semibold text-foreground">Volunteers</h2>
               <Badge variant="secondary">
                 {volunteers?.length || 0} members
               </Badge>

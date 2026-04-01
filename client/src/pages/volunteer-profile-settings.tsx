@@ -22,6 +22,7 @@ import WebBottomNav from "@/components/layout/web-bottom-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/layout/footer";
 
 // ============================================================================
 // CONSTANTS - Match intake form exactly
@@ -798,6 +799,8 @@ export default function VolunteerProfileSettings() {
       ) : (
         <WebBottomNav activeTab="profile" />
       )}
+
+      {!isVolunteerMobile && <Footer />}
     </div>
   );
 }

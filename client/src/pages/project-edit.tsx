@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/layout/footer";
 import { ProjectCoverUpload } from "@/components/project-cover-upload";
 
 // SDG options
@@ -1667,6 +1668,7 @@ export default function ProjectEdit() {
           </form>
         </Form>
       </div>
+      {!isMobile && <Footer />}
     </>
   );
 }

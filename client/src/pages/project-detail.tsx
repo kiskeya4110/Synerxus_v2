@@ -21,6 +21,7 @@ import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
@@ -1676,6 +1677,8 @@ export default function ProjectDetail() {
 
       {/* Mobile Bottom Navigation for Volunteers */}
       {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+
+      {!isMobile && <Footer />}
 
       {/* Delete Task Confirmation Dialog */}
       <DeleteConfirmDialog

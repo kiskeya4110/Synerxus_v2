@@ -4,6 +4,8 @@ import { ShieldCheck, RefreshCw, ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthHeaders } from "@/lib/queryClient";
+import Logo from "@/components/ui/logo";
+import Footer from "@/components/layout/footer";
 
 // ============================================
 // TYPES
@@ -328,12 +330,12 @@ export default function AdminPilotDashboard() {
                   <ArrowLeft className="w-4 h-4 text-slate-500" />
                 </button>
               </Link>
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-800">Synerxus Admin</h1>
-                <p className="text-xs text-slate-500">MVP Pilot Dashboard</p>
+              <Logo size="sm" variant="full" />
+              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-cyan-700">Admin</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -559,7 +561,6 @@ export default function AdminPilotDashboard() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-8 text-center text-sm text-slate-400 pb-4">
           <p>Every element either diagnoses <em>why verification is low</em> or proves <em>value to corporate pilots</em>.</p>
           <p className="mt-1 text-xs">
@@ -567,6 +568,7 @@ export default function AdminPilotDashboard() {
           </p>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

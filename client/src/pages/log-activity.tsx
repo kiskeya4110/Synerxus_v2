@@ -18,6 +18,7 @@ import DashboardMobileNav from "@/components/dashboard/shared/DashboardMobileNav
 import OfflineBanner from "@/components/layout/offline-banner";
 import { useOfflineSync } from "@/hooks/use-offline-sync";
 import { saveActivityOffline } from "@/lib/offline-storage";
+import Footer from "@/components/layout/footer";
 
 // Outcome template type from project.outcomeTemplates
 interface OutcomeTemplate {
@@ -701,6 +702,8 @@ export default function LogActivity() {
           }}
         />
       )}
+
+      {!isMobile && <Footer />}
     </div>
   );
 }

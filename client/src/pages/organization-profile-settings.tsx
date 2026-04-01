@@ -27,6 +27,8 @@ import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationNav from "@/components/layout/organization-nav";
+import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PrivacyConsentDialog } from "@/components/privacy-consent-dialog";
 
@@ -734,7 +736,7 @@ export default function OrganizationProfileSettings() {
 
       <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
         {/* Header - Mobile PWA only; desktop uses organization-nav */}
-        {isMobile && <OrganizationPWAHeader />}
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationNav />}
 
         {/* Content container matching header width */}
         <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>
@@ -1193,6 +1195,8 @@ export default function OrganizationProfileSettings() {
 
         {/* Bottom Navigation for mobile */}
         {isMobile && <OrganizationPWANav activeTab="settings" />}
+
+        {!isMobile && <Footer />}
       </div>
     </OrganizationProfileErrorBoundary>
   );

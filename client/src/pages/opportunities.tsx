@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Users, Calendar, Briefcase, Plus, AlertCircle } from "lucide-react";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 import type { Opportunity, User } from "@shared/schema";
 
 export default function Opportunities() {
@@ -208,6 +209,7 @@ export default function Opportunities() {
         </div>
       )}
       </div>
+      <Footer />
     </div>
   );
 }

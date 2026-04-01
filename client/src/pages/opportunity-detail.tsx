@@ -36,6 +36,7 @@ import { SDG_GOALS } from "@shared/sdg-goals";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchBreakdown {
@@ -747,6 +748,8 @@ export default function OpportunityDetail() {
 
       {/* Mobile Bottom Navigation */}
       {isMobile && <WebBottomNav activeTab="discover" />}
+
+      {!isMobile && <Footer />}
     </div>
   );
 }

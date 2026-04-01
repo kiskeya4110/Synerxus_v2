@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import OrganizationNav from "@/components/layout/organization-nav";
+import Footer from "@/components/layout/footer";
 
 const skillOptions = [
   "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
@@ -1062,6 +1063,7 @@ export default function PostCoreOpportunity() {
       <div className="max-w-4xl mx-auto py-8 px-4 light">
         {formContent}
       </div>
+      <Footer />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { getAuthHeaders } from "@/lib/queryClient";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationNav from "@/components/layout/organization-nav";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
+import Footer from "@/components/layout/footer";
 import {
   CheckCircle,
   XCircle,
@@ -817,6 +818,8 @@ export default function NgoVerification() {
           )
         )}
       </div>
+
+      <Footer />
 
       {/* Reject Modal */}
       <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>

@@ -1,6 +1,7 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
+import { Menu, X } from "lucide-react";
 import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
 import Footer from "@/components/layout/footer";
 import { useState, useEffect, useRef } from "react";
@@ -669,10 +670,12 @@ const VolunteerSpotlightSection = () => {
 };
 
 export default function Landing() {
+  const [, navigate] = useLocation();
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [volunteerFact, setVolunteerFact] = useState(() => getRandomFact('volunteers'));
   const [ngoFact, setNgoFact] = useState(() => getRandomFact('ngos'));
   const [csrFact, setCsrFact] = useState(() => getRandomFact('csr'));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Check localStorage for current user ID to determine login status
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -693,62 +696,116 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#faf9f7] flex flex-col overflow-x-hidden w-full max-w-full">
-      {/* Navigation - Consistent site-wide header with menu tabs */}
+      {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm safe-area-top">
-        <div className="container mx-auto px-[5%] sm:px-[8%] py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
+        <div className="container mx-auto px-[5%] sm:px-[8%] py-3 flex justify-between items-center">
           {/* Logo */}
           <Link href="/landing">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 touch-feedback">
+            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 touch-feedback">
               <Logo size="sm" showMotto={true} />
             </div>
           </Link>
 
-          {/* Center: Navigation Menu - Hidden on mobile */}
+          {/* Center: Navigation links — desktop only */}
           <div className="hidden md:flex items-center gap-1">
             <Link href="/landing">
-              <Button variant="ghost" size="sm" className="text-indigo-700 font-semibold hover:bg-indigo-50 rounded-lg bg-indigo-50/60">
-                Home
-              </Button>
+              <Button variant="ghost" size="sm" className="text-indigo-700 font-semibold hover:bg-indigo-50 rounded-lg bg-indigo-50/60">Home</Button>
             </Link>
             <Link href="/projects">
-              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
-                Projects
-              </Button>
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">Projects</Button>
             </Link>
             <Link href="/organizations">
-              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
-                Organizations
-              </Button>
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">Organizations</Button>
             </Link>
             <Link href="/help">
-              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
-                Help
-              </Button>
+              <Button variant="ghost" size="sm" className="text-stone-700 font-medium hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">Help</Button>
             </Link>
           </div>
 
-          {/* Right: Auth Buttons */}
-          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
+          {/* Right: Auth buttons — desktop only */}
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
+                <Button size="sm" className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl" data-testid="button-my-dashboard">
                   My Dashboard
                 </Button>
               </Link>
             ) : (
               <>
-                <Link href="/login" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-login-nav">Log In</Button>
+                <Link href="/login">
+                  <Button size="sm" className="whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-4 rounded-xl" data-testid="button-login-nav">Log In</Button>
                 </Link>
-                <Link href="/login?tab=register" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
-                    Sign Up
-                  </Button>
+                <Link href="/login?tab=register">
+                  <Button size="sm" className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 rounded-xl" data-testid="button-sign-up-nav">Sign Up</Button>
                 </Link>
               </>
             )}
           </div>
+
+          {/* Mobile: Hamburger — shown below md */}
+          <button
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-stone-100 transition-colors text-stone-700"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {/* Mobile dropdown panel */}
+        {mobileMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setMobileMenuOpen(false)} />
+            <div className="md:hidden absolute left-0 right-0 z-50 bg-white border-b border-stone-200 shadow-lg">
+              {/* Nav links */}
+              <div className="px-4 py-3 space-y-1 border-b border-stone-100">
+                {[
+                  { href: "/landing", label: "Home" },
+                  { href: "/projects", label: "Projects" },
+                  { href: "/organizations", label: "Organizations" },
+                  { href: "/help", label: "Help" },
+                ].map(({ href, label }) => (
+                  <button
+                    key={href}
+                    onClick={() => { setMobileMenuOpen(false); navigate(href); }}
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-stone-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Auth buttons */}
+              <div className="px-4 py-3 space-y-2">
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); navigate("/dashboard"); }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-semibold text-sm text-center"
+                    data-testid="button-my-dashboard"
+                  >
+                    My Dashboard
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 text-white font-semibold text-sm text-center"
+                      data-testid="button-login-nav"
+                    >
+                      Log In
+                    </button>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); navigate("/login?tab=register"); }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-semibold text-sm text-center"
+                      data-testid="button-sign-up-nav"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Scrollable main content */}

@@ -855,7 +855,6 @@ export default function Landing() {
                   alt="Volunteer Collage"
                   className="w-full h-auto object-contain"
                   loading="eager"
-                  fetchPriority="high"
                   decoding="async"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>

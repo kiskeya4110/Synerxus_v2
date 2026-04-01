@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
@@ -106,17 +106,18 @@ export default function DiscoverOpportunities() {
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
-      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, { headers });
       if (!response.ok) {
         throw new Error(`Failed to fetch opportunities: ${response.status}`);
       }
       return response.json();
     },
     enabled: !!userId,
-    retry: 2, // Retry twice on failure
-    retryDelay: 1000, // Wait 1 second between retries
-    staleTime: 60000, // Cache for 60 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 60000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Fetch opportunity status
@@ -124,7 +125,8 @@ export default function DiscoverOpportunities() {
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
       if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`, { headers });
       if (!response.ok) {
         return { savedIds: [], rejectedIds: [], appliedIds: [] };
       }

@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { PageHeader, Grid } from "@/components/ui/section";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { getSDGColor, getSDGName, isValidSDG } from "@/lib/sdg-utils";
@@ -49,6 +50,9 @@ const VolunteerView = memo(function VolunteerView({
 
   // State for expandable sections on dashboard
   const [expandedSection, setExpandedSection] = useState<'wallet' | 'projects' | 'activity' | null>(null);
+
+  // KPI preview modal state (desktop)
+  const [kpiModal, setKpiModal] = useState<null | 'sdgs' | 'hours' | 'impact' | 'projects'>(null);
 
   // History tab state
   const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
@@ -192,6 +196,25 @@ const VolunteerView = memo(function VolunteerView({
     const sdgsFromLogs = allLogs.flatMap((l: any) => l.sdgTags || l.project?.sdgGoals || []);
     return new Set(sdgsFromLogs).size;
   }, [allLogs, stats.sdgsAddressed]);
+
+  // Unique SDG numbers the volunteer has worked on (for SDG modal)
+  const sdgList = useMemo(() => {
+    const nums = allLogs.flatMap((l: any) => l.sdgTags || l.project?.sdgGoals || []);
+    return Array.from(new Set(nums)).filter((n: any) => isValidSDG(n)).sort((a: any, b: any) => a - b) as number[];
+  }, [allLogs]);
+
+  // Hours by project (for Hours modal)
+  const hoursByProject = useMemo(() => {
+    const map = new Map<string, { name: string; hours: number; verified: number }>();
+    allLogs.forEach((l: any) => {
+      const name = l.project?.name || 'Unknown Project';
+      const existing = map.get(name) || { name, hours: 0, verified: 0 };
+      existing.hours += l.hours || 0;
+      if (l.verificationStatus === 'approved') existing.verified += l.hours || 0;
+      map.set(name, existing);
+    });
+    return Array.from(map.values()).sort((a, b) => b.hours - a.hours);
+  }, [allLogs]);
 
   // Assigned projects from dashboard data (enriched with org names, hours, AIU)
   const assignedProjects = useMemo(() => {
@@ -1110,7 +1133,7 @@ const VolunteerView = memo(function VolunteerView({
 
           {/* Quick Stats Row - Interactive Cards */}
           <Grid columns={4} gap="default">
-            <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onClick={() => setKpiModal('sdgs')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
                 label="SDGs Addressed"
                 value={sdgsContributed}
@@ -1119,7 +1142,7 @@ const VolunteerView = memo(function VolunteerView({
                 icon={<Globe className="h-5 w-5 text-primary" />}
               />
             </div>
-            <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onClick={() => setKpiModal('hours')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
                 label="Hours Logged"
                 value={stats.hoursLogged}
@@ -1128,16 +1151,16 @@ const VolunteerView = memo(function VolunteerView({
                 icon={<Clock className="h-5 w-5 text-accent" />}
               />
             </div>
-            <div onClick={() => navigate('/discover-opportunities')} className="cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onClick={() => setKpiModal('impact')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
                 label="People Impacted"
                 value={stats.totalPeopleImpacted}
-                subtitle={`${stats.totalProjects} projects`}
+                subtitle={`${stats.outcomesVerified} verified outcomes`}
                 accentColor="success"
                 icon={<Target className="h-5 w-5 text-success" />}
               />
             </div>
-            <div onClick={() => setMobileTab('history')} className="cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onClick={() => setKpiModal('projects')} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <MetricCard
                 label="Active Projects"
                 value={stats.projectsActive}
@@ -1548,6 +1571,204 @@ const VolunteerView = memo(function VolunteerView({
           </Card>
         </>
       )}
+
+      {/* KPI Preview Modals */}
+
+      {/* SDGs Addressed Modal */}
+      <Dialog open={kpiModal === 'sdgs'} onOpenChange={() => setKpiModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              SDGs You've Contributed To
+            </DialogTitle>
+          </DialogHeader>
+          {sdgList.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{sdgList.length} Sustainable Development Goals addressed across your activities</p>
+              <div className="grid grid-cols-2 gap-2">
+                {sdgList.map((sdg) => (
+                  <div key={sdg} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-secondary/20">
+                    <span
+                      className="w-8 h-8 rounded text-xs font-bold flex items-center justify-center text-white flex-shrink-0"
+                      style={{ backgroundColor: getSDGColor(sdg) }}
+                    >
+                      {sdg}
+                    </span>
+                    <span className="text-xs font-medium text-foreground leading-tight">{getSDGName(sdg)}</span>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => { setKpiModal(null); navigate('/volunteer/settings'); }}>
+                Update My SDG Commitments
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <Globe className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No SDG data yet — log your first activity to see your contributions.</p>
+              <Button size="sm" className="mt-3" onClick={() => { setKpiModal(null); navigate('/log-activity'); }}>Log Activity</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Hours Logged Modal */}
+      <Dialog open={kpiModal === 'hours'} onOpenChange={() => setKpiModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-accent" />
+              Hours Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-blue-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-blue-700">{stats.hoursLogged}</p>
+                <p className="text-xs text-blue-600 mt-0.5">Total Logged</p>
+              </div>
+              <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-emerald-700">{stats.verifiedHours}</p>
+                <p className="text-xs text-emerald-600 mt-0.5">Verified</p>
+              </div>
+            </div>
+            {hoursByProject.length > 0 && (
+              <>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">By Project</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {hoursByProject.map((proj) => (
+                    <div key={proj.name} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
+                      <span className="text-sm font-medium text-foreground truncate flex-1 mr-2">{proj.name}</span>
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-sm font-bold text-stone-800">{proj.hours}h</span>
+                        {proj.verified > 0 && (
+                          <span className="text-xs text-emerald-600 ml-1">({proj.verified}h ✓)</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setMobileTab('history'); }}>
+              View Full History
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* People Impacted Modal */}
+      <Dialog open={kpiModal === 'impact'} onOpenChange={() => setKpiModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-success" />
+              People Impacted
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-emerald-700">{stats.totalPeopleImpacted}</p>
+                <p className="text-xs text-emerald-600 mt-0.5">Total Beneficiaries</p>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-blue-700">{stats.outcomesVerified}</p>
+                <p className="text-xs text-blue-600 mt-0.5">Verified Outcomes</p>
+              </div>
+            </div>
+            {allLogs.filter((l: any) => l.verificationStatus === 'approved' && (l.outcomeQuantity || 0) > 0).length > 0 ? (
+              <>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Verified Outcomes</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {allLogs
+                    .filter((l: any) => l.verificationStatus === 'approved')
+                    .slice(0, 6)
+                    .map((log: any) => (
+                      <div key={log.id} className="flex items-center justify-between p-2 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                        <div className="flex-1 min-w-0 mr-2">
+                          <p className="text-xs font-medium text-stone-800 truncate">{log.project?.name || 'Unknown Project'}</p>
+                          {log.outcomes && <p className="text-[11px] text-stone-500 truncate">{log.outcomes}</p>}
+                        </div>
+                        {(log.outcomeQuantity || 0) > 0 && (
+                          <span className="text-xs font-bold text-emerald-700 flex-shrink-0">{log.outcomeQuantity} people</span>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-2">Log verified activities to see your impact on people.</p>
+            )}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setMobileTab('history'); }}>
+              View All Activity
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Active Projects Modal */}
+      <Dialog open={kpiModal === 'projects'} onOpenChange={() => setKpiModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-cyan-500" />
+              Your Projects
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-cyan-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-cyan-700">{stats.projectsActive}</p>
+                <p className="text-xs text-cyan-600 mt-0.5">Active</p>
+              </div>
+              <div className="bg-stone-50 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-stone-700">{stats.totalProjects}</p>
+                <p className="text-xs text-stone-500 mt-0.5">Total</p>
+              </div>
+            </div>
+            {assignedProjects.length > 0 ? (
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {assignedProjects.map((project: any) => {
+                  const isActive = !project.status || project.status.toLowerCase() === 'active' || project.status.toLowerCase() === 'in progress';
+                  const sdgs: number[] = project.sdgGoals || [];
+                  return (
+                    <div key={project.id} className="p-3 rounded-lg border border-border bg-secondary/20 space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground leading-tight">{project.name}</p>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'}`}>
+                          {project.status || 'Active'}
+                        </span>
+                      </div>
+                      {project.organizationName && (
+                        <p className="text-xs text-muted-foreground">{project.organizationName}</p>
+                      )}
+                      {sdgs.length > 0 && (
+                        <div className="flex gap-1">
+                          {sdgs.slice(0, 5).map((sdg) => (
+                            <span key={sdg} className="w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white" style={{ backgroundColor: getSDGColor(sdg) }}>
+                              {sdg}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No projects yet. Explore opportunities to get started.</p>
+              </div>
+            )}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); navigate('/discover-opportunities'); }}>
+              Browse Opportunities
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </main>
   );

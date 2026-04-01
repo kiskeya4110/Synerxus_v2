@@ -71,6 +71,10 @@ const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-par
 // Admin pages
 const AdminPilotDashboard = lazy(() => import("@/pages/admin-pilot-dashboard"));
 
+// Public directory pages
+const Organizations = lazy(() => import("@/pages/organizations"));
+const OrganizationsPWA = lazy(() => import("@/pages/organizations-pwa"));
+
 // Legal pages
 const Terms = lazy(() => import("@/pages/terms"));
 const Privacy = lazy(() => import("@/pages/privacy"));
@@ -188,6 +192,8 @@ export default function App() {
           <Route path="/opportunities" component={Opportunities} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
           <Route path="/opportunities/:id" component={OpportunityDetail} />
+          <Route path="/organizations" component={Organizations} />
+          <Route path="/organizations/pwa" component={OrganizationsPWA} />
 
           {/* ================================================================ */}
           {/* NGO ROUTES - Project Pipeline + Verification Queue */}

@@ -237,7 +237,6 @@ export default function OrganizationPWAHeader({
       items: [
         { icon: Home, label: "Verify Hub", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
         { icon: FolderOpen, label: "Projects", desc: "Manage your projects", action: () => navigate('/projects') },
-        { icon: CheckCircle, label: "Verify", desc: "1-tap verification queue", action: () => navigate('/ngo-verification') },
       ]
     },
     {
@@ -309,7 +308,7 @@ export default function OrganizationPWAHeader({
 
       {/* Full Screen Menu Overlay */}
       {showMenu && (
-        <div className="fixed inset-0 z-[100] flex flex-col">
+        <div className="fixed inset-0 z-[200] flex flex-col">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"

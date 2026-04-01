@@ -11,7 +11,8 @@ export const matchmakerRouter = Router();
  */
 matchmakerRouter.post("/run", async (req: Request, res: Response) => {
   try {
-    const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+    const parsedThreshold0 = req.query.threshold ? parseFloat(req.query.threshold as string) : NaN;
+    const threshold = (!isNaN(parsedThreshold0) && parsedThreshold0 >= 0) ? parsedThreshold0 : 40.0;
 
     // Get all volunteers and organizations
     const volunteers = await storage.listVolunteers();
@@ -54,8 +55,10 @@ matchmakerRouter.post("/run", async (req: Request, res: Response) => {
 matchmakerRouter.get("/volunteer/:id", async (req: Request, res: Response) => {
   try {
     const volunteerId = req.params.id;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 3; // Default to top 3 for Impact Log model
-    const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+    const parsedLimit1 = req.query.limit ? parseInt(req.query.limit as string) : NaN;
+    const limit = (!isNaN(parsedLimit1) && parsedLimit1 > 0) ? parsedLimit1 : 3;
+    const parsedThreshold1 = req.query.threshold ? parseFloat(req.query.threshold as string) : NaN;
+    const threshold = (!isNaN(parsedThreshold1) && parsedThreshold1 >= 0) ? parsedThreshold1 : 40.0;
 
     // Get all volunteers and organizations
     const volunteers = await storage.listVolunteers();
@@ -161,8 +164,10 @@ matchmakerRouter.post("/volunteer/:volunteerId", async (req: Request, res: Respo
 matchmakerRouter.get("/organization/:id", async (req: Request, res: Response) => {
   try {
     const organizationId = req.params.id;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-    const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+    const parsedLimit2 = req.query.limit ? parseInt(req.query.limit as string) : NaN;
+    const limit = (!isNaN(parsedLimit2) && parsedLimit2 > 0) ? parsedLimit2 : 10;
+    const parsedThreshold2 = req.query.threshold ? parseFloat(req.query.threshold as string) : NaN;
+    const threshold = (!isNaN(parsedThreshold2) && parsedThreshold2 >= 0) ? parsedThreshold2 : 40.0;
 
     // Get all volunteers and organizations
     const volunteers = await storage.listVolunteers();

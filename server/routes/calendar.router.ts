@@ -26,6 +26,7 @@ calendarRouter.get("/", async (req: Request, res: Response) => {
 calendarRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.id);
+    if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
     const event = await storage.getCalendarEvent(eventId);
 
     if (!event) {
@@ -56,6 +57,7 @@ calendarRouter.post("/", async (req: Request, res: Response) => {
 calendarRouter.patch("/:id", async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.id);
+    if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
     const eventData = insertCalendarEventSchema.partial().parse(req.body);
 
     const updatedEvent = await storage.updateCalendarEvent(eventId, eventData);
@@ -75,6 +77,7 @@ calendarRouter.patch("/:id", async (req: Request, res: Response) => {
 calendarRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.id);
+    if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
     const deleted = await storage.deleteCalendarEvent(eventId);
 
     if (!deleted) {

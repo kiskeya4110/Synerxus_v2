@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertAIRecommendationSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { logger } from "../logger";
 
 export const aiRecommendationsRouter = Router();
 
@@ -21,7 +22,7 @@ aiRecommendationsRouter.get("/ai-recommendations/:organizationId", async (req: R
     const recommendations = await storage.listAIRecommendations(organizationId);
     res.json(recommendations);
   } catch (err) {
-    console.error("Error fetching AI recommendations:", err);
+    logger.error("[AI] Error fetching AI recommendations", { error: err });
     res.status(500).json({ message: "Error fetching AI recommendations" });
   }
 });
@@ -47,7 +48,7 @@ aiRecommendationsRouter.get("/ai-recommendations/:organizationId/:recommendation
 
     res.json(recommendation);
   } catch (err) {
-    console.error("Error fetching AI recommendation:", err);
+    logger.error("[AI] Error fetching AI recommendation", { error: err });
     res.status(500).json({ message: "Error fetching AI recommendation" });
   }
 });
@@ -67,7 +68,7 @@ aiRecommendationsRouter.post("/ai-recommendations", async (req: Request, res: Re
       const validationError = fromZodError(err);
       return res.status(400).json({ message: validationError.message });
     }
-    console.error("Error creating AI recommendation:", err);
+    logger.error("[AI] Error creating AI recommendation", { error: err });
     res.status(500).json({ message: "Error creating AI recommendation" });
   }
 });
@@ -126,7 +127,7 @@ aiRecommendationsRouter.post("/ai-recommendations/bulk-apply", async (req: Reque
       recommendations: results
     });
   } catch (err) {
-    console.error("Error applying AI recommendations:", err);
+    logger.error("[AI] Error applying AI recommendations", { error: err });
     res.status(500).json({ message: "Error applying AI recommendations" });
   }
 });
@@ -171,7 +172,7 @@ aiRecommendationsRouter.post("/ai-recommendations/dismiss", async (req: Request,
       res.status(201).json(newRec);
     }
   } catch (err) {
-    console.error("Error dismissing AI recommendation:", err);
+    logger.error("[AI] Error dismissing AI recommendation", { error: err });
     res.status(500).json({ message: "Error dismissing AI recommendation" });
   }
 });
@@ -209,7 +210,7 @@ aiRecommendationsRouter.patch("/ai-recommendations/:id", async (req: Request, re
     const updated = await storage.updateAIRecommendation(id, updateData);
     res.json(updated);
   } catch (err) {
-    console.error("Error updating AI recommendation:", err);
+    logger.error("[AI] Error updating AI recommendation", { error: err });
     res.status(500).json({ message: "Error updating AI recommendation" });
   }
 });
@@ -229,7 +230,7 @@ aiRecommendationsRouter.delete("/ai-recommendations/:id", async (req: Request, r
     await storage.deleteAIRecommendation(id);
     res.status(204).send();
   } catch (err) {
-    console.error("Error deleting AI recommendation:", err);
+    logger.error("[AI] Error deleting AI recommendation", { error: err });
     res.status(500).json({ message: "Error deleting AI recommendation" });
   }
 });

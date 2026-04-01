@@ -1,4 +1,5 @@
 import { useState, useMemo, memo } from "react";
+import DOMPurify from "dompurify";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -272,7 +273,7 @@ const CorporateView = memo(function CorporateView({
             </div>
             <div
               className="flex-1 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: reportContent.body }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
             />
           </div>
         )}

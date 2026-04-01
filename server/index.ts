@@ -25,7 +25,7 @@ import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
-import { securityHeaders, sanitizeInput, cleanupSecurity } from "./middleware/security";
+import { securityHeaders, sanitizeInput, cleanupSecurity, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware } from "./middleware/security";
 import { closeRedis } from "./redis";
 import { exec } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
@@ -400,11 +400,14 @@ app.get('/api/health', (req, res) => {
 });
 
 // Security middleware
+app.use(corsMiddleware);
 app.use(securityHeaders);
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' })); // Limit body size to prevent DoS
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 app.use(sanitizeInput); // Sanitize user inputs
+app.use(csrfTokenMiddleware);
+app.use(csrfValidationMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();

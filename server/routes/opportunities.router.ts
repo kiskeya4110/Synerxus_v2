@@ -26,7 +26,8 @@ opportunitiesRouter.get("/matches", authMiddleware, async (req: Request, res: Re
 
     // SECURITY: Use authenticated user's ID
     const userIdNum = authUser.id;
-    const threshold = thresholdParam ? parseInt(thresholdParam) : 40;
+    const parsedT = thresholdParam ? parseInt(thresholdParam) : NaN;
+    const threshold = (!isNaN(parsedT) && parsedT >= 0 && parsedT <= 100) ? parsedT : 40;
 
     const matchedOpportunities = await getProjectsForVolunteer(userIdNum, threshold);
 
@@ -138,6 +139,7 @@ opportunitiesRouter.get("/", authMiddleware, async (req: Request, res: Response)
 opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const opportunityId = parseInt(req.params.id);
+    if (isNaN(opportunityId)) return res.status(400).json({ message: "Invalid opportunity ID" });
     const userId = req.query.userId as string | undefined;
     const opportunity = await storage.getOpportunity(opportunityId);
 
@@ -159,6 +161,7 @@ opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
     // Calculate match score if userId is provided (for volunteers)
     if (userId) {
       const userIdNum = parseInt(userId);
+      if (isNaN(userIdNum)) return res.status(400).json({ message: "Invalid user ID" });
       const user = await storage.getUser(userIdNum);
 
       if (user && user.userType === 'volunteer') {
@@ -221,6 +224,7 @@ opportunitiesRouter.patch("/:id", async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
     const opportunityId = parseInt(req.params.id);
+    if (isNaN(opportunityId)) return res.status(400).json({ message: "Invalid opportunity ID" });
 
     const existingOpportunity = await storage.getOpportunity(opportunityId);
     if (!existingOpportunity) {

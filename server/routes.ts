@@ -425,8 +425,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", csrRouter); // Handles /csr/*, /employee-engagement/*, /volunteer-employers
   app.use("/api", activitiesRouter); // Handles /volunteer-activities, /impact-metrics, /project-impacts
   app.use("/api", logsRouter); // Handles /logs (unified impact log API), /reports/export
-  app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
   app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
+  app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
   app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
   app.use("/api", aiRecommendationsRouter); // Handles /ai-recommendations for Apply/Dismiss AI insights

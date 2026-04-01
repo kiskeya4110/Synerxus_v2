@@ -104,24 +104,23 @@ export default function OrganizationNav() {
     <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
       <div className="container max-w-7xl mx-auto px-4">
         <nav className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-8">
-            <Logo size="sm" variant="full" theme="light" />
+          {/* Logo — standalone on the left */}
+          <Logo size="sm" variant="full" theme="light" />
 
+          {/* Nav items + actions — all on the right */}
+          <div className="flex items-center gap-3">
             {/* Desktop Nav Items */}
             <div className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const fullLocation = location + window.location.search;
-                const isActive =
-                  (item.href === "/dashboard?tab=reports" &&
-                    (fullLocation.includes("tab=reports") || location.includes("tab=reports"))) ||
-                  (item.href === "/dashboard" &&
-                    location === "/dashboard" && !fullLocation.includes("tab=reports")) ||
-                  (item.href === "/ngo-verification" &&
-                    location.includes("ngo-verification")) ||
-                  (item.href === "/projects" && location.startsWith("/projects")) ||
-                  location === item.href;
+                const isActive = (() => {
+                  if (item.href === "/dashboard?tab=reports") return fullLocation.includes("tab=reports");
+                  if (item.href === "/dashboard") return location === "/dashboard" && !fullLocation.includes("tab=reports");
+                  if (item.href === "/ngo-verification") return location.includes("ngo-verification");
+                  if (item.href === "/projects") return location.startsWith("/projects");
+                  return location === item.href;
+                })();
 
                 const isVerifyTab = item.label === "Verify";
 
@@ -156,10 +155,7 @@ export default function OrganizationNav() {
                 );
               })}
             </div>
-          </div>
 
-          {/* Right Section */}
-          <div className="flex items-center gap-3">
             {/* Create Project Button */}
             <Button
               variant="accent"
@@ -231,13 +227,13 @@ export default function OrganizationNav() {
                       {navItems.map((item) => {
                         const Icon = item.icon;
                         const fullLoc = location + window.location.search;
-                        const isActive =
-                          (item.href.includes("tab=reports") &&
-                            fullLoc.includes("tab=reports")) ||
-                          (item.href === "/dashboard" &&
-                            location === "/dashboard" && !fullLoc.includes("tab=reports")) ||
-                          (item.href !== "/dashboard" && !item.href.includes("tab=") &&
-                            location.startsWith(item.href));
+                        const isActive = (() => {
+                          if (item.href === "/dashboard?tab=reports") return fullLoc.includes("tab=reports");
+                          if (item.href === "/dashboard") return location === "/dashboard" && !fullLoc.includes("tab=reports");
+                          if (item.href === "/ngo-verification") return location.includes("ngo-verification");
+                          if (item.href === "/projects") return location.startsWith("/projects");
+                          return location === item.href;
+                        })();
                         return (
                           <Link key={item.href} href={item.href}>
                             <button

@@ -1,4 +1,5 @@
 import { useState, useMemo, memo, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -324,7 +325,7 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{volunteer.name}</p>
             <p className="text-xs text-muted-foreground">
-              {volunteer.totalHours}h across {volunteer.projectsCount} projects
+              {volunteer.totalHours}h across {volunteer.projectsCount} project{volunteer.projectsCount !== 1 ? 's' : ''}
             </p>
           </div>
           <Badge
@@ -1589,7 +1590,7 @@ const OrganizationView = memo(function OrganizationView({
                   {/* Report body rendered inline */}
                   <div
                     className="flex-1 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: reportContent.body }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
                   />
                 </div>
               )}
@@ -1706,7 +1707,7 @@ const OrganizationView = memo(function OrganizationView({
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTab} onValueChange={(tab) => { if (tab !== 'reports') closeReport(); setActiveTab(tab); }}>
-        <TabsList className="w-full max-w-md">
+        <TabsList className="w-full">
           <TabsTrigger value="overview" className="flex-1">
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
@@ -1723,6 +1724,10 @@ const OrganizationView = memo(function OrganizationView({
           <TabsTrigger value="projects" className="flex-1">
             <FolderOpen className="h-4 w-4 mr-2" />
             Projects
+          </TabsTrigger>
+          <TabsTrigger value="volunteers" className="flex-1">
+            <Users className="h-4 w-4 mr-2" />
+            Volunteers
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex-1">
             <FileText className="h-4 w-4 mr-2" />
@@ -1782,7 +1787,7 @@ const OrganizationView = memo(function OrganizationView({
                   <Users className="h-5 w-5 text-primary" />
                   Active Volunteers
                 </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/volunteers")}>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab("volunteers")}>
                   View All
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
@@ -1794,8 +1799,8 @@ const OrganizationView = memo(function OrganizationView({
                     name: v.displayName || v.name || "Volunteer",
                     avatar: v.avatar,
                     email: v.email || "",
-                    totalHours: v.totalHours || 0,
-                    projectsCount: v.projectsCount || 1,
+                    totalHours: v.totalHours ?? 0,
+                    projectsCount: v.projectsCount ?? 0,
                     lastActive: v.lastActive || new Date().toISOString(),
                     status: "active" as const,
                   }))}
@@ -2001,6 +2006,58 @@ const OrganizationView = memo(function OrganizationView({
           </Section>
         </TabsContent>
 
+        {/* Volunteers Tab */}
+        <TabsContent value="volunteers" className="mt-6">
+          <Section title={`Volunteers (${volunteers.length})`}>
+            {isLoadingVolunteers ? (
+              <LoadingState message="Loading volunteers..." />
+            ) : volunteers.length === 0 ? (
+              <EmptyState
+                title="No volunteers yet"
+                description="Volunteers will appear here once they join your projects."
+              />
+            ) : (
+              <div className="space-y-3">
+                {volunteers.map((vol: any) => (
+                  <div
+                    key={vol.id}
+                    className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                      {(vol.displayName || vol.name || 'V').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {vol.displayName || vol.name || 'Volunteer'}
+                      </p>
+                      {vol.email && (
+                        <p className="text-xs text-muted-foreground truncate">{vol.email}</p>
+                      )}
+                      <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {vol.totalHours ?? 0}h logged
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FolderOpen className="h-3 w-3" />
+                          {vol.projectsCount ?? 0} project{(vol.projectsCount ?? 0) !== 1 ? 's' : ''}
+                        </span>
+                        {vol.lastActive && (
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3" />
+                            Last active {new Date(vol.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant="success" size="sm">Active</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+        </TabsContent>
+
         {/* Reports Tab */}
         <TabsContent value="reports" className="mt-6">
           {/* Full-screen report viewer overlay */}
@@ -2041,7 +2098,7 @@ const OrganizationView = memo(function OrganizationView({
               </div>
               <div
                 className="flex-1 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: reportContent.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
               />
             </div>
           )}

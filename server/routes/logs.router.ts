@@ -44,6 +44,17 @@ const LOGO_DATA_URI = loadLogoDataUri();
 
 export const logsRouter = Router();
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return String(text ?? '').replace(/[&<>"']/g, char => map[char]);
+}
+
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
 
@@ -1342,11 +1353,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       const fieldRow = (label: string, value: string) =>
         `<tr style="border-bottom:0.5px solid #f3f4f6;">
           <td style="padding:6px 10px;font-size:10px;font-weight:600;color:#374151;white-space:nowrap;background:#f9fafb;width:150px;">${label}</td>
-          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">${value}</td>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">${escapeHtml(value)}</td>
         </tr>`;
       return `<div class="outcome-card" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff;">
         <div style="background:#111827;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.3px;">Outcome ${idx + 1}: ${outcomeTitle}</div>
+          <div style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.3px;">Outcome ${idx + 1}: ${escapeHtml(outcomeTitle)}</div>
           ${primarySdg ? `<div style="width:24px;height:24px;background:${sdgColor};border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0;">${primarySdg}</div>` : ''}
         </div>
         <div style="padding:10px 14px;">
@@ -1369,8 +1380,8 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
           <div style="background:#f9fafb;border-radius:6px;padding:8px 10px;border:0.5px solid #e5e7eb;">
             <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:5px;letter-spacing:0.2px;">Audit Trail:</div>
             <div style="font-size:10px;color:#6b7280;line-height:1.9;">
-              <strong style="color:#374151;">Method:</strong> ${verificationMethod} &nbsp;|&nbsp; <strong style="color:#374151;">Device:</strong> ${deviceDisplay} &nbsp;|&nbsp; <strong style="color:#374151;">Geolocation:</strong> ${geoDisplay} &nbsp;|&nbsp; <strong style="color:#374151;">Timestamp:</strong> ${verifiedTime}<br>
-              <strong style="color:#374151;">Verified by:</strong> ${verifierDisplay}
+              <strong style="color:#374151;">Method:</strong> ${escapeHtml(verificationMethod)} &nbsp;|&nbsp; <strong style="color:#374151;">Device:</strong> ${escapeHtml(deviceDisplay)} &nbsp;|&nbsp; <strong style="color:#374151;">Geolocation:</strong> ${escapeHtml(geoDisplay)} &nbsp;|&nbsp; <strong style="color:#374151;">Timestamp:</strong> ${escapeHtml(verifiedTime)}<br>
+              <strong style="color:#374151;">Verified by:</strong> ${escapeHtml(verifierDisplay)}
             </div>
           </div>
         </div>
@@ -1530,7 +1541,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       ).join('');
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid #f3f4f6;">
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:500;color:#111827;">${p.name}</div>
+          <div style="font-size:12px;font-weight:500;color:#111827;">${escapeHtml(p.name)}</div>
           <div style="display:flex;gap:4px;margin-top:4px;">${sdgDots}</div>
         </div>
         <div style="display:flex;gap:20px;text-align:center;">
@@ -1613,7 +1624,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- VERIFICATION METHODOLOGY heading -->
   <div style="font-size:13px;font-weight:700;color:#374151;letter-spacing:0.8px;margin-bottom:3px;">VERIFICATION METHODOLOGY</div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Pilot-format sample report demonstrating audit-support verification architecture</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Pilot-format sample report demonstrating Synerxus verification architecture</div>
   <div style="border-top:2px solid #0891b2;margin-bottom:16px;"></div>
 
   <!-- TEMPLATE CONTEXT NOTICE -->
@@ -1624,11 +1635,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- Header: Logo + Report Meta -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:36px;height:36px;border-radius:8px;object-fit:contain;">
+    <div style="display:flex;align-items:center;gap:13px;">
+      <img src="${LOGO_DATA_URI}" alt="Synerxus" style="width:52px;height:52px;border-radius:10px;object-fit:contain;">
       <div>
-        <div style="font-weight:700;font-size:15px;color:var(--txt-p);letter-spacing:0.5px;">SYNERXUS</div>
-        <div style="font-size:11px;color:#0891b2;">Impact, Verified.</div>
+        <div style="font-weight:700;font-size:20px;letter-spacing:0.5px;"><span style="color:#0A2463;">SYNER</span><span style="color:#B8860B;">XUS</span></div>
+        <div style="font-size:13px;font-weight:600;"><span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
       </div>
     </div>
     <div style="text-align:right;font-size:10px;color:var(--txt-t);line-height:1.8;">
@@ -1721,6 +1732,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         <span style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;display:inline-block;"></span>
         ${totalBeneficiaries > 0 ? 'NGO-tracked' : 'From verified outcomes'}
       </div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:6px;line-height:1.4;">&#8224; Counts provided by NGO partners per project records. Not independently verified by Synerxus. Auditors should sample 15\u201330% per ISAE 3000.</div>
     </div>
   </div>
 
@@ -1806,8 +1818,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div class="audit-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:14px;">
     <div style="width:38px;height:38px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#059669;flex-shrink:0;">\u2713</div>
     <div style="flex:1;">
-      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">AUDIT TRAIL COMPLETENESS: ${verificationRate}%</div>
-      <div style="font-size:10px;color:#047857;line-height:1.6;">Every outcome includes: verification timestamp, verifier identity, device ID/SMS number, geolocation, and hours \u2014 all NGO-confirmed with immutable records for CSRD compliance.${avgVerificationHours > 0 ? ` Average time to verify: ${avgVerificationHours} hours.` : ''}</div>
+      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">AUDIT TRAIL COMPLETENESS: ${verificationRate}% (${verified.length}/${allActivities.length} outcomes verified within 72h SLA)</div>
+      <div style="font-size:10px;color:#047857;line-height:1.6;">Verified outcomes include: verification timestamp, verifier identity, device ID/SMS number, geolocation, and hours \u2014 all NGO-confirmed with immutable records.${avgVerificationHours > 0 ? ` Average time to verify: ${avgVerificationHours} hours.` : ''}</div>
+      ${allActivities.length - verified.length > 0 ? `<div style="font-size:10px;color:#b45309;margin-top:4px;">Unverified outcomes: ${allActivities.length - verified.length} (${100 - verificationRate}%) \u2014 documented in Exceptions Log.</div>` : ''}
     </div>
   </div>
 
@@ -1834,16 +1847,16 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Footer -->
   <div style="padding-top:10px;border-top:0.5px solid var(--bd);">
     <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#92400e;margin-bottom:10px;">
-      <strong>CSRD Audit Statement:</strong> This report contains ${verified.length} verified impact records representing ${Math.round(totalHours)} volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. All entries have been verified by authorized ${orgName} staff with immutable audit trails maintained for CSRD compliance. Generated by Synerxus Impact Data Infrastructure.
+      <strong>CSRD Audit-Support Statement:</strong> This report contains ${verified.length} verified impact records representing ${Math.round(totalHours)} volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. Records have been verified by authorized NGO staff with immutable audit trails maintained to support CSRD disclosure. <strong>This report does not constitute an assurance opinion. Formal CSRD filing requires independent limited or reasonable assurance per ISAE 3000 from a qualified auditor.</strong> Generated by Synerxus Impact Data Infrastructure.
     </div>
     <div style="font-size:10px;color:var(--txt-t);margin-bottom:8px;">
       <div>Generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
-      <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 Audit-Support Data (Management Reporting Verified)</div>
+      <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 CSRD Audit-Support Data (Management Verified) \u2014 Requires independent ISAE 3000 assurance for formal CSRD filing</div>
     </div>
     <div style="text-align:center;">
       <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-s);border-radius:100px;padding:5px 14px;font-size:10px;color:var(--txt-s);border:0.5px solid var(--bd);">
         <span style="width:5px;height:5px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-        Powered by Synerxus \u2022 Impact, Verified.
+        Powered by <span style="font-weight:700;color:#0A2463;">SYNER</span><span style="font-weight:700;color:#B8860B;">XUS</span> \u2022 <span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span>
       </span>
     </div>
   </div>
@@ -2043,8 +2056,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     // NGO partner rows
     const ngoRows = Object.values(ngoStats).map((n: any) => `
       <tr style="border-bottom:0.5px solid #e5e7eb;">
-        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${n.org.name}</td>
-        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.org.location || '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${escapeHtml(n.org.name)}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(n.org.location || '—')}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.outcomes}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.beneficiaries}</td>
         <td style="padding:6px 8px;font-size:11px;">
@@ -2056,12 +2069,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     // Employee contributor rows
     const employeeRows = topVolunteers.map((v: any, i: number) => `
       <tr style="border-bottom:0.5px solid #e5e7eb;${i % 2 === 1 ? 'background:#f9fafb;' : ''}">
-        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${v.name}</td>
-        <td style="padding:6px 8px;font-size:11px;color:#374151;">${v.dept}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${escapeHtml(v.name)}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(v.dept)}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${v.outcomes}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${Math.round(v.hours)}h</td>
-        <td style="padding:6px 8px;font-size:11px;color:#374151;">${Array.from(v.ngos).join(', ') || '—'}</td>
-        <td style="padding:6px 8px;font-size:11px;color:#374151;">${Array.from(v.skills).slice(0, 2).join(', ') || '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(Array.from(v.ngos).join(', ') || '—')}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(Array.from(v.skills).slice(0, 2).join(', ') || '—')}</td>
       </tr>`).join('');
 
     // SDG alignment rows
@@ -2072,7 +2085,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
         <td style="padding:6px 8px;">
           <span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;">SDG ${n}</span>
         </td>
-        <td style="padding:6px 8px;font-size:11px;font-weight:500;color:#111827;">${SDG_NAMES_LOCAL[n] || `SDG ${n}`}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:500;color:#111827;">${escapeHtml(SDG_NAMES_LOCAL[n] || `SDG ${n}`)}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${data.outcomes}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${Math.round(data.hours)}h</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${data.beneficiaries}</td>
@@ -2084,11 +2097,13 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       const volunteer = userMap.get(a.userId);
       const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
       const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
+      const outcomeText = (a.editedOutcomeText || a.outcomeText || a.description || '—').slice(0, 60);
+      const outcomeEllipsis = (a.editedOutcomeText || a.outcomeText || '')?.length > 60 ? '…' : '';
       return `<tr style="border-bottom:0.5px solid #e5e7eb;">
-        <td style="padding:5px 8px;font-size:10px;color:#374151;">${dateStr}</td>
-        <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${volunteer?.displayName || 'Volunteer'}</td>
-        <td style="padding:5px 8px;font-size:10px;color:#374151;">${org?.name || 'NGO'}</td>
-        <td style="padding:5px 8px;font-size:10px;color:#374151;">${(a.editedOutcomeText || a.outcomeText || a.description || '—').slice(0, 60)}${(a.editedOutcomeText || a.outcomeText || '')?.length > 60 ? '…' : ''}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(dateStr)}</td>
+        <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${escapeHtml(volunteer?.displayName || 'Volunteer')}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(org?.name || 'NGO')}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(outcomeText)}${outcomeEllipsis}</td>
         <td style="padding:5px 8px;font-size:10px;text-align:center;color:#374151;">${a.hours || 0}h</td>
         <td style="padding:5px 8px;font-size:10px;"><span style="color:#059669;">&#10003; ${a.deviceId ? 'App' : 'Platform'}</span></td>
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.geolocation ? '&#x1F4CD; Located' : '—'}</td>
@@ -2150,7 +2165,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
-      <div style="color:var(--teal);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">SYNERXUS · Impact, Verified.</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;"><span style="color:#ffffff;">SYNER</span><span style="color:#B8860B;">XUS</span> · <span style="color:#B8860B;">Impact,</span> <span style="color:#ffffff;">Verified.</span></div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
       <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
     </div>
@@ -2177,7 +2192,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
     <div class="kpi"><div class="kpi-label">NGO-Confirmed Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
     <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'from outcomes'}</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'from outcomes'}</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; NGO partner estimates, not independently verified. Sample 15&#8211;30% per ISAE 3000.</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
     <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">NGO-verified</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">${sortedSdgs.length}</div><div class="kpi-sub">goals impacted</div></div>
@@ -2292,7 +2307,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       : `<table><thead><tr><th>Date</th><th>NGO Partner</th><th>Outcome</th><th>Negative Impact</th></tr></thead><tbody>${rejected.slice(0, 5).map((a: any) => {
           const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
           const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
-          return `<tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:10px;">${dateStr}</td><td style="padding:6px 8px;font-size:10px;">${org?.name || 'NGO'}</td><td style="padding:6px 8px;font-size:10px;">${(a.outcomeText || a.description || '—').slice(0, 50)}</td><td style="padding:6px 8px;font-size:10px;color:#b45309;">${a.rejectedReason || 'Not meeting verification standards'}</td></tr>`;
+          return `<tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:10px;">${escapeHtml(dateStr)}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml(org?.name || 'NGO')}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml((a.outcomeText || a.description || '—').slice(0, 50))}</td><td style="padding:6px 8px;font-size:10px;color:#b45309;">${escapeHtml(a.rejectedReason || 'Not meeting verification standards')}</td></tr>`;
         }).join('')}</tbody></table>`}
   </div>
   <div class="warn-note">&#9888; <strong>CSRD Requirement:</strong> ESRS S3.4 mandates disclosure of "actual and potential negative impacts on communities." This section satisfies double materiality — showing both positive outcomes AND unintended consequences.</div>
@@ -2326,12 +2341,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   <div style="font-size:10px;color:var(--txt-s);">
     <div>Report ID: ${reportId} · Generated by Synerxus on behalf of ${corpName}</div>
     <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · All data NGO-verified with immutable audit trails</div>
-    <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · Audit-Support Data (Management Reporting Verified)</div>
+    <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · CSRD Audit-Support Data (Management Verified) &mdash; Requires independent ISAE 3000 assurance for formal CSRD filing</div>
   </div>
   <div style="text-align:center;">
     <span style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);border-radius:100px;padding:5px 12px;font-size:10px;color:#fff;">
       <span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
-      Powered by Synerxus · Impact, Verified.
+      Powered by <span style="font-weight:700;color:#ffffff;">SYNER</span><span style="font-weight:700;color:#B8860B;">XUS</span> · <span style="color:#B8860B;">Impact,</span> <span style="color:#ffffff;">Verified.</span>
     </span>
   </div>
 </div>

@@ -30,6 +30,7 @@ import {
 } from "./csr-utils";
 import { authMiddleware } from "../../middleware/auth";
 import { getAuthenticatedUser } from "../utils";
+import { logger } from "../../logger";
 
 export const csrEngagementRouter = Router();
 
@@ -76,7 +77,7 @@ csrEngagementRouter.get("/employee-engagement/commitments", authMiddleware, asyn
 
     res.json(commitments);
   } catch (err) {
-    console.error("Error fetching commitments:", err);
+    logger.error("[CSR] Error fetching commitments", { error: err });
     res.status(500).json({ error: "Failed to fetch commitments" });
   }
 });
@@ -136,7 +137,7 @@ csrEngagementRouter.get("/employee-engagement/csr-goals", async (req: Request, r
 
     res.json(goals);
   } catch (err) {
-    console.error("Error fetching CSR goals:", err);
+    logger.error("[CSR] Error fetching CSR goals", { error: err });
     res.status(500).json({ error: "Failed to fetch CSR goals" });
   }
 });
@@ -185,7 +186,7 @@ csrEngagementRouter.get("/employee-engagement/impact-dashboard/:userId", async (
     try {
       aiuData = await calculateVolunteerAIU(userId);
     } catch (err) {
-      console.error("Error calculating volunteer AIU:", err);
+      logger.error("[CSR] Error calculating volunteer AIU", { error: err });
     }
 
     // Get recent activities
@@ -213,7 +214,7 @@ csrEngagementRouter.get("/employee-engagement/impact-dashboard/:userId", async (
       impactScore: Math.round(totalHours * 3.5)
     });
   } catch (err) {
-    console.error("Error fetching impact dashboard:", err);
+    logger.error("[CSR] Error fetching impact dashboard", { error: err });
     res.status(500).json({ error: "Failed to fetch impact dashboard" });
   }
 });
@@ -231,14 +232,14 @@ csrEngagementRouter.post("/employee-engagement/send-tips", async (req: Request, 
     }
 
     // In production, this would send emails/notifications to employees
-    console.log(`Sending ${tipType} tips to partner ${partnerId}:`, { recipients, message });
+    logger.info(`[CSR] Sending ${tipType} tips to partner ${partnerId}`, { recipients: recipients?.length, message });
 
     res.json({
       success: true,
       message: `Tips sent to ${recipients?.length || 'all'} employees`
     });
   } catch (err) {
-    console.error("Error sending tips:", err);
+    logger.error("[CSR] Error sending tips", { error: err });
     res.status(500).json({ error: "Failed to send tips" });
   }
 });

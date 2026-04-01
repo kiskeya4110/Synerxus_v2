@@ -324,7 +324,35 @@ volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) =>
       const users = await storage.getUsersByIds(volunteerIdArray);
       const volunteers = users.filter((u: any) => u.userType === 'volunteer');
 
-      return res.json(volunteers);
+      // Compute projectsCount per volunteer from their assignments
+      const volunteerProjectsMap = new Map<number, Set<number>>();
+      for (const a of orgAssignments) {
+        if (!volunteerProjectsMap.has(a.volunteerId)) volunteerProjectsMap.set(a.volunteerId, new Set());
+        volunteerProjectsMap.get(a.volunteerId)!.add(a.projectId);
+      }
+
+      // Compute totalHours per volunteer from approved + pending activities on org's projects
+      const allActivities = await storage.listVolunteerActivities();
+      const volunteerHoursMap = new Map<number, number>();
+      for (const activity of allActivities) {
+        if (
+          activity.userId != null &&
+          activity.projectId != null &&
+          volunteerIds.has(activity.userId) &&
+          orgProjectIds.has(activity.projectId) &&
+          activity.verificationStatus !== 'rejected'
+        ) {
+          volunteerHoursMap.set(activity.userId, (volunteerHoursMap.get(activity.userId) || 0) + (activity.hours || 0));
+        }
+      }
+
+      const enriched = volunteers.map((u: any) => ({
+        ...u,
+        totalHours: Math.round((volunteerHoursMap.get(u.id) || 0) * 10) / 10,
+        projectsCount: volunteerProjectsMap.get(u.id)?.size || 0,
+      }));
+
+      return res.json(enriched);
     }
 
     // SECURITY: Without org filter, only allow organization users to see all volunteers

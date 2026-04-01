@@ -599,7 +599,7 @@ export default function CSRReportsExports() {
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline">Impact, Verified.</div>
+            <div class="footer-tagline"><span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>
@@ -1049,7 +1049,7 @@ export default function CSRReportsExports() {
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline">Impact, Verified.</div>
+            <div class="footer-tagline"><span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>

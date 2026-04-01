@@ -133,7 +133,7 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
     // If middleware didn't set user, try direct token verification as fallback
     if (!req.user && authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      logger.info(`[Storage] Attempting direct token verification for upload. Token length: ${token.length}`);
+      logger.info(`[Storage] Attempting direct token verification for upload.`);
 
       // Try JWT first
       try {
@@ -195,10 +195,12 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
     // Parse options from query
     const imageType = (req.query.imageType as ImageType) || "profile";
     // Use authenticated user's ID by default for proper file ownership tracking
-    const userId = req.query.userId ? parseInt(req.query.userId as string) : req.user.id;
-    const organizationId = req.query.organizationId
-      ? parseInt(req.query.organizationId as string)
-      : req.user.organizationId || undefined;
+    const parsedUserId = req.query.userId ? parseInt(req.query.userId as string) : NaN;
+    if (req.query.userId && isNaN(parsedUserId)) return res.status(400).json({ message: "Invalid user ID" });
+    const userId = !isNaN(parsedUserId) ? parsedUserId : req.user.id;
+    const parsedOrgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : NaN;
+    if (req.query.organizationId && isNaN(parsedOrgId)) return res.status(400).json({ message: "Invalid organization ID" });
+    const organizationId = !isNaN(parsedOrgId) ? parsedOrgId : req.user.organizationId || undefined;
     const generateThumbnail = req.query.generateThumbnail !== "false";
 
     // Security: Validate user ownership - users can only upload for themselves

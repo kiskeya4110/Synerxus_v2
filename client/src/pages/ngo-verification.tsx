@@ -551,7 +551,7 @@ export default function NgoVerification() {
   // Mobile Organization PWA View
   if (isMobile && isOrganization) {
     return (
-      <OrganizationPWALayout activeTab="home">
+      <OrganizationPWALayout activeTab="verify">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-slate-800">Verification</h1>

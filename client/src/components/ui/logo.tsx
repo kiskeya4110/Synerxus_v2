@@ -76,6 +76,7 @@ export default function Logo({
           color: '#0F172A',
           textAlign: 'left',
           display: 'block',
+          whiteSpace: 'nowrap',
         }}
       >
         <span style={{ color: '#B8860B' }}>Impacts.</span>{' '}

@@ -78,7 +78,7 @@ if (!JWT_SECRET) {
   // In development, log loud warning but generate a random secret for this session
   console.warn("[SECURITY] Generating random JWT secret for this session - tokens will be invalid after restart");
 }
-const JWT_SECRET_VALUE = JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
+const JWT_SECRET_VALUE = JWT_SECRET || crypto.randomBytes(64).toString('hex');
 
 // REFRESH_TOKEN_SECRET must be independent from JWT_SECRET
 if (!process.env.REFRESH_TOKEN_SECRET) {
@@ -470,6 +470,39 @@ export const corsOptions = {
   exposedHeaders: ["X-Total-Count", "X-Page", "X-Page-Size"],
   maxAge: 86400, // 24 hours
 };
+
+/**
+ * CORS middleware — enforces corsOptions without requiring the cors package
+ */
+export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const origin = req.headers.origin as string | undefined;
+
+  corsOptions.origin(origin, (err, allow) => {
+    if (err || !allow) {
+      // No CORS headers — browser will block the request
+      if (req.method === "OPTIONS") {
+        res.status(204).end();
+      } else {
+        next();
+      }
+      return;
+    }
+
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", corsOptions.methods.join(", "));
+    res.setHeader("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(", "));
+    res.setHeader("Access-Control-Expose-Headers", corsOptions.exposedHeaders.join(", "));
+    res.setHeader("Access-Control-Max-Age", String(corsOptions.maxAge));
+
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+
+    next();
+  });
+}
 
 /**
  * Log suspicious activity

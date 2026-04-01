@@ -18,9 +18,7 @@ const FOOTER_LINKS = {
     { href: "/projects", label: "Projects" },
     { href: "/organizations", label: "Organizations" },
   ],
-  resources: [
-    { href: "/help", label: "Help Center" },
-  ],
+  resources: [{ href: "/help", label: "Help Center" }],
   legal: [
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/terms", label: "Terms of Service" },
@@ -29,8 +27,16 @@ const FOOTER_LINKS = {
 
 const SOCIAL_LINKS = [
   { href: "https://x.com", label: "X (Twitter)", icon: SiX },
-  { href: "https://www.linkedin.com/company/synerxus", label: "LinkedIn", icon: Linkedin },
-  { href: "https://www.facebook.com/861509087040686", label: "Facebook", icon: Facebook },
+  {
+    href: "https://www.linkedin.com/company/synerxus",
+    label: "LinkedIn",
+    icon: Linkedin,
+  },
+  {
+    href: "https://www.facebook.com/861509087040686",
+    label: "Facebook",
+    icon: Facebook,
+  },
 ];
 
 export default function Footer() {
@@ -133,7 +139,7 @@ export default function Footer() {
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Mail className="h-4 w-4" />
-                  support@synerxus.com
+                  hello@synerxus.com
                 </a>
               </li>
               <li>
@@ -156,7 +162,10 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">
-            © {currentYear} Synerxus. All rights reserved.
+            © {currentYear}{" "}
+            <span style={{ color: "#0A2463", fontWeight: 700 }}>SYNER</span>
+            <span style={{ color: "#B8860B", fontWeight: 700 }}>XUS</span>. All
+            rights reserved.
           </p>
           <div className="flex gap-6">
             {FOOTER_LINKS.legal.map((link) => (

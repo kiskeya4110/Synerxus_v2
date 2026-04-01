@@ -147,6 +147,7 @@ projectsRouter.get("/", async (req: Request, res: Response) => {
 projectsRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
+    if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
     const { userId } = req.query;
 
     const project = await storage.getProject(projectId);
@@ -157,6 +158,7 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
 
     if (userId) {
       const userIdNum = parseInt(userId as string);
+      if (isNaN(userIdNum)) return res.status(400).json({ message: "Invalid user ID" });
       const user = await storage.getUser(userIdNum);
 
       if (user) {
@@ -220,6 +222,7 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
 projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
+    if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
     const user = req.user;
 
     console.log("[Projects] DELETE request for project:", projectId);
@@ -283,6 +286,7 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
 projectsRouter.get("/:id/metrics", async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
+    if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
 
     const project = await storage.getProject(projectId);
     if (!project) {
@@ -388,6 +392,7 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
     const projectId = parseInt(req.params.id);
+    if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
 
     const existingProject = await storage.getProject(projectId);
     if (!existingProject) {

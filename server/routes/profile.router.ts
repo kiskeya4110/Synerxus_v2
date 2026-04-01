@@ -7,6 +7,7 @@ import { db } from "../db";
 import { users, organizations, matchableOrganizations } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
+import { logger } from "../logger";
 
 export const profileRouter = Router();
 
@@ -99,7 +100,7 @@ profileRouter.patch("/volunteer", authMiddleware, async (req: Request, res: Resp
           }
         }
       } catch (err) {
-        console.error("Error updating legacy volunteer table (non-critical):", err);
+        logger.warn("[Profile] Error updating legacy volunteer table (non-critical)", { error: err });
         // This is legacy data, don't fail the request if it errors
       }
     }
@@ -113,7 +114,7 @@ profileRouter.patch("/volunteer", authMiddleware, async (req: Request, res: Resp
       volunteerProfile
     });
   } catch (err) {
-    console.error("Error updating volunteer profile:", err);
+    logger.error("[Profile] Error updating volunteer profile", { error: err });
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }
@@ -140,7 +141,7 @@ profileRouter.patch("/organization", authMiddleware, async (req: Request, res: R
     }
 
     const { profilePhotoUrl, name, mission, needs, sdgFocus, location, city, country, bio, displayName, website, contactEmail } = req.body;
-    console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country, location });
+    logger.debug('[Profile] Organization PATCH received', { needs, sdgFocus, mission, name, city, country, location });
 
     // Create organization if it doesn't exist (outside transaction - one-time setup)
     let organizationId = user.organizationId;
@@ -185,7 +186,7 @@ profileRouter.patch("/organization", authMiddleware, async (req: Request, res: R
         if (city !== undefined) orgUpdates.city = city;
         if (country !== undefined) orgUpdates.country = country;
 
-        console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
+        logger.debug('[Profile] Updating organization', { orgUpdates });
 
         if (Object.keys(orgUpdates).length > 0) {
           await tx.update(organizations).set(orgUpdates).where(eq(organizations.id, organizationId));
@@ -237,7 +238,7 @@ profileRouter.patch("/organization", authMiddleware, async (req: Request, res: R
     const updatedUser = await storage.getUser(userId);
     res.json(updatedUser);
   } catch (err) {
-    console.error("Error updating organization profile:", err);
+    logger.error("[Profile] Error updating organization profile", { error: err });
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }
@@ -268,10 +269,10 @@ profileRouter.get("/volunteer", authMiddleware, async (req: Request, res: Respon
     try {
       volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
       if (volunteerProfile) {
-        console.log(`[Profile GET] Retrieved profile for user ${userId}, skillRatings:`, JSON.stringify(volunteerProfile.skillRatings));
+        logger.debug(`[Profile] Retrieved profile for user ${userId}`, { skillRatings: volunteerProfile.skillRatings });
       }
     } catch (err) {
-      console.error("Error fetching volunteer profile:", err);
+      logger.error("[Profile] Error fetching volunteer profile", { error: err });
     }
 
     // Merge user.avatar into volunteerProfile.profilePhotoUrl if missing
@@ -294,7 +295,7 @@ profileRouter.get("/volunteer", authMiddleware, async (req: Request, res: Respon
       volunteerProfile: mergedProfile
     });
   } catch (err) {
-    console.error("Error fetching volunteer profile:", err);
+    logger.error("[Profile] Error fetching volunteer profile", { error: err });
     res.status(500).json({ message: "Failed to fetch volunteer profile" });
   }
 });
@@ -329,7 +330,7 @@ profileRouter.get("/organization", authMiddleware, async (req: Request, res: Res
       try {
         matchableOrganization = await storage.getMatchableOrganizationByEmail(user.email);
       } catch (err) {
-        console.error("Error fetching matchable organization:", err);
+        logger.error("[Profile] Error fetching matchable organization", { error: err });
       }
     }
 
@@ -339,7 +340,7 @@ profileRouter.get("/organization", authMiddleware, async (req: Request, res: Res
       try {
         organizationProfile = await storage.getOrganizationProfileByOrgId(user.organizationId);
       } catch (err) {
-        console.error("Error fetching organization profile:", err);
+        logger.error("[Profile] Error fetching organization profile", { error: err });
       }
     }
 
@@ -356,7 +357,7 @@ profileRouter.get("/organization", authMiddleware, async (req: Request, res: Res
       matchableOrganization
     });
   } catch (err) {
-    console.error("Error fetching organization profile:", err);
+    logger.error("[Profile] Error fetching organization profile", { error: err });
     res.status(500).json({ message: "Failed to fetch organization profile" });
   }
 });
@@ -390,7 +391,7 @@ profileRouter.get("/intake/volunteer-profile", authMiddleware, async (req: Reque
       volunteerProfile: mergedProfile
     });
   } catch (err) {
-    console.error("Error fetching volunteer profile:", err);
+    logger.error("[Profile] Error fetching volunteer profile", { error: err });
     res.status(500).json({ message: "Failed to fetch volunteer profile" });
   }
 });
@@ -404,14 +405,12 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
 
     const userId = authUser.id;
 
-    console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
 
     const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
 
     // Always calculate total hours from availability slots
     if (req.body.availability && Array.isArray(req.body.availability) && req.body.availability.length > 0) {
@@ -425,10 +424,10 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
       // If not provided, use the calculated hours from slots
       if (req.body.weeklyAvailability) {
         const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
-        console.log(`[Intake POST CRITICAL] User ${userId} - Setting weeklyAvailability to min(${req.body.weeklyAvailability}, ${totalAvailabilityHours}) = ${availabilityHours}`);
+        logger.debug(`[Profile] User ${userId} - Setting weeklyAvailability`, { weeklyAvailability: availabilityHours });
         req.body.weeklyAvailability = availabilityHours;
       } else {
-        console.log(`[Intake POST CRITICAL] User ${userId} - Auto-calculating weeklyAvailability from slots = ${totalAvailabilityHours}`);
+        logger.debug(`[Profile] User ${userId} - Auto-calculating weeklyAvailability`, { totalAvailabilityHours });
         req.body.weeklyAvailability = totalAvailabilityHours;
       }
     } else if (!req.body.weeklyAvailability) {
@@ -436,9 +435,6 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
       req.body.weeklyAvailability = 0;
     }
 
-    console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
-    console.log(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
-    console.log(`[Intake POST] Received yearsOfExperience for user ${userId}:`, JSON.stringify(req.body.yearsOfExperience));
 
     const existingProfile = await storage.getVolunteerProfileByUserId(userId);
 
@@ -453,25 +449,17 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
       profilePhotoUrl: req.body.profilePhotoUrl || existingProfile?.profilePhotoUrl || null // Preserve existing photo if no new one provided
     };
 
-    console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
-    console.log(`[Intake POST] Saving profile data with availability:`, JSON.stringify(profileData.availability));
-    console.log(`[Intake POST] Saving profile data with yearsOfExperience:`, JSON.stringify(profileData.yearsOfExperience));
 
     let profile;
     if (existingProfile) {
-      console.log(`[Intake POST CRITICAL] UPDATING existing profile for user ${userId}. New weeklyAvailability: ${profileData.weeklyAvailability}`);
+      logger.debug(`[Profile] Updating existing profile for user ${userId}`, { weeklyAvailability: profileData.weeklyAvailability });
       profile = await storage.updateVolunteerProfile(existingProfile.id, profileData);
     } else {
-      console.log(`[Intake POST CRITICAL] CREATING new profile for user ${userId}. weeklyAvailability: ${profileData.weeklyAvailability}`);
+      logger.debug(`[Profile] Creating new profile for user ${userId}`, { weeklyAvailability: profileData.weeklyAvailability });
       profile = await storage.createVolunteerProfile(profileData);
     }
 
-    console.log(`[Intake POST CRITICAL] Profile saved for user ${userId}. Fetching to verify...`);
     const savedProfile = await storage.getVolunteerProfileByUserId(userId);
-    console.log(`[Intake POST CRITICAL] VERIFIED: User ${userId} now has weeklyAvailability = ${savedProfile?.weeklyAvailability}`);
-    console.log(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
-    console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
-    console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
 
     // Update user's displayName, userType, skills, and avatar if needed
     const updates: any = {};
@@ -496,7 +484,6 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
     // Create or update matchable volunteer for algorithm
     if (profile) {
       const matchableVolId = `vol_${user.email}`;
-      console.log(`Creating/updating matchable volunteer: ${matchableVolId}`);
       const existingMatchableVol = await storage.getVolunteer(matchableVolId);
 
       // Use the updated name from request body, not the stale user object
@@ -512,19 +499,15 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
         sdgGoals: profile.preferredSdgs || []
       };
 
-      console.log('Matchable volunteer data:', JSON.stringify(matchableVolData, null, 2));
 
       if (existingMatchableVol) {
-        console.log('Updating existing matchable volunteer');
         await storage.updateVolunteer(matchableVolId, matchableVolData);
       } else {
-        console.log('Creating new matchable volunteer');
         await storage.createVolunteer({
           id: matchableVolId,
           ...matchableVolData
         } as any);
       }
-      console.log('Matchable volunteer created/updated successfully');
     }
 
     broadcastUpdate("volunteer_profile_updated", profile);
@@ -536,7 +519,7 @@ profileRouter.post("/intake/volunteer-profile", authMiddleware, async (req: Requ
       volunteerProfile: profile
     });
   } catch (err) {
-    console.error("Error saving volunteer profile:", err);
+    logger.error("[Profile] Error saving volunteer profile", { error: err });
     res.status(500).json({ message: "Failed to save volunteer profile" });
   }
 });
@@ -557,7 +540,7 @@ profileRouter.get("/intake/organization-profile", authMiddleware, async (req: Re
     const profile = await storage.getOrganizationProfileByOrgId(organizationId);
     res.json(profile);
   } catch (err) {
-    console.error("Error fetching organization profile:", err);
+    logger.error("[Profile] Error fetching organization profile", { error: err });
     res.status(500).json({ message: "Failed to fetch organization profile" });
   }
 });
@@ -673,12 +656,6 @@ profileRouter.post("/intake/organization-profile", authMiddleware, async (req: R
         location: organization.address || ''
       };
 
-      console.log('[OrganizationIntake] Syncing volunteer needs to matchable org:', {
-        organizationId,
-        volunteerNeeds: profile.volunteerNeeds,
-        matchableOrgId
-      });
-
       if (existingMatchableOrg) {
         await storage.updateMatchableOrganization(matchableOrgId, matchableOrgData);
       } else {
@@ -692,7 +669,7 @@ profileRouter.post("/intake/organization-profile", authMiddleware, async (req: R
     broadcastUpdate("organization_profile_updated", profile);
     res.json(profile);
   } catch (err) {
-    console.error("Error saving organization profile:", err);
+    logger.error("[Profile] Error saving organization profile", { error: err });
     res.status(500).json({ message: "Failed to save organization profile" });
   }
 });

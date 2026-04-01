@@ -247,7 +247,10 @@
       "Bash(sed -n '580,600p' /home/runner/workspace/server/routes/admin.router.ts)",
       "Bash(sed -n '980,1000p' /home/runner/workspace/server/routes/admin.router.ts)",
       "Bash(sed -n '300,330p' /home/runner/workspace/server/routes/admin.router.ts)",
-      "Bash(sed -n '774,800p' /home/runner/workspace/server/routes/admin.router.ts)"
+      "Bash(sed -n '774,800p' /home/runner/workspace/server/routes/admin.router.ts)",
+      "Bash(npm audit:*)",
+      "Bash(head -5 node -e \"console.log\\(''''html2pdf.js:'''', require\\(''''./node_modules/html2pdf.js/package.json''''\\).version\\)\")",
+      "Bash(/dev/null npm:*)"
     ],
     "deny": [],
     "ask": []

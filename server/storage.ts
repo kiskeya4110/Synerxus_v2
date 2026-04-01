@@ -190,7 +190,7 @@ export interface IStorage {
   listUsersByOrganization(organizationId: number): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
-  listUsers(): Promise<User[]>;
+  listUsers(limit?: number): Promise<User[]>;
   getUsersByIds(ids: number[]): Promise<User[]>;
   listUsersByType(userType: string): Promise<User[]>;
   countUsersByType(userType: string): Promise<number>;
@@ -754,8 +754,8 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async listUsers(): Promise<User[]> {
-    return await db.select().from(users);
+  async listUsers(limit = 3000): Promise<User[]> {
+    return await db.select().from(users).limit(limit);
   }
 
   async getUsersByIds(ids: number[]): Promise<User[]> {

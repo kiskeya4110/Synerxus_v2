@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 // Layout Components
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import OrganizationNav from "@/components/layout/organization-nav";
+import CorporateNav from "@/components/layout/corporate-nav";
 import Footer from "@/components/layout/footer";
 
 // Shared Dashboard Components
@@ -260,7 +261,7 @@ export default function UnifiedDashboard() {
       {/* Role-specific navigation */}
       {userType === 'volunteer' && <VolunteerNav />}
       {userType === 'organization' && <OrganizationNav />}
-      {userType === 'corporate-partner' && <VolunteerNav />} {/* Corporate uses simpler nav */}
+      {userType === 'corporate-partner' && <CorporateNav />}
 
       {/* Role-specific content - only one renders, each lazy-loaded */}
       {userType === 'volunteer' && (

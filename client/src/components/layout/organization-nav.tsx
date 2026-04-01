@@ -12,6 +12,7 @@ import {
   Building2,
   FileBarChart2,
   Settings,
+  Clock,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
@@ -34,6 +35,7 @@ const getOrgNavItems = () => [
 // Dropdown menu items - MVP only
 const MENU_ITEMS = [
   { href: "/organization-profile-settings", label: "Profile Settings", icon: Settings },
+  { href: "/log-volunteer-hours", label: "Log Volunteer Hours", icon: Clock },
   { href: "/help", label: "Help & Support", icon: HelpCircle },
 ];
 

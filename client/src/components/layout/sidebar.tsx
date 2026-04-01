@@ -3,25 +3,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  CheckSquare,
-  Users,
-  Building2,
-  PieChart,
-  Globe,
-  Calendar,
-  LayoutList,
   Smartphone,
-  Sparkles,
-  BarChart,
   Briefcase,
   Search,
   FolderKanban,
   UserCircle,
-  Settings,
   FileText,
-  Mail,
-  Award,
-  Trophy,
   ShieldCheck
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -118,72 +105,30 @@ export default function Sidebar() {
 
   const userType = currentUser.userType;
 
-  // Volunteer-specific navigation (grouped)
+  // Volunteer-specific navigation — MVP core only
   const volunteerNavSections = [
     {
       label: null,
       items: [
         { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Activity",
-      items: [
         { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/log-activity", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
         { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Progress",
-      items: [
-        { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/achievements", label: "Achievements", icon: <Award className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Options",
-      items: [
-        { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/volunteer-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
       ],
     },
   ];
 
-  // Organization-specific navigation (grouped)
+  // Organization-specific navigation — MVP core only
   const organizationNavSections = [
     {
       label: null,
       items: [
         { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/ngo-verification", label: "Verify Outcomes", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/projects", label: "Projects", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+        { href: "/log-volunteer-hours", label: "Log Volunteer Hours", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
         { href: "/organization-profile-settings", label: "Profile & Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Manage",
-      items: [
-        { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/applications", label: "Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Analytics",
-      items: [
-        { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-      ],
-    },
-    {
-      label: "Options",
-      items: [
-        { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/organization-leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-        { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
       ],
     },
   ];

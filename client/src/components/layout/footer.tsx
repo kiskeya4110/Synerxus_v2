@@ -12,13 +12,7 @@ const footerRegistry = {
 };
 
 const FOOTER_LINKS = {
-  platform: [
-    { href: "/volunteer-dashboard", label: "Dashboard" },
-    { href: "/discover-opportunities", label: "Opportunities" },
-    { href: "/projects", label: "Projects" },
-    { href: "/organizations", label: "Organizations" },
-  ],
-  resources: [{ href: "/help", label: "Help Center" }],
+  support: [{ href: "/help", label: "Help Center" }],
   legal: [
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/terms", label: "Terms of Service" },
@@ -69,11 +63,11 @@ export default function Footer() {
       data-footer-id={instanceId.current}
     >
       <div className="container max-w-7xl mx-auto px-4 py-6">
-        {/* 3-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
+        {/* 4-column grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-5">
 
           {/* Column 1: Brand */}
-          <div className="space-y-3">
+          <div className="col-span-2 md:col-span-1 space-y-3">
             <Logo size="sm" variant="full" clickable={false} />
             <p className="text-xs text-muted-foreground leading-relaxed">
               Turn Volunteer Hours into Audit-Ready ESG Data
@@ -97,11 +91,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 2: Platform + Resources */}
+          {/* Column 2: Support */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Platform</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Support</h4>
             <ul className="space-y-2">
-              {[...FOOTER_LINKS.platform, ...FOOTER_LINKS.resources].map((link) => (
+              {FOOTER_LINKS.support.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
@@ -111,7 +105,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Contact + Legal */}
+          {/* Column 3: Contact */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Contact</h4>
             <ul className="space-y-2">
@@ -136,7 +130,11 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider pt-1">Legal</h4>
+          </div>
+
+          {/* Column 4: Legal */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Legal</h4>
             <ul className="space-y-2">
               {FOOTER_LINKS.legal.map((link) => (
                 <li key={link.href}>

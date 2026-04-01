@@ -3,12 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
-  Search, MapPin, Clock, Users, Sparkles, Target,
-  ChevronDown, CheckCircle, Building2, Filter, Briefcase
+  Search, MapPin, Clock, Users, Building2, Filter, X, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
@@ -28,21 +25,9 @@ interface EnrichedOpportunity {
   sdgGoals?: number[];
   requiredSkills?: string[];
   volunteersNeeded?: number;
-  startDate?: string;
-  endDate?: string;
   matchScore?: number;
   matchReasons?: string[];
-  matchBreakdown?: {
-    skillMatch: number;
-    locationMatch: number;
-    sdgMatch: number;
-    interestMatch: number;
-    availabilityMatch: number;
-    experienceMatch: number;
-  };
   isUrgent?: boolean;
-  benefits?: string;
-  requirements?: string;
 }
 
 interface OpportunityStatus {
@@ -56,7 +41,6 @@ export default function DiscoverOpportunities() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Parse URL search parameters for pre-populated filters
   const urlParams = useMemo(() => {
     const searchParams = new URLSearchParams(window.location.search);
     return {
@@ -71,7 +55,6 @@ export default function DiscoverOpportunities() {
   const [searchQuery, setSearchQuery] = useState(urlParams.search || urlParams.skill);
   const [categoryFilter, setCategoryFilter] = useState<string>(urlParams.category);
   const [locationFilter, setLocationFilter] = useState<string>(urlParams.location);
-  const [skillFilter, setSkillFilter] = useState<string>(urlParams.skill);
   const [sdgFilter, setSdgFilter] = useState<string>(urlParams.sdg);
   const [showFilters, setShowFilters] = useState(false);
   const [applyingToId, setApplyingToId] = useState<number | null>(null);
@@ -80,37 +63,21 @@ export default function DiscoverOpportunities() {
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
 
-  // Update filters when URL params change
   useEffect(() => {
-    if (urlParams.skill) {
-      setSearchQuery(urlParams.skill);
-      setSkillFilter(urlParams.skill);
-      setShowFilters(true); // Show filters panel when skill is pre-selected
-    }
-    if (urlParams.search) {
-      setSearchQuery(urlParams.search);
-    }
-    if (urlParams.sdg) {
-      setSdgFilter(urlParams.sdg);
-      setShowFilters(true);
-    }
+    if (urlParams.skill) setSearchQuery(urlParams.skill);
+    if (urlParams.search) setSearchQuery(urlParams.search);
+    if (urlParams.sdg) setSdgFilter(urlParams.sdg);
   }, [urlParams.skill, urlParams.search, urlParams.sdg]);
 
-  // Scroll to top on page load
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  // Fetch opportunities - using React Query's built-in retry and caching
   const { data: opportunities = [], isLoading, isError, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
       const headers = await getAuthHeaders();
       const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, { headers });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch opportunities: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch opportunities: ${response.status}`);
       return response.json();
     },
     enabled: !!userId,
@@ -120,16 +87,13 @@ export default function DiscoverOpportunities() {
     gcTime: 5 * 60 * 1000,
   });
 
-  // Fetch opportunity status
   const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] }, refetch: refetchStatus } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
       if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
       const headers = await getAuthHeaders();
       const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`, { headers });
-      if (!response.ok) {
-        return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      }
+      if (!response.ok) return { savedIds: [], rejectedIds: [], appliedIds: [] };
       return response.json();
     },
     enabled: !!userId,
@@ -138,71 +102,49 @@ export default function DiscoverOpportunities() {
     gcTime: 5 * 60 * 1000,
   });
 
-  // These useMemo hooks must be before any early returns to maintain consistent hook order
   const availableCategories = useMemo(() => {
     if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
+    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort() as string[];
   }, [opportunities]);
 
   const availableLocations = useMemo(() => {
     if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
+    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort() as string[];
   }, [opportunities]);
 
-  // Redirect to login if not authenticated - must be after all hooks
   if (!userId) {
     return (
-      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
-        <div className="text-slate-800 text-center p-6">
-          <p className="mb-4">Please log in to discover opportunities</p>
-          <Button onClick={() => navigate('/login')} className="bg-emerald-500 hover:bg-emerald-600">
-            Go to Login
-          </Button>
+      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="mb-4 text-stone-600">Please log in to discover opportunities</p>
+          <Button onClick={() => navigate('/login')}>Go to Login</Button>
         </div>
       </div>
     );
   }
 
   const filteredOpportunities = (opportunities || []).filter((opp) => {
-    // Guard against malformed opportunity objects
     if (!opp || typeof opp.id !== 'number') return false;
-
-    const matchesSearch = searchQuery
-      ? (opp.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (opp.requiredSkills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-      : true;
-
+    const matchesSearch = !searchQuery ||
+      (opp.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (opp.requiredSkills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = categoryFilter === "all" || opp.category === categoryFilter;
     const matchesLocation = locationFilter === "all" ||
       (locationFilter === "remote" ? opp.isRemote : (opp.location || '').includes(locationFilter));
-
-    // Skill filter - check if opportunity requires the specific skill
-    const matchesSkill = !skillFilter ||
-      (opp.requiredSkills || []).some(s => s.toLowerCase().includes(skillFilter.toLowerCase()));
-
-    // SDG filter - check if opportunity targets the specific SDG
-    const matchesSdg = !sdgFilter ||
-      (opp.sdgGoals || []).includes(parseInt(sdgFilter));
-
+    const matchesSdg = !sdgFilter || (opp.sdgGoals || []).includes(parseInt(sdgFilter));
     const isNotRejected = !opportunityStatus?.rejectedIds?.includes(opp.id);
-
-    return matchesSearch && matchesCategory && matchesLocation && matchesSkill && matchesSdg && isNotRejected;
+    return matchesSearch && matchesCategory && matchesLocation && matchesSdg && isNotRejected;
   });
 
-  const topMatches = filteredOpportunities.filter(o => (o.matchScore ?? 0) >= 70).slice(0, 3);
+  const hasApplied = (id: number) => opportunityStatus?.appliedIds?.includes(id) ?? false;
 
-  const hasApplied = (opportunityId: number) => {
-    return opportunityStatus?.appliedIds?.includes(opportunityId) ?? false;
-  };
+  const hasActiveFilters = categoryFilter !== 'all' || locationFilter !== 'all' || !!sdgFilter;
 
-  // Apply mutation for direct application
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: number) => {
       const volunteerId = parseInt(userId || '0');
-      if (!volunteerId) {
-        throw new Error('Please log in to apply');
-      }
+      if (!volunteerId) throw new Error('Please log in to apply');
       return apiRequest("POST", "/api/applications", {
         opportunityId,
         volunteerId,
@@ -212,452 +154,294 @@ export default function DiscoverOpportunities() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities/status"] });
-      toast({ title: "Applied successfully!", description: "Your application has been submitted. The organization will review it soon." });
+      toast({ title: "Applied successfully!", description: "Your application has been submitted." });
       setApplyingToId(null);
     },
     onError: (error: Error) => {
-      toast({ title: "Application failed", description: error.message || "Failed to apply. Please try again.", variant: "destructive" });
+      toast({ title: "Application failed", description: error.message || "Please try again.", variant: "destructive" });
       setApplyingToId(null);
     }
   });
 
   const handleApply = (opportunityId: number) => {
-    if (!userId) {
-      toast({ title: "Please log in", description: "You need to be logged in to apply.", variant: "destructive" });
-      navigate('/login');
-      return;
-    }
-    if (hasApplied(opportunityId)) {
-      toast({ title: "Already applied", description: "You have already applied to this opportunity." });
-      return;
-    }
+    if (!userId) { navigate('/login'); return; }
+    if (hasApplied(opportunityId)) return;
     setApplyingToId(opportunityId);
     applyMutation.mutate(opportunityId);
   };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
-        <div className="text-slate-800 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p>Loading opportunities...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state with retry option
-  if (isError) {
-    return (
-      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
-        <div className="text-slate-800 text-center p-6">
-          <div className="w-16 h-16 mx-auto mb-4 text-amber-500">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-          </div>
-          <p className="text-lg font-semibold mb-2">Unable to load opportunities</p>
-          <p className="text-sm text-slate-500 mb-4">
-            Please check your connection and try again.
-          </p>
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={() => {
-                refetchOpportunities();
-                refetchStatus();
-              }}
-              className="bg-emerald-500 hover:bg-emerald-600"
-            >
-              Try Again
-            </Button>
-            <Button onClick={() => navigate('/volunteer-dashboard')} variant="outline">
-              Go to Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen h-screen bg-[#f8f9fa] dark:from-slate-900 dark:to-slate-800 flex flex-col w-full overflow-hidden">
-      {/* Volunteer Desktop Navigation - only for volunteers */}
+    <div className="min-h-screen bg-[#faf9f7] flex flex-col">
       {isVolunteer && <VolunteerNav />}
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 md:px-6 pt-4 pb-6 md:mx-6 md:mt-6 md:rounded-xl">
-          <h1 className="text-white text-xl font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-300" />
-            Discover Opportunities
-          </h1>
-          <p className="text-blue-100 text-sm mt-1">
-            {filteredOpportunities.length} opportunities matched to you
-          </p>
+      <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 pb-24 space-y-4">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Opportunities</h1>
+          <p className="text-sm text-stone-500 mt-0.5">Find volunteer opportunities that match your skills and interests</p>
+        </div>
 
-          {/* Active Filters Display */}
-          {(skillFilter || sdgFilter) && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {skillFilter && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                  <span>Skill: {skillFilter}</span>
-                  <button
-                    onClick={() => { setSkillFilter(''); setSearchQuery(''); }}
-                    className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center hover:bg-white/50"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-              {sdgFilter && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                  <span>SDG {sdgFilter}</span>
-                  <button
-                    onClick={() => setSdgFilter('')}
-                    className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center hover:bg-white/50"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Search Bar */}
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+        {/* Search + Filter Row */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
             <input
               type="text"
               placeholder="Search opportunities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-white/50 outline-none shadow-lg"
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 shadow-sm"
             />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-
-          {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="mt-3 flex items-center gap-2 text-white/90 text-sm hover:text-white transition-colors"
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors shadow-sm ${
+              hasActiveFilters
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'
+            }`}
           >
-            <Filter className="w-4 h-4" />
-            <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            <Filter className="h-4 w-4" />
+            {hasActiveFilters ? 'Filtered' : 'Filter'}
           </button>
         </div>
 
-        <div className="space-y-4 p-4 md:px-6 -mt-2">
-          {/* Filters */}
-          {showFilters && (
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
-              <h3 className="text-slate-800 font-semibold text-sm">Filters</h3>
+        {/* Active filter chips */}
+        {(sdgFilter || categoryFilter !== 'all' || locationFilter !== 'all') && (
+          <div className="flex flex-wrap gap-2">
+            {categoryFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full border border-indigo-200">
+                {categoryFilter}
+                <button onClick={() => setCategoryFilter('all')}><X className="h-3 w-3 ml-0.5" /></button>
+              </span>
+            )}
+            {locationFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full border border-indigo-200">
+                {locationFilter === 'remote' ? 'Remote' : locationFilter}
+                <button onClick={() => setLocationFilter('all')}><X className="h-3 w-3 ml-0.5" /></button>
+              </span>
+            )}
+            {sdgFilter && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full border border-indigo-200">
+                SDG {sdgFilter}
+                <button onClick={() => setSdgFilter('')}><X className="h-3 w-3 ml-0.5" /></button>
+              </span>
+            )}
+          </div>
+        )}
 
-              {/* Category Filter */}
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-slate-500 text-xs mb-1 block">Category</label>
+                <label className="text-xs font-medium text-stone-500 block mb-1.5">Category</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 >
                   <option value="all">All Categories</option>
-                  {availableCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
-
-              {/* Location Filter */}
               <div>
-                <label className="text-slate-500 text-xs mb-1 block">Location</label>
+                <label className="text-xs font-medium text-stone-500 block mb-1.5">Location</label>
                 <select
                   value={locationFilter}
                   onChange={(e) => setLocationFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 >
                   <option value="all">All Locations</option>
                   <option value="remote">Remote Only</option>
-                  {availableLocations.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
+                  {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                 </select>
               </div>
             </div>
-          )}
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setCategoryFilter('all'); setLocationFilter('all'); setSdgFilter(''); }}
+                className="text-xs text-stone-500 hover:text-stone-700 underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        )}
 
-          {/* Top Matches - Only show for volunteers */}
-          {isVolunteer && topMatches.length > 0 && (
-            <div>
-              <h2 className="text-slate-800 text-lg font-semibold mb-3 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-blue-500" />
-                Top Matches for You
-              </h2>
-              <div className="space-y-3">
-                {topMatches.map((opp) => (
-                  <div
-                    key={opp.id}
-                    className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
-                    onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full font-medium">
-                            {opp.matchScore}% Match
-                          </span>
-                          {hasApplied(opp.id) && (
-                            <span className="text-xs px-2.5 py-1 bg-emerald-500 rounded-full font-medium">Applied</span>
-                          )}
-                        </div>
-                        <h3 className="font-semibold text-base mt-2">{opp.title}</h3>
-                        {opp.organizationName && (
-                          <p className="text-xs text-blue-100 mt-1 flex items-center gap-1">
-                            <Building2 className="w-3 h-3" />
-                            {opp.organizationName}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+        {/* Results count */}
+        <p className="text-xs text-stone-400">
+          {isLoading ? 'Loading...' : `${filteredOpportunities.length} opportunit${filteredOpportunities.length === 1 ? 'y' : 'ies'} found`}
+        </p>
 
-                    {opp.matchReasons && opp.matchReasons.length > 0 && (
-                      <div className="my-3 text-xs bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                        <p className="font-semibold mb-1 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Why this matches:
-                        </p>
-                        <p className="text-blue-100">• {opp.matchReasons[0]}</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3 text-xs mb-3 text-blue-100">
-                      {opp.location && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{opp.location}</span>
-                        </div>
-                      )}
-                      {opp.timeCommitment && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{opp.timeCommitment}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {isVolunteer && (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApply(opp.id);
-                        }}
-                        disabled={hasApplied(opp.id) || applyingToId === opp.id}
-                        className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl"
-                      >
-                        {hasApplied(opp.id) ? "Already Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
-                      </Button>
-                    )}
-                  </div>
-                ))}
+        {/* Loading */}
+        {isLoading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-xl border border-stone-200 p-5 animate-pulse">
+                <div className="h-4 bg-stone-100 rounded w-2/3 mb-3" />
+                <div className="h-3 bg-stone-100 rounded w-1/3 mb-4" />
+                <div className="h-3 bg-stone-100 rounded w-full mb-2" />
+                <div className="h-3 bg-stone-100 rounded w-4/5" />
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+        )}
 
-          {/* All Opportunities */}
-          <div>
-            <h2 className="text-slate-800 text-lg font-semibold mb-3">
-              All Opportunities ({filteredOpportunities.length})
-            </h2>
+        {/* Error */}
+        {isError && !isLoading && (
+          <div className="bg-white rounded-xl border border-stone-200 p-8 text-center shadow-sm">
+            <p className="text-stone-600 font-medium mb-1">Unable to load opportunities</p>
+            <p className="text-stone-400 text-sm mb-4">Please check your connection and try again.</p>
+            <Button size="sm" onClick={() => { refetchOpportunities(); refetchStatus(); }}>Try Again</Button>
+          </div>
+        )}
 
-            {filteredOpportunities.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
-                <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <p className="text-slate-600 font-medium">No opportunities found</p>
-                <p className="text-slate-400 text-sm mt-1">Try adjusting your filters</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredOpportunities.map((opp) => {
-                  const matchScore = opp.matchScore ?? 0;
-                  const matchGradient = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
-                                    matchScore >= 60 ? 'from-blue-500 to-indigo-500' :
-                                    matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-slate-400 to-slate-500';
+        {/* Empty state */}
+        {!isLoading && !isError && filteredOpportunities.length === 0 && (
+          <div className="bg-white rounded-xl border border-stone-200 p-10 text-center shadow-sm">
+            <Search className="h-10 w-10 text-stone-300 mx-auto mb-3" />
+            <p className="text-stone-600 font-medium">No opportunities found</p>
+            <p className="text-stone-400 text-sm mt-1">Try adjusting your search or filters</p>
+            {(searchQuery || hasActiveFilters) && (
+              <button
+                className="mt-3 text-sm text-indigo-600 hover:underline"
+                onClick={() => { setSearchQuery(''); setCategoryFilter('all'); setLocationFilter('all'); setSdgFilter(''); }}
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        )}
 
-                  return (
-                    <div
-                      key={opp.id}
-                      className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
-                      onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
-                    >
-                      {/* Match Score Header - Only for volunteers */}
-                      {isVolunteer ? (
-                        <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
-                          <div className="flex items-center gap-3 text-white">
-                            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                              <span className="text-base font-bold">{matchScore}%</span>
-                            </div>
-                            <div>
-                              <span className="text-sm font-semibold block">
-                                {matchScore >= 80 ? 'Excellent Match' :
-                                 matchScore >= 60 ? 'Good Match' :
-                                 matchScore >= 40 ? 'Fair Match' : 'Explore'}
-                              </span>
-                              <span className="text-xs text-white/80">Compatibility Score</span>
-                            </div>
-                          </div>
-                          {hasApplied(opp.id) && (
-                            <Badge className="bg-white/20 text-white text-xs border-0 rounded-full px-3">
-                              Applied
-                            </Badge>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-gradient-to-r from-slate-600 to-slate-700 px-4 py-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3 text-white">
-                            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                              <Briefcase className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <span className="text-sm font-semibold block">Volunteer Opportunity</span>
-                              <span className="text-xs text-white/80">View Details</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="p-4">
-                        {/* Title & Organization */}
-                        <h3 className="text-slate-800 font-semibold text-base mb-1">
-                          {opp.title}
-                        </h3>
+        {/* Opportunity Cards */}
+        {!isLoading && !isError && filteredOpportunities.length > 0 && (
+          <div className="space-y-3">
+            {filteredOpportunities.map((opp) => {
+              const applied = hasApplied(opp.id);
+              const applying = applyingToId === opp.id;
+              return (
+                <div
+                  key={opp.id}
+                  className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all cursor-pointer"
+                  onClick={() => navigate(`/opportunities/${opp.id}`)}
+                >
+                  <div className="p-5">
+                    {/* Title row */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-stone-900 leading-snug">{opp.title}</h3>
                         {opp.organizationName && (
-                          <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
-                            <Building2 className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5 mt-1 text-stone-500 text-xs">
+                            <Building2 className="h-3 w-3 flex-shrink-0" />
                             <span>{opp.organizationName}</span>
                           </div>
                         )}
-
-                        {/* Description */}
-                        {opp.description && (
-                          <p className="text-slate-600 text-sm line-clamp-2 mb-3">
-                            {opp.description}
-                          </p>
-                        )}
-
-                        {/* SDG Goals */}
-                        {opp.sdgGoals && opp.sdgGoals.length > 0 && (
-                          <div className="flex gap-1.5 mb-3">
-                            {opp.sdgGoals.slice(0, 4).map((sdg) => (
-                              <div
-                                key={sdg}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                                style={{ backgroundColor: getSDGColor(sdg) }}
-                              >
-                                {sdg}
-                              </div>
-                            ))}
-                            {opp.sdgGoals.length > 4 && (
-                              <div className="w-7 h-7 rounded-lg bg-slate-500 flex items-center justify-center text-white text-[10px] shadow-sm">
-                                +{opp.sdgGoals.length - 4}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Match Reasons - Only show for volunteers */}
-                        {isVolunteer && opp.matchReasons && opp.matchReasons.length > 0 && (
-                          <div className="bg-blue-50 rounded-xl p-3 mb-3">
-                            <p className="text-blue-700 text-xs font-semibold mb-1 flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Why this matches you
-                            </p>
-                            <p className="text-blue-600 text-xs">• {opp.matchReasons[0]}</p>
-                          </div>
-                        )}
-
-                        {/* Meta Info */}
-                        <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
-                          {opp.location && (
-                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                              <MapPin className="w-3 h-3" />
-                              <span>{opp.location}</span>
-                            </div>
-                          )}
-                          {opp.timeCommitment && (
-                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                              <Clock className="w-3 h-3" />
-                              <span>{opp.timeCommitment}</span>
-                            </div>
-                          )}
-                          {opp.volunteersNeeded && (
-                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                              <Users className="w-3 h-3" />
-                              <span>{opp.volunteersNeeded} needed</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Skills */}
-                        {opp.requiredSkills && opp.requiredSkills.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-slate-500 text-xs mb-1.5 font-medium">Required Skills:</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {opp.requiredSkills.slice(0, 3).map((skill, idx) => (
-                                <span key={idx} className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-medium">
-                                  {skill}
-                                </span>
-                              ))}
-                              {opp.requiredSkills.length > 3 && (
-                                <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg">
-                                  +{opp.requiredSkills.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/opportunities/${opp.id}/pwa`);
-                            }}
-                            variant="outline"
-                            className="flex-1 rounded-xl border-slate-200"
-                          >
-                            View Details
-                          </Button>
-                          {isVolunteer && (
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleApply(opp.id);
-                              }}
-                              disabled={hasApplied(opp.id) || applyingToId === opp.id}
-                              className={`flex-1 rounded-xl ${hasApplied(opp.id) ? 'bg-slate-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white font-semibold`}
-                            >
-                              {hasApplied(opp.id) ? "Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
-                            </Button>
-                          )}
-                        </div>
                       </div>
+                      {applied && (
+                        <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex-shrink-0">
+                          <CheckCircle2 className="h-3 w-3" /> Applied
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    {/* Description */}
+                    {opp.description && (
+                      <p className="text-sm text-stone-500 line-clamp-2 mb-3 leading-relaxed">{opp.description}</p>
+                    )}
+
+                    {/* SDG circles */}
+                    {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                      <div className="flex gap-1.5 mb-3">
+                        {opp.sdgGoals.slice(0, 5).map((sdg) => (
+                          <span
+                            key={sdg}
+                            className="w-6 h-6 rounded text-[10px] font-bold flex items-center justify-center text-white"
+                            style={{ backgroundColor: getSDGColor(sdg) }}
+                          >
+                            {sdg}
+                          </span>
+                        ))}
+                        {opp.sdgGoals.length > 5 && (
+                          <span className="w-6 h-6 rounded bg-stone-200 text-[10px] font-medium flex items-center justify-center text-stone-500">
+                            +{opp.sdgGoals.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Meta row */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-stone-400 mb-4">
+                      {(opp.location || opp.isRemote) && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {opp.isRemote ? 'Remote' : opp.location}
+                        </span>
+                      )}
+                      {opp.timeCommitment && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {opp.timeCommitment}
+                        </span>
+                      )}
+                      {opp.volunteersNeeded && (
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {opp.volunteersNeeded} needed
+                        </span>
+                      )}
+                      {opp.category && (
+                        <span className="px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full">{opp.category}</span>
+                      )}
+                    </div>
+
+                    {/* Skills */}
+                    {opp.requiredSkills && opp.requiredSkills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {opp.requiredSkills.slice(0, 4).map((skill, i) => (
+                          <span key={i} className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded-md">{skill}</span>
+                        ))}
+                        {opp.requiredSkills.length > 4 && (
+                          <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-400 rounded-md">+{opp.requiredSkills.length - 4}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg border-stone-200 text-stone-600 hover:bg-stone-50"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/opportunities/${opp.id}`); }}
+                      >
+                        View Details
+                      </Button>
+                      {isVolunteer && (
+                        <Button
+                          size="sm"
+                          disabled={applied || applying}
+                          onClick={(e) => { e.stopPropagation(); handleApply(opp.id); }}
+                          className={`rounded-lg font-medium ${applied ? 'bg-stone-100 text-stone-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+                        >
+                          {applied ? 'Applied' : applying ? 'Applying...' : 'Apply Now'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-        </div>
+        )}
       </main>
 
-      {/* Mobile Bottom Navigation */}
       {isMobile && <WebBottomNav activeTab="discover" />}
-
-      {/* Footer - Hidden on mobile */}
       {!isMobile && <Footer />}
     </div>
   );

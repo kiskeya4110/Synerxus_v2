@@ -268,7 +268,7 @@ export default function VolunteerNav() {
               <Button
                 variant="accent"
                 size="sm"
-                className="hidden sm:flex"
+                className="hidden md:flex"
                 onClick={() => navigate("/log-activity")}
               >
                 <Plus className="h-4 w-4 mr-1" />

@@ -160,7 +160,7 @@ export default function OrganizationNav() {
             <Button
               variant="accent"
               size="sm"
-              className="hidden sm:flex"
+              className="hidden md:flex"
               onClick={() => navigate("/post-core-opportunity")}
             >
               <Plus className="h-4 w-4 mr-1" />
@@ -297,15 +297,6 @@ export default function OrganizationNav() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden text-stone-600 hover:text-stone-900 hover:bg-stone-100"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
           </div>
         </nav>
       </div>

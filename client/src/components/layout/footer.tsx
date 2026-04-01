@@ -68,69 +68,100 @@ export default function Footer() {
       className="bg-secondary border-t border-border mt-auto"
       data-footer-id={instanceId.current}
     >
-      <div className="container max-w-7xl mx-auto px-4 py-4">
-        {/* Top row: brand + nav links + contact */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="container max-w-7xl mx-auto px-4 py-6">
+        {/* 3-column grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
+
+          {/* Column 1: Brand */}
+          <div className="space-y-3">
             <Logo size="sm" variant="full" clickable={false} />
-            <span className="hidden md:block text-xs text-muted-foreground">·</span>
-            <p className="hidden md:block text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Turn Volunteer Hours into Audit-Ready ESG Data
             </p>
+            <div className="flex gap-2">
+              {SOCIAL_LINKS.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-md bg-stone-100 text-muted-foreground hover:text-primary hover:bg-indigo-50 transition-colors"
+                    aria-label={link.label}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-            {FOOTER_LINKS.platform.map((link) => (
-              <Link key={link.href} href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                {link.label}
-              </Link>
-            ))}
-            {FOOTER_LINKS.resources.map((link) => (
-              <Link key={link.href} href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                {link.label}
-              </Link>
-            ))}
-            <a href="mailto:hello@synerxus.com" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <Mail className="h-3 w-3" />
-              hello@synerxus.com
-            </a>
+          {/* Column 2: Platform + Resources */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Platform</h4>
+            <ul className="space-y-2">
+              {[...FOOTER_LINKS.platform, ...FOOTER_LINKS.resources].map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {SOCIAL_LINKS.map((link) => {
-              const Icon = link.icon;
-              return (
+          {/* Column 3: Contact + Legal */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Contact</h4>
+            <ul className="space-y-2">
+              <li>
                 <a
-                  key={link.href}
-                  href={link.href}
+                  href="mailto:hello@synerxus.com"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                  hello@synerxus.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://synerxus.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 rounded-md bg-stone-100 text-muted-foreground hover:text-primary hover:bg-indigo-50 transition-colors"
-                  aria-label={link.label}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  synerxus.com
                 </a>
-              );
-            })}
+              </li>
+            </ul>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider pt-1">Legal</h4>
+            <ul className="space-y-2">
+              {FOOTER_LINKS.legal.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
+
         </div>
 
         <Divider />
 
-        {/* Bottom row: copyright + legal */}
-        <div className="pt-3 flex flex-col md:flex-row justify-between items-center gap-2">
+        {/* Copyright bar */}
+        <div className="pt-4 flex flex-col md:flex-row justify-between items-center gap-2">
           <p className="text-xs text-muted-foreground">
             © {currentYear}{" "}
             <span style={{ color: "#0A2463", fontWeight: 700 }}>SYNER</span>
             <span style={{ color: "#B8860B", fontWeight: 700 }}>XUS</span>. All rights reserved.
           </p>
-          <div className="flex gap-4">
-            {FOOTER_LINKS.legal.map((link) => (
-              <Link key={link.href} href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Intelligent connections for sustainable development worldwide
+          </p>
         </div>
       </div>
     </footer>

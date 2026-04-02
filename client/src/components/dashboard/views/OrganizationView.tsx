@@ -1113,7 +1113,7 @@ const OrganizationView = memo(function OrganizationView({
               {/* Core Metrics - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => navigate('/ngo/projects')}
+                  onClick={() => navigate('/dashboard?tab=projects')}
                   className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -1221,7 +1221,7 @@ const OrganizationView = memo(function OrganizationView({
               {/* Recent Projects */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <button
-                  onClick={() => navigate('/ngo/projects')}
+                  onClick={() => navigate('/dashboard?tab=projects')}
                   className="w-full px-4 py-3 border-b border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">

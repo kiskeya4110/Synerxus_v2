@@ -201,16 +201,16 @@ export default function App() {
           {/* Legacy routes - redirect to unified dashboard */}
           <Route path="/ngo/dashboard">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/ngo/dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
-          <Route path="/ngo/verification" component={NgoVerification} />
-          <Route path="/ngo/projects" component={NgoProjects} />
+          <Route path="/ngo/verification">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/ngo/projects">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/ngo/log-hours" component={LogVolunteerHours} />
           <Route path="/ngo/settings" component={OrganizationProfileSettings} />
           {/* Legacy routes - redirect to unified dashboard */}
           <Route path="/organization-dashboard">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/organization-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
-          <Route path="/ngo-verification" component={NgoVerification} />
-          <Route path="/volunteers">{() => <Redirect to="/projects" />}</Route>
-          <Route path="/projects" component={NgoProjects} />
+          <Route path="/ngo-verification">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/volunteers">{() => <Redirect to="/dashboard" />}</Route>
+          <Route path="/projects">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/projects/:id/edit" component={ProjectEdit} />
           <Route path="/ngo/projects/:id/edit" component={ProjectEdit} />
           <Route path="/projects/:id" component={ProjectDetail} />

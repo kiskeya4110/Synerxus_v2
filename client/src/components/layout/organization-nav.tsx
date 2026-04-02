@@ -24,12 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/ui/logo";
 
-// Navigation items - MVP only
+// Navigation items — Verify / Projects / Reports are now tabs on the dashboard.
+// To add a new top-level nav item, append an entry here.
 const getOrgNavItems = () => [
-  { href: "/dashboard", label: "Home", icon: Home, tabEvent: undefined as string | undefined },
-  { href: "/ngo-verification", label: "Verify", icon: Shield, tabEvent: undefined as string | undefined },
-  { href: "/projects", label: "Projects", icon: FolderOpen, tabEvent: undefined as string | undefined },
-  { href: "/dashboard?tab=reports", label: "Reports", icon: FileBarChart2, tabEvent: "reports" as string | undefined },
+  { href: "/dashboard", label: "Dashboard", icon: Home, tabEvent: undefined as string | undefined },
 ];
 
 // Dropdown menu items - MVP only
@@ -115,25 +113,11 @@ export default function OrganizationNav() {
             <div className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const fullLocation = location + window.location.search;
-                const isActive = (() => {
-                  if (item.href === "/dashboard?tab=reports") return fullLocation.includes("tab=reports");
-                  if (item.href === "/dashboard") return location === "/dashboard" && !fullLocation.includes("tab=reports");
-                  if (item.href === "/ngo-verification") return location.includes("ngo-verification");
-                  if (item.href === "/projects") return location.startsWith("/projects");
-                  return location === item.href;
-                })();
-
-                const isVerifyTab = item.label === "Verify";
+                const isActive = location.startsWith("/dashboard") || location === "/";
 
                 return (
                   <Link key={item.href} href={item.href}>
                     <button
-                      onClick={() => {
-                        if (item.tabEvent) {
-                          window.dispatchEvent(new CustomEvent('navigate-tab', { detail: item.tabEvent }));
-                        }
-                      }}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
                         isActive
@@ -143,13 +127,13 @@ export default function OrganizationNav() {
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
-                      {isVerifyTab && pendingCount > 0 && (
+                      {pendingCount > 0 && (
                         <Badge
                           variant="destructive"
                           size="sm"
                           className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center"
                         >
-                          {pendingCount}
+                          {pendingCount > 9 ? '9+' : pendingCount}
                         </Badge>
                       )}
                     </button>
@@ -228,14 +212,7 @@ export default function OrganizationNav() {
                     <div className="py-2 border-b border-stone-100 lg:hidden">
                       {navItems.map((item) => {
                         const Icon = item.icon;
-                        const fullLoc = location + window.location.search;
-                        const isActive = (() => {
-                          if (item.href === "/dashboard?tab=reports") return fullLoc.includes("tab=reports");
-                          if (item.href === "/dashboard") return location === "/dashboard" && !fullLoc.includes("tab=reports");
-                          if (item.href === "/ngo-verification") return location.includes("ngo-verification");
-                          if (item.href === "/projects") return location.startsWith("/projects");
-                          return location === item.href;
-                        })();
+                        const isActive = location.startsWith("/dashboard");
                         return (
                           <Link key={item.href} href={item.href}>
                             <button
@@ -245,12 +222,7 @@ export default function OrganizationNav() {
                                   ? "bg-indigo-50 text-indigo-600"
                                   : "text-stone-700 hover:bg-stone-50"
                               )}
-                              onClick={() => {
-                                setMenuOpen(false);
-                                if (item.tabEvent) {
-                                  window.dispatchEvent(new CustomEvent('navigate-tab', { detail: item.tabEvent }));
-                                }
-                              }}
+                              onClick={() => setMenuOpen(false)}
                             >
                               <Icon className="h-4 w-4" />
                               <span className="text-sm font-medium">{item.label}</span>

@@ -35,11 +35,9 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { getAuthHeaders } from "@/lib/queryClient";
 
-// Desktop nav items - MVP only
+// Desktop nav items — minimal chrome, tabs live on the dashboard
 const VOLUNTEER_NAV_ITEMS = [
-  { href: "/volunteer-dashboard", label: "Impact Wallet", icon: Home },
-  { href: "/my-work", label: "My Work", icon: ClipboardList },
-  { href: "/log-activity", label: "Log Activity", icon: ClipboardList },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
 ];
 
 // Dropdown menu items
@@ -235,10 +233,7 @@ export default function VolunteerNav() {
                   const Icon = item.icon;
                   const isActive =
                     location === item.href ||
-                    (item.href === "/volunteer-dashboard" &&
-                      location.startsWith("/volunteer-dashboard")) ||
-                    (item.href === "/my-work" && location.startsWith("/my-work")) ||
-                    (item.href === "/log-activity" && location.startsWith("/log-activity"));
+                    (item.href === "/dashboard" && location.startsWith("/dashboard"));
 
                   return (
                     <Link key={item.href} href={item.href}>

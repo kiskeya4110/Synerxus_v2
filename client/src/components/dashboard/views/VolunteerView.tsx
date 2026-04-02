@@ -16,6 +16,10 @@ import {
   User,
   FolderOpen,
   Briefcase,
+  Home,
+  Sparkles,
+  ClipboardList,
+  MapPin,
 } from "lucide-react";
 
 // UI Components
@@ -28,6 +32,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { getSDGColor, getSDGName, isValidSDG } from "@/lib/sdg-utils";
+
+// ── Tab configuration ────────────────────────────────────────────────────────
+// To add a new desktop tab: append one entry here and add a TabsContent block.
+type VolunteerTab = 'home' | 'my-work' | 'opportunities';
+
+const VOLUNTEER_TABS: { id: VolunteerTab; label: string; icon: React.ElementType }[] = [
+  { id: 'home',          label: 'Home',          icon: Home },
+  { id: 'my-work',       label: 'My Work',       icon: ClipboardList },
+  { id: 'opportunities', label: 'Opportunities', icon: Sparkles },
+];
 
 
 // Main VolunteerView Component
@@ -47,6 +61,10 @@ const VolunteerView = memo(function VolunteerView({
   setMobileTab,
 }: VolunteerViewProps) {
   const [, navigate] = useLocation();
+
+  // Desktop tab — drives which panel is visible on lg+ screens.
+  // Mobile continues to use mobileTab (passed from parent) unchanged.
+  const [desktopTab, setDesktopTab] = useState<VolunteerTab>('home');
 
   // State for expandable sections on dashboard
   const [expandedSection, setExpandedSection] = useState<'wallet' | 'projects' | 'activity' | null>(null);
@@ -112,6 +130,23 @@ const VolunteerView = memo(function VolunteerView({
     enabled: !!userId,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
+  });
+
+  // Fetch top matched opportunities for the Opportunities tab (lazy — only active when tab is open)
+  const { data: opportunitiesData = [], isLoading: isLoadingOpportunities } = useQuery({
+    queryKey: ["/api/opportunities/discover", userId],
+    queryFn: async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, { headers });
+        if (!response.ok) return [];
+        return response.json();
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!userId && desktopTab === 'opportunities',
+    staleTime: 5 * 60_000,
   });
 
   // Derive all logs from dashboard data (activities are included in the dashboard response)
@@ -1116,8 +1151,30 @@ const VolunteerView = memo(function VolunteerView({
   // Desktop View
   return (
     <main className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
-      {/* Desktop: Dashboard Home View */}
-      {mobileTab !== 'history' && (
+
+      {/* ── Desktop Tab Bar ───────────────────────────────────────────────── */}
+      <div className="border-b border-border -mb-2">
+        <nav className="flex gap-1">
+          {VOLUNTEER_TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setDesktopTab(id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
+                desktopTab === id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Home Tab ─────────────────────────────────────────────────────── */}
+      {desktopTab === 'home' && (
         <>
           {/* Page Header */}
           <PageHeader
@@ -1175,7 +1232,7 @@ const VolunteerView = memo(function VolunteerView({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Impact Summary */}
             <div className="space-y-6">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMobileTab('history')}>
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setDesktopTab('my-work')}>
                 <CardContent className="p-6">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                     Your Impact Summary
@@ -1183,7 +1240,7 @@ const VolunteerView = memo(function VolunteerView({
 
                   <div className="grid grid-cols-2 gap-4">
                     <button
-                      onClick={(e) => { e.stopPropagation(); setMobileTab('history'); }}
+                      onClick={(e) => { e.stopPropagation(); setDesktopTab('my-work'); }}
                       className="space-y-1 text-left hover:bg-secondary/50 p-2 rounded-lg transition-colors -m-2"
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -1194,7 +1251,7 @@ const VolunteerView = memo(function VolunteerView({
                       <p className="text-xs text-muted-foreground">{stats.verifiedHours} verified</p>
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); navigate('/discover-opportunities'); }}
+                      onClick={(e) => { e.stopPropagation(); setDesktopTab('opportunities'); }}
                       className="space-y-1 text-left hover:bg-secondary/50 p-2 rounded-lg transition-colors -m-2"
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -1205,7 +1262,7 @@ const VolunteerView = memo(function VolunteerView({
                       <p className="text-xs text-muted-foreground">{stats.outcomesVerified} verified outcomes</p>
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setMobileTab('history'); }}
+                      onClick={(e) => { e.stopPropagation(); setDesktopTab('my-work'); }}
                       className="space-y-1 text-left hover:bg-secondary/50 p-2 rounded-lg transition-colors -m-2"
                     >
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -1237,7 +1294,7 @@ const VolunteerView = memo(function VolunteerView({
                     <Clock className="h-5 w-5 text-primary" />
                     Recent Activity
                   </CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => setMobileTab('history')}>
+                  <Button variant="ghost" size="sm" onClick={() => setDesktopTab('my-work')}>
                     View All
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
@@ -1317,15 +1374,15 @@ const VolunteerView = memo(function VolunteerView({
         </>
       )}
 
-      {/* Desktop: History View */}
-      {mobileTab === 'history' && (
+      {/* ── My Work Tab ──────────────────────────────────────────────────── */}
+      {desktopTab === 'my-work' && (
         <>
-          {/* History Header */}
+          {/* My Work Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => setMobileTab('home')}>
+              <Button variant="ghost" size="sm" onClick={() => setDesktopTab('home')}>
                 <ChevronRight className="h-4 w-4 rotate-180 mr-1" />
-                Back
+                Home
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Impact History</h1>
@@ -1572,6 +1629,97 @@ const VolunteerView = memo(function VolunteerView({
         </>
       )}
 
+      {/* ── Opportunities Tab ────────────────────────────────────────────── */}
+      {desktopTab === 'opportunities' && (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Top Matched Opportunities</h1>
+              <p className="text-sm text-muted-foreground">Ranked by your skills, availability and mission alignment</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setDesktopTab('home')}>
+              <ChevronRight className="h-4 w-4 rotate-180 mr-1" />
+              Home
+            </Button>
+          </div>
+
+          {isLoadingOpportunities ? (
+            <LoadingState message="Finding your best matches…" />
+          ) : opportunitiesData.length === 0 ? (
+            <EmptyState
+              title="No matches yet"
+              description="Complete your profile and skills to unlock personalised recommendations."
+              action={{ label: "Update Profile", onClick: () => navigate('/volunteer/settings') }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {opportunitiesData.slice(0, 6).map((opp: any) => (
+                <Card key={opp.id} className="flex flex-col hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-snug line-clamp-2">{opp.title || opp.name}</CardTitle>
+                      {opp.matchScore != null && (
+                        <Badge className="flex-shrink-0 bg-emerald-100 text-emerald-700 border-0">
+                          {Math.round(opp.matchScore)}% match
+                        </Badge>
+                      )}
+                    </div>
+                    {opp.organizationName && (
+                      <p className="text-xs text-muted-foreground font-medium">{opp.organizationName}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col gap-3">
+                    {opp.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-3">{opp.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-auto">
+                      {(opp.sdgGoals || []).slice(0, 3).map((sdg: number) => (
+                        isValidSDG(sdg) && (
+                          <span
+                            key={sdg}
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white"
+                            style={{ backgroundColor: getSDGColor(sdg) }}
+                          >
+                            SDG {sdg}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {opp.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {opp.location}
+                        </span>
+                      )}
+                      {opp.timeCommitment && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {opp.timeCommitment}
+                        </span>
+                      )}
+                    </div>
+                    {opp.whyMatch && (
+                      <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100">
+                        <p className="text-xs text-emerald-700 font-medium mb-0.5">Why this is a good match</p>
+                        <p className="text-xs text-emerald-600 line-clamp-2">{opp.whyMatch}</p>
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      className="w-full mt-auto bg-gradient-to-r from-teal-500 to-blue-500 text-white border-0 hover:opacity-90"
+                      onClick={() => navigate(`/opportunities/${opp.id}`)}
+                    >
+                      View Details
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       {/* KPI Preview Modals */}
 
       {/* SDGs Addressed Modal */}
@@ -1651,7 +1799,7 @@ const VolunteerView = memo(function VolunteerView({
                 </div>
               </>
             )}
-            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setMobileTab('history'); }}>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setDesktopTab('my-work'); }}>
               View Full History
             </Button>
           </div>
@@ -1701,7 +1849,7 @@ const VolunteerView = memo(function VolunteerView({
             ) : (
               <p className="text-sm text-muted-foreground text-center py-2">Log verified activities to see your impact on people.</p>
             )}
-            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setMobileTab('history'); }}>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setDesktopTab('my-work'); }}>
               View All Activity
             </Button>
           </div>
@@ -1763,7 +1911,7 @@ const VolunteerView = memo(function VolunteerView({
                 <p className="text-sm">No projects yet. Explore opportunities to get started.</p>
               </div>
             )}
-            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); navigate('/discover-opportunities'); }}>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setDesktopTab('opportunities'); }}>
               Browse Opportunities
             </Button>
           </div>

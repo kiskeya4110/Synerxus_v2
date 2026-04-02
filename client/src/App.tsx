@@ -180,14 +180,14 @@ export default function App() {
           <Route path="/volunteer/settings" component={VolunteerProfileSettings} />
           {/* Legacy routes - redirect to unified dashboard */}
           <Route path="/volunteer-dashboard">{() => <Redirect to="/dashboard" />}</Route>
-          <Route path="/my-work" component={MyWork} />
+          <Route path="/my-work">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/log-activity" component={LogActivity} />
           <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
 
           {/* ================================================================ */}
           {/* OPPORTUNITIES - Discover & detail views (volunteer + general) */}
           {/* ================================================================ */}
-          <Route path="/discover-opportunities" component={DiscoverOpportunities} />
+          <Route path="/discover-opportunities">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
           <Route path="/opportunities" component={Opportunities} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
@@ -231,7 +231,7 @@ export default function App() {
           <Route path="/csr-dashboard">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/csr-dashboard-pwa">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/csr-dashboard/pwa">{() => <Redirect to="/dashboard" />}</Route>
-          <Route path="/csr-reports-exports" component={CSRReportsExports} />
+          <Route path="/csr-reports-exports">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
 
           {/* ================================================================ */}

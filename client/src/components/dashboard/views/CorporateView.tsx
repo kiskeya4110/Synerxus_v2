@@ -12,6 +12,16 @@ import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getAuthHeaders } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
+
+// ── Corporate tab configuration ───────────────────────────────────────────────
+// To add a new tab: append one entry here + add a matching conditional block.
+type CorporateTab = 'outcomes' | 'reports';
+
+const CORPORATE_TABS: { id: CorporateTab; label: string }[] = [
+  { id: 'outcomes', label: 'Verified Outcomes' },
+  { id: 'reports',  label: 'ESG Reports' },
+];
 
 interface VerifiedOutcome {
   id: number;
@@ -60,6 +70,9 @@ const CorporateView = memo(function CorporateView({
 }: CorporateViewProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+
+  // Desktop tab navigation (mobile is unaffected)
+  const [activeCorpTab, setActiveCorpTab] = useState<CorporateTab>('outcomes');
 
   // Report state
   const [reportGenerating, setReportGenerating] = useState(false);
@@ -650,42 +663,50 @@ const CorporateView = memo(function CorporateView({
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button
-            onClick={handleExportCSV}
-            disabled={outcomes.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50 disabled:opacity-50 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-          <div className="flex items-center gap-2">
-            <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
-              <SelectTrigger className="w-[140px] h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
-              </SelectContent>
-            </Select>
+          {activeCorpTab === 'outcomes' && (
             <button
-              onClick={generateReport}
-              disabled={reportGenerating}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              onClick={handleExportCSV}
+              disabled={outcomes.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
-              {reportGenerating ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <FileText className="w-4 h-4" />
-              )}
-              ESG Report
+              <Download className="w-4 h-4" />
+              Export CSV
             </button>
-          </div>
+          )}
+          {activeCorpTab === 'reports' && (
+            <button
+              onClick={() => setActiveCorpTab('outcomes')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              View Outcomes
+            </button>
+          )}
         </div>
       </div>
+
+      {/* ── Desktop Tab Bar ────────────────────────────────────────────────── */}
+      <div className="border-b border-slate-200 -mb-2">
+        <nav className="flex gap-1">
+          {CORPORATE_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveCorpTab(id)}
+              className={cn(
+                "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
+                activeCorpTab === id
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Verified Outcomes Tab ────────────────────────────────────────── */}
+      {activeCorpTab === 'outcomes' && (<>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4">
@@ -971,6 +992,88 @@ const CorporateView = memo(function CorporateView({
           </table>
         </div>
       )}
+
+      </>)} {/* end outcomes tab */}
+
+      {/* ── ESG Reports Tab ───────────────────────────────────────────────── */}
+      {activeCorpTab === 'reports' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Generate ESG Report</h2>
+            <p className="text-sm text-slate-500 mt-0.5">CSRD-compliant impact summary ready for download or print</p>
+          </div>
+
+          {/* Period + Generate */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-slate-700 block mb-1">Reporting Period</label>
+              <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
+                <SelectTrigger className="w-full sm:w-[200px] h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">Last 7 days</SelectItem>
+                  <SelectItem value="30d">Last 30 days</SelectItem>
+                  <SelectItem value="90d">Last 90 days</SelectItem>
+                  <SelectItem value="1y">Last year</SelectItem>
+                  <SelectItem value="all">All time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <button
+              onClick={generateReport}
+              disabled={reportGenerating}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {reportGenerating ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+              {reportGenerating ? 'Generating…' : 'Generate Report'}
+            </button>
+          </div>
+
+          {/* Report preview */}
+          {reportContent && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-slate-50">
+                <span className="text-sm font-semibold text-slate-800">Report Preview</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={downloadReport}
+                    className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg px-3 py-1.5 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download HTML
+                  </button>
+                  <button
+                    onClick={printReport}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-3 py-1.5 transition-colors"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Print / PDF
+                  </button>
+                </div>
+              </div>
+              <style dangerouslySetInnerHTML={{ __html: reportContent.styles }} />
+              <div
+                className="p-6 max-h-[70vh] overflow-y-auto"
+                dangerouslySetInnerHTML={{ __html: reportContent.body }}
+              />
+            </div>
+          )}
+
+          {!reportContent && !reportGenerating && (
+            <div className="text-center py-16 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">Select a reporting period and click Generate Report</p>
+              <p className="text-xs mt-1">Report includes SDG alignment, project breakdown, and CSRD compliance metrics</p>
+            </div>
+          )}
+        </div>
+      )}
+
     </main>
   );
 });

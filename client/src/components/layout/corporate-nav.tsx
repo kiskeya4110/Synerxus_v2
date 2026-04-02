@@ -17,9 +17,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "@/components/ui/logo";
 import { getAuthHeaders } from "@/lib/queryClient";
 
+// Nav items — ESG Reports is now a tab on the dashboard, not a separate page
 const CSR_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/csr-reports-exports", label: "ESG Reports", icon: FileBarChart2 },
 ];
 
 const MENU_ITEMS = [
@@ -79,8 +79,7 @@ export default function CorporateNav() {
                 const Icon = item.icon;
                 const isActive =
                   location === item.href ||
-                  (item.href === "/dashboard" && location === "/dashboard") ||
-                  (item.href === "/csr-reports-exports" && location.startsWith("/csr-reports"));
+                  (item.href === "/dashboard" && location.startsWith("/dashboard"));
 
                 return (
                   <Link key={item.href} href={item.href}>

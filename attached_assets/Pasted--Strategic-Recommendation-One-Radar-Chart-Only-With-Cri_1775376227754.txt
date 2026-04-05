@@ -1,0 +1,100 @@
+### ✅ Strategic Recommendation: **One Radar Chart Only—With Critical Constraints**
+
+Radar charts have **limited auditor utility** but can serve a single strategic purpose in your report: **visualizing multi-dimensional scoring for the Verified Innovation Scaling Index**. Use it *only* if you follow these constraints:
+
+---
+
+## 📍 Where to Place It (Section 8: Innovation Scoring)
+
+**Placement:** Immediately after the 5-dimension scoring table in the Verified Innovation Scaling Index section  
+**Purpose:** Provide an at-a-glance visual of an innovation's balanced/unbalanced profile across dimensions—not precise comparison
+
+---
+
+## 📐 Minimalist Radar Chart Specification
+
+```
+┌─────────────────────────────────────────────────────┐
+│  VERIFIED INNOVATION SCORING PROFILE                │
+│  Solar Microgrids for Rural Clinics — Gold Tier    │
+│                                                     │
+│          Verification Integrity (92)                │
+│                    /\                               │
+│                   /  \                              │
+│   Geographic ────/      \──── SDG Alignment (100)   │
+│   Reach (33)   /   ★    \                           │
+│               /  79.9    \                          │
+│   Persistence ─────────── Scale (68)                │
+│   (85)                                              │
+│                                                     │
+│  ★ Composite Score: 79.9 → Gold Tier                │
+└─────────────────────────────────────────────────────┘
+```
+
+### Critical Design Constraints:
+| Requirement | Specification | Why |
+|-------------|---------------|-----|
+| **Monochrome only** | Navy (#0A2463) lines on off-white (#F9FAFB) | Avoids "marketing" perception |
+| **Explicit labels** | Every axis labeled with exact score (no guessing) | Auditors need precision |
+| **Always paired with table** | Radar appears *below* the weighted scoring table | Table is primary source; radar is supplemental |
+| **No fill color** | Outline only (no shaded interior) | Prevents visual distortion of area perception |
+| **5 axes max** | One per scoring dimension | More axes become unreadable |
+
+---
+
+## ⚠️ Why Radar Charts Are Generally Problematic for Auditors
+
+| Issue | Impact |
+|-------|--------|
+| **Area distortion** | Human eye misjudges area enclosed by polygon—92 vs 85 looks more different than it is |
+| **Axis order manipulation** | Reordering axes changes visual impression (ethical risk) |
+| **Poor for precise comparison** | Auditors need exact numbers—not visual estimation |
+| **Feels "marketing-y"** | Associated with executive dashboards—not audit evidence |
+
+---
+
+## ✅ Recommended Implementation Sequence
+
+### **Primary (Required): Weighted Scoring Table**
+```
+| Dimension          | Raw Score | Weight | Weighted |
+|--------------------|-----------|--------|----------|
+| Verification Int.  | 92        | 40%    | 36.8     |
+| Scale              | 68        | 25%    | 17.0     |
+| Persistence        | 85        | 15%    | 12.8     |
+| Geographic Reach   | 33        | 10%    | 3.3      |
+| SDG Alignment      | 100       | 10%    | 10.0     |
+| **Composite**      |           |        | **79.9** |
+```
+✅ **Auditor-preferred** — precise, scannable, maps directly to evidence
+
+### **Supplemental (Optional): Radar Chart**
+- Place *below* the table as visual reinforcement  
+- Label every axis with exact score  
+- Add disclaimer: *"Visual representation only—refer to scoring table for audit purposes"*
+
+---
+
+## 🚫 Where NOT to Use Radar Charts
+
+| Section | Use Instead |
+|---------|-------------|
+| SDG Distribution | Horizontal bar chart (precise % comparison) |
+| Verification Timeline | Linear timeline bar (shows SLA compliance) |
+| Geographic Density | Dot-density map (proves cross-context scalability) |
+| Boundary Definition | ✓/✗ dual-column matrix (instant clarity) |
+| CSRD Mapping | Horizontal indicator bar (clear assurance boundary) |
+
+---
+
+## 💡 Final Recommendation
+
+**Include ONE radar chart ONLY if:**
+1. You're showcasing the Verified Innovation Scaling Index scoring methodology  
+2. It appears *after* and *supplemental to* the weighted scoring table  
+3. It follows monochrome minimalist styling with explicit axis labels  
+4. You add a disclaimer that the table—not the chart—is the audit source  
+
+**Otherwise, skip radar charts entirely.** The weighted scoring table alone is more auditor-friendly, defensible, and professional. Radar charts add visual interest but reduce precision—the opposite of what auditors need.
+
+> **Bottom line:** In verification reporting, *precision beats aesthetics*. Use radar charts sparingly—if at all—and never as the primary evidence source.

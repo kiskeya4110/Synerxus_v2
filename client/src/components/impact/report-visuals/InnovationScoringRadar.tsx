@@ -231,82 +231,100 @@ export default function InnovationScoringRadar({
           </div>
         </div>
 
-        {/* Two-column: radar + scoring table */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0",
-          }}
-        >
-          {/* Radar */}
-          <div style={{ padding: "8px 8px 8px 16px", borderRight: "1px solid #E5E7EB" }}>
-            <RadarSVG dimensions={dimensions} />
-            <div
+        {/* PRIMARY: Weighted Scoring Table — full width */}
+        <div style={{ padding: "8px 16px 12px" }}>
+          <div
+            style={{
+              fontSize: "9px",
+              fontWeight: 700,
+              color: "#374151",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginBottom: "6px",
+            }}
+          >
+            Weighted Scoring Table
+            <span
               style={{
+                marginLeft: "8px",
                 fontSize: "8px",
-                color: "#9CA3AF",
-                fontStyle: "italic",
-                textAlign: "center",
-                marginTop: "4px",
-                lineHeight: 1.4,
+                fontWeight: 600,
+                color: "#059669",
+                textTransform: "none",
+                letterSpacing: 0,
               }}
             >
-              Visual representation only — refer to scoring table for audit purposes
-            </div>
+              (Primary Audit Source)
+            </span>
           </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
+                <th style={{ padding: "3px 4px", textAlign: "left", color: "#6B7280", fontWeight: 600 }}>Dimension</th>
+                <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Raw Score (/100)</th>
+                <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Weight</th>
+                <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Weighted Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dimensions.map((d, i) => (
+                <tr
+                  key={i}
+                  style={{
+                    borderBottom: i < dimensions.length - 1 ? "1px solid #F3F4F6" : "1px solid #E5E7EB",
+                    background: i % 2 === 1 ? "#FFFFFF" : undefined,
+                  }}
+                >
+                  <td style={{ padding: "4px", color: "#374151" }}>{d.label}</td>
+                  <td style={{ padding: "4px", textAlign: "center", color: "#0A2463", fontWeight: 700 }}>{d.rawScore}</td>
+                  <td style={{ padding: "4px", textAlign: "center", color: "#6B7280" }}>{Math.round(d.weight * 100)}%</td>
+                  <td style={{ padding: "4px", textAlign: "center", color: "#374151", fontWeight: 600 }}>
+                    {Math.round(d.rawScore * d.weight * 10) / 10}
+                  </td>
+                </tr>
+              ))}
+              <tr style={{ background: "#0A2463" }}>
+                <td style={{ padding: "4px 4px", color: "#F9FAFB", fontWeight: 700 }} colSpan={3}>
+                  Composite Score
+                </td>
+                <td style={{ padding: "4px 4px", textAlign: "center", color: "#F9FAFB", fontWeight: 700 }}>
+                  {composite}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          {/* Scoring table */}
-          <div style={{ padding: "8px 16px 8px 12px" }}>
-            <div
-              style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                color: "#374151",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-                marginBottom: "6px",
-              }}
-            >
-              Weighted Scoring Table
-            </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
-                  <th style={{ padding: "3px 4px", textAlign: "left", color: "#6B7280", fontWeight: 600 }}>Dimension</th>
-                  <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Score</th>
-                  <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Wt.</th>
-                  <th style={{ padding: "3px 4px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>Wtd.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dimensions.map((d, i) => (
-                  <tr
-                    key={i}
-                    style={{
-                      borderBottom: i < dimensions.length - 1 ? "1px solid #F3F4F6" : "1px solid #E5E7EB",
-                      background: i % 2 === 1 ? "#FFFFFF" : undefined,
-                    }}
-                  >
-                    <td style={{ padding: "4px", color: "#374151" }}>{d.label}</td>
-                    <td style={{ padding: "4px", textAlign: "center", color: "#0A2463", fontWeight: 700 }}>{d.rawScore}</td>
-                    <td style={{ padding: "4px", textAlign: "center", color: "#6B7280" }}>{Math.round(d.weight * 100)}%</td>
-                    <td style={{ padding: "4px", textAlign: "center", color: "#374151", fontWeight: 600 }}>
-                      {Math.round(d.rawScore * d.weight * 10) / 10}
-                    </td>
-                  </tr>
-                ))}
-                {/* Composite row */}
-                <tr style={{ background: "#0A2463" }}>
-                  <td style={{ padding: "4px 4px", color: "#F9FAFB", fontWeight: 700 }} colSpan={3}>
-                    Composite Score
-                  </td>
-                  <td style={{ padding: "4px 4px", textAlign: "center", color: "#F9FAFB", fontWeight: 700 }}>
-                    {composite}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Divider */}
+        <div style={{ borderTop: "1px dashed #D1D5DB", margin: "0 16px" }} />
+
+        {/* SUPPLEMENTAL: Radar chart — below the table */}
+        <div style={{ padding: "8px 16px 4px" }}>
+          <div
+            style={{
+              fontSize: "9px",
+              fontWeight: 700,
+              color: "#6B7280",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginBottom: "4px",
+              textAlign: "center",
+            }}
+          >
+            Supplemental — Visual Scoring Profile
+          </div>
+          <RadarSVG dimensions={dimensions} />
+          <div
+            style={{
+              fontSize: "8px",
+              color: "#9CA3AF",
+              fontStyle: "italic",
+              textAlign: "center",
+              marginTop: "4px",
+              lineHeight: 1.4,
+            }}
+          >
+            Supplemental visual only — not for audit use. Axis order is fixed; scores match the table above.
           </div>
         </div>
       </div>
@@ -321,7 +339,7 @@ export default function InnovationScoringRadar({
           background: "#F9FAFB",
         }}
       >
-        Scoring table is the primary audit source. Radar provides supplemental visual profile only. Axis order is fixed — not manipulated.
+        Weighted scoring table is the primary and authoritative audit source for this index. The radar chart is a supplemental visual representation only and does not constitute verified evidence. Axis order is fixed — not manipulated.
       </div>
     </div>
   );

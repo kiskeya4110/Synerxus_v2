@@ -1915,7 +1915,17 @@ const OrganizationView = memo(function OrganizationView({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <SDGImpactSummary sdgData={dashboardData?.sdgDistribution || []} />
+                <SDGImpactSummary
+                  sdgData={
+                    reportPreviewStats.sdgEntries.length > 0
+                      ? reportPreviewStats.sdgEntries.map(e => ({
+                          goal: parseInt(e.sdg.replace('SDG ', '')),
+                          hours: e.outcomes,
+                          projects: 1,
+                        }))
+                      : (dashboardData?.sdgDistribution || [])
+                  }
+                />
               </CardContent>
             </Card>
           </div>

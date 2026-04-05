@@ -284,7 +284,7 @@ export default function UnifiedDashboard() {
             activeUser={activeUser}
             organization={organization}
             orgTab={orgTab}
-            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours' | 'reports')}
+            setOrgTab={(tab: string) => setOrgTab(tab as 'home' | 'verify' | 'volunteers' | 'hours' | 'reports' | 'projects')}
           />
         </Suspense>
       )}

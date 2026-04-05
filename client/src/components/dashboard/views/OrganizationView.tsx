@@ -501,6 +501,7 @@ const OrganizationView = memo(function OrganizationView({
   // Sync desktop activeTab when orgTab changes (e.g. from nav link)
   useEffect(() => {
     if (orgTab === 'reports') setActiveTab('reports');
+    else if (orgTab === 'projects') setActiveTab('projects');
     else closeReport();
   }, [orgTab]);
 
@@ -1188,7 +1189,7 @@ const OrganizationView = memo(function OrganizationView({
               {/* Core Metrics - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => navigate('/dashboard?tab=projects')}
+                  onClick={() => setOrgTab?.('projects')}
                   className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -1296,7 +1297,7 @@ const OrganizationView = memo(function OrganizationView({
               {/* Recent Projects */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <button
-                  onClick={() => navigate('/dashboard?tab=projects')}
+                  onClick={() => setOrgTab?.('projects')}
                   className="w-full px-4 py-3 border-b border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -1347,6 +1348,70 @@ const OrganizationView = memo(function OrganizationView({
                     </button>
                   )}
                 </div>
+              </div>
+            </>
+          )}
+
+          {/* Mobile Projects Tab */}
+          {orgTab === 'projects' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => setOrgTab?.('home')}
+                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
+                <button
+                  onClick={() => navigate('/post-core-opportunity')}
+                  className="ml-auto px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" /> New
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {projects.length > 0 ? (
+                  projects.map((project: any) => (
+                    <button
+                      key={project.id}
+                      onClick={() => navigate(`/ngo/projects/${project.id}`)}
+                      className="w-full bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98]"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{project.name}</p>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              project.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {project.status || 'active'}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {project.volunteerCount || 0}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {project.totalHours || 0}h
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <button
+                    onClick={() => navigate('/post-core-opportunity')}
+                    className="w-full bg-white rounded-xl border border-dashed border-indigo-300 p-8 text-center hover:border-indigo-400 transition-colors"
+                  >
+                    <FolderOpen className="h-10 w-10 text-indigo-300 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-900">No projects yet</p>
+                    <p className="text-xs text-indigo-600 mt-1">Tap to create your first project →</p>
+                  </button>
+                )}
               </div>
             </>
           )}

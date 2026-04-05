@@ -324,7 +324,7 @@ export default function LogVolunteerHoursPage() {
   if (isMobile) {
     return (
       <OrganizationPWALayout
-        activeTab="home"
+        activeTab="log"
         organizationName={organizationProfile?.commonName || organization?.name}
         organizationLogo={organizationProfile?.logoUrl || organization?.logoUrl || organization?.logo}
       >

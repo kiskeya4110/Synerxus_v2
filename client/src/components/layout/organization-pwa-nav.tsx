@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { Home, FolderOpen, ClipboardList, Shield as ShieldCheck, BarChart3 } from "lucide-react";
 
 interface OrganizationPWANavProps {
-  activeTab?: 'home' | 'projects' | 'verify' | 'more' | 'settings' | 'dashboard' | 'reports';
+  activeTab?: 'home' | 'projects' | 'verify' | 'more' | 'settings' | 'dashboard' | 'reports' | 'log';
   userId?: string;
 }
 

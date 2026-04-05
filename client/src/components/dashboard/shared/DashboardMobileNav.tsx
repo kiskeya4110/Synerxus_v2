@@ -31,7 +31,7 @@ function getNavItems(
 
   if (userType === 'organization') {
     return [
-      { id: 'projects', label: 'Projects', icon: FolderOpen, action: () => navigate('/ngo/projects') },
+      { id: 'projects', label: 'Projects', icon: FolderOpen, action: () => onTabChange?.('projects') },
       { id: 'verify', label: 'Verify', icon: ShieldCheck, action: () => onTabChange?.('verify') },
       { id: 'home', label: 'Home', icon: Home, action: () => onTabChange?.('home'), isPrimary: true },
       { id: 'reports', label: 'Reports', icon: Download, action: () => onTabChange?.('reports') },

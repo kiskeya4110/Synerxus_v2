@@ -1310,9 +1310,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         <td style="padding:7px 10px;font-size:11px;text-align:center;">
           <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
             <div style="width:50px;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
-              <div style="width:${hPct}%;height:100%;background:${color};border-radius:3px;"></div>
+              <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
             </div>
-            <span style="color:#6b7280;min-width:28px;">${hPct}%</span>
+            <span style="color:#6b7280;min-width:28px;">${pct}%</span>
           </div>
         </td>
       </tr>`;
@@ -1872,25 +1872,32 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       `<div style="font-size:10px;color:#374151;font-weight:600;">${escapeHtml(orgName)}</div>` +
       `<div style="font-size:9px;font-weight:700;color:#0A2463;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:3px;padding:2px 8px;">${visiTier}</div>` +
       '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">' +
-      '<div style="padding:8px 8px 8px 16px;border-right:1px solid #E5E7EB;">' +
-      visiSvgHtml +
-      '<div style="font-size:8px;color:#9CA3AF;font-style:italic;text-align:center;margin-top:4px;line-height:1.4;">Visual representation only &#x2014; refer to scoring table for audit purposes</div>' +
+      // PRIMARY: Full-width scoring table
+      '<div style="padding:8px 16px 12px;">' +
+      '<div style="font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Weighted Scoring Table' +
+      '<span style="margin-left:8px;font-size:8px;font-weight:600;color:#059669;text-transform:none;letter-spacing:0;">(Primary Audit Source)</span>' +
       '</div>' +
-      '<div style="padding:8px 16px 8px 12px;">' +
-      '<div style="font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Weighted Scoring Table</div>' +
       '<table style="width:100%;border-collapse:collapse;font-size:9px;">' +
       '<thead><tr style="border-bottom:1px solid #E5E7EB;">' +
       '<th style="padding:3px 4px;text-align:left;color:#6B7280;font-weight:600;">Dimension</th>' +
-      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Score</th>' +
-      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Wt.</th>' +
-      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Wtd.</th>' +
+      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Raw Score (/100)</th>' +
+      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Weight</th>' +
+      '<th style="padding:3px 4px;text-align:center;color:#6B7280;font-weight:600;">Weighted Score</th>' +
       '</tr></thead>' +
       `<tbody>${visiTableRows}` +
       `<tr style="background:#0A2463;"><td style="padding:4px 6px;color:#F9FAFB;font-weight:700;font-size:9px;" colspan="3">Composite Score</td><td style="padding:4px 6px;text-align:center;color:#F9FAFB;font-weight:700;font-size:9px;">${visiComposite}</td></tr>` +
       '</tbody></table>' +
-      '</div></div></div>' +
-      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;background:#F9FAFB;">Scoring table is the primary audit source. Radar provides supplemental visual profile only. Axis order is fixed &#x2014; not manipulated.</div>' +
+      '</div>' +
+      // Dashed divider
+      '<div style="border-top:1px dashed #D1D5DB;margin:0 16px;"></div>' +
+      // SUPPLEMENTAL: Radar chart below the table
+      '<div style="padding:8px 16px 4px;">' +
+      '<div style="font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;text-align:center;">Supplemental &#x2014; Visual Scoring Profile</div>' +
+      visiSvgHtml +
+      '<div style="font-size:8px;color:#9CA3AF;font-style:italic;text-align:center;margin-top:4px;line-height:1.4;">Supplemental visual only &#x2014; not for audit use. Axis order is fixed; scores match the table above.</div>' +
+      '</div>' +
+      '</div>' +
+      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;background:#F9FAFB;">Weighted scoring table is the primary and authoritative audit source for this index. The radar chart is a supplemental visual representation only and does not constitute verified evidence. Axis order is fixed &#x2014; not manipulated.</div>' +
       '</div>';
 
     const html = `<!DOCTYPE html>

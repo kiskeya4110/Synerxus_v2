@@ -46,7 +46,7 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] max-w-[428px] mx-auto z-40 border-t border-emerald-500/20 shadow-lg bg-gradient-to-r from-emerald-50 via-emerald-100 to-amber-50"
+      className="fixed bottom-0 left-0 right-0 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] max-w-[428px] mx-auto z-40 border-t border-[#D4AF37]/20 shadow-lg bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50"
     >
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
@@ -57,8 +57,8 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
               onClick={() => navigate(item.path)}
               className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all touch-manipulation cursor-pointer active:scale-95 min-w-[56px] min-h-[44px] ${
                 isActive
-                  ? 'bg-emerald-500/15 text-emerald-700 font-semibold'
-                  : 'bg-transparent text-emerald-800 font-medium'
+                  ? 'bg-[#D4AF37]/50 text-[#92700A] font-semibold'
+                  : 'bg-transparent text-stone-600 font-medium'
               }`}
               data-testid={`nav-csr-${item.id}`}
             >

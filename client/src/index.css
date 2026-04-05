@@ -930,6 +930,47 @@ input[type="radio"] {
   animation: slideUp 0.3s ease-out;
 }
 
+/* ===== PWA LIGHT GOLD THEME ===== */
+/* Overrides button highlights to light gold within all PWA views.
+   Logo colors (--logo-*) are preserved and unaffected. */
+.pwa-gradient-bg {
+  --primary-hsl: 46 65% 52%;           /* Light gold #D4AF37 */
+  --primary-foreground: 24 10% 10%;    /* Dark stone — gold needs dark text for contrast */
+  --ring: 46 65% 52%;                  /* Gold focus rings */
+  --primary: #D4AF37;                  /* Hex alias used by @layer components */
+  --primary-hover: #BF9B30;            /* Deeper gold for hover */
+}
+
+.pwa-gradient-bg .input:focus {
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.pwa-gradient-bg textarea:focus {
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.pwa-gradient-bg .nav-item.active {
+  background: rgba(212, 175, 55, 0.15);
+  color: #92700A;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.pwa-gradient-bg .badge-primary {
+  background: rgba(212, 175, 55, 0.2);
+  color: #92700A;
+}
+
+.pwa-gradient-bg .card:hover {
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 1px #D4AF37;
+}
+
+.pwa-gradient-bg .glow-primary {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
 /* ===== PWA GRADIENT BACKGROUND ===== */
 .pwa-gradient-bg {
   background:

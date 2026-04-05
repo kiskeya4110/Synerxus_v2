@@ -40,6 +40,19 @@ import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { formatDecimal } from "@/lib/format-utils";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 
+// Report Visual Components
+import VerificationDensityStrip from "@/components/impact/report-visuals/VerificationDensityStrip";
+import BoundaryIntegrityMatrix from "@/components/impact/report-visuals/BoundaryIntegrityMatrix";
+import EvidenceObjectArchitecture from "@/components/impact/report-visuals/EvidenceObjectArchitecture";
+import SDGHorizontalBar from "@/components/impact/report-visuals/SDGHorizontalBar";
+import CSRDBoundaryIndicator from "@/components/impact/report-visuals/CSRDBoundaryIndicator";
+import ContributionChain from "@/components/impact/report-visuals/ContributionChain";
+import ScreeningStatusMatrix from "@/components/impact/report-visuals/ScreeningStatusMatrix";
+import GeographicHeatmap from "@/components/impact/report-visuals/GeographicHeatmap";
+import VerificationTimeline from "@/components/impact/report-visuals/VerificationTimeline";
+import AssuranceBoundaryDiagram from "@/components/impact/report-visuals/AssuranceBoundaryDiagram";
+import InnovationScoringRadar from "@/components/impact/report-visuals/InnovationScoringRadar";
+
 // Types
 interface PendingVerification {
   id: number;
@@ -624,6 +637,68 @@ const OrganizationView = memo(function OrganizationView({
     gcTime: 5 * 60_000,
   });
 
+  // Computed stats for report preview visuals — mirrors server-side filter logic exactly
+  const reportPreviewStats = useMemo(() => {
+    // Apply same time-period filter the server uses
+    let logsInPeriod = allOrgLogs as any[];
+    if (reportTimePeriod && reportTimePeriod !== 'all') {
+      const nowMs = Date.now();
+      const msMap: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+      const days = msMap[reportTimePeriod];
+      if (days) {
+        const since = nowMs - days * 24 * 60 * 60 * 1000;
+        logsInPeriod = logsInPeriod.filter((l: any) => {
+          const d = l.date || l.createdAt;
+          return d && new Date(d).getTime() >= since;
+        });
+      }
+    }
+
+    const verified = logsInPeriod.filter((l: any) => l.verificationStatus === 'approved');
+    const total = logsInPeriod.length;
+    const verificationRate = total > 0 ? Math.round((verified.length / total) * 100) : 0;
+    const totalHoursVerified = Math.round(verified.reduce((s: number, l: any) => s + (l.hours || 0), 0));
+    const verifyTimes = verified
+      .filter((l: any) => l.verifiedAt && l.createdAt)
+      .map((l: any) => (new Date(l.verifiedAt).getTime() - new Date(l.createdAt).getTime()) / 3600000)
+      .filter((h: number) => h >= 0);
+    const avgSLA = verifyTimes.length > 0
+      ? Math.round(verifyTimes.reduce((s: number, t: number) => s + t, 0) / verifyTimes.length)
+      : 16;
+    // Mirror server: editedOutcomeQuantity wins over outcomeQuantity
+    const totalOutcomes = verified.reduce((s: number, l: any) => s + (l.editedOutcomeQuantity || l.outcomeQuantity || 0), 0);
+    const totalBeneficiaries = verified.reduce((s: number, l: any) => s + (l.beneficiaryCount || 0), 0);
+    const effectiveBeneficiaries = totalBeneficiaries > 0 ? totalBeneficiaries : totalOutcomes;
+
+    // SDG map — mirrors server: use sdgTags if present, else fall back to project sdgGoals
+    // Enriched logs from /api/logs already embed log.project.sdgGoals — use that directly
+    const sdgMap: Record<number, number> = {};
+    for (const log of verified) {
+      const tags: number[] = log.sdgTags || [];
+      if (tags.length > 0) {
+        for (const s of tags) { sdgMap[s] = (sdgMap[s] || 0) + 1; }
+      } else {
+        // log.project.sdgGoals is embedded by the enrichment in the logs endpoint
+        for (const s of (log.project?.sdgGoals || [])) { sdgMap[s] = (sdgMap[s] || 0) + 1; }
+      }
+    }
+    const totalSdgOutcomes = Object.values(sdgMap).reduce((s, c) => s + c, 0);
+    const sdgEntries = Object.entries(sdgMap)
+      .sort((a, b) => (b[1] as number) - (a[1] as number))
+      .slice(0, 6)
+      .map(([sdg, count]) => {
+        const num = parseInt(sdg);
+        const goal = SDG_GOALS[num];
+        return {
+          sdg: 'SDG ' + num,
+          label: goal?.name || 'SDG ' + num,
+          percentage: totalSdgOutcomes > 0 ? Math.round(((count as number) / totalSdgOutcomes) * 100) : 0,
+          outcomes: count as number,
+        };
+      });
+    return { verificationRate, totalHoursVerified, avgSLA, effectiveBeneficiaries, verifiedCount: verified.length, sdgEntries };
+  }, [allOrgLogs, reportTimePeriod]);
+
   // Pre-compute filter counts once (avoids repeated .filter() inside render)
   const logFilterCounts = useMemo(() => ({
     all: allOrgLogs.length,
@@ -1096,18 +1171,18 @@ const OrganizationView = memo(function OrganizationView({
               {/* Log Hours — primary action, always visible */}
               <button
                 onClick={() => navigate('/ngo/log-hours')}
-                className="w-full bg-gradient-to-r from-indigo-600 to-emerald-600 text-white rounded-xl p-4 flex items-center justify-between shadow-md active:scale-[0.98] transition-all"
+                className="w-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-[#92700A]" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold leading-tight">Log Volunteer Hours & Impact</p>
-                    <p className="text-[11px] text-white/80 mt-0.5">Record verified outcomes for your team</p>
+                    <p className="text-sm font-bold leading-tight text-stone-800">Log Volunteer Hours & Impact</p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">Record verified outcomes for your team</p>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-[#92700A]/60 flex-shrink-0" />
               </button>
 
               {/* Core Metrics - 2x2 Grid */}
@@ -2098,7 +2173,18 @@ const OrganizationView = memo(function OrganizationView({
               </div>
               <div
                 className="flex-1 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, {
+                  ADD_ATTR: [
+                    'style', 'class', 'id',
+                    // SVG presentation attributes stripped by default
+                    'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linejoin',
+                    'font-size', 'font-family', 'font-weight', 'text-anchor',
+                    'cx', 'cy', 'r', 'x1', 'y1', 'x2', 'y2', 'points',
+                    'transform', 'opacity',
+                  ],
+                  ADD_TAGS: ['svg', 'polygon', 'polyline', 'line', 'circle', 'text', 'path', 'rect', 'g'],
+                  FORCE_BODY: true,
+                }) }}
               />
             </div>
           )}
@@ -2140,6 +2226,74 @@ const OrganizationView = memo(function OrganizationView({
               )}
             </CardContent>
           </Card>
+
+          {/* ── Report Visuals Preview ── */}
+          <div className="mt-8 space-y-2">
+            <div className="flex items-center gap-2 mb-4">
+              <span style={{ width: 3, height: 16, background: '#0891B2', borderRadius: 2, display: 'inline-block' }} />
+              <span className="text-sm font-semibold text-foreground">Report Preview — Live Data</span>
+              <span className="text-xs text-muted-foreground ml-1">
+                ({reportTimePeriod === 'all' ? 'all time' : reportTimePeriod === '1y' ? 'last 12 months' : `last ${reportTimePeriod}`} — matches selected period)
+              </span>
+            </div>
+
+            {/* Section 1: Executive Summary */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 1 — Executive Summary</div>
+            <VerificationDensityStrip
+              verifiedOutcomes={reportPreviewStats.verifiedCount}
+              verificationRate={reportPreviewStats.verificationRate}
+              verifiedHours={reportPreviewStats.totalHoursVerified}
+              avgSLA={reportPreviewStats.avgSLA}
+              verifiedBeneficiaries={reportPreviewStats.effectiveBeneficiaries}
+            />
+
+            {/* Section 2: Verification Boundary */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 2 — Verification Boundary</div>
+            <BoundaryIntegrityMatrix />
+
+            {/* Section 3: Verification Methodology */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 3 — Verification Methodology</div>
+            <EvidenceObjectArchitecture />
+
+            {/* Section 4: SDG Alignment */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 4 — SDG Alignment</div>
+            <SDGHorizontalBar
+              entries={reportPreviewStats.sdgEntries.length > 0 ? reportPreviewStats.sdgEntries : undefined}
+            />
+
+            {/* Section 5: CSRD/ESRS Mapping */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — CSRD/ESRS Mapping</div>
+            <CSRDBoundaryIndicator />
+
+            {/* Section 6: Contribution Pathways */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 6 — Contribution Pathways</div>
+            <ContributionChain avgSLA={reportPreviewStats.avgSLA} />
+
+            {/* Section 7: Negative Impact Screening */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 7 — Negative Impact Screening</div>
+            <ScreeningStatusMatrix />
+
+            {/* Section 8: Engagement Metrics */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 8 — Engagement Metrics</div>
+            <GeographicHeatmap
+              verificationRate={reportPreviewStats.verificationRate}
+              avgSLA={reportPreviewStats.avgSLA}
+            />
+
+            {/* Section 9: Audit Trail */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 9 — Audit Trail</div>
+            <VerificationTimeline
+              slaComplianceRate={reportPreviewStats.verificationRate}
+            />
+
+            {/* Section 10: Innovation Scoring (Verified Innovation Scaling Index) */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 10 — Verified Innovation Scaling Index</div>
+            <InnovationScoringRadar />
+
+            {/* Section 11: Limitations & Assurance */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 11 — Limitations &amp; Assurance</div>
+            <AssuranceBoundaryDiagram />
+          </div>
         </TabsContent>
       </Tabs>
 

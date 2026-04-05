@@ -85,7 +85,7 @@ export default function DashboardMobileNav({
   if (userType === 'volunteer') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-[160] shadow-lg"
+        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4AF37]/20 px-1 pt-2 z-[160] shadow-lg"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="grid grid-cols-5 items-end max-w-md mx-auto">
@@ -100,11 +100,11 @@ export default function DashboardMobileNav({
                 className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                   isPrimary
                     ? isActive
-                      ? 'bg-emerald-600 text-white -mt-3 shadow-md'
-                      : 'text-stone-500 -mt-3 hover:bg-emerald-600 hover:text-white'
+                      ? 'bg-[#D4AF37] text-stone-900 -mt-3 shadow-md'
+                      : 'text-stone-500 -mt-3 hover:bg-[#D4AF37] hover:text-stone-900'
                     : isActive
-                      ? 'text-emerald-700 bg-emerald-100'
-                      : 'text-stone-500 hover:text-emerald-600 hover:bg-emerald-50'
+                      ? 'text-[#92700A] bg-[#D4AF37]/50'
+                      : 'text-stone-500 hover:text-[#92700A] hover:bg-[#D4AF37]/50'
                 }`}
               >
                 <div className={`flex items-center justify-center ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
@@ -124,7 +124,7 @@ export default function DashboardMobileNav({
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-1 pt-2 z-[160] shadow-lg"
+          className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4AF37]/20 px-1 pt-2 z-[160] shadow-lg"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           <div className="grid grid-cols-5 items-end max-w-md mx-auto">
@@ -139,11 +139,11 @@ export default function DashboardMobileNav({
                   className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                     isPrimary
                       ? isActive
-                        ? 'bg-indigo-600 text-white -mt-3 shadow-md'
-                        : 'text-stone-500 -mt-3 hover:bg-indigo-600 hover:text-white'
+                        ? 'bg-[#D4AF37] text-stone-900 -mt-3 shadow-md'
+                        : 'text-stone-500 -mt-3 hover:bg-[#D4AF37] hover:text-stone-900'
                       : isActive
-                        ? 'text-indigo-700 bg-indigo-50'
-                        : 'text-stone-500 hover:text-indigo-600 hover:bg-indigo-50'
+                        ? 'text-[#92700A] bg-[#D4AF37]/50'
+                        : 'text-stone-500 hover:text-[#92700A] hover:bg-[#D4AF37]/50'
                   }`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
@@ -215,9 +215,8 @@ export default function DashboardMobileNav({
   if (userType === 'corporate-partner') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#D4AF37]/20 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50"
         style={{
-          background: '#FFFFFF',
           boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
           paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
         }}
@@ -233,10 +232,10 @@ export default function DashboardMobileNav({
                 className="flex flex-col items-center justify-end min-w-[56px] min-h-[48px] pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className={`flex items-center justify-center h-8 w-8 rounded-lg pointer-events-none ${isActive ? 'bg-slate-800' : ''}`}>
-                  <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-white' : 'text-slate-600'}`} />
+                <div className={`flex items-center justify-center h-8 w-8 rounded-lg pointer-events-none ${isActive ? 'bg-[#D4AF37]/50' : ''}`}>
+                  <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-[#92700A]' : 'text-slate-600'}`} />
                 </div>
-                <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-slate-800 font-semibold' : 'text-slate-600'}`}>
+                <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-[#92700A] font-semibold' : 'text-slate-600'}`}>
                   {item.label}
                 </span>
               </button>

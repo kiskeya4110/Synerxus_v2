@@ -1581,11 +1581,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
       '<span style="color:#6B7280;">SMS-Based (No App Required)</span></div></div>';
 
-    // SDG Horizontal Bar Chart
-    const _nSdgTot = sortedSdgs.reduce((s: number, [, d]: any) => s + d.count, 0);
+    // SDG Horizontal Bar Chart — use same totalSdgOutcomes denominator as the table above
     const _nSdgBarEs = sortedSdgs.slice(0, 6).map(([sdg, data]: any) => {
       const _n = parseInt(sdg);
-      const _p = _nSdgTot > 0 ? Math.round((data.count / _nSdgTot) * 100) : 0;
+      const _p = totalSdgOutcomes > 0 ? Math.round((data.count / totalSdgOutcomes) * 100) : 0;
       return { lbl: 'SDG ' + _n, name: SDG_NAMES[_n] || ('SDG ' + _n), pct: _p, outcomes: data.count };
     });
     const _nSdgBMax = _nSdgBarEs.length > 0 ? Math.max(..._nSdgBarEs.map((e: any) => e.pct), 1) : 1;
@@ -2465,11 +2464,11 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
       '<span style="color:#6B7280;">SMS-Based (No App Required)</span></div></div>';
 
-    // SDG Horizontal Bar Chart
-    const _sdgTot = sortedSdgs.reduce((s: number, [, d]: any) => s + d.outcomes, 0);
+    // SDG Horizontal Bar Chart — denominator = all SDGs (not just top-6 slice)
+    const _sdgTotAll = Object.values(sdgMap).reduce((s: number, d: any) => s + d.outcomes, 0);
     const _sdgBarEs = sortedSdgs.slice(0, 6).map(([sdg, data]: any) => {
       const _n = parseInt(sdg);
-      const _p = _sdgTot > 0 ? Math.round((data.outcomes / _sdgTot) * 100) : 0;
+      const _p = _sdgTotAll > 0 ? Math.round((data.outcomes / _sdgTotAll) * 100) : 0;
       return { lbl: 'SDG ' + _n, name: SDG_NAMES_LOCAL[_n] || ('SDG ' + _n), pct: _p, outcomes: data.outcomes };
     });
     const _sdgBMax = _sdgBarEs.length > 0 ? Math.max(..._sdgBarEs.map((e: any) => e.pct), 1) : 1;

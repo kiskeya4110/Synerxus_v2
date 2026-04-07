@@ -99,12 +99,13 @@ function HowItWorksSection() {
         </div>
 
         {/* Image with absolutely-positioned hotspots */}
-        <div className="rounded-2xl overflow-hidden shadow-xl border border-slate-200 bg-white relative">
+        <div className="shadow-xl border border-slate-200 bg-white relative rounded-2xl" style={{ overflow: "visible" }}>
           <img
             src={corporateEsgFlowImg}
             alt="Corporate ESG Impact Flow"
-            className="w-full object-contain block"
+            className="w-full object-contain block rounded-2xl"
             loading="eager"
+            style={{ display: "block" }}
           />
 
           {/* Unlabelled hotspots at each step's diagram position */}

@@ -524,33 +524,44 @@ export default function Landing() {
 
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start justify-between">
 
-              {/* Left: layer stack — Level 4 at top, Level 1 at bottom */}
+              {/* Left: layer stack — Level 5 at top, Level 1 at bottom */}
               <div className="flex-1 w-full max-w-2xl">
                 <div className="flex flex-col gap-2">
                   {[
+                    {
+                      id: "Level 5",
+                      label: "Audit / Assurance",
+                      sub: "Too slow, cost-prohibitive",
+                      highlight: false,
+                      dim: true,
+                    },
                     {
                       id: "Level 4",
                       label: "Verification",
                       sub: "The Missing Layer — Synerxus fills this",
                       highlight: true,
+                      dim: false,
                     },
                     {
                       id: "Level 3",
                       label: "Trackers",
                       sub: "Log hours only — no outcome proof",
                       highlight: false,
+                      dim: false,
                     },
                     {
                       id: "Level 2",
                       label: "Aggregators",
                       sub: "Saturated — no independent confirmation",
                       highlight: false,
+                      dim: false,
                     },
                     {
                       id: "Level 1",
                       label: "Reporting Frameworks",
                       sub: "CSRD / GRI / ESRS — saturated",
                       highlight: false,
+                      dim: false,
                     },
                   ].map((layer, idx, arr) => (
                     <div key={layer.id} className="relative">
@@ -559,6 +570,8 @@ export default function Landing() {
                         className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${
                           layer.highlight
                             ? "border-[#00E35B]/60 bg-[#00B341]/10"
+                            : layer.dim
+                            ? "border-white/8 bg-white/3 opacity-60"
                             : "border-white/10 bg-white/5 hover:bg-white/8"
                         }`}
                         style={

@@ -1252,7 +1252,7 @@ export default function Landing() {
               badgeText: "text-slate-400",
               cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["Benevity", "Goodera", "Salesforce Volunteer", "YourCause"],
+              tools: ["Benevity", "Goodera", "YourCause"],
               detail: "Track volunteer hours and log activities effectively — but cannot prove that the promised outcomes were actually delivered to beneficiaries.",
             },
             {
@@ -1268,7 +1268,7 @@ export default function Landing() {
               badgeText: "text-slate-400",
               cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["Sopact", "WEF UpLink", "Impact Genome", "IRIS+"],
+              tools: ["Sopact", "IRIS+", "WEF UpLink"],
               detail: "Aggregate and visualise impact data beautifully — but the underlying inputs remain self-reported and unverified, limiting defensibility.",
             },
             {
@@ -1284,7 +1284,7 @@ export default function Landing() {
               badgeText: "text-slate-400",
               cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["CSRD", "GRI Standards", "ESRS S3/S4", "SDG Indicators"],
+              tools: ["CSRD", "GRI Standards", "ESRS S3/S4"],
               detail: "Define what to report and in what format — but accept self-declared numbers. They create demand for verified data; Synerxus provides the supply.",
             },
           ];
@@ -1479,13 +1479,6 @@ export default function Landing() {
                       </div>
                     </div>
 
-                    {/* Static quote below — only when Level 4 not active */}
-                    {!activeLayer.synerxus && (
-                      <div className="mt-4 px-4 py-3 rounded-xl border border-[#B8860B]/20 bg-amber-50/60">
-                        <p className="text-xs text-[#0A1F44] font-bold leading-snug mb-1">Everyone builds trackers.</p>
-                        <p className="text-xs text-[#B8860B] font-bold leading-snug">No one built the verification layer.</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

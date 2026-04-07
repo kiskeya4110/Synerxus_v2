@@ -386,6 +386,114 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── Missing Infrastructure Stack ── */}
+        <section className="py-16 md:py-20 bg-[#06112B]">
+          <div className="max-w-6xl mx-auto px-6 md:px-10">
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center justify-between">
+
+              {/* Left: layer stack */}
+              <div className="flex-1 w-full max-w-xl">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-10">
+                  The Missing<br />Infrastructure
+                </h2>
+
+                <div className="flex flex-col gap-1.5">
+                  {[
+                    { id: "L5", label: "Audit / Assurance", sub: "Too slow, cost-prohibitive", highlight: false, dim: true },
+                    { id: "L4", label: "Verification", sub: "The Critical Gap", highlight: true, dim: false },
+                    { id: "L3", label: "Trackers", sub: "Log hours only — no outcome proof", highlight: false, dim: false },
+                    { id: "L2", label: "Aggregators", sub: "Saturated", highlight: false, dim: false },
+                    { id: "L1", label: "Reporting Frameworks", sub: "CSRD / GRI / ESRS (saturated)", highlight: false, dim: false },
+                  ].map((layer) => (
+                    <div
+                      key={layer.id}
+                      className={`relative flex items-center gap-4 px-5 py-4 rounded-xl border transition-all ${
+                        layer.highlight
+                          ? "border-[#00E35B] bg-[#00B341]/10"
+                          : layer.dim
+                          ? "border-white/8 bg-[#0A1A3E]/50 opacity-70"
+                          : "border-white/12 bg-[#0A1A3E]"
+                      }`}
+                      style={
+                        layer.highlight
+                          ? { boxShadow: "0 0 28px rgba(0,227,91,0.35), 0 0 6px rgba(0,227,91,0.2)" }
+                          : undefined
+                      }
+                    >
+                      {/* Layer badge */}
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${
+                          layer.highlight ? "bg-[#00B341] text-white" : "bg-white/10 text-white/50"
+                        }`}
+                      >
+                        {layer.id}
+                      </div>
+
+                      {/* Label + sub */}
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={`font-bold text-sm sm:text-base leading-tight ${
+                            layer.highlight ? "text-[#00E35B]" : "text-white/90"
+                          }`}
+                        >
+                          {layer.highlight && <span className="text-white/60 mr-1">← </span>}
+                          {layer.label}
+                        </div>
+                        <div className="text-xs text-white/45 mt-0.5">{layer.sub}</div>
+                      </div>
+
+                      {/* Synerxus tag on highlight layer */}
+                      {layer.highlight && (
+                        <div className="shrink-0 text-[#00E35B] text-[10px] sm:text-xs font-bold px-2.5 py-1 border border-[#00E35B]/40 rounded-full whitespace-nowrap">
+                          Synerxus fills this
+                        </div>
+                      )}
+
+                      {/* Connector line on right edge */}
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-px bg-white/10" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: gold-framed quote panel */}
+              <div
+                className="w-full lg:w-72 xl:w-80 rounded-2xl p-8 text-white flex-shrink-0"
+                style={{
+                  border: "2px solid #E6B800",
+                  boxShadow: "0 0 48px rgba(230,184,0,0.18), inset 0 0 24px rgba(230,184,0,0.04)",
+                  background: "linear-gradient(135deg, #0A1640 0%, #06112B 100%)",
+                }}
+              >
+                {/* Circuit-board corner accents */}
+                <div className="flex justify-between mb-6 opacity-40">
+                  <div className="w-8 h-8 border-t-2 border-l-2 border-[#E6B800] rounded-tl-md" />
+                  <div className="w-8 h-8 border-t-2 border-r-2 border-[#E6B800] rounded-tr-md" />
+                </div>
+
+                <p className="text-xl sm:text-2xl font-extrabold leading-tight mb-5">
+                  Everyone builds trackers.
+                </p>
+                <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#E6B800]">
+                  No one built the verification layer.
+                </p>
+
+                <div className="flex justify-between mt-6 opacity-40">
+                  <div className="w-8 h-8 border-b-2 border-l-2 border-[#E6B800] rounded-bl-md" />
+                  <div className="w-8 h-8 border-b-2 border-r-2 border-[#E6B800] rounded-br-md" />
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  <p className="text-sm text-white/55 leading-relaxed">
+                    Synerxus is the first platform to close the loop between ground-level activity and audit-ready ESG evidence.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
         {/* ── Section 3: Solution ── */}
         <section className="py-16 md:py-24 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">

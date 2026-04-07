@@ -2,12 +2,23 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import {
-  Menu, X, ShieldCheck, FileCheck, BarChart2, Clock, Lock,
-  AlertTriangle, CheckCircle, TrendingUp, Users,
-  Building2, Globe, HardHat, ArrowRight
+  Menu,
+  X,
+  ShieldCheck,
+  FileCheck,
+  BarChart2,
+  Clock,
+  Lock,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  Building2,
+  Globe,
+  HardHat,
+  ArrowRight,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_3_1775528713652.png";
 import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
@@ -23,7 +34,8 @@ const PIPELINE_STEPS = [
     color: "#1D4ED8",
     x: 12,
     y: 38,
-    detail: "Volunteers log outcomes, hours, skills applied, and beneficiary counts in real time via mobile. Every entry is timestamped and linked to a specific project.",
+    detail:
+      "Volunteers log outcomes, hours, skills applied, and beneficiary counts in real time via mobile. Every entry is timestamped and linked to a specific project.",
   },
   {
     label: "NGO Receives Verification Request",
@@ -31,7 +43,8 @@ const PIPELINE_STEPS = [
     color: "#B8860B",
     x: 37,
     y: 36,
-    detail: "The assigned NGO partner receives an instant verification request by SMS or in-app notification — no login required to review and confirm.",
+    detail:
+      "The assigned NGO partner receives an instant verification request by SMS or in-app notification — no login required to review and confirm.",
   },
   {
     label: "NGO Verifies with Single Tap",
@@ -39,7 +52,8 @@ const PIPELINE_STEPS = [
     color: "#059669",
     x: 62,
     y: 36,
-    detail: "The NGO verifier confirms both the outcome and hours logged in under 15 seconds via a single tap — no paperwork, no back-and-forth.",
+    detail:
+      "The NGO verifier confirms both the outcome and hours logged in under 15 seconds via a single tap — no paperwork, no back-and-forth.",
   },
   {
     label: "System Captures Immutable Audit Trail",
@@ -47,7 +61,8 @@ const PIPELINE_STEPS = [
     color: "#0A1F44",
     x: 87,
     y: 38,
-    detail: "The verification event is sealed into an immutable Evidence Object — timestamp, verifier identity, device ID, GPS coordinates, and SDG mapping all captured automatically.",
+    detail:
+      "The verification event is sealed into an immutable Evidence Object — timestamp, verifier identity, device ID, GPS coordinates, and SDG mapping all captured automatically.",
   },
   {
     label: "Volunteer Logs Outcome + Hours",
@@ -55,7 +70,8 @@ const PIPELINE_STEPS = [
     color: "#1D4ED8",
     x: 12,
     y: 76,
-    detail: "Volunteers record impact in the field — from skills workshops to environmental cleanups — using the Synerxus mobile app with offline support.",
+    detail:
+      "Volunteers record impact in the field — from skills workshops to environmental cleanups — using the Synerxus mobile app with offline support.",
   },
   {
     label: "NGO Receives Verification Request",
@@ -63,7 +79,8 @@ const PIPELINE_STEPS = [
     color: "#B8860B",
     x: 37,
     y: 76,
-    detail: "NGO staff receive a structured review request with all supporting evidence pre-attached — outcome description, photo, and beneficiary data — ready to approve in seconds.",
+    detail:
+      "NGO staff receive a structured review request with all supporting evidence pre-attached — outcome description, photo, and beneficiary data — ready to approve in seconds.",
   },
   {
     label: "NGO Verifies with Single Tap",
@@ -71,7 +88,8 @@ const PIPELINE_STEPS = [
     color: "#059669",
     x: 62,
     y: 76,
-    detail: "A single tap from the NGO confirms the full activity record. Synerxus records the verifier's identity and time, creating a legally-defensible confirmation event.",
+    detail:
+      "A single tap from the NGO confirms the full activity record. Synerxus records the verifier's identity and time, creating a legally-defensible confirmation event.",
   },
   {
     label: "Corporate Accesses Verified Outcomes",
@@ -79,7 +97,8 @@ const PIPELINE_STEPS = [
     color: "#7C3AED",
     x: 87,
     y: 76,
-    detail: "Corporate ESG teams access a dashboard of verified, audit-ready impact data — every outcome traceable to a specific NGO confirmation, ready for CSRD disclosure.",
+    detail:
+      "Corporate ESG teams access a dashboard of verified, audit-ready impact data — every outcome traceable to a specific NGO confirmation, ready for CSRD disclosure.",
   },
 ];
 
@@ -99,7 +118,10 @@ function HowItWorksSection() {
         </div>
 
         {/* Image with absolutely-positioned hotspots */}
-        <div className="shadow-xl border border-slate-200 bg-white relative rounded-2xl" style={{ overflow: "visible" }}>
+        <div
+          className="shadow-xl border border-slate-200 bg-white relative rounded-2xl"
+          style={{ overflow: "visible" }}
+        >
           <img
             src={corporateEsgFlowImg}
             alt="Corporate ESG Impact Flow"
@@ -117,7 +139,11 @@ function HowItWorksSection() {
               onClick={() => setActiveStep(activeStep === i ? null : i)}
               aria-label={step.label}
               className="absolute group focus:outline-none"
-              style={{ left: `${step.x}%`, top: `${step.y}%`, transform: "translate(-50%, -50%)" }}
+              style={{
+                left: `${step.x}%`,
+                top: `${step.y}%`,
+                transform: "translate(-50%, -50%)",
+              }}
             >
               {/* Outer pulse ring */}
               <span
@@ -155,8 +181,12 @@ function HowItWorksSection() {
                   className="block w-full h-0.5 rounded-full mb-2 opacity-60"
                   style={{ backgroundColor: step.color }}
                 />
-                <span className="block text-xs font-bold text-[#0A1F44] leading-snug">{step.label}</span>
-                <span className="block text-[10px] text-slate-400 mt-1 leading-snug">{step.sub}</span>
+                <span className="block text-xs font-bold text-[#0A1F44] leading-snug">
+                  {step.label}
+                </span>
+                <span className="block text-[10px] text-slate-400 mt-1 leading-snug">
+                  {step.sub}
+                </span>
               </span>
             </button>
           ))}
@@ -165,9 +195,16 @@ function HowItWorksSection() {
         {/* Detail panel */}
         <div
           className={`mt-4 rounded-2xl border bg-white px-6 py-5 flex items-start gap-4 shadow-md transition-all duration-300 ${
-            activeStep !== null ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+            activeStep !== null
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-2 pointer-events-none"
           }`}
-          style={{ borderColor: activeStep !== null ? PIPELINE_STEPS[activeStep].color : "#e2e8f0" }}
+          style={{
+            borderColor:
+              activeStep !== null
+                ? PIPELINE_STEPS[activeStep].color
+                : "#e2e8f0",
+          }}
         >
           {activeStep !== null && (
             <>
@@ -176,16 +213,25 @@ function HowItWorksSection() {
                 style={{ backgroundColor: PIPELINE_STEPS[activeStep].color }}
               />
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: PIPELINE_STEPS[activeStep].color }}>
+                <p
+                  className="text-xs font-bold uppercase tracking-wider mb-1"
+                  style={{ color: PIPELINE_STEPS[activeStep].color }}
+                >
                   Step {activeStep + 1} of {PIPELINE_STEPS.length}
                 </p>
-                <h3 className="font-extrabold text-[#0A1F44] text-base mb-1">{PIPELINE_STEPS[activeStep].label}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{PIPELINE_STEPS[activeStep].detail}</p>
+                <h3 className="font-extrabold text-[#0A1F44] text-base mb-1">
+                  {PIPELINE_STEPS[activeStep].label}
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  {PIPELINE_STEPS[activeStep].detail}
+                </p>
               </div>
             </>
           )}
           {activeStep === null && (
-            <p className="text-slate-400 text-sm italic">Hover or tap a step in the diagram above to learn more.</p>
+            <p className="text-slate-400 text-sm italic">
+              Hover or tap a step in the diagram above to learn more.
+            </p>
           )}
         </div>
       </div>
@@ -193,19 +239,583 @@ function HowItWorksSection() {
   );
 }
 
+const WATERMARK_BG = {
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='280'%3E%3Ctext x='50%25' y='50%25' font-size='72' font-weight='900' font-family='Arial,sans-serif' fill='%23000000' fill-opacity='0.055' text-anchor='middle' dominant-baseline='middle' transform='rotate(-35 210 140)'%3ESAMPLE%3C/text%3E%3C/svg%3E")`,
+  backgroundRepeat: "repeat",
+  backgroundSize: "420px 280px",
+};
+
+const SAMPLE_SDGS = [
+  { num: 1,  name: "No Poverty",         hours: 520, outcomes: 45, beneficiaries: 12_400, color: "#E5243B" },
+  { num: 3,  name: "Good Health",         hours: 390, outcomes: 38, beneficiaries:  8_200, color: "#4C9F38" },
+  { num: 4,  name: "Quality Education",   hours: 410, outcomes: 31, beneficiaries:  6_800, color: "#C5192D" },
+  { num: 8,  name: "Decent Work",         hours: 280, outcomes: 20, beneficiaries:  4_310, color: "#A21942" },
+  { num: 13, name: "Climate Action",      hours: 358, outcomes: 27, beneficiaries:  7_580, color: "#3F7E44" },
+];
+
+const SAMPLE_NGOS = [
+  { name: "Green Future Alliance",      outcomes: 56, hours: 680, beneficiaries: 18_200, verification: "In-Person + App", sdgs: [13, 3] },
+  { name: "Solar Village Initiative",   outcomes: 48, hours: 520, beneficiaries: 14_900, verification: "App Confirmed",   sdgs: [7, 1]  },
+  { name: "Urban Green Corridors",      outcomes: 30, hours: 478, beneficiaries:  6_190, verification: "In-Person",       sdgs: [11, 13] },
+];
+
+const SAMPLE_EVIDENCE = [
+  { id: "EO-2026-0041", date: "12 Mar 2026", ngo: "Green Future Alliance",    outcome: "Watershed planting — 340 trees",       hours: 16, sdg: 13, verifier: "Amara Diallo",    method: "GPS + Photo" },
+  { id: "EO-2026-0038", date: "08 Mar 2026", ngo: "Solar Village Initiative", outcome: "Solar panel installation — 22 homes",  hours: 24, sdg: 7,  verifier: "Kwame Osei",      method: "App Tap" },
+  { id: "EO-2026-0031", date: "01 Mar 2026", ngo: "Green Future Alliance",    outcome: "Health screening — 85 beneficiaries",  hours: 8,  sdg: 3,  verifier: "Amara Diallo",    method: "App Tap" },
+  { id: "EO-2026-0027", date: "24 Feb 2026", ngo: "Urban Green Corridors",    outcome: "Job-readiness workshop — 42 trainees", hours: 12, sdg: 8,  verifier: "Sofia Monteiro",  method: "In-Person" },
+];
+
+function buildSampleReportHtml(): string {
+  const WM = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='280'%3E%3Ctext x='50%25' y='50%25' font-size='72' font-weight='900' font-family='Arial,sans-serif' fill='%23000000' fill-opacity='0.055' text-anchor='middle' dominant-baseline='middle' transform='rotate(-35 210 140)'%3ESAMPLE%3C/text%3E%3C/svg%3E")`;
+
+  const sdgColors: Record<number, string> = {
+    1:'#E5243B',2:'#DDA63A',3:'#4C9F38',4:'#C5192D',5:'#FF3A21',
+    6:'#26BDE2',7:'#FCC30B',8:'#A21942',9:'#FD6925',10:'#DD1367',
+    11:'#FD9D24',12:'#BF8B2E',13:'#3F7E44',14:'#0A97D9',15:'#56C02B',
+    16:'#00689D',17:'#19486A',
+  };
+  const sdgNames: Record<number, string> = {
+    1:'No Poverty',3:'Good Health & Well-being',4:'Quality Education',
+    7:'Affordable & Clean Energy',8:'Decent Work & Economic Growth',
+    11:'Sustainable Cities & Communities',13:'Climate Action',
+  };
+
+  const sdgs = [
+    { n:13, outcomes:45, hours:680, benef:18200 },
+    { n:1,  outcomes:38, hours:490, benef:12400 },
+    { n:3,  outcomes:31, hours:390, benef:8200  },
+    { n:7,  outcomes:27, hours:358, benef:7580  },
+    { n:4,  outcomes:20, hours:280, benef:4310  },
+    { n:8,  outcomes:15, hours:195, benef:2800  },
+    { n:11, outcomes:10, hours:165, benef:1980  },
+  ];
+  const totalOutcomes = sdgs.reduce((s,d)=>s+d.outcomes,0); // 186 verified activities logged
+  const sdgBarMax = Math.max(...sdgs.map(d=>d.outcomes));
+
+  const sdgRows = sdgs.map(d=>{
+    const pct = totalOutcomes>0?Math.round((d.outcomes/totalOutcomes)*100):0;
+    const barW = Math.round((d.outcomes/sdgBarMax)*100);
+    return `<tr style="border-bottom:0.5px solid #e5e7eb;">
+      <td style="padding:6px 8px;"><span style="background:${sdgColors[d.n]};color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;">SDG ${d.n}</span></td>
+      <td style="padding:6px 8px;font-size:11px;font-weight:500;color:#111827;">${sdgNames[d.n]||`SDG ${d.n}`}</td>
+      <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${d.outcomes}</td>
+      <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${d.hours}h</td>
+      <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${d.benef.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+
+  const sdgBarRows = sdgs.map((d,i)=>{
+    const pct=totalOutcomes>0?Math.round((d.outcomes/totalOutcomes)*100):0;
+    const barW=Math.round((d.outcomes/sdgBarMax)*100);
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<sdgs.length-1?'8px':'0'};">
+      <div style="width:110px;flex-shrink:0;font-size:9.5px;font-weight:600;"><span style="color:#0A2463;">SDG ${d.n}</span> <span style="color:#6B7280;font-weight:400;">${sdgNames[d.n]||''}</span></div>
+      <div style="flex:1;background:#E5E7EB;height:14px;border-radius:2px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:#0A2463;border-radius:2px;"></div></div>
+      <div style="width:130px;flex-shrink:0;font-size:9.5px;color:#374151;font-weight:500;">${pct}% <span style="color:#6B7280;font-weight:400;">(${d.outcomes} outcomes)</span></div>
+    </div>`;
+  }).join('');
+
+  const ngoRows = [
+    { name:'Green Future Alliance',   loc:'Sub-Saharan Africa', outcomes:56, benef:18200, sdgs:[13,3] },
+    { name:'Solar Village Initiative', loc:'East Africa',        outcomes:48, benef:14900, sdgs:[7,1]  },
+    { name:'Urban Green Corridors',    loc:'Europe',             outcomes:30, benef:6190,  sdgs:[11,13]},
+  ].map(n=>`<tr style="border-bottom:0.5px solid #e5e7eb;">
+    <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${n.name}</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.loc}</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.outcomes}</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.benef.toLocaleString()}</td>
+    <td style="padding:6px 8px;font-size:11px;">${n.sdgs.map(g=>`<span style="background:${sdgColors[g]};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-right:2px;">SDG ${g}</span>`).join('')}</td>
+    <td style="padding:6px 8px;font-size:11px;"><span style="color:#059669;">&#10003; Complete</span></td>
+  </tr>`).join('');
+
+  const empRows = [
+    { name:'Sarah M.',  dept:'Sustainability', outcomes:28, hours:420, ngo:'Green Future Alliance',   skills:'Environmental, Leadership'      },
+    { name:'James K.',  dept:'Operations',     outcomes:22, hours:352, ngo:'Solar Village Initiative', skills:'Project Management, Technical'  },
+    { name:'Ana P.',    dept:'Human Resources',outcomes:19, hours:298, ngo:'Urban Green Corridors',   skills:'Community Engagement, Training' },
+    { name:'David L.',  dept:'Finance',        outcomes:15, hours:240, ngo:'Green Future Alliance',   skills:'Financial Planning, Coaching'   },
+    { name:'Maria R.',  dept:'Engineering',    outcomes:12, hours:210, ngo:'Solar Village Initiative', skills:'Technical, Engineering'         },
+  ].map((v,i)=>`<tr style="border-bottom:0.5px solid #e5e7eb;${i%2===1?'background:#f9fafb;':''}">
+    <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${v.name}</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${v.dept}</td>
+    <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${v.outcomes}</td>
+    <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${v.hours}h</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${v.ngo}</td>
+    <td style="padding:6px 8px;font-size:11px;color:#374151;">${v.skills}</td>
+  </tr>`).join('');
+
+  const auditRows = [
+    { date:'2026-03-28', emp:'Sarah M.',  ngo:'Green Future Alliance',    outcome:'Watershed planting — 340 trees restored',          hours:16, geo:true,  method:'App' },
+    { date:'2026-03-25', emp:'James K.',  ngo:'Solar Village Initiative',  outcome:'Solar panel installation — 22 homes energised',    hours:24, geo:true,  method:'App' },
+    { date:'2026-03-22', emp:'Ana P.',    ngo:'Urban Green Corridors',     outcome:'Job-readiness workshop — 42 trainees certified',   hours:8,  geo:false, method:'App' },
+    { date:'2026-03-18', emp:'David L.',  ngo:'Green Future Alliance',     outcome:'Health screening — 85 community beneficiaries',    hours:12, geo:true,  method:'App' },
+    { date:'2026-03-15', emp:'Maria R.',  ngo:'Solar Village Initiative',  outcome:'Clean-water filter installation — 14 households',  hours:10, geo:true,  method:'App' },
+    { date:'2026-03-10', emp:'Sarah M.',  ngo:'Green Future Alliance',     outcome:'Environmental education — 60 school students',     hours:6,  geo:false, method:'App' },
+    { date:'2026-03-07', emp:'James K.',  ngo:'Urban Green Corridors',     outcome:'Urban garden setup — 3 community plots',           hours:14, geo:true,  method:'App' },
+    { date:'2026-03-03', emp:'Ana P.',    ngo:'Solar Village Initiative',  outcome:'Financial literacy training — 35 participants',    hours:8,  geo:false, method:'App' },
+    { date:'2026-02-27', emp:'David L.',  ngo:'Green Future Alliance',     outcome:'Tree nursery — 500 seedlings prepared',            hours:20, geo:true,  method:'App' },
+    { date:'2026-02-22', emp:'Maria R.',  ngo:'Urban Green Corridors',     outcome:'Skills mentoring — 18 youth participants',         hours:9,  geo:false, method:'App' },
+  ].map(a=>`<tr style="border-bottom:0.5px solid #e5e7eb;">
+    <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.date}</td>
+    <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${a.emp}</td>
+    <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.ngo}</td>
+    <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.outcome}</td>
+    <td style="padding:5px 8px;font-size:10px;text-align:center;color:#374151;">${a.hours}h</td>
+    <td style="padding:5px 8px;font-size:10px;"><span style="color:#059669;">&#10003; ${a.method}</span></td>
+    <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.geo?'&#x1F4CD; Located':'—'}</td>
+  </tr>`).join('');
+
+  const geoRows = [
+    { loc:'Sub-Saharan Africa', count:68 },
+    { loc:'East Africa',        count:56 },
+    { loc:'Europe',             count:41 },
+    { loc:'North America',      count:25 },
+    { loc:'South-East Asia',    count:10 },
+  ];
+  const geoMax = geoRows[0].count;
+  const geoBarRows = geoRows.map((g,i)=>
+    `<div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<geoRows.length-1?'8px':'0'};">
+      <div style="width:130px;flex-shrink:0;font-size:9.5px;color:#374151;font-weight:600;">${g.loc}</div>
+      <div style="flex:1;background:#E5E7EB;height:14px;border-radius:2px;overflow:hidden;"><div style="width:${Math.round((g.count/geoMax)*100)}%;height:100%;background:${i===0?'#0A2463':'#374151'};border-radius:2px;opacity:${(1-i*0.12).toFixed(2)};"></div></div>
+      <div style="width:100px;flex-shrink:0;font-size:9.5px;color:#374151;font-weight:500;">${g.count} verifications</div>
+    </div>`
+  ).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAMPLE — Synerxus Corporate ESG Impact Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--navy:#0A2463;--teal:#00A896;--gold:#F08A5D;--teal-lt:#E0F4F2;--navy-lt:#EEF2FF;--bd:#e5e7eb;--bg-s:#f9fafb;--txt:#111827;--txt-s:#6b7280;--r:8px;}
+  body{font-family:'Inter',sans-serif;color:var(--txt);background:#fff;font-size:11px;line-height:1.5;position:relative;}
+  body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+    background-image:${WM};background-repeat:repeat;background-size:420px 280px;}
+  .page{max-width:900px;margin:0 auto;padding:24px;}
+  h1{font-size:20px;font-weight:800;}
+  h2{font-size:13px;font-weight:700;color:#fff;}
+  h3{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;break-after:avoid;page-break-after:avoid;}
+  h3+*{break-before:avoid;page-break-before:avoid;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;padding:7px 8px;}
+  .section{margin-bottom:20px;border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden;break-inside:avoid;page-break-inside:avoid;}
+  .section-header{background:var(--navy);padding:10px 14px;break-after:avoid;page-break-after:avoid;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;break-inside:avoid;}
+  .kpi{background:#fff;border:0.5px solid var(--bd);border-radius:var(--r);padding:12px 14px;break-inside:avoid;}
+  .kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-s);margin-bottom:4px;}
+  .kpi-value{font-size:22px;font-weight:800;color:var(--navy);line-height:1.1;}
+  .kpi-sub{font-size:9px;color:var(--txt-s);margin-top:2px;}
+  .badge-ok{color:#059669;font-weight:600;}
+  .badge-warn{color:#d97706;font-weight:600;}
+  .note{background:var(--teal-lt);border-left:3px solid var(--teal);padding:8px 12px;font-size:10px;color:#065f46;margin:10px 0;border-radius:0 var(--r) var(--r) 0;break-inside:avoid;}
+  .warn-note{background:#fffbeb;border-left:3px solid var(--gold);padding:8px 12px;font-size:10px;color:#92400e;margin:10px 0;border-radius:0 var(--r) var(--r) 0;break-inside:avoid;}
+  @page{size:A4 portrait;margin:11mm 22mm;}
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .page{padding:0;}
+    .kpi-grid,.section{break-inside:avoid;page-break-inside:avoid;}
+    .section-header{break-after:avoid;page-break-after:avoid;}
+    h3{break-after:avoid;page-break-after:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;">
+        <span style="color:#fff;">SYNER</span><span style="color:#B8860B;">XUS</span> · <span style="color:#B8860B;">Impact,</span> <span style="color:#fff;">Verified.</span>
+      </div>
+      <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
+      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
+    </div>
+    <div style="text-align:right;color:#cbd5e1;font-size:10px;">
+      <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ESG-2026-0407-ACME</div>
+      <div>Generated: April 7, 2026</div>
+      <div style="margin-top:2px;">Corporation: <strong style="color:#fff;">Acme Corporation</strong></div>
+      <div>Reporting Period: <strong style="color:#fff;">Q1 2026 (Jan – Mar 2026)</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- SAMPLE NOTICE -->
+<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:20px;break-inside:avoid;">
+  <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:.5px;margin-bottom:4px;">&#9888; SAMPLE REPORT — ILLUSTRATIVE DATA ONLY</div>
+  <div style="font-size:10px;color:#78350f;line-height:1.6;">This is a <strong>sample report</strong> using fictitious data to demonstrate the Synerxus verification architecture. It mirrors the exact structure delivered to corporate ESG teams. All names, figures, and organisations are illustrative. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Synerxus is designed to reduce auditor evidence-gathering by 60–70%; it does not replace auditor judgment per ISAE 3000.</div>
+</div>
+
+<!-- SECTION 1: EXECUTIVE SNAPSHOT -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">3</div><div class="kpi-sub">organisations</div></div>
+    <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">47</div><div class="kpi-sub">of 120 linked</div></div>
+    <div class="kpi"><div class="kpi-label">NGO-Confirmed Outcomes</div><div class="kpi-value">134</div><div class="kpi-sub">186 total units</div></div>
+    <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">1,678</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">39,290</div><div class="kpi-sub">NGO-tracked</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; NGO partner estimates. Sample 15–30% per ISAE 3000.</div></div>
+    <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">85%</div><div class="kpi-sub">avg 16h turnaround</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Hours / Employee</div><div class="kpi-value">35.7h</div><div class="kpi-sub">NGO-verified</div></div>
+    <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">7</div><div class="kpi-sub">goals impacted</div></div>
+  </div>
+
+  <!-- Verification density strip -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+      <div style="padding:16px 20px;border-right:1px solid #E5E7EB;background:#F9FAFB;">
+        <div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">134 Verified</div>
+        <div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Outcomes &#x2713;</div>
+        <div style="font-size:10px;color:#6B7280;margin-top:6px;">85% Verification Rate</div>
+      </div>
+      <div style="padding:16px 20px;border-right:1px solid #E5E7EB;background:#F9FAFB;">
+        <div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">1,678 Verified</div>
+        <div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Hours &#x23F1;</div>
+        <div style="font-size:10px;color:#6B7280;margin-top:6px;">16h Avg SLA</div>
+      </div>
+      <div style="padding:16px 20px;background:#F9FAFB;">
+        <div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">39,290 Verified</div>
+        <div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Beneficiaries</div>
+        <div style="font-size:10px;color:#6B7280;margin-top:6px;">NGO-Tracked</div>
+      </div>
+    </div>
+    <div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:.03em;">Management Reporting Verified — Supports CSRD Assurance (ISAE 3000)</div>
+  </div>
+
+  <!-- CSRD boundary indicator -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">CSRD Assurance Boundary Indicator</div>
+    <div style="padding:14px 16px;background:#F9FAFB;">
+      <div style="background:#E5E7EB;height:18px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:8px;">
+        <div style="width:65%;height:100%;background:#0A2463;display:flex;align-items:center;padding-left:8px;"><span style="font-size:9px;color:#F9FAFB;font-weight:700;">65%</span></div>
+      </div>
+      <div style="font-size:10.5px;color:#374151;font-weight:600;margin-bottom:4px;">Supports CSRD Assurance <span style="color:#0891B2;">(Management Reporting Verified)</span></div>
+      <div style="font-size:9px;color:#6B7280;font-style:italic;padding-top:6px;border-top:1px solid #E5E7EB;margin-top:6px;">* Independent auditor procedures per ISAE 3000 required for formal assurance. Synerxus reduces evidence-gathering burden — it does not replace auditor judgment or opinion.</div>
+    </div>
+  </div>
+
+  <!-- ESRS disclosure support -->
+  <div class="section">
+    <div class="section-header"><h2>ESRS Disclosure Support Status</h2></div>
+    <table>
+      <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">ESRS Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
+      <tbody>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S1.4 — Workforce skills</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 47 employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.3 — Community engagement</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 3 NGO partners, 134 verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Actual community impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 39,290 beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.4 — Negative impacts (double materiality)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; None disclosed this period</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
+        <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS G1.3 — Monitoring processes</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 85% verification rate, 16h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — designed to support CSRD disclosure requirements for third-party verified social impact data (ESRS S3).</div>
+</div>
+
+<!-- VERIFICATION BOUNDARY MATRIX -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Verification Boundary — Scope Definition</h3>
+  <div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Verification Boundary — Included vs. Excluded</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;">
+      <div style="border-right:1px solid #E5E7EB;">
+        <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#0891B2;background:#F0FDFF;border-bottom:1px solid #E5E7EB;">Included (Verified)</div>
+        ${['NGO-confirmed outcomes','72h verification window','Validated beneficiary counts','Immutable audit trails'].map((item,i,arr)=>`<div style="padding:7px 16px;font-size:10.5px;color:#374151;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ${item}</div>`).join('')}
+      </div>
+      <div>
+        <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#374151;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Excluded (Not Verified)</div>
+        ${['Self-reported hours','Outcomes >72h post-completion','Projected/estimated numbers','Financial SROI valuation'].map((item,i,arr)=>`<div style="padding:7px 16px;font-size:10.5px;color:#6B7280;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}display:flex;align-items:center;gap:8px;"><span style="color:#9CA3AF;font-weight:700;">&#x2717;</span> ${item}</div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: NGO PARTNERSHIPS -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: NGO Partnership Impact</h3>
+  <div class="section">
+    <div class="section-header"><h2>Sponsored NGO Partners — Verified Impact</h2></div>
+    <table>
+      <thead><tr><th>NGO Partner</th><th>Location</th><th>Verified Outcomes</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Audit Status</th></tr></thead>
+      <tbody>${ngoRows}</tbody>
+    </table>
+  </div>
+  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S3.3 requires disclosure of "operations with significant community impact." This section proves direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
+</div>
+
+<!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (ESRS S1.4)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+    <div class="section">
+      <div class="section-header"><h2>Participation Metrics</h2></div>
+      <table><tbody>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">47</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">1,678h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">35.7h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8h industry avg</td></tr>
+        <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">293</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Platform-tracked</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="section">
+      <div class="section-header"><h2>Industry Benchmarks</h2></div>
+      <table><tbody>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">Verification Rate</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">85%</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. N/A (competitors)</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;">Verification SLA</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">16h avg</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">target: ≤72h</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">SDGs Addressed</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">7 goals</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 2.3 avg (Fortune 500)</td></tr>
+        <tr><td style="padding:7px 10px;font-size:11px;">NGO Partners</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">3</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8 avg (Benevity)</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><h2>Top Employee Contributors (Verified Outcomes)</h2></div>
+    <table>
+      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Verified Outcomes</th><th style="text-align:center;">Hours</th><th>NGO Partners</th><th>Skills Deployed</th></tr></thead>
+      <tbody>${empRows}</tbody>
+    </table>
+  </div>
+  <!-- Geographic heatmap -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Global Verification Density — Q1 2026</div>
+    <div style="padding:12px 16px;background:#F9FAFB;">${geoBarRows}</div>
+    <div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">
+      <span>Verification Rate: <strong style="color:#0A2463;">85%</strong></span>
+      <span>Avg. SLA: <strong style="color:#0A2463;">16h</strong></span>
+      <span style="color:#6B7280;">SMS-Based (No App Required)</span>
+    </div>
+  </div>
+  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S1.4 requires disclosure of "workforce skills development." This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
+</div>
+
+<!-- SECTION 4: SDG ALIGNMENT -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 4: SDG Alignment &amp; Impact Attribution</h3>
+  <div class="section">
+    <div class="section-header"><h2>UN Sustainable Development Goals Contribution</h2></div>
+    <table>
+      <thead><tr><th>SDG</th><th>Goal</th><th style="text-align:center;">Outcomes</th><th style="text-align:center;">Hours</th><th style="text-align:center;">Beneficiaries</th></tr></thead>
+      <tbody>${sdgRows}</tbody>
+    </table>
+  </div>
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">SDG Alignment — Verified Outcome Distribution</div>
+    <div style="padding:12px 16px;background:#F9FAFB;">${sdgBarRows}</div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to verified outcomes only. SDG alignment confirmed by NGO program directors.</div>
+  </div>
+</div>
+
+<!-- SECTION 5: AUDIT TRAIL -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
+  <div class="section">
+    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Immutable Records for Auditor Sampling (showing 10 of 134)</h2></div>
+    <table>
+      <thead><tr><th>Date</th><th>Employee</th><th>NGO Partner</th><th>Outcome Verified</th><th style="text-align:center;">Hours</th><th>Method</th><th>Geolocation</th></tr></thead>
+      <tbody>${auditRows}</tbody>
+    </table>
+  </div>
+  <!-- Verification timeline -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Q1 2026 Verification Timeline — SLA Compliance</div>
+    <div style="padding:14px 16px;background:#F9FAFB;">
+      <div style="font-size:9px;color:#6B7280;margin-bottom:6px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">90-Day Reporting Window</div>
+      <div style="background:#E5E7EB;height:20px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:6px;"><div style="width:85%;height:100%;background:#0A2463;"></div></div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0A2463;border-radius:1px;flex-shrink:0;"></div><span style="font-size:9.5px;color:#374151;font-weight:600;">85% verified within 72h SLA</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0891B2;border-radius:1px;flex-shrink:0;"></div><span style="font-size:9.5px;color:#374151;font-weight:600;">100% immutable audit trails maintained</span></div>
+      </div>
+    </div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps verified against stated SLA. 72h SLA matches boundary definition for defensibility.</div>
+  </div>
+  <!-- Evidence Object Architecture -->
+  <div style="font-family:Inter,sans-serif;margin-bottom:14px;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Evidence Object: Structured Verification Unit</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+      <div style="border-right:1px solid #E5E7EB;">
+        <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Outcome Data</div>
+        ${['Deliverable','Beneficiaries','Hours','Skills Applied'].map((item,i,arr)=>`<div style="padding:5px 14px;font-size:10px;color:#374151;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}">&#x2022; ${item}</div>`).join('')}
+      </div>
+      <div style="border-right:1px solid #E5E7EB;">
+        <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Audit Trail</div>
+        ${['Timestamp','Verifier ID','Geolocation','Device Hash'].map((item,i,arr)=>`<div style="padding:5px 14px;font-size:10px;color:#374151;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}">&#x2022; ${item}</div>`).join('')}
+      </div>
+      <div>
+        <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Regulatory Metadata</div>
+        ${['SDG Primary/Secondary','ESRS Mapping (S3/S4)','Project ID','Corporate Program'].map((item,i,arr)=>`<div style="padding:5px 14px;font-size:10px;color:#374151;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}">&#x2022; ${item}</div>`).join('')}
+      </div>
+    </div>
+    <div style="padding:10px 16px;background:#F0FDFF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;">
+      <span style="color:#0891B2;font-size:14px;">&#x2193;</span>
+      <span style="font-size:10px;color:#0891B2;font-weight:700;">NGO Verification &#x2713; within 72h</span>
+      <span style="font-size:10px;color:#6B7280;">&#x2192;</span>
+      <span style="font-size:10px;color:#374151;font-weight:600;">Immutable Record Locked</span>
+    </div>
+  </div>
+  <div style="background:#f0f9ff;border:0.5px solid #bae6fd;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#0369a1;margin-top:8px;">
+    &#128269; <strong>Auditor Use Case:</strong> Randomly sample 15–30% of outcomes for direct NGO confirmation. Each record includes verifier identity, timestamp, and contact information for the NGO programme director.
+  </div>
+</div>
+
+<!-- SECTION 6: DOUBLE MATERIALITY -->
+<div style="margin-bottom:20px;">
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Double Materiality Disclosure (ESRS S3.4)</h3>
+  <!-- Screening matrix -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Negative Impact Screening — Status Matrix</div>
+    <div style="display:grid;grid-template-columns:2fr 80px 100px 1fr;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
+      ${['Screening Dimension','Status','Outcomes Affected','Verification Method'].map((h,i)=>`<div style="padding:6px 12px;font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;${i<3?'border-right:1px solid #E5E7EB;':''}">${h}</div>`).join('')}
+    </div>
+    ${[
+      {dim:'Community Harm',method:'NGO Program Director'},
+      {dim:'Environmental Effects',method:'Community Liaison'},
+      {dim:'Resource Displacement',method:'Project Coordinator'},
+      {dim:'Beneficiary Concerns',method:'Structured Survey'},
+    ].map((row,i,arr)=>`<div style="display:grid;grid-template-columns:2fr 80px 100px 1fr;${i<arr.length-1?'border-bottom:1px solid #F3F4F6;':''}">
+      <div style="padding:7px 12px;font-size:10px;color:#374151;border-right:1px solid #E5E7EB;">${row.dim}</div>
+      <div style="padding:7px 12px;font-size:10px;color:#0891B2;font-weight:700;border-right:1px solid #E5E7EB;display:flex;align-items:center;gap:4px;">&#x2713; Pass</div>
+      <div style="padding:7px 12px;font-size:10px;font-weight:700;color:#374151;border-right:1px solid #E5E7EB;text-align:center;">0</div>
+      <div style="padding:7px 12px;font-size:10px;color:#6B7280;">${row.method}</div>
+    </div>`).join('')}
+  </div>
+  <!-- Contribution chain -->
+  <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Contribution Chain — Verification Node</div>
+    <div style="padding:16px;background:#F9FAFB;display:flex;align-items:center;flex-wrap:wrap;">
+      ${[
+        {label:'Volunteer Activity',verified:false,sla:''},
+        {label:'NGO Verification &#x2713;',verified:true,sla:'16h Avg SLA'},
+        {label:'Verified Outcome',verified:false,sla:''},
+        {label:'Beneficiaries',verified:false,sla:''},
+        {label:'SDG Advanced',verified:false,sla:''},
+      ].map((node,i,arr)=>`<div style="display:flex;align-items:center;">
+        <div style="padding:8px 12px;border:${node.verified?'1.5px solid #0891B2':'1px solid #E5E7EB'};border-radius:3px;background:${node.verified?'#F0FDFF':'#FFFFFF'};text-align:center;min-width:90px;">
+          <div style="font-size:9.5px;font-weight:${node.verified?'700':'500'};color:${node.verified?'#0891B2':'#374151'};line-height:1.3;">${node.label}</div>
+          ${node.sla?`<div style="font-size:8.5px;color:#0A2463;font-weight:600;margin-top:3px;">${node.sla}</div>`:''}
+        </div>
+        ${i<arr.length-1?'<div style="padding:0 6px;color:#9CA3AF;font-size:14px;font-weight:300;">&#x2192;</div>':''}
+      </div>`).join('')}
+    </div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Independent NGO verification is the trust mechanism — not self-reported activity.</div>
+  </div>
+  <!-- Assurance boundary diagram -->
+  <div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;margin-top:16px;">
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Assurance Boundary — Limitations &amp; Scope</div>
+    <div style="padding:16px;background:#F9FAFB;">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#F9FAFB;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#374151;">Independent Assurance — ISAE 3000 REQUIRED</div>
+          <div style="font-size:9px;color:#9CA3AF;margin-top:2px;">(Auditor Judgment)</div>
+        </div>
+        <div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>
+        <div style="width:88%;padding:10px 16px;border:1.5px solid #0891B2;border-radius:4px;background:#F0FDFF;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#0A2463;">Synerxus: Management Reporting Verified &#x2713;</div>
+          <div style="font-size:9px;color:#0891B2;margin-top:2px;">(NGO Verification)</div>
+        </div>
+        <div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>
+        <div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Verified &#x2192; Audit-Ready</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Synerxus provides verification infrastructure — not assurance opinion. Independent auditor required for ISAE 3000 / CSRD formal assurance.</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#9ca3af;">
+  <div>&#169; 2026 Synerxus · SAMPLE REPORT — Data is illustrative only · Report ID: ESG-2026-0407-ACME</div>
+  <div style="font-weight:700;color:#0A2463;">SYNER<span style="color:#B8860B;">XUS</span></div>
+</div>
+
+</div>
+</body>
+</html>`;
+}
+
+function SampleReportModal({ onClose }: { onClose: () => void }) {
+  const html = buildSampleReportHtml();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const printReport = () => {
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[500] flex flex-col bg-white">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white shadow-sm flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Logo size="sm" clickable={false} />
+          <span className="text-sm font-bold text-[#0A1F44] hidden sm:block">Corporate ESG Impact Report</span>
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full border border-amber-200 uppercase tracking-wider">Sample</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={printReport}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A1F44] text-white text-xs font-semibold hover:bg-[#0d2a5e] transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            Print / Save PDF
+          </button>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors text-lg font-bold"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Report in isolated iframe */}
+      <iframe
+        ref={iframeRef}
+        srcDoc={html}
+        title="Sample Synerxus ESG Impact Report"
+        className="flex-1 w-full border-0"
+        sandbox="allow-same-origin allow-popups"
+      />
+    </div>
+  );
+}
+
 export default function Landing() {
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showSampleReport, setShowSampleReport] = useState(false);
   const [heroSlide, setHeroSlide] = useState(0);
+  const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Auto-advance hero slides; resets when user manually picks a slide
+  const startHeroTimer = () => {
+    if (heroTimerRef.current) clearInterval(heroTimerRef.current);
+    heroTimerRef.current = setInterval(
+      () => setHeroSlide((s) => (s + 1) % HERO_SLIDES.length),
+      4000
+    );
+  };
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setHeroSlide((s) => (s + 1) % HERO_SLIDES.length);
-    }, 4000);
-    return () => clearInterval(timer);
+    startHeroTimer();
+    return () => { if (heroTimerRef.current) clearInterval(heroTimerRef.current); };
   }, []);
 
-  const storedUserId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
+  const goToSlide = (i: number) => {
+    setHeroSlide(i);
+    startHeroTimer();
+  };
+
+  const storedUserId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("currentUserId")
+      : null;
 
   const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/users/me", storedUserId],
@@ -221,6 +831,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col overflow-x-hidden w-full">
+      {showSampleReport && <SampleReportModal onClose={() => setShowSampleReport(false)} />}
       {/* ── Navigation ── */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-6 md:px-10 py-3 flex justify-between items-center">
@@ -232,33 +843,74 @@ export default function Landing() {
 
           <div className="hidden md:flex items-center gap-1">
             <Link href="/landing">
-              <Button variant="ghost" size="sm" className="text-[#0A1F44] font-semibold hover:bg-blue-50 rounded-lg">Home</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#0A1F44] font-semibold hover:bg-blue-50 rounded-lg"
+              >
+                Home
+              </Button>
             </Link>
             <Link href="/projects">
-              <Button variant="ghost" size="sm" className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg">Projects</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
+              >
+                Projects
+              </Button>
             </Link>
             <Link href="/organizations">
-              <Button variant="ghost" size="sm" className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg">Organizations</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
+              >
+                Organizations
+              </Button>
             </Link>
             <Link href="/help">
-              <Button variant="ghost" size="sm" className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg">Help</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
+              >
+                Help
+              </Button>
             </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button size="sm" className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl" data-testid="button-my-dashboard">
+                <Button
+                  size="sm"
+                  className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
+                  data-testid="button-my-dashboard"
+                >
                   My Dashboard
                 </Button>
               </Link>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="sm" variant="outline" className="whitespace-nowrap border-[#0A1F44] text-[#0A1F44] font-semibold text-sm px-4 rounded-xl hover:bg-[#0A1F44] hover:text-white" data-testid="button-login-nav">Log In</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="whitespace-nowrap border-[#0A1F44] text-[#0A1F44] font-semibold text-sm px-4 rounded-xl hover:bg-[#0A1F44] hover:text-white"
+                    data-testid="button-login-nav"
+                  >
+                    Log In
+                  </Button>
                 </Link>
                 <Link href="/login?tab=register">
-                  <Button size="sm" className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl" data-testid="button-sign-up-nav">Sign Up</Button>
+                  <Button
+                    size="sm"
+                    className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
+                    data-testid="button-sign-up-nav"
+                  >
+                    Sign Up
+                  </Button>
                 </Link>
               </>
             )}
@@ -269,13 +921,20 @@ export default function Landing() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
 
         {mobileMenuOpen && (
           <>
-            <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setMobileMenuOpen(false)} />
+            <div
+              className="fixed inset-0 z-40 bg-black/20"
+              onClick={() => setMobileMenuOpen(false)}
+            />
             <div className="md:hidden absolute left-0 right-0 z-50 bg-white border-b border-slate-200 shadow-lg">
               <div className="px-4 py-3 space-y-1 border-b border-slate-100">
                 {[
@@ -286,7 +945,10 @@ export default function Landing() {
                 ].map(({ href, label }) => (
                   <button
                     key={href}
-                    onClick={() => { setMobileMenuOpen(false); navigate(href); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate(href);
+                    }}
                     className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-[#0A1F44] transition-colors"
                   >
                     {label}
@@ -296,7 +958,10 @@ export default function Landing() {
               <div className="px-4 py-3 space-y-2">
                 {isLoggedIn ? (
                   <button
-                    onClick={() => { setMobileMenuOpen(false); navigate("/dashboard"); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate("/dashboard");
+                    }}
                     className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
                     data-testid="button-my-dashboard"
                   >
@@ -305,14 +970,20 @@ export default function Landing() {
                 ) : (
                   <>
                     <button
-                      onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate("/login");
+                      }}
                       className="w-full py-2.5 px-4 rounded-xl border border-[#0A1F44] text-[#0A1F44] font-semibold text-sm text-center"
                       data-testid="button-login-nav"
                     >
                       Log In
                     </button>
                     <button
-                      onClick={() => { setMobileMenuOpen(false); navigate("/login?tab=register"); }}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate("/login?tab=register");
+                      }}
                       className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
                       data-testid="button-sign-up-nav"
                     >
@@ -327,7 +998,6 @@ export default function Landing() {
       </nav>
 
       <main className="flex-1 overflow-x-hidden w-full">
-
         {/* ── Section 1: Hero ── */}
         <section
           className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/60 to-blue-100/80 py-16 md:py-24"
@@ -353,23 +1023,29 @@ export default function Landing() {
           </svg>
 
           <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-
             {/* Left column */}
             <div className="flex flex-col order-2 md:order-1">
               <h1
                 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-[#0A1F44] mb-5"
                 data-testid="text-hero-title"
               >
-                The Verification Layer<br />
+                The Verification Layer
+                <br />
                 <span className="text-[#0A1F44]">for </span>
-                <span className="text-[#1D4ED8]">ESG, SDG, and<br />Community Impact.</span>
+                <span className="text-[#1D4ED8]">
+                  ESG, SDG, and
+                  <br />
+                  Community Impact.
+                </span>
               </h1>
 
               <p
                 className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed"
                 data-testid="text-hero-description"
               >
-                Real-time, NGO-verified outcomes with immutable audit trails—built for CSRD, ESRS, and enterprise ESG reporting.
+                Real-time, NGO-verified outcomes with immutable audit
+                trails—built for enterprise ESG, and CSRD, ESRS reporting under
+                the UN SDGs.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -410,8 +1086,16 @@ export default function Landing() {
 
               {/* Trust badge strip */}
               <div className="flex flex-wrap gap-2 mt-1">
-                {["CSRD-Ready", "ESRS S3/S4", "Audit-Defensible", "NGO-Verified"].map((badge) => (
-                  <span key={badge} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#0A1F44]/15 text-[10px] sm:text-xs font-semibold text-[#0A1F44] shadow-sm">
+                {[
+                  "UN-SDG Tagged",
+                  "CSRD-Ready",
+                  "Audit-Defensible",
+                  "NGO-Verified",
+                ].map((badge) => (
+                  <span
+                    key={badge}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#0A1F44]/15 text-[10px] sm:text-xs font-semibold text-[#0A1F44] shadow-sm"
+                  >
                     <CheckCircle className="h-3 w-3 text-emerald-500" />
                     {badge}
                   </span>
@@ -423,7 +1107,10 @@ export default function Landing() {
             <div className="relative order-1 md:order-2 flex justify-center">
               <div className="relative w-full max-w-lg">
                 {/* Slide images — crossfade stack */}
-                <div className="relative rounded-2xl shadow-2xl overflow-hidden" style={{ aspectRatio: "16/10" }}>
+                <div
+                  className="relative rounded-2xl shadow-2xl overflow-hidden"
+                  style={{ aspectRatio: "16/10" }}
+                >
                   {HERO_SLIDES.map((src, i) => (
                     <img
                       key={i}
@@ -441,13 +1128,14 @@ export default function Landing() {
                   {HERO_SLIDES.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => setHeroSlide(i)}
+                      onClick={() => goToSlide(i)}
                       aria-label={`Slide ${i + 1}`}
                       className="pointer-events-auto rounded-full border-2 border-white shadow transition-all duration-300"
                       style={{
                         width: heroSlide === i ? "24px" : "8px",
                         height: "8px",
-                        backgroundColor: heroSlide === i ? "#ffffff" : "rgba(255,255,255,0.5)",
+                        backgroundColor:
+                          heroSlide === i ? "#ffffff" : "rgba(255,255,255,0.5)",
                       }}
                     />
                   ))}
@@ -493,11 +1181,16 @@ export default function Landing() {
                   quote: '"Impact is real, but unverifiable."',
                 },
               ].map((card) => (
-                <div key={card.segment} className="bg-slate-50 rounded-2xl p-6 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                <div
+                  key={card.segment}
+                  className="bg-slate-50 rounded-2xl p-6 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all"
+                >
                   <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
                     {card.icon}
                   </div>
-                  <h3 className="text-lg font-bold text-[#0A1F44] mb-2">{card.segment}</h3>
+                  <h3 className="text-lg font-bold text-[#0A1F44] mb-2">
+                    {card.segment}
+                  </h3>
                   <p className="text-slate-600 text-sm mb-3">{card.pain}</p>
                   <p className="text-slate-400 text-sm italic">{card.quote}</p>
                 </div>
@@ -511,24 +1204,23 @@ export default function Landing() {
         </section>
 
         {/* ── Missing Infrastructure Stack ── */}
-        <section className="py-16 md:py-20 bg-[#0A1F44]">
+        <section className="py-16 md:py-20 bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
-
             {/* Section header */}
             <div className="text-center mb-10">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#E6B800]/20 text-[#E6B800] text-xs font-bold uppercase tracking-wider mb-3">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
                 The Gap
               </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44]">
                 The Missing Infrastructure
               </h2>
-              <p className="text-blue-200/70 text-sm md:text-base mt-3 max-w-xl mx-auto">
-                Every layer of the impact stack exists — except the one that makes it credible.
+              <p className="text-slate-500 text-sm md:text-base mt-3 max-w-xl mx-auto">
+                Every layer of the impact stack exists — except the one that
+                makes it credible.
               </p>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start justify-between">
-
               {/* Left: layer stack — Level 5 at top, Level 1 at bottom */}
               <div className="flex-1 w-full max-w-2xl">
                 <div className="flex flex-col gap-2">
@@ -574,14 +1266,17 @@ export default function Landing() {
                       <div
                         className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${
                           layer.highlight
-                            ? "border-[#00E35B]/60 bg-[#00B341]/10"
+                            ? "border-emerald-400/70 bg-emerald-50"
                             : layer.dim
-                            ? "border-white/8 bg-white/3 opacity-60"
-                            : "border-white/10 bg-white/5 hover:bg-white/8"
+                              ? "border-slate-200 bg-slate-50 opacity-55"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                         }`}
                         style={
                           layer.highlight
-                            ? { boxShadow: "0 0 32px rgba(0,227,91,0.25), inset 0 0 16px rgba(0,227,91,0.04)" }
+                            ? {
+                                boxShadow:
+                                  "0 0 24px rgba(5,150,105,0.12), 0 2px 8px rgba(5,150,105,0.08)",
+                              }
                             : undefined
                         }
                       >
@@ -589,8 +1284,8 @@ export default function Landing() {
                         <div
                           className={`shrink-0 rounded-xl px-3 py-2 text-center min-w-[72px] ${
                             layer.highlight
-                              ? "bg-[#00B341] text-white"
-                              : "bg-white/10 text-white/50"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-slate-100 text-slate-400"
                           }`}
                         >
                           <div className="text-[9px] font-bold uppercase tracking-wider leading-none opacity-80">
@@ -605,27 +1300,31 @@ export default function Landing() {
                         <div className="flex-1 min-w-0">
                           <div
                             className={`font-bold text-sm sm:text-base leading-tight ${
-                              layer.highlight ? "text-[#00E35B]" : "text-white/90"
+                              layer.highlight
+                                ? "text-emerald-700"
+                                : "text-[#0A1F44]"
                             }`}
                           >
                             {layer.label}
                           </div>
-                          <div className="text-xs text-white/45 mt-0.5 leading-snug">{layer.sub}</div>
+                          <div className="text-xs text-slate-400 mt-0.5 leading-snug">
+                            {layer.sub}
+                          </div>
                         </div>
 
-                        {/* Arrow indicator on highlight */}
+                        {/* Pulse indicator on highlight */}
                         {layer.highlight && (
                           <div className="shrink-0 flex items-center gap-1.5">
-                            <div className="w-5 h-px bg-[#00E35B]/60" />
-                            <div className="w-2 h-2 rounded-full bg-[#00E35B] animate-pulse" />
+                            <div className="w-5 h-px bg-emerald-400" />
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                           </div>
                         )}
                       </div>
 
-                      {/* Connector dot between cards */}
+                      {/* Connector between cards */}
                       {idx < arr.length - 1 && (
                         <div className="flex justify-start pl-9 my-0.5">
-                          <div className="w-px h-2 bg-white/15" />
+                          <div className="w-px h-2 bg-slate-200" />
                         </div>
                       )}
                     </div>
@@ -634,52 +1333,53 @@ export default function Landing() {
 
                 {/* Foundation label */}
                 <div className="mt-4 flex items-center gap-2 pl-1">
-                  <div className="h-px flex-1 bg-white/10" />
-                  <span className="text-[10px] text-white/30 uppercase tracking-widest font-semibold">Foundation</span>
-                  <div className="h-px flex-1 bg-white/10" />
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+                    Foundation
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200" />
                 </div>
               </div>
 
-              {/* Right: gold-framed quote panel */}
+              {/* Right: quote panel */}
               <div
-                className="w-full lg:w-80 xl:w-96 rounded-2xl overflow-hidden flex-shrink-0"
+                className="w-full lg:w-80 xl:w-96 rounded-2xl overflow-hidden flex-shrink-0 bg-white"
                 style={{
-                  border: "1.5px solid rgba(230,184,0,0.5)",
-                  boxShadow: "0 0 40px rgba(230,184,0,0.12), 0 8px 32px rgba(0,0,0,0.3)",
-                  background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-                  backdropFilter: "blur(12px)",
+                  border: "1.5px solid rgba(184,134,11,0.35)",
+                  boxShadow:
+                    "0 0 32px rgba(184,134,11,0.08), 0 8px 24px rgba(0,0,0,0.06)",
                 }}
               >
                 {/* Gold top bar */}
-                <div className="h-1 w-full bg-gradient-to-r from-[#E6B800]/30 via-[#E6B800] to-[#E6B800]/30" />
+                <div className="h-1 w-full bg-gradient-to-r from-[#B8860B]/30 via-[#B8860B] to-[#B8860B]/30" />
 
                 <div className="p-8">
                   {/* Corner accents */}
                   <div className="flex justify-between mb-6">
-                    <div className="w-6 h-6 border-t-2 border-l-2 border-[#E6B800]/50 rounded-tl" />
-                    <div className="w-6 h-6 border-t-2 border-r-2 border-[#E6B800]/50 rounded-tr" />
+                    <div className="w-6 h-6 border-t-2 border-l-2 border-[#B8860B]/40 rounded-tl" />
+                    <div className="w-6 h-6 border-t-2 border-r-2 border-[#B8860B]/40 rounded-tr" />
                   </div>
 
-                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-white mb-4">
+                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#0A1F44] mb-4">
                     Everyone builds trackers.
                   </p>
-                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#E6B800]">
+                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#B8860B]">
                     No one built the verification layer.
                   </p>
 
                   <div className="flex justify-between mt-6 mb-6">
-                    <div className="w-6 h-6 border-b-2 border-l-2 border-[#E6B800]/50 rounded-bl" />
-                    <div className="w-6 h-6 border-b-2 border-r-2 border-[#E6B800]/50 rounded-br" />
+                    <div className="w-6 h-6 border-b-2 border-l-2 border-[#B8860B]/40 rounded-bl" />
+                    <div className="w-6 h-6 border-b-2 border-r-2 border-[#B8860B]/40 rounded-br" />
                   </div>
 
-                  <div className="border-t border-white/10 pt-5">
-                    <p className="text-sm text-blue-200/60 leading-relaxed">
-                      Synerxus is the first platform to close the loop between ground-level activity and audit-ready ESG evidence.
+                  <div className="border-t border-slate-100 pt-5">
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      Synerxus is the first platform to close the loop between
+                      ground-level activity and audit-ready ESG evidence.
                     </p>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </section>
@@ -692,7 +1392,8 @@ export default function Landing() {
                 Verify What Actually Happened
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto">
-                Four capabilities that turn impact claims into defensible evidence.
+                Four capabilities that turn impact claims into defensible
+                evidence.
               </p>
             </div>
 
@@ -723,13 +1424,22 @@ export default function Landing() {
                   bg: "bg-amber-100",
                 },
               ].map((feat) => (
-                <div key={feat.title} className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow flex gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${feat.bg} flex items-center justify-center flex-shrink-0`}>
+                <div
+                  key={feat.title}
+                  className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow flex gap-4"
+                >
+                  <div
+                    className={`w-12 h-12 rounded-xl ${feat.bg} flex items-center justify-center flex-shrink-0`}
+                  >
                     {feat.icon}
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#0A1F44] mb-1">{feat.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{feat.desc}</p>
+                    <h3 className="font-bold text-[#0A1F44] mb-1">
+                      {feat.title}
+                    </h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">
+                      {feat.desc}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -745,24 +1455,54 @@ export default function Landing() {
                 A Complete Chain of Custody
               </h2>
               <p className="text-slate-500 text-base md:text-lg">
-                Four steps from delivery to disclosure — with verification at every stage.
+                Four steps from delivery to disclosure — with verification at
+                every stage.
               </p>
             </div>
 
             <div className="flex flex-col md:flex-row items-start md:items-center justify-center gap-4 md:gap-0">
               {[
-                { icon: <FileCheck className="h-7 w-7 text-white" />, num: "01", label: "Deliverable Completed", color: "bg-[#0A1F44]" },
-                { icon: <ShieldCheck className="h-7 w-7 text-white" />, num: "02", label: "NGO Verifies", color: "bg-blue-600" },
-                { icon: <Lock className="h-7 w-7 text-white" />, num: "03", label: "Evidence Object Created", color: "bg-[#0A1F44]" },
-                { icon: <BarChart2 className="h-7 w-7 text-white" />, num: "04", label: "ESG / SDG Reporting", color: "bg-blue-600" },
+                {
+                  icon: <FileCheck className="h-7 w-7 text-white" />,
+                  num: "01",
+                  label: "Deliverable Completed",
+                  color: "bg-[#0A1F44]",
+                },
+                {
+                  icon: <ShieldCheck className="h-7 w-7 text-white" />,
+                  num: "02",
+                  label: "NGO Verifies",
+                  color: "bg-blue-600",
+                },
+                {
+                  icon: <Lock className="h-7 w-7 text-white" />,
+                  num: "03",
+                  label: "Evidence Object Created",
+                  color: "bg-[#0A1F44]",
+                },
+                {
+                  icon: <BarChart2 className="h-7 w-7 text-white" />,
+                  num: "04",
+                  label: "ESG / SDG Reporting",
+                  color: "bg-blue-600",
+                },
               ].map((step, i, arr) => (
-                <div key={step.num} className="flex flex-col md:flex-row items-center md:items-start flex-1">
+                <div
+                  key={step.num}
+                  className="flex flex-col md:flex-row items-center md:items-start flex-1"
+                >
                   <div className="flex flex-col items-center text-center w-32">
-                    <div className={`w-14 h-14 rounded-full ${step.color} flex items-center justify-center shadow-lg mb-3`}>
+                    <div
+                      className={`w-14 h-14 rounded-full ${step.color} flex items-center justify-center shadow-lg mb-3`}
+                    >
                       {step.icon}
                     </div>
-                    <span className="text-xs text-slate-400 font-bold mb-1">{step.num}</span>
-                    <span className="text-sm font-bold text-[#0A1F44] leading-tight">{step.label}</span>
+                    <span className="text-xs text-slate-400 font-bold mb-1">
+                      {step.num}
+                    </span>
+                    <span className="text-sm font-bold text-[#0A1F44] leading-tight">
+                      {step.label}
+                    </span>
                   </div>
                   {i < arr.length - 1 && (
                     <div className="hidden md:flex items-center justify-center flex-1 mt-6">
@@ -787,7 +1527,9 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
-                Built for Every Organization<br />That Needs Verified Impact
+                Built for Every Organization
+                <br />
+                That Needs Verified Impact
               </h2>
             </div>
 
@@ -796,52 +1538,154 @@ export default function Landing() {
                 {
                   icon: <BarChart2 className="h-6 w-6 text-blue-700" />,
                   audience: "ESG Teams",
-                  benefit: "CSRD-ready evidence for S3/S4 disclosures — audit-defensible from day one.",
+                  benefit:
+                    "CSRD-ready evidence for S3/S4 disclosures — audit-defensible from day one.",
                   bg: "bg-blue-100",
                 },
                 {
                   icon: <Users className="h-6 w-6 text-[#0A1F44]" />,
                   audience: "Corporate Volunteering",
-                  benefit: "Move beyond hours logged — verify outcomes and show true employee impact.",
+                  benefit:
+                    "Move beyond hours logged — verify outcomes and show true employee impact.",
                   bg: "bg-slate-100",
                 },
                 {
                   icon: <ShieldCheck className="h-6 w-6 text-emerald-700" />,
                   audience: "NGOs",
-                  benefit: "Show funders verified, timestamped impact — effortlessly and credibly.",
+                  benefit:
+                    "Show funders verified, timestamped impact — effortlessly and credibly.",
                   bg: "bg-emerald-100",
                 },
                 {
                   icon: <Globe className="h-6 w-6 text-sky-700" />,
                   audience: "Cities & Multilaterals",
-                  benefit: "Comparable, verified data across pilots, programs, and geographies.",
+                  benefit:
+                    "Comparable, verified data across pilots, programs, and geographies.",
                   bg: "bg-sky-100",
                 },
                 {
                   icon: <HardHat className="h-6 w-6 text-amber-700" />,
                   audience: "Engineering & Infrastructure Firms",
-                  benefit: "Verify local hiring commitments and community impact against project targets.",
+                  benefit:
+                    "Verify local hiring commitments and community impact against project targets.",
                   bg: "bg-amber-100",
                 },
                 {
                   icon: <Building2 className="h-6 w-6 text-violet-700" />,
                   audience: "Impact Investors",
-                  benefit: "Portfolio-wide verification of social outcomes — from commitment to delivery.",
+                  benefit:
+                    "Portfolio-wide verification of social outcomes — from commitment to delivery.",
                   bg: "bg-violet-100",
                 },
               ].map((card) => (
-                <div key={card.audience} className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
-                  <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+                <div
+                  key={card.audience}
+                  className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all"
+                >
+                  <div
+                    className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}
+                  >
                     {card.icon}
                   </div>
-                  <h3 className="font-bold text-[#0A1F44] mb-2">{card.audience}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{card.benefit}</p>
+                  <h3 className="font-bold text-[#0A1F44] mb-2">
+                    {card.audience}
+                  </h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">
+                    {card.benefit}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* ── Section 6: Verification Stack ── */}
+        <section className="py-16 md:py-20 bg-[#0A1F44]">
+          <div className="max-w-5xl mx-auto px-6 md:px-10 text-center">
+            <span className="inline-block px-4 py-1 rounded-full bg-[#E6B800]/20 text-[#E6B800] text-xs font-bold uppercase tracking-wider mb-5">
+              Accurate Global Impact Stack Workflow
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-6">
+              Synerxus provides the missing verification layer
+              <br className="hidden md:block" /> between Trackers and Aggregators
+            </h2>
+
+            <p className="text-blue-200 text-base md:text-lg mb-3 max-w-3xl mx-auto leading-relaxed">
+              <span className="text-white font-semibold">Trackers log inputs</span>{" "}
+              →{" "}
+              <span className="text-[#E6B800] font-semibold">
+                Synerxus verifies delivery
+              </span>{" "}
+              →{" "}
+              <span className="text-white font-semibold">
+                Aggregators display outcomes
+              </span>{" "}
+              →{" "}
+              <span className="text-white font-semibold">
+                Evaluators prove causality.
+              </span>
+            </p>
+
+            <p className="text-blue-300 text-sm md:text-base max-w-2xl mx-auto mb-12 leading-relaxed">
+              We don't replace Benevity or WEF UpLink — we make their data
+              audit-supportive by adding NGO-confirmed outcomes with immutable
+              audit trails.
+            </p>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-0">
+              {[
+                {
+                  label: "Trackers",
+                  sub: "Log inputs & volunteer hours",
+                  bg: "bg-blue-800",
+                  textColor: "text-white",
+                  subColor: "text-blue-300",
+                },
+                {
+                  label: "Synerxus",
+                  sub: "Verifies delivery with NGO-confirmed outcomes",
+                  bg: "bg-[#E6B800]",
+                  textColor: "text-[#0A1F44]",
+                  subColor: "text-[#0A1F44]/70",
+                },
+                {
+                  label: "Aggregators",
+                  sub: "Display outcomes & reporting",
+                  bg: "bg-blue-800",
+                  textColor: "text-white",
+                  subColor: "text-blue-300",
+                },
+                {
+                  label: "Evaluators",
+                  sub: "Prove causality & long-term impact",
+                  bg: "bg-blue-800",
+                  textColor: "text-white",
+                  subColor: "text-blue-300",
+                },
+              ].map((node, i, arr) => (
+                <div
+                  key={node.label}
+                  className="flex flex-col md:flex-row items-center"
+                >
+                  <div
+                    className={`${node.bg} rounded-xl px-5 py-4 w-48 text-center shadow-lg`}
+                  >
+                    <p className={`font-bold text-sm ${node.textColor} mb-1`}>
+                      {node.label}
+                    </p>
+                    <p className={`text-xs ${node.subColor} leading-snug`}>
+                      {node.sub}
+                    </p>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <ArrowRight className="h-5 w-5 text-[#E6B800] my-2 md:my-0 md:mx-2 rotate-90 md:rotate-0 flex-shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ── Section 7: Impact Metrics ── */}
         <section className="py-16 md:py-20 bg-[#0A1F44] border-t border-blue-800">
@@ -859,17 +1703,23 @@ export default function Landing() {
                 { value: "16h", label: "Avg. Time to Verify" },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col items-center">
-                  <span className="text-3xl md:text-4xl font-extrabold text-[#E6B800] mb-1">{stat.value}</span>
-                  <span className="text-blue-200 text-xs md:text-sm font-medium leading-snug">{stat.label}</span>
+                  <span className="text-3xl md:text-4xl font-extrabold text-[#E6B800] mb-1">
+                    {stat.value}
+                  </span>
+                  <span className="text-blue-200 text-xs md:text-sm font-medium leading-snug">
+                    {stat.label}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <Link href="/login">
-              <Button variant="outline" className="border-[#E6B800] text-[#E6B800] hover:bg-[#E6B800] hover:text-[#0A1F44] font-semibold rounded-xl px-6">
-                See a Sample Verified Impact Report
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              onClick={() => setShowSampleReport(true)}
+              className="border-[#E6B800] text-[#E6B800] hover:bg-[#E6B800] hover:text-[#0A1F44] font-semibold rounded-xl px-6 cursor-pointer"
+            >
+              See a Sample Verified Impact Report
+            </Button>
           </div>
         </section>
 
@@ -881,7 +1731,8 @@ export default function Landing() {
                 Verified Impact in Action
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-xl mx-auto">
-                Real programs. Real verification. Real evidence for ESG reporting.
+                Real programs. Real verification. Real evidence for ESG
+                reporting.
               </p>
             </div>
 
@@ -906,14 +1757,23 @@ export default function Landing() {
                   tagColor: "bg-blue-100 text-blue-800",
                 },
               ].map((study) => (
-                <div key={study.title} className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-shadow">
+                <div
+                  key={study.title}
+                  className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-shadow"
+                >
                   <div className="h-3 bg-[#0A1F44]" />
                   <div className="p-6">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${study.tagColor} mb-3 inline-block`}>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${study.tagColor} mb-3 inline-block`}
+                    >
                       {study.tag}
                     </span>
-                    <h3 className="font-bold text-[#0A1F44] text-lg mb-2">{study.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{study.desc}</p>
+                    <h3 className="font-bold text-[#0A1F44] text-lg mb-2">
+                      {study.title}
+                    </h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">
+                      {study.desc}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -930,10 +1790,13 @@ export default function Landing() {
                 Get Started
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-5 leading-tight">
-                Ready to Move Beyond<br />Self-Reported Impact?
+                Ready to Move Beyond
+                <br />
+                Self-Reported Impact?
               </h2>
               <p className="text-blue-200 text-base md:text-lg mb-10 leading-relaxed">
-                Join the organizations building audit-ready ESG evidence — not just impact narratives.
+                Join the organizations building audit-ready ESG evidence — not
+                just impact narratives.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/login?tab=register">

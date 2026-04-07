@@ -162,7 +162,7 @@ export default function UnifiedDashboard() {
   // This prevents org-scoped queries from firing with stale/demo data
   if (authLoading || isViewportLoading || (user && !dbUser) || (user && userId && isLoadingUser)) {
     return (
-      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <LoadingState message="Loading your dashboard..." />
       </div>
     );
@@ -171,7 +171,7 @@ export default function UnifiedDashboard() {
   // Auth check
   if (!userId || !activeUser) {
     return (
-      <div className="min-h-screen pwa-gradient-bg flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <ErrorState
           title="Not Authenticated"
           message="Please log in to view your dashboard."
@@ -184,7 +184,7 @@ export default function UnifiedDashboard() {
   // Mobile PWA View - Role-specific with shared header and nav
   if (isMobile === true) {
     return (
-      <div className="min-h-screen pwa-gradient-bg pb-20">
+      <div className="min-h-screen bg-slate-50 pb-20">
         {/* Shared Header - adapts based on userType */}
         <DashboardHeader
           userType={userType}
@@ -257,7 +257,7 @@ export default function UnifiedDashboard() {
 
   // Desktop View - Role-specific with appropriate navigation
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50">
       {/* Role-specific navigation */}
       {userType === 'volunteer' && <VolunteerNav />}
       {userType === 'organization' && <OrganizationNav />}

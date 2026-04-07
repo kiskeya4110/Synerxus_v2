@@ -2,8 +2,8 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import {
-  Menu, X, User, ShieldCheck, FileCheck, BarChart2, Clock, Lock,
-  ChevronRight, AlertTriangle, CheckCircle, TrendingUp, Users,
+  Menu, X, ShieldCheck, FileCheck, BarChart2, Clock, Lock,
+  AlertTriangle, CheckCircle, TrendingUp, Users,
   Building2, Globe, HardHat, ArrowRight
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
@@ -11,6 +11,163 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import doctorsVolunteeringImg from "@assets/doctors-volunteering.webp";
 import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_1775526029439.png";
+
+const PIPELINE_STEPS = [
+  {
+    label: "Inputs Logged",
+    sub: "Funds, Hours, Activities",
+    color: "#1D4ED8",
+    x: 9,
+    y: 34,
+    detail: "Volunteers and NGO staff log activities, hours, and deliverables in real time. Every input is timestamped and linked to a specific project and beneficiary group.",
+  },
+  {
+    label: "Deliverable Completed",
+    sub: "Activity or Service Done",
+    color: "#0A1F44",
+    x: 34,
+    y: 24,
+    detail: "Once a task is done, the responsible party marks it as complete and submits supporting documentation — photos, sign-off sheets, or field data — for review.",
+  },
+  {
+    label: "NGO Verification",
+    sub: "Independent Confirmation",
+    color: "#059669",
+    x: 70,
+    y: 22,
+    detail: "An independent NGO partner reviews the evidence and confirms or disputes the claim within 72 hours — the step that makes Synerxus audit-defensible.",
+  },
+  {
+    label: "Evidence Object Created",
+    sub: "Immutable Audit Trail",
+    color: "#B8860B",
+    x: 9,
+    y: 74,
+    detail: "A structured Evidence Object is created containing the verified claim, timestamps, NGO sign-off, and any attached media. This record is immutable.",
+  },
+  {
+    label: "Aggregation & Analysis",
+    sub: "Beneficiary Follow-Up",
+    color: "#1D4ED8",
+    x: 33,
+    y: 72,
+    detail: "Verified outcomes are automatically aggregated across projects, geographies, and SDG categories — giving ESG teams a live, auditable picture of impact.",
+  },
+  {
+    label: "Impact Data Compiled",
+    sub: "ESG Reports Generated",
+    color: "#0A1F44",
+    x: 57,
+    y: 72,
+    detail: "Impact data is mapped to ESRS S3/S4 and GRI indicators. Your ESG team receives a pre-formatted, citation-ready report with links to every Evidence Object.",
+  },
+  {
+    label: "Auditor Review",
+    sub: "CSRD-Compliant Sign-off",
+    color: "#059669",
+    x: 82,
+    y: 72,
+    detail: "Auditors access a dedicated review portal where every claim traces back to a source event, NGO confirmation, and Evidence Object — CSRD-compliant assurance with no back-and-forth.",
+  },
+];
+
+function HowItWorksSection() {
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+
+  return (
+    <section className="bg-slate-50 py-10 md:py-14">
+      <div className="max-w-7xl mx-auto px-4 md:px-10">
+        <div className="text-center mb-8">
+          <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+            How It Works
+          </span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#0A1F44]">
+            From Ground-Level Activity to Boardroom ESG Report
+          </h2>
+        </div>
+
+        {/* Image with absolutely-positioned hotspots */}
+        <div className="rounded-2xl overflow-hidden shadow-xl border border-slate-200 bg-white relative">
+          <img
+            src={corporateEsgFlowImg}
+            alt="Corporate ESG Impact Flow"
+            className="w-full object-contain block"
+            loading="eager"
+          />
+
+          {/* Hotspots placed at their actual diagram positions */}
+          {PIPELINE_STEPS.map((step, i) => (
+            <button
+              key={step.label}
+              onMouseEnter={() => setActiveStep(i)}
+              onMouseLeave={() => setActiveStep(null)}
+              onClick={() => setActiveStep(activeStep === i ? null : i)}
+              aria-label={step.label}
+              className="absolute group focus:outline-none"
+              style={{ left: `${step.x}%`, top: `${step.y}%`, transform: "translate(-50%, -50%)" }}
+            >
+              {/* Pulse ring */}
+              <span
+                className={`absolute inset-0 rounded-full animate-ping opacity-40`}
+                style={{ backgroundColor: step.color, animationDuration: "2s" }}
+              />
+              {/* Step number badge */}
+              <span
+                className={`relative flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white text-[10px] font-extrabold shadow-lg transition-transform duration-200 ${
+                  activeStep === i ? "scale-130" : "group-hover:scale-110"
+                }`}
+                style={{ backgroundColor: step.color }}
+              >
+                {i + 1}
+              </span>
+
+              {/* Tooltip — appears above the dot, switches sides on right-edge steps */}
+              <span
+                className={`absolute bottom-full mb-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-xl pointer-events-none text-left transition-all duration-150 ${
+                  activeStep === i ? "opacity-100 scale-100" : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                } ${step.x > 65 ? "right-0" : "left-0"}`}
+                style={{ minWidth: "150px" }}
+              >
+                <span className="block text-[10px] font-extrabold uppercase tracking-wider mb-0.5" style={{ color: step.color }}>
+                  Step {i + 1}
+                </span>
+                <span className="block text-xs font-bold text-[#0A1F44] leading-tight">{step.label}</span>
+                <span className="block text-[10px] text-slate-400 mt-0.5">{step.sub}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Detail panel */}
+        <div
+          className={`mt-4 rounded-2xl border bg-white px-6 py-5 flex items-start gap-4 shadow-md transition-all duration-300 ${
+            activeStep !== null ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+          }`}
+          style={{ borderColor: activeStep !== null ? PIPELINE_STEPS[activeStep].color : "#e2e8f0" }}
+        >
+          {activeStep !== null && (
+            <>
+              <div
+                className="w-2 self-stretch rounded-full flex-shrink-0"
+                style={{ backgroundColor: PIPELINE_STEPS[activeStep].color }}
+              />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: PIPELINE_STEPS[activeStep].color }}>
+                  Step {activeStep + 1} of {PIPELINE_STEPS.length}
+                </p>
+                <h3 className="font-extrabold text-[#0A1F44] text-base mb-1">{PIPELINE_STEPS[activeStep].label}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{PIPELINE_STEPS[activeStep].detail}</p>
+              </div>
+            </>
+          )}
+          {activeStep === null && (
+            <p className="text-slate-400 text-sm italic">Hover or tap a step in the diagram above to learn more.</p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -290,36 +447,13 @@ export default function Landing() {
                   </div>
                 </div>
 
-                {/* Watermark */}
-                <div className="absolute bottom-2 right-2 opacity-25">
-                  <Logo size="xs" clickable={false} />
-                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* ── How It Works ── */}
-        <section className="bg-[#0A1F44] py-10 md:py-14">
-          <div className="max-w-7xl mx-auto px-4 md:px-10">
-            <div className="text-center mb-8">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#E6B800]/20 text-[#E6B800] text-xs font-bold uppercase tracking-wider mb-3">
-                How It Works
-              </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white">
-                From Ground-Level Activity to Boardroom ESG Report
-              </h2>
-            </div>
-            <div className="rounded-2xl overflow-hidden shadow-2xl bg-white">
-              <img
-                src={corporateEsgFlowImg}
-                alt="Corporate ESG Impact Flow Verification — Inputs Logged, Deliverable Completed, NGO Verification, Evidence Object Created, Aggregation & Analysis, Impact Data Compiled, Auditor Review"
-                className="w-full object-contain"
-                loading="eager"
-              />
-            </div>
-          </div>
-        </section>
+        <HowItWorksSection />
 
         {/* ── Section 2: Problem ── */}
         <section className="py-16 md:py-24 bg-white">
@@ -372,106 +506,159 @@ export default function Landing() {
         </section>
 
         {/* ── Missing Infrastructure Stack ── */}
-        <section className="py-16 md:py-20 bg-[#06112B]">
+        <section className="py-16 md:py-20 bg-[#0A1F44]">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
-            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center justify-between">
 
-              {/* Left: layer stack */}
-              <div className="flex-1 w-full max-w-xl">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-10">
-                  The Missing<br />Infrastructure
-                </h2>
+            {/* Section header */}
+            <div className="text-center mb-10">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#E6B800]/20 text-[#E6B800] text-xs font-bold uppercase tracking-wider mb-3">
+                The Gap
+              </span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">
+                The Missing Infrastructure
+              </h2>
+              <p className="text-blue-200/70 text-sm md:text-base mt-3 max-w-xl mx-auto">
+                Every layer of the impact stack exists — except the one that makes it credible.
+              </p>
+            </div>
 
-                <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start justify-between">
+
+              {/* Left: layer stack — Level 4 at top, Level 1 at bottom */}
+              <div className="flex-1 w-full max-w-2xl">
+                <div className="flex flex-col gap-2">
                   {[
-                    { id: "L5", label: "Audit / Assurance", sub: "Too slow, cost-prohibitive", highlight: false, dim: true },
-                    { id: "L4", label: "Verification", sub: "The Critical Gap", highlight: true, dim: false },
-                    { id: "L3", label: "Trackers", sub: "Log hours only — no outcome proof", highlight: false, dim: false },
-                    { id: "L2", label: "Aggregators", sub: "Saturated", highlight: false, dim: false },
-                    { id: "L1", label: "Reporting Frameworks", sub: "CSRD / GRI / ESRS (saturated)", highlight: false, dim: false },
-                  ].map((layer) => (
-                    <div
-                      key={layer.id}
-                      className={`relative flex items-center gap-4 px-5 py-4 rounded-xl border transition-all ${
-                        layer.highlight
-                          ? "border-[#00E35B] bg-[#00B341]/10"
-                          : layer.dim
-                          ? "border-white/8 bg-[#0A1A3E]/50 opacity-70"
-                          : "border-white/12 bg-[#0A1A3E]"
-                      }`}
-                      style={
-                        layer.highlight
-                          ? { boxShadow: "0 0 28px rgba(0,227,91,0.35), 0 0 6px rgba(0,227,91,0.2)" }
-                          : undefined
-                      }
-                    >
-                      {/* Layer badge */}
+                    {
+                      id: "Level 4",
+                      label: "Verification",
+                      sub: "The Missing Layer — Synerxus fills this",
+                      highlight: true,
+                    },
+                    {
+                      id: "Level 3",
+                      label: "Trackers",
+                      sub: "Log hours only — no outcome proof",
+                      highlight: false,
+                    },
+                    {
+                      id: "Level 2",
+                      label: "Aggregators",
+                      sub: "Saturated — no independent confirmation",
+                      highlight: false,
+                    },
+                    {
+                      id: "Level 1",
+                      label: "Reporting Frameworks",
+                      sub: "CSRD / GRI / ESRS — saturated",
+                      highlight: false,
+                    },
+                  ].map((layer, idx, arr) => (
+                    <div key={layer.id} className="relative">
+                      {/* Card */}
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                          layer.highlight ? "bg-[#00B341] text-white" : "bg-white/10 text-white/50"
+                        className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${
+                          layer.highlight
+                            ? "border-[#00E35B]/60 bg-[#00B341]/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/8"
                         }`}
+                        style={
+                          layer.highlight
+                            ? { boxShadow: "0 0 32px rgba(0,227,91,0.25), inset 0 0 16px rgba(0,227,91,0.04)" }
+                            : undefined
+                        }
                       >
-                        {layer.id}
-                      </div>
-
-                      {/* Label + sub */}
-                      <div className="flex-1 min-w-0">
+                        {/* Level badge */}
                         <div
-                          className={`font-bold text-sm sm:text-base leading-tight ${
-                            layer.highlight ? "text-[#00E35B]" : "text-white/90"
+                          className={`shrink-0 rounded-xl px-3 py-2 text-center min-w-[72px] ${
+                            layer.highlight
+                              ? "bg-[#00B341] text-white"
+                              : "bg-white/10 text-white/50"
                           }`}
                         >
-                          {layer.highlight && <span className="text-white/60 mr-1">← </span>}
-                          {layer.label}
+                          <div className="text-[9px] font-bold uppercase tracking-wider leading-none opacity-80">
+                            {layer.id.split(" ")[0]}
+                          </div>
+                          <div className="text-lg font-extrabold leading-tight">
+                            {layer.id.split(" ")[1]}
+                          </div>
                         </div>
-                        <div className="text-xs text-white/45 mt-0.5">{layer.sub}</div>
+
+                        {/* Label + sub */}
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className={`font-bold text-sm sm:text-base leading-tight ${
+                              layer.highlight ? "text-[#00E35B]" : "text-white/90"
+                            }`}
+                          >
+                            {layer.label}
+                          </div>
+                          <div className="text-xs text-white/45 mt-0.5 leading-snug">{layer.sub}</div>
+                        </div>
+
+                        {/* Arrow indicator on highlight */}
+                        {layer.highlight && (
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            <div className="w-5 h-px bg-[#00E35B]/60" />
+                            <div className="w-2 h-2 rounded-full bg-[#00E35B] animate-pulse" />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Synerxus tag on highlight layer */}
-                      {layer.highlight && (
-                        <div className="shrink-0 text-[#00E35B] text-[10px] sm:text-xs font-bold px-2.5 py-1 border border-[#00E35B]/40 rounded-full whitespace-nowrap">
-                          Synerxus fills this
+                      {/* Connector dot between cards */}
+                      {idx < arr.length - 1 && (
+                        <div className="flex justify-start pl-9 my-0.5">
+                          <div className="w-px h-2 bg-white/15" />
                         </div>
                       )}
-
-                      {/* Connector line on right edge */}
-                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-px bg-white/10" />
                     </div>
                   ))}
+                </div>
+
+                {/* Foundation label */}
+                <div className="mt-4 flex items-center gap-2 pl-1">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-[10px] text-white/30 uppercase tracking-widest font-semibold">Foundation</span>
+                  <div className="h-px flex-1 bg-white/10" />
                 </div>
               </div>
 
               {/* Right: gold-framed quote panel */}
               <div
-                className="w-full lg:w-72 xl:w-80 rounded-2xl p-8 text-white flex-shrink-0"
+                className="w-full lg:w-80 xl:w-96 rounded-2xl overflow-hidden flex-shrink-0"
                 style={{
-                  border: "2px solid #E6B800",
-                  boxShadow: "0 0 48px rgba(230,184,0,0.18), inset 0 0 24px rgba(230,184,0,0.04)",
-                  background: "linear-gradient(135deg, #0A1640 0%, #06112B 100%)",
+                  border: "1.5px solid rgba(230,184,0,0.5)",
+                  boxShadow: "0 0 40px rgba(230,184,0,0.12), 0 8px 32px rgba(0,0,0,0.3)",
+                  background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                  backdropFilter: "blur(12px)",
                 }}
               >
-                {/* Circuit-board corner accents */}
-                <div className="flex justify-between mb-6 opacity-40">
-                  <div className="w-8 h-8 border-t-2 border-l-2 border-[#E6B800] rounded-tl-md" />
-                  <div className="w-8 h-8 border-t-2 border-r-2 border-[#E6B800] rounded-tr-md" />
-                </div>
+                {/* Gold top bar */}
+                <div className="h-1 w-full bg-gradient-to-r from-[#E6B800]/30 via-[#E6B800] to-[#E6B800]/30" />
 
-                <p className="text-xl sm:text-2xl font-extrabold leading-tight mb-5">
-                  Everyone builds trackers.
-                </p>
-                <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#E6B800]">
-                  No one built the verification layer.
-                </p>
+                <div className="p-8">
+                  {/* Corner accents */}
+                  <div className="flex justify-between mb-6">
+                    <div className="w-6 h-6 border-t-2 border-l-2 border-[#E6B800]/50 rounded-tl" />
+                    <div className="w-6 h-6 border-t-2 border-r-2 border-[#E6B800]/50 rounded-tr" />
+                  </div>
 
-                <div className="flex justify-between mt-6 opacity-40">
-                  <div className="w-8 h-8 border-b-2 border-l-2 border-[#E6B800] rounded-bl-md" />
-                  <div className="w-8 h-8 border-b-2 border-r-2 border-[#E6B800] rounded-br-md" />
-                </div>
-
-                <div className="mt-6 pt-5 border-t border-white/10">
-                  <p className="text-sm text-white/55 leading-relaxed">
-                    Synerxus is the first platform to close the loop between ground-level activity and audit-ready ESG evidence.
+                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-white mb-4">
+                    Everyone builds trackers.
                   </p>
+                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#E6B800]">
+                    No one built the verification layer.
+                  </p>
+
+                  <div className="flex justify-between mt-6 mb-6">
+                    <div className="w-6 h-6 border-b-2 border-l-2 border-[#E6B800]/50 rounded-bl" />
+                    <div className="w-6 h-6 border-b-2 border-r-2 border-[#E6B800]/50 rounded-br" />
+                  </div>
+
+                  <div className="border-t border-white/10 pt-5">
+                    <p className="text-sm text-blue-200/60 leading-relaxed">
+                      Synerxus is the first platform to close the loop between ground-level activity and audit-ready ESG evidence.
+                    </p>
+                  </div>
                 </div>
               </div>
 

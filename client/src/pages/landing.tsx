@@ -20,85 +20,60 @@ import {
 import Footer from "@/components/layout/footer";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_3_1775528713652.png";
+import esgVerificationProcessImg from "@assets/Copilot_20260407_120309_1775588622996.png";
 import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
 import heroSlide2 from "@assets/Corporate_data_presentation_1775529421335.png";
 import heroSlide3 from "@assets/Corporate_sustainabi_1775529421337.png";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
+import { SDG_GOALS } from "@shared/sdg-goals";
 
 const HERO_SLIDES = [heroSlide1, heroSlide2, heroSlide3];
 
 const PIPELINE_STEPS = [
   {
-    label: "Volunteer Logs Outcome + Hours",
-    sub: "Description, skills applied, beneficiary count",
+    label: "Volunteer Logs Activity",
+    sub: "Outcomes & hours recorded · in-field volunteer work",
     color: "#1D4ED8",
-    x: 12,
-    y: 38,
+    x: 11,
+    y: 55,
     detail:
-      "Volunteers log outcomes, hours, skills applied, and beneficiary counts in real time via mobile. Every entry is timestamped and linked to a specific project.",
+      "Volunteers record outcomes, hours, skills applied, and beneficiary counts in real time via mobile — timestamped and linked to a specific project the moment it happens.",
   },
   {
-    label: "NGO Receives Verification Request",
-    sub: "SMS or app notification within 1 hour",
+    label: "NGO Verification Request",
+    sub: "SMS / App notification sent · review link provided",
     color: "#B8860B",
-    x: 37,
-    y: 36,
+    x: 29,
+    y: 55,
     detail:
-      "The assigned NGO partner receives an instant verification request by SMS or in-app notification — no login required to review and confirm.",
+      "The assigned NGO partner receives an instant verification request by SMS or in-app notification. A review link is provided — no platform login required to confirm.",
   },
   {
-    label: "NGO Verifies with Single Tap",
-    sub: "Confirms BOTH outcome AND hours — <15 seconds",
+    label: "One-Tap Verification",
+    sub: "NGO confirms results · verified instantly",
     color: "#059669",
-    x: 62,
-    y: 36,
+    x: 50,
+    y: 55,
     detail:
-      "The NGO verifier confirms both the outcome and hours logged in under 15 seconds via a single tap — no paperwork, no back-and-forth.",
+      "The NGO verifier confirms both the outcome and hours in under 15 seconds via a single tap — no paperwork, no back-and-forth. Verification is captured the moment it happens.",
   },
   {
-    label: "System Captures Immutable Audit Trail",
-    sub: "Timestamp, identity, device ID, geolocation, SDG tags",
+    label: "Immutable Audit Trail",
+    sub: "Secure records captured · timestamp & geolocation",
     color: "#0A1F44",
-    x: 87,
-    y: 38,
+    x: 71,
+    y: 55,
     detail:
-      "The verification event is sealed into an immutable Evidence Object — timestamp, verifier identity, device ID, GPS coordinates, and SDG mapping all captured automatically.",
+      "Every verified event is sealed into an immutable audit record — verifier identity, device ID, GPS coordinates, timestamp, and SDG mapping captured automatically for CSRD compliance.",
   },
   {
-    label: "Volunteer Logs Outcome + Hours",
-    sub: "Real-world activity captured at source",
-    color: "#1D4ED8",
-    x: 12,
-    y: 76,
-    detail:
-      "Volunteers record impact in the field — from skills workshops to environmental cleanups — using the Synerxus mobile app with offline support.",
-  },
-  {
-    label: "NGO Receives Verification Request",
-    sub: "Frictionless review for field partners",
-    color: "#B8860B",
-    x: 37,
-    y: 76,
-    detail:
-      "NGO staff receive a structured review request with all supporting evidence pre-attached — outcome description, photo, and beneficiary data — ready to approve in seconds.",
-  },
-  {
-    label: "NGO Verifies with Single Tap",
-    sub: "Both outcome AND hours confirmed together",
-    color: "#059669",
-    x: 62,
-    y: 76,
-    detail:
-      "A single tap from the NGO confirms the full activity record. Synerxus records the verifier's identity and time, creating a legally-defensible confirmation event.",
-  },
-  {
-    label: "Corporate Accesses Verified Outcomes",
-    sub: "Direct NGO confirmation — ISAE 3000 compliant",
+    label: "Impact Report Delivered",
+    sub: "PDF sent via SMS & email · audit-ready report",
     color: "#7C3AED",
-    x: 87,
-    y: 76,
+    x: 89,
+    y: 55,
     detail:
-      "Corporate ESG teams access a dashboard of verified, audit-ready impact data — every outcome traceable to a specific NGO confirmation, ready for CSRD disclosure.",
+      "Corporate ESG teams receive a branded, audit-ready PDF impact report — every outcome traceable to a direct NGO confirmation, ready for CSRD and GRI disclosure.",
   },
 ];
 
@@ -122,13 +97,16 @@ function HowItWorksSection() {
           className="shadow-xl border border-slate-200 bg-white relative rounded-2xl"
           style={{ overflow: "visible" }}
         >
-          <img
-            src={corporateEsgFlowImg}
-            alt="Corporate ESG Impact Flow"
-            className="w-full object-contain block rounded-2xl"
-            loading="eager"
-            style={{ display: "block" }}
-          />
+          {/* overflow:hidden wrapper crops the whitespace; the outer div stays overflow:visible for tooltips */}
+          <div className="overflow-hidden rounded-2xl">
+            <img
+              src={esgVerificationProcessImg}
+              alt="ESG Impact Verification Process — 5 Steps"
+              className="w-full block"
+              loading="eager"
+              style={{ display: "block", marginTop: "-8%", marginBottom: "-8%" }}
+            />
+          </div>
 
           {/* Unlabelled hotspots at each step's diagram position */}
           {PIPELINE_STEPS.map((step, i) => (
@@ -792,6 +770,8 @@ export default function Landing() {
   const [showSampleReport, setShowSampleReport] = useState(false);
   const [heroSlide, setHeroSlide] = useState(0);
   const [activeGapLayer, setActiveGapLayer] = useState("Level 4");
+  const [showProcessBrief, setShowProcessBrief] = useState(false);
+  const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-advance hero slides; resets when user manually picks a slide
@@ -1088,10 +1068,11 @@ export default function Landing() {
               {/* Trust badge strip */}
               <div className="flex flex-wrap gap-2 mt-1">
                 {[
-                  "UN-SDG Tagged",
+                  "All 17 UN SDGs",
                   "CSRD-Ready",
                   "Audit-Defensible",
                   "NGO-Verified",
+                  "ESRS S3/S4 Mapped",
                 ].map((badge) => (
                   <span
                     key={badge}
@@ -1237,7 +1218,7 @@ export default function Landing() {
               cardActive: "border-emerald-400/80 bg-emerald-50 shadow-[0_0_24px_rgba(5,150,105,0.15)]",
               cardIdle: "border-emerald-300/60 bg-emerald-50/70",
               tools: [],
-              detail: "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. This is the layer that turns ESG claims into CSRD-ready evidence.",
+              detail: "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. Every verified outcome is automatically tagged to the relevant UN SDG (1–17) and mapped to ESRS S3/S4, turning ESG claims into CSRD-ready evidence.",
             },
             {
               id: "Level 3",
@@ -1459,17 +1440,17 @@ export default function Landing() {
 
                         {/* CTA for Level 4 */}
                         {activeLayer.synerxus ? (
-                          <Link href="/login?tab=register">
+                          <a href="mailto:hello@synerxus.com?subject=Book a Demo with Synerxus">
                             <Button
                               size="sm"
                               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
                             >
                               Book a Verification Demo
                             </Button>
-                          </Link>
+                          </a>
                         ) : (
                           <button
-                            onClick={() => setActiveGapLayer("Level 4")}
+                            onClick={() => setShowProcessBrief(true)}
                             className="w-full text-xs text-emerald-600 font-semibold hover:text-emerald-700 flex items-center justify-center gap-1.5 pt-1 transition-colors"
                           >
                             See how Synerxus fills the gap
@@ -1796,13 +1777,14 @@ export default function Landing() {
               Impact, Verified.
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-10">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-10">
               {[
                 { value: "134", label: "Verified Outcomes" },
                 { value: "1,678", label: "Verified Hours" },
                 { value: "439,290", label: "Beneficiaries Reached" },
                 { value: "85%", label: "Verification Rate" },
                 { value: "16h", label: "Avg. Time to Verify" },
+                { value: "17", label: "UN SDGs Tracked" },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col items-center">
                   <span className="text-3xl md:text-4xl font-extrabold text-[#E6B800] mb-1">
@@ -1822,6 +1804,128 @@ export default function Landing() {
             >
               See a Sample Verified Impact Report
             </Button>
+          </div>
+        </section>
+
+        {/* ── SDG Mapping Section ── */}
+        <section className="py-14 bg-white border-t border-slate-100">
+          <div className="max-w-5xl mx-auto px-6 md:px-10">
+            <div className="text-center mb-8">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+                UN Sustainable Development Goals
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3">
+                Every Verified Outcome, Mapped to the UN SDGs
+              </h2>
+              <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
+                Synerxus automatically tags each NGO-verified outcome to the relevant SDG — creating a traceable chain from ground-level delivery to CSRD disclosure across all 17 goals.
+              </p>
+              <p className="text-slate-400 text-xs mt-2">Click any goal to learn more.</p>
+            </div>
+
+            {/* 17 SDG icons — 4 cols mobile, 9 cols tablet, 17 cols desktop */}
+            <div
+              className="grid gap-3 mb-6"
+              style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+              ref={(el) => {
+                if (!el) return;
+                const update = () => {
+                  if (window.innerWidth >= 1024) el.style.gridTemplateColumns = "repeat(17, minmax(0, 1fr))";
+                  else if (window.innerWidth >= 640) el.style.gridTemplateColumns = "repeat(9, minmax(0, 1fr))";
+                  else el.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
+                };
+                update();
+                window.addEventListener("resize", update);
+              }}
+            >
+              {Array.from({ length: 17 }, (_, i) => i + 1).map((n) => {
+                const goal = SDG_GOALS[n];
+                const icon = UN_SDG_ICONS[n];
+                const isActive = activeSdg === n;
+                return (
+                  <button
+                    key={n}
+                    onClick={() => setActiveSdg(isActive ? null : n)}
+                    className={`relative rounded-xl overflow-hidden focus:outline-none transition-all duration-150 ${
+                      isActive
+                        ? "scale-105 shadow-xl"
+                        : "hover:scale-105 hover:shadow-md opacity-90 hover:opacity-100"
+                    }`}
+                    style={isActive ? { outline: `3px solid ${goal.color}`, outlineOffset: "3px" } : {}}
+                    aria-label={`SDG ${n}: ${goal.name}`}
+                  >
+                    <img
+                      src={icon}
+                      alt={`SDG ${n}: ${goal.name}`}
+                      className="w-full h-auto block"
+                      loading="lazy"
+                    />
+                    {isActive && (
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-1"
+                        style={{ backgroundColor: goal.color }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Info panel — shown when an SDG is selected */}
+            {activeSdg !== null && (() => {
+              const goal = SDG_GOALS[activeSdg];
+              return (
+                <div
+                  className="rounded-2xl border p-5 mb-6 transition-all duration-200"
+                  style={{ borderColor: goal.color + "55", backgroundColor: goal.color + "0D" }}
+                >
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={UN_SDG_ICONS[activeSdg]}
+                      alt={`SDG ${activeSdg}`}
+                      className="w-16 h-16 rounded-xl flex-shrink-0 shadow-sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                          style={{ backgroundColor: goal.color }}
+                        >
+                          SDG {activeSdg}
+                        </span>
+                        <h3 className="font-extrabold text-[#0A1F44] text-base">{goal.name}</h3>
+                      </div>
+                      <p className="text-slate-600 text-sm leading-relaxed mb-3">{goal.details}</p>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Key Targets</p>
+                        <ul className="flex flex-wrap gap-1.5">
+                          {goal.targets.map((t) => (
+                            <li
+                              key={t}
+                              className="text-[11px] px-2.5 py-1 rounded-full bg-white border font-medium text-slate-600"
+                              style={{ borderColor: goal.color + "55" }}
+                            >
+                              {t}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveSdg(null)}
+                      className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <p className="text-center text-xs text-slate-400">
+              Every Synerxus-verified outcome carries an immutable SDG tag — audit-ready for ESRS S3/S4 and GRI disclosure.
+            </p>
           </div>
         </section>
 
@@ -1845,18 +1949,21 @@ export default function Landing() {
                   tag: "Environmental",
                   desc: "Watershed restoration verified across 7 active projects — immutable audit trails delivered to corporate ESG teams within 48 hours.",
                   tagColor: "bg-emerald-100 text-emerald-800",
+                  sdgs: [{ n: 6, color: "#26BDE2", name: "Clean Water" }, { n: 15, color: "#56C02B", name: "Life on Land" }],
                 },
                 {
                   title: "Solar Village Initiative",
                   tag: "Energy Access",
                   desc: "Energy access outcomes confirmed with full audit trails, mapped to SDG 7 and ESRS E1 — ready for CSRD disclosure.",
                   tagColor: "bg-amber-100 text-amber-800",
+                  sdgs: [{ n: 7, color: "#FCC30B", name: "Clean Energy" }, { n: 1, color: "#E5243B", name: "No Poverty" }],
                 },
                 {
                   title: "Urban Green Corridors",
                   tag: "City-Level",
                   desc: "City-level environmental outcomes verified in real time across 3 municipalities — enabling comparable, cross-pilot ESG reporting.",
                   tagColor: "bg-blue-100 text-blue-800",
+                  sdgs: [{ n: 11, color: "#FD9D24", name: "Sustainable Cities" }, { n: 13, color: "#3F7E44", name: "Climate Action" }],
                 },
               ].map((study) => (
                 <div
@@ -1865,11 +1972,25 @@ export default function Landing() {
                 >
                   <div className="h-3 bg-[#0A1F44]" />
                   <div className="p-6">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${study.tagColor} mb-3 inline-block`}
-                    >
-                      {study.tag}
-                    </span>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${study.tagColor}`}
+                      >
+                        {study.tag}
+                      </span>
+                      <div className="flex gap-1">
+                        {study.sdgs.map((sdg) => (
+                          <span
+                            key={sdg.n}
+                            title={`SDG ${sdg.n}: ${sdg.name}`}
+                            className="w-6 h-6 rounded-md flex items-center justify-center text-white font-bold text-[10px] shadow-sm"
+                            style={{ backgroundColor: sdg.color }}
+                          >
+                            {sdg.n}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                     <h3 className="font-bold text-[#0A1F44] text-lg mb-2">
                       {study.title}
                     </h3>
@@ -1937,6 +2058,70 @@ export default function Landing() {
         {/* ── Footer ── */}
         <Footer />
       </main>
+
+      {/* Process Brief Modal */}
+      {showProcessBrief && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setShowProcessBrief(false)}
+        >
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowProcessBrief(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#0A1F44]">How Synerxus Works</h3>
+                <p className="text-xs text-slate-500">A brief overview of our verification process</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#0A1F44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+                <div>
+                  <p className="text-sm font-semibold text-[#0A1F44]">Real-Time Data Collection</p>
+                  <p className="text-xs text-slate-500">Impact data is captured at the point of service — not reconstructed after the fact. Each outcome is tagged to its relevant UN SDG (e.g. tutoring sessions → SDG 4: Quality Education).</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#0A1F44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+                <div>
+                  <p className="text-sm font-semibold text-[#0A1F44]">NGO-Confirmed Outcomes</p>
+                  <p className="text-xs text-slate-500">Every outcome is verified by the receiving NGO partner within a 72-hour window. NGO staff can confirm or refine the SDG tag before the record is locked.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#0A1F44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+                <div>
+                  <p className="text-sm font-semibold text-[#0A1F44]">UN SDG-Tagged Audit Trail</p>
+                  <p className="text-xs text-slate-500">Verified data is locked and timestamped with its SDG mapping, producing audit-ready evidence aligned to all 17 UN SDGs and ESRS S3/S4 for CSRD disclosure.</p>
+                </div>
+              </div>
+            </div>
+
+            <a
+              href="mailto:hello@synerxus.com?subject=Book a Demo with Synerxus"
+              className="block w-full"
+            >
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl">
+                Book a Demo with Synerxus
+              </Button>
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,64 +10,72 @@ import Footer from "@/components/layout/footer";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import doctorsVolunteeringImg from "@assets/doctors-volunteering.webp";
-import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_1775526029439.png";
+import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_3_1775528713652.png";
 
 const PIPELINE_STEPS = [
   {
-    label: "Inputs Logged",
-    sub: "Funds, Hours, Activities",
+    label: "Volunteer Logs Outcome + Hours",
+    sub: "Description, skills applied, beneficiary count",
     color: "#1D4ED8",
-    x: 9,
-    y: 34,
-    detail: "Volunteers and NGO staff log activities, hours, and deliverables in real time. Every input is timestamped and linked to a specific project and beneficiary group.",
+    x: 12,
+    y: 38,
+    detail: "Volunteers log outcomes, hours, skills applied, and beneficiary counts in real time via mobile. Every entry is timestamped and linked to a specific project.",
   },
   {
-    label: "Deliverable Completed",
-    sub: "Activity or Service Done",
-    color: "#0A1F44",
-    x: 34,
-    y: 24,
-    detail: "Once a task is done, the responsible party marks it as complete and submits supporting documentation — photos, sign-off sheets, or field data — for review.",
-  },
-  {
-    label: "NGO Verification",
-    sub: "Independent Confirmation",
-    color: "#059669",
-    x: 70,
-    y: 22,
-    detail: "An independent NGO partner reviews the evidence and confirms or disputes the claim within 72 hours — the step that makes Synerxus audit-defensible.",
-  },
-  {
-    label: "Evidence Object Created",
-    sub: "Immutable Audit Trail",
+    label: "NGO Receives Verification Request",
+    sub: "SMS or app notification within 1 hour",
     color: "#B8860B",
-    x: 9,
-    y: 74,
-    detail: "A structured Evidence Object is created containing the verified claim, timestamps, NGO sign-off, and any attached media. This record is immutable.",
+    x: 37,
+    y: 36,
+    detail: "The assigned NGO partner receives an instant verification request by SMS or in-app notification — no login required to review and confirm.",
   },
   {
-    label: "Aggregation & Analysis",
-    sub: "Beneficiary Follow-Up",
-    color: "#1D4ED8",
-    x: 33,
-    y: 72,
-    detail: "Verified outcomes are automatically aggregated across projects, geographies, and SDG categories — giving ESG teams a live, auditable picture of impact.",
-  },
-  {
-    label: "Impact Data Compiled",
-    sub: "ESG Reports Generated",
-    color: "#0A1F44",
-    x: 57,
-    y: 72,
-    detail: "Impact data is mapped to ESRS S3/S4 and GRI indicators. Your ESG team receives a pre-formatted, citation-ready report with links to every Evidence Object.",
-  },
-  {
-    label: "Auditor Review",
-    sub: "CSRD-Compliant Sign-off",
+    label: "NGO Verifies with Single Tap",
+    sub: "Confirms BOTH outcome AND hours — <15 seconds",
     color: "#059669",
-    x: 82,
-    y: 72,
-    detail: "Auditors access a dedicated review portal where every claim traces back to a source event, NGO confirmation, and Evidence Object — CSRD-compliant assurance with no back-and-forth.",
+    x: 62,
+    y: 36,
+    detail: "The NGO verifier confirms both the outcome and hours logged in under 15 seconds via a single tap — no paperwork, no back-and-forth.",
+  },
+  {
+    label: "System Captures Immutable Audit Trail",
+    sub: "Timestamp, identity, device ID, geolocation, SDG tags",
+    color: "#0A1F44",
+    x: 87,
+    y: 38,
+    detail: "The verification event is sealed into an immutable Evidence Object — timestamp, verifier identity, device ID, GPS coordinates, and SDG mapping all captured automatically.",
+  },
+  {
+    label: "Volunteer Logs Outcome + Hours",
+    sub: "Real-world activity captured at source",
+    color: "#1D4ED8",
+    x: 12,
+    y: 76,
+    detail: "Volunteers record impact in the field — from skills workshops to environmental cleanups — using the Synerxus mobile app with offline support.",
+  },
+  {
+    label: "NGO Receives Verification Request",
+    sub: "Frictionless review for field partners",
+    color: "#B8860B",
+    x: 37,
+    y: 76,
+    detail: "NGO staff receive a structured review request with all supporting evidence pre-attached — outcome description, photo, and beneficiary data — ready to approve in seconds.",
+  },
+  {
+    label: "NGO Verifies with Single Tap",
+    sub: "Both outcome AND hours confirmed together",
+    color: "#059669",
+    x: 62,
+    y: 76,
+    detail: "A single tap from the NGO confirms the full activity record. Synerxus records the verifier's identity and time, creating a legally-defensible confirmation event.",
+  },
+  {
+    label: "Corporate Accesses Verified Outcomes",
+    sub: "Direct NGO confirmation — ISAE 3000 compliant",
+    color: "#7C3AED",
+    x: 87,
+    y: 76,
+    detail: "Corporate ESG teams access a dashboard of verified, audit-ready impact data — every outcome traceable to a specific NGO confirmation, ready for CSRD disclosure.",
   },
 ];
 
@@ -95,10 +103,10 @@ function HowItWorksSection() {
             loading="eager"
           />
 
-          {/* Hotspots placed at their actual diagram positions */}
+          {/* Unlabelled hotspots at each step's diagram position */}
           {PIPELINE_STEPS.map((step, i) => (
             <button
-              key={step.label}
+              key={`${step.label}-${i}`}
               onMouseEnter={() => setActiveStep(i)}
               onMouseLeave={() => setActiveStep(null)}
               onClick={() => setActiveStep(activeStep === i ? null : i)}
@@ -106,33 +114,44 @@ function HowItWorksSection() {
               className="absolute group focus:outline-none"
               style={{ left: `${step.x}%`, top: `${step.y}%`, transform: "translate(-50%, -50%)" }}
             >
-              {/* Pulse ring */}
+              {/* Outer pulse ring */}
               <span
-                className={`absolute inset-0 rounded-full animate-ping opacity-40`}
-                style={{ backgroundColor: step.color, animationDuration: "2s" }}
+                className="absolute rounded-full animate-ping"
+                style={{
+                  inset: "-6px",
+                  backgroundColor: step.color,
+                  opacity: 0.3,
+                  animationDuration: `${1.8 + i * 0.15}s`,
+                }}
               />
-              {/* Step number badge */}
+              {/* Inner dot — no label */}
               <span
-                className={`relative flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white text-[10px] font-extrabold shadow-lg transition-transform duration-200 ${
-                  activeStep === i ? "scale-130" : "group-hover:scale-110"
+                className={`relative block rounded-full border-2 border-white shadow-md transition-all duration-200 ${
+                  activeStep === i ? "scale-150" : "group-hover:scale-125"
                 }`}
-                style={{ backgroundColor: step.color }}
-              >
-                {i + 1}
-              </span>
+                style={{
+                  width: "14px",
+                  height: "14px",
+                  backgroundColor: activeStep === i ? step.color : step.color,
+                  opacity: activeStep === i ? 1 : 0.85,
+                }}
+              />
 
-              {/* Tooltip — appears above the dot, switches sides on right-edge steps */}
+              {/* Tooltip — appears above dot; flips right-aligned near right edge */}
               <span
-                className={`absolute bottom-full mb-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-xl pointer-events-none text-left transition-all duration-150 ${
-                  activeStep === i ? "opacity-100 scale-100" : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                className={`absolute bottom-full mb-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-2xl pointer-events-none text-left transition-all duration-150 ${
+                  activeStep === i
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
                 } ${step.x > 65 ? "right-0" : "left-0"}`}
-                style={{ minWidth: "150px" }}
+                style={{ minWidth: "170px", zIndex: 10 }}
               >
-                <span className="block text-[10px] font-extrabold uppercase tracking-wider mb-0.5" style={{ color: step.color }}>
-                  Step {i + 1}
-                </span>
-                <span className="block text-xs font-bold text-[#0A1F44] leading-tight">{step.label}</span>
-                <span className="block text-[10px] text-slate-400 mt-0.5">{step.sub}</span>
+                <span
+                  className="block w-full h-0.5 rounded-full mb-2 opacity-60"
+                  style={{ backgroundColor: step.color }}
+                />
+                <span className="block text-xs font-bold text-[#0A1F44] leading-snug">{step.label}</span>
+                <span className="block text-[10px] text-slate-400 mt-1 leading-snug">{step.sub}</span>
               </span>
             </button>
           ))}

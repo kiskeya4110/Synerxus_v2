@@ -10,6 +10,7 @@ import Footer from "@/components/layout/footer";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import doctorsVolunteeringImg from "@assets/doctors-volunteering.webp";
+import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_1775526029439.png";
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -298,10 +299,10 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Pipeline Graphic Section ── */}
+        {/* ── How It Works ── */}
         <section className="bg-[#0A1F44] py-10 md:py-14">
           <div className="max-w-7xl mx-auto px-4 md:px-10">
-            <div className="text-center mb-6">
+            <div className="text-center mb-8">
               <span className="inline-block px-4 py-1 rounded-full bg-[#E6B800]/20 text-[#E6B800] text-xs font-bold uppercase tracking-wider mb-3">
                 How It Works
               </span>
@@ -309,78 +310,13 @@ export default function Landing() {
                 From Ground-Level Activity to Boardroom ESG Report
               </h2>
             </div>
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+            <div className="rounded-2xl overflow-hidden shadow-2xl bg-white">
               <img
-                src="/landing-hero.png"
-                alt="Synerxus verification pipeline — Volunteer to NGO Verifier to Verified Outcome to ESG Report"
-                className="w-full object-cover"
-                style={{ maxHeight: "420px", objectPosition: "center bottom" }}
+                src={corporateEsgFlowImg}
+                alt="Corporate ESG Impact Flow Verification — Inputs Logged, Deliverable Completed, NGO Verification, Evidence Object Created, Aggregation & Analysis, Impact Data Compiled, Auditor Review"
+                className="w-full object-contain"
                 loading="eager"
               />
-            </div>
-            <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 mt-8">
-              {[
-                {
-                  label: "Volunteer",
-                  sub: "Logs ground activity",
-                  icon: <User className="h-5 w-5" />,
-                  ring: "border-blue-400",
-                  bg: "bg-blue-900/50",
-                  iconColor: "text-blue-300",
-                  labelColor: "text-blue-300",
-                },
-                {
-                  label: "NGO Verifier",
-                  sub: "Confirms outcomes",
-                  icon: <ShieldCheck className="h-5 w-5" />,
-                  ring: "border-[#E6B800]",
-                  bg: "bg-[#E6B800]/10",
-                  iconColor: "text-[#E6B800]",
-                  labelColor: "text-[#E6B800]",
-                },
-                {
-                  label: "Verified Outcome",
-                  sub: "Immutable audit record",
-                  icon: <FileCheck className="h-5 w-5" />,
-                  ring: "border-emerald-400",
-                  bg: "bg-emerald-900/40",
-                  iconColor: "text-emerald-300",
-                  labelColor: "text-emerald-300",
-                },
-                {
-                  label: "ESG Report",
-                  sub: "CSRD-ready evidence",
-                  icon: <BarChart2 className="h-5 w-5" />,
-                  ring: "border-[#E6B800]",
-                  bg: "bg-[#E6B800]/10",
-                  iconColor: "text-[#E6B800]",
-                  labelColor: "text-[#E6B800]",
-                },
-              ].map((step, i, arr) => (
-                <div key={step.label} className="flex items-center gap-2 sm:gap-4">
-                  {/* Step card */}
-                  <div className="flex flex-col items-center gap-2">
-                    <div
-                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 ${step.ring} ${step.bg} flex items-center justify-center shadow-lg ${step.iconColor}`}
-                    >
-                      {step.icon}
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-xs sm:text-sm font-bold leading-tight ${step.labelColor}`}>
-                        {step.label}
-                      </div>
-                      <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 leading-tight">
-                        {step.sub}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Arrow connector */}
-                  {i < arr.length - 1 && (
-                    <ArrowRight className="h-5 w-5 text-white/25 flex-shrink-0 mb-6" />
-                  )}
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -845,17 +781,15 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Right: Corporate photo */}
-            <div className="relative hidden md:block">
+            {/* Right: Corporate photo — unobstructed */}
+            <div className="hidden md:block overflow-hidden">
               <img
                 src="/landing-hero.png"
-                alt="Corporate ESG presentation with verified impact data"
-                className="absolute inset-0 w-full h-full object-cover"
+                alt="Corporate professional presenting ESG impact data to a board room"
+                className="w-full h-full object-cover"
                 style={{ objectPosition: "center top" }}
                 loading="lazy"
               />
-              {/* Gradient fade from navy on the left */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0A1F44] via-[#0A1F44]/20 to-transparent" />
             </div>
           </div>
         </section>

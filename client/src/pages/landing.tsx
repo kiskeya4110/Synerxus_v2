@@ -842,36 +842,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Section 6: Verification Stack ── */}
-        <section className="py-16 md:py-20 bg-[#0A1F44]">
-          <div className="max-w-5xl mx-auto px-6 md:px-10 text-center">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4">
-              Synerxus Completes the Global Impact Stack
-            </h2>
-            <p className="text-blue-200 text-base md:text-lg mb-12 max-w-2xl mx-auto">
-              We verify delivery. Others measure perception or aggregate data. Together, it becomes auditable.
-            </p>
-
-            <div className="flex flex-col md:flex-row items-center justify-center gap-0">
-              {[
-                { label: "Inputs", sub: "Activity data, volunteer hours, deliverables", bg: "bg-blue-800" },
-                { label: "Synerxus", sub: "Independent verification & audit trails", bg: "bg-[#E6B800]", textColor: "text-[#0A1F44]", subColor: "text-[#0A1F44]/70" },
-                { label: "Aggregators", sub: "Sopact, impact platforms & reporting tools", bg: "bg-blue-800" },
-                { label: "Longitudinal Validation", sub: "60 Decibels & perception research", bg: "bg-blue-800" },
-              ].map((node, i, arr) => (
-                <div key={node.label} className="flex flex-col md:flex-row items-center">
-                  <div className={`${node.bg} rounded-xl px-5 py-4 w-44 text-center`}>
-                    <p className={`font-bold text-sm ${node.textColor || "text-white"} mb-1`}>{node.label}</p>
-                    <p className={`text-xs ${node.subColor || "text-blue-300"} leading-snug`}>{node.sub}</p>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <ArrowRight className="h-5 w-5 text-blue-400 my-2 md:my-0 md:mx-2 rotate-90 md:rotate-0 flex-shrink-0" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ── Section 7: Impact Metrics ── */}
         <section className="py-16 md:py-20 bg-[#0A1F44] border-t border-blue-800">

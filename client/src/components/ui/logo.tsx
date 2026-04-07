@@ -63,7 +63,7 @@ export default function Logo({
           lineHeight: 1,
         }}
       >
-        <span style={{ color: '#0F172A' }}>SYNER</span>
+        <span style={{ color: '#0A2463' }}>SYNER</span>
         <span style={{ color: '#B8860B' }}>XUS</span>
       </span>
       <span
@@ -82,10 +82,10 @@ export default function Logo({
         <span style={{ color: '#B8860B' }}>Impacts.</span>{' '}
         <span
           onClick={handleVerifiedClick}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', color: '#0A2463' }}
           title="NGO Verification"
         >
-          Verified
+          Verified!
         </span>
       </span>
     </div>

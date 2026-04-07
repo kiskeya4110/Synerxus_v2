@@ -791,6 +791,7 @@ export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSampleReport, setShowSampleReport] = useState(false);
   const [heroSlide, setHeroSlide] = useState(0);
+  const [activeGapLayer, setActiveGapLayer] = useState("Level 4");
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-advance hero slides; resets when user manually picks a slide
@@ -1204,185 +1205,293 @@ export default function Landing() {
         </section>
 
         {/* ── Missing Infrastructure Stack ── */}
-        <section className="py-16 md:py-20 bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
-          <div className="max-w-6xl mx-auto px-6 md:px-10">
-            {/* Section header */}
-            <div className="text-center mb-10">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
-                The Gap
-              </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44]">
-                The Missing Infrastructure
-              </h2>
-              <p className="text-slate-500 text-sm md:text-base mt-3 max-w-xl mx-auto">
-                Every layer of the impact stack exists — except the one that
-                makes it credible.
-              </p>
-            </div>
+        {(() => {
+          const GAP_LAYERS = [
+            {
+              id: "Level 5",
+              label: "Audit / Assurance",
+              sub: "Too slow, cost-prohibitive",
+              dim: true,
+              synerxus: false,
+              status: "Out of reach",
+              statusBg: "bg-slate-100",
+              statusText: "text-slate-500",
+              badgeBg: "bg-slate-100",
+              badgeText: "text-slate-400",
+              cardActive: "border-slate-300 bg-slate-50 shadow-sm",
+              cardIdle: "border-slate-200 bg-slate-50/60 opacity-55",
+              tools: ["Big 4 Auditors", "ISAE 3000 firms", "PwC ESG Assurance"],
+              detail: "Independent assurance exists but costs $100k+ per engagement and takes months to complete — far too slow and expensive for program-level verification.",
+            },
+            {
+              id: "Level 4",
+              label: "Verification",
+              sub: "The missing layer — Synerxus fills this",
+              dim: false,
+              synerxus: true,
+              status: "✦ Synerxus fills this",
+              statusBg: "bg-emerald-100",
+              statusText: "text-emerald-700",
+              badgeBg: "bg-emerald-600",
+              badgeText: "text-white",
+              cardActive: "border-emerald-400/80 bg-emerald-50 shadow-[0_0_24px_rgba(5,150,105,0.15)]",
+              cardIdle: "border-emerald-300/60 bg-emerald-50/70",
+              tools: [],
+              detail: "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. This is the layer that turns ESG claims into CSRD-ready evidence.",
+            },
+            {
+              id: "Level 3",
+              label: "Trackers",
+              sub: "Log hours only — no outcome proof",
+              dim: false,
+              synerxus: false,
+              status: "Saturated",
+              statusBg: "bg-amber-100",
+              statusText: "text-amber-700",
+              badgeBg: "bg-slate-100",
+              badgeText: "text-slate-400",
+              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardIdle: "border-slate-200 bg-white",
+              tools: ["Benevity", "Goodera", "Salesforce Volunteer", "YourCause"],
+              detail: "Track volunteer hours and log activities effectively — but cannot prove that the promised outcomes were actually delivered to beneficiaries.",
+            },
+            {
+              id: "Level 2",
+              label: "Aggregators",
+              sub: "Display data — no independent confirmation",
+              dim: false,
+              synerxus: false,
+              status: "Saturated",
+              statusBg: "bg-blue-100",
+              statusText: "text-blue-700",
+              badgeBg: "bg-slate-100",
+              badgeText: "text-slate-400",
+              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardIdle: "border-slate-200 bg-white",
+              tools: ["Sopact", "WEF UpLink", "Impact Genome", "IRIS+"],
+              detail: "Aggregate and visualise impact data beautifully — but the underlying inputs remain self-reported and unverified, limiting defensibility.",
+            },
+            {
+              id: "Level 1",
+              label: "Reporting Frameworks",
+              sub: "Define what to report — accept self-declared numbers",
+              dim: false,
+              synerxus: false,
+              status: "Saturated",
+              statusBg: "bg-violet-100",
+              statusText: "text-violet-700",
+              badgeBg: "bg-slate-100",
+              badgeText: "text-slate-400",
+              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardIdle: "border-slate-200 bg-white",
+              tools: ["CSRD", "GRI Standards", "ESRS S3/S4", "SDG Indicators"],
+              detail: "Define what to report and in what format — but accept self-declared numbers. They create demand for verified data; Synerxus provides the supply.",
+            },
+          ];
+          const activeLayer = GAP_LAYERS.find((l) => l.id === activeGapLayer) ?? GAP_LAYERS[1];
+          return (
+            <section className="py-16 md:py-20 bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
+              <div className="max-w-6xl mx-auto px-6 md:px-10">
+                {/* Section header */}
+                <div className="text-center mb-10">
+                  <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+                    The Gap
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44]">
+                    The Missing Infrastructure
+                  </h2>
+                  <p className="text-slate-500 text-sm md:text-base mt-3 max-w-xl mx-auto">
+                    Every layer of the impact stack exists — except the one that makes it credible.
+                    <span className="block mt-1 text-slate-400 text-xs">Click any layer to explore.</span>
+                  </p>
+                </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start justify-between">
-              {/* Left: layer stack — Level 5 at top, Level 1 at bottom */}
-              <div className="flex-1 w-full max-w-2xl">
-                <div className="flex flex-col gap-2">
-                  {[
-                    {
-                      id: "Level 5",
-                      label: "Audit / Assurance",
-                      sub: "Too slow, cost-prohibitive",
-                      highlight: false,
-                      dim: true,
-                    },
-                    {
-                      id: "Level 4",
-                      label: "Verification",
-                      sub: "The Missing Layer — Synerxus fills this",
-                      highlight: true,
-                      dim: false,
-                    },
-                    {
-                      id: "Level 3",
-                      label: "Trackers",
-                      sub: "Log hours only — no outcome proof",
-                      highlight: false,
-                      dim: false,
-                    },
-                    {
-                      id: "Level 2",
-                      label: "Aggregators",
-                      sub: "Saturated — no independent confirmation",
-                      highlight: false,
-                      dim: false,
-                    },
-                    {
-                      id: "Level 1",
-                      label: "Reporting Frameworks",
-                      sub: "CSRD / GRI / ESRS — saturated",
-                      highlight: false,
-                      dim: false,
-                    },
-                  ].map((layer, idx, arr) => (
-                    <div key={layer.id} className="relative">
-                      {/* Card */}
-                      <div
-                        className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${
-                          layer.highlight
-                            ? "border-emerald-400/70 bg-emerald-50"
-                            : layer.dim
-                              ? "border-slate-200 bg-slate-50 opacity-55"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
-                        }`}
-                        style={
-                          layer.highlight
-                            ? {
-                                boxShadow:
-                                  "0 0 24px rgba(5,150,105,0.12), 0 2px 8px rgba(5,150,105,0.08)",
-                              }
-                            : undefined
-                        }
-                      >
-                        {/* Level badge */}
-                        <div
-                          className={`shrink-0 rounded-xl px-3 py-2 text-center min-w-[72px] ${
-                            layer.highlight
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-400"
-                          }`}
-                        >
-                          <div className="text-[9px] font-bold uppercase tracking-wider leading-none opacity-80">
-                            {layer.id.split(" ")[0]}
+                <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+                  {/* Left: interactive layer stack */}
+                  <div className="flex-1 w-full max-w-xl">
+                    <div className="flex flex-col gap-1.5">
+                      {GAP_LAYERS.map((layer, idx, arr) => {
+                        const isActive = activeGapLayer === layer.id;
+                        return (
+                          <div key={layer.id} className="relative">
+                            {/* Clickable card */}
+                            <button
+                              onClick={() => setActiveGapLayer(layer.id)}
+                              className={`w-full text-left flex items-center gap-4 px-5 py-3.5 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/30 ${
+                                isActive ? layer.cardActive : layer.cardIdle + " hover:border-slate-300 hover:opacity-100"
+                              } ${layer.dim && !isActive ? "opacity-55" : ""}`}
+                            >
+                              {/* Level badge */}
+                              <div className={`shrink-0 rounded-xl px-3 py-2 text-center min-w-[68px] ${layer.badgeBg} ${layer.badgeText}`}>
+                                <div className="text-[8px] font-bold uppercase tracking-wider leading-none opacity-70">
+                                  {layer.id.split(" ")[0]}
+                                </div>
+                                <div className="text-lg font-extrabold leading-tight">
+                                  {layer.id.split(" ")[1]}
+                                </div>
+                              </div>
+
+                              {/* Label + sub */}
+                              <div className="flex-1 min-w-0">
+                                <div className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-emerald-700" : "text-[#0A1F44]"}`}>
+                                  {layer.label}
+                                </div>
+                                <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">{layer.sub}</div>
+                              </div>
+
+                              {/* Right: status pill + chevron */}
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span className={`hidden sm:inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full ${layer.statusBg} ${layer.statusText}`}>
+                                  {layer.status}
+                                </span>
+                                <svg
+                                  className={`w-4 h-4 text-slate-300 transition-transform duration-200 ${isActive ? "rotate-180 text-slate-500" : ""}`}
+                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </button>
+
+                            {/* Accordion detail */}
+                            <div
+                              className={`overflow-hidden transition-all duration-300 ease-in-out ${isActive ? "max-h-64 opacity-100 mt-1" : "max-h-0 opacity-0"}`}
+                            >
+                              <div className={`mx-1 px-5 py-4 rounded-xl border ${layer.synerxus ? "border-emerald-200 bg-emerald-50/80" : "border-slate-100 bg-slate-50/80"}`}>
+                                {/* Status pill (mobile) */}
+                                <span className={`sm:hidden inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 ${layer.statusBg} ${layer.statusText}`}>
+                                  {layer.status}
+                                </span>
+                                <p className={`text-xs leading-relaxed mb-3 ${layer.synerxus ? "text-emerald-800" : "text-slate-600"}`}>
+                                  {layer.detail}
+                                </p>
+                                {layer.tools.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <span className="text-[10px] text-slate-400 mr-1 self-center">Examples:</span>
+                                    {layer.tools.map((t) => (
+                                      <span key={t} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] italic text-emerald-600">No platform existed here before Synerxus.</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Connector */}
+                            {idx < arr.length - 1 && (
+                              <div className="flex justify-start pl-[38px] my-0.5">
+                                <div className="w-px h-2 bg-slate-200" />
+                              </div>
+                            )}
                           </div>
-                          <div className="text-lg font-extrabold leading-tight">
-                            {layer.id.split(" ")[1]}
+                        );
+                      })}
+                    </div>
+
+                    {/* Foundation label */}
+                    <div className="mt-4 flex items-center gap-2 pl-1">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Foundation</span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                  </div>
+
+                  {/* Right: dynamic detail panel */}
+                  <div className="w-full lg:w-80 xl:w-[340px] flex-shrink-0 sticky top-24">
+                    <div
+                      key={activeGapLayer}
+                      className={`rounded-2xl border overflow-hidden transition-all duration-300 ${
+                        activeLayer.synerxus
+                          ? "border-emerald-300 bg-white shadow-[0_0_32px_rgba(5,150,105,0.10)]"
+                          : "border-slate-200 bg-white shadow-lg"
+                      }`}
+                    >
+                      {/* Coloured top bar */}
+                      <div className={`h-1 w-full ${activeLayer.synerxus ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400" : "bg-gradient-to-r from-[#0A1F44]/20 via-[#0A1F44]/60 to-[#0A1F44]/20"}`} />
+
+                      <div className="p-6">
+                        {/* Level + status */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`rounded-xl px-3 py-2 text-center min-w-[60px] ${activeLayer.badgeBg} ${activeLayer.badgeText}`}>
+                            <div className="text-[8px] font-bold uppercase tracking-wider leading-none opacity-70">
+                              {activeLayer.id.split(" ")[0]}
+                            </div>
+                            <div className="text-base font-extrabold leading-tight">
+                              {activeLayer.id.split(" ")[1]}
+                            </div>
+                          </div>
+                          <div>
+                            <div className={`font-extrabold text-base leading-tight ${activeLayer.synerxus ? "text-emerald-700" : "text-[#0A1F44]"}`}>
+                              {activeLayer.label}
+                            </div>
+                            <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5 ${activeLayer.statusBg} ${activeLayer.statusText}`}>
+                              {activeLayer.status}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Label + sub */}
-                        <div className="flex-1 min-w-0">
-                          <div
-                            className={`font-bold text-sm sm:text-base leading-tight ${
-                              layer.highlight
-                                ? "text-emerald-700"
-                                : "text-[#0A1F44]"
-                            }`}
-                          >
-                            {layer.label}
-                          </div>
-                          <div className="text-xs text-slate-400 mt-0.5 leading-snug">
-                            {layer.sub}
-                          </div>
-                        </div>
+                        <p className={`text-sm leading-relaxed mb-4 ${activeLayer.synerxus ? "text-emerald-800" : "text-slate-600"}`}>
+                          {activeLayer.detail}
+                        </p>
 
-                        {/* Pulse indicator on highlight */}
-                        {layer.highlight && (
-                          <div className="shrink-0 flex items-center gap-1.5">
-                            <div className="w-5 h-px bg-emerald-400" />
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        {/* Tool tags */}
+                        {activeLayer.tools.length > 0 ? (
+                          <div className="mb-5">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-semibold">Existing tools at this level</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {activeLayer.tools.map((t) => (
+                                <span key={t} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-600">
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-5 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <p className="text-xs text-emerald-700 font-medium">
+                              No platform existed here before Synerxus — this is the white space.
+                            </p>
                           </div>
                         )}
+
+                        {/* CTA for Level 4 */}
+                        {activeLayer.synerxus ? (
+                          <Link href="/login?tab=register">
+                            <Button
+                              size="sm"
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
+                            >
+                              Book a Verification Demo
+                            </Button>
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => setActiveGapLayer("Level 4")}
+                            className="w-full text-xs text-emerald-600 font-semibold hover:text-emerald-700 flex items-center justify-center gap-1.5 pt-1 transition-colors"
+                          >
+                            See how Synerxus fills the gap
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
-
-                      {/* Connector between cards */}
-                      {idx < arr.length - 1 && (
-                        <div className="flex justify-start pl-9 my-0.5">
-                          <div className="w-px h-2 bg-slate-200" />
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
 
-                {/* Foundation label */}
-                <div className="mt-4 flex items-center gap-2 pl-1">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-                    Foundation
-                  </span>
-                  <div className="h-px flex-1 bg-slate-200" />
-                </div>
-              </div>
-
-              {/* Right: quote panel */}
-              <div
-                className="w-full lg:w-80 xl:w-96 rounded-2xl overflow-hidden flex-shrink-0 bg-white"
-                style={{
-                  border: "1.5px solid rgba(184,134,11,0.35)",
-                  boxShadow:
-                    "0 0 32px rgba(184,134,11,0.08), 0 8px 24px rgba(0,0,0,0.06)",
-                }}
-              >
-                {/* Gold top bar */}
-                <div className="h-1 w-full bg-gradient-to-r from-[#B8860B]/30 via-[#B8860B] to-[#B8860B]/30" />
-
-                <div className="p-8">
-                  {/* Corner accents */}
-                  <div className="flex justify-between mb-6">
-                    <div className="w-6 h-6 border-t-2 border-l-2 border-[#B8860B]/40 rounded-tl" />
-                    <div className="w-6 h-6 border-t-2 border-r-2 border-[#B8860B]/40 rounded-tr" />
-                  </div>
-
-                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#0A1F44] mb-4">
-                    Everyone builds trackers.
-                  </p>
-                  <p className="text-xl sm:text-2xl font-extrabold leading-tight text-[#B8860B]">
-                    No one built the verification layer.
-                  </p>
-
-                  <div className="flex justify-between mt-6 mb-6">
-                    <div className="w-6 h-6 border-b-2 border-l-2 border-[#B8860B]/40 rounded-bl" />
-                    <div className="w-6 h-6 border-b-2 border-r-2 border-[#B8860B]/40 rounded-br" />
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-5">
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                      Synerxus is the first platform to close the loop between
-                      ground-level activity and audit-ready ESG evidence.
-                    </p>
+                    {/* Static quote below — only when Level 4 not active */}
+                    {!activeLayer.synerxus && (
+                      <div className="mt-4 px-4 py-3 rounded-xl border border-[#B8860B]/20 bg-amber-50/60">
+                        <p className="text-xs text-[#0A1F44] font-bold leading-snug mb-1">Everyone builds trackers.</p>
+                        <p className="text-xs text-[#B8860B] font-bold leading-snug">No one built the verification layer.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          );
+        })()}
 
         {/* ── Section 3: Solution ── */}
         <section className="py-16 md:py-24 bg-blue-50">

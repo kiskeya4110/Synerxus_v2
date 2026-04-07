@@ -7,10 +7,14 @@ import {
   Building2, Globe, HardHat, ArrowRight
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import doctorsVolunteeringImg from "@assets/doctors-volunteering.webp";
 import corporateEsgFlowImg from "@assets/Corporate_ESG_impact_3_1775528713652.png";
+import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
+import heroSlide2 from "@assets/Corporate_data_presentation_1775529421335.png";
+import heroSlide3 from "@assets/Corporate_sustainabi_1775529421337.png";
+
+const HERO_SLIDES = [heroSlide1, heroSlide2, heroSlide3];
 
 const PIPELINE_STEPS = [
   {
@@ -191,6 +195,14 @@ function HowItWorksSection() {
 export default function Landing() {
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [heroSlide, setHeroSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroSlide((s) => (s + 1) % HERO_SLIDES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   const storedUserId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
 
@@ -406,66 +418,39 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Right column — dashboard mockup */}
+            {/* Right column — image slideshow */}
             <div className="relative order-1 md:order-2 flex justify-center">
-              <div className="relative w-full max-w-md">
-                {/* Background photo */}
-                <img
-                  src={doctorsVolunteeringImg}
-                  alt="Professionals reviewing ESG data"
-                  className="w-full rounded-2xl shadow-2xl object-cover"
-                  style={{ maxHeight: "380px", objectPosition: "center" }}
-                  loading="eager"
-                  decoding="async"
-                />
-
-                {/* ESG Dashboard floating card */}
-                <div className="absolute top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-64 bg-white rounded-xl shadow-2xl p-4 border border-slate-100">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-[#0A1F44] uppercase tracking-wide">ESG Dashboard</span>
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  </div>
-
-                  {/* Stats */}
-                  <div className="space-y-2.5 mb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <TrendingUp className="h-3.5 w-3.5 text-blue-600" />
-                        <span className="text-xs text-slate-500">Emissions Reduction</span>
-                      </div>
-                      <span className="text-sm font-extrabold text-[#0A1F44]">28%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-green-600" />
-                        <span className="text-xs text-slate-500">Beneficiaries Reached</span>
-                      </div>
-                      <span className="text-sm font-extrabold text-[#0A1F44]">125,480</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                        <span className="text-xs text-slate-500">Verified Projects</span>
-                      </div>
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    </div>
-                  </div>
-
-                  {/* Mini bar chart */}
-                  <div className="flex items-end gap-1 h-10 border-t border-slate-100 pt-2">
-                    {[40, 60, 45, 75, 55, 80, 65].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 rounded-sm"
-                        style={{
-                          height: `${h}%`,
-                          backgroundColor: i === 5 ? "#0A1F44" : "#BFDBFE",
-                        }}
-                      />
-                    ))}
-                  </div>
+              <div className="relative w-full max-w-lg">
+                {/* Slide images — crossfade stack */}
+                <div className="relative rounded-2xl shadow-2xl overflow-hidden" style={{ aspectRatio: "16/10" }}>
+                  {HERO_SLIDES.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`ESG impact slide ${i + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+                      style={{ opacity: heroSlide === i ? 1 : 0 }}
+                      loading={i === 0 ? "eager" : "lazy"}
+                    />
+                  ))}
                 </div>
 
+                {/* Dot navigation */}
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 pointer-events-none">
+                  {HERO_SLIDES.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setHeroSlide(i)}
+                      aria-label={`Slide ${i + 1}`}
+                      className="pointer-events-auto rounded-full border-2 border-white shadow transition-all duration-300"
+                      style={{
+                        width: heroSlide === i ? "24px" : "8px",
+                        height: "8px",
+                        backgroundColor: heroSlide === i ? "#ffffff" : "rgba(255,255,255,0.5)",
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>

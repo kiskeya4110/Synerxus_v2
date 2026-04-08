@@ -1177,6 +1177,9 @@ export default function CSRReportsExports() {
           {/* Page Title */}
           <div className="mb-4">
             <h1 className="text-xl font-bold text-gray-900">Analytics & Reports</h1>
+            {currentUser?.name && (
+              <p className="text-sm font-semibold text-gray-800">{currentUser.name}</p>
+            )}
             <p className="text-sm text-gray-500">Generate reports and track performance</p>
           </div>
 
@@ -1734,6 +1737,9 @@ export default function CSRReportsExports() {
               <div style={{ width: "1px", height: "36px", backgroundColor: "#e5e7eb", margin: "0 4px" }} />
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>CSR / ESG Reports</div>
+                {companyName && companyName !== "Your Company" && (
+                  <div style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>{companyName}</div>
+                )}
                 <div style={{ fontSize: "12px", color: "#6b7280" }}>Verified impact data · Audit-ready exports</div>
               </div>
             </div>

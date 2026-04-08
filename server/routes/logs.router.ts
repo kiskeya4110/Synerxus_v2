@@ -2739,24 +2739,27 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div class="page">
 
 <!-- REPORT HEADER -->
-<div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:${(filterEmployeeNames && filterEmployeeNames.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-    <div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <img src="${LOGO_DATA_URI}" alt="Synerxus" style="height:44px;width:auto;display:block;" />
-        <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
-          <span style="font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;"><span style="color:#fff;">SYNER</span><span style="color:#D4980C;">XUS</span></span>
-          <span style="font-size:11px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;"><span style="color:#D4980C;">Impacts.</span> <span style="color:#fff;">Verified.</span></span>
+<div style="border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:${(filterEmployeeNames && filterEmployeeNames.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
+  <div style="background:var(--navy);height:5px;"></div>
+  <div style="background:#fff;padding:16px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <img src="${LOGO_DATA_URI}" alt="Synerxus" style="height:44px;width:auto;display:block;" />
+          <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
+            <span style="font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;"><span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span></span>
+            <span style="font-size:11px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;"><span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></span>
+          </div>
         </div>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);">Corporate ESG Impact Report</div>
+        <div style="color:var(--txt-s);font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
       </div>
-      <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
-      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
-    </div>
-    <div style="text-align:right;color:#cbd5e1;font-size:10px;">
-      <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>
-      <div>Generated: ${reportDate}</div>
-      <div style="margin-top:2px;">Corporation: <strong style="color:#fff;">${corpName}</strong></div>
-      <div>Reporting Period: <strong style="color:#fff;">${periodDisplay}</strong></div>
+      <div style="text-align:right;color:var(--txt-s);font-size:10px;">
+        <div style="color:var(--navy);font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>
+        <div>Generated: ${reportDate}</div>
+        <div style="margin-top:2px;">Corporation: <strong style="color:var(--navy);">${corpName}</strong></div>
+        <div>Reporting Period: <strong style="color:var(--navy);">${periodDisplay}</strong></div>
+      </div>
     </div>
   </div>
 </div>

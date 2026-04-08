@@ -563,9 +563,15 @@ export default function CSRReportsExports() {
             <div class="report-header">
               <div class="header-left">
                 <div class="logo-container">
-                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
-                  <div class="company-divider"></div>
-                  <div class="company-name">${orgName}</div>
+                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 44px; width: auto;" />
+                  <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
+                    <span style="font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;">
+                      <span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span>
+                    </span>
+                    <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
+                      <span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
+                    </span>
+                  </div>
                 </div>
                 <div class="report-title">${orgName}</div>
                 <div class="report-subtitle">
@@ -1002,9 +1008,15 @@ export default function CSRReportsExports() {
             <div class="report-header">
               <div class="header-left">
                 <div class="logo-container">
-                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 36px; width: auto;" />
-                  <div class="company-divider"></div>
-                  <div class="company-name">${companyName}</div>
+                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 44px; width: auto;" />
+                  <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
+                    <span style="font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;">
+                      <span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span>
+                    </span>
+                    <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
+                      <span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
+                    </span>
+                  </div>
                 </div>
 
                 <div class="report-title">${companyName}</div>
@@ -1709,9 +1721,17 @@ export default function CSRReportsExports() {
             <>
           {/* Report Section Header with Synerxus branding */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "4px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <img src="/synerxus-esg-logo.png" alt="Synerxus" style={{ height: "36px", width: "auto" }} />
-              <div style={{ width: "1px", height: "32px", backgroundColor: "#e5e7eb" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <img src="/synerxus-esg-logo.png" alt="Synerxus" style={{ height: "44px", width: "auto" }} />
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
+                <span style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1 }}>
+                  <span style={{ color: "#0A2463" }}>SYNER</span><span style={{ color: "#D4980C" }}>XUS</span>
+                </span>
+                <span style={{ fontSize: "11px", fontWeight: 600, lineHeight: 1, whiteSpace: "nowrap" }}>
+                  <span style={{ color: "#D4980C" }}>Impacts.</span> <span style={{ color: "#0A2463" }}>Verified.</span>
+                </span>
+              </div>
+              <div style={{ width: "1px", height: "36px", backgroundColor: "#e5e7eb", margin: "0 4px" }} />
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>CSR / ESG Reports</div>
                 <div style={{ fontSize: "12px", color: "#6b7280" }}>Verified impact data · Audit-ready exports</div>

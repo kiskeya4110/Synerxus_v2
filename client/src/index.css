@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
+section[id] {
+  scroll-margin-top: 72px;
+}
+
 /* =====================================================
    SYNERXUS DESIGN SYSTEM v2.0
    Light Theme (Off-White) Default - "Turn Volunteer Hours into Audit-Ready ESG Data"

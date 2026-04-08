@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
-import { useState, useEffect, useRef, type RefObject } from "react";
+import React, { useState, useEffect, useRef, type RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
 import esgVerificationProcessImg from "@assets/Copilot_20260407_120309_1775588622996.png";
 import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
@@ -29,7 +29,15 @@ import { SDG_GOALS } from "@shared/sdg-goals";
 
 const HERO_SLIDES = [heroSlide1, heroSlide2, heroSlide3];
 
-const PIPELINE_STEPS = [
+const PIPELINE_STEPS: {
+  label: string;
+  sub: string;
+  color: string;
+  x: number;
+  y: number;
+  detail: string;
+  mobileImage?: string;
+}[] = [
   {
     label: "Volunteer Logs Activity",
     sub: "Outcomes & hours recorded · in-field volunteer work",
@@ -38,6 +46,7 @@ const PIPELINE_STEPS = [
     y: 55,
     detail:
       "Volunteers record outcomes, hours, skills applied, and beneficiary counts in real time via mobile — timestamped and linked to a specific project the moment it happens.",
+    mobileImage: undefined,
   },
   {
     label: "NGO Verification Request",
@@ -47,6 +56,7 @@ const PIPELINE_STEPS = [
     y: 55,
     detail:
       "The assigned NGO partner receives an instant verification request by SMS or in-app notification. A review link is provided — no platform login required to confirm.",
+    mobileImage: undefined,
   },
   {
     label: "One-Tap Verification",
@@ -56,6 +66,7 @@ const PIPELINE_STEPS = [
     y: 55,
     detail:
       "The NGO verifier confirms both the outcome and hours in under 15 seconds via a single tap — no paperwork, no back-and-forth. Verification is captured the moment it happens.",
+    mobileImage: undefined,
   },
   {
     label: "Immutable Audit Trail",
@@ -65,6 +76,7 @@ const PIPELINE_STEPS = [
     y: 55,
     detail:
       "Every verified event is sealed into an immutable audit record — verifier identity, device ID, GPS coordinates, timestamp, and SDG mapping captured automatically for CSRD compliance.",
+    mobileImage: undefined,
   },
   {
     label: "Impact Report Delivered",
@@ -74,6 +86,44 @@ const PIPELINE_STEPS = [
     y: 55,
     detail:
       "Corporate ESG teams receive a branded, audit-ready PDF impact report — every outcome traceable to a direct NGO confirmation, ready for CSRD and GRI disclosure.",
+    mobileImage: undefined,
+  },
+];
+
+const CUSTODY_STEPS: {
+  Icon: React.ComponentType<{ className?: string }>;
+  num: string;
+  label: string;
+  sub: string;
+  color: string;
+}[] = [
+  {
+    Icon: FileCheck,
+    num: "01",
+    label: "Deliverable Completed",
+    sub: "Volunteer logs outcomes, hours & beneficiaries in real time via mobile — timestamped at the moment it happens.",
+    color: "#0A1F44",
+  },
+  {
+    Icon: ShieldCheck,
+    num: "02",
+    label: "NGO Verifies",
+    sub: "Partner NGO confirms results with a single tap — no login required, under 15 seconds.",
+    color: "#1D4ED8",
+  },
+  {
+    Icon: Lock,
+    num: "03",
+    label: "Evidence Object Created",
+    sub: "Record sealed with GPS coordinates, device ID, verifier identity & SDG mapping — tamper-proof.",
+    color: "#059669",
+  },
+  {
+    Icon: BarChart2,
+    num: "04",
+    label: "ESG / SDG Reporting",
+    sub: "Audit-ready PDF delivered to corporate ESG teams — every claim traceable to an NGO confirmation.",
+    color: "#7C3AED",
   },
 ];
 
@@ -100,131 +150,271 @@ function HowItWorksSection({
           <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#0A1F44]">
             From Ground-Level Activity to Boardroom ESG Report
           </h2>
+          <a
+            href="/Synerxus-Verification-Methodology-v1.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            download="Synerxus-Verification-Methodology-v1.pdf"
+            className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-[#0A1F44]/70 hover:text-[#0A1F44] border border-[#0A1F44]/20 hover:border-[#0A1F44]/50 rounded-full px-4 py-1.5 transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
+              <path d="M6 1v7M3 5.5l3 3 3-3M1.5 10.5h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Download Verification Methodology
+          </a>
         </div>
 
-        {/* Image with absolutely-positioned hotspots */}
-        <div
-          className="shadow-xl border border-slate-200 bg-white relative rounded-2xl"
-          style={{ overflow: "visible" }}
-        >
-          {/* overflow:hidden wrapper crops the whitespace; the outer div stays overflow:visible for tooltips */}
-          <div className="overflow-hidden rounded-2xl">
-            <img
-              src={esgVerificationProcessImg}
-              alt="ESG Impact Verification Process — 5 Steps"
-              className="w-full block"
-              loading="eager"
-              style={{
-                display: "block",
-                marginTop: "-8%",
-                marginBottom: "-8%",
-              }}
-            />
+        {/* ── Mobile: winding roadmap (hidden on md+) ── */}
+        <div className="md:hidden">
+          {PIPELINE_STEPS.map((step, i) => {
+            const isOpen = activeStep === i;
+            const onLeft = i % 2 === 0;
+
+            return (
+              <div key={`mobile-${i}`}>
+                {/* Step card — alternates left / right */}
+                <div
+                  className={`flex ${onLeft ? "justify-start" : "justify-end"}`}
+                >
+                  <div
+                    className="w-[82%] rounded-2xl border bg-white shadow-md overflow-hidden"
+                    style={{ borderColor: isOpen ? step.color : "#e2e8f0" }}
+                  >
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left focus:outline-none"
+                      onClick={() => setActiveStep(isOpen ? null : i)}
+                      aria-expanded={isOpen}
+                    >
+                      <span
+                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow"
+                        style={{ backgroundColor: step.color }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block font-extrabold text-[#0A1F44] text-sm leading-snug">
+                          {step.label}
+                        </span>
+                        <span className="block text-[11px] text-slate-400 leading-snug mt-0.5">
+                          {step.sub}
+                        </span>
+                      </span>
+                      <span
+                        className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M4 6l4 4 4-4"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 pb-4">
+                        <div
+                          className="h-0.5 rounded-full mb-3 opacity-50"
+                          style={{ backgroundColor: step.color }}
+                        />
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                          {step.detail}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Winding connector to the next step */}
+                {i < PIPELINE_STEPS.length - 1 && (
+                  <div className="h-10 relative">
+                    <svg
+                      viewBox="0 0 100 40"
+                      className="absolute inset-0 w-full h-full"
+                      fill="none"
+                      preserveAspectRatio="none"
+                    >
+                      {onLeft ? (
+                        /* Left card → sweep right toward next card */
+                        <path
+                          d="M 70 0 C 70 20, 30 20, 30 40"
+                          stroke={step.color}
+                          strokeWidth="1.5"
+                          strokeOpacity="0.45"
+                          strokeDasharray="4 3"
+                        />
+                      ) : (
+                        /* Right card → sweep left toward next card */
+                        <path
+                          d="M 30 0 C 30 20, 70 20, 70 40"
+                          stroke={step.color}
+                          strokeWidth="1.5"
+                          strokeOpacity="0.45"
+                          strokeDasharray="4 3"
+                        />
+                      )}
+                      {/* Arrowhead at the end */}
+                      {onLeft ? (
+                        <path
+                          d="M 26 36 L 30 40 L 34 36"
+                          stroke={step.color}
+                          strokeWidth="1.5"
+                          strokeOpacity="0.55"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      ) : (
+                        <path
+                          d="M 66 36 L 70 40 L 74 36"
+                          stroke={step.color}
+                          strokeWidth="1.5"
+                          strokeOpacity="0.55"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      )}
+                    </svg>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Desktop: image + hotspots (hidden below md) ── */}
+        <div className="hidden md:block">
+          {/* Image with absolutely-positioned hotspots */}
+          <div
+            className="shadow-xl border border-slate-200 bg-white relative rounded-2xl"
+            style={{ overflow: "visible" }}
+          >
+            {/* overflow:hidden wrapper crops the whitespace; the outer div stays overflow:visible for tooltips */}
+            <div className="overflow-hidden rounded-2xl">
+              <img
+                src={esgVerificationProcessImg}
+                alt="ESG Impact Verification Process — 5 Steps"
+                className="w-full block"
+                loading="eager"
+                style={{
+                  display: "block",
+                  marginTop: "-8%",
+                  marginBottom: "-8%",
+                }}
+              />
+            </div>
+
+            {/* Unlabelled hotspots at each step's diagram position */}
+            {PIPELINE_STEPS.map((step, i) => (
+              <button
+                key={`${step.label}-${i}`}
+                onMouseEnter={() => setActiveStep(i)}
+                onMouseLeave={() => setActiveStep(null)}
+                onClick={() => setActiveStep(activeStep === i ? null : i)}
+                aria-label={step.label}
+                className="absolute group focus:outline-none"
+                style={{
+                  left: `${step.x}%`,
+                  top: `${step.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {/* Outer pulse ring */}
+                <span
+                  className="absolute rounded-full animate-ping"
+                  style={{
+                    inset: "-6px",
+                    backgroundColor: step.color,
+                    opacity: 0.3,
+                    animationDuration: `${1.8 + i * 0.15}s`,
+                  }}
+                />
+                {/* Inner dot — no label */}
+                <span
+                  className={`relative block rounded-full border-2 border-white shadow-md transition-all duration-200 ${
+                    activeStep === i ? "scale-150" : "group-hover:scale-125"
+                  }`}
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: activeStep === i ? step.color : step.color,
+                    opacity: activeStep === i ? 1 : 0.85,
+                  }}
+                />
+
+                {/* Tooltip — appears above dot; flips right-aligned near right edge */}
+                <span
+                  className={`absolute bottom-full mb-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-2xl pointer-events-none text-left transition-all duration-150 ${
+                    activeStep === i
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
+                  } ${step.x > 65 ? "right-0" : "left-0"}`}
+                  style={{ minWidth: "170px", zIndex: 10 }}
+                >
+                  <span
+                    className="block w-full h-0.5 rounded-full mb-2 opacity-60"
+                    style={{ backgroundColor: step.color }}
+                  />
+                  <span className="block text-xs font-bold text-[#0A1F44] leading-snug">
+                    {step.label}
+                  </span>
+                  <span className="block text-[10px] text-slate-400 mt-1 leading-snug">
+                    {step.sub}
+                  </span>
+                </span>
+              </button>
+            ))}
           </div>
 
-          {/* Unlabelled hotspots at each step's diagram position */}
-          {PIPELINE_STEPS.map((step, i) => (
-            <button
-              key={`${step.label}-${i}`}
-              onMouseEnter={() => setActiveStep(i)}
-              onMouseLeave={() => setActiveStep(null)}
-              onClick={() => setActiveStep(activeStep === i ? null : i)}
-              aria-label={step.label}
-              className="absolute group focus:outline-none"
-              style={{
-                left: `${step.x}%`,
-                top: `${step.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              {/* Outer pulse ring */}
-              <span
-                className="absolute rounded-full animate-ping"
-                style={{
-                  inset: "-6px",
-                  backgroundColor: step.color,
-                  opacity: 0.3,
-                  animationDuration: `${1.8 + i * 0.15}s`,
-                }}
-              />
-              {/* Inner dot — no label */}
-              <span
-                className={`relative block rounded-full border-2 border-white shadow-md transition-all duration-200 ${
-                  activeStep === i ? "scale-150" : "group-hover:scale-125"
-                }`}
-                style={{
-                  width: "14px",
-                  height: "14px",
-                  backgroundColor: activeStep === i ? step.color : step.color,
-                  opacity: activeStep === i ? 1 : 0.85,
-                }}
-              />
-
-              {/* Tooltip — appears above dot; flips right-aligned near right edge */}
-              <span
-                className={`absolute bottom-full mb-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-2xl pointer-events-none text-left transition-all duration-150 ${
-                  activeStep === i
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
-                } ${step.x > 65 ? "right-0" : "left-0"}`}
-                style={{ minWidth: "170px", zIndex: 10 }}
-              >
-                <span
-                  className="block w-full h-0.5 rounded-full mb-2 opacity-60"
-                  style={{ backgroundColor: step.color }}
-                />
-                <span className="block text-xs font-bold text-[#0A1F44] leading-snug">
-                  {step.label}
-                </span>
-                <span className="block text-[10px] text-slate-400 mt-1 leading-snug">
-                  {step.sub}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Detail panel */}
-        <div
-          className={`mt-4 rounded-2xl border bg-white px-6 py-5 flex items-start gap-4 shadow-md transition-all duration-300 ${
-            activeStep !== null
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none"
-          }`}
-          style={{
-            borderColor:
+          {/* Detail panel */}
+          <div
+            className={`mt-4 rounded-2xl border bg-white px-6 py-5 flex items-start gap-4 shadow-md transition-all duration-300 ${
               activeStep !== null
-                ? PIPELINE_STEPS[activeStep].color
-                : "#e2e8f0",
-          }}
-        >
-          {activeStep !== null && (
-            <>
-              <div
-                className="w-2 self-stretch rounded-full flex-shrink-0"
-                style={{ backgroundColor: PIPELINE_STEPS[activeStep].color }}
-              />
-              <div>
-                <p
-                  className="text-xs font-bold uppercase tracking-wider mb-1"
-                  style={{ color: PIPELINE_STEPS[activeStep].color }}
-                >
-                  Step {activeStep + 1} of {PIPELINE_STEPS.length}
-                </p>
-                <h3 className="font-extrabold text-[#0A1F44] text-base mb-1">
-                  {PIPELINE_STEPS[activeStep].label}
-                </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
-                  {PIPELINE_STEPS[activeStep].detail}
-                </p>
-              </div>
-            </>
-          )}
-          {activeStep === null && (
-            <p className="text-slate-400 text-sm italic">
-              Hover or tap a step in the diagram above to learn more.
-            </p>
-          )}
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-2 pointer-events-none"
+            }`}
+            style={{
+              borderColor:
+                activeStep !== null
+                  ? PIPELINE_STEPS[activeStep].color
+                  : "#e2e8f0",
+            }}
+          >
+            {activeStep !== null && (
+              <>
+                <div
+                  className="w-2 self-stretch rounded-full flex-shrink-0"
+                  style={{ backgroundColor: PIPELINE_STEPS[activeStep].color }}
+                />
+                <div>
+                  <p
+                    className="text-xs font-bold uppercase tracking-wider mb-1"
+                    style={{ color: PIPELINE_STEPS[activeStep].color }}
+                  >
+                    Step {activeStep + 1} of {PIPELINE_STEPS.length}
+                  </p>
+                  <h3 className="font-extrabold text-[#0A1F44] text-base mb-1">
+                    {PIPELINE_STEPS[activeStep].label}
+                  </h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">
+                    {PIPELINE_STEPS[activeStep].detail}
+                  </p>
+                </div>
+              </>
+            )}
+            {activeStep === null && (
+              <p className="text-slate-400 text-sm italic">
+                Hover or tap a step in the diagram above to learn more.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </section>
@@ -1087,28 +1277,7 @@ export default function Landing() {
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const walkthroughTimerRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
-
-  const startWalkthrough = () => {
-    howItWorksRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-    if (walkthroughTimerRef.current) clearInterval(walkthroughTimerRef.current);
-    setHowItWorksStep(0);
-    let step = 0;
-    walkthroughTimerRef.current = setInterval(() => {
-      step += 1;
-      if (step >= PIPELINE_STEPS.length) {
-        clearInterval(walkthroughTimerRef.current!);
-        walkthroughTimerRef.current = null;
-      } else {
-        setHowItWorksStep(step);
-      }
-    }, 2000);
-  };
+  const heroTouchStartX = useRef<number | null>(null);
 
   // Auto-advance hero slides; resets when user manually picks a slide
   const startHeroTimer = () => {
@@ -1146,6 +1315,19 @@ export default function Landing() {
     enabled: !!storedUserId,
   });
 
+  const { data: publicStats } = useQuery<{
+    totalVerifiedOutcomes: number;
+    totalVerifiedHours: number;
+    totalBeneficiaries: number;
+    verificationRate: number;
+    uniqueSdgsTracked: number;
+    avgVerificationHours: number | null;
+  }>({
+    queryKey: ["/api/public-stats"],
+    queryFn: () => fetch("/api/public-stats").then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoggedIn = !!storedUserId && !!currentUser?.id;
 
   return (
@@ -1154,7 +1336,7 @@ export default function Landing() {
         <SampleReportModal onClose={() => setShowSampleReport(false)} />
       )}
       {/* ── Navigation ── */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-6 md:px-10 py-3 flex justify-between items-center">
           <Link href="/landing">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
@@ -1163,42 +1345,20 @@ export default function Landing() {
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
-            <Link href="/landing">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[#0A1F44] font-semibold hover:bg-blue-50 rounded-lg"
+            {[
+              { label: "How It Works", anchor: "how-it-works" },
+              { label: "For Teams", anchor: "for-teams" },
+              { label: "See Impact", anchor: "verification-stack" },
+              { label: "FAQ", anchor: "faq" },
+            ].map(({ label, anchor }) => (
+              <a
+                key={anchor}
+                href={`#${anchor}`}
+                className="px-3 py-1.5 text-sm text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg transition-colors"
               >
-                Home
-              </Button>
-            </Link>
-            <Link href="/projects">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
-              >
-                Projects
-              </Button>
-            </Link>
-            <Link href="/organizations">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
-              >
-                Organizations
-              </Button>
-            </Link>
-            <Link href="/help">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 font-medium hover:bg-blue-50 hover:text-[#0A1F44] rounded-lg"
-              >
-                Help
-              </Button>
-            </Link>
+                {label}
+              </a>
+            ))}
           </div>
 
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
@@ -1259,21 +1419,19 @@ export default function Landing() {
             <div className="md:hidden absolute left-0 right-0 z-50 bg-white border-b border-slate-200 shadow-lg">
               <div className="px-4 py-3 space-y-1 border-b border-slate-100">
                 {[
-                  { href: "/landing", label: "Home" },
-                  { href: "/projects", label: "Projects" },
-                  { href: "/organizations", label: "Organizations" },
-                  { href: "/help", label: "Help" },
-                ].map(({ href, label }) => (
-                  <button
-                    key={href}
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate(href);
-                    }}
-                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-[#0A1F44] transition-colors"
+                  { label: "How It Works", anchor: "how-it-works" },
+                  { label: "For Teams", anchor: "for-teams" },
+                  { label: "See Impact", anchor: "verification-stack" },
+                  { label: "FAQ", anchor: "faq" },
+                ].map(({ label, anchor }) => (
+                  <a
+                    key={anchor}
+                    href={`#${anchor}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-[#0A1F44] transition-colors"
                   >
                     {label}
-                  </button>
+                  </a>
                 ))}
               </div>
               <div className="px-4 py-3 space-y-2">
@@ -1318,7 +1476,7 @@ export default function Landing() {
         )}
       </nav>
 
-      <main className="flex-1 overflow-x-hidden w-full">
+      <main className="flex-1 overflow-x-hidden w-full pt-[57px]">
         {/* ── Section 1: Hero ── */}
         <section
           className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/60 to-blue-100/80 py-10 md:py-16"
@@ -1362,8 +1520,8 @@ export default function Landing() {
                 data-testid="text-hero-description"
               >
                 Real-time, NGO-verified outcomes with immutable audit
-                trails—built for enterprise ESG, and CSRD, ESRS reporting under
-                the UN SDGs.
+                trails — built for enterprise ESG, CSRD and ESRS reporting
+                under the UN SDGs.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -1385,17 +1543,17 @@ export default function Landing() {
                         className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-8 rounded-xl shadow-lg"
                         data-testid="button-join-hero"
                       >
-                        Get a Demo
+                        Book a Demo
                       </Button>
                     </Link>
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={startWalkthrough}
+                      onClick={() => setShowSampleReport(true)}
                       className="border-2 border-[#0A1F44] text-[#0A1F44] font-bold px-8 rounded-xl hover:bg-[#0A1F44] hover:text-white transition-colors"
                       data-testid="button-sign-in-hero"
                     >
-                      See How Verification Works
+                      See a Sample Report
                     </Button>
                   </>
                 )}
@@ -1428,6 +1586,20 @@ export default function Landing() {
                 <div
                   className="relative rounded-2xl shadow-2xl overflow-hidden"
                   style={{ aspectRatio: "16/10" }}
+                  onTouchStart={(e) => {
+                    heroTouchStartX.current = e.touches[0].clientX;
+                  }}
+                  onTouchEnd={(e) => {
+                    if (heroTouchStartX.current === null) return;
+                    const delta = e.changedTouches[0].clientX - heroTouchStartX.current;
+                    heroTouchStartX.current = null;
+                    if (Math.abs(delta) < 40) return;
+                    goToSlide(
+                      delta < 0
+                        ? (heroSlide + 1) % HERO_SLIDES.length
+                        : (heroSlide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length,
+                    );
+                  }}
                 >
                   {HERO_SLIDES.map((src, i) => (
                     <img
@@ -1463,15 +1635,33 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── How It Works ── */}
-        <HowItWorksSection
-          activeStep={howItWorksStep}
-          setActiveStep={setHowItWorksStep}
-          sectionRef={howItWorksRef}
-        />
+        {/* ── NGO Partner Strip ── */}
+        <div className="bg-slate-50 border-y border-slate-100 py-4 px-6">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 flex-shrink-0">
+              Verified with
+            </span>
+            <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-[#0A1F44] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[10px] font-extrabold tracking-tight">LF</span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-[#0A1F44] leading-tight">Limitless Foundation</p>
+                <p className="text-[10px] text-slate-400 leading-tight">Zambia · Community &amp; Youth Impact</p>
+              </div>
+              <span className="flex-shrink-0 ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><circle cx="4" cy="4" r="3" fill="#059669"/></svg>
+                Active partner
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 italic hidden sm:block">
+              More partners onboarding
+            </span>
+          </div>
+        </div>
 
         {/* ── Section 2: Problem ── */}
-        <section className="py-10 md:py-16 bg-white">
+        <section id="problem" className="py-10 md:py-16 bg-white">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
@@ -1524,6 +1714,13 @@ export default function Landing() {
             </p>
           </div>
         </section>
+
+        {/* ── How It Works ── */}
+        <HowItWorksSection
+          activeStep={howItWorksStep}
+          setActiveStep={setHowItWorksStep}
+          sectionRef={howItWorksRef}
+        />
 
         {/* ── Missing Infrastructure Stack ── */}
         {(() => {
@@ -1697,14 +1894,14 @@ export default function Landing() {
                   </div>
                 )}
                 {layer.synerxus ? (
-                  <a href="mailto:hello@synerxus.com?subject=Book a Demo with Synerxus">
+                  <Link href="/login?tab=register">
                     <Button
                       size="sm"
                       className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
                     >
                       Book a Verification Demo
                     </Button>
-                  </a>
+                  </Link>
                 ) : (
                   <button
                     onClick={() => {
@@ -2001,7 +2198,7 @@ export default function Landing() {
         {/* ── Section 4: Workflow ── */}
         <section className="py-10 md:py-16 bg-white">
           <div className="max-w-5xl mx-auto px-6 md:px-10">
-            <div className="text-center mb-8">
+            <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
                 A Complete Chain of Custody
               </h2>
@@ -2011,152 +2208,102 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Mobile: 2×2 with arrows */}
-            <div className="md:hidden flex flex-col gap-1">
-              {/* Row 1: 01 → 02 */}
-              <div className="flex items-center gap-2">
-                {[
-                  {
-                    icon: <FileCheck className="h-6 w-6 text-white" />,
-                    num: "01",
-                    label: "Deliverable Completed",
-                    color: "bg-[#0A1F44]",
-                  },
-                  {
-                    icon: <ShieldCheck className="h-6 w-6 text-white" />,
-                    num: "02",
-                    label: "NGO Verifies",
-                    color: "bg-blue-600",
-                  },
-                ].map((step, i) => (
-                  <>
-                    <div
-                      key={step.num}
-                      className="flex-1 flex flex-col items-center text-center bg-slate-50 border border-slate-100 rounded-2xl p-4"
-                    >
+            {/* Mobile: vertical timeline */}
+            <div className="md:hidden flex flex-col">
+              {CUSTODY_STEPS.map((step, i) => {
+                const { Icon } = step;
+                return (
+                  <div key={step.num} className="flex gap-4">
+                    {/* Left column: icon + connecting line */}
+                    <div className="flex flex-col items-center flex-shrink-0">
                       <div
-                        className={`w-11 h-11 rounded-full ${step.color} flex items-center justify-center shadow-md mb-3`}
+                        className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"
+                        style={{ backgroundColor: step.color }}
                       >
-                        {step.icon}
+                        <Icon className="h-5 w-5 text-white" />
                       </div>
-                      <span className="text-[10px] text-slate-400 font-bold tracking-wider mb-1">
+                      {i < CUSTODY_STEPS.length - 1 && (
+                        <div
+                          className="w-0.5 flex-1 my-1 rounded-full opacity-25"
+                          style={{ backgroundColor: step.color, minHeight: "28px" }}
+                        />
+                      )}
+                    </div>
+                    {/* Right column: content */}
+                    <div className={i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"}>
+                      <span
+                        className="text-[10px] font-bold tracking-widest uppercase"
+                        style={{ color: step.color }}
+                      >
                         {step.num}
                       </span>
-                      <span className="text-xs font-bold text-[#0A1F44] leading-snug">
+                      <h3 className="font-extrabold text-[#0A1F44] text-sm leading-snug mt-0.5 mb-1">
                         {step.label}
-                      </span>
+                      </h3>
+                      <p className="text-slate-500 text-xs leading-relaxed">
+                        {step.sub}
+                      </p>
                     </div>
-                    {i === 0 && (
-                      <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                    )}
-                  </>
-                ))}
-              </div>
-              {/* Down connector — aligned under step 02 (right card) */}
-              <div className="flex justify-end pr-[calc(50%-10px)]">
-                <ArrowRight className="h-4 w-4 text-slate-400 rotate-90" />
-              </div>
-              {/* Row 2: 03 → 04 */}
-              <div className="flex items-center gap-2">
-                {[
-                  {
-                    icon: <Lock className="h-6 w-6 text-white" />,
-                    num: "03",
-                    label: "Evidence Object Created",
-                    color: "bg-[#0A1F44]",
-                  },
-                  {
-                    icon: <BarChart2 className="h-6 w-6 text-white" />,
-                    num: "04",
-                    label: "ESG / SDG Reporting",
-                    color: "bg-blue-600",
-                  },
-                ].map((step, i) => (
-                  <>
-                    <div
-                      key={step.num}
-                      className="flex-1 flex flex-col items-center text-center bg-slate-50 border border-slate-100 rounded-2xl p-4"
-                    >
-                      <div
-                        className={`w-11 h-11 rounded-full ${step.color} flex items-center justify-center shadow-md mb-3`}
-                      >
-                        {step.icon}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-bold tracking-wider mb-1">
-                        {step.num}
-                      </span>
-                      <span className="text-xs font-bold text-[#0A1F44] leading-snug">
-                        {step.label}
-                      </span>
-                    </div>
-                    {i === 0 && (
-                      <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                    )}
-                  </>
-                ))}
-              </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Desktop: horizontal flow with arrows */}
-            <div className="hidden md:flex flex-row items-center justify-center gap-0">
-              {[
-                {
-                  icon: <FileCheck className="h-7 w-7 text-white" />,
-                  num: "01",
-                  label: "Deliverable Completed",
-                  color: "bg-[#0A1F44]",
-                },
-                {
-                  icon: <ShieldCheck className="h-7 w-7 text-white" />,
-                  num: "02",
-                  label: "NGO Verifies",
-                  color: "bg-blue-600",
-                },
-                {
-                  icon: <Lock className="h-7 w-7 text-white" />,
-                  num: "03",
-                  label: "Evidence Object Created",
-                  color: "bg-[#0A1F44]",
-                },
-                {
-                  icon: <BarChart2 className="h-7 w-7 text-white" />,
-                  num: "04",
-                  label: "ESG / SDG Reporting",
-                  color: "bg-blue-600",
-                },
-              ].map((step, i, arr) => (
-                <div
-                  key={step.num}
-                  className="flex flex-row items-center flex-1"
-                >
-                  <div className="flex flex-col items-center text-center w-32">
+            {/* Desktop: horizontal cards with gradient connectors */}
+            <div className="hidden md:flex flex-row items-stretch gap-0">
+              {CUSTODY_STEPS.map((step, i) => {
+                const { Icon } = step;
+                return (
+                  <div key={step.num} className="flex flex-row items-center flex-1">
+                    {/* Card */}
                     <div
-                      className={`w-14 h-14 rounded-full ${step.color} flex items-center justify-center shadow-lg mb-3`}
+                      className="flex-1 flex flex-col items-center text-center bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:shadow-lg transition-shadow duration-200 h-full"
+                      style={{ borderTop: `3px solid ${step.color}` }}
                     >
-                      {step.icon}
-                    </div>
-                    <span className="text-xs text-slate-400 font-bold mb-1">
-                      {step.num}
-                    </span>
-                    <span className="text-sm font-bold text-[#0A1F44] leading-tight">
-                      {step.label}
-                    </span>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div className="flex items-center justify-center flex-1 mt-[-24px]">
-                      <div className="w-full h-0.5 bg-slate-200 relative">
-                        <ArrowRight className="h-4 w-4 text-slate-400 absolute right-0 top-1/2 -translate-y-1/2" />
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center shadow-md mb-3 mt-1"
+                        style={{ backgroundColor: step.color }}
+                      >
+                        <Icon className="h-6 w-6 text-white" />
                       </div>
+                      <span
+                        className="text-[10px] font-bold tracking-widest uppercase mb-1"
+                        style={{ color: step.color }}
+                      >
+                        {step.num}
+                      </span>
+                      <span className="text-sm font-extrabold text-[#0A1F44] leading-tight mb-2">
+                        {step.label}
+                      </span>
+                      <span className="text-xs text-slate-500 leading-relaxed">
+                        {step.sub}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    {/* Gradient connector */}
+                    {i < CUSTODY_STEPS.length - 1 && (
+                      <div className="flex-shrink-0 w-8 flex flex-col items-center justify-center self-center mt-[-8px]">
+                        <div
+                          className="h-0.5 w-full rounded-full"
+                          style={{
+                            background: `linear-gradient(to right, ${step.color}, ${CUSTODY_STEPS[i + 1].color})`,
+                            opacity: 0.5,
+                          }}
+                        />
+                        <ArrowRight
+                          className="h-3 w-3 -mt-0.5 -mr-1 self-end"
+                          style={{ color: CUSTODY_STEPS[i + 1].color, opacity: 0.6 }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* ── Section 5: Audience ── */}
-        <section className="py-10 md:py-16 bg-blue-50">
+        <section id="for-teams" className="py-10 md:py-16 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
@@ -2233,22 +2380,22 @@ export default function Landing() {
         </section>
 
         {/* ── Section 6: Verification Stack ── */}
-        <section className="py-10 md:py-14 bg-[#0A1F44]">
+        <section id="verification-stack" className="py-10 md:py-14 bg-[#0A1F44]">
           <div className="max-w-5xl mx-auto px-6 md:px-10 text-center">
             <span className="inline-block px-4 py-1 rounded-full bg-[#B8860B]/20 text-[#B8860B] text-xs font-bold uppercase tracking-wider mb-5">
               Accurate Global Impact Stack Workflow
             </span>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-6">
-              Synerxus provides the missing verification layer
-              <br className="hidden md:block" /> between Trackers and
-              Aggregators
+              Synerxus is the independent verification layer
+              <br className="hidden md:block" /> between input trackers and
+              impact aggregators
             </h2>
 
             <p className="text-blue-300 text-sm md:text-base max-w-2xl mx-auto mb-10 leading-relaxed">
-              We don't replace Benevity or WEF UpLink — we make their data
-              audit-supportive by adding NGO-confirmed outcomes with immutable
-              audit trails.
+              We complement existing systems by transforming self-reported
+              activity data into audit-supportive evidence through
+              NGO-confirmed outcomes with immutable audit trails.
             </p>
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-0">
@@ -2306,21 +2453,53 @@ export default function Landing() {
         </section>
 
         {/* ── Section 7: Impact Metrics ── */}
-        <section className="py-10 md:py-14 bg-[#0A1F44] border-t border-blue-800">
+        <section id="impact-metrics" className="py-10 md:py-14 bg-[#0A1F44] border-t border-blue-800">
           <div className="max-w-6xl mx-auto px-6 md:px-10 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-8">
-              Impact, Verified!
+              Verified Impact. Measurable Evidence.
             </h2>
 
             <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-10">
-              {[
-                { value: "134", label: "Verified Outcomes" },
-                { value: "1,678", label: "Verified Hours" },
-                { value: "439,290", label: "Beneficiaries Reached" },
-                { value: "85%", label: "Verification Rate" },
-                { value: "16h", label: "Avg. Time to Verify" },
-                { value: "17", label: "UN SDGs Tracked" },
-              ].map((stat) => (
+              {(
+                [
+                  {
+                    value: publicStats?.totalVerifiedOutcomes != null
+                      ? publicStats.totalVerifiedOutcomes.toLocaleString()
+                      : "—",
+                    label: "Verified Outcomes",
+                  },
+                  {
+                    value: publicStats?.totalVerifiedHours != null
+                      ? publicStats.totalVerifiedHours.toLocaleString()
+                      : "—",
+                    label: "Verified Hours",
+                  },
+                  {
+                    value: publicStats?.totalBeneficiaries != null && publicStats.totalBeneficiaries > 0
+                      ? publicStats.totalBeneficiaries.toLocaleString()
+                      : "—",
+                    label: "Beneficiaries Reached",
+                  },
+                  {
+                    value: publicStats ? `${publicStats.verificationRate}%` : "—",
+                    label: "Verification Rate",
+                  },
+                  {
+                    value: publicStats?.avgVerificationHours != null
+                      ? `${publicStats.avgVerificationHours}h`
+                      : "—",
+                    label: "Avg. Time to Verify",
+                  },
+                  {
+                    value: publicStats
+                      ? publicStats.uniqueSdgsTracked > 0
+                        ? String(publicStats.uniqueSdgsTracked)
+                        : "17"
+                      : "—",
+                    label: "UN SDGs Tracked",
+                  },
+                ] as { value: string; label: string }[]
+              ).map((stat) => (
                 <div key={stat.label} className="flex flex-col items-center">
                   <span className="text-3xl md:text-4xl font-extrabold text-[#B8860B] mb-1">
                     {stat.value}
@@ -2488,7 +2667,10 @@ export default function Landing() {
                     {/* Desktop: inline panel */}
                     <div
                       className="hidden lg:block rounded-2xl border p-5 mb-6 transition-all duration-200"
-                      style={{ borderColor: goal.color + "55", backgroundColor: goal.color + "0D" }}
+                      style={{
+                        borderColor: goal.color + "55",
+                        backgroundColor: goal.color + "0D",
+                      }}
                     >
                       {panelContent}
                     </div>
@@ -2507,7 +2689,10 @@ export default function Landing() {
                           style={{ borderColor: goal.color + "55" }}
                         >
                           {/* Coloured top bar */}
-                          <div className="h-1 w-full" style={{ backgroundColor: goal.color }} />
+                          <div
+                            className="h-1 w-full"
+                            style={{ backgroundColor: goal.color }}
+                          />
                           <div className="p-5">{panelContent}</div>
                         </div>
                       </div>
@@ -2534,6 +2719,9 @@ export default function Landing() {
                 Real programs. Real verification. Real evidence for ESG
                 reporting.
               </p>
+              <span className="inline-block mt-3 text-xs text-slate-400 border border-slate-200 rounded-full px-3 py-0.5">
+                Sample data — illustrative of platform capabilities
+              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2602,6 +2790,64 @@ export default function Landing() {
                     </p>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section id="faq" className="py-10 md:py-16 bg-white border-t border-slate-100">
+          <div className="max-w-3xl mx-auto px-6 md:px-10">
+            <div className="text-center mb-10">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+                FAQ
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44]">
+                Common Questions
+              </h2>
+            </div>
+            <div className="flex flex-col divide-y divide-slate-100">
+              {[
+                {
+                  q: "Does Synerxus replace our existing volunteer tracking platform?",
+                  a: "No. Synerxus is the independent verification layer that sits between your activity tracker (e.g. Benevity, Goodera) and your ESG aggregator or reporting framework. We add NGO-confirmed outcomes and immutable audit trails on top of what you already have.",
+                },
+                {
+                  q: "How does NGO verification actually work?",
+                  a: "After a volunteer logs an activity, the assigned NGO partner receives an instant SMS or in-app verification request. They confirm or flag the outcome with a single tap — no login required — in under 15 seconds. The result is sealed into a tamper-proof evidence record.",
+                },
+                {
+                  q: "Is this compliant with CSRD and ESRS S3/S4?",
+                  a: "Synerxus is specifically designed to produce evidence that supports CSRD disclosure obligations under ESRS S3 (Affected Communities) and S4 (Consumers and End-users). Every verified outcome is automatically tagged to the relevant ESRS standard and UN SDG, creating a traceable chain of evidence for third-party assurance.",
+                },
+                {
+                  q: "What does an immutable audit trail actually contain?",
+                  a: "Each Evidence Object captures: verifier identity, device ID, GPS coordinates, timestamp, outcome description, hours, beneficiary count, and SDG mapping — all sealed at the moment of verification. Records cannot be retroactively edited.",
+                },
+                {
+                  q: "How long does verification typically take?",
+                  a: "Our average verification turnaround is 16 hours, with a target SLA of 72 hours. NGOs are notified instantly and can verify from any mobile device without creating an account.",
+                },
+                {
+                  q: "Can we use Synerxus across multiple NGO partners and geographies?",
+                  a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each NGO partner is onboarded once and can verify outcomes across all corporate programs they are linked to. Reports aggregate verified data across all partners, SDGs, and geographies in one dashboard.",
+                },
+              ].map(({ q, a }, i) => (
+                <details key={i} className="group py-5">
+                  <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
+                    <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
+                      {q}
+                    </span>
+                    <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
+                    {a}
+                  </p>
+                </details>
               ))}
             </div>
           </div>

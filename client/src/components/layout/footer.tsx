@@ -70,7 +70,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1 space-y-3">
             <Logo size="sm" variant="full" clickable={false} />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Turn Volunteer Hours into Audit-Ready ESG Data
+              NGO-Verified Impact Evidence for CSRD &amp; ESG Reporting
             </p>
             <div className="flex gap-2">
               {SOCIAL_LINKS.map((link) => {
@@ -158,7 +158,7 @@ export default function Footer() {
             <span style={{ color: "#B8860B", fontWeight: 700 }}>XUS</span>. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Intelligent connections for sustainable development worldwide
+            NGO-verified impact evidence for a transparent world
           </p>
         </div>
       </div>

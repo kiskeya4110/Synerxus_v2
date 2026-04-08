@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /api/
+
+Sitemap: https://synerxus.com/sitemap.xml

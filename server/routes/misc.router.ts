@@ -10,8 +10,51 @@ import { notifyNewAssignment } from "../notification-service";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
+import { db } from "../db";
+import { volunteerActivities } from "@shared/schema";
 
 export const miscRouter = Router();
+
+// ── Public platform stats (unauthenticated) ──────────────────────────────────
+miscRouter.get("/public-stats", async (_req: Request, res: Response) => {
+  try {
+    const all = await db.select().from(volunteerActivities);
+    const verified = all.filter(a => a.verificationStatus === "approved");
+
+    const totalVerifiedOutcomes = verified.length;
+    const totalVerifiedHours = Math.round(verified.reduce((s, a) => s + (a.hours || 0), 0));
+    const totalBeneficiaries = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0);
+    const verificationRate = all.length > 0
+      ? Math.round((verified.length / all.length) * 100)
+      : 0;
+
+    const uniqueSdgs = new Set<number>();
+    for (const a of verified) {
+      if (Array.isArray(a.sdgTags)) a.sdgTags.forEach(n => uniqueSdgs.add(n));
+    }
+
+    const verifiedWithTime = verified.filter(a => a.verifiedAt && a.createdAt);
+    const avgVerificationHours = verifiedWithTime.length > 0
+      ? Math.round(
+          verifiedWithTime.reduce((s, a) =>
+            s + (a.verifiedAt!.getTime() - a.createdAt.getTime()), 0
+          ) / verifiedWithTime.length / 3_600_000
+        )
+      : null;
+
+    res.json({
+      totalVerifiedOutcomes,
+      totalVerifiedHours,
+      totalBeneficiaries,
+      verificationRate,
+      uniqueSdgsTracked: uniqueSdgs.size,
+      avgVerificationHours,
+    });
+  } catch (err) {
+    console.error("public-stats error:", err);
+    res.status(500).json({ message: "Failed to load stats" });
+  }
+});
 
 // ===== HELPER FUNCTIONS =====
 

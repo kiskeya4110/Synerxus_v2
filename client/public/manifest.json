@@ -1,12 +1,12 @@
 {
-  "name": "Synerxus - Connect. Collaborate. Impact Globally.",
+  "name": "Synerxus — NGO-Verified ESG Impact Reporting",
   "short_name": "Synerxus",
-  "description": "Intelligent connections for sustainable development worldwide. AI-powered platform connecting volunteers with impactful opportunities.",
+  "description": "Real-time, NGO-verified outcome verification with immutable audit trails for CSRD, ESRS S3/S4 and UN SDG reporting.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#FDF8F3",
+  "theme_color": "#0A1F44",
   "background_color": "#FDF8F3",
   "icons": [
     {
@@ -40,5 +40,5 @@
       "purpose": "any"
     }
   ],
-  "categories": ["productivity", "utilities", "social"]
+  "categories": ["business", "productivity", "finance"]
 }

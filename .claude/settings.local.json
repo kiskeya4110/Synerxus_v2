@@ -252,7 +252,8 @@
       "Bash(head -5 node -e \"console.log\\(''''html2pdf.js:'''', require\\(''''./node_modules/html2pdf.js/package.json''''\\).version\\)\")",
       "Bash(/dev/null npm:*)",
       "Bash(node:*)",
-      "WebFetch(domain:c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev)"
+      "WebFetch(domain:c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev)",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []

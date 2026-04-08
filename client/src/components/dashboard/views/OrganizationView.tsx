@@ -1172,18 +1172,18 @@ const OrganizationView = memo(function OrganizationView({
               {/* Log Hours — primary action, always visible */}
               <button
                 onClick={() => navigate('/ngo/log-hours')}
-                className="w-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
+                className="w-full bg-[#D4980C]/10 border border-[#D4980C]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-[#92700A]" />
+                  <div className="w-9 h-9 rounded-lg bg-[#D4980C]/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-[#7a5200]" />
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold leading-tight text-stone-800">Log Volunteer Hours & Impact</p>
                     <p className="text-[11px] text-stone-500 mt-0.5">Record verified outcomes for your team</p>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-[#92700A]/60 flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-[#7a5200]/60 flex-shrink-0" />
               </button>
 
               {/* Core Metrics - 2x2 Grid */}

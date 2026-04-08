@@ -942,41 +942,41 @@ input[type="radio"] {
 /* Overrides button highlights to light gold within all PWA views.
    Logo colors (--logo-*) are preserved and unaffected. */
 .pwa-gradient-bg {
-  --primary-hsl: 46 65% 52%;           /* Light gold #D4AF37 */
+  --primary-hsl: 46 65% 52%;           /* Light gold #D4980C */
   --primary-foreground: 24 10% 10%;    /* Dark stone — gold needs dark text for contrast */
   --ring: 46 65% 52%;                  /* Gold focus rings */
-  --primary: #D4AF37;                  /* Hex alias used by @layer components */
-  --primary-hover: #BF9B30;            /* Deeper gold for hover */
+  --primary: #D4980C;                  /* Hex alias used by @layer components */
+  --primary-hover: #B07F0A;            /* Deeper gold for hover */
 }
 
 .pwa-gradient-bg .input:focus {
-  border-color: #D4AF37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+  border-color: #D4980C;
+  box-shadow: 0 0 0 3px rgba(212, 152, 12, 0.2);
 }
 
 .pwa-gradient-bg textarea:focus {
-  border-color: #D4AF37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+  border-color: #D4980C;
+  box-shadow: 0 0 0 3px rgba(212, 152, 12, 0.2);
 }
 
 .pwa-gradient-bg .nav-item.active {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 152, 12, 0.15);
   color: #92700A;
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(212, 152, 12, 0.3);
 }
 
 .pwa-gradient-bg .badge-primary {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(212, 152, 12, 0.2);
   color: #92700A;
 }
 
 .pwa-gradient-bg .card:hover {
-  border-color: #D4AF37;
-  box-shadow: 0 0 0 1px #D4AF37;
+  border-color: #D4980C;
+  box-shadow: 0 0 0 1px #D4980C;
 }
 
 .pwa-gradient-bg .glow-primary {
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 20px rgba(212, 152, 12, 0.4);
 }
 
 /* ===== PWA GRADIENT BACKGROUND ===== */

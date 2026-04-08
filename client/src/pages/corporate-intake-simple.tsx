@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -74,6 +74,8 @@ type CorporateFormData = z.infer<typeof corporateSchema>;
 
 export default function CorporateIntakeSimple() {
   const [, navigate] = useLocation();
+  const searchString = useSearch();
+  const selectedPlan = new URLSearchParams(searchString).get("plan") ?? "pilot";
   const { toast } = useToast();
   const { signUp, signInWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -112,7 +114,8 @@ export default function CorporateIntakeSimple() {
     queryFn: async () => {
       const response = await fetch("/api/organizations?status=active");
       if (!response.ok) return [];
-      return response.json();
+      const json = await response.json();
+      return Array.isArray(json) ? json : (json.data ?? []);
     },
   });
 
@@ -164,6 +167,7 @@ export default function CorporateIntakeSimple() {
             employeeCount: data.employeeCount,
             ngoPartnerId: data.ngoPartnerId ? parseInt(data.ngoPartnerId) : null,
             inviteCode: inviteCode,
+            subscriptionTier: selectedPlan,
             pilotStart: new Date().toISOString(),
             pilotEnd: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
           }),
@@ -225,9 +229,31 @@ export default function CorporateIntakeSimple() {
         {/* Header */}
         <div className="text-center mb-6">
           <Logo size="md" className="mx-auto mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900">Start Your Free Pilot</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Create Your Corporate Account</h1>
           <p className="text-gray-500 mt-1">See verified impact in ~2 minutes</p>
         </div>
+
+        {/* Plan context banner */}
+        {selectedPlan && selectedPlan !== "pilot" ? (
+          <div className="mb-5 flex items-center gap-3 bg-[#0A1F44] rounded-2xl px-5 py-3.5">
+            <span className="text-[#D4980C] text-lg">✦</span>
+            <div>
+              <p className="text-white text-xs font-semibold capitalize">
+                {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan selected
+              </p>
+              <p className="text-blue-200 text-[11px] mt-0.5">
+                Your plan features will be activated once your account is confirmed.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-5 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3.5">
+            <span className="text-emerald-600 text-lg">●</span>
+            <p className="text-emerald-800 text-xs font-semibold">
+              Starting with a free 90-day Pilot — no credit card required
+            </p>
+          </div>
+        )}
 
         <Card className="shadow-lg">
           <CardContent className="p-6">

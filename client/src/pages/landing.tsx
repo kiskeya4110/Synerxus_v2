@@ -16,9 +16,16 @@ import {
   Globe,
   HardHat,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
-import React, { useState, useEffect, useRef, type RefObject } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  type RefObject,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import esgVerificationProcessImg from "@assets/Copilot_20260407_120309_1775588622996.png";
 import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
@@ -63,7 +70,7 @@ const PIPELINE_STEPS: {
   {
     label: "NGO Verification Request",
     sub: "SMS / App notification sent · review link provided",
-    color: "#B8860B",
+    color: "#D4980C",
     x: 29,
     y: 55,
     detail:
@@ -169,8 +176,20 @@ function HowItWorksSection({
             download="Synerxus-Verification-Methodology-v1.pdf"
             className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-[#0A1F44]/70 hover:text-[#0A1F44] border border-[#0A1F44]/20 hover:border-[#0A1F44]/50 rounded-full px-4 py-1.5 transition-colors"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
-              <path d="M6 1v7M3 5.5l3 3 3-3M1.5 10.5h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className="flex-shrink-0"
+            >
+              <path
+                d="M6 1v7M3 5.5l3 3 3-3M1.5 10.5h9"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             Download Verification Methodology
           </a>
@@ -890,7 +909,7 @@ function buildSampleReportHtml(): string {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
       <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;">
-        <span style="color:#fff;">SYNER</span><span style="color:#B8860B;">XUS</span> · <span style="color:#B8860B;">Impact,</span> <span style="color:#fff;">Verified.</span>
+        <span style="color:#fff;">SYNER</span><span style="color:#D4980C;">XUS</span> · <span style="color:#D4980C;">Impact,</span> <span style="color:#fff;">Verified.</span>
       </div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
       <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
@@ -1202,7 +1221,7 @@ function buildSampleReportHtml(): string {
 <!-- FOOTER -->
 <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#9ca3af;">
   <div>&#169; 2026 Synerxus · SAMPLE REPORT — Data is illustrative only · Report ID: ESG-2026-0407-ACME</div>
-  <div style="font-weight:700;color:#0A2463;">SYNER<span style="color:#B8860B;">XUS</span></div>
+  <div style="font-weight:700;color:#0A2463;">SYNER<span style="color:#D4980C;">XUS</span></div>
 </div>
 
 </div>
@@ -1210,8 +1229,262 @@ function buildSampleReportHtml(): string {
 </html>`;
 }
 
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  pilot: "Pilot — $5,000 / 90 days",
+  starter: "Starter — From $8,000/yr",
+  growth: "Growth — From $22,000/yr",
+  enterprise: "Enterprise — From $38,000/yr",
+};
+
+function PricingContactModal({
+  plan,
+  onClose,
+}: {
+  plan: string;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    email: "",
+    message: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          company: form.company,
+          email: form.email,
+          plan: PLAN_DISPLAY_NAMES[plan] ?? plan,
+          message: form.message,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to send enquiry");
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please email hello@synerxus.com directly.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-7"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {submitted ? (
+          <div className="text-center py-6">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-7 w-7 text-emerald-500" />
+            </div>
+            <h3 className="text-lg font-extrabold text-[#0A1F44] mb-2">
+              Request received!
+            </h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-5">
+              We'll be in touch within one business day to discuss your{" "}
+              <strong>
+                {PLAN_DISPLAY_NAMES[plan]?.split(" — ")[0] ?? plan}
+              </strong>{" "}
+              plan.
+            </p>
+            <Button
+              className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold rounded-xl px-6"
+              onClick={onClose}
+            >
+              Done
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-[#D4980C]/15 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-[#D4980C]" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#0A1F44] leading-tight">
+                  Get in touch
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {PLAN_DISPLAY_NAMES[plan] ?? plan}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Full name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                    placeholder="Jane Smith"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0A1F44]/20 focus:border-[#0A1F44]/40"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Company <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    required
+                    value={form.company}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, company: e.target.value }))
+                    }
+                    placeholder="Acme Corp"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0A1F44]/20 focus:border-[#0A1F44]/40"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Work email <span className="text-red-400">*</span>
+                </label>
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  placeholder="jane@company.com"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0A1F44]/20 focus:border-[#0A1F44]/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Notes{" "}
+                  <span className="text-slate-300 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={form.message}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, message: e.target.value }))
+                  }
+                  placeholder="Tell us about your program size, geographies, or specific requirements..."
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0A1F44]/20 focus:border-[#0A1F44]/40 resize-none"
+                />
+              </div>
+              {error && (
+                <p className="text-xs text-red-500 text-center">{error}</p>
+              )}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold rounded-xl py-2.5"
+              >
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin inline" />Sending…</>
+                ) : (
+                  "Send Enquiry"
+                )}
+              </Button>
+              <p className="text-center text-[11px] text-slate-400">
+                We typically respond within one business day.
+              </p>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LoopingCounter({
+  target,
+  suffix = "",
+  delay = 0,
+}: {
+  target: number | null;
+  suffix?: string;
+  delay?: number;
+}) {
+  const [count, setCount] = useState(0);
+  const animRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (target === null || target === 0) return;
+
+    const DURATION = 2200;
+    const HOLD = 1400;
+    let startTime: number | null = null;
+
+    const magnitude = Math.pow(
+      10,
+      Math.max(0, Math.floor(Math.log10(target)) - 1),
+    );
+
+    const step = (ts: number) => {
+      if (startTime === null) startTime = ts;
+      const elapsed = ts - startTime;
+      const progress = Math.min(elapsed / DURATION, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round((eased * target) / magnitude) * magnitude);
+      if (progress < 1) {
+        animRef.current = requestAnimationFrame(step);
+      } else {
+        timerRef.current = setTimeout(() => {
+          startTime = null;
+          setCount(0);
+          animRef.current = requestAnimationFrame(step);
+        }, HOLD);
+      }
+    };
+
+    timerRef.current = setTimeout(() => {
+      animRef.current = requestAnimationFrame(step);
+    }, delay);
+
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [target, delay]);
+
+  if (target === null) return <span>—</span>;
+  return (
+    <span>
+      {count.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
+
 function SampleReportModal({ onClose }: { onClose: () => void }) {
-  const html = buildSampleReportHtml();
+  const html = useMemo(() => buildSampleReportHtml(), []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const printReport = () => {
@@ -1232,7 +1505,7 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
           <span className="text-sm font-bold text-[#0A1F44] hidden sm:block">
             Corporate ESG Impact Report
           </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#B8860B]/10 text-[#B8860B] rounded-full border border-[#B8860B]/20 uppercase tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4980C]/10 text-[#D4980C] rounded-full border border-[#D4980C]/20 uppercase tracking-wider">
             Sample
           </span>
         </div>
@@ -1287,6 +1560,7 @@ export default function Landing() {
   const [showProcessBrief, setShowProcessBrief] = useState(false);
   const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
+  const [pricingPlan, setPricingPlan] = useState<string | null>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heroTouchStartX = useRef<number | null>(null);
@@ -1337,7 +1611,7 @@ export default function Landing() {
     activeNGOs: number;
   }>({
     queryKey: ["/api/public-stats"],
-    queryFn: () => fetch("/api/public-stats").then(r => r.json()),
+    queryFn: () => fetch("/api/public-stats").then((r) => r.json()),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -1348,9 +1622,15 @@ export default function Landing() {
       {showSampleReport && (
         <SampleReportModal onClose={() => setShowSampleReport(false)} />
       )}
+      {pricingPlan && (
+        <PricingContactModal
+          plan={pricingPlan}
+          onClose={() => setPricingPlan(null)}
+        />
+      )}
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-6 md:px-10 py-3 flex justify-between items-center">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm safe-area-top">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 py-3 flex justify-between items-center">
           <Link href="/landing">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
               <Logo size="sm" showMotto={true} />
@@ -1362,6 +1642,7 @@ export default function Landing() {
               { label: "How It Works", anchor: "how-it-works" },
               { label: "For Teams", anchor: "for-teams" },
               { label: "See Impact", anchor: "verification-stack" },
+              { label: "Pricing", anchor: "pricing" },
               { label: "FAQ", anchor: "faq" },
             ].map(({ label, anchor }) => (
               <a
@@ -1397,7 +1678,7 @@ export default function Landing() {
                     Log In
                   </Button>
                 </Link>
-                <Link href="/login?tab=register">
+                <Link href="/signup">
                   <Button
                     size="sm"
                     className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
@@ -1435,6 +1716,7 @@ export default function Landing() {
                   { label: "How It Works", anchor: "how-it-works" },
                   { label: "For Teams", anchor: "for-teams" },
                   { label: "See Impact", anchor: "verification-stack" },
+                  { label: "Pricing", anchor: "pricing" },
                   { label: "FAQ", anchor: "faq" },
                 ].map(({ label, anchor }) => (
                   <a
@@ -1474,7 +1756,7 @@ export default function Landing() {
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        navigate("/login?tab=register");
+                        navigate("/signup");
                       }}
                       className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
                       data-testid="button-sign-up-nav"
@@ -1489,7 +1771,10 @@ export default function Landing() {
         )}
       </nav>
 
-      <main className="flex-1 overflow-x-hidden w-full pt-[57px]">
+      <main
+        className="flex-1 overflow-x-hidden w-full"
+        style={{ paddingTop: "calc(57px + env(safe-area-inset-top, 0px))" }}
+      >
         {/* ── Section 1: Hero ── */}
         <section
           className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/60 to-blue-100/80 py-10 md:py-16"
@@ -1514,7 +1799,7 @@ export default function Landing() {
             <ellipse cx="0" cy="200" rx="200" ry="130" fill="#93C5FD" />
           </svg>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 md:grid-cols-2 gap-12 md:items-stretch">
             {/* Left column */}
             <div className="flex flex-col order-2 md:order-1">
               <h1
@@ -1523,7 +1808,7 @@ export default function Landing() {
               >
                 The Verification Layer
                 <span className="text-[#0A1F44]"> for </span>
-                <span className="text-[#B8860B]">
+                <span className="text-[#D4980C]">
                   CSR, ESG, and Global Community Impact.
                 </span>
               </h1>
@@ -1532,12 +1817,12 @@ export default function Landing() {
                 className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed"
                 data-testid="text-hero-description"
               >
-                Real-time, NGO-verified outcomes with immutable audit
-                trails — built for enterprise ESG, CSRD and ESRS reporting
-                under the UN SDGs.
+                Real-time, NGO-verified outcomes with immutable audit trails —
+                built for enterprise ESG, CSRD and ESRS reporting under the UN
+                SDGs.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 mb-10">
+              <div className="flex flex-row gap-2 sm:gap-3 mb-10">
                 {isLoggedIn ? (
                   <Link href="/dashboard">
                     <Button
@@ -1550,10 +1835,10 @@ export default function Landing() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/login?tab=register">
+                    <Link href="/signup">
                       <Button
                         size="lg"
-                        className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-8 rounded-xl shadow-lg"
+                        className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
                         data-testid="button-join-hero"
                       >
                         Book a Demo
@@ -1561,9 +1846,8 @@ export default function Landing() {
                     </Link>
                     <Button
                       size="lg"
-                      variant="outline"
                       onClick={() => setShowSampleReport(true)}
-                      className="border-2 border-[#0A1F44] text-[#0A1F44] font-bold px-8 rounded-xl hover:bg-[#0A1F44] hover:text-white transition-colors"
+                      className="bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg border-0 text-sm sm:text-base"
                       data-testid="button-sign-in-hero"
                     >
                       See a Sample Report
@@ -1571,6 +1855,14 @@ export default function Landing() {
                   </>
                 )}
               </div>
+
+              {/* Free tier note */}
+              {!isLoggedIn && (
+                <p className="text-xs text-slate-500 -mt-7 mb-5 flex items-center gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                  NGOs &amp; Volunteers always join free
+                </p>
+              )}
 
               {/* Trust badge strip */}
               <div className="flex flex-wrap gap-2 mt-1">
@@ -1593,24 +1885,30 @@ export default function Landing() {
             </div>
 
             {/* Right column — image slideshow */}
-            <div className="relative order-1 md:order-2 flex justify-center">
-              <div className="relative w-full max-w-lg">
+            <div className="relative order-1 md:order-2 flex justify-center md:flex-col">
+              <div className="relative w-full max-w-lg md:max-w-none md:flex-1 md:flex md:flex-col">
                 {/* Slide images — crossfade stack */}
                 <div
-                  className="relative rounded-2xl shadow-2xl overflow-hidden"
-                  style={{ aspectRatio: "16/10" }}
+                  className="relative rounded-2xl overflow-hidden md:flex-1"
+                  style={{
+                    minHeight: "220px",
+                    boxShadow:
+                      "0 25px 50px -12px rgb(0 0 0 / 0.25), inset 0 0 110px 45px rgba(255, 255, 255, 0.78)",
+                  }}
                   onTouchStart={(e) => {
                     heroTouchStartX.current = e.touches[0].clientX;
                   }}
                   onTouchEnd={(e) => {
                     if (heroTouchStartX.current === null) return;
-                    const delta = e.changedTouches[0].clientX - heroTouchStartX.current;
+                    const delta =
+                      e.changedTouches[0].clientX - heroTouchStartX.current;
                     heroTouchStartX.current = null;
                     if (Math.abs(delta) < 40) return;
                     goToSlide(
                       delta < 0
                         ? (heroSlide + 1) % HERO_SLIDES.length
-                        : (heroSlide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length,
+                        : (heroSlide - 1 + HERO_SLIDES.length) %
+                            HERO_SLIDES.length,
                     );
                   }}
                 >
@@ -1650,26 +1948,76 @@ export default function Landing() {
 
         {/* ── NGO Partner Strip ── */}
         <div className="bg-slate-50 border-y border-slate-100 py-4 px-6">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap text-center sm:text-left">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 flex-shrink-0">
               Verified with
             </span>
+            {/* Partner 1 */}
             <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm">
               <div className="w-8 h-8 rounded-lg bg-[#0A1F44] flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-[10px] font-extrabold tracking-tight">LF</span>
+                <span className="text-white text-[10px] font-extrabold tracking-tight">
+                  LF
+                </span>
               </div>
               <div className="text-left">
-                <p className="text-xs font-bold text-[#0A1F44] leading-tight">Limitless Foundation</p>
-                <p className="text-[10px] text-slate-400 leading-tight">Zambia · Community &amp; Youth Impact</p>
+                <p className="text-xs font-bold text-[#0A1F44] leading-tight">
+                  Limitless Foundation
+                </p>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Zambia · Community &amp; Youth Impact
+                </p>
               </div>
               <span className="flex-shrink-0 ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><circle cx="4" cy="4" r="3" fill="#059669"/></svg>
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <circle cx="4" cy="4" r="3" fill="#059669" />
+                </svg>
                 Active partner
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 italic hidden sm:block">
-              More partners onboarding
-            </span>
+            {/* Partner 2 */}
+            <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-[#1D4ED8] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[10px] font-extrabold tracking-tight">
+                  GH
+                </span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-[#0A1F44] leading-tight">
+                  GreenHope Alliance
+                </p>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Kenya · Environment &amp; Education
+                </p>
+              </div>
+              <span className="flex-shrink-0 ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <circle cx="4" cy="4" r="3" fill="#D4980C" />
+                </svg>
+                Onboarding
+              </span>
+            </div>
+            {/* Partner 3 */}
+            <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-[#059669] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[10px] font-extrabold tracking-tight">
+                  RI
+                </span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-[#0A1F44] leading-tight">
+                  Rise Impact Network
+                </p>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  South Africa · Skills &amp; Livelihoods
+                </p>
+              </div>
+              <span className="flex-shrink-0 ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <circle cx="4" cy="4" r="3" fill="#D4980C" />
+                </svg>
+                Onboarding
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1762,13 +2110,13 @@ export default function Landing() {
               dim: false,
               synerxus: true,
               status: "✦ Synerxus fills this",
-              statusBg: "bg-emerald-100",
-              statusText: "text-emerald-700",
-              badgeBg: "bg-emerald-600",
+              statusBg: "bg-[#D4980C]/15",
+              statusText: "text-[#D4980C]",
+              badgeBg: "bg-[#D4980C]",
               badgeText: "text-white",
               cardActive:
-                "border-emerald-400/80 bg-emerald-50 shadow-[0_0_24px_rgba(5,150,105,0.15)]",
-              cardIdle: "border-emerald-300/60 bg-emerald-50/70",
+                "border-[#D4980C]/70 bg-[#FFFBF0] shadow-[0_0_24px_rgba(212,152,12,0.18)]",
+              cardIdle: "border-[#D4980C]/40 bg-[#FFFDF5]/80",
               tools: [],
               detail:
                 "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. Every verified outcome is automatically tagged to the relevant UN SDG (1–17) and mapped to ESRS S3/S4, turning ESG claims into CSRD-ready evidence.",
@@ -1780,8 +2128,8 @@ export default function Landing() {
               dim: false,
               synerxus: false,
               status: "Saturated",
-              statusBg: "bg-[#B8860B]/10",
-              statusText: "text-[#B8860B]",
+              statusBg: "bg-[#D4980C]/10",
+              statusText: "text-[#D4980C]",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
@@ -1839,7 +2187,7 @@ export default function Landing() {
             <>
               {/* Coloured top bar */}
               <div
-                className={`h-1 w-full ${layer.synerxus ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400" : "bg-gradient-to-r from-[#0A1F44]/20 via-[#0A1F44]/60 to-[#0A1F44]/20"}`}
+                className={`h-1 w-full ${layer.synerxus ? "bg-gradient-to-r from-[#D4980C]/60 via-[#D4980C] to-[#D4980C]/60" : "bg-gradient-to-r from-[#0A1F44]/20 via-[#0A1F44]/60 to-[#0A1F44]/20"}`}
               />
               <div className="p-6">
                 <div className="flex items-start justify-between gap-3 mb-4">
@@ -1856,7 +2204,7 @@ export default function Landing() {
                     </div>
                     <div>
                       <div
-                        className={`font-extrabold text-base leading-tight ${layer.synerxus ? "text-emerald-700" : "text-[#0A1F44]"}`}
+                        className={`font-extrabold text-base leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
                       >
                         {layer.label}
                       </div>
@@ -1878,7 +2226,7 @@ export default function Landing() {
                   )}
                 </div>
                 <p
-                  className={`text-sm leading-relaxed mb-4 ${layer.synerxus ? "text-emerald-800" : "text-slate-600"}`}
+                  className={`text-sm leading-relaxed mb-4 ${layer.synerxus ? "text-[#7a5200]" : "text-slate-600"}`}
                 >
                   {layer.detail}
                 </p>
@@ -1899,22 +2247,22 @@ export default function Landing() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mb-5 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                    <p className="text-xs text-emerald-700 font-medium">
+                  <div className="mb-5 px-3 py-2.5 rounded-xl bg-[#FFFBF0] border border-[#D4980C]/30">
+                    <p className="text-xs text-[#7a5200] font-medium">
                       No platform existed here before Synerxus — this is the
                       white space.
                     </p>
                   </div>
                 )}
                 {layer.synerxus ? (
-                  <Link href="/login?tab=register">
+                  <a href="mailto:hello@synerxus.com?subject=Book a Verification Demo">
                     <Button
                       size="sm"
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl"
+                      className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-semibold rounded-xl"
                     >
                       Book a Verification Demo
                     </Button>
-                  </Link>
+                  </a>
                 ) : (
                   <button
                     onClick={() => {
@@ -1982,7 +2330,7 @@ export default function Landing() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div
-                                    className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-emerald-700" : "text-[#0A1F44]"}`}
+                                    className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
                                   >
                                     {layer.label}
                                   </div>
@@ -2078,7 +2426,7 @@ export default function Landing() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div
-                                  className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-emerald-700" : "text-[#0A1F44]"}`}
+                                  className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
                                 >
                                   {layer.label}
                                 </div>
@@ -2179,10 +2527,10 @@ export default function Landing() {
                   bg: "bg-emerald-100",
                 },
                 {
-                  icon: <AlertTriangle className="h-6 w-6 text-[#B8860B]" />,
+                  icon: <AlertTriangle className="h-6 w-6 text-[#D4980C]" />,
                   title: "Negative Impact Screening",
                   desc: "Mandatory at verification — prevents greenwashing before it enters your reports.",
-                  bg: "bg-[#B8860B]/10",
+                  bg: "bg-[#D4980C]/10",
                 },
               ].map((feat) => (
                 <div
@@ -2238,12 +2586,19 @@ export default function Landing() {
                       {i < CUSTODY_STEPS.length - 1 && (
                         <div
                           className="w-0.5 flex-1 my-1 rounded-full opacity-25"
-                          style={{ backgroundColor: step.color, minHeight: "28px" }}
+                          style={{
+                            backgroundColor: step.color,
+                            minHeight: "28px",
+                          }}
                         />
                       )}
                     </div>
                     {/* Right column: content */}
-                    <div className={i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"}>
+                    <div
+                      className={
+                        i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"
+                      }
+                    >
                       <span
                         className="text-[10px] font-bold tracking-widest uppercase"
                         style={{ color: step.color }}
@@ -2267,7 +2622,10 @@ export default function Landing() {
               {CUSTODY_STEPS.map((step, i) => {
                 const { Icon } = step;
                 return (
-                  <div key={step.num} className="flex flex-row items-center flex-1">
+                  <div
+                    key={step.num}
+                    className="flex flex-row items-center flex-1"
+                  >
                     {/* Card */}
                     <div
                       className="flex-1 flex flex-col items-center text-center bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:shadow-lg transition-shadow duration-200 h-full"
@@ -2304,7 +2662,10 @@ export default function Landing() {
                         />
                         <ArrowRight
                           className="h-3 w-3 -mt-0.5 -mr-1 self-end"
-                          style={{ color: CUSTODY_STEPS[i + 1].color, opacity: 0.6 }}
+                          style={{
+                            color: CUSTODY_STEPS[i + 1].color,
+                            opacity: 0.6,
+                          }}
                         />
                       </div>
                     )}
@@ -2357,11 +2718,11 @@ export default function Landing() {
                   bg: "bg-sky-100",
                 },
                 {
-                  icon: <HardHat className="h-6 w-6 text-[#B8860B]" />,
+                  icon: <HardHat className="h-6 w-6 text-[#D4980C]" />,
                   audience: "Engineering & Infrastructure Firms",
                   benefit:
                     "Verify local hiring commitments and community impact against project targets.",
-                  bg: "bg-[#B8860B]/10",
+                  bg: "bg-[#D4980C]/10",
                 },
                 {
                   icon: <Building2 className="h-6 w-6 text-violet-700" />,
@@ -2393,9 +2754,12 @@ export default function Landing() {
         </section>
 
         {/* ── Section 6: Verification Stack ── */}
-        <section id="verification-stack" className="py-10 md:py-14 bg-[#0A1F44]">
+        <section
+          id="verification-stack"
+          className="py-10 md:py-14 bg-[#0A1F44]"
+        >
           <div className="max-w-5xl mx-auto px-6 md:px-10 text-center">
-            <span className="inline-block px-4 py-1 rounded-full bg-[#B8860B]/20 text-[#B8860B] text-xs font-bold uppercase tracking-wider mb-5">
+            <span className="inline-block px-4 py-1 rounded-full bg-[#D4980C]/20 text-[#D4980C] text-xs font-bold uppercase tracking-wider mb-5">
               Accurate Global Impact Stack Workflow
             </span>
 
@@ -2407,8 +2771,8 @@ export default function Landing() {
 
             <p className="text-blue-300 text-sm md:text-base max-w-2xl mx-auto mb-10 leading-relaxed">
               We complement existing systems by transforming self-reported
-              activity data into audit-supportive evidence through
-              NGO-confirmed outcomes with immutable audit trails.
+              activity data into audit-supportive evidence through NGO-confirmed
+              outcomes with immutable audit trails.
             </p>
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-0">
@@ -2423,7 +2787,7 @@ export default function Landing() {
                 {
                   label: "Synerxus",
                   sub: "Verifies delivery with NGO-confirmed outcomes",
-                  bg: "bg-[#B8860B]",
+                  bg: "bg-[#D4980C]",
                   textColor: "text-[#0A1F44]",
                   subColor: "text-[#0A1F44]/70",
                 },
@@ -2457,7 +2821,7 @@ export default function Landing() {
                     </p>
                   </div>
                   {i < arr.length - 1 && (
-                    <ArrowRight className="h-5 w-5 text-[#B8860B] my-2 md:my-0 md:mx-2 rotate-90 md:rotate-0 flex-shrink-0" />
+                    <ArrowRight className="h-5 w-5 text-[#D4980C] my-2 md:my-0 md:mx-2 rotate-90 md:rotate-0 flex-shrink-0" />
                   )}
                 </div>
               ))}
@@ -2466,7 +2830,10 @@ export default function Landing() {
         </section>
 
         {/* ── Section 7: Impact Metrics ── */}
-        <section id="impact-metrics" className="py-10 md:py-14 bg-[#0A1F44] border-t border-blue-800">
+        <section
+          id="impact-metrics"
+          className="py-10 md:py-14 bg-[#0A1F44] border-t border-blue-800"
+        >
           <div className="max-w-6xl mx-auto px-6 md:px-10 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-8">
               Verified Impact. Measurable Evidence.
@@ -2476,46 +2843,51 @@ export default function Landing() {
               {(
                 [
                   {
-                    value: publicStats?.totalVerifiedOutcomes != null
-                      ? publicStats.totalVerifiedOutcomes.toLocaleString()
-                      : "—",
+                    target: publicStats?.totalVerifiedOutcomes ?? null,
+                    suffix: "",
                     label: "Verified Outcomes",
                   },
                   {
-                    value: publicStats?.totalVerifiedHours != null
-                      ? publicStats.totalVerifiedHours.toLocaleString()
-                      : "—",
+                    target: publicStats?.totalVerifiedHours ?? null,
+                    suffix: "",
                     label: "Verified Hours",
                   },
                   {
-                    value: publicStats?.totalBeneficiaries != null && publicStats.totalBeneficiaries > 0
-                      ? publicStats.totalBeneficiaries.toLocaleString()
-                      : "—",
+                    target:
+                      (publicStats?.totalBeneficiaries ?? 0) > 0
+                        ? publicStats!.totalBeneficiaries
+                        : null,
+                    suffix: "",
                     label: "Beneficiaries Reached",
                   },
                   {
-                    value: publicStats ? `${publicStats.verificationRate}%` : "—",
+                    target: publicStats?.verificationRate ?? null,
+                    suffix: "%",
                     label: "Verification Rate",
                   },
                   {
-                    value: publicStats?.activeNGOs != null
-                      ? publicStats.activeNGOs.toLocaleString()
-                      : "—",
+                    target: publicStats?.activeNGOs ?? null,
+                    suffix: "",
                     label: "Active NGOs",
                   },
                   {
-                    value: publicStats
+                    target: publicStats
                       ? publicStats.uniqueSdgsTracked > 0
-                        ? String(publicStats.uniqueSdgsTracked)
-                        : "17"
-                      : "—",
+                        ? publicStats.uniqueSdgsTracked
+                        : 17
+                      : null,
+                    suffix: "",
                     label: "UN SDGs Tracked",
                   },
-                ] as { value: string; label: string }[]
-              ).map((stat) => (
+                ] as { target: number | null; suffix: string; label: string }[]
+              ).map((stat, i) => (
                 <div key={stat.label} className="flex flex-col items-center">
-                  <span className="text-3xl md:text-4xl font-extrabold text-[#B8860B] mb-1">
-                    {stat.value}
+                  <span className="text-3xl md:text-4xl font-extrabold text-[#D4980C] mb-1">
+                    <LoopingCounter
+                      target={stat.target}
+                      suffix={stat.suffix}
+                      delay={i * 200}
+                    />
                   </span>
                   <span className="text-blue-200 text-xs md:text-sm font-medium leading-snug">
                     {stat.label}
@@ -2527,7 +2899,7 @@ export default function Landing() {
             <Button
               variant="outline"
               onClick={() => setShowSampleReport(true)}
-              className="border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-[#0A1F44] font-semibold rounded-xl px-6 cursor-pointer"
+              className="border-[#D4980C] text-[#D4980C] hover:bg-[#D4980C] hover:text-[#0A1F44] font-semibold rounded-xl px-6 cursor-pointer"
             >
               See a Sample Verified Impact Report
             </Button>
@@ -2753,7 +3125,7 @@ export default function Landing() {
                   title: "Solar Village Initiative",
                   tag: "Energy Access",
                   desc: "Energy access outcomes confirmed with full audit trails, mapped to SDG 7 and ESRS E1 — ready for CSRD disclosure.",
-                  tagColor: "bg-[#B8860B]/10 text-[#B8860B]",
+                  tagColor: "bg-[#D4980C]/10 text-[#D4980C]",
                   sdgs: [
                     { n: 7, color: "#FCC30B", name: "Clean Energy" },
                     { n: 1, color: "#E5243B", name: "No Poverty" },
@@ -2809,7 +3181,10 @@ export default function Landing() {
         </section>
 
         {/* ── FAQ ── */}
-        <section id="faq" className="py-10 md:py-16 bg-white border-t border-slate-100">
+        <section
+          id="faq"
+          className="py-10 md:py-16 bg-white border-t border-slate-100"
+        >
           <div className="max-w-3xl mx-auto px-6 md:px-10">
             <div className="text-center mb-10">
               <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
@@ -2845,6 +3220,10 @@ export default function Landing() {
                   q: "Can we use Synerxus across multiple NGO partners and geographies?",
                   a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each NGO partner is onboarded once and can verify outcomes across all corporate programs they are linked to. Reports aggregate verified data across all partners, SDGs, and geographies in one dashboard.",
                 },
+                {
+                  q: "How does Synerxus integrate with our existing systems?",
+                  a: "Synerxus is designed as an additive verification layer — it does not replace your existing platforms. It connects to your current volunteer management tools (e.g. Benevity, Goodera, SAP Concur) via API or CSV export, appending NGO-verified outcome data to your existing activity records. For ESG aggregators and CSRD reporting frameworks, Synerxus exports audit-ready data in GRI, ESRS, and ISO 26000 formats. Enterprise integrations are handled by our onboarding team during setup — no developer resources required on your side.",
+                },
               ].map(({ q, a }, i) => (
                 <details key={i} className="group py-5">
                   <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
@@ -2852,8 +3231,19 @@ export default function Landing() {
                       {q}
                     </span>
                     <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                      >
+                        <path
+                          d="M4.5 6.75L9 11.25L13.5 6.75"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </span>
                   </summary>
@@ -2862,6 +3252,407 @@ export default function Landing() {
                   </p>
                 </details>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Pricing Section ── */}
+        <section
+          id="pricing"
+          className="py-10 md:py-16 bg-slate-50 border-t border-slate-100"
+        >
+          <div className="max-w-6xl mx-auto px-6 md:px-10">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+                Pricing
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3">
+                Verified outcomes, audit-ready evidence, and exclusive NGO
+                access
+              </h2>
+              <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
+                Built on the world's only free verification network.
+              </p>
+            </div>
+
+            {/* Free NGO callout — top of pricing */}
+            <div className="mb-8 rounded-2xl bg-[#0A1F44] px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#D4980C] flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm leading-snug">
+                  NGO verification is always free — no hidden costs for your
+                  partner organizations.
+                </p>
+                <p className="text-blue-200 text-xs mt-1 leading-relaxed">
+                  When you pay for Synerxus, you're not buying verification —
+                  you're buying exclusive access to high-impact NGO partners who
+                  verify outcomes as a fundraising asset, not as a favour.
+                </p>
+              </div>
+            </div>
+
+            {/* Pricing cards — 4 tiers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+              {/* Pilot */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Pilot
+                  </span>
+                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
+                    $5,000
+                  </div>
+                  <div className="text-xs text-slate-400 font-medium mb-2">
+                    90 days · validation sprint
+                  </div>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    Teams validating fit before rollout.
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Evidence Infrastructure
+                  </p>
+                  <ul className="space-y-1.5">
+                    {[
+                      "1 program",
+                      "50 verified outcomes",
+                      "NGO verification workflow",
+                      "SDG-tagged audit trail",
+                    ].map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-xs text-slate-600"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-5 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                    Free for NGO Partners
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Auto-generated "Verified Impact Summary" PDFs they can send
+                    to <em>any</em> funder — at no cost.
+                  </p>
+                </div>
+                <div className="mb-4 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <p className="text-[10px] text-emerald-700 font-semibold leading-snug">
+                    → $5K credited toward annual plan if converted within 30
+                    days
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setPricingPlan("pilot")}
+                  variant="outline"
+                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
+                >
+                  Start a Pilot
+                </Button>
+              </div>
+
+              {/* Starter */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Starter
+                  </span>
+                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
+                    From $8,000
+                    <span className="text-base font-semibold text-slate-400">
+                      /yr
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 font-medium mb-2">
+                    60% less than one audit exception
+                  </div>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    Small ESG teams proving impact.
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Evidence Infrastructure
+                  </p>
+                  <ul className="space-y-1.5">
+                    {[
+                      "Free verification for up to 3 NGO partners",
+                      "50 verified outcomes/month",
+                      "Immutable audit trail",
+                      "PDF evidence exports",
+                    ].map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-xs text-slate-600"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-5 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                    Free for NGO Partners
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    1-tap verification (&lt;15 seconds) becomes their
+                    fundraising asset — no app, no login.
+                  </p>
+                </div>
+                <div className="mb-4 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] text-slate-500 leading-snug">
+                    +$12/outcome overage · +$5K NGO incentive guarantee
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setPricingPlan("starter")}
+                  variant="outline"
+                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
+                >
+                  Request Pricing
+                </Button>
+              </div>
+
+              {/* Growth */}
+              <div className="bg-[#0A1F44] rounded-2xl border border-[#0A1F44] p-6 flex flex-col relative shadow-xl">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#D4980C] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap">
+                  Most Popular
+                </span>
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
+                    Growth
+                  </span>
+                  <div className="mt-1.5 text-2xl font-extrabold text-white">
+                    From $22,000
+                    <span className="text-base font-semibold text-blue-300">
+                      /yr
+                    </span>
+                  </div>
+                  <div className="text-xs text-blue-300 font-medium mb-2">
+                    Multi-program scale
+                  </div>
+                  <p className="text-blue-200 text-xs leading-relaxed">
+                    Multi-program teams scaling globally.
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300 mb-2">
+                    Evidence Infrastructure
+                  </p>
+                  <ul className="space-y-1.5">
+                    {[
+                      "Unlimited NGO partners (all free)",
+                      "250 verified outcomes/month",
+                      "CSRD/ESRS export templates",
+                      "API + Slack integration",
+                    ].map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-xs text-blue-100"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-[#D4980C] flex-shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-5 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                    Free for NGO Partners
+                  </p>
+                  <p className="text-xs text-blue-200 leading-relaxed">
+                    "Verified by Synerxus" badge increases their credibility
+                    with funders — automatically.
+                  </p>
+                </div>
+                <div className="mb-4 px-3 py-2 rounded-xl bg-white/10 border border-white/10">
+                  <p className="text-[10px] text-blue-200 leading-snug">
+                    +$15/outcome overage · +$7.5K Auditor Export Package (Q4
+                    pre-audit)
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setPricingPlan("growth")}
+                  className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold rounded-xl shadow text-sm"
+                >
+                  Request Pricing
+                </Button>
+              </div>
+
+              {/* Enterprise */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Enterprise
+                  </span>
+                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
+                    From $38,000
+                    <span className="text-base font-semibold text-slate-400">
+                      /yr
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 font-medium mb-2">
+                    Global compliance teams
+                  </div>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    Compliance teams managing global risk.
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Evidence Infrastructure
+                  </p>
+                  <ul className="space-y-1.5">
+                    {[
+                      "Unlimited programs & NGOs (all free)",
+                      "Multi-region reporting (EU/US/APAC)",
+                      "SSO/SAML + SOC 2",
+                      "SLA-backed 72h verification",
+                    ].map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-xs text-slate-600"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-5 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                    Free for NGO Partners
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Priority verification support so their reporting needs are
+                    always met — zero cost to them.
+                  </p>
+                </div>
+                <div className="mb-4 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] text-slate-500 leading-snug">
+                    +$8/outcome overage · +$10K/region · +$12K Pre-Audit Package
+                    · Custom integrations
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setPricingPlan("enterprise")}
+                  variant="outline"
+                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
+                >
+                  Talk to Sales
+                </Button>
+              </div>
+            </div>
+
+            {/* What happens next */}
+            <div className="rounded-2xl bg-[#0A1F44] px-6 py-6 md:px-8 md:py-7">
+              <h3 className="text-sm font-extrabold text-white uppercase tracking-wider mb-5">
+                What happens next
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    step: "1",
+                    title: "Send your enquiry",
+                    desc: "Fill in the form — takes 60 seconds. We'll receive it instantly.",
+                  },
+                  {
+                    step: "2",
+                    title: "30-min discovery call",
+                    desc: "We'll map your ESG reporting goals and confirm the right plan for your team.",
+                  },
+                  {
+                    step: "3",
+                    title: "Start your Pilot",
+                    desc: "Go live in days. First verified impact report delivered within 90 days.",
+                  },
+                ].map((item) => (
+                  <div key={item.step} className="flex gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#D4980C] flex items-center justify-center">
+                      <span className="text-[11px] font-extrabold text-white">{item.step}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{item.title}</p>
+                      <p className="text-xs text-blue-200 mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Why NGOs Love Synerxus */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-6 md:p-8">
+              <div className="mb-5">
+                <h3 className="text-base font-extrabold text-[#0A1F44] mb-1">
+                  Why NGOs verify outcomes for free — and why that matters to
+                  you
+                </h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  This isn't charity. It's how we build the supply-side network
+                  that makes your impact data defensible.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                {[
+                  {
+                    icon: <FileCheck className="h-4 w-4 text-[#D4980C]" />,
+                    title: "Funding tool",
+                    desc: 'Auto-generated "Verified Impact Summary" PDFs they can send to any funder.',
+                  },
+                  {
+                    icon: <Clock className="h-4 w-4 text-[#D4980C]" />,
+                    title: "1-tap verification",
+                    desc: "Takes <15 seconds — no app, no login, no training required.",
+                  },
+                  {
+                    icon: <ShieldCheck className="h-4 w-4 text-[#D4980C]" />,
+                    title: "Credibility boost",
+                    desc: '"Verified by Synerxus" badge increases NGO credibility with funders.',
+                  },
+                  {
+                    icon: <CheckCircle className="h-4 w-4 text-[#D4980C]" />,
+                    title: "Zero cost",
+                    desc: "No fees, no contracts, no hidden costs — ever.",
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#D4980C]/10 flex items-center justify-center mt-0.5">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0A1F44]">
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <p className="text-xs text-slate-500 max-w-xl">
+                  Competitors like Benevity and YourCause track self-reported
+                  hours but don't verify outcomes at the source. Synerxus makes
+                  verification free for NGOs—creating a network effect that
+                  makes your ESG data permanently more defensible than any tool
+                  that doesn't prioritize verification at the source.
+                </p>
+                <Button
+                  onClick={() => setPricingPlan("pilot")}
+                  size="sm"
+                  className="flex-shrink-0 bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold rounded-xl whitespace-nowrap"
+                >
+                  Book a Demo
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -2883,39 +3674,34 @@ export default function Landing() {
           {/* Foreground content — always in front, never obstructed */}
           <div className="relative z-10 max-w-7xl mx-auto px-8 md:px-14 py-12 md:py-20">
             <div className="max-w-xl">
-              <span className="inline-block px-3 py-1 rounded-full bg-[#B8860B]/20 text-[#B8860B] text-xs font-bold uppercase tracking-wider mb-5">
+              <span className="inline-block px-3 py-1 rounded-full bg-[#D4980C]/20 text-[#D4980C] text-xs font-bold uppercase tracking-wider mb-5">
                 Get Started
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-5 leading-tight">
-                Ready to Move Beyond Self-Reported Impact?
+                Ready to Move Beyond{" "}
+                <span className="whitespace-nowrap">Self-Reported Impact?</span>
               </h2>
               <p className="text-blue-200 text-base md:text-lg mb-10 leading-relaxed">
                 Join the organizations building audit-ready ESG evidence — not
                 just impact narratives.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/login?tab=register">
+                <Link href="/signup">
                   <Button
                     size="lg"
-                    className="bg-[#B8860B] hover:bg-[#9a6e0a] text-[#0A1F44] font-bold px-8 rounded-xl shadow-lg"
+                    className="bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold px-8 rounded-xl shadow-lg"
                   >
-                    Book a Verification Demo
+                    Start Free Trial
                   </Button>
                 </Link>
-                <a
-                  href="/Synerxus-Verification-Methodology-v1.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download="Synerxus-Verification-Methodology-v1.pdf"
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setPricingPlan("pilot")}
+                  className="border-2 border-white text-white font-bold px-8 rounded-xl hover:bg-white hover:text-[#0A1F44] transition-colors"
                 >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-2 border-white text-white font-bold px-8 rounded-xl hover:bg-white hover:text-[#0A1F44] transition-colors"
-                  >
-                    Download the Methodology
-                  </Button>
-                </a>
+                  Book a Demo
+                </Button>
               </div>
             </div>
           </div>
@@ -3006,14 +3792,12 @@ export default function Landing() {
               </div>
             </div>
 
-            <a
-              href="mailto:hello@synerxus.com?subject=Book a Demo with Synerxus"
-              className="block w-full"
+            <Button
+              onClick={() => setPricingPlan("pilot")}
+              className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-semibold rounded-xl"
             >
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl">
-                Book a Demo with Synerxus
-              </Button>
-            </a>
+              Book a Demo with Synerxus
+            </Button>
           </div>
         </div>
       )}

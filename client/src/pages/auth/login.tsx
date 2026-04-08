@@ -265,12 +265,33 @@ export default function LoginAuth() {
             {/* Sign up link */}
             <p className="text-center text-sm text-gray-500 mt-6">
               Don't have an account?{" "}
-              <a href="/signup" className="text-indigo-600 font-medium hover:text-indigo-500">
+              <a href="/signup" className="text-[#0A1F44] font-semibold hover:text-[#D4980C] transition-colors">
                 Sign up
               </a>
             </p>
           </CardContent>
         </Card>
+
+        {/* Role quick-join strip */}
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <p className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 px-4 pt-4 pb-2">New here? Join as</p>
+          <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
+            {[
+              { label: "Volunteer", sub: "Free", href: "/signup/volunteer", color: "text-emerald-600" },
+              { label: "NGO", sub: "Free", href: "/signup/organization", color: "text-blue-600" },
+              { label: "Corporate", sub: "Paid plans", href: "/signup/corporate", color: "text-[#D4980C]" },
+            ].map(({ label, sub, href, color }) => (
+              <a
+                key={label}
+                href={href}
+                className="flex flex-col items-center py-3 px-2 hover:bg-slate-50 transition-colors group"
+              >
+                <span className={`text-xs font-bold ${color}`}>{label}</span>
+                <span className="text-[10px] text-slate-400 mt-0.5">{sub}</span>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Role Selection Dialog for new Google users */}

@@ -37,7 +37,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
     <>
       <div className="h-16 md:hidden" />
       <nav
-        className="fixed bottom-0 left-0 right-0 h-16 grid grid-cols-5 items-center px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4AF37]/20 shadow-[0_-2px_16px_rgba(0,0,0,0.08)]"
+        className="fixed bottom-0 left-0 right-0 h-16 grid grid-cols-5 items-center px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 shadow-[0_-2px_16px_rgba(0,0,0,0.08)]"
         data-testid="mobile-bottom-nav"
       >
         {NAV_ITEMS.map((item) => {
@@ -51,8 +51,8 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 data-testid={`nav-${item.id}`}
                 className={`flex flex-col items-center justify-self-center gap-0.5 px-3.5 py-2.5 rounded-xl border-none cursor-pointer -translate-y-2 transition-all duration-200 min-w-[60px] min-h-[48px] shadow-lg ${
                   active
-                    ? 'bg-[#D4AF37] text-stone-900 shadow-[#D4AF37]/40'
-                    : 'bg-[#D4AF37]/80 text-stone-900 shadow-[#D4AF37]/30 hover:shadow-[#D4AF37]/50'
+                    ? 'bg-[#D4980C] text-stone-900 shadow-[#D4980C]/40'
+                    : 'bg-[#D4980C]/80 text-stone-900 shadow-[#D4980C]/30 hover:shadow-[#D4980C]/50'
                 }`}
               >
                 <item.icon size={20} />
@@ -69,13 +69,13 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
               onClick={() => handleNavClick(item)}
               data-testid={`nav-${item.id}`}
               className={`flex flex-col items-center justify-self-center gap-0.5 px-2 py-1.5 bg-transparent border-none cursor-pointer transition-all duration-200 min-w-[52px] min-h-[48px] rounded-lg ${
-                active ? 'text-[#92700A]' : 'text-slate-500'
+                active ? 'text-[#7a5200]' : 'text-slate-500'
               }`}
             >
               <div className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                active ? 'bg-[#D4AF37]/50' : 'bg-transparent'
+                active ? 'bg-[#D4980C]/50' : 'bg-transparent'
               }`}>
-                <item.icon size={20} strokeWidth={2} className={active ? 'text-[#92700A]' : 'text-slate-500'} />
+                <item.icon size={20} strokeWidth={2} className={active ? 'text-[#7a5200]' : 'text-slate-500'} />
               </div>
               <span className={`text-[10px] tracking-wide ${active ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}

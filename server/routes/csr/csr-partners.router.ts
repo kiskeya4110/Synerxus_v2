@@ -20,8 +20,9 @@ export const csrPartnersRouter = Router();
  */
 csrPartnersRouter.post("/csr/partners", async (req: Request, res: Response) => {
   try {
-    const { userId, companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
+    const { userId, companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs, subscriptionTier } = req.body;
 
+    const VALID_TIERS = ["free", "pilot", "starter", "growth", "enterprise"];
     const partner = {
       userId,
       companyName,
@@ -31,7 +32,8 @@ csrPartnersRouter.post("/csr/partners", async (req: Request, res: Response) => {
       employeeCount,
       annualCSRBudget,
       primarySdgs: primarySdgs || [],
-      rosterSyncStatus: "pending"
+      rosterSyncStatus: "pending",
+      subscriptionTier: VALID_TIERS.includes(subscriptionTier) ? subscriptionTier : "pilot",
     };
 
     const created = await storage.createCSRPartner?.(partner) || { id: Date.now() };

@@ -1147,7 +1147,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
           {/* Bottom Bar */}
           <div style={{ borderTop: "1px solid rgba(15, 23, 42, 0.15)", paddingTop: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
             <span style={{ fontSize: "11px", color: "#1e293b", fontWeight: "500" }}>
-              © {new Date().getFullYear()} <span style={{ color: '#0A2463', fontWeight: 700 }}>SYNER</span><span style={{ color: '#B8860B', fontWeight: 700 }}>XUS</span>. All rights reserved.
+              © {new Date().getFullYear()} <span style={{ color: '#0A2463', fontWeight: 700 }}>SYNER</span><span style={{ color: '#D4980C', fontWeight: 700 }}>XUS</span>. All rights reserved.
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <button onClick={() => navigate("/privacy")} style={{ background: "none", border: "none", color: "#334155", fontSize: "11px", cursor: "pointer" }}>

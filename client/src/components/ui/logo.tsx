@@ -52,25 +52,25 @@ export default function Logo({
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      gap: `${Math.round(config.height * 0.06)}px`,
+      gap: `${Math.round(config.height * 0.05)}px`,
     }}>
       <span
         style={{
-          fontSize: `${Math.round(config.height * 0.78)}px`,
+          fontSize: `${Math.round(config.height * 0.70)}px`,
           fontFamily: "'Inter', 'Instrument Sans', sans-serif",
-          fontWeight: 800,
+          fontWeight: 700,
           letterSpacing: '-0.02em',
           lineHeight: 1,
         }}
       >
         <span style={{ color: '#0A2463' }}>SYNER</span>
-        <span style={{ color: '#B8860B' }}>XUS</span>
+        <span style={{ color: '#D4980C' }}>XUS</span>
       </span>
       <span
         style={{
-          fontSize: `${Math.round(config.height * 0.50)}px`,
+          fontSize: `${Math.round(config.height * 0.43)}px`,
           fontFamily: "'Inter', 'Instrument Sans', sans-serif",
-          fontWeight: 700,
+          fontWeight: 600,
           letterSpacing: '0.01em',
           lineHeight: 1,
           color: '#0F172A',
@@ -79,7 +79,7 @@ export default function Logo({
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: '#B8860B' }}>Impacts.</span>{' '}
+        <span style={{ color: '#D4980C' }}>Impacts.</span>{' '}
         <span
           onClick={handleVerifiedClick}
           style={{ cursor: 'pointer', color: '#0A2463' }}

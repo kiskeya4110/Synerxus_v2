@@ -53,11 +53,11 @@ export default function OrganizationPWANav({ activeTab, userId: propUserId }: Or
               className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                 isPrimary
                   ? isActive
-                    ? 'bg-[#D4AF37] text-stone-900 -mt-3 shadow-md'
-                    : 'text-stone-500 -mt-3 hover:bg-[#D4AF37] hover:text-stone-900'
+                    ? 'bg-[#D4980C] text-stone-900 -mt-3 shadow-md'
+                    : 'text-stone-500 -mt-3 hover:bg-[#D4980C] hover:text-stone-900'
                   : isActive
-                    ? 'text-[#92700A] bg-[#D4AF37]/50'
-                    : 'text-stone-500 hover:text-[#92700A] hover:bg-[#D4AF37]/50'
+                    ? 'text-[#7a5200] bg-[#D4980C]/50'
+                    : 'text-stone-500 hover:text-[#7a5200] hover:bg-[#D4980C]/50'
               }`}
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid={`nav-org-${item.id}`}

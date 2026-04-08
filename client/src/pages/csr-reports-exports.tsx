@@ -47,6 +47,8 @@ import Footer from "@/components/layout/footer";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { useToast } from "@/hooks/use-toast";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
+import { usePlanFeatures } from "@/hooks/use-plan-features";
+import { PlanGate } from "@/components/plan-gate";
 
 // Lazy load heavy chart components for better initial load
 const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
@@ -209,6 +211,7 @@ export default function CSRReportsExports() {
   const [activeTab, setActiveTab] = useState<"reports" | "expenses" | "budget">("reports");
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenses, setExpenses] = useState(sampleExpenses);
+  const planFeatures = usePlanFeatures();
 
   // Financial KPIs
   const totalBudget = 106000;
@@ -599,7 +602,7 @@ export default function CSRReportsExports() {
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline"><span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
+            <div class="footer-tagline"><span style="color:#D4980C;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>
@@ -1049,7 +1052,7 @@ export default function CSRReportsExports() {
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline"><span style="color:#B8860B;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
+            <div class="footer-tagline"><span style="color:#D4980C;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>
@@ -1205,44 +1208,46 @@ export default function CSRReportsExports() {
           </div>
 
           {/* Quick Export Section */}
-          <div className="mt-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200 shadow-sm">
-            <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Download className="w-4 h-4 text-orange-600" />
-              Quick Data Export
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  toast({ title: "Exported", description: "Volunteer hours data exported." });
-                }}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">⏱️</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Volunteer Hours</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">🌍</div>
-                <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "Project data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">📁</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "Impact data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">📊</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Impact Data</div>
-              </button>
+          <PlanGate feature="csvExport" hasAccess={planFeatures.csvExport}>
+            <div className="mt-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200 shadow-sm">
+              <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
+                <Download className="w-4 h-4 text-orange-600" />
+                Quick Data Export
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    toast({ title: "Exported", description: "Volunteer hours data exported." });
+                  }}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">⏱️</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Volunteer Hours</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">🌍</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">📁</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "Impact data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">📊</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Impact Data</div>
+                </button>
+              </div>
             </div>
-          </div>
+          </PlanGate>
         </div>
       </OrganizationPWALayout>
     );
@@ -1324,46 +1329,48 @@ export default function CSRReportsExports() {
           </div>
 
           {/* Quick Export Section - Light background */}
-          <div className="mt-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200 shadow-sm">
-            <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Download className="w-4 h-4 text-blue-600" />
-              Quick Data Export
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  const csv = generateCSVContent({ id: "all-data", name: "All Data Export" } as ReportTemplate, reportData);
-                  downloadFile(csv, "all_employee_hours.csv", "text/csv");
-                  toast({ title: "Exported", description: "Employee hours data exported." });
-                }}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">⏱️</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Employee Hours</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">🌍</div>
-                <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "Project data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">📁</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
-              </button>
-              <button
-                onClick={() => toast({ title: "Exported", description: "Financial data exported." })}
-                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
-              >
-                <div className="text-sm mb-0.5">💰</div>
-                <div className="text-slate-800 text-[10px] font-semibold">Financial</div>
-              </button>
+          <PlanGate feature="csvExport" hasAccess={planFeatures.csvExport}>
+            <div className="mt-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200 shadow-sm">
+              <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
+                <Download className="w-4 h-4 text-blue-600" />
+                Quick Data Export
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    const csv = generateCSVContent({ id: "all-data", name: "All Data Export" } as ReportTemplate, reportData);
+                    downloadFile(csv, "all_employee_hours.csv", "text/csv");
+                    toast({ title: "Exported", description: "Employee hours data exported." });
+                  }}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">⏱️</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Employee Hours</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">🌍</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">📁</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
+                </button>
+                <button
+                  onClick={() => toast({ title: "Exported", description: "Financial data exported." })}
+                  className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm mb-0.5">💰</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Financial</div>
+                </button>
+              </div>
             </div>
-          </div>
+          </PlanGate>
         </main>
 
         <CSRMobileNav activeTab="reports" />
@@ -1703,49 +1710,51 @@ export default function CSRReportsExports() {
           </div>
 
           {/* Quick Export Section */}
-          <div style={{ backgroundColor: "white", borderRadius: "12px", border: "2px solid #1e3a8a", padding: "24px", marginTop: "16px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#111827", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Download style={{ width: "20px", height: "20px", color: "#1e3a8a" }} />
-              Quick Data Export
-            </h3>
-            <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "20px" }}>Export raw data for custom analysis in your preferred tools.</p>
+          <PlanGate feature="csvExport" hasAccess={planFeatures.csvExport}>
+            <div style={{ backgroundColor: "white", borderRadius: "12px", border: "2px solid #1e3a8a", padding: "24px", marginTop: "16px" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#111827", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <Download style={{ width: "20px", height: "20px", color: "#1e3a8a" }} />
+                Quick Data Export
+              </h3>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "20px" }}>Export raw data for custom analysis in your preferred tools.</p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
-              <button onClick={() => {
-                const csv = generateCSVContent({ id: "all-data", name: "All Data Export" } as ReportTemplate, reportData);
-                downloadFile(csv, "all_employee_hours.csv", "text/csv");
-                toast({ title: "Exported", description: "Employee hours data exported successfully." });
-              }} style={{ padding: "16px", backgroundColor: "#f0fdf4", border: "1px solid #22c55e", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
-                <div style={{ fontSize: "20px", marginBottom: "8px" }}>⏱️</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Employee Hours</div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>All volunteer activity data</div>
-              </button>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
+                <button onClick={() => {
+                  const csv = generateCSVContent({ id: "all-data", name: "All Data Export" } as ReportTemplate, reportData);
+                  downloadFile(csv, "all_employee_hours.csv", "text/csv");
+                  toast({ title: "Exported", description: "Employee hours data exported successfully." });
+                }} style={{ padding: "16px", backgroundColor: "#f0fdf4", border: "1px solid #22c55e", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontSize: "20px", marginBottom: "8px" }}>⏱️</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Employee Hours</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280" }}>All volunteer activity data</div>
+                </button>
 
-              <button onClick={() => {
-                toast({ title: "Exported", description: "SDG metrics data exported successfully." });
-              }} style={{ padding: "16px", backgroundColor: "#eff6ff", border: "1px solid #3b82f6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
-                <div style={{ fontSize: "20px", marginBottom: "8px" }}>🌍</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>SDG Metrics</div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>Goal alignment data</div>
-              </button>
+                <button onClick={() => {
+                  toast({ title: "Exported", description: "SDG metrics data exported successfully." });
+                }} style={{ padding: "16px", backgroundColor: "#eff6ff", border: "1px solid #3b82f6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontSize: "20px", marginBottom: "8px" }}>🌍</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>SDG Metrics</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280" }}>Goal alignment data</div>
+                </button>
 
-              <button onClick={() => {
-                toast({ title: "Exported", description: "Project data exported successfully." });
-              }} style={{ padding: "16px", backgroundColor: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
-                <div style={{ fontSize: "20px", marginBottom: "8px" }}>📁</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Project Data</div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>All project information</div>
-              </button>
+                <button onClick={() => {
+                  toast({ title: "Exported", description: "Project data exported successfully." });
+                }} style={{ padding: "16px", backgroundColor: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontSize: "20px", marginBottom: "8px" }}>📁</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Project Data</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280" }}>All project information</div>
+                </button>
 
-              <button onClick={() => {
-                toast({ title: "Exported", description: "Financial data exported successfully." });
-              }} style={{ padding: "16px", backgroundColor: "#faf5ff", border: "1px solid #8b5cf6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
-                <div style={{ fontSize: "20px", marginBottom: "8px" }}>💰</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Financial Data</div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>ROI and value metrics</div>
-              </button>
+                <button onClick={() => {
+                  toast({ title: "Exported", description: "Financial data exported successfully." });
+                }} style={{ padding: "16px", backgroundColor: "#faf5ff", border: "1px solid #8b5cf6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontSize: "20px", marginBottom: "8px" }}>💰</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Financial Data</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280" }}>ROI and value metrics</div>
+                </button>
+              </div>
             </div>
-          </div>
+          </PlanGate>
             </>
           )}
 

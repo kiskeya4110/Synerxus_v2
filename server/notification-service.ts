@@ -70,7 +70,8 @@ function createEmailTransporter() {
   };
 }
 
-const emailTransporter = createEmailTransporter();
+export const emailTransporter = createEmailTransporter();
+export const EMAIL_FROM = EMAIL_CONFIG.from;
 
 // SMS Provider interface (Phase 2 stub -- no-op implementation)
 export interface SMSProvider {

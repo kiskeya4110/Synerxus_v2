@@ -6,7 +6,7 @@ import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } f
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { sendInvitationEmail } from "../email-digest-service";
-import { notifyNewAssignment } from "../notification-service";
+import { notifyNewAssignment, emailTransporter, EMAIL_FROM } from "../notification-service";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
@@ -1028,5 +1028,49 @@ miscRouter.get("/invitations/pending", async (req, res) => {
   } catch (error) {
     console.error("Error fetching pending invitations:", error);
     res.status(500).json({ error: "Failed to fetch pending invitations" });
+  }
+});
+
+// ── Public contact / pricing enquiry (unauthenticated) ───────────────────────
+miscRouter.post("/contact", async (req: Request, res: Response) => {
+  try {
+    const { name, company, email, plan, message } = req.body as {
+      name: string;
+      company: string;
+      email: string;
+      plan: string;
+      message?: string;
+    };
+
+    if (!name || !company || !email || !plan) {
+      return res.status(400).json({ error: "name, company, email and plan are required" });
+    }
+
+    const subject = `Synerxus ${plan} Plan Enquiry — ${company}`;
+    const textBody = [
+      `Name: ${name}`,
+      `Company: ${company}`,
+      `Email: ${email}`,
+      `Plan: ${plan}`,
+      "",
+      "Notes:",
+      message || "(none)",
+    ].join("\n");
+
+    await emailTransporter.sendMail({
+      from: EMAIL_FROM,
+      to: "hello@synerxus.com",
+      cc: email,
+      replyTo: email,
+      subject,
+      text: textBody,
+      html: `<pre style="font-family:sans-serif;font-size:14px;">${textBody.replace(/</g, "&lt;")}</pre>`,
+    });
+
+    console.log(`[CONTACT] Enquiry received from ${email} for plan: ${plan}`);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[CONTACT] Failed to send enquiry email:", error);
+    res.status(500).json({ error: "Failed to send enquiry. Please email hello@synerxus.com directly." });
   }
 });

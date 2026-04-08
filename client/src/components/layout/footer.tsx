@@ -20,7 +20,7 @@ const FOOTER_LINKS = {
 };
 
 const SOCIAL_LINKS = [
-  { href: "https://x.com", label: "X (Twitter)", icon: SiX },
+  { href: "https://x.com/synerxus", label: "X (Twitter)", icon: SiX },
   {
     href: "https://www.linkedin.com/company/synerxus",
     label: "LinkedIn",
@@ -62,7 +62,7 @@ export default function Footer() {
       className="bg-secondary border-t border-border mt-auto"
       data-footer-id={instanceId.current}
     >
-      <div className="container max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-6">
         {/* 4-column grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-5">
 
@@ -155,7 +155,7 @@ export default function Footer() {
           <p className="text-xs text-muted-foreground">
             © {currentYear}{" "}
             <span style={{ color: "#0A2463", fontWeight: 700 }}>SYNER</span>
-            <span style={{ color: "#B8860B", fontWeight: 700 }}>XUS</span>. All rights reserved.
+            <span style={{ color: "#D4980C", fontWeight: 700 }}>XUS</span>. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             NGO-verified impact evidence for a transparent world

@@ -30,7 +30,7 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4AF37]/20 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
       style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid grid-cols-5">
@@ -43,11 +43,11 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
               key={item.id}
               onClick={() => handleNavClick(item)}
               className={`flex flex-col items-center justify-center py-1 w-full rounded transition-all ${
-                isActive ? 'text-[#92700A] bg-[#D4AF37]/50' : 'text-stone-500 hover:text-[#92700A]'
+                isActive ? 'text-[#7a5200] bg-[#D4980C]/50' : 'text-stone-500 hover:text-[#7a5200]'
               }`}
               data-testid={`csr-nav-${item.id}`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#92700A]' : 'text-stone-500'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#7a5200]' : 'text-stone-500'}`} />
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>
           );

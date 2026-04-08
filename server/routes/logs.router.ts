@@ -2742,7 +2742,13 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:${(filterEmployeeNames && filterEmployeeNames.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
-      <div style="margin-bottom:8px;"><img src="${LOGO_DATA_URI}" alt="Synerxus" style="height:32px;width:auto;display:block;" /></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <img src="${LOGO_DATA_URI}" alt="Synerxus" style="height:44px;width:auto;display:block;" />
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
+          <span style="font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;"><span style="color:#fff;">SYNER</span><span style="color:#D4980C;">XUS</span></span>
+          <span style="font-size:11px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;"><span style="color:#D4980C;">Impacts.</span> <span style="color:#fff;">Verified.</span></span>
+        </div>
+      </div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
       <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
     </div>

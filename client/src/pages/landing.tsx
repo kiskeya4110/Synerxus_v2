@@ -170,10 +170,10 @@ function HowItWorksSection({
             From Ground-Level Activity to Boardroom ESG Report
           </h2>
           <a
-            href="/Synerxus-Verification-Methodology-v1.pdf"
+            href="/Synerxus-Verification-Methodology-v1.1.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            download="Synerxus-Verification-Methodology-v1.pdf"
+            download="Synerxus-Verification-Methodology-v1.1.pdf"
             className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-[#0A1F44]/70 hover:text-[#0A1F44] border border-[#0A1F44]/20 hover:border-[#0A1F44]/50 rounded-full px-4 py-1.5 transition-colors"
           >
             <svg

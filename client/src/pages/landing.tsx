@@ -94,7 +94,7 @@ const PIPELINE_STEPS: {
     x: 71,
     y: 55,
     detail:
-      "Every verified event is sealed into an immutable audit record — verifier identity, device ID, GPS coordinates, timestamp, and SDG mapping captured automatically for CSRD compliance.",
+      "Every verified event is sealed into an immutable audit record — verifier identity, device ID, GPS coordinates, timestamp, and SDG mapping captured automatically for WEF, GRI and global ESG compliance.",
     mobileImage: undefined,
   },
   {
@@ -104,7 +104,7 @@ const PIPELINE_STEPS: {
     x: 89,
     y: 55,
     detail:
-      "Corporate ESG teams receive a branded, audit-ready PDF impact report — every outcome traceable to a direct NGO confirmation, ready for CSRD and GRI disclosure.",
+      "Corporate ESG teams receive a branded, audit-ready PDF impact report — every outcome traceable to a direct NGO confirmation, aligned to WEF SCM, GRI, SASB and TCFD.",
     mobileImage: undefined,
   },
 ];
@@ -962,26 +962,26 @@ function buildSampleReportHtml(): string {
         <div style="font-size:10px;color:#6B7280;margin-top:6px;">NGO-Tracked</div>
       </div>
     </div>
-    <div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:.03em;">Management Reporting Verified — Supports CSRD Assurance (ISAE 3000)</div>
+    <div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:.03em;">Management Reporting Verified — WEF SCM · GRI · SASB · TCFD · ISAE 3000 Revised</div>
   </div>
 
   <!-- CSRD boundary indicator -->
   <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
-    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">CSRD Assurance Boundary Indicator</div>
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Assurance Boundary Indicator — ISAE 3000 Revised</div>
     <div style="padding:14px 16px;background:#F9FAFB;">
       <div style="background:#E5E7EB;height:18px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:8px;">
         <div style="width:65%;height:100%;background:#0A2463;display:flex;align-items:center;padding-left:8px;"><span style="font-size:9px;color:#F9FAFB;font-weight:700;">65%</span></div>
       </div>
-      <div style="font-size:10.5px;color:#374151;font-weight:600;margin-bottom:4px;">Supports CSRD Assurance <span style="color:#0891B2;">(Management Reporting Verified)</span></div>
+      <div style="font-size:10.5px;color:#374151;font-weight:600;margin-bottom:4px;">WEF SCM · GRI · SASB · TCFD Aligned <span style="color:#0891B2;">(Management Reporting Verified)</span></div>
       <div style="font-size:9px;color:#6B7280;font-style:italic;padding-top:6px;border-top:1px solid #E5E7EB;margin-top:6px;">* Independent auditor procedures per ISAE 3000 required for formal assurance. Synerxus reduces evidence-gathering burden — it does not replace auditor judgment or opinion.</div>
     </div>
   </div>
 
-  <!-- ESRS disclosure support -->
+  <!-- Framework disclosure support -->
   <div class="section">
-    <div class="section-header"><h2>ESRS Disclosure Support Status</h2></div>
+    <div class="section-header"><h2>Framework Alignment Status (WEF · GRI · ESRS)</h2></div>
     <table>
-      <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">ESRS Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
+      <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">Disclosure Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
       <tbody>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S1.4 — Workforce skills</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 47 employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">ESRS S3.3 — Community engagement</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 3 NGO partners, 134 verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
@@ -991,7 +991,7 @@ function buildSampleReportHtml(): string {
       </tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — designed to support CSRD disclosure requirements for third-party verified social impact data (ESRS S3).</div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — aligned to WEF SCM, GRI 413-1, SASB, TCFD and (for EU organisations) ESRS S3.</div>
 </div>
 
 <!-- VERIFICATION BOUNDARY MATRIX -->
@@ -1022,12 +1022,12 @@ function buildSampleReportHtml(): string {
       <tbody>${ngoRows}</tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S3.3 requires disclosure of "operations with significant community impact." This section proves direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> GRI 413-1 and WEF People pillar require disclosure of community engagement. ESRS S3.3 applies for EU filers. This section proves direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
 </div>
 
 <!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (ESRS S1.4)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (WEF People · GRI 404-1)</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
     <div class="section">
       <div class="section-header"><h2>Participation Metrics</h2></div>
@@ -1065,7 +1065,7 @@ function buildSampleReportHtml(): string {
       <span style="color:#6B7280;">SMS-Based (No App Required)</span>
     </div>
   </div>
-  <div class="note">&#128161; <strong>CSRD Relevance:</strong> ESRS S1.4 requires disclosure of "workforce skills development." This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> WEF People pillar and GRI 404-1 require workforce skills disclosure. ESRS S1.4 applies for EU filers. This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
 </div>
 
 <!-- SECTION 4: SDG ALIGNMENT -->
@@ -1122,7 +1122,7 @@ function buildSampleReportHtml(): string {
       </div>
       <div>
         <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Regulatory Metadata</div>
-        ${["SDG Primary/Secondary", "ESRS Mapping (S3/S4)", "Project ID", "Corporate Program"].map((item, i, arr) => `<div style="padding:5px 14px;font-size:10px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}">&#x2022; ${item}</div>`).join("")}
+        ${["SDG Primary/Secondary", "WEF Pillar · GRI Disclosure", "Project ID", "Corporate Program"].map((item, i, arr) => `<div style="padding:5px 14px;font-size:10px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}">&#x2022; ${item}</div>`).join("")}
       </div>
     </div>
     <div style="padding:10px 16px;background:#F0FDFF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;">
@@ -1139,7 +1139,7 @@ function buildSampleReportHtml(): string {
 
 <!-- SECTION 6: DOUBLE MATERIALITY -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Double Materiality Disclosure (ESRS S3.4)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Impact Materiality Disclosure (WEF Prosperity · GRI 413-2)</h3>
   <!-- Screening matrix -->
   <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
     <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Negative Impact Screening — Status Matrix</div>
@@ -1214,7 +1214,7 @@ function buildSampleReportHtml(): string {
         </div>
       </div>
     </div>
-    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Synerxus provides verification infrastructure — not assurance opinion. Independent auditor required for ISAE 3000 / CSRD formal assurance.</div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Synerxus provides verification infrastructure — not assurance opinion. Independent auditor required for ISAE 3000 formal assurance.</div>
   </div>
 </div>
 
@@ -1818,8 +1818,8 @@ export default function Landing() {
                 data-testid="text-hero-description"
               >
                 Real-time, NGO-verified outcomes with immutable audit trails —
-                built for enterprise ESG, CSRD and ESRS reporting under the UN
-                SDGs.
+                built for global ESG reporting under WEF, GRI, SASB, TCFD and
+                the UN SDGs.
               </p>
 
               <div className="flex flex-row gap-2 sm:gap-3 mb-10">
@@ -1868,10 +1868,10 @@ export default function Landing() {
               <div className="flex flex-wrap gap-2 mt-1">
                 {[
                   "All 17 UN SDGs",
-                  "CSRD-Ready",
+                  "WEF SCM Aligned",
                   "Audit-Defensible",
                   "NGO-Verified",
-                  "ESRS S3/S4 Mapped",
+                  "GRI · SASB · TCFD",
                 ].map((badge) => (
                   <span
                     key={badge}
@@ -2039,7 +2039,7 @@ export default function Landing() {
                   icon: <Building2 className="h-7 w-7 text-[#0A1F44]" />,
                   segment: "ESG Teams",
                   pain: "70% of disclosures rely on self-reported data.",
-                  quote: '"CSRD requires evidence, not narratives."',
+                  quote: '"ESG frameworks require evidence, not narratives."',
                 },
                 {
                   icon: <Users className="h-7 w-7 text-[#0A1F44]" />,
@@ -2119,7 +2119,7 @@ export default function Landing() {
               cardIdle: "border-[#D4980C]/40 bg-[#FFFDF5]/80",
               tools: [],
               detail:
-                "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. Every verified outcome is automatically tagged to the relevant UN SDG (1–17) and mapped to ESRS S3/S4, turning ESG claims into CSRD-ready evidence.",
+                "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. Every verified outcome is automatically tagged to the relevant UN SDG (1–17) and mapped to WEF, GRI, SASB and TCFD metrics, turning ESG claims into audit-ready evidence.",
             },
             {
               id: "Level 3",
@@ -2168,7 +2168,7 @@ export default function Landing() {
               badgeText: "text-slate-400",
               cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["CSRD", "GRI Standards", "ESRS S3/S4"],
+              tools: ["WEF SCM", "GRI Standards", "SASB · TCFD"],
               detail:
                 "Define what to report and in what format — but accept self-declared numbers. They create demand for verified data; Synerxus provides the supply.",
             },
@@ -2523,7 +2523,7 @@ export default function Landing() {
                 {
                   icon: <BarChart2 className="h-6 w-6 text-emerald-600" />,
                   title: "SDG + ESG Alignment",
-                  desc: "Automatic mapping to ESRS S3/S4 — reports that compliance officers trust.",
+                  desc: "Automatic mapping to WEF, GRI, SASB and TCFD — reports that compliance officers trust globally.",
                   bg: "bg-emerald-100",
                 },
                 {
@@ -2693,7 +2693,7 @@ export default function Landing() {
                   icon: <BarChart2 className="h-6 w-6 text-blue-700" />,
                   audience: "ESG Teams",
                   benefit:
-                    "CSRD-ready evidence for S3/S4 disclosures — audit-defensible from day one.",
+                    "WEF- and GRI-aligned evidence — audit-defensible from day one, including CSRD/ESRS support.",
                   bg: "bg-blue-100",
                 },
                 {
@@ -2919,7 +2919,7 @@ export default function Landing() {
               <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
                 Synerxus automatically tags each NGO-verified outcome to the
                 relevant SDG — creating a traceable chain from ground-level
-                delivery to CSRD disclosure across all 17 goals.
+                delivery to ESG disclosure across all 17 goals.
               </p>
               <p className="text-slate-400 text-xs mt-2">
                 Click any goal to learn more.
@@ -3088,7 +3088,7 @@ export default function Landing() {
 
             <p className="text-center text-xs text-slate-400">
               Every Synerxus-verified outcome carries an immutable SDG tag —
-              audit-ready for ESRS S3/S4 and GRI disclosure.
+              audit-ready for GRI, SASB, TCFD and WEF SCM disclosure.
             </p>
           </div>
         </section>
@@ -3124,7 +3124,7 @@ export default function Landing() {
                 {
                   title: "Solar Village Initiative",
                   tag: "Energy Access",
-                  desc: "Energy access outcomes confirmed with full audit trails, mapped to SDG 7 and ESRS E1 — ready for CSRD disclosure.",
+                  desc: "Energy access outcomes confirmed with full audit trails, mapped to SDG 7, WEF Planet pillar and GRI 302 — audit-ready globally.",
                   tagColor: "bg-[#D4980C]/10 text-[#D4980C]",
                   sdgs: [
                     { n: 7, color: "#FCC30B", name: "Clean Energy" },
@@ -3205,8 +3205,8 @@ export default function Landing() {
                   a: "After a volunteer logs an activity, the assigned NGO partner receives an instant SMS or in-app verification request. They confirm or flag the outcome with a single tap — no login required — in under 15 seconds. The result is sealed into a tamper-proof evidence record.",
                 },
                 {
-                  q: "Is this compliant with CSRD and ESRS S3/S4?",
-                  a: "Synerxus is specifically designed to produce evidence that supports CSRD disclosure obligations under ESRS S3 (Affected Communities) and S4 (Consumers and End-users). Every verified outcome is automatically tagged to the relevant ESRS standard and UN SDG, creating a traceable chain of evidence for third-party assurance.",
+                  q: "Which reporting frameworks does Synerxus support?",
+                  a: "Synerxus is built around the WEF Stakeholder Capitalism Metrics as its primary framework, with alignment to GRI Standards, SASB, TCFD and UN SDGs. EU organisations using CSRD/ESRS are also supported — ESRS S3 (Affected Communities) and S4 data points are mapped automatically. Every verified outcome creates a traceable chain of evidence for third-party assurance under ISAE 3000 Revised.",
                 },
                 {
                   q: "What does an immutable audit trail actually contain?",
@@ -3223,6 +3223,50 @@ export default function Landing() {
                 {
                   q: "How does Synerxus integrate with our existing systems?",
                   a: "Synerxus is designed as an additive verification layer — it does not replace your existing platforms. It connects to your current volunteer management tools (e.g. Benevity, Goodera, SAP Concur) via API or CSV export, appending NGO-verified outcome data to your existing activity records. For ESG aggregators and CSRD reporting frameworks, Synerxus exports audit-ready data in GRI, ESRS, and ISO 26000 formats. Enterprise integrations are handled by our onboarding team during setup — no developer resources required on your side.",
+                },
+                {
+                  q: "What is WEF SCM?",
+                  a: "WEF SCM stands for the World Economic Forum Stakeholder Capitalism Metrics — a universal set of sustainability indicators created by the WEF in collaboration with Deloitte, EY, KPMG, and PwC. Synerxus uses WEF SCM as its primary framework backbone because it was specifically designed to harmonise GRI, SASB, TCFD, and the EU's ESRS into a single standard. This means evidence collected once on Synerxus can satisfy reporting requirements across all major frameworks simultaneously, without reformatting.",
+                },
+                {
+                  q: "What is CSRD?",
+                  a: "CSRD stands for the Corporate Sustainability Reporting Directive — a European Union regulation that requires large companies operating in the EU to publish detailed, audited sustainability reports. It began phasing in from 2024 and will apply to tens of thousands of companies by 2026. CSRD mandates reporting against ESRS (European Sustainability Reporting Standards) and requires evidence that can be externally assured. Synerxus is designed specifically to generate the type of third-party-verified, audit-ready data that CSRD requires.",
+                },
+                {
+                  q: "What is ESRS?",
+                  a: "ESRS stands for European Sustainability Reporting Standards — the specific set of standards companies must follow when reporting under CSRD. The standards cover environmental topics (E1–E5), social topics (S1–S4), and governance (G1). Synerxus automatically maps each verified outcome to the relevant ESRS topics — most commonly ESRS S3 (Affected Communities) and ESRS S1 (Own Workforce) — so your disclosure data is already structured for your CSRD report.",
+                },
+                {
+                  q: "What is GRI?",
+                  a: "GRI stands for the Global Reporting Initiative, one of the world's most widely used sustainability reporting frameworks, adopted by over 10,000 organisations in 100+ countries. GRI Standards cover economic, environmental, and social impacts. Synerxus verified outcomes are automatically mapped to relevant GRI standards, particularly GRI 413 (Local Communities) and GRI 403 (Occupational Health & Safety), so your data is ready for GRI-based disclosures without additional work.",
+                },
+                {
+                  q: "What is SASB?",
+                  a: "SASB stands for the Sustainability Accounting Standards Board, a US-based framework that defines industry-specific sustainability metrics for investors. SASB standards vary by sector — for example, a financial services firm and a manufacturing company will report on different sustainability indicators. Synerxus applies the applicable SASB indicators to your verified outcomes based on your industry, ensuring your ESG data is relevant and comparable to peers in your sector.",
+                },
+                {
+                  q: "What is TCFD?",
+                  a: "TCFD stands for the Task Force on Climate-related Financial Disclosures, a framework developed by the Financial Stability Board to guide companies in reporting on climate-related risks and opportunities. TCFD covers Governance, Strategy, Risk Management, and Metrics & Targets. While Synerxus is primarily focused on social impact (the 'S' in ESG), our evidence objects map to TCFD where climate-related community and workforce outcomes are involved, and our governance documentation supports TCFD's governance pillar reporting.",
+                },
+                {
+                  q: "What are the UN SDGs?",
+                  a: "The UN SDGs — Sustainable Development Goals — are 17 global goals adopted by all United Nations member states in 2015, ranging from No Poverty (SDG 1) and Quality Education (SDG 4) to Climate Action (SDG 13) and Partnerships for the Goals (SDG 17). Every activity and outcome logged on Synerxus is automatically mapped to one or more SDGs based on what was achieved and who was served. This makes it straightforward to report on your SDG contribution in annual reports and stakeholder communications.",
+                },
+                {
+                  q: "What is ISAE 3000?",
+                  a: "ISAE 3000 is the International Standard on Assurance Engagements 3000 — the global auditing standard used by external auditors (Big 4 and others) when providing assurance over non-financial (ESG) reports. It requires verifiable evidence, a documented chain of custody, and independence between the activity submitter and the verifier. Synerxus is structured specifically to meet ISAE 3000 evidence requirements: every verified outcome includes third-party confirmation, timestamps, device metadata, and a tamper-proof hash — reducing auditor evidence-gathering effort by 60–70%. Formal assurance still requires an independent auditor; Synerxus generates the evidence they need.",
+                },
+                {
+                  q: "What happens if an NGO rejects a verification request?",
+                  a: "If a verifier flags an outcome as inaccurate or unverifiable, it is marked as rejected and excluded from all ESG reports and audit trails. Rejected outcomes are logged separately and disclosed in compliance reports for transparency — CSRD's double materiality principle requires disclosure of negative or unverified outcomes as well. The submitting volunteer or program manager is notified and can resubmit with additional evidence.",
+                },
+                {
+                  q: "Who verifies the outcomes — do verifiers work for Synerxus?",
+                  a: "No. Verifiers are always independent of Synerxus and independent of the person submitting the outcome. They are NGO staff, program directors, beneficiaries, or employer representatives who are directly involved in the activity. This independence is a core requirement of ISAE 3000 and is fundamental to the credibility of the evidence. Synerxus facilitates the request and records the result — we do not influence or participate in the verification decision.",
+                },
+                {
+                  q: "Does Synerxus provide formal ESG assurance?",
+                  a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
                 },
               ].map(({ q, a }, i) => (
                 <details key={i} className="group py-5">
@@ -3450,7 +3494,7 @@ export default function Landing() {
                     {[
                       "Unlimited NGO partners (all free)",
                       "250 verified outcomes/month",
-                      "CSRD/ESRS export templates",
+                      "WEF · GRI · SASB · TCFD export templates",
                       "API + Slack integration",
                     ].map((f) => (
                       <li
@@ -3786,7 +3830,7 @@ export default function Landing() {
                   <p className="text-xs text-slate-500">
                     Verified data is locked and timestamped with its SDG
                     mapping, producing audit-ready evidence aligned to all 17 UN
-                    SDGs and ESRS S3/S4 for CSRD disclosure.
+                    SDGs — aligned to WEF SCM, GRI, SASB and TCFD.
                   </p>
                 </div>
               </div>

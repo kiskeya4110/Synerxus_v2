@@ -253,7 +253,8 @@
       "Bash(/dev/null npm:*)",
       "Bash(node:*)",
       "WebFetch(domain:c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(NODE_ENV=development tsx /home/runner/workspace/server/index.ts)"
     ],
     "deny": [],
     "ask": []

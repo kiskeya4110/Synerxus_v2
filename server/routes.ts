@@ -406,6 +406,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setLogsBroadcast(broadcastUpdate);
   setNotificationBroadcast(broadcastUpdate);
 
+  // ── PUBLIC endpoint: platform stats for landing page ─────────────────────────
+  // IMPORTANT: must be declared BEFORE all router mounts so no router-level
+  // authMiddleware can intercept unauthenticated visitors.
+  app.get("/api/public-stats", async (_req: Request, res: Response) => {
+    const CACHE_KEY = "public:platform-stats";
+    const cached = cache.get<object>(CACHE_KEY);
+    if (cached) return res.json(cached);
+
+    try {
+      const [allActivities, allUsers, allProjects] = await Promise.all([
+        db.select().from(volunteerActivities),
+        storage.listUsers(),
+        db.select({ id: projects.id, organizationId: projects.organizationId }).from(projects),
+      ]);
+
+      const verified = allActivities.filter(a => a.verificationStatus === "approved");
+
+      const totalVerifiedOutcomes = verified.length;
+      const totalVerifiedHours    = Math.round(verified.reduce((s, a) => s + (a.hours || 0), 0));
+      const totalBeneficiaries    = verified.reduce((s, a) => s + (a.beneficiaryCount || 0), 0);
+      const verificationRate      = allActivities.length > 0
+        ? Math.round((verified.length / allActivities.length) * 100)
+        : 0;
+
+      const uniqueSdgs = new Set<number>();
+      for (const a of verified) {
+        if (Array.isArray(a.sdgTags)) a.sdgTags.forEach(n => uniqueSdgs.add(n));
+      }
+
+      const totalVolunteers = allUsers.filter(u => u.userType === "volunteer").length;
+
+      const projectOrgMap = new Map<number, number>();
+      for (const p of allProjects) {
+        if (p.organizationId != null) projectOrgMap.set(p.id, p.organizationId);
+      }
+      const activeOrgIds = new Set<number>();
+      for (const a of verified) {
+        if (a.projectId) {
+          const orgId = projectOrgMap.get(a.projectId);
+          if (orgId) activeOrgIds.add(orgId);
+        }
+      }
+      const activeNGOs = activeOrgIds.size;
+
+      const payload = {
+        totalVerifiedOutcomes,
+        totalVerifiedHours,
+        totalBeneficiaries,
+        verificationRate,
+        uniqueSdgsTracked: uniqueSdgs.size,
+        totalVolunteers,
+        activeNGOs,
+      };
+
+      cache.set(CACHE_KEY, payload, 120); // cache 2 min
+      return res.json(payload);
+    } catch (err) {
+      logger.error("public-stats error:", err);
+      return res.status(500).json({ message: "Failed to load stats" });
+    }
+  });
+
   // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
   // Phases 1-6 routers: mounted at resource-specific paths
   registerChatRoutes(app);
@@ -426,8 +488,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", activitiesRouter); // Handles /volunteer-activities, /impact-metrics, /project-impacts
   app.use("/api", logsRouter); // Handles /logs (unified impact log API), /reports/export
   app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
+  app.use("/api", miscRouter); // Handles /public-stats (unauthenticated), /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
-  app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
   app.use("/api", aiRecommendationsRouter); // Handles /ai-recommendations for Apply/Dismiss AI insights
   app.use("/api", uptimeMonitor); // Handles /ping, /status, /webhook/uptime

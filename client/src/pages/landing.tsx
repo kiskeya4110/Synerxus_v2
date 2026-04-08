@@ -1321,7 +1321,8 @@ export default function Landing() {
     totalBeneficiaries: number;
     verificationRate: number;
     uniqueSdgsTracked: number;
-    avgVerificationHours: number | null;
+    totalVolunteers: number;
+    activeNGOs: number;
   }>({
     queryKey: ["/api/public-stats"],
     queryFn: () => fetch("/api/public-stats").then(r => r.json()),
@@ -2485,10 +2486,10 @@ export default function Landing() {
                     label: "Verification Rate",
                   },
                   {
-                    value: publicStats?.avgVerificationHours != null
-                      ? `${publicStats.avgVerificationHours}h`
+                    value: publicStats?.activeNGOs != null
+                      ? publicStats.activeNGOs.toLocaleString()
                       : "—",
-                    label: "Avg. Time to Verify",
+                    label: "Active NGOs",
                   },
                   {
                     value: publicStats

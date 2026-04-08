@@ -1,0 +1,41 @@
+Based on what I can see in the code and what's been built,
+   here are the meaningful remaining opportunities:
+
+  Conversion                                                
+  - No pricing signal anywhere — enterprise prospects need
+  at least a tier anchor or "Request Pricing" CTA to avoid  
+  friction. Even a "Starter / Growth / Enterprise" skeleton
+  builds confidence.                                        
+  - The final CTA section goes straight to "Start Free    
+  Trial" — a secondary "Book a Demo" option would capture
+  prospects who aren't ready to self-serve.                 
+                                           
+  Performance                                               
+  - The three hero slide images (heroSlide1/2/3) are all    
+  eagerly imported at page load. Only the first slide is    
+  visible initially — slides 2 and 3 could be lazy-loaded.  
+  - buildSampleReportHtml() is a large function that        
+  constructs a ~3KB HTML string — it runs on every render 
+  cycle rather than being memoized.                         
+                                   
+  Trust / Social Proof                                      
+  - The X (Twitter) footer link still points to             
+  https://x.com with no handle.                
+  - The partner strip only shows Limitless Foundation — even
+   2–3 more named NGO partners (or enterprise customer    
+  logos) would significantly strengthen the trust signal for
+   CSRD-conscious procurement teams.
+                                                            
+  Content                                                 
+  - The FAQ section answers operational questions but
+  doesn't address the most common enterprise objection: "How
+   does this integrate with our existing systems?" — that's 
+  typically the deal-breaker for CSRD tooling.              
+                                                          
+  Want me to implement any of these?
+                                                            
+✻ Worked for 30s                 
+                                                            
+❯ yes and make the impact kpis like a looping counter that  
+  repeats itself                                            
+                                                            

@@ -27,7 +27,19 @@ import heroSlide3 from "@assets/Corporate_sustainabi_1775529421337.png";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDG_GOALS } from "@shared/sdg-goals";
 
-const HERO_SLIDES = [heroSlide1, heroSlide2, heroSlide3];
+const HERO_SLIDES = [
+  heroSlide1,
+  "/hero-volunteer-hand.png",
+  "/hero-aid-relief.png",
+  heroSlide2,
+  "/hero-village-build.png",
+  "/hero-coaching.png",
+  heroSlide3,
+  "/hero-community.png",
+  "/hero-construction.png",
+  "/hero-construction-tutorial.png",
+  "/hero-planters.png",
+];
 
 const PIPELINE_STEPS: {
   label: string;

@@ -1421,6 +1421,14 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
+    // Parse optional entity filters
+    const employeeIdsParam = req.query.employeeIds as string | undefined;
+    const projectIdsParam = req.query.projectIds as string | undefined;
+    const orgIdsParam = req.query.orgIds as string | undefined;
+    const filterEmployeeIds = employeeIdsParam ? employeeIdsParam.split(',').map(Number).filter(Boolean) : null;
+    const filterProjectIds = projectIdsParam ? projectIdsParam.split(',').map(Number).filter(Boolean) : null;
+    const filterOrgIds = orgIdsParam ? orgIdsParam.split(',').map(Number).filter(Boolean) : null;
+
     const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
     const projects = await storage.listProjects?.() || [];
@@ -1429,11 +1437,39 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
     // Get employee user IDs - use helper function to get ALL linked employees
     const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
-    // Get employee activities only - filter for verified status
-    const employeeActivities = volunteerActivities.filter((a: any) => {
+    // Determine which project IDs belong to selected orgs (for org filter)
+    let orgFilteredProjectIds: Set<number> | null = null;
+    if (filterOrgIds) {
+      orgFilteredProjectIds = new Set(
+        projects.filter((p: any) => p.organizationId && filterOrgIds.includes(p.organizationId)).map((p: any) => p.id)
+      );
+    }
+
+    // Build employee name lookup for filter dropdown (all linked employees, not filtered)
+    const allLinkedEmployeeActivities = volunteerActivities.filter((a: any) => {
       if (!employeeUserIds.has(a.userId)) return false;
       const status = a.verificationStatus?.toLowerCase();
       return status === 'approved' || status === 'verified';
+    });
+    const employeeNameMap = new Map<number, string>();
+    allLinkedEmployeeActivities.forEach((a: any) => {
+      if (!employeeNameMap.has(a.userId)) {
+        const u = users.find((usr: any) => usr.id === a.userId);
+        const name = u?.displayName || u?.email?.split('@')[0] || `Employee ${a.userId}`;
+        employeeNameMap.set(a.userId, name);
+      }
+    });
+    const employeeList = Array.from(employeeNameMap.entries()).map(([id, name]) => ({ id, name }));
+
+    // Get employee activities only - filter for verified status and apply entity filters
+    let employeeActivities = volunteerActivities.filter((a: any) => {
+      if (!employeeUserIds.has(a.userId)) return false;
+      const status = a.verificationStatus?.toLowerCase();
+      if (status !== 'approved' && status !== 'verified') return false;
+      if (filterEmployeeIds && !filterEmployeeIds.includes(a.userId)) return false;
+      if (filterProjectIds && a.projectId && !filterProjectIds.includes(a.projectId)) return false;
+      if (orgFilteredProjectIds && a.projectId && !orgFilteredProjectIds.has(a.projectId)) return false;
+      return true;
     });
     const totalEmployeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
     const uniqueEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
@@ -1502,6 +1538,7 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
           .filter((a: any) => a.projectId === p.id)
           .reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
         return {
+          id: p.id,
           name: p.name,
           hours: projectHours,
           employees: new Set(employeeActivities.filter((a: any) => a.projectId === p.id).map((a: any) => a.userId)).size,
@@ -1549,6 +1586,18 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
 
     const avgComplianceScore = Math.round((complianceScores.bCorpScore + complianceScores.griScore + complianceScores.isoScore + complianceScores.sasbScore) / 4);
 
+    // Build org list from projects that have employee activity (for filter dropdown)
+    const relevantOrgIds = new Set(
+      projects
+        .filter((p: any) => allLinkedEmployeeActivities.some((a: any) => a.projectId === p.id))
+        .map((p: any) => p.organizationId)
+        .filter(Boolean)
+    );
+    const allOrgs = await storage.listOrganizations?.() || [];
+    const orgList = (allOrgs as any[])
+      .filter((o: any) => relevantOrgIds.has(o.id))
+      .map((o: any) => ({ id: o.id, name: o.name }));
+
     res.json({
       reportPeriod: new Date().toISOString().slice(0, 7),
       engagementMetrics,
@@ -1557,6 +1606,8 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
       sdgMetrics,
       projectMetrics,
       benchmarks,
+      employeeList,
+      orgList,
       complianceStatus: {
         bCorpReady: financialMetrics.roi > 200,
         griAligned: sdgMetrics.length >= 3,
@@ -2444,6 +2495,7 @@ csrRouter.get("/employee-engagement/summary", queueMiddleware('heavy'), async (r
       .slice(0, 10)
       .map((v, idx) => ({
         rank: idx + 1,
+        userId: v.userId,
         name: v.name,
         hours: Math.round(v.hours),
         projects: v.projects,

@@ -2224,6 +2224,14 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       }
     }
 
+    // Entity filters
+    const filterEmployeeNamesRaw = req.query.employeeNames as string | undefined;
+    const filterProjectIdsRaw = req.query.projectIds as string | undefined;
+    const filterNgoNamesRaw = req.query.ngoNames as string | undefined;
+    const filterEmployeeNames = filterEmployeeNamesRaw ? filterEmployeeNamesRaw.split('|||').map(s => s.trim()).filter(Boolean) : null;
+    const filterProjectIds = filterProjectIdsRaw ? filterProjectIdsRaw.split(',').map(Number).filter(Boolean) : null;
+    const filterNgoNames = filterNgoNamesRaw ? filterNgoNamesRaw.split('|||').map(s => s.trim()).filter(Boolean) : null;
+
     // Get linked volunteer user IDs
     const allProfiles = await storage.listVolunteerProfiles?.() || [];
     let linkedUserIds: number[] = [];
@@ -2248,7 +2256,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       allActivities = rows as any[];
     }
 
-    const verified = allActivities.filter((a: any) => a.verificationStatus === 'approved');
+    // Apply project filter early (before splitting into verified/rejected)
+    if (filterProjectIds) {
+      allActivities = allActivities.filter((a: any) => a.projectId && filterProjectIds.includes(a.projectId));
+    }
+
+    let verified = allActivities.filter((a: any) => a.verificationStatus === 'approved');
     const rejected = allActivities.filter((a: any) => a.verificationStatus === 'rejected');
 
     // Volunteer user details
@@ -2269,6 +2282,23 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     }
     const ngoOrgMap = new Map(ngoOrgs.map((o: any) => [o.id, o]));
     const verifierToOrgMap = new Map(verifierUsers.map((u: any) => [u.id, ngoOrgMap.get(u.organizationId)]));
+
+    // Apply employee name filter (needs userMap to resolve names)
+    if (filterEmployeeNames) {
+      verified = verified.filter((a: any) => {
+        const u = userMap.get(a.userId);
+        const name = u?.displayName || u?.email || '';
+        return filterEmployeeNames.some(fn => name.toLowerCase().includes(fn.toLowerCase()));
+      });
+    }
+
+    // Apply NGO name filter (needs verifierToOrgMap)
+    if (filterNgoNames) {
+      verified = verified.filter((a: any) => {
+        const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
+        return org && filterNgoNames.some(fn => (org.name || '').toLowerCase().includes(fn.toLowerCase()));
+      });
+    }
 
     // Metrics
     const totalHours = verified.reduce((s: number, a: any) => s + (a.hours || 0), 0);
@@ -2709,10 +2739,10 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div class="page">
 
 <!-- REPORT HEADER -->
-<div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;">
+<div style="background:var(--navy);border-radius:var(--r);padding:16px 20px;margin-bottom:${(filterEmployeeNames && filterEmployeeNames.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;"><span style="color:#ffffff;">SYNER</span><span style="color:#B8860B;">XUS</span> · <span style="color:#B8860B;">Impact,</span> <span style="color:#ffffff;">Verified.</span></div>
+      <div style="margin-bottom:8px;"><img src="${LOGO_DATA_URI}" alt="Synerxus" style="height:32px;width:auto;display:block;" /></div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
       <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
     </div>
@@ -2724,6 +2754,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     </div>
   </div>
 </div>
+${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.length) ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0 0 var(--r) var(--r);padding:8px 20px;margin-bottom:20px;font-size:10px;color:#1e40af;">🔍 Filtered by: ${[filterEmployeeNames?.length ? `Employees: ${filterEmployeeNames.join(', ')}` : '', filterProjectIds?.length ? `Projects (${filterProjectIds.length} selected)` : '', filterNgoNames?.length ? `NGO Partners: ${filterNgoNames.join(', ')}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
 
 <!-- TEMPLATE CONTEXT NOTICE -->
 <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">

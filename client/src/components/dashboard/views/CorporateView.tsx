@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, useEffect } from "react";
 import DOMPurify from "dompurify";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -79,6 +79,19 @@ const CorporateView = memo(function CorporateView({
   const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
   const [reportTimePeriod, setReportTimePeriod] = useState("all");
 
+  // ESG report entity filter state
+  const [selectedEmployeeNames, setSelectedEmployeeNames] = useState<string[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
+  const [selectedNgoNames, setSelectedNgoNames] = useState<string[]>([]);
+  const [reportFilterPanel, setReportFilterPanel] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!reportFilterPanel) return;
+    const close = () => setReportFilterPanel(null);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [reportFilterPanel]);
+
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
   const [filterSdg, setFilterSdg] = useState<string>("");
@@ -149,6 +162,21 @@ const CorporateView = memo(function CorporateView({
     return Array.from(set);
   }, [outcomes]);
 
+  // Options for ESG report entity filters — derived from outcomes already in memory
+  const reportEmployeeOptions = useMemo(() => {
+    const names = new Set<string>();
+    outcomes.forEach(o => { if (o.volunteerName && o.volunteerName !== 'Volunteer') names.add(o.volunteerName); });
+    return Array.from(names).sort();
+  }, [outcomes]);
+
+  const reportProjectOptions = uniqueProjects; // already [projectId, projectName][]
+
+  const reportNgoOptions = useMemo(() => {
+    const names = new Set<string>();
+    outcomes.forEach(o => { if (o.ngoName && o.ngoName !== 'NGO') names.add(o.ngoName); });
+    return Array.from(names).sort();
+  }, [outcomes]);
+
   const activeFilterCount = [filterSdg, filterProject, filterOutcomeType, filterStartDate, filterEndDate].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -200,6 +228,9 @@ const CorporateView = memo(function CorporateView({
       const params = new URLSearchParams();
       if (reportTimePeriod !== 'all') params.set('timePeriod', reportTimePeriod);
       params.set('corporateId', userId);
+      if (selectedEmployeeNames.length) params.set('employeeNames', selectedEmployeeNames.join('|||'));
+      if (selectedProjectIds.length) params.set('projectIds', selectedProjectIds.join(','));
+      if (selectedNgoNames.length) params.set('ngoNames', selectedNgoNames.join('|||'));
       const url = `/api/reports/corporate-esg-summary?${params.toString()}`;
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
@@ -998,9 +1029,109 @@ const CorporateView = memo(function CorporateView({
       {/* ── ESG Reports Tab ───────────────────────────────────────────────── */}
       {activeCorpTab === 'reports' && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Generate ESG Report</h2>
-            <p className="text-sm text-slate-500 mt-0.5">CSRD-compliant impact summary ready for download or print</p>
+          {/* Branding header */}
+          <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4">
+            <div className="flex items-center gap-4">
+              <img src="/synerxus-esg-logo.png" alt="Synerxus" className="h-9 w-auto" />
+              <div className="w-px h-8 bg-slate-200" />
+              <div>
+                <div className="text-sm font-bold text-slate-900 leading-tight">CSR / ESG Reports</div>
+                <div className="text-[10px] text-slate-500 leading-tight">Verified impact data · Audit-ready exports</div>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">✓ Blockchain Verified</span>
+          </div>
+
+          {/* Entity Filters */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              Filter by:
+            </span>
+
+            {/* Employees */}
+            <div className="relative">
+              <button
+                onClick={() => setReportFilterPanel(reportFilterPanel === 'emp' ? null : 'emp')}
+                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors",
+                  selectedEmployeeNames.length ? "bg-blue-50 border-blue-400 text-blue-700" : "bg-white border-slate-200 text-slate-700")}
+              >
+                👥 Employees {selectedEmployeeNames.length > 0 && `(${selectedEmployeeNames.length})`}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {reportFilterPanel === 'emp' && (
+                <div onMouseDown={(e) => e.stopPropagation()} className="absolute top-full mt-1 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-2 min-w-[210px] max-h-52 overflow-y-auto">
+                  {reportEmployeeOptions.length === 0
+                    ? <p className="text-xs text-slate-400 text-center py-3">No employee data yet</p>
+                    : reportEmployeeOptions.map(name => (
+                      <label key={name} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" checked={selectedEmployeeNames.includes(name)} onChange={e => { if (e.target.checked) setSelectedEmployeeNames(p => [...p, name]); else setSelectedEmployeeNames(p => p.filter(n => n !== name)); }} className="accent-blue-600" />
+                        {name}
+                      </label>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+
+            {/* Projects */}
+            <div className="relative">
+              <button
+                onClick={() => setReportFilterPanel(reportFilterPanel === 'proj' ? null : 'proj')}
+                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors",
+                  selectedProjectIds.length ? "bg-green-50 border-green-400 text-green-700" : "bg-white border-slate-200 text-slate-700")}
+              >
+                📁 Projects {selectedProjectIds.length > 0 && `(${selectedProjectIds.length})`}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {reportFilterPanel === 'proj' && (
+                <div onMouseDown={(e) => e.stopPropagation()} className="absolute top-full mt-1 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-2 min-w-[210px] max-h-52 overflow-y-auto">
+                  {reportProjectOptions.length === 0
+                    ? <p className="text-xs text-slate-400 text-center py-3">No project data yet</p>
+                    : reportProjectOptions.map(([id, name]) => (
+                      <label key={id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" checked={selectedProjectIds.includes(id)} onChange={e => { if (e.target.checked) setSelectedProjectIds(p => [...p, id]); else setSelectedProjectIds(p => p.filter(i => i !== id)); }} className="accent-green-600" />
+                        {name}
+                      </label>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+
+            {/* NGO Partners */}
+            <div className="relative">
+              <button
+                onClick={() => setReportFilterPanel(reportFilterPanel === 'ngo' ? null : 'ngo')}
+                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors",
+                  selectedNgoNames.length ? "bg-amber-50 border-amber-400 text-amber-700" : "bg-white border-slate-200 text-slate-700")}
+              >
+                🌍 NGO Partners {selectedNgoNames.length > 0 && `(${selectedNgoNames.length})`}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {reportFilterPanel === 'ngo' && (
+                <div onMouseDown={(e) => e.stopPropagation()} className="absolute top-full mt-1 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-2 min-w-[210px] max-h-52 overflow-y-auto">
+                  {reportNgoOptions.length === 0
+                    ? <p className="text-xs text-slate-400 text-center py-3">No NGO partner data yet</p>
+                    : reportNgoOptions.map(name => (
+                      <label key={name} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" checked={selectedNgoNames.includes(name)} onChange={e => { if (e.target.checked) setSelectedNgoNames(p => [...p, name]); else setSelectedNgoNames(p => p.filter(n => n !== name)); }} className="accent-amber-600" />
+                        {name}
+                      </label>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+
+            {(selectedEmployeeNames.length > 0 || selectedProjectIds.length > 0 || selectedNgoNames.length > 0) && (
+              <button
+                onClick={() => { setSelectedEmployeeNames([]); setSelectedProjectIds([]); setSelectedNgoNames([]); setReportContent(null); }}
+                className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-sm font-medium"
+              >
+                ✕ Clear filters
+              </button>
+            )}
           </div>
 
           {/* Period + Generate */}

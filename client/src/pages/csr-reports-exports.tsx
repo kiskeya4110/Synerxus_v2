@@ -210,6 +210,18 @@ export default function CSRReportsExports() {
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"reports" | "expenses" | "budget">("reports");
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
+  const [selectedOrgIds, setSelectedOrgIds] = useState<number[]>([]);
+  const [filterOpenPanel, setFilterOpenPanel] = useState<string | null>(null);
+
+  // Close filter dropdowns when clicking outside
+  useEffect(() => {
+    if (!filterOpenPanel) return;
+    const close = () => setFilterOpenPanel(null);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [filterOpenPanel]);
   const [expenses, setExpenses] = useState(sampleExpenses);
   const planFeatures = usePlanFeatures();
 
@@ -220,11 +232,15 @@ export default function CSRReportsExports() {
   const budgetUtilization = Math.round((totalSpent / totalBudget) * 100);
   const pendingExpenses = expenses.filter(e => e.status === "pending").reduce((sum, e) => sum + e.amount, 0);
 
-  // Fetch report data
+  // Fetch report data (re-fetches when entity filters change)
   const { data: reportData, isLoading } = useQuery({
-    queryKey: ["/api/csr/reports-summary", userId],
+    queryKey: ["/api/csr/reports-summary", userId, selectedEmployeeIds, selectedProjectIds, selectedOrgIds],
     queryFn: async () => {
-      const response = await fetch(`/api/csr/impact-reporting?userId=${userId}`);
+      const params = new URLSearchParams({ userId: userId || '' });
+      if (selectedEmployeeIds.length) params.set('employeeIds', selectedEmployeeIds.join(','));
+      if (selectedProjectIds.length) params.set('projectIds', selectedProjectIds.join(','));
+      if (selectedOrgIds.length) params.set('orgIds', selectedOrgIds.join(','));
+      const response = await fetch(`/api/csr/impact-reporting?${params}`);
       if (!response.ok) throw new Error("Failed to fetch report data");
       return response.json();
     },
@@ -258,6 +274,18 @@ export default function CSRReportsExports() {
     enabled: isOrganization && !!userId
   });
 
+  // Fetch unfiltered base data for populating filter dropdown options
+  // Uses a stable query key without filter params so dropdowns always show all available options
+  const { data: baseReportData } = useQuery<any>({
+    queryKey: ["/api/csr/reports-base", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/impact-reporting?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId && !isOrganization,
+  });
+
   // On desktop, org users go to the org dashboard reports tab (not CSR layout)
   useEffect(() => {
     if (isOrganization && !isMobile) {
@@ -278,6 +306,29 @@ export default function CSRReportsExports() {
     month: "long",
     day: "numeric",
   });
+
+  // Filter option lists derived from unfiltered base report data
+  const employeeOptions: { id: number; name: string }[] = baseReportData?.employeeList || [];
+  const projectOptions: { id: number; name: string }[] = (baseReportData?.projectMetrics || [])
+    .filter((p: any) => p.id)
+    .map((p: any) => ({ id: p.id as number, name: p.name as string }));
+  const orgOptions: { id: number; name: string }[] = baseReportData?.orgList || [];
+
+  // Build a "Filtered by" label for the PDF header
+  const filterLabelParts: string[] = [];
+  if (selectedEmployeeIds.length) {
+    const names = employeeOptions.filter(e => selectedEmployeeIds.includes(e.id)).map(e => e.name);
+    if (names.length) filterLabelParts.push(`Employees: ${names.join(', ')}`);
+  }
+  if (selectedProjectIds.length) {
+    const names = projectOptions.filter(p => selectedProjectIds.includes(p.id)).map(p => p.name);
+    if (names.length) filterLabelParts.push(`Projects: ${names.join(', ')}`);
+  }
+  if (selectedOrgIds.length) {
+    const names = orgOptions.filter(o => selectedOrgIds.includes(o.id)).map(o => o.name);
+    if (names.length) filterLabelParts.push(`NGO Partners: ${names.join(', ')}`);
+  }
+  const activeFilterLabel = filterLabelParts.length ? `Filtered by: ${filterLabelParts.join(' | ')}` : '';
 
   const categories = [
     { id: "all", label: "All Reports", icon: "📄" },
@@ -302,8 +353,8 @@ export default function CSRReportsExports() {
 
       // PDF generation only for MVP
       const htmlContent = isOrganization
-        ? generateOrgPDFContent(template)
-        : generatePDFContent(template, reportData);
+        ? generateOrgPDFContent(template, activeFilterLabel)
+        : generatePDFContent(template, reportData, activeFilterLabel);
       const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(DOMPurify.sanitize(htmlContent, { WHOLE_DOCUMENT: true }));
@@ -355,7 +406,7 @@ export default function CSRReportsExports() {
     return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
   };
 
-  const generateOrgPDFContent = (template: ReportTemplate) => {
+  const generateOrgPDFContent = (template: ReportTemplate, filterLabel: string = '') => {
     const orgName = currentUser?.name || currentUser?.displayName || "Organization";
     const totalHours = orgDashboardData?.totalHours || 0;
     const activeVolunteers = orgDashboardData?.activeVolunteers || 0;
@@ -526,6 +577,7 @@ export default function CSRReportsExports() {
                   <span class="meta-divider">|</span>
                   <span class="blockchain-verified">✓ Blockchain Verified</span>
                 </div>
+                ${filterLabel ? `<div style="margin-top: 8px; font-size: 12px; color: #6b7280;">🔍 ${filterLabel}</div>` : ''}
               </div>
               <div class="header-right">
                 <div class="impact-score-box">
@@ -618,7 +670,7 @@ export default function CSRReportsExports() {
     `;
   };
 
-  const generatePDFContent = (template: ReportTemplate, data: any) => {
+  const generatePDFContent = (template: ReportTemplate, data: any, filterLabel: string = '') => {
     return `
       <!DOCTYPE html>
       <html>
@@ -966,6 +1018,7 @@ export default function CSRReportsExports() {
                   <span class="meta-divider">|</span>
                   <span class="blockchain-verified">✓ Blockchain Verified</span>
                 </div>
+                ${filterLabel ? `<div style="margin-top: 8px; font-size: 12px; color: #6b7280;">🔍 ${filterLabel}</div>` : ''}
               </div>
 
               <div class="header-right">
@@ -1654,6 +1707,131 @@ export default function CSRReportsExports() {
           {/* Reports Tab - Original Content */}
           {activeTab === "reports" && (
             <>
+          {/* Report Section Header with Synerxus branding */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <img src="/synerxus-esg-logo.png" alt="Synerxus" style={{ height: "36px", width: "auto" }} />
+              <div style={{ width: "1px", height: "32px", backgroundColor: "#e5e7eb" }} />
+              <div>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>CSR / ESG Reports</div>
+                <div style={{ fontSize: "12px", color: "#6b7280" }}>Verified impact data · Audit-ready exports</div>
+              </div>
+            </div>
+            <span style={{ fontSize: "11px", fontWeight: "600", padding: "4px 12px", borderRadius: "20px", backgroundColor: "#dbeafe", color: "#1e40af" }}>✓ Blockchain Verified</span>
+          </div>
+
+          {/* Entity Filters */}
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center", padding: "16px", backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+            <span style={{ fontSize: "13px", fontWeight: "600", color: "#374151", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Filter style={{ width: "14px", height: "14px", color: "#6b7280" }} />
+              Filter by:
+            </span>
+
+            {/* Employees dropdown — always visible */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setFilterOpenPanel(filterOpenPanel === 'employees' ? null : 'employees')}
+                style={{ padding: "8px 14px", backgroundColor: selectedEmployeeIds.length ? "#eff6ff" : "white", color: selectedEmployeeIds.length ? "#1e40af" : "#374151", border: `1px solid ${selectedEmployeeIds.length ? "#3b82f6" : "#e5e7eb"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                👥 Employees {selectedEmployeeIds.length > 0 ? `(${selectedEmployeeIds.length})` : ''}
+                <span style={{ fontSize: "10px" }}>▼</span>
+              </button>
+              {filterOpenPanel === 'employees' && (
+                <div
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: "8px", minWidth: "220px", maxHeight: "220px", overflowY: "auto" }}
+                >
+                  {employeeOptions.length === 0 ? (
+                    <div style={{ padding: "12px", fontSize: "13px", color: "#9ca3af", textAlign: "center" }}>No employee data yet</div>
+                  ) : employeeOptions.map(emp => (
+                    <label key={emp.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                    >
+                      <input type="checkbox" checked={selectedEmployeeIds.includes(emp.id)} onChange={(e) => { if (e.target.checked) setSelectedEmployeeIds(prev => [...prev, emp.id]); else setSelectedEmployeeIds(prev => prev.filter(id => id !== emp.id)); }} style={{ accentColor: "#1e3a8a" }} />
+                      {emp.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Projects dropdown — always visible */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setFilterOpenPanel(filterOpenPanel === 'projects' ? null : 'projects')}
+                style={{ padding: "8px 14px", backgroundColor: selectedProjectIds.length ? "#f0fdf4" : "white", color: selectedProjectIds.length ? "#15803d" : "#374151", border: `1px solid ${selectedProjectIds.length ? "#22c55e" : "#e5e7eb"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                📁 Projects {selectedProjectIds.length > 0 ? `(${selectedProjectIds.length})` : ''}
+                <span style={{ fontSize: "10px" }}>▼</span>
+              </button>
+              {filterOpenPanel === 'projects' && (
+                <div
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: "8px", minWidth: "220px", maxHeight: "220px", overflowY: "auto" }}
+                >
+                  {projectOptions.length === 0 ? (
+                    <div style={{ padding: "12px", fontSize: "13px", color: "#9ca3af", textAlign: "center" }}>No project data yet</div>
+                  ) : projectOptions.map(proj => (
+                    <label key={proj.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                    >
+                      <input type="checkbox" checked={selectedProjectIds.includes(proj.id)} onChange={(e) => { if (e.target.checked) setSelectedProjectIds(prev => [...prev, proj.id]); else setSelectedProjectIds(prev => prev.filter(id => id !== proj.id)); }} style={{ accentColor: "#059669" }} />
+                      {proj.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* NGO Partners dropdown — always visible */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setFilterOpenPanel(filterOpenPanel === 'orgs' ? null : 'orgs')}
+                style={{ padding: "8px 14px", backgroundColor: selectedOrgIds.length ? "#fef3c7" : "white", color: selectedOrgIds.length ? "#92400e" : "#374151", border: `1px solid ${selectedOrgIds.length ? "#f59e0b" : "#e5e7eb"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                🌍 NGO Partners {selectedOrgIds.length > 0 ? `(${selectedOrgIds.length})` : ''}
+                <span style={{ fontSize: "10px" }}>▼</span>
+              </button>
+              {filterOpenPanel === 'orgs' && (
+                <div
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: "8px", minWidth: "220px", maxHeight: "220px", overflowY: "auto" }}
+                >
+                  {orgOptions.length === 0 ? (
+                    <div style={{ padding: "12px", fontSize: "13px", color: "#9ca3af", textAlign: "center" }}>No NGO partner data yet</div>
+                  ) : orgOptions.map(org => (
+                    <label key={org.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                    >
+                      <input type="checkbox" checked={selectedOrgIds.includes(org.id)} onChange={(e) => { if (e.target.checked) setSelectedOrgIds(prev => [...prev, org.id]); else setSelectedOrgIds(prev => prev.filter(id => id !== org.id)); }} style={{ accentColor: "#f59e0b" }} />
+                      {org.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Clear filters */}
+            {(selectedEmployeeIds.length > 0 || selectedProjectIds.length > 0 || selectedOrgIds.length > 0) && (
+              <button
+                onClick={() => { setSelectedEmployeeIds([]); setSelectedProjectIds([]); setSelectedOrgIds([]); }}
+                style={{ padding: "8px 14px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "500" }}
+              >
+                ✕ Clear filters
+              </button>
+            )}
+
+            {/* Active filter summary */}
+            {activeFilterLabel && (
+              <span style={{ fontSize: "12px", color: "#6b7280", fontStyle: "italic", marginLeft: "4px" }}>
+                🔍 {activeFilterLabel}
+              </span>
+            )}
+          </div>
+
           {/* Category Filter */}
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             {categories.map((cat) => (

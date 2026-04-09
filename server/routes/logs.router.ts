@@ -2501,13 +2501,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       const _p = _sdgTotAll > 0 ? Math.round((data.outcomes / _sdgTotAll) * 100) : 0;
       return { lbl: 'SDG ' + _n, name: SDG_NAMES_LOCAL[_n] || ('SDG ' + _n), pct: _p, outcomes: data.outcomes };
     });
-    const _sdgBMax = _sdgBarEs.length > 0 ? Math.max(..._sdgBarEs.map((e: any) => e.pct), 1) : 1;
     const _sdgBarRows = _sdgBarEs.map((e: any, i: number) =>
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:' + (i < _sdgBarEs.length - 1 ? '8px' : '0') + ';">' +
       '<div style="width:110px;flex-shrink:0;font-size:9.5px;font-weight:600;">' +
       '<span style="color:#0A2463;">' + e.lbl + '</span> <span style="color:#6B7280;font-weight:400;">' + escapeHtml(e.name) + '</span></div>' +
       '<div style="flex:1;background:#E5E7EB;height:14px;border-radius:2px;overflow:hidden;">' +
-      '<div style="width:' + Math.round((e.pct / _sdgBMax) * 100) + '%;height:100%;background:#0A2463;border-radius:2px;"></div>' +
+      '<div style="width:' + e.pct + '%;height:100%;background:#0A2463;border-radius:2px;"></div>' +
       '</div>' +
       '<div style="width:120px;flex-shrink:0;font-size:9.5px;color:#374151;font-weight:500;">' + e.pct + '% <span style="color:#6B7280;font-weight:400;">(' + e.outcomes + ' outcomes verified)</span></div>' +
       '</div>'

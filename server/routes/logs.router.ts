@@ -2555,7 +2555,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 
     // Boundary Integrity Matrix
     const _boundMatrixHtml =
-      '<div style="margin-bottom:20px;">' +
+      '<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">' +
       '<h3 style="color:#0A2463;font-size:13px;font-weight:700;border-bottom:2px solid #00A896;padding-bottom:4px;margin-bottom:12px;">&#9635; Verification Boundary &#x2014; Scope Definition</h3>' +
       '<div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
       '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Verification Boundary &#x2014; Included vs. Excluded</div>' +
@@ -2666,7 +2666,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 
     // Assurance Boundary Diagram
     const _assuranceDiagHtml =
-      '<div style="margin-bottom:20px;">' +
+      '<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">' +
       '<h3 style="color:#0A2463;font-size:13px;font-weight:700;border-bottom:2px solid #00A896;padding-bottom:4px;margin-bottom:12px;">&#9635; Assurance Boundary &#x2014; Limitations &amp; Scope</h3>' +
       '<div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
       '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Assurance Boundary &#x2014; Limitations &amp; Scope</div>' +
@@ -2778,7 +2778,7 @@ ${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.le
 </div>
 
 <!-- SECTION 1: EXECUTIVE SNAPSHOT -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">${Object.keys(ngoStats).length}</div><div class="kpi-sub">organizations</div></div>
@@ -2813,7 +2813,7 @@ ${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.le
 ${_boundMatrixHtml}
 
 <!-- SECTION 2: NGO PARTNERSHIPS -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: NGO Partnership Impact</h3>
   ${Object.keys(ngoStats).length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No NGO partners found for this reporting period.</p>' : `
   <div class="section">
@@ -2827,7 +2827,7 @@ ${_boundMatrixHtml}
 </div>
 
 <!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (ESRS S1.4)</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
     <div class="section">
@@ -2868,7 +2868,7 @@ ${_boundMatrixHtml}
 </div>
 
 <!-- SECTION 4: SDG ALIGNMENT -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 4: SDG Alignment &amp; Impact Attribution</h3>
   ${sortedSdgs.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No SDG data found for this period.</p>' : `
   <div class="section">
@@ -2882,7 +2882,7 @@ ${_boundMatrixHtml}
 </div>
 
 <!-- SECTION 5: AUDIT TRAIL -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
   ${verified.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No verified outcomes for this period.</p>' : `
   <div class="section">
@@ -2899,7 +2899,7 @@ ${_boundMatrixHtml}
 </div>
 
 <!-- SECTION 6: DOUBLE MATERIALITY -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Double Materiality Disclosure (ESRS S3.4)</h3>
   <div class="section">
     <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Disclosures — SUPPORTS CSRD Double Materiality Requirements</h2></div>
@@ -2916,7 +2916,7 @@ ${_boundMatrixHtml}
 </div>
 
 <!-- APPENDIX: METHODOLOGY -->
-<div style="margin-bottom:20px;">
+<div style="margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Appendix A: Verification Methodology</h3>
   ${_evidArchHtml}
   <div class="section">

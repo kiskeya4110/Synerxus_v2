@@ -506,7 +506,7 @@ export default function CSRReportsExports() {
               page-break-before: avoid;
               break-before: avoid;
             }
-            .report-section {
+            .report-section, .report-table-block {
               page-break-inside: avoid;
               break-inside: avoid;
             }
@@ -957,7 +957,7 @@ export default function CSRReportsExports() {
               page-break-before: avoid;
               break-before: avoid;
             }
-            .report-section {
+            .report-section, .report-table-block {
               page-break-inside: avoid;
               break-inside: avoid;
             }

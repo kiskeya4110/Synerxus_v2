@@ -1910,8 +1910,8 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
     <div class="section">
       <h2><span class="section-icon">🌍</span> UN SDG Alignment</h2>
       <table class="sdg-table">
-        <tr><th>SDG Goal</th><th>Hours Contributed</th><th>% of Total</th><th>Status</th></tr>
-        ${safeSdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg?.goal || 'N/A'}</strong></td><td>${sdg?.hours || 0} hrs</td><td>${sdg?.percentage || 0}%</td><td>${(sdg?.percentage || 0) > 15 ? '✅ Strong' : (sdg?.percentage || 0) > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}
+        <thead><tr><th>SDG Goal</th><th>Hours Contributed</th><th>% of Total</th><th>Status</th></tr></thead>
+        <tbody>${safeSdgMetrics.slice(0, 6).map((sdg: any) => `<tr><td><strong>SDG ${sdg?.goal || 'N/A'}</strong></td><td>${sdg?.hours || 0} hrs</td><td>${sdg?.percentage || 0}%</td><td>${(sdg?.percentage || 0) > 15 ? '✅ Strong' : (sdg?.percentage || 0) > 5 ? '📈 Growing' : '🔄 Building'}</td></tr>`).join('')}</tbody>
       </table>
     </div>
 

@@ -1930,22 +1930,8 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       --bd: #e5e7eb; --bd-l: #f3f4f6;
       --r: 10px;
     }
-    @page { size: A4 portrait; margin: 22mm 15mm 15mm; }
-    .print-running-header { display: none; }
+    @page { size: A4 portrait; margin: 15mm 15mm 12mm; }
     @media print {
-      .print-running-header {
-        display: flex;
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 14mm;
-        background: #ffffff;
-        border-bottom: 1px solid #e5e7eb;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 15mm;
-        z-index: 9999;
-        font-family: Inter, Arial, sans-serif;
-      }
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; background: #fff; font-size: 10px; }
       .report-body { border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; }
       /* Prevent cards and blocks from splitting — but NOT table itself (too large); only rows */
@@ -1995,10 +1981,6 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   </style>
 </head>
 <body>
-<div class="print-running-header">
-  <span style="font-weight:700;font-size:9pt;letter-spacing:0.03em;"><span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span> &nbsp;<span style="font-weight:400;color:#6b7280;font-size:8pt;">· Impacts. Verified.</span></span>
-  <span style="font-size:8pt;color:#9ca3af;">Confidential Report</span>
-</div>
 <div class="report-body">
 
   <!-- HEADER -->
@@ -2778,22 +2760,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   .badge-warn { color: #d97706; font-weight: 600; }
   .note { background: var(--teal-lt); border-left: 3px solid var(--teal); padding: 8px 12px; font-size: 10px; color: #065f46; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
   .warn-note { background: #fffbeb; border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: #92400e; margin: 10px 0; border-radius: 0 var(--r) var(--r) 0; break-inside: avoid; page-break-inside: avoid; }
-  @page { size: A4 portrait; margin: 22mm 15mm 15mm; }
-  .print-running-header { display: none; }
+  @page { size: A4 portrait; margin: 15mm 15mm 12mm; }
   @media print {
-    .print-running-header {
-      display: flex;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 14mm;
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 15mm;
-      z-index: 9999;
-      font-family: Inter, Arial, sans-serif;
-    }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { padding: 0; }
     .kpi-grid { break-inside: avoid; page-break-inside: avoid; }
@@ -2809,10 +2777,6 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 </style>
 </head>
 <body>
-<div class="print-running-header">
-  <span style="font-weight:700;font-size:9pt;letter-spacing:0.03em;"><span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span> &nbsp;<span style="font-weight:400;color:#6b7280;font-size:8pt;">· Impacts. Verified.</span></span>
-  <span style="font-size:8pt;color:#9ca3af;">Confidential Report</span>
-</div>
 <div class="page">
 
 <!-- REPORT HEADER -->

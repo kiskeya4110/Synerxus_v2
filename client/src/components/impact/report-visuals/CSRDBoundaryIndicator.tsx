@@ -24,7 +24,7 @@ export default function CSRDBoundaryIndicator({ percentage = 65 }: CSRDBoundaryI
           textTransform: "uppercase",
         }}
       >
-        CSRD Assurance Boundary Indicator
+        Global Sustainability Assurance Boundary Indicator
       </div>
 
       <div style={{ padding: "14px 16px", background: "#F9FAFB" }}>
@@ -57,7 +57,7 @@ export default function CSRDBoundaryIndicator({ percentage = 65 }: CSRDBoundaryI
 
         {/* Label */}
         <div style={{ fontSize: "10.5px", color: "#374151", fontWeight: 600, marginBottom: "4px" }}>
-          Supports CSRD Assurance{" "}
+          Supports Global Sustainability Frameworks{" "}
           <span style={{ color: "#0891B2" }}>(Management Reporting Verified)</span>
         </div>
 

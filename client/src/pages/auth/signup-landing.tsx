@@ -35,7 +35,7 @@ const ROLE_OPTIONS = [
   {
     id: "corporate",
     title: "Corporate Partner",
-    description: "Deploy verified ESG programs, get audit-ready impact evidence, and meet CSRD requirements.",
+    description: "Deploy verified ESG programs, get audit-ready impact evidence, and meet global sustainability reporting requirements.",
     icon: Building2,
     href: "/signup/corporate",
     free: false,

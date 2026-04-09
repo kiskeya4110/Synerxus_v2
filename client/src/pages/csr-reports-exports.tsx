@@ -1117,7 +1117,7 @@ export default function CSRReportsExports() {
             .framework-bar-secondary { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
             .secondary-label { font-size:10px; color:#93c5fd; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
             .fw-pill { background:rgba(255,255,255,0.12); color:#e0f2fe; font-size:10px; font-weight:600; padding:3px 9px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); }
-            .fw-pill.esrs { background:rgba(99,102,241,0.3); border-color:rgba(99,102,241,0.5); }
+            .fw-pill.global-fw { background:rgba(99,102,241,0.3); border-color:rgba(99,102,241,0.5); }
             .isae-badge { background:rgba(16,185,129,0.25); color:#6ee7b7; font-size:10px; font-weight:700; padding:3px 10px; border-radius:12px; border:1px solid rgba(16,185,129,0.4); margin-left:auto; white-space:nowrap; }
 
             /* Ring Charts */
@@ -1272,7 +1272,7 @@ export default function CSRReportsExports() {
                 <span class="fw-pill">GRI Standards</span>
                 <span class="fw-pill">SASB</span>
                 <span class="fw-pill">TCFD</span>
-                <span class="fw-pill esrs">ESRS (CSRD)</span>
+                <span class="fw-pill global-fw">SEC Climate Rules</span>
                 <span class="fw-pill">UN SDGs</span>
               </div>
             </div>
@@ -1658,7 +1658,7 @@ export default function CSRReportsExports() {
               <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"timestamp_utc"</span>: <span class="ev-val str">"2024-03-14T13:47:00Z"</span>,</div>
               <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"gri_disclosure"</span>: <span class="ev-val str">"GRI 413-1"</span>,</div>
               <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"sasb_indicator"</span>: <span class="ev-val str">"HC-MS-310a.1"</span>,</div>
-              <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"esrs_data_point"</span>: <span class="ev-val str">"ESRS S1-4"</span></div>
+              <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"framework_mapping"</span>: <span class="ev-val str">"GRI 403 · SASB SO-ES-110.C · TCFD Principle 7"</span></div>
               <div class="evidence-line"><span class="ev-bracket">}</span></div>
             </div>
           </div>
@@ -1675,39 +1675,39 @@ export default function CSRReportsExports() {
                   <th style="width:16%">GRI Standard</th>
                   <th style="width:16%">SASB</th>
                   <th style="width:16%">TCFD</th>
-                  <th style="width:16%">ESRS (CSRD)</th>
+                  <th style="width:16%">SEC / Global</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td class="wef-col">Volunteer Engagement Hours</td>
                   <td><span class="pillar-tag pillar-people">People</span></td>
-                  <td>GRI 413-1</td><td>HC-MS-310a.1</td><td>No direct equiv.</td><td>ESRS S1-4</td>
+                  <td>GRI 413-1</td><td>HC-MS-310a.1</td><td>No direct equiv.</td><td>SEC Item 103</td>
                 </tr>
                 <tr>
                   <td class="wef-col">Community Investment ($)</td>
                   <td><span class="pillar-tag pillar-prosperity">Prosperity</span></td>
-                  <td>GRI 201-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>ESRS S3-1</td>
+                  <td>GRI 201-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>SEC S-K 101</td>
                 </tr>
                 <tr>
                   <td class="wef-col">GHG Emissions (Scope 1&amp;2)</td>
                   <td><span class="pillar-tag pillar-planet">Planet</span></td>
-                  <td>GRI 305-1/2</td><td>EM-IS-110a.1</td><td>Metrics &amp; Targets</td><td>ESRS E1-6</td>
+                  <td>GRI 305-1/2</td><td>EM-IS-110a.1</td><td>Metrics &amp; Targets</td><td>SEC Climate Rules</td>
                 </tr>
                 <tr>
                   <td class="wef-col">Board Diversity &amp; Structure</td>
                   <td><span class="pillar-tag pillar-governance">Governance</span></td>
-                  <td>GRI 405-1</td><td>CG-EC-330a.1</td><td>Governance</td><td>ESRS G1-1</td>
+                  <td>GRI 405-1</td><td>CG-EC-330a.1</td><td>Governance</td><td>SEC S-K 402</td>
                 </tr>
                 <tr>
                   <td class="wef-col">Employee Training Investment</td>
                   <td><span class="pillar-tag pillar-people">People</span></td>
-                  <td>GRI 404-1</td><td>HC-MS-330a.1</td><td>No direct equiv.</td><td>ESRS S1-13</td>
+                  <td>GRI 404-1</td><td>HC-MS-330a.1</td><td>No direct equiv.</td><td>SEC HCM Disc.</td>
                 </tr>
                 <tr>
                   <td class="wef-col">Beneficiaries Reached</td>
                   <td><span class="pillar-tag pillar-prosperity">Prosperity</span></td>
-                  <td>GRI 413-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>ESRS S3-4</td>
+                  <td>GRI 413-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>SDG 17.17</td>
                 </tr>
               </tbody>
             </table>
@@ -1760,7 +1760,7 @@ export default function CSRReportsExports() {
                 <div class="assurance-item"><span class="assurance-icon">✓</span><span>Blockchain anchoring of all evidence objects</span></div>
                 <div class="assurance-item"><span class="assurance-icon">✓</span><span>SDG mapping and WEF pillar classification</span></div>
                 <div class="assurance-item"><span class="assurance-icon">✓</span><span>SLA monitoring and verification audit trail</span></div>
-                <div class="assurance-item"><span class="assurance-icon">✓</span><span>Framework crosswalk tagging (GRI/SASB/TCFD/ESRS)</span></div>
+                <div class="assurance-item"><span class="assurance-icon">✓</span><span>Framework crosswalk tagging (GRI/SASB/TCFD/SEC/UN SDGs)</span></div>
                 <div class="assurance-item"><span class="assurance-icon">✓</span><span>Report generation with sample data disclosure</span></div>
               </div>
               <div class="assurance-panel auditor">
@@ -1771,7 +1771,7 @@ export default function CSRReportsExports() {
                 <div class="assurance-item"><span class="assurance-icon">◆</span><span>Financial metric reconciliation (if applicable)</span></div>
                 <div class="assurance-item"><span class="assurance-icon">◆</span><span>Scope 3 GHG data verification (if in scope)</span></div>
                 <div class="assurance-item"><span class="assurance-icon">◆</span><span>Final assurance opinion and practitioner letter</span></div>
-                <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory filing review (CSRD/SEC where applicable)</span></div>
+                <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory filing review (SEC, GRI, SASB where applicable)</span></div>
               </div>
             </div>
           </div>
@@ -1788,7 +1788,7 @@ export default function CSRReportsExports() {
               </div>
               <div class="footer-ids">
                 <div><strong>Report ID:</strong> ${reportId}</div>
-                <div><strong>Framework:</strong> WEF SCM v2.0 · GRI · SASB · TCFD · ESRS</div>
+                <div><strong>Framework:</strong> WEF SCM v2.0 · GRI · SASB · TCFD · SEC Climate Rules · UN SDGs</div>
                 <div><strong>Assurance:</strong> ISAE 3000 Revised · Audit-Supported</div>
                 <div><strong>Generated:</strong> ${currentDate}</div>
               </div>
@@ -1798,7 +1798,7 @@ export default function CSRReportsExports() {
               <span class="footer-fw-tag">GRI</span>
               <span class="footer-fw-tag">SASB</span>
               <span class="footer-fw-tag">TCFD</span>
-              <span class="footer-fw-tag">ESRS</span>
+              <span class="footer-fw-tag">SEC Rules</span>
               <span class="footer-fw-tag">UN SDGs</span>
               <span class="footer-fw-tag">ISAE 3000</span>
             </div>

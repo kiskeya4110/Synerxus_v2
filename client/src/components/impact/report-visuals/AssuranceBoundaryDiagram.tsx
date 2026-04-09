@@ -111,7 +111,7 @@ export default function AssuranceBoundaryDiagram() {
         }}
       >
         Synerxus provides verification infrastructure — not assurance opinion. Independent auditor
-        required for ISAE 3000 / CSRD formal assurance.
+        required for ISAE 3000 formal assurance per global sustainability frameworks.
       </div>
     </div>
   );

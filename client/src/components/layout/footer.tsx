@@ -70,7 +70,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1 space-y-3">
             <Logo size="sm" variant="full" clickable={false} />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              NGO-Verified Impact Evidence for CSRD &amp; ESG Reporting
+              NGO-Verified Impact Evidence for Global ESG Reporting
             </p>
             <div className="flex gap-2">
               {SOCIAL_LINKS.map((link) => {

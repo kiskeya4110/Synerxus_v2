@@ -1742,7 +1742,7 @@ const OrganizationView = memo(function OrganizationView({
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">NGO Impact Summary</h3>
                 <p className="text-xs text-gray-500 mb-3">
-                  Verified hours · SDG alignment · CSRD compliance metrics
+                  Verified hours · SDG alignment · Global sustainability framework metrics
                 </p>
                 <div className="flex items-center gap-2 justify-center mb-4">
                   <label className="text-xs font-medium text-gray-500">Time Period</label>
@@ -2271,7 +2271,7 @@ const OrganizationView = memo(function OrganizationView({
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Impact Summary</h3>
               <p className="text-sm text-gray-500 mb-4">
-                CSRD/ESRS-compliant report with verified hours, SDG alignment, audit trail, and diaspora volunteer impact.
+                Global sustainability framework-aligned report with verified hours, SDG alignment, audit trail, and diaspora volunteer impact.
               </p>
               <div className="flex items-center gap-3 justify-center mb-6">
                 <label className="text-xs font-medium text-muted-foreground">Time Period</label>
@@ -2336,8 +2336,8 @@ const OrganizationView = memo(function OrganizationView({
               entries={reportPreviewStats.sdgEntries.length > 0 ? reportPreviewStats.sdgEntries : undefined}
             />
 
-            {/* Section 5: CSRD/ESRS Mapping */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — CSRD/ESRS Mapping</div>
+            {/* Section 5: Global Framework Mapping */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — Global Framework Mapping</div>
             <CSRDBoundaryIndicator />
 
             {/* Section 6: Contribution Pathways */}

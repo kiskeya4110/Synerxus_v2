@@ -117,7 +117,7 @@ export default function VerificationDensityStrip({
           letterSpacing: "0.03em",
         }}
       >
-        Management Reporting Verified — Supports CSRD Assurance (ISAE 3000)
+        Management Reporting Verified — Supports Global Sustainability Frameworks (ISAE 3000)
       </div>
     </div>
   );

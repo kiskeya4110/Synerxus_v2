@@ -10,7 +10,7 @@ export default function EvidenceObjectArchitecture() {
     },
     {
       title: "Regulatory Metadata",
-      items: ["SDG Primary/Secondary", "ESRS Mapping (S3/S4)", "Project ID", "Corporate Program"],
+      items: ["SDG Primary/Secondary", "Framework Mapping (GRI/SASB/TCFD)", "Project ID", "Corporate Program"],
     },
   ];
 

@@ -330,7 +330,7 @@ const CorporateView = memo(function CorporateView({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Corporate ESG Report</h3>
-              <p className="text-xs text-gray-500">CSRD-compliant impact summary</p>
+              <p className="text-xs text-gray-500">Global sustainability framework-aligned impact summary</p>
             </div>
           </div>
           <div className="flex items-center gap-2 mb-3">
@@ -1199,7 +1199,7 @@ const CorporateView = memo(function CorporateView({
             <div className="text-center py-16 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">Select a reporting period and click Generate Report</p>
-              <p className="text-xs mt-1">Report includes SDG alignment, project breakdown, and CSRD compliance metrics</p>
+              <p className="text-xs mt-1">Report includes SDG alignment, project breakdown, and global sustainability framework metrics</p>
             </div>
           )}
         </div>

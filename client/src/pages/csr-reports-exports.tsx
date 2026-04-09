@@ -498,6 +498,14 @@ export default function CSRReportsExports() {
               page-break-before: avoid;
               break-before: avoid;
             }
+            h3 {
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            h3 + * {
+              page-break-before: avoid;
+              break-before: avoid;
+            }
             .report-section {
               page-break-inside: avoid;
               break-inside: avoid;
@@ -517,8 +525,9 @@ export default function CSRReportsExports() {
             .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
             table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
-            th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; }
-            td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+            thead { display: table-header-group; }
+            th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
+            td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
             tr { page-break-inside: avoid; break-inside: avoid; }
             tr:nth-child(even) { background: #f9fafb; }
             .sdg-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; color: white; font-weight: 700; font-size: 12px; margin-right: 8px; }
@@ -940,6 +949,14 @@ export default function CSRReportsExports() {
               page-break-before: avoid;
               break-before: avoid;
             }
+            h3 {
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            h3 + * {
+              page-break-before: avoid;
+              break-before: avoid;
+            }
             .report-section {
               page-break-inside: avoid;
               break-inside: avoid;
@@ -990,6 +1007,7 @@ export default function CSRReportsExports() {
               page-break-inside: avoid;
               break-inside: avoid;
             }
+            thead { display: table-header-group; }
             th {
               background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
               color: white;
@@ -997,11 +1015,15 @@ export default function CSRReportsExports() {
               text-align: left;
               font-weight: 600;
               font-size: 13px;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             td {
               padding: 12px 16px;
               border-bottom: 1px solid #e5e7eb;
               font-size: 13px;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             tr {
               page-break-inside: avoid;

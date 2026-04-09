@@ -2707,8 +2707,11 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
   h2 { font-size: 13px; font-weight: 700; color: #fff; }
   h3 { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 8px; break-after: avoid; page-break-after: avoid; }
   h3 + * { break-before: avoid; page-break-before: avoid; }
-  table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; padding: 7px 8px; }
+  table { width: 100%; border-collapse: collapse; break-inside: avoid; page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  td { break-inside: avoid; page-break-inside: avoid; }
+  th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; padding: 7px 8px; break-inside: avoid; page-break-inside: avoid; }
   .section { margin-bottom: 20px; border: 0.5px solid var(--bd); border-radius: var(--r); overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
   .section-header { background: var(--navy); padding: 10px 14px; break-after: avoid; page-break-after: avoid; }
   .section-header + * { break-before: avoid; page-break-before: avoid; }
@@ -2731,6 +2734,10 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     .section-header + * { break-before: avoid; page-break-before: avoid; }
     h3 { break-after: avoid; page-break-after: avoid; }
     h3 + * { break-before: avoid; page-break-before: avoid; }
+    table { break-inside: avoid; page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    td, th { break-inside: avoid; page-break-inside: avoid; }
   }
 </style>
 </head>

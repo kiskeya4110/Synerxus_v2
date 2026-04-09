@@ -1807,8 +1807,9 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
     .compliance-name { font-weight: 600; color: #374151; }
     .compliance-score { font-weight: 700; font-size: 18px; }
     .sdg-table { width: 100%; border-collapse: collapse; margin: 0 0 32px 0; page-break-inside: avoid; break-inside: avoid; }
-    .sdg-table th { background: #1e3a8a; color: white; padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; }
-    .sdg-table td { padding: 13px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+    .sdg-table thead { display: table-header-group; }
+    .sdg-table th { background: #1e3a8a; color: white; padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; page-break-inside: avoid; break-inside: avoid; }
+    .sdg-table td { padding: 13px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
     .sdg-table tr { page-break-inside: avoid; break-inside: avoid; }
     .sdg-table tr:nth-child(even) { background: #f9fafb; }
     .footer { background: #111827; color: white; padding: 16px 56px; display: flex; justify-content: space-between; align-items: center; margin-top: 48px; page-break-inside: avoid; break-inside: avoid; }

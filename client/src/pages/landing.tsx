@@ -1877,7 +1877,7 @@ export default function Landing() {
               )}
 
               {/* Trust badge strip */}
-              <div className="flex flex-wrap gap-2 mt-1">
+              <div className="grid grid-cols-2 gap-2 mt-1 justify-items-start">
                 {[
                   "NGO-Verified Outcomes",
                   "Immutable Audit Trail",

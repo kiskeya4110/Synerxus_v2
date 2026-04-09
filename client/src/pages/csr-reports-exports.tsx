@@ -345,6 +345,14 @@ export default function CSRReportsExports() {
 
   // MVP: PDF export only
   const generateReport = async (template: ReportTemplate, format: string) => {
+    if (!planFeatures.esgReportExport) {
+      toast({
+        title: "Upgrade Required",
+        description: "Report export requires a Pilot plan or above. Visit /landing#pricing to upgrade.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsGenerating(template.id);
 
     try {
@@ -412,7 +420,7 @@ export default function CSRReportsExports() {
     const activeVolunteers = orgDashboardData?.activeVolunteers || 0;
     const activeProjects = orgDashboardData?.activeProjects || 0;
     const sdgsAddressed = orgDashboardData?.sdgsAddressed || 0;
-    const sdgMetrics = reportData?.sdgMetrics || [];
+    const sdgMetrics = (reportData?.sdgMetrics || []).slice().sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0));
 
     return `
       <!DOCTYPE html>
@@ -690,7 +698,7 @@ export default function CSRReportsExports() {
     const directBeneficiaries = data?.impactMetrics?.directBeneficiaries || 0;
     const economicValue = data?.financialMetrics?.volunteerHourValue || 0;
     const roi = data?.financialMetrics?.roi || 0;
-    const sdgMetricsData: any[] = data?.sdgMetrics || [];
+    const sdgMetricsData: any[] = (data?.sdgMetrics || []).slice().sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0));
     const impactScore = data?.impactMetrics?.impactScore || Math.round((participationRate || 0) * 0.8 + 20);
 
     // Ring chart helper — pure SVG
@@ -1983,21 +1991,39 @@ export default function CSRReportsExports() {
                   <div className="text-slate-800 text-[10px] font-semibold">Volunteer Hours</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                  onClick={() => {
+                    const sdgs = reportData?.sdgMetrics || [];
+                    const hdr = ["SDG Goal","SDG Name","Hours","Percentage"];
+                    const rows = sdgs.map((m: any) => [`SDG ${m.goal || ''}`, m.name || m.label || '', String(m.hours || m.totalHours || 0), `${m.percentage || 0}%`]);
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "sdg_metrics.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "SDG metrics data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">🌍</div>
                   <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                  onClick={() => {
+                    const projects = reportData?.projectMetrics || [];
+                    const hdr = ["Project Name","Hours","Employees","Status"];
+                    const rows = projects.map((p: any) => [p.name || '', String(p.hours || 0), String(p.employees || 0), p.status || '']);
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "project_data.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Project data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">📁</div>
                   <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "Impact data exported." })}
+                  onClick={() => {
+                    const im = reportData?.impactMetrics || {};
+                    const hdr = ["Metric","Value"];
+                    const rows = [["Direct Beneficiaries", String(im.directBeneficiaries || 0)], ["Indirect Beneficiaries", String(im.indirectBeneficiaries || 0)], ["Estimated Lives Touched", String(im.estimatedLivesTouched || 0)], ["Impact Per Hour", String(im.impactPerHour || 0)]];
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "impact_data.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Impact data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">📊</div>
@@ -2106,21 +2132,39 @@ export default function CSRReportsExports() {
                   <div className="text-slate-800 text-[10px] font-semibold">Employee Hours</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                  onClick={() => {
+                    const sdgs = reportData?.sdgMetrics || [];
+                    const hdr = ["SDG Goal","SDG Name","Hours","Percentage"];
+                    const rows = sdgs.map((m: any) => [`SDG ${m.goal || ''}`, m.name || m.label || '', String(m.hours || m.totalHours || 0), `${m.percentage || 0}%`]);
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "sdg_metrics.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "SDG metrics data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">🌍</div>
                   <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                  onClick={() => {
+                    const projects = reportData?.projectMetrics || [];
+                    const hdr = ["Project Name","Hours","Employees","Status"];
+                    const rows = projects.map((p: any) => [p.name || '', String(p.hours || 0), String(p.employees || 0), p.status || '']);
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "project_data.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Project data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">📁</div>
                   <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
                 </button>
                 <button
-                  onClick={() => toast({ title: "Exported", description: "Financial data exported." })}
+                  onClick={() => {
+                    const fm = reportData?.financialMetrics || {};
+                    const hdr = ["Metric","Value"];
+                    const rows = [["Volunteer Hour Value", `$${fm.volunteerHourValue || 0}`], ["ROI", `${fm.roi || 0}%`], ["Cost Per Beneficiary", `$${fm.costPerBeneficiary || 0}`], ["Program Cost", `$${fm.programCost || 0}`]];
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "financial_data.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Financial data exported." });
+                  }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">💰</div>
@@ -2624,7 +2668,11 @@ export default function CSRReportsExports() {
                 </button>
 
                 <button onClick={() => {
-                  toast({ title: "Exported", description: "SDG metrics data exported successfully." });
+                  const sdgs = reportData?.sdgMetrics || [];
+                  const hdr = ["SDG Goal","SDG Name","Hours","Percentage"];
+                  const rows = sdgs.map((m: any) => [`SDG ${m.goal || ''}`, m.name || m.label || '', String(m.hours || m.totalHours || 0), `${m.percentage || 0}%`]);
+                  downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "sdg_metrics.csv", "text/csv");
+                  toast({ title: "Downloaded", description: "SDG metrics data exported successfully." });
                 }} style={{ padding: "16px", backgroundColor: "#eff6ff", border: "1px solid #3b82f6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
                   <div style={{ fontSize: "20px", marginBottom: "8px" }}>🌍</div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>SDG Metrics</div>
@@ -2632,7 +2680,11 @@ export default function CSRReportsExports() {
                 </button>
 
                 <button onClick={() => {
-                  toast({ title: "Exported", description: "Project data exported successfully." });
+                  const projects = reportData?.projectMetrics || [];
+                  const hdr = ["Project Name","Hours","Employees","Status"];
+                  const rows = projects.map((p: any) => [p.name || '', String(p.hours || 0), String(p.employees || 0), p.status || '']);
+                  downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "project_data.csv", "text/csv");
+                  toast({ title: "Downloaded", description: "Project data exported successfully." });
                 }} style={{ padding: "16px", backgroundColor: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
                   <div style={{ fontSize: "20px", marginBottom: "8px" }}>📁</div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Project Data</div>
@@ -2640,7 +2692,11 @@ export default function CSRReportsExports() {
                 </button>
 
                 <button onClick={() => {
-                  toast({ title: "Exported", description: "Financial data exported successfully." });
+                  const fm = reportData?.financialMetrics || {};
+                  const hdr = ["Metric","Value"];
+                  const rows = [["Volunteer Hour Value", `$${fm.volunteerHourValue || 0}`], ["ROI", `${fm.roi || 0}%`], ["Cost Per Beneficiary", `$${fm.costPerBeneficiary || 0}`], ["Program Cost", `$${fm.programCost || 0}`]];
+                  downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "financial_data.csv", "text/csv");
+                  toast({ title: "Downloaded", description: "Financial data exported successfully." });
                 }} style={{ padding: "16px", backgroundColor: "#faf5ff", border: "1px solid #8b5cf6", borderRadius: "8px", cursor: "pointer", textAlign: "left" }}>
                   <div style={{ fontSize: "20px", marginBottom: "8px" }}>💰</div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>Financial Data</div>

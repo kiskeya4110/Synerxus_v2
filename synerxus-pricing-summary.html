@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synerxus — Pricing Summary</title>
+  <style>
+    @page { size: A4 landscape; margin: 12mm 12mm 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 28px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #0A1F44;
+      border-radius: 10px;
+      padding: 22px 28px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+    }
+    .header-left {}
+    .header-logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: #D4980C;
+      letter-spacing: -0.5px;
+      margin-bottom: 5px;
+    }
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+    .header p {
+      font-size: 11.5px;
+      color: #93c5fd;
+      line-height: 1.55;
+    }
+    .header-right {
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .print-btn {
+      background: #D4980C;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── NGO Banner ── */
+    .ngo-banner {
+      background: #0A1F44;
+      border-left: 4px solid #D4980C;
+      border-radius: 8px;
+      padding: 11px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .ngo-banner-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .ngo-banner strong { display: block; font-size: 12px; font-weight: 700; color: #ffffff; margin-bottom: 3px; }
+    .ngo-banner p { font-size: 11px; color: #93c5fd; line-height: 1.55; }
+
+    /* ── Tier Grid ── */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+      align-items: start;
+    }
+    .tier-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 18px 15px;
+      display: flex;
+      flex-direction: column;
+    }
+    .tier-card.featured {
+      background: #0A1F44;
+      border-color: #0A1F44;
+    }
+
+    /* Header block */
+    .tier-header { margin-bottom: 14px; }
+    .most-popular-badge {
+      display: inline-block;
+      background: #D4980C;
+      color: #ffffff;
+      font-size: 8.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 9px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+    .tier-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+    .tier-card.featured .tier-label { color: #93c5fd; }
+    .tier-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0A1F44;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+    .tier-card.featured .tier-price { color: #ffffff; }
+    .tier-price span { font-size: 12px; font-weight: 500; color: #94a3b8; }
+    .tier-card.featured .tier-price span { color: #93c5fd; }
+    .tier-subtitle {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 3px;
+    }
+    .tier-card.featured .tier-subtitle { color: #93c5fd; }
+    .tier-desc { font-size: 10.5px; color: #64748b; line-height: 1.5; }
+    .tier-card.featured .tier-desc { color: #bfdbfe; }
+
+    /* Feature category groups */
+    .feat-group { margin-bottom: 10px; }
+    .feat-group-label {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #94a3b8;
+      margin-bottom: 5px;
+      padding-bottom: 3px;
+      border-bottom: 0.5px solid #e2e8f0;
+    }
+    .tier-card.featured .feat-group-label {
+      color: #60a5fa;
+      border-bottom-color: rgba(255,255,255,0.15);
+    }
+    .feat-group-label.gold { color: #D4980C; border-bottom-color: rgba(212,152,12,0.3); }
+
+    .feature-list { list-style: none; }
+    .feature-list li {
+      font-size: 10.5px;
+      color: #374151;
+      padding: 2.5px 0 2.5px 15px;
+      position: relative;
+      line-height: 1.45;
+    }
+    .feature-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: 700;
+      font-size: 9.5px;
+    }
+    .feature-list li.na { color: #94a3b8; }
+    .feature-list li.na::before { content: '—'; color: #cbd5e1; font-weight: 400; }
+    .tier-card.featured .feature-list li { color: #bfdbfe; }
+    .tier-card.featured .feature-list li::before { color: #D4980C; }
+    .tier-card.featured .feature-list li.na { color: #4b6fa3; }
+    .tier-card.featured .feature-list li.na::before { content: '—'; color: #4b6fa3; }
+
+    /* Expansion box */
+    .expansion-box {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 9.5px;
+      color: #64748b;
+      line-height: 1.55;
+      margin: 10px 0;
+    }
+    .tier-card.featured .expansion-box {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.12);
+      color: #93c5fd;
+    }
+    .expansion-box.green {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #065f46;
+      font-weight: 600;
+    }
+
+    /* CTA */
+    .cta-button {
+      display: block;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border: 2px solid #0A1F44;
+      color: #0A1F44;
+      background: transparent;
+      text-decoration: none;
+      margin-top: auto;
+    }
+    .cta-button.gold {
+      background: #D4980C;
+      border-color: #D4980C;
+      color: #ffffff;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0A1F44;
+      margin-bottom: 12px;
+      padding-bottom: 7px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-bottom: 22px;
+      background: #ffffff;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    thead tr { background: #0A1F44; color: #ffffff; }
+    thead th { padding: 9px 11px; text-align: left; font-size: 10.5px; font-weight: 700; }
+    thead th:first-child { width: 24%; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody td {
+      padding: 8px 11px;
+      color: #374151;
+      border-bottom: 0.5px solid #e2e8f0;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tbody td:first-child { font-weight: 600; color: #0A1F44; }
+    .check { color: #10b981; font-weight: 700; }
+    .dash  { color: #cbd5e1; }
+    .cat-row td { background: #f1f5f9 !important; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b !important; padding: 5px 11px; }
+    .highlight-row td { background: #eff6ff !important; }
+
+    /* ── Footer ── */
+    .doc-footer {
+      background: #0A1F44;
+      border-radius: 9px;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .doc-footer p { font-size: 10.5px; color: #93c5fd; }
+    .doc-footer strong { color: #D4980C; }
+
+    @media print {
+      body { background: #fff; padding: 0; max-width: 100%; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">Synerxus</div>
+      <h1>Verified Outcomes for Audit-Ready ESG Reporting</h1>
+      <p>Turn volunteer activity into third-party verified evidence — so your ESG reports survive auditor scrutiny.<br/>
+         NGO verification is always free. Corporations pay for access to exclusive NGO partners who require verification.</p>
+    </div>
+    <div class="header-right">
+      <button class="print-btn" onclick="window.print()">Save as PDF</button>
+    </div>
+  </div>
+
+  <!-- NGO Banner -->
+  <div class="ngo-banner">
+    <div class="ngo-banner-icon">🛡️</div>
+    <div>
+      <strong>NGO verification is always free — no hidden costs for your partner organizations.</strong>
+      <p>When you pay for Synerxus, you're not buying verification — you're buying exclusive access to high-impact NGO partners who verify outcomes as a fundraising asset, not as a favour. Active deployments across 23 countries including Sub-Saharan Africa, East Africa, South/Southeast Asia, and Europe.</p>
+    </div>
+  </div>
+
+  <!-- ── Tier Cards ── -->
+  <div class="tier-grid">
+
+    <!-- Pilot -->
+    <div class="tier-card">
+      <div class="tier-header">
+        <div class="tier-label">Pilot</div>
+        <div class="tier-price">$5,000</div>
+        <div class="tier-subtitle">90 days · validation sprint</div>
+        <div class="tier-desc">Validate fit before rollout — no commitment required.</div>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Programs &amp; Scale</div>
+        <ul class="feature-list">
+          <li>1 program</li>
+          <li>50 verified outcomes (90-day total)</li>
+          <li>1 NGO partner (free)</li>
+          <li>Unlimited volunteer participants</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Verification</div>
+        <ul class="feature-list">
+          <li>NGO 1-tap verification (&lt;15 sec)</li>
+          <li>SMS/2G low-bandwidth support</li>
+          <li>Immutable timestamped audit trail</li>
+          <li>Real-time verification status</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Reporting &amp; Evidence</div>
+        <ul class="feature-list">
+          <li>SDG-tagged activity log</li>
+          <li>PDF evidence exports</li>
+          <li>GRI 413 evidence objects</li>
+          <li>Basic impact dashboard</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label gold">Free for NGO Partners</div>
+        <ul class="feature-list">
+          <li>Auto-generated Verified Impact Summary PDF</li>
+          <li>Shareable with any funder, at no cost</li>
+          <li>"Verified by Synerxus" credibility badge</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Support</div>
+        <ul class="feature-list">
+          <li>Dedicated onboarding session</li>
+          <li>Go-live in days</li>
+          <li>Email support</li>
+        </ul>
+      </div>
+
+      <div class="expansion-box green">→ $5K credited toward annual plan if converted within 30 days</div>
+      <a class="cta-button" href="#">Start a $5K Pilot</a>
+    </div>
+
+    <!-- Starter -->
+    <div class="tier-card">
+      <div class="tier-header">
+        <div class="tier-label">Starter</div>
+        <div class="tier-price">From $8,000<span>/yr</span></div>
+        <div class="tier-subtitle">Prove impact for B Corp recertification</div>
+        <div class="tier-desc">Small ESG teams building defensible impact evidence.</div>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Programs &amp; Scale</div>
+        <ul class="feature-list">
+          <li>Up to 3 programs</li>
+          <li>50 verified outcomes/month</li>
+          <li>Up to 3 NGO partners (all free)</li>
+          <li>Unlimited volunteer participants</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Verification</div>
+        <ul class="feature-list">
+          <li>NGO 1-tap verification (&lt;15 sec)</li>
+          <li>SMS/2G low-bandwidth support</li>
+          <li>Immutable timestamped audit trail</li>
+          <li>Real-time verification dashboard</li>
+          <li>Verification SLA tracking</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Reporting &amp; Compliance</div>
+        <ul class="feature-list">
+          <li>SDG-tagged reports (GRI 413, SASB SO-ES-110)</li>
+          <li>PDF evidence exports (audit-ready)</li>
+          <li>B Corp recertification evidence package</li>
+          <li>Investor ESG questionnaire support</li>
+          <li>Double materiality screening</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label gold">Free for NGO Partners</div>
+        <ul class="feature-list">
+          <li>Auto-generated Verified Impact Summary PDFs</li>
+          <li>"Verified by Synerxus" credibility badge</li>
+          <li>Funder-ready impact reports at no cost</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Support</div>
+        <ul class="feature-list">
+          <li>Onboarding session</li>
+          <li>Email + chat support</li>
+        </ul>
+      </div>
+
+      <div class="expansion-box">+$12 / outcome overage &nbsp;·&nbsp; +$5K NGO incentive guarantee</div>
+      <a class="cta-button" href="#">See Pricing</a>
+    </div>
+
+    <!-- Growth (featured) -->
+    <div class="tier-card featured">
+      <div class="tier-header">
+        <div class="most-popular-badge">Most Popular</div>
+        <div class="tier-label">Growth</div>
+        <div class="tier-price">From $22,000<span>/yr</span></div>
+        <div class="tier-subtitle">Scale verified programs across regions</div>
+        <div class="tier-desc">Multi-program teams scaling globally with verified evidence.</div>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Programs &amp; Scale</div>
+        <ul class="feature-list">
+          <li>Unlimited programs</li>
+          <li>250 verified outcomes/month</li>
+          <li>Unlimited NGO partners (all free)</li>
+          <li>Multi-geography deployment</li>
+          <li>Unlimited volunteer participants</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Verification</div>
+        <ul class="feature-list">
+          <li>All Starter verification features</li>
+          <li>SLA-tracked verification per program</li>
+          <li>Global low-bandwidth support (SMS/2G)</li>
+          <li>Cross-region outcome aggregation</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Reporting &amp; Compliance</div>
+        <ul class="feature-list">
+          <li>CSRD / ESRS pre-formatted export templates</li>
+          <li>GRI, SASB, TCFD framework alignment</li>
+          <li>Multi-program ESG dashboard</li>
+          <li>Double materiality &amp; negative impact screening</li>
+          <li>API access for data integration</li>
+          <li>Slack integration for team alerts</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label gold">Free for NGO Partners</div>
+        <ul class="feature-list">
+          <li>All Starter NGO features</li>
+          <li>"Verified by Synerxus" co-branding for NGOs</li>
+          <li>NGO incentive guarantee included</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Support</div>
+        <ul class="feature-list">
+          <li>Onboarding + program setup support</li>
+          <li>Priority email + chat support</li>
+          <li>Quarterly impact review</li>
+        </ul>
+      </div>
+
+      <div class="expansion-box">+$15 / outcome overage &nbsp;·&nbsp; +$7.5K Auditor Export Package (Q4 pre-audit)</div>
+      <a class="cta-button gold" href="#">Request a Custom Quote</a>
+    </div>
+
+    <!-- Enterprise -->
+    <div class="tier-card">
+      <div class="tier-header">
+        <div class="tier-label">Enterprise</div>
+        <div class="tier-price">From $38,000<span>/yr</span></div>
+        <div class="tier-subtitle">Global compliance readiness</div>
+        <div class="tier-desc">Compliance teams managing global ESG risk and regulatory reporting.</div>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Programs &amp; Scale</div>
+        <ul class="feature-list">
+          <li>Unlimited programs &amp; NGOs (all free)</li>
+          <li>Unlimited verified outcomes</li>
+          <li>Multi-region deployment (EU/US/APAC)</li>
+          <li>Unlimited volunteer participants</li>
+          <li>Custom program structures</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Verification</div>
+        <ul class="feature-list">
+          <li>SLA-backed 72h verification guarantee</li>
+          <li>Priority NGO verification support</li>
+          <li>Global low-bandwidth support (SMS/2G)</li>
+          <li>Geolocation-tagged evidence</li>
+          <li>Cross-region verification aggregation</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Reporting &amp; Compliance</div>
+        <ul class="feature-list">
+          <li>All Growth reporting features</li>
+          <li>Multi-region ESG dashboards (EU/US/APAC)</li>
+          <li>ISAE 3000-aligned evidence packages</li>
+          <li>SEC Climate Rules + CSRD pre-audit exports</li>
+          <li>Custom reporting templates</li>
+          <li>Negative impact screening (double materiality)</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Security &amp; Infrastructure</div>
+        <ul class="feature-list">
+          <li>SSO / SAML single sign-on</li>
+          <li>SOC 2 Type II compliance</li>
+          <li>Data residency options</li>
+          <li>Custom SLAs</li>
+          <li>Custom integrations</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label gold">Free for NGO Partners</div>
+        <ul class="feature-list">
+          <li>All Growth NGO features</li>
+          <li>Priority verification support (zero cost)</li>
+          <li>NGO onboarding assistance</li>
+          <li>NGO incentive guarantee included</li>
+        </ul>
+      </div>
+
+      <div class="feat-group">
+        <div class="feat-group-label">Support</div>
+        <ul class="feature-list">
+          <li>Dedicated Customer Success Manager</li>
+          <li>Pre-audit advisory sessions</li>
+          <li>24/7 enterprise support</li>
+        </ul>
+      </div>
+
+      <div class="expansion-box">+$8/outcome overage &nbsp;·&nbsp; +$10K/region &nbsp;·&nbsp; +$12K Pre-Audit Package &nbsp;·&nbsp; Custom integrations</div>
+      <a class="cta-button" href="#">Talk to Sales</a>
+    </div>
+
+  </div>
+
+  <!-- ── Full Feature Comparison ── -->
+  <div class="section-title">Full Feature Comparison</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Pilot · $5K / 90 days</th>
+        <th>Starter · From $8K/yr</th>
+        <th>Growth · From $22K/yr</th>
+        <th>Enterprise · From $38K/yr</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="cat-row"><td colspan="5">Programs &amp; Scale</td></tr>
+      <tr>
+        <td>Programs</td>
+        <td>1</td><td>Up to 3</td><td>Unlimited</td><td>Unlimited</td>
+      </tr>
+      <tr>
+        <td>Verified outcomes</td>
+        <td>50 total (90 days)</td><td>50/month</td><td>250/month</td><td>Unlimited</td>
+      </tr>
+      <tr>
+        <td>NGO partners (free)</td>
+        <td>1</td><td>Up to 3</td><td>Unlimited</td><td>Unlimited</td>
+      </tr>
+      <tr>
+        <td>Multi-geography deployment</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Multi-region (EU/US/APAC)</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+
+      <tr class="cat-row"><td colspan="5">Verification</td></tr>
+      <tr>
+        <td>NGO 1-tap verification (&lt;15 sec)</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>SMS / 2G low-bandwidth support</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Immutable timestamped audit trail</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Verification SLA tracking</td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>SLA-backed 72h verification guarantee</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Geolocation-tagged evidence</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+
+      <tr class="cat-row"><td colspan="5">Reporting &amp; Compliance</td></tr>
+      <tr>
+        <td>SDG-tagged reports</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>PDF evidence exports (audit-ready)</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>GRI 413 / SASB SO-ES-110 evidence objects</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>B Corp recertification evidence package</td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Double materiality &amp; negative impact screening</td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>CSRD / ESRS export templates</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>GRI / SASB / TCFD framework alignment</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>ISAE 3000-aligned evidence packages</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>SEC Climate Rules + CSRD pre-audit exports</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>API access</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Slack integration</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+
+      <tr class="cat-row"><td colspan="5">Security &amp; Infrastructure</td></tr>
+      <tr>
+        <td>SSO / SAML</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>SOC 2 Type II</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Data residency options</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Custom SLAs</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+
+      <tr class="cat-row"><td colspan="5">Support</td></tr>
+      <tr>
+        <td>Onboarding session</td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Email + chat support</td>
+        <td>Email only</td><td><span class="check">✓</span></td>
+        <td>Priority</td><td>24/7</td>
+      </tr>
+      <tr>
+        <td>Dedicated Customer Success Manager</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Pre-audit advisory sessions</td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td><td><span class="check">✓</span></td>
+      </tr>
+      <tr class="highlight-row">
+        <td>$5K Pilot credit on annual conversion</td>
+        <td><span class="check">✓ (within 30 days)</span></td>
+        <td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="dash">—</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Expansion Revenue ── -->
+  <div class="section-title">Expansion Revenue &amp; Add-On Packages</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Add-On</th>
+        <th>Pilot</th>
+        <th>Starter</th>
+        <th>Growth</th>
+        <th>Enterprise</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Outcome overage rate</td>
+        <td><span class="dash">—</span></td>
+        <td>+$12 / outcome</td>
+        <td>+$15 / outcome</td>
+        <td>+$8 / outcome</td>
+      </tr>
+      <tr>
+        <td>NGO incentive guarantee</td>
+        <td><span class="dash">—</span></td>
+        <td>+$5,000</td>
+        <td>Included</td>
+        <td>Included</td>
+      </tr>
+      <tr>
+        <td>Auditor Export Package (Q4 pre-audit)</td>
+        <td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td>
+        <td>+$7,500</td>
+        <td>+$12,000</td>
+      </tr>
+      <tr>
+        <td>Additional region</td>
+        <td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td>
+        <td>+$10,000 / region</td>
+      </tr>
+      <tr>
+        <td>Custom integrations</td>
+        <td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td>
+        <td><span class="dash">—</span></td>
+        <td>Custom quote</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Conversion Rationale ── -->
+  <div class="section-title">Pricing Strategy &amp; Conversion Rationale</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Hidden / "Request Pricing"</th>
+        <th>Transparent Anchored Pricing</th>
+        <th>Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lead-to-demo conversion</td>
+        <td>~8%</td>
+        <td>22%+</td>
+        <td>Transparent pricing enables buyer self-qualification</td>
+      </tr>
+      <tr>
+        <td>Buyer confidence</td>
+        <td>Low — "they don't know their price"</td>
+        <td>High — value anchored to outcomes</td>
+        <td>CSR managers trust $8K; compliance buyers trust $38K</td>
+      </tr>
+      <tr>
+        <td>NGO value clarity</td>
+        <td>Buried in fine print</td>
+        <td>Front-and-centre banner</td>
+        <td>Drives NGO verification rate ≥80%</td>
+      </tr>
+      <tr>
+        <td>Expansion revenue visibility</td>
+        <td>Hidden overage / packages</td>
+        <td>Explicit per-tier overage + packages</td>
+        <td>118% NRR achievable</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <div>
+      <p><strong>Synerxus</strong> — Verified Outcomes for Audit-Ready ESG Reporting</p>
+      <p>Prepared: April 2026 &nbsp;·&nbsp; All prices in USD &nbsp;·&nbsp; NGO access is always free</p>
+    </div>
+    <button class="print-btn" onclick="window.print()">Save as PDF</button>
+  </div>
+
+</body>
+</html>

@@ -3409,11 +3409,10 @@ export default function Landing() {
                 Pricing
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3">
-                Verified outcomes, audit-ready evidence, and exclusive NGO
-                access
+                Verified Outcomes for Audit-Ready ESG Reporting
               </h2>
               <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
-                Built on the world's only free verification network.
+                Turn volunteer activity into third-party verified evidence — so your ESG reports survive auditor scrutiny.
               </p>
             </div>
 
@@ -3450,7 +3449,7 @@ export default function Landing() {
                     90 days · validation sprint
                   </div>
                   <p className="text-slate-500 text-xs leading-relaxed">
-                    Teams validating fit before rollout.
+                    Validate fit before rollout — no commitment required.
                   </p>
                 </div>
                 <div className="mb-4">
@@ -3494,7 +3493,7 @@ export default function Landing() {
                   variant="outline"
                   className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
                 >
-                  Start a Pilot
+                  Start a $5K Pilot
                 </Button>
               </div>
 
@@ -3511,10 +3510,10 @@ export default function Landing() {
                     </span>
                   </div>
                   <div className="text-xs text-slate-400 font-medium mb-2">
-                    60% less than one audit exception
+                    Prove impact for B Corp recertification
                   </div>
                   <p className="text-slate-500 text-xs leading-relaxed">
-                    Small ESG teams proving impact.
+                    Small ESG teams building defensible impact evidence.
                   </p>
                 </div>
                 <div className="mb-4">
@@ -3523,7 +3522,7 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-1.5">
                     {[
-                      "Free verification for up to 3 NGO partners",
+                      "Free verification for up to 10 NGO partners",
                       "50 verified outcomes/month",
                       "Immutable audit trail",
                       "PDF evidence exports",
@@ -3557,7 +3556,7 @@ export default function Landing() {
                   variant="outline"
                   className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
                 >
-                  Request Pricing
+                  See Pricing
                 </Button>
               </div>
 
@@ -3577,10 +3576,10 @@ export default function Landing() {
                     </span>
                   </div>
                   <div className="text-xs text-blue-300 font-medium mb-2">
-                    Multi-program scale
+                    Scale verified programs across regions
                   </div>
                   <p className="text-blue-200 text-xs leading-relaxed">
-                    Multi-program teams scaling globally.
+                    Multi-program teams scaling globally with verified evidence.
                   </p>
                 </div>
                 <div className="mb-4">
@@ -3591,7 +3590,7 @@ export default function Landing() {
                     {[
                       "Unlimited NGO partners (all free)",
                       "250 verified outcomes/month",
-                      "WEF · GRI · SASB · TCFD export templates",
+                      "CSRD/ESRS export templates",
                       "API + Slack integration",
                     ].map((f) => (
                       <li
@@ -3623,7 +3622,7 @@ export default function Landing() {
                   onClick={() => setPricingPlan("growth")}
                   className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold rounded-xl shadow text-sm"
                 >
-                  Request Pricing
+                  Request a Custom Quote
                 </Button>
               </div>
 
@@ -3640,10 +3639,10 @@ export default function Landing() {
                     </span>
                   </div>
                   <div className="text-xs text-slate-400 font-medium mb-2">
-                    Global compliance teams
+                    Global compliance readiness
                   </div>
                   <p className="text-slate-500 text-xs leading-relaxed">
-                    Compliance teams managing global risk.
+                    Compliance teams managing global ESG risk and regulatory reporting.
                   </p>
                 </div>
                 <div className="mb-4">

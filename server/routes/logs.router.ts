@@ -1193,7 +1193,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         volunteers: new Set(pActivities.map(a => a.userId)).size,
         sdgs: p.sdgGoals || [],
       };
-    }).filter(p => p.hours > 0 || p.outcomes > 0);
+    }).filter(p => p.hours > 0 || p.outcomes > 0).sort((a, b) => b.hours - a.hours || b.outcomes - a.outcomes);
 
     const now = new Date();
     const reportDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1872,7 +1872,8 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       `<text x="${visiSvgCx}" y="${visiSvgCy + 7}" font-size="8" font-family="Inter,sans-serif" font-weight="600" fill="#374151" text-anchor="middle">Composite</text>` +
       `</svg>`;
 
-    const visiTableRows = visiDims.map((d, i) =>
+    const visiTableDims = [...visiDims].sort((a, b) => b.score - a.score);
+    const visiTableRows = visiTableDims.map((d, i) =>
       `<tr style="border-bottom:0.5px solid #F3F4F6;background:${i % 2 === 1 ? '#FFFFFF' : 'transparent'};">` +
       `<td style="padding:4px 6px;font-size:9px;color:#374151;">${d.label}</td>` +
       `<td style="padding:4px 6px;font-size:9px;font-weight:700;color:#0A2463;text-align:center;">${d.score}</td>` +
@@ -2425,7 +2426,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     };
 
     // NGO partner rows
-    const ngoRows = Object.values(ngoStats).map((n: any) => `
+    const ngoRows = Object.values(ngoStats).sort((a: any, b: any) => b.outcomes - a.outcomes).map((n: any) => `
       <tr style="border-bottom:0.5px solid #e5e7eb;">
         <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${escapeHtml(n.org.name)}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(n.org.location || '—')}</td>
@@ -2518,7 +2519,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       const _n = parseInt(sdg);
       const _p = _sdgTotAll > 0 ? Math.round((data.outcomes / _sdgTotAll) * 100) : 0;
       return { lbl: 'SDG ' + _n, name: SDG_NAMES_LOCAL[_n] || ('SDG ' + _n), pct: _p, outcomes: data.outcomes };
-    });
+    }).sort((a: any, b: any) => b.pct - a.pct);
     const _sdgBarRows = _sdgBarEs.map((e: any, i: number) =>
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:' + (i < _sdgBarEs.length - 1 ? '8px' : '0') + ';">' +
       '<div style="width:110px;flex-shrink:0;font-size:9.5px;font-weight:600;">' +

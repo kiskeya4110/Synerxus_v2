@@ -422,14 +422,26 @@ export default function CSRReportsExports() {
           <style>
             @page {
               size: A4 portrait;
-              margin: 28mm 60mm;
-              @top-center { content: none; }
-              @bottom-center { content: none; }
-              @bottom-left { content: none; }
-              @bottom-right { content: none; }
+              margin: 22mm 15mm 15mm;
             }
             @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { -webkit-print-color-adjust: exact; } }
             @media print { html, body { margin: 0 !important; } }
+            .print-running-header { display: none; }
+            @media print {
+              .print-running-header {
+                display: flex;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                height: 14mm;
+                background: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 15mm;
+                z-index: 9999;
+                font-family: Arial, sans-serif;
+              }
+            }
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
 
@@ -524,7 +536,7 @@ export default function CSRReportsExports() {
             .metric-value { font-size: 28px; font-weight: 800; color: #92400e; }
             .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
-            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; }
             thead { display: table-header-group; }
             th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
             td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
@@ -546,6 +558,10 @@ export default function CSRReportsExports() {
           </style>
         </head>
         <body>
+          <div class="print-running-header">
+            <span style="font-weight:700;font-size:9pt;letter-spacing:0.03em;"><span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span> &nbsp;<span style="font-weight:400;color:#6b7280;font-size:8pt;">· Impacts. Verified.</span></span>
+            <span style="font-size:8pt;color:#9ca3af;">Confidential Report</span>
+          </div>
           <div class="sdg-watermark">
             <svg viewBox="0 0 200 200" width="600" height="600">
               ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map((sdg, index) => {
@@ -811,10 +827,26 @@ export default function CSRReportsExports() {
           <style>
             @page {
               size: A4 portrait;
-              margin: 20mm 15mm;
+              margin: 22mm 15mm 15mm;
             }
             @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { -webkit-print-color-adjust: exact; } }
             @media print { html, body { margin: 0 !important; } }
+            .print-running-header { display: none; }
+            @media print {
+              .print-running-header {
+                display: flex;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                height: 14mm;
+                background: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 15mm;
+                z-index: 9999;
+                font-family: Arial, sans-serif;
+              }
+            }
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { font-family: Arial, sans-serif; margin: 0; padding: 32px 0; color: #333; background: #fff; }
 
@@ -1005,8 +1037,6 @@ export default function CSRReportsExports() {
               margin: 24px 0;
               border-radius: 8px;
               overflow: hidden;
-              page-break-inside: avoid;
-              break-inside: avoid;
             }
             thead { display: table-header-group; }
             th {
@@ -1233,6 +1263,10 @@ export default function CSRReportsExports() {
           </style>
         </head>
         <body>
+          <div class="print-running-header">
+            <span style="font-weight:700;font-size:9pt;letter-spacing:0.03em;"><span style="color:#0A2463;">SYNER</span><span style="color:#D4980C;">XUS</span> &nbsp;<span style="font-weight:400;color:#6b7280;font-size:8pt;">· Impacts. Verified.</span></span>
+            <span style="font-size:8pt;color:#9ca3af;">Confidential Report</span>
+          </div>
           <!-- SDG Wheel Watermark -->
           <div class="sdg-watermark">
             <svg viewBox="0 0 200 200" width="600" height="600">

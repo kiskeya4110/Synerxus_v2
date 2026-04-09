@@ -125,7 +125,8 @@ const CUSTODY_STEPS: {
     sub: "Volunteer logs outcomes, hours & beneficiaries in real time via mobile — timestamped at the moment it happens.",
     color: "#0D9488",
     bg: "#F0FDFA",
-    detail: "Every submission captures GPS location, device fingerprint, timestamp, volunteer ID, hours contributed, beneficiary count, and a free-text outcome description — all before a verifier is ever contacted.",
+    detail:
+      "Every submission captures GPS location, device fingerprint, timestamp, volunteer ID, hours contributed, beneficiary count, and a free-text outcome description — all before a verifier is ever contacted.",
   },
   {
     Icon: ShieldCheck,
@@ -134,7 +135,8 @@ const CUSTODY_STEPS: {
     sub: "Partner NGO confirms results with a single tap — no login required, under 15 seconds.",
     color: "#EA580C",
     bg: "#FFF7ED",
-    detail: "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. Single-tap confirmation via the Synerxus app or SMS. No training required. Average response time: 16 hours.",
+    detail:
+      "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. Single-tap confirmation via the Synerxus app or SMS. No training required. Average response time: 16 hours.",
   },
   {
     Icon: Lock,
@@ -143,7 +145,8 @@ const CUSTODY_STEPS: {
     sub: "Record sealed with GPS coordinates, device ID, verifier identity & SDG mapping — tamper-proof.",
     color: "#DB2777",
     bg: "#FDF2F8",
-    detail: "The confirmed outcome is sealed into an immutable Evidence Object: verifier identity, device ID, GPS coordinates, timestamp, SDG mapping, and a cryptographic hash. Records cannot be retroactively edited — meeting ISAE 3000 chain-of-custody requirements.",
+    detail:
+      "The confirmed outcome is sealed into an immutable Evidence Object: verifier identity, device ID, GPS coordinates, timestamp, SDG mapping, and a cryptographic hash. Records cannot be retroactively edited — meeting ISAE 3000 chain-of-custody requirements.",
   },
   {
     Icon: BarChart2,
@@ -152,7 +155,8 @@ const CUSTODY_STEPS: {
     sub: "Audit-ready PDF delivered to corporate ESG teams — every claim traceable to an NGO confirmation.",
     color: "#2563EB",
     bg: "#EFF6FF",
-    detail: "Verified outcomes are aggregated into GRI-, ESRS-, and WEF SCM-aligned reports with a full evidence trail. Auditors receive a ready-made evidence pack — reducing assurance preparation time by 60–70%.",
+    detail:
+      "Verified outcomes are aggregated into GRI-, ESRS-, and WEF SCM-aligned reports with a full evidence trail. Auditors receive a ready-made evidence pack — reducing assurance preparation time by 60–70%.",
   },
 ];
 
@@ -1286,7 +1290,10 @@ function PricingContactModal({
       }
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please email hello@synerxus.com directly.");
+      setError(
+        err.message ||
+          "Something went wrong. Please email hello@synerxus.com directly.",
+      );
     } finally {
       setLoading(false);
     }
@@ -1417,7 +1424,10 @@ function PricingContactModal({
                 className="w-full bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold rounded-xl py-2.5"
               >
                 {loading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin inline" />Sending…</>
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin inline" />
+                    Sending…
+                  </>
                 ) : (
                   "Send Enquiry"
                 )}
@@ -1569,6 +1579,7 @@ export default function Landing() {
   const [heroSlide, setHeroSlide] = useState(0);
   const [activeGapLayer, setActiveGapLayer] = useState<string | null>(null);
   const [showProcessBrief, setShowProcessBrief] = useState(false);
+  const [showAllFaq, setShowAllFaq] = useState(false);
   const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
   const [pricingPlan, setPricingPlan] = useState<string | null>(null);
@@ -2040,7 +2051,7 @@ export default function Landing() {
                 The World Runs on Unverified Impact Claims
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto">
-                Three broken systems. One verification gap. Synerxus closes it.
+                Three Broken Systems. One Verification Gap. Synerxus Closes It.
               </p>
             </div>
 
@@ -2081,10 +2092,12 @@ export default function Landing() {
               ))}
             </div>
 
-            <p className="text-center text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mt-10 tracking-tight">
+            <p className="text-center text-2xl sm:text-3.5xl font-extrabold text-[#0A1F44] mt-10 tracking-tight">
               Synerxus{" "}
               <span className="relative inline-block">
-                <span className="relative z-10">closes the verification gap.</span>
+                <span className="relative z-10">
+                  Closes The Verification Gap.
+                </span>
                 <span className="absolute inset-x-0 bottom-1 h-[6px] bg-[#D4980C]/30 rounded-full -z-0" />
               </span>
             </p>
@@ -2579,7 +2592,8 @@ export default function Landing() {
                 A Complete Chain of Custody
               </h2>
               <p className="text-slate-500 text-base md:text-lg">
-                Four steps from delivery to disclosure — with verification at every stage.
+                Four steps from delivery to disclosure — with verification at
+                every stage.
               </p>
             </div>
 
@@ -2600,27 +2614,44 @@ export default function Landing() {
                       {i < CUSTODY_STEPS.length - 1 && (
                         <div
                           className="w-0.5 flex-1 my-1 rounded-full opacity-25"
-                          style={{ backgroundColor: step.color, minHeight: "28px" }}
+                          style={{
+                            backgroundColor: step.color,
+                            minHeight: "28px",
+                          }}
                         />
                       )}
                     </div>
                     <div
-                      className={i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"}
+                      className={
+                        i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"
+                      }
                     >
                       <button
                         onClick={() => setCustodyActive(isActive ? null : i)}
                         className="w-full text-left"
                       >
-                        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: step.color }}>
+                        <span
+                          className="text-[10px] font-bold tracking-widest uppercase"
+                          style={{ color: step.color }}
+                        >
                           {step.num}
                         </span>
                         <h3 className="font-extrabold text-[#0A1F44] text-sm leading-snug mt-0.5 mb-1">
                           {step.label}
                         </h3>
-                        <p className="text-slate-500 text-xs leading-relaxed">{step.sub}</p>
+                        <p className="text-slate-500 text-xs leading-relaxed">
+                          {step.sub}
+                        </p>
                       </button>
                       {isActive && (
-                        <p className="mt-2 text-xs leading-relaxed rounded-xl px-3 py-2 border" style={{ color: step.color, backgroundColor: step.bg, borderColor: step.color + "33" }}>
+                        <p
+                          className="mt-2 text-xs leading-relaxed rounded-xl px-3 py-2 border"
+                          style={{
+                            color: step.color,
+                            backgroundColor: step.bg,
+                            borderColor: step.color + "33",
+                          }}
+                        >
                           {step.detail}
                         </p>
                       )}
@@ -2642,24 +2673,84 @@ export default function Landing() {
                   aria-hidden="true"
                 >
                   {/* 01(TL)→02(BL): curved down-left */}
-                  <path d="M 28 36 Q 14 50 28 64" fill="none" stroke="#0D9488" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-teal)" />
+                  <path
+                    d="M 28 36 Q 14 50 28 64"
+                    fill="none"
+                    stroke="#0D9488"
+                    strokeWidth="0.8"
+                    strokeDasharray="2.5 1.5"
+                    opacity="0.6"
+                    markerEnd="url(#arrow-teal)"
+                  />
                   {/* 02(BL)→03(BR): curved across bottom */}
-                  <path d="M 36 72 Q 50 84 64 72" fill="none" stroke="#EA580C" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-orange)" />
+                  <path
+                    d="M 36 72 Q 50 84 64 72"
+                    fill="none"
+                    stroke="#EA580C"
+                    strokeWidth="0.8"
+                    strokeDasharray="2.5 1.5"
+                    opacity="0.6"
+                    markerEnd="url(#arrow-orange)"
+                  />
                   {/* 03(BR)→04(TR): curved up-right */}
-                  <path d="M 72 64 Q 86 50 72 36" fill="none" stroke="#DB2777" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-pink)" />
+                  <path
+                    d="M 72 64 Q 86 50 72 36"
+                    fill="none"
+                    stroke="#DB2777"
+                    strokeWidth="0.8"
+                    strokeDasharray="2.5 1.5"
+                    opacity="0.6"
+                    markerEnd="url(#arrow-pink)"
+                  />
                   {/* 04(TR)→01(TL): curved across top */}
-                  <path d="M 64 28 Q 50 16 36 28" fill="none" stroke="#2563EB" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-blue)" />
+                  <path
+                    d="M 64 28 Q 50 16 36 28"
+                    fill="none"
+                    stroke="#2563EB"
+                    strokeWidth="0.8"
+                    strokeDasharray="2.5 1.5"
+                    opacity="0.6"
+                    markerEnd="url(#arrow-blue)"
+                  />
                   <defs>
-                    <marker id="arrow-teal" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                    <marker
+                      id="arrow-teal"
+                      markerWidth="4"
+                      markerHeight="4"
+                      refX="3"
+                      refY="2"
+                      orient="auto"
+                    >
                       <path d="M0,0 L0,4 L4,2 z" fill="#0D9488" opacity="0.7" />
                     </marker>
-                    <marker id="arrow-orange" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                    <marker
+                      id="arrow-orange"
+                      markerWidth="4"
+                      markerHeight="4"
+                      refX="3"
+                      refY="2"
+                      orient="auto"
+                    >
                       <path d="M0,0 L0,4 L4,2 z" fill="#EA580C" opacity="0.7" />
                     </marker>
-                    <marker id="arrow-pink" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                    <marker
+                      id="arrow-pink"
+                      markerWidth="4"
+                      markerHeight="4"
+                      refX="3"
+                      refY="2"
+                      orient="auto"
+                    >
                       <path d="M0,0 L0,4 L4,2 z" fill="#DB2777" opacity="0.7" />
                     </marker>
-                    <marker id="arrow-blue" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                    <marker
+                      id="arrow-blue"
+                      markerWidth="4"
+                      markerHeight="4"
+                      refX="3"
+                      refY="2"
+                      orient="auto"
+                    >
                       <path d="M0,0 L0,4 L4,2 z" fill="#2563EB" opacity="0.7" />
                     </marker>
                   </defs>
@@ -2674,15 +2765,25 @@ export default function Landing() {
                 </div>
 
                 {/* 2×2 grid — order: TL, TR, BL, BR */}
-                <div className="grid grid-cols-2 gap-10" style={{ zIndex: 3, position: "relative" }}>
-                  {[CUSTODY_STEPS[0], CUSTODY_STEPS[3], CUSTODY_STEPS[1], CUSTODY_STEPS[2]].map((step, gridIdx) => {
+                <div
+                  className="grid grid-cols-2 gap-10"
+                  style={{ zIndex: 3, position: "relative" }}
+                >
+                  {[
+                    CUSTODY_STEPS[0],
+                    CUSTODY_STEPS[3],
+                    CUSTODY_STEPS[1],
+                    CUSTODY_STEPS[2],
+                  ].map((step, gridIdx) => {
                     const originalIdx = [0, 3, 1, 2][gridIdx];
                     const { Icon } = step;
                     const isActive = custodyActive === originalIdx;
                     return (
                       <button
                         key={step.num}
-                        onClick={() => setCustodyActive(isActive ? null : originalIdx)}
+                        onClick={() =>
+                          setCustodyActive(isActive ? null : originalIdx)
+                        }
                         className="text-left rounded-2xl border p-6 transition-all duration-200 focus:outline-none group"
                         style={{
                           backgroundColor: isActive ? step.bg : "#F8FAFC",
@@ -2693,18 +2794,24 @@ export default function Landing() {
                             : "0 1px 4px rgba(0,0,0,0.06)",
                           transform: isActive ? "scale(1.02)" : "scale(1)",
                         }}
-                        onMouseEnter={e => {
+                        onMouseEnter={(e) => {
                           if (!isActive) {
-                            (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${step.color}28`;
-                            (e.currentTarget as HTMLElement).style.borderColor = step.color + "66";
-                            (e.currentTarget as HTMLElement).style.transform = "scale(1.015)";
+                            (e.currentTarget as HTMLElement).style.boxShadow =
+                              `0 4px 20px ${step.color}28`;
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              step.color + "66";
+                            (e.currentTarget as HTMLElement).style.transform =
+                              "scale(1.015)";
                           }
                         }}
-                        onMouseLeave={e => {
+                        onMouseLeave={(e) => {
                           if (!isActive) {
-                            (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
-                            (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
-                            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                            (e.currentTarget as HTMLElement).style.boxShadow =
+                              "0 1px 4px rgba(0,0,0,0.06)";
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "#E2E8F0";
+                            (e.currentTarget as HTMLElement).style.transform =
+                              "scale(1)";
                           }
                         }}
                       >
@@ -2741,7 +2848,10 @@ export default function Landing() {
                           </p>
                         )}
                         {!isActive && (
-                          <p className="mt-3 text-xs font-medium" style={{ color: step.color + "99" }}>
+                          <p
+                            className="mt-3 text-xs font-medium"
+                            style={{ color: step.color + "99" }}
+                          >
                             Click to learn more →
                           </p>
                         )}
@@ -3578,11 +3688,17 @@ export default function Landing() {
                 ].map((item) => (
                   <div key={item.step} className="flex gap-3">
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#D4980C] flex items-center justify-center">
-                      <span className="text-[11px] font-extrabold text-white">{item.step}</span>
+                      <span className="text-[11px] font-extrabold text-white">
+                        {item.step}
+                      </span>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white">{item.title}</p>
-                      <p className="text-xs text-blue-200 mt-0.5 leading-relaxed">{item.desc}</p>
+                      <p className="text-xs font-bold text-white">
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-blue-200 mt-0.5 leading-relaxed">
+                        {item.desc}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -3797,8 +3913,11 @@ export default function Landing() {
                   q: "Does Synerxus provide formal ESG assurance?",
                   a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
                 },
-              ].map(({ q, a }, i) => (
-                <details key={i} className="group py-5 border-b border-slate-100">
+              ].slice(0, showAllFaq ? undefined : 6).map(({ q, a }, i) => (
+                <details
+                  key={i}
+                  className="group py-5 border-b border-slate-100"
+                >
                   <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
                     <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
                       {q}
@@ -3825,6 +3944,29 @@ export default function Landing() {
                   </p>
                 </details>
               ))}
+            </div>
+
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setShowAllFaq(!showAllFaq)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-[#0A1F44]/20 text-[#0A1F44] text-sm font-semibold hover:bg-[#0A1F44]/5 transition-colors"
+              >
+                {showAllFaq ? (
+                  <>
+                    Show Less
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 10L8 6L12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    See 12 More Questions
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </section>

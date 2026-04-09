@@ -1877,7 +1877,7 @@ export default function Landing() {
               )}
 
               {/* Trust badge strip */}
-              <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 mt-1">
                 {[
                   "NGO-Verified Outcomes",
                   "Immutable Audit Trail",
@@ -1886,7 +1886,7 @@ export default function Landing() {
                 ].map((badge) => (
                   <span
                     key={badge}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#0A1F44]/15 text-[10px] sm:text-xs font-semibold text-[#0A1F44] shadow-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#0A1F44]/15 text-[10px] sm:text-xs font-semibold text-[#0A1F44] shadow-sm w-fit"
                   >
                     <CheckCircle className="h-3 w-3 text-emerald-500" />
                     {badge}

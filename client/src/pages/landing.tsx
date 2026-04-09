@@ -1218,7 +1218,8 @@ function buildSampleReportHtml(): string {
   </div>
   <!-- Assurance boundary diagram -->
   <div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;margin-top:16px;">
-    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Assurance Boundary — Limitations &amp; Scope</div>
+    <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Assurance Boundary: Global Verification Scope</div>
+    <div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides verified outcome data supporting multiple global sustainability frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce auditor evidence-gathering burden by 60–70% but does not replace independent assurance per ISAE 3000.</div>
     <div style="padding:16px;background:#F9FAFB;">
       <div style="display:flex;flex-direction:column;align-items:center;">
         <div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#F9FAFB;text-align:center;">
@@ -1236,7 +1237,27 @@ function buildSampleReportHtml(): string {
         </div>
       </div>
     </div>
-    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Synerxus provides verification infrastructure — not assurance opinion. Independent auditor required for ISAE 3000 formal assurance.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #E5E7EB;">
+      <div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">
+        <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:8px;">&#x2705; What Synerxus Provides</div>
+        <ul style="margin:0;padding:0;list-style:none;">
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with immutable audit trails</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence objects for GRI 413, SASB SO-ES-110</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Double materiality compliance via negative impact screening</li>
+          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Global framework alignment (SDGs, GRI, SASB, TCFD)</li>
+        </ul>
+      </div>
+      <div style="padding:12px 14px;background:#fef2f2;">
+        <div style="font-size:10px;font-weight:700;color:#991b1b;margin-bottom:8px;">&#x274C; What Requires External Action</div>
+        <ul style="margin:0;padding:0;list-style:none;">
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Formal assurance opinion (independent auditor required)</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Causal attribution (requires RCTs)</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Financial valuation (SROI not calculated)</li>
+          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance guarantee (auditor judgment required)</li>
+        </ul>
+      </div>
+    </div>
+    <div style="padding:8px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#6b7280;font-style:italic;background:#fffbeb;">For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per ISAE 3000 remains required. Synerxus provides the evidence — auditors provide the opinion.</div>
   </div>
 </div>
 

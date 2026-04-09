@@ -1848,7 +1848,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
   <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:8px 56px;break-inside:avoid;page-break-inside:avoid;">
     <div style="max-width:100%;">
       <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;">&#9888; TEMPLATE CONTEXT — VERIFICATION METHODOLOGY DEMONSTRATION</div>
-      <div style="font-size:11px;color:#78350f;line-height:1.6;">This is a <strong>pilot-format sample report</strong> demonstrating how Synerxus verification architecture SUPPORTS CSRD/ESRS disclosure requirements. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Data shown reflects NGO-confirmed outcomes from the active corporate pilot. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70% when paired with real pilot data; it does not replace auditor judgment. Final limited assurance requires independent auditor procedures per ISAE 3000.</div>
+      <div style="font-size:11px;color:#78350f;line-height:1.6;">This is a <strong>pilot-format sample report</strong> demonstrating how Synerxus verification architecture SUPPORTS global sustainability reporting requirements (GRI, SASB, TCFD, WEF SCM, UN SDGs). This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Data shown reflects NGO-confirmed outcomes from the active corporate pilot. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70% when paired with real pilot data; it does not replace auditor judgment. Final limited assurance requires independent auditor procedures per ISAE 3000.</div>
     </div>
   </div>
 

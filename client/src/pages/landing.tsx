@@ -1835,7 +1835,7 @@ export default function Landing() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/signup">
+                    <Link href="/signup/corporate">
                       <Button
                         size="lg"
                         className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
@@ -3690,7 +3690,7 @@ export default function Landing() {
                   that doesn't prioritize verification at the source.
                 </p>
                 <Button
-                  onClick={() => setPricingPlan("pilot")}
+                  onClick={() => navigate("/signup/corporate")}
                   size="sm"
                   className="flex-shrink-0 bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold rounded-xl whitespace-nowrap"
                 >
@@ -3741,7 +3741,7 @@ export default function Landing() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => setPricingPlan("pilot")}
+                  onClick={() => navigate("/signup/corporate")}
                   className="border-2 border-white text-white font-bold px-8 rounded-xl hover:bg-white hover:text-[#0A1F44] transition-colors"
                 >
                   Book a Demo
@@ -3837,7 +3837,7 @@ export default function Landing() {
             </div>
 
             <Button
-              onClick={() => setPricingPlan("pilot")}
+              onClick={() => navigate("/signup/corporate")}
               className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-semibold rounded-xl"
             >
               Book a Demo with Synerxus

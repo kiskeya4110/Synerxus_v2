@@ -134,7 +134,7 @@ const CUSTODY_STEPS: {
     sub: "Partner NGO confirms results with a single tap — no login required, under 15 seconds.",
     color: "#EA580C",
     bg: "#FFF7ED",
-    detail: "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. No account, no app download, no training required. Average response time: 16 hours.",
+    detail: "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. Single-tap confirmation via the Synerxus app or SMS. No training required. Average response time: 16 hours.",
   },
   {
     Icon: Lock,
@@ -1072,7 +1072,7 @@ function buildSampleReportHtml(): string {
     <div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">
       <span>Verification Rate: <strong style="color:#0A2463;">85%</strong></span>
       <span>Avg. SLA: <strong style="color:#0A2463;">16h</strong></span>
-      <span style="color:#6B7280;">SMS-Based (No App Required)</span>
+      <span style="color:#6B7280;">SMS + PWA Verified</span>
     </div>
   </div>
   <div class="note">&#128161; <strong>Framework Relevance:</strong> WEF People pillar and GRI 404-1 require workforce skills disclosure. ESRS S1.4 applies for EU filers. This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
@@ -1853,7 +1853,7 @@ export default function Landing() {
                         className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
                         data-testid="button-join-hero"
                       >
-                        Book a Demo
+                        Get Started
                       </Button>
                     </Link>
                     <Button
@@ -3405,7 +3405,7 @@ export default function Landing() {
                   </p>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     1-tap verification (&lt;15 seconds) becomes their
-                    fundraising asset — no app, no login.
+                    fundraising asset — free on the Synerxus app.
                   </p>
                 </div>
                 <div className="mb-4 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
@@ -3611,7 +3611,7 @@ export default function Landing() {
                   {
                     icon: <Clock className="h-4 w-4 text-[#D4980C]" />,
                     title: "1-tap verification",
-                    desc: "Takes <15 seconds — no app, no login, no training required.",
+                    desc: "Takes <15 seconds via the Synerxus app or SMS. Zero training needed.",
                   },
                   {
                     icon: <ShieldCheck className="h-4 w-4 text-[#D4980C]" />,
@@ -3918,7 +3918,7 @@ export default function Landing() {
               onClick={() => navigate("/signup/corporate")}
               className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-semibold rounded-xl"
             >
-              Book a Demo with Synerxus
+              Get Started
             </Button>
           </div>
         </div>

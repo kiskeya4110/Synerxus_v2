@@ -1579,7 +1579,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">' +
       '<span>Verification Rate: <strong style="color:#0A2463;">' + verificationRate + '%</strong></span>' +
       '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
-      '<span style="color:#6B7280;">SMS-Based (No App Required)</span></div></div>';
+      '<span style="color:#6B7280;">SMS + PWA Verified</span></div></div>';
 
     // SDG Horizontal Bar Chart — use same totalSdgOutcomes denominator as the table above
     const _nSdgBarEs = sortedSdgs.slice(0, 6).map(([sdg, data]: any) => {
@@ -2492,7 +2492,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">' +
       '<span>Verification Rate: <strong style="color:#0A2463;">' + verificationRate + '%</strong></span>' +
       '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
-      '<span style="color:#6B7280;">SMS-Based (No App Required)</span></div></div>';
+      '<span style="color:#6B7280;">SMS + PWA Verified</span></div></div>';
 
     // SDG Horizontal Bar Chart — denominator = all SDGs (not just top-6 slice)
     const _sdgTotAll = Object.values(sdgMap).reduce((s: number, d: any) => s + d.outcomes, 0);

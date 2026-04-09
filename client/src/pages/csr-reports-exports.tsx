@@ -669,7 +669,7 @@ export default function CSRReportsExports() {
             <div class="footer-logo">
               <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
-            <div class="footer-tagline"><span style="color:#D4980C;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
+            <div class="footer-tagline"><span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
               Generated on ${currentDate} • ${template.name}
             </div>
@@ -679,6 +679,7 @@ export default function CSRReportsExports() {
             <div class="footer-copyright">
               © ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com
             </div>
+            <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
           </div>
         </body>
       </html>
@@ -1798,7 +1799,7 @@ export default function CSRReportsExports() {
                 <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height:28px;width:auto;" />
                 <div style="font-size:11px;line-height:1.6;color:#6b7280;">
                   <div><span style="color:#D4980C;font-weight:700;">Impacts.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
-                  <div>Powered by Synerxus · ISAE 3000 Revised</div>
+                  <div>ISAE 3000 Revised · Audit-Supported</div>
                 </div>
               </div>
               <div class="footer-ids">
@@ -1823,6 +1824,7 @@ export default function CSRReportsExports() {
               <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorized personnel.</div>
             </div>
             <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com | assurance@synerxus.com</div>
+            <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
           </div>
         </body>
       </html>

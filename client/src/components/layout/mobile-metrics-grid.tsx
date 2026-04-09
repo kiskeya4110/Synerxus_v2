@@ -1,6 +1,5 @@
-import { FolderOpen, Clock, Target, Users, TrendingUp, Award, CheckCircle, Zap } from "lucide-react";
+import { FolderOpen, Clock, Target, Users, TrendingUp, CheckCircle, Zap } from "lucide-react";
 import { formatDecimal } from "@/lib/format-utils";
-import { useAIUDisplay } from "@/hooks/use-feature-flags";
 
 interface MobileMetricsGridProps {
   activeProjects?: number;
@@ -8,7 +7,6 @@ interface MobileMetricsGridProps {
   completedProjects?: number;
   totalHours?: number;
   sdgsAddressed?: number;
-  aiuEarned?: number;
   activeVolunteers?: number;
   livesImpacted?: number;
   onActiveProjectsClick?: () => void;
@@ -23,7 +21,6 @@ export default function MobileMetricsGrid({
   completedProjects = 0,
   totalHours = 0,
   sdgsAddressed = 0,
-  aiuEarned = 0,
   activeVolunteers = 0,
   livesImpacted = 0,
   onActiveProjectsClick,
@@ -31,7 +28,6 @@ export default function MobileMetricsGrid({
   onSdgsClick,
   onAiuClick,
 }: MobileMetricsGridProps) {
-  const isAIUEnabled = useAIUDisplay();
 
   // Calculate industry-standard KPIs
   const successRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
@@ -69,16 +65,6 @@ export default function MobileMetricsGrid({
       onClick: onSdgsClick,
       testId: "mobile-metric-sdgs",
       tooltip: "UN SDGs addressed"
-    },
-    {
-      label: "Impact Score",
-      value: typeof aiuEarned === 'number' ? formatDecimal(aiuEarned) : aiuEarned,
-      subValue: `${totalHours.toLocaleString()} verified`,
-      icon: Award,
-      color: "#0ea5e9",
-      onClick: onTotalHoursClick,
-      testId: "mobile-metric-impact",
-      tooltip: "Verified social impact score"
     },
   ];
 

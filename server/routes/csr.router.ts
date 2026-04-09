@@ -10,6 +10,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware, requireCSRAccess } from "../middleware/auth";
+import { requirePlanFeature } from "../middleware/plan-enforcement";
 import { getAuthenticatedUser } from "./utils";
 
 export const csrRouter = Router();
@@ -1626,7 +1627,7 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
  * GET /csr/impact-reporting/export/csv
  * Export CSR Impact Report as CSV file
  */
-csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAccess, requirePlanFeature("csvExport"), queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1714,7 +1715,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
  * GET /csr/impact-reporting/export/pdf
  * Export CSR Impact Report as PDF (HTML format for browser printing)
  */
-csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAccess, queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAccess, requirePlanFeature("esgReportExport"), queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;

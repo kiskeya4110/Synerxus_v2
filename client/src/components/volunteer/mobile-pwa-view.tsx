@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreHorizontal } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
-import AIUDetailsModal from "@/components/dashboard/aiu-details-modal";
-import { useAIUDisplay } from "@/hooks/use-feature-flags";
 import ContributionBadges from "@/components/dashboard/contribution-badges";
 import ImpactLogHistory from "@/components/dashboard/impact-log-history";
 import { useLocation, Link } from "wouter";
@@ -87,7 +85,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { signOut } = useAuth();
-  const isAIUEnabled = useAIUDisplay();
   const [activeTab, setActiveTab] = useState<TabType>(initialActiveTab || 'dashboard');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
@@ -97,7 +94,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
   const [showReadinessModal, setShowReadinessModal] = useState(false);
-  const [showAIUDetailsModal, setShowAIUDetailsModal] = useState(false);
 
   // Log Activity form state
   const [logActivityProjectId, setLogActivityProjectId] = useState<string>("");
@@ -1345,22 +1341,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-[10px] font-semibold text-slate-200">Impacted</div>
                 <div className="text-[8px] text-rose-300">people</div>
               </button>
-              {/* Impact Score */}
-              <button
-                onClick={() => setShowAIUDetailsModal(true)}
-                className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg group"
-                data-testid="kpi-aiu-score"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-                  <Award className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-xl font-bold text-white">
-                  {formatNumber(aiuSummary?.totalAiu || 0)}
-                </div>
-                <div className="text-[10px] font-semibold text-slate-200">Impact Score</div>
-                <div className="text-[8px] text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">Tap for details</div>
-              </button>
               {/* Total Hours - Time contributed with verification status */}
               <button
                 onClick={() => setShowKpiModal('hours')}
@@ -1438,17 +1418,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       </div>
                       <div className="text-[9px] text-slate-200 font-semibold">Projects</div>
                       <div className="text-[8px] text-purple-300 mt-0.5">Tap for details</div>
-                    </button>
-                    {/* Impact Score - Clickable, using aiuSummary as single source of truth */}
-                    <button
-                      onClick={() => setShowAIUDetailsModal(true)}
-                      className="text-center p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 transition-all active:scale-95 shadow-md border border-slate-600/50 cursor-pointer group"
-                    >
-                      <div className="text-2xl font-bold text-amber-300">
-                        {formatNumber(aiuSummary?.totalAiu)}
-                      </div>
-                      <div className="text-[9px] text-slate-200 font-semibold">Score</div>
-                      <div className="text-[8px] text-amber-300 mt-0.5">Tap for details</div>
                     </button>
                   </div>
 
@@ -2568,18 +2537,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <ChevronDown className="w-4 h-4 opacity-60 ml-auto -rotate-90" />
                 </button>
-                {/* pts Score - Clickable */}
-                <button
-                  onClick={() => setShowAIUDetailsModal(true)}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all active:scale-[0.98] text-left"
-                >
-                  <Target className="w-6 h-6 opacity-90" />
-                  <div>
-                    <div className="text-3xl font-bold">{formatNumber(aiuSummary?.totalAiu)}</div>
-                    <div className="text-xs opacity-80">Total Impact Score</div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 opacity-60 ml-auto -rotate-90" />
-                </button>
               </div>
               {/* Secondary metrics row - all clickable */}
               <div className="grid grid-cols-3 gap-2 mb-3">
@@ -2600,15 +2557,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <Briefcase className="w-4 h-4 mx-auto opacity-80 mb-1" />
                   <div className="text-lg font-bold">{kpis.totalProjects}</div>
                   <div className="text-[10px] opacity-70">Projects</div>
-                </button>
-                {/* Impact Score - Clickable */}
-                <button
-                  onClick={() => setShowKpiModal('impact-score')}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all active:scale-[0.98] text-center"
-                >
-                  <Zap className="w-4 h-4 mx-auto opacity-80 mb-1" />
-                  <div className="text-lg font-bold">{kpis.impactScore}</div>
-                  <div className="text-[10px] opacity-70">Impact Score</div>
                 </button>
               </div>
               {/* SDGs Contributed - Clickable footer */}
@@ -3572,20 +3520,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
-                onClick={() => setShowAIUDetailsModal(true)}
-                className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
-                data-testid="button-aiu-score"
-              >
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
-                  <Award className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-white font-medium">Impact Score</div>
-                  <div className="text-slate-400 text-xs">Impact Score breakdown</div>
-                </div>
-                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
-              </button>
-              <button
                 onClick={() => setShowKpiModal('impact-roi')}
                 className="w-full bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-lg hover:shadow-xl hover:bg-slate-700/90 transition-all flex items-center gap-3 text-left"
                 data-testid="button-impact-roi"
@@ -3669,7 +3603,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
                 {showKpiModal === 'sdgs' && 'SDG Contributions'}
-                {showKpiModal === 'impact-score' && 'Your Impact Score'}
                 {showKpiModal === 'tasks' && 'Task Progress'}
                 {showKpiModal === 'people' && 'People Reached'}
                 {showKpiModal === 'applications' && 'Pending Applications'}
@@ -3709,10 +3642,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                     <div className="text-sm text-slate-700 space-y-2">
-                      <div className="flex justify-between">
-                        <span>Impact Points Earned:</span>
-                        <span className="text-emerald-600 font-semibold">{formatNumber(aiuSummary?.totalAiu)}</span>
-                      </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
                         <span className="text-white font-semibold">{kpis.totalProjects}</span>
@@ -3923,83 +3852,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <p className="text-xs mt-2">Update your profile to set SDG goals, then find projects!</p>
                     </div>
                   )}
-                </>
-              )}
-              {showKpiModal === 'impact-score' && (
-                <>
-                  <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-indigo-600 mb-2">{kpis.impactScore}</div>
-                    <div className="text-slate-600">Overall Impact Score</div>
-                  </div>
-                  {/* Impact Score Definition */}
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-slate-700">
-                      <span className="font-semibold text-indigo-700">Impact Score</span> is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and SDG alignment.
-                    </p>
-                  </div>
-                  {/* Score Gauge */}
-                  <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden mb-4">
-                    <div
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(kpis.impactScore, 100)}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-semibold text-white drop-shadow">{kpis.impactScore}/100</span>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100 mb-4">
-                    <h4 className="font-semibold text-indigo-800 text-sm mb-3">Score Breakdown</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">Hours Impact (35%)</span>
-                          <span className="text-indigo-700 font-semibold">{kpis.totalHours} hrs</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((kpis.totalHours / 100) * 100, 100)}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">People Reached (30%)</span>
-                          <span className="text-rose-700 font-semibold">{kpis.livesImpacted}</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min((kpis.livesImpacted / 500) * 100, 100)}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">Task Completion (20%)</span>
-                          <span className="text-emerald-700 font-semibold">{kpis.totalTasks > 0 ? Math.round((kpis.completedTasks / kpis.totalTasks) * 100) : 0}%</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${kpis.totalTasks > 0 ? (kpis.completedTasks / kpis.totalTasks) * 100 : 0}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">SDG Coverage (10%)</span>
-                          <span className="text-purple-700 font-semibold">{kpis.sdgsContributed}/17</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(kpis.sdgsContributed / 17) * 100}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-600">Skills Listed (5%)</span>
-                          <span className="text-amber-700 font-semibold">{kpis.skills} skills</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min((kpis.skills / 10) * 100, 100)}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-600 text-center">
-                    Your impact score reflects your overall contribution across hours, people reached, tasks, SDGs, and skills.
-                  </div>
                 </>
               )}
               {showKpiModal === 'impact-roi' && (
@@ -4388,10 +4240,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Total Hours:</span>
                       <span className="text-blue-600 font-semibold">{Math.round(kpis.totalHours)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Impact Points Earned:</span>
-                      <span className="text-emerald-600 font-semibold">{formatNumber(aiuSummary?.totalAiu)}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -4941,23 +4789,6 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         </div>
       )}
 
-      {/* Enhanced pts Details Modal - Opens when pts KPI is clicked */}
-      <AIUDetailsModal
-        isOpen={showAIUDetailsModal}
-        onClose={() => setShowAIUDetailsModal(false)}
-        totalAIU={aiuSummary?.totalAiu ?? 0}
-        projects={aiuSummary?.projects ?? []}
-        totalHours={aiuSummary?.totalHours ?? kpis.totalHours ?? 0}
-        volunteerName={user?.displayName}
-        sdgsContributed={aiuSummary?.sdgsContributed ?? []}
-        verificationRate={Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}
-        verifiedHours={kpis.verifiedHours}
-        pendingHours={kpis.pendingHours}
-        onNavigateToVerification={() => {
-          setShowAIUDetailsModal(false);
-          setActiveTab('projects');
-        }}
-      />
 
       {/*
         IMPORTANT: PWA Bottom Tray Navigation - DO NOT REPLACE

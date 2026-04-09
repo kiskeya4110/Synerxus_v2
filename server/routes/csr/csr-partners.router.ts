@@ -7,6 +7,7 @@ import { Router, Request, Response } from "express";
 import { storage } from "../../storage";
 import { safeParseInt, handleValidationError, createErrorResponse } from "./csr-utils";
 import { authMiddleware } from "../../middleware/auth";
+import { requirePlanFeature, requireNgoPartnerQuota } from "../../middleware/plan-enforcement";
 import { getAuthenticatedUser } from "../utils";
 import { logger } from "../../logger";
 
@@ -182,7 +183,7 @@ csrPartnersRouter.post("/csr/recognize-employee", async (req: Request, res: Resp
  * POST /volunteer-employers
  * Link volunteer to employer
  */
-csrPartnersRouter.post("/volunteer-employers", async (req: Request, res: Response) => {
+csrPartnersRouter.post("/volunteer-employers", authMiddleware, requireNgoPartnerQuota(), async (req: Request, res: Response) => {
   try {
     const { volunteerId, partnerId, employeeId, department, jobTitle } = req.body;
 
@@ -333,7 +334,7 @@ csrPartnersRouter.get("/csr/budget-links", async (req: Request, res: Response) =
  * POST /csr/verified-outputs
  * Create a Verified Output
  */
-csrPartnersRouter.post("/csr/verified-outputs", async (req: Request, res: Response) => {
+csrPartnersRouter.post("/csr/verified-outputs", authMiddleware, requirePlanFeature("csrdModule"), async (req: Request, res: Response) => {
   try {
     const { projectId, partnerId, outputType, outputValue, evidence } = req.body;
 

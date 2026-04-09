@@ -115,34 +115,44 @@ const CUSTODY_STEPS: {
   label: string;
   sub: string;
   color: string;
+  bg: string;
+  detail: string;
 }[] = [
   {
     Icon: FileCheck,
     num: "01",
     label: "Deliverable Completed",
     sub: "Volunteer logs outcomes, hours & beneficiaries in real time via mobile — timestamped at the moment it happens.",
-    color: "#0A1F44",
+    color: "#0D9488",
+    bg: "#F0FDFA",
+    detail: "Every submission captures GPS location, device fingerprint, timestamp, volunteer ID, hours contributed, beneficiary count, and a free-text outcome description — all before a verifier is ever contacted.",
   },
   {
     Icon: ShieldCheck,
     num: "02",
     label: "NGO Verifies",
     sub: "Partner NGO confirms results with a single tap — no login required, under 15 seconds.",
-    color: "#1D4ED8",
+    color: "#EA580C",
+    bg: "#FFF7ED",
+    detail: "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. No account, no app download, no training required. Average response time: 16 hours.",
   },
   {
     Icon: Lock,
     num: "03",
     label: "Evidence Object Created",
     sub: "Record sealed with GPS coordinates, device ID, verifier identity & SDG mapping — tamper-proof.",
-    color: "#059669",
+    color: "#DB2777",
+    bg: "#FDF2F8",
+    detail: "The confirmed outcome is sealed into an immutable Evidence Object: verifier identity, device ID, GPS coordinates, timestamp, SDG mapping, and a cryptographic hash. Records cannot be retroactively edited — meeting ISAE 3000 chain-of-custody requirements.",
   },
   {
     Icon: BarChart2,
     num: "04",
     label: "ESG / SDG Reporting",
     sub: "Audit-ready PDF delivered to corporate ESG teams — every claim traceable to an NGO confirmation.",
-    color: "#7C3AED",
+    color: "#2563EB",
+    bg: "#EFF6FF",
+    detail: "Verified outcomes are aggregated into GRI-, ESRS-, and WEF SCM-aligned reports with a full evidence trail. Auditors receive a ready-made evidence pack — reducing assurance preparation time by 60–70%.",
   },
 ];
 
@@ -909,7 +919,7 @@ function buildSampleReportHtml(): string {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
       <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;">
-        <span style="color:#fff;">SYNER</span><span style="color:#D4980C;">XUS</span> · <span style="color:#D4980C;">Impact,</span> <span style="color:#fff;">Verified.</span>
+        <span style="color:#fff;">SYNERXUS</span> · <span style="color:#D4980C;">Impact,</span> <span style="color:#fff;">Verified.</span>
       </div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
       <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
@@ -1221,7 +1231,7 @@ function buildSampleReportHtml(): string {
 <!-- FOOTER -->
 <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#9ca3af;">
   <div>&#169; 2026 Synerxus · SAMPLE REPORT — Data is illustrative only · Report ID: ESG-2026-0407-ACME</div>
-  <div style="font-weight:700;color:#0A2463;">SYNER<span style="color:#D4980C;">XUS</span></div>
+  <div style="font-weight:700;color:#0A2463;">SYNERXUS</div>
 </div>
 
 </div>
@@ -1234,6 +1244,7 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
   starter: "Starter — From $8,000/yr",
   growth: "Growth — From $22,000/yr",
   enterprise: "Enterprise — From $38,000/yr",
+  demo: "Book a Demo",
 };
 
 function PricingContactModal({
@@ -1561,6 +1572,7 @@ export default function Landing() {
   const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
   const [pricingPlan, setPricingPlan] = useState<string | null>(null);
+  const [custodyActive, setCustodyActive] = useState<number | null>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heroTouchStartX = useRef<number | null>(null);
@@ -1865,13 +1877,12 @@ export default function Landing() {
               )}
 
               {/* Trust badge strip */}
-              <div className="flex flex-wrap gap-2 mt-1">
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 {[
-                  "All 17 UN SDGs",
-                  "WEF SCM Aligned",
-                  "Audit-Defensible",
-                  "NGO-Verified",
-                  "GRI · SASB · TCFD",
+                  "NGO-Verified Outcomes",
+                  "Immutable Audit Trail",
+                  "CSRD/ESRS Support",
+                  "SDG-Aligned Impact",
                 ].map((badge) => (
                   <span
                     key={badge}
@@ -2070,8 +2081,12 @@ export default function Landing() {
               ))}
             </div>
 
-            <p className="text-center text-[#0A1F44] font-bold text-lg mt-10">
-              Synerxus closes the verification gap.
+            <p className="text-center text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mt-10 tracking-tight">
+              Synerxus{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10">closes the verification gap.</span>
+                <span className="absolute inset-x-0 bottom-1 h-[6px] bg-[#D4980C]/30 rounded-full -z-0" />
+              </span>
             </p>
           </div>
         </section>
@@ -2557,15 +2572,14 @@ export default function Landing() {
         </section>
 
         {/* ── Section 4: Workflow ── */}
-        <section className="py-10 md:py-16 bg-white">
+        <section className="py-10 md:py-20 bg-white">
           <div className="max-w-5xl mx-auto px-6 md:px-10">
-            <div className="text-center mb-10">
+            <div className="text-center mb-10 md:mb-14">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
                 A Complete Chain of Custody
               </h2>
               <p className="text-slate-500 text-base md:text-lg">
-                Four steps from delivery to disclosure — with verification at
-                every stage.
+                Four steps from delivery to disclosure — with verification at every stage.
               </p>
             </div>
 
@@ -2573,9 +2587,9 @@ export default function Landing() {
             <div className="md:hidden flex flex-col">
               {CUSTODY_STEPS.map((step, i) => {
                 const { Icon } = step;
+                const isActive = custodyActive === i;
                 return (
                   <div key={step.num} className="flex gap-4">
-                    {/* Left column: icon + connecting line */}
                     <div className="flex flex-col items-center flex-shrink-0">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"
@@ -2586,92 +2600,156 @@ export default function Landing() {
                       {i < CUSTODY_STEPS.length - 1 && (
                         <div
                           className="w-0.5 flex-1 my-1 rounded-full opacity-25"
-                          style={{
-                            backgroundColor: step.color,
-                            minHeight: "28px",
-                          }}
+                          style={{ backgroundColor: step.color, minHeight: "28px" }}
                         />
                       )}
                     </div>
-                    {/* Right column: content */}
                     <div
-                      className={
-                        i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"
-                      }
+                      className={i < CUSTODY_STEPS.length - 1 ? "pb-6 flex-1" : "flex-1"}
                     >
-                      <span
-                        className="text-[10px] font-bold tracking-widest uppercase"
-                        style={{ color: step.color }}
+                      <button
+                        onClick={() => setCustodyActive(isActive ? null : i)}
+                        className="w-full text-left"
                       >
-                        {step.num}
-                      </span>
-                      <h3 className="font-extrabold text-[#0A1F44] text-sm leading-snug mt-0.5 mb-1">
-                        {step.label}
-                      </h3>
-                      <p className="text-slate-500 text-xs leading-relaxed">
-                        {step.sub}
-                      </p>
+                        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: step.color }}>
+                          {step.num}
+                        </span>
+                        <h3 className="font-extrabold text-[#0A1F44] text-sm leading-snug mt-0.5 mb-1">
+                          {step.label}
+                        </h3>
+                        <p className="text-slate-500 text-xs leading-relaxed">{step.sub}</p>
+                      </button>
+                      {isActive && (
+                        <p className="mt-2 text-xs leading-relaxed rounded-xl px-3 py-2 border" style={{ color: step.color, backgroundColor: step.bg, borderColor: step.color + "33" }}>
+                          {step.detail}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Desktop: horizontal cards with gradient connectors */}
-            <div className="hidden md:flex flex-row items-stretch gap-0">
-              {CUSTODY_STEPS.map((step, i) => {
-                const { Icon } = step;
-                return (
-                  <div
-                    key={step.num}
-                    className="flex flex-row items-center flex-1"
-                  >
-                    {/* Card */}
-                    <div
-                      className="flex-1 flex flex-col items-center text-center bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:shadow-lg transition-shadow duration-200 h-full"
-                      style={{ borderTop: `3px solid ${step.color}` }}
-                    >
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center shadow-md mb-3 mt-1"
-                        style={{ backgroundColor: step.color }}
+            {/* Desktop: circular flow diagram */}
+            <div className="hidden md:block">
+              {/* Grid with SVG overlay */}
+              <div className="relative">
+                {/* SVG curved arrows — sits between grid and cards */}
+                <svg
+                  viewBox="0 0 100 100"
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  style={{ zIndex: 1 }}
+                  aria-hidden="true"
+                >
+                  {/* 01(TL)→02(BL): curved down-left */}
+                  <path d="M 28 36 Q 14 50 28 64" fill="none" stroke="#0D9488" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-teal)" />
+                  {/* 02(BL)→03(BR): curved across bottom */}
+                  <path d="M 36 72 Q 50 84 64 72" fill="none" stroke="#EA580C" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-orange)" />
+                  {/* 03(BR)→04(TR): curved up-right */}
+                  <path d="M 72 64 Q 86 50 72 36" fill="none" stroke="#DB2777" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-pink)" />
+                  {/* 04(TR)→01(TL): curved across top */}
+                  <path d="M 64 28 Q 50 16 36 28" fill="none" stroke="#2563EB" strokeWidth="0.8" strokeDasharray="2.5 1.5" opacity="0.6" markerEnd="url(#arrow-blue)" />
+                  <defs>
+                    <marker id="arrow-teal" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                      <path d="M0,0 L0,4 L4,2 z" fill="#0D9488" opacity="0.7" />
+                    </marker>
+                    <marker id="arrow-orange" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                      <path d="M0,0 L0,4 L4,2 z" fill="#EA580C" opacity="0.7" />
+                    </marker>
+                    <marker id="arrow-pink" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                      <path d="M0,0 L0,4 L4,2 z" fill="#DB2777" opacity="0.7" />
+                    </marker>
+                    <marker id="arrow-blue" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                      <path d="M0,0 L0,4 L4,2 z" fill="#2563EB" opacity="0.7" />
+                    </marker>
+                  </defs>
+                </svg>
+
+                {/* Central badge */}
+                <div
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border-2 border-slate-200 shadow-lg flex items-center justify-center"
+                  style={{ zIndex: 2 }}
+                >
+                  <ShieldCheck className="h-7 w-7 text-[#0A1F44]" />
+                </div>
+
+                {/* 2×2 grid — order: TL, TR, BL, BR */}
+                <div className="grid grid-cols-2 gap-10" style={{ zIndex: 3, position: "relative" }}>
+                  {[CUSTODY_STEPS[0], CUSTODY_STEPS[3], CUSTODY_STEPS[1], CUSTODY_STEPS[2]].map((step, gridIdx) => {
+                    const originalIdx = [0, 3, 1, 2][gridIdx];
+                    const { Icon } = step;
+                    const isActive = custodyActive === originalIdx;
+                    return (
+                      <button
+                        key={step.num}
+                        onClick={() => setCustodyActive(isActive ? null : originalIdx)}
+                        className="text-left rounded-2xl border p-6 transition-all duration-200 focus:outline-none group"
+                        style={{
+                          backgroundColor: isActive ? step.bg : "#F8FAFC",
+                          borderColor: isActive ? step.color : "#E2E8F0",
+                          borderWidth: isActive ? "2px" : "1px",
+                          boxShadow: isActive
+                            ? `0 0 0 3px ${step.color}22, 0 8px 24px ${step.color}18`
+                            : "0 1px 4px rgba(0,0,0,0.06)",
+                          transform: isActive ? "scale(1.02)" : "scale(1)",
+                        }}
+                        onMouseEnter={e => {
+                          if (!isActive) {
+                            (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${step.color}28`;
+                            (e.currentTarget as HTMLElement).style.borderColor = step.color + "66";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1.015)";
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!isActive) {
+                            (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+                            (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                          }
+                        }}
                       >
-                        <Icon className="h-6 w-6 text-white" />
-                      </div>
-                      <span
-                        className="text-[10px] font-bold tracking-widest uppercase mb-1"
-                        style={{ color: step.color }}
-                      >
-                        {step.num}
-                      </span>
-                      <span className="text-sm font-extrabold text-[#0A1F44] leading-tight mb-2">
-                        {step.label}
-                      </span>
-                      <span className="text-xs text-slate-500 leading-relaxed">
-                        {step.sub}
-                      </span>
-                    </div>
-                    {/* Gradient connector */}
-                    {i < CUSTODY_STEPS.length - 1 && (
-                      <div className="flex-shrink-0 w-8 flex flex-col items-center justify-center self-center mt-[-8px]">
-                        <div
-                          className="h-0.5 w-full rounded-full"
-                          style={{
-                            background: `linear-gradient(to right, ${step.color}, ${CUSTODY_STEPS[i + 1].color})`,
-                            opacity: 0.5,
-                          }}
-                        />
-                        <ArrowRight
-                          className="h-3 w-3 -mt-0.5 -mr-1 self-end"
-                          style={{
-                            color: CUSTODY_STEPS[i + 1].color,
-                            opacity: 0.6,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div
+                            className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+                            style={{ backgroundColor: step.color }}
+                          >
+                            <Icon className="h-5 w-5 text-white" />
+                          </div>
+                          <span
+                            className="text-[11px] font-black tracking-widest uppercase"
+                            style={{ color: step.color }}
+                          >
+                            {step.num}
+                          </span>
+                        </div>
+                        <h3 className="font-extrabold text-[#0A1F44] text-base leading-snug mb-2">
+                          {step.label}
+                        </h3>
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                          {step.sub}
+                        </p>
+                        {isActive && (
+                          <p
+                            className="mt-4 text-sm leading-relaxed rounded-xl px-3 py-3 border"
+                            style={{
+                              color: step.color,
+                              backgroundColor: step.bg,
+                              borderColor: step.color + "33",
+                            }}
+                          >
+                            {step.detail}
+                          </p>
+                        )}
+                        {!isActive && (
+                          <p className="mt-3 text-xs font-medium" style={{ color: step.color + "99" }}>
+                            Click to learn more →
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -3180,126 +3258,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── FAQ ── */}
-        <section
-          id="faq"
-          className="py-10 md:py-16 bg-white border-t border-slate-100"
-        >
-          <div className="max-w-3xl mx-auto px-6 md:px-10">
-            <div className="text-center mb-10">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
-                FAQ
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44]">
-                Common Questions
-              </h2>
-            </div>
-            <div className="flex flex-col divide-y divide-slate-100">
-              {[
-                {
-                  q: "Does Synerxus replace our existing volunteer tracking platform?",
-                  a: "No. Synerxus is the independent verification layer that sits between your activity tracker (e.g. Benevity, Goodera) and your ESG aggregator or reporting framework. We add NGO-confirmed outcomes and immutable audit trails on top of what you already have.",
-                },
-                {
-                  q: "How does NGO verification actually work?",
-                  a: "After a volunteer logs an activity, the assigned NGO partner receives an instant SMS or in-app verification request. They confirm or flag the outcome with a single tap — no login required — in under 15 seconds. The result is sealed into a tamper-proof evidence record.",
-                },
-                {
-                  q: "Which reporting frameworks does Synerxus support?",
-                  a: "Synerxus is built around the WEF Stakeholder Capitalism Metrics as its primary framework, with alignment to GRI Standards, SASB, TCFD and UN SDGs. EU organisations using CSRD/ESRS are also supported — ESRS S3 (Affected Communities) and S4 data points are mapped automatically. Every verified outcome creates a traceable chain of evidence for third-party assurance under ISAE 3000 Revised.",
-                },
-                {
-                  q: "What does an immutable audit trail actually contain?",
-                  a: "Each Evidence Object captures: verifier identity, device ID, GPS coordinates, timestamp, outcome description, hours, beneficiary count, and SDG mapping — all sealed at the moment of verification. Records cannot be retroactively edited.",
-                },
-                {
-                  q: "How long does verification typically take?",
-                  a: "Our average verification turnaround is 16 hours, with a target SLA of 72 hours. NGOs are notified instantly and can verify from any mobile device without creating an account.",
-                },
-                {
-                  q: "Can we use Synerxus across multiple NGO partners and geographies?",
-                  a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each NGO partner is onboarded once and can verify outcomes across all corporate programs they are linked to. Reports aggregate verified data across all partners, SDGs, and geographies in one dashboard.",
-                },
-                {
-                  q: "How does Synerxus integrate with our existing systems?",
-                  a: "Synerxus is designed as an additive verification layer — it does not replace your existing platforms. It connects to your current volunteer management tools (e.g. Benevity, Goodera, SAP Concur) via API or CSV export, appending NGO-verified outcome data to your existing activity records. For ESG aggregators and CSRD reporting frameworks, Synerxus exports audit-ready data in GRI, ESRS, and ISO 26000 formats. Enterprise integrations are handled by our onboarding team during setup — no developer resources required on your side.",
-                },
-                {
-                  q: "What is WEF SCM?",
-                  a: "WEF SCM stands for the World Economic Forum Stakeholder Capitalism Metrics — a universal set of sustainability indicators created by the WEF in collaboration with Deloitte, EY, KPMG, and PwC. Synerxus uses WEF SCM as its primary framework backbone because it was specifically designed to harmonise GRI, SASB, TCFD, and the EU's ESRS into a single standard. This means evidence collected once on Synerxus can satisfy reporting requirements across all major frameworks simultaneously, without reformatting.",
-                },
-                {
-                  q: "What is CSRD?",
-                  a: "CSRD stands for the Corporate Sustainability Reporting Directive — a European Union regulation that requires large companies operating in the EU to publish detailed, audited sustainability reports. It began phasing in from 2024 and will apply to tens of thousands of companies by 2026. CSRD mandates reporting against ESRS (European Sustainability Reporting Standards) and requires evidence that can be externally assured. Synerxus is designed specifically to generate the type of third-party-verified, audit-ready data that CSRD requires.",
-                },
-                {
-                  q: "What is ESRS?",
-                  a: "ESRS stands for European Sustainability Reporting Standards — the specific set of standards companies must follow when reporting under CSRD. The standards cover environmental topics (E1–E5), social topics (S1–S4), and governance (G1). Synerxus automatically maps each verified outcome to the relevant ESRS topics — most commonly ESRS S3 (Affected Communities) and ESRS S1 (Own Workforce) — so your disclosure data is already structured for your CSRD report.",
-                },
-                {
-                  q: "What is GRI?",
-                  a: "GRI stands for the Global Reporting Initiative, one of the world's most widely used sustainability reporting frameworks, adopted by over 10,000 organisations in 100+ countries. GRI Standards cover economic, environmental, and social impacts. Synerxus verified outcomes are automatically mapped to relevant GRI standards, particularly GRI 413 (Local Communities) and GRI 403 (Occupational Health & Safety), so your data is ready for GRI-based disclosures without additional work.",
-                },
-                {
-                  q: "What is SASB?",
-                  a: "SASB stands for the Sustainability Accounting Standards Board, a US-based framework that defines industry-specific sustainability metrics for investors. SASB standards vary by sector — for example, a financial services firm and a manufacturing company will report on different sustainability indicators. Synerxus applies the applicable SASB indicators to your verified outcomes based on your industry, ensuring your ESG data is relevant and comparable to peers in your sector.",
-                },
-                {
-                  q: "What is TCFD?",
-                  a: "TCFD stands for the Task Force on Climate-related Financial Disclosures, a framework developed by the Financial Stability Board to guide companies in reporting on climate-related risks and opportunities. TCFD covers Governance, Strategy, Risk Management, and Metrics & Targets. While Synerxus is primarily focused on social impact (the 'S' in ESG), our evidence objects map to TCFD where climate-related community and workforce outcomes are involved, and our governance documentation supports TCFD's governance pillar reporting.",
-                },
-                {
-                  q: "What are the UN SDGs?",
-                  a: "The UN SDGs — Sustainable Development Goals — are 17 global goals adopted by all United Nations member states in 2015, ranging from No Poverty (SDG 1) and Quality Education (SDG 4) to Climate Action (SDG 13) and Partnerships for the Goals (SDG 17). Every activity and outcome logged on Synerxus is automatically mapped to one or more SDGs based on what was achieved and who was served. This makes it straightforward to report on your SDG contribution in annual reports and stakeholder communications.",
-                },
-                {
-                  q: "What is ISAE 3000?",
-                  a: "ISAE 3000 is the International Standard on Assurance Engagements 3000 — the global auditing standard used by external auditors (Big 4 and others) when providing assurance over non-financial (ESG) reports. It requires verifiable evidence, a documented chain of custody, and independence between the activity submitter and the verifier. Synerxus is structured specifically to meet ISAE 3000 evidence requirements: every verified outcome includes third-party confirmation, timestamps, device metadata, and a tamper-proof hash — reducing auditor evidence-gathering effort by 60–70%. Formal assurance still requires an independent auditor; Synerxus generates the evidence they need.",
-                },
-                {
-                  q: "What happens if an NGO rejects a verification request?",
-                  a: "If a verifier flags an outcome as inaccurate or unverifiable, it is marked as rejected and excluded from all ESG reports and audit trails. Rejected outcomes are logged separately and disclosed in compliance reports for transparency — CSRD's double materiality principle requires disclosure of negative or unverified outcomes as well. The submitting volunteer or program manager is notified and can resubmit with additional evidence.",
-                },
-                {
-                  q: "Who verifies the outcomes — do verifiers work for Synerxus?",
-                  a: "No. Verifiers are always independent of Synerxus and independent of the person submitting the outcome. They are NGO staff, program directors, beneficiaries, or employer representatives who are directly involved in the activity. This independence is a core requirement of ISAE 3000 and is fundamental to the credibility of the evidence. Synerxus facilitates the request and records the result — we do not influence or participate in the verification decision.",
-                },
-                {
-                  q: "Does Synerxus provide formal ESG assurance?",
-                  a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
-                },
-              ].map(({ q, a }, i) => (
-                <details key={i} className="group py-5">
-                  <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
-                    <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
-                      {q}
-                    </span>
-                    <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 18 18"
-                        fill="none"
-                      >
-                        <path
-                          d="M4.5 6.75L9 11.25L13.5 6.75"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
-                    {a}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── Pricing Section ── */}
         <section
           id="pricing"
@@ -3690,7 +3648,7 @@ export default function Landing() {
                   that doesn't prioritize verification at the source.
                 </p>
                 <Button
-                  onClick={() => navigate("/signup/corporate")}
+                  onClick={() => setPricingPlan("demo")}
                   size="sm"
                   className="flex-shrink-0 bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold rounded-xl whitespace-nowrap"
                 >
@@ -3741,12 +3699,132 @@ export default function Landing() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate("/signup/corporate")}
+                  onClick={() => setPricingPlan("demo")}
                   className="border-2 border-white text-white font-bold px-8 rounded-xl hover:bg-white hover:text-[#0A1F44] transition-colors"
                 >
                   Book a Demo
                 </Button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section
+          id="faq"
+          className="py-10 md:py-16 bg-white border-t border-slate-100"
+        >
+          <div className="max-w-6xl mx-auto px-6 md:px-10">
+            <div className="text-center mb-10">
+              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+                FAQ
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44]">
+                Common Questions
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-10">
+              {[
+                {
+                  q: "Does Synerxus replace our existing volunteer tracking platform?",
+                  a: "No. Synerxus is the independent verification layer that sits between your activity tracker (e.g. Benevity, Goodera) and your ESG aggregator or reporting framework. We add NGO-confirmed outcomes and immutable audit trails on top of what you already have.",
+                },
+                {
+                  q: "How does NGO verification actually work?",
+                  a: "After a volunteer logs an activity, the assigned NGO partner receives an instant SMS or in-app verification request. They confirm or flag the outcome with a single tap — no login required — in under 15 seconds. The result is sealed into a tamper-proof evidence record.",
+                },
+                {
+                  q: "Which reporting frameworks does Synerxus support?",
+                  a: "Synerxus is built around the WEF Stakeholder Capitalism Metrics as its primary framework, with alignment to GRI Standards, SASB, TCFD and UN SDGs. EU organisations using CSRD/ESRS are also supported — ESRS S3 (Affected Communities) and S4 data points are mapped automatically. Every verified outcome creates a traceable chain of evidence for third-party assurance under ISAE 3000 Revised.",
+                },
+                {
+                  q: "What does an immutable audit trail actually contain?",
+                  a: "Each Evidence Object captures: verifier identity, device ID, GPS coordinates, timestamp, outcome description, hours, beneficiary count, and SDG mapping — all sealed at the moment of verification. Records cannot be retroactively edited.",
+                },
+                {
+                  q: "How long does verification typically take?",
+                  a: "Our average verification turnaround is 16 hours, with a target SLA of 72 hours. NGOs are notified instantly and can verify from any mobile device without creating an account.",
+                },
+                {
+                  q: "Can we use Synerxus across multiple NGO partners and geographies?",
+                  a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each NGO partner is onboarded once and can verify outcomes across all corporate programs they are linked to. Reports aggregate verified data across all partners, SDGs, and geographies in one dashboard.",
+                },
+                {
+                  q: "How does Synerxus integrate with our existing systems?",
+                  a: "Synerxus is designed as an additive verification layer — it does not replace your existing platforms. It connects to your current volunteer management tools (e.g. Benevity, Goodera, SAP Concur) via API or CSV export, appending NGO-verified outcome data to your existing activity records. For ESG aggregators and CSRD reporting frameworks, Synerxus exports audit-ready data in GRI, ESRS, and ISO 26000 formats. Enterprise integrations are handled by our onboarding team during setup — no developer resources required on your side.",
+                },
+                {
+                  q: "What is WEF SCM?",
+                  a: "WEF SCM stands for the World Economic Forum Stakeholder Capitalism Metrics — a universal set of sustainability indicators created by the WEF in collaboration with Deloitte, EY, KPMG, and PwC. Synerxus uses WEF SCM as its primary framework backbone because it was specifically designed to harmonise GRI, SASB, TCFD, and the EU's ESRS into a single standard. This means evidence collected once on Synerxus can satisfy reporting requirements across all major frameworks simultaneously, without reformatting.",
+                },
+                {
+                  q: "What is CSRD?",
+                  a: "CSRD stands for the Corporate Sustainability Reporting Directive — a European Union regulation that requires large companies operating in the EU to publish detailed, audited sustainability reports. It began phasing in from 2024 and will apply to tens of thousands of companies by 2026. CSRD mandates reporting against ESRS (European Sustainability Reporting Standards) and requires evidence that can be externally assured. Synerxus is designed specifically to generate the type of third-party-verified, audit-ready data that CSRD requires.",
+                },
+                {
+                  q: "What is ESRS?",
+                  a: "ESRS stands for European Sustainability Reporting Standards — the specific set of standards companies must follow when reporting under CSRD. The standards cover environmental topics (E1–E5), social topics (S1–S4), and governance (G1). Synerxus automatically maps each verified outcome to the relevant ESRS topics — most commonly ESRS S3 (Affected Communities) and ESRS S1 (Own Workforce) — so your disclosure data is already structured for your CSRD report.",
+                },
+                {
+                  q: "What is GRI?",
+                  a: "GRI stands for the Global Reporting Initiative, one of the world's most widely used sustainability reporting frameworks, adopted by over 10,000 organisations in 100+ countries. GRI Standards cover economic, environmental, and social impacts. Synerxus verified outcomes are automatically mapped to relevant GRI standards, particularly GRI 413 (Local Communities) and GRI 403 (Occupational Health & Safety), so your data is ready for GRI-based disclosures without additional work.",
+                },
+                {
+                  q: "What is SASB?",
+                  a: "SASB stands for the Sustainability Accounting Standards Board, a US-based framework that defines industry-specific sustainability metrics for investors. SASB standards vary by sector — for example, a financial services firm and a manufacturing company will report on different sustainability indicators. Synerxus applies the applicable SASB indicators to your verified outcomes based on your industry, ensuring your ESG data is relevant and comparable to peers in your sector.",
+                },
+                {
+                  q: "What is TCFD?",
+                  a: "TCFD stands for the Task Force on Climate-related Financial Disclosures, a framework developed by the Financial Stability Board to guide companies in reporting on climate-related risks and opportunities. TCFD covers Governance, Strategy, Risk Management, and Metrics & Targets. While Synerxus is primarily focused on social impact (the 'S' in ESG), our evidence objects map to TCFD where climate-related community and workforce outcomes are involved, and our governance documentation supports TCFD's governance pillar reporting.",
+                },
+                {
+                  q: "What are the UN SDGs?",
+                  a: "The UN SDGs — Sustainable Development Goals — are 17 global goals adopted by all United Nations member states in 2015, ranging from No Poverty (SDG 1) and Quality Education (SDG 4) to Climate Action (SDG 13) and Partnerships for the Goals (SDG 17). Every activity and outcome logged on Synerxus is automatically mapped to one or more SDGs based on what was achieved and who was served. This makes it straightforward to report on your SDG contribution in annual reports and stakeholder communications.",
+                },
+                {
+                  q: "What is ISAE 3000?",
+                  a: "ISAE 3000 is the International Standard on Assurance Engagements 3000 — the global auditing standard used by external auditors (Big 4 and others) when providing assurance over non-financial (ESG) reports. It requires verifiable evidence, a documented chain of custody, and independence between the activity submitter and the verifier. Synerxus is structured specifically to meet ISAE 3000 evidence requirements: every verified outcome includes third-party confirmation, timestamps, device metadata, and a tamper-proof hash — reducing auditor evidence-gathering effort by 60–70%. Formal assurance still requires an independent auditor; Synerxus generates the evidence they need.",
+                },
+                {
+                  q: "What happens if an NGO rejects a verification request?",
+                  a: "If a verifier flags an outcome as inaccurate or unverifiable, it is marked as rejected and excluded from all ESG reports and audit trails. Rejected outcomes are logged separately and disclosed in compliance reports for transparency — CSRD's double materiality principle requires disclosure of negative or unverified outcomes as well. The submitting volunteer or program manager is notified and can resubmit with additional evidence.",
+                },
+                {
+                  q: "Who verifies the outcomes — do verifiers work for Synerxus?",
+                  a: "No. Verifiers are always independent of Synerxus and independent of the person submitting the outcome. They are NGO staff, program directors, beneficiaries, or employer representatives who are directly involved in the activity. This independence is a core requirement of ISAE 3000 and is fundamental to the credibility of the evidence. Synerxus facilitates the request and records the result — we do not influence or participate in the verification decision.",
+                },
+                {
+                  q: "Does Synerxus provide formal ESG assurance?",
+                  a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
+                },
+              ].map(({ q, a }, i) => (
+                <details key={i} className="group py-5 border-b border-slate-100">
+                  <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
+                    <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
+                      {q}
+                    </span>
+                    <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                      >
+                        <path
+                          d="M4.5 6.75L9 11.25L13.5 6.75"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
+                    {a}
+                  </p>
+                </details>
+              ))}
             </div>
           </div>
         </section>

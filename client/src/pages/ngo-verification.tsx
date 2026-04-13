@@ -28,7 +28,9 @@ import {
   RefreshCw,
   Pencil,
   MapPin,
-  X
+  X,
+  Download,
+  ShieldCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import type { User as UserType } from "@shared/schema";
@@ -549,6 +551,24 @@ export default function NgoVerification() {
     );
   };
 
+  const downloadReport = async () => {
+    try {
+      const response = await fetch("/api/reports/ngo-impact-summary", {
+        headers: await getAuthHeaders()
+      });
+      if (!response.ok) throw new Error("Failed to generate report");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ngo-impact-report.html";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "Download failed", description: "Could not generate the impact report.", variant: "destructive" });
+    }
+  };
+
   // Mobile Organization PWA View
   if (isMobile && isOrganization) {
     return (
@@ -558,6 +578,16 @@ export default function NgoVerification() {
             <h1 className="text-xl font-bold text-slate-800">Verification</h1>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {approvedLogs.length} Verified by Synerxus
+            </div>
+            <Button variant="outline" size="sm" onClick={downloadReport} className="text-xs gap-1.5">
+              <Download className="w-3.5 h-3.5" />
+              Impact Report
             </Button>
           </div>
 
@@ -751,6 +781,12 @@ export default function NgoVerification() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {approvedLogs.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {approvedLogs.length} Verified by Synerxus
+                </div>
+              )}
               {/* Tab switcher */}
               <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
                 <button
@@ -772,6 +808,10 @@ export default function NgoVerification() {
                   )}
                 </button>
               </div>
+              <Button variant="outline" size="sm" onClick={downloadReport}>
+                <Download className="w-4 h-4 mr-2" />
+                Impact Report
+              </Button>
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh

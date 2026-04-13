@@ -3591,7 +3591,7 @@ export default function Landing() {
                       "Unlimited NGO partners (all free)",
                       "250 verified outcomes/month",
                       "CSRD/ESRS export templates",
-                      "API + Slack integration",
+                      "API access for data integration",
                     ].map((f) => (
                       <li
                         key={f}

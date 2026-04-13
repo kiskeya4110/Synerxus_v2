@@ -13,11 +13,22 @@ export interface PlanFeatures {
   maxNgoPartners: number;
   /** Max admin seats (users under this corporate account) */
   maxAdminSeats: number;
+  /** Max distinct programs/projects a corporate can run concurrently */
+  maxPrograms: number;
+  /** Max verified outcomes per calendar month */
+  maxMonthlyOutcomes: number;
   /** Can download verified ESG reports as PDF */
   esgReportExport: boolean;
   /** Can export raw data as CSV */
   csvExport: boolean;
-  /** Can access the REST API for system integrations */
+  /**
+   * Can access the REST API for system integrations.
+   * TODO (Post-Pilot): Not yet implemented. Requires:
+   *   1. API key generation + management (issue/revoke per corporate account)
+   *   2. Versioned public endpoints (/api/v1/...)
+   *   3. requirePlanFeature("apiAccess") gate on those routes
+   * Do not sell Growth/Enterprise on this feature until built.
+   */
   apiAccess: boolean;
   /** White-label impact reports (remove Synerxus branding) */
   whiteLabelReports: boolean;
@@ -42,6 +53,8 @@ export const PLAN_FEATURES: Record<SubscriptionTier, PlanFeatures> = {
     label: "Free",
     maxNgoPartners: 1,
     maxAdminSeats: 1,
+    maxPrograms: 0,
+    maxMonthlyOutcomes: 0,
     esgReportExport: false,
     csvExport: false,
     apiAccess: false,
@@ -58,6 +71,8 @@ export const PLAN_FEATURES: Record<SubscriptionTier, PlanFeatures> = {
     label: "Pilot",
     maxNgoPartners: 5,
     maxAdminSeats: 1,
+    maxPrograms: 1,
+    maxMonthlyOutcomes: 50,
     esgReportExport: true,
     csvExport: false,
     apiAccess: false,
@@ -74,6 +89,8 @@ export const PLAN_FEATURES: Record<SubscriptionTier, PlanFeatures> = {
     label: "Starter",
     maxNgoPartners: 10,
     maxAdminSeats: 3,
+    maxPrograms: 3,
+    maxMonthlyOutcomes: 50,
     esgReportExport: true,
     csvExport: true,
     apiAccess: false,
@@ -90,6 +107,8 @@ export const PLAN_FEATURES: Record<SubscriptionTier, PlanFeatures> = {
     label: "Growth",
     maxNgoPartners: Infinity,
     maxAdminSeats: 10,
+    maxPrograms: Infinity,
+    maxMonthlyOutcomes: 250,
     esgReportExport: true,
     csvExport: true,
     apiAccess: true,
@@ -106,6 +125,8 @@ export const PLAN_FEATURES: Record<SubscriptionTier, PlanFeatures> = {
     label: "Enterprise",
     maxNgoPartners: Infinity,
     maxAdminSeats: Infinity,
+    maxPrograms: Infinity,
+    maxMonthlyOutcomes: Infinity,
     esgReportExport: true,
     csvExport: true,
     apiAccess: true,

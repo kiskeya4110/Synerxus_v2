@@ -1983,7 +1983,9 @@ export default function CSRReportsExports() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => {
-                    toast({ title: "Exported", description: "Volunteer hours data exported." });
+                    const csv = generateCSVContent({ id: "hours-export", name: "Volunteer Hours Export" } as ReportTemplate, reportData);
+                    downloadFile(csv, "volunteer_hours.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Volunteer hours data exported." });
                   }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
@@ -2288,7 +2290,12 @@ export default function CSRReportsExports() {
               <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
                 <div style={{ padding: "20px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>Recent Expenses</h3>
-                  <button onClick={() => { toast({ title: "Exported", description: "Expense report exported." }); }} style={{ padding: "8px 16px", backgroundColor: "#f3f4f6", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <button onClick={() => {
+                    const hdr = ["ID","Date","Category","Description","Project","Amount","Status","Submitted By"];
+                    const rows = expenses.map(e => [e.id, e.date, e.category, e.description, e.project || '', `$${e.amount.toFixed(2)}`, e.status, e.submittedBy]);
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "expense_report.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Expense report exported." });
+                  }} style={{ padding: "8px 16px", backgroundColor: "#f3f4f6", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}>
                     <Download style={{ width: "14px", height: "14px" }} />
                     Export CSV
                   </button>

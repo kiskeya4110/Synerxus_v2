@@ -22,6 +22,7 @@ import {
 } from "@shared/sdg-goals";
 import { smsVerificationService } from "../services/sms-verification";
 import { invalidateCache } from "../dashboard-service";
+import { getPlanFeatures } from "../../shared/plan-features";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -256,13 +257,8 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
         .filter((o: any) => o.activityId)
         .map((o: any) => o.activityId);
 
-      activities = [];
-      for (const actId of activityIds) {
-        const activity = await storage.getVolunteerActivity(actId);
-        if (activity && activity.verificationStatus === 'approved') {
-          activities.push(activity);
-        }
-      }
+      const fetched = await Promise.all(activityIds.map((id: number) => storage.getVolunteerActivity(id)));
+      activities = fetched.filter((a): a is NonNullable<typeof a> => !!a && a.verificationStatus === 'approved');
     }
     // Volunteer viewing their own logs
     else if (user_id) {
@@ -300,38 +296,39 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
-    // Enrich with project and user data for display
-    const enrichedLogs = await Promise.all(activities.map(async (activity) => {
-      const project = activity.projectId
-        ? await storage.getProject(activity.projectId)
-        : null;
-      const user = activity.userId
-        ? await storage.getUser(activity.userId)
-        : null;
-      const verifier = activity.verifiedBy
-        ? await storage.getUser(activity.verifiedBy)
-        : null;
+    // Batch-fetch all referenced entities, then enrich synchronously
+    const [enrichProjects, enrichUsers] = await Promise.all([
+      storage.listProjects(),
+      storage.listUsers(),
+    ]);
+    const enrichProjectMap = new Map(enrichProjects.map((p: any) => [p.id, p]));
+    const enrichUserMap = new Map(enrichUsers.map((u: any) => [u.id, u]));
+
+    const enrichedLogs = activities.map((activity) => {
+      const project = activity.projectId ? enrichProjectMap.get(activity.projectId) : null;
+      const user = activity.userId ? enrichUserMap.get(activity.userId) : null;
+      const verifier = activity.verifiedBy ? enrichUserMap.get(activity.verifiedBy) : null;
 
       return {
         ...activity,
         project: project ? {
-          id: project.id,
-          name: project.name,
-          sdgGoals: project.sdgGoals,
-          outcomeTemplates: project.outcomeTemplates
+          id: (project as any).id,
+          name: (project as any).name,
+          sdgGoals: (project as any).sdgGoals,
+          outcomeTemplates: (project as any).outcomeTemplates
         } : null,
         volunteer: user ? {
-          id: user.id,
-          displayName: user.displayName,
-          email: user.email,
-          avatar: user.avatar
+          id: (user as any).id,
+          displayName: (user as any).displayName,
+          email: (user as any).email,
+          avatar: (user as any).avatar
         } : null,
         verifier: verifier ? {
-          id: verifier.id,
-          displayName: verifier.displayName
+          id: (verifier as any).id,
+          displayName: (verifier as any).displayName
         } : null
       };
-    }));
+    });
 
     res.json(enrichedLogs);
   } catch (err) {
@@ -378,34 +375,40 @@ logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) 
         (allowedUserIds === null || (a.userId && allowedUserIds.has(a.userId)))
     );
 
-    // Enrich each approved activity with project, volunteer, and verifier data
-    let enrichedLogs: any[] = [];
-    for (const activity of approvedActivities) {
-      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
-      const volunteer = activity.userId ? await storage.getUser(activity.userId) : null;
-      const verifier = activity.verifiedBy ? await storage.getUser(activity.verifiedBy) : null;
-      const verifierOrg = verifier?.organizationId
-        ? await storage.getOrganization(verifier.organizationId)
-        : null;
+    // Batch-fetch all referenced entities upfront, then enrich synchronously
+    const [allProjects, allUsers, allOrgs] = await Promise.all([
+      storage.listProjects(),
+      storage.listUsers(),
+      storage.listOrganizations(),
+    ]);
+    const projectMap = new Map(allProjects.map((p: any) => [p.id, p]));
+    const userMap = new Map(allUsers.map((u: any) => [u.id, u]));
+    const orgMap = new Map(allOrgs.map((o: any) => [o.id, o]));
 
-      enrichedLogs.push({
+    let enrichedLogs: any[] = approvedActivities.map((activity: any) => {
+      const project = activity.projectId ? projectMap.get(activity.projectId) : null;
+      const volunteer = activity.userId ? userMap.get(activity.userId) : null;
+      const verifier = activity.verifiedBy ? userMap.get(activity.verifiedBy) : null;
+      const verifierOrg = verifier?.organizationId ? orgMap.get(verifier.organizationId) : null;
+
+      return {
         id: activity.id,
-        outcomeText: (activity as any).editedOutcomeText || (activity as any).outcomeText || activity.description,
+        outcomeText: activity.editedOutcomeText || activity.outcomeText || activity.description,
         outcomeType: activity.outcomes,
-        outcomeQuantity: (activity as any).editedOutcomeQuantity || activity.outcomeQuantity,
-        sdgTags: (activity as any).editedSdgTags || (activity as any).sdgTags || project?.sdgGoals || [],
+        outcomeQuantity: activity.editedOutcomeQuantity || activity.outcomeQuantity,
+        sdgTags: activity.editedSdgTags || activity.sdgTags || project?.sdgGoals || [],
         hours: activity.hours,
         date: activity.date,
         verifiedAt: activity.verifiedAt,
         ngoName: verifierOrg?.name || 'NGO',
         verifierName: verifier?.displayName || null,
-        volunteerName: volunteer?.displayName || volunteer?.email || 'Volunteer',
+        volunteerName: volunteer?.displayName || (volunteer as any)?.email || 'Volunteer',
         projectName: project?.name || 'Project',
         projectId: activity.projectId,
         evidenceUrls: activity.evidenceUrls,
-        geolocation: (activity as any).geolocation
-      });
-    }
+        geolocation: activity.geolocation
+      };
+    });
 
     // Apply filters
     if (sdg) {
@@ -469,6 +472,24 @@ logsRouter.get("/logs/:id", authMiddleware, async (req: Request, res: Response) 
     if (!activity) {
       return res.status(404).json({ message: "Impact log not found" });
     }
+
+    // Ownership check: volunteer sees only their own logs;
+    // NGO sees only logs belonging to their organization's projects;
+    // corporate-partner sees only approved logs linked to their employees
+    const requestingUser = req.user!;
+    if (requestingUser.userType === 'volunteer') {
+      if (activity.userId !== requestingUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else if (requestingUser.userType === 'organization') {
+      if (activity.projectId) {
+        const proj = await storage.getProject(activity.projectId);
+        if (proj && proj.organizationId !== requestingUser.organizationId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+    }
+    // corporate-partner and admin: allowed through
 
     // Enrich with related data
     const project = activity.projectId
@@ -544,6 +565,71 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
 
     // Accept optional edited fields from NGO verification (Phase 2)
     const { editedOutcomeText, editedOutcomeQuantity, editedSdgTags } = req.body;
+
+    // Enforce maxMonthlyOutcomes limit per CSR partner
+    try {
+      const volunteerProfile = activity.userId != null ? await storage.getVolunteerProfileByUserId(activity.userId) : null;
+      const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+      const volunteerLinks = volunteerProfile?.id
+        ? employerLinks.filter((link: any) => link.volunteerId === volunteerProfile.id && link.verificationStatus !== 'rejected')
+        : [];
+
+      const partnerIdsToCheck: number[] = [];
+      if (volunteerProfile?.employerId) {
+        const id = Number(volunteerProfile.employerId);
+        if (!isNaN(id)) partnerIdsToCheck.push(id);
+      }
+      volunteerLinks.forEach((link: any) => {
+        const id = Number(link.partnerId);
+        if (!isNaN(id) && !partnerIdsToCheck.includes(id)) partnerIdsToCheck.push(id);
+      });
+
+      if (partnerIdsToCheck.length > 0) {
+        const partners = await storage.listCSRPartners?.() || [];
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        for (const partnerId of partnerIdsToCheck) {
+          const partner = partners.find((p: any) => p.id === partnerId);
+          if (!partner) continue;
+          const planFeatures = getPlanFeatures(partner.subscriptionTier);
+          if (planFeatures.maxMonthlyOutcomes === Infinity) continue;
+
+          // Count already-approved outcomes this month for this partner's linked volunteers
+          const [allActivities, allEngagements, allUsers] = await Promise.all([
+            storage.listVolunteerActivities?.() || [],
+            storage.listEmployeeEngagement(),
+            storage.listUsers?.() || [],
+          ]);
+          const partnerEmployeeEmails = new Set<string>();
+          (Array.isArray(allEngagements) ? allEngagements : []).forEach((e: any) => {
+            if (e.partnerId === partnerId && e.employeeEmail) partnerEmployeeEmails.add(e.employeeEmail);
+          });
+          const partnerUserIds = new Set(
+            allUsers
+              .filter((u: any) => partnerEmployeeEmails.has(u.email))
+              .map((u: any) => u.id)
+          );
+
+          const monthlyCount = (Array.isArray(allActivities) ? allActivities : []).filter((a: any) =>
+            partnerUserIds.has(a.userId) &&
+            a.verificationStatus === 'approved' &&
+            a.verifiedAt && new Date(a.verifiedAt) >= startOfMonth
+          ).length;
+
+          if (monthlyCount >= planFeatures.maxMonthlyOutcomes) {
+            return res.status(402).json({
+              error: "Monthly outcome limit reached",
+              message: `This organisation's CSR partner has reached the ${planFeatures.maxMonthlyOutcomes} verified outcomes/month limit on their ${planFeatures.label} plan.`
+            });
+          }
+        }
+      }
+    } catch (limitErr) {
+      console.error("[PlanLimit] Error checking outcome limit:", limitErr);
+      // Non-fatal — do not block verification if the check itself errors
+    }
 
     const verificationUpdate: any = {
       verificationStatus: 'approved',

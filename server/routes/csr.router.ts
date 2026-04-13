@@ -10,7 +10,9 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware, requireCSRAccess } from "../middleware/auth";
-import { requirePlanFeature } from "../middleware/plan-enforcement";
+import { requirePlanFeature, requireNgoPartnerQuota } from "../middleware/plan-enforcement";
+import { exportRateLimiter } from "../middleware/security";
+import { getPlanFeatures } from "../../shared/plan-features";
 import { getAuthenticatedUser } from "./utils";
 
 export const csrRouter = Router();
@@ -1627,7 +1629,7 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
  * GET /csr/impact-reporting/export/csv
  * Export CSR Impact Report as CSV file
  */
-csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAccess, requirePlanFeature("csvExport"), queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAccess, requirePlanFeature("csvExport"), exportRateLimiter, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1715,7 +1717,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
  * GET /csr/impact-reporting/export/pdf
  * Export CSR Impact Report as PDF (HTML format for browser printing)
  */
-csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAccess, requirePlanFeature("esgReportExport"), queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAccess, requirePlanFeature("esgReportExport"), exportRateLimiter, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -1941,10 +1943,10 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
 
   <!-- Footer -->
   <div class="footer">
-    <div class="footer-brand">
+    ${getPlanFeatures(userPartner.subscriptionTier).whiteLabelReports ? '' : `<div class="footer-brand">
       <span>✦</span> synerxus
       <span class="synerxus-badge">Management Reporting Verified</span>
-    </div>
+    </div>`}
     <div class="footer-text">
       Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} | Report ID: ${Date.now().toString(36).toUpperCase()}
     </div>
@@ -2133,7 +2135,7 @@ csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) =>
  * POST /volunteer-employers
  * Link volunteer to employer
  */
-csrRouter.post("/volunteer-employers", async (req: Request, res: Response) => {
+csrRouter.post("/volunteer-employers", authMiddleware, requireNgoPartnerQuota(), async (req: Request, res: Response) => {
   try {
     const { volunteerId, partnerId, employeeId, department, jobTitle } = req.body;
 
@@ -2228,9 +2230,30 @@ csrRouter.get("/csr/challenges", async (req: Request, res: Response) => {
  * POST /csr/budget-links
  * Create a Project Budget Link
  */
-csrRouter.post("/csr/budget-links", async (req: Request, res: Response) => {
+csrRouter.post("/csr/budget-links", authMiddleware, async (req: Request, res: Response) => {
   try {
     const { projectId, partnerId, budgetLineItem, allocatedBudget, volunteerHoursValue, attributedTo } = req.body;
+
+    // Enforce maxPrograms limit
+    if (partnerId) {
+      const partners = await storage.listCSRPartners?.() || [];
+      const partner = partners.find((p: any) => p.id === partnerId);
+      if (partner) {
+        const planFeatures = getPlanFeatures(partner.subscriptionTier);
+        if (planFeatures.maxPrograms !== Infinity) {
+          const existingLinks = await storage.listProjectBudgetLinks?.() || [];
+          const partnerLinks = existingLinks.filter((b: any) => b.partnerId === partnerId);
+          const distinctProjects = new Set(partnerLinks.map((b: any) => b.projectId)).size;
+          const isNewProject = !partnerLinks.some((b: any) => b.projectId === projectId);
+          if (isNewProject && distinctProjects >= planFeatures.maxPrograms) {
+            return res.status(402).json({
+              error: "Program limit reached",
+              message: `Your ${planFeatures.label} plan allows up to ${planFeatures.maxPrograms} program(s). Upgrade to add more.`
+            });
+          }
+        }
+      }
+    }
 
     const budgetLink = {
       projectId,

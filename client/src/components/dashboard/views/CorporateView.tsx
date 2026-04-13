@@ -674,7 +674,7 @@ const CorporateView = memo(function CorporateView({
           </div>
           <div
             className="flex-1 overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: reportContent.body }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
           />
         </div>
       )}
@@ -1190,7 +1190,7 @@ const CorporateView = memo(function CorporateView({
               <style dangerouslySetInnerHTML={{ __html: reportContent.styles }} />
               <div
                 className="p-6 max-h-[70vh] overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: reportContent.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
               />
             </div>
           )}

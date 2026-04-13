@@ -1,33 +1,152 @@
-# Synerxus - Connect. Manage. Impact Globally.
+# Synerxus — Connect. Manage. Impact Globally.
 
 ## Overview
-Synerxus is an AI-powered platform that connects global volunteers with opportunities and empowers organizations to track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhanced global collaboration. The platform's vision is "Intelligent connections for sustainable development worldwide," aiming to drive sustainable development through intelligent connections and an outcome-first approach for CSRD-compliant corporate ESG reporting.
+Synerxus is an AI-powered impact data infrastructure platform (PWA) that connects volunteers, NGOs, and corporations for ESG/SDG reporting. The core MVP flow is: volunteers log verified outcomes → NGOs verify within 72h → corporates access audit-ready data for CSRD-compliant ESG reporting. The platform vision is "Intelligent connections for sustainable development worldwide," with an outcome-first approach replacing self-reported hours and estimates.
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language.
+- No AIU (Attributable Impact Units) in pilot — use "Impact Score", "Verified Outcomes", or "Ground-Truth Outcomes" instead.
+- CSRD/ESRS language: use "Impact Materiality Assessment" (not "Double Materiality Disclosure"), "disclosures" (not "requirements"), "Framework Guidance" (not "Global Framework Requirement"), "are globally recognized" (not "apply globally").
+
+## Branding
+- Logo file: `/synerxus-esg-logo.png`
+- Wordmark: navy `#0A2463` "SYNER" + gold `#D4980C` "XUS" (no space between)
+- Tagline: "Impacts. Verified." (period after Impacts, no comma)
+- Footer/report tagline: "ISAE 3000 Revised · Audit-Supported"
+- Primary nav blue: `#0A1F44`; accent gold: `#D4980C`
 
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a mobile-optimized, role-based dashboard utilizing UN SDG-themed color schemes, `shadcn/ui` components built on `Radix UI`, and a light theme with vibrant accents. Consistent typography, an infinity loop logo, and interactive elements are employed. Dashboards dynamically adjust for volunteer and organization views. Opportunity displays consistently use a 2-column layout for AI analysis and SDG alignment. A dedicated organization dashboard uses a dark green theme. Mobile PWA project and opportunity detail views feature hero images, match score badges, two-column layouts with SDG circles, "Why this is a good match" sections, expected tasks, time commitment, and apply buttons with teal-to-blue gradient headers and emerald-to-blue action buttons.
+- Mobile-optimized, role-based dashboard with UN SDG-themed color schemes
+- `shadcn/ui` components built on Radix UI; light theme with vibrant accents
+- Three distinct dashboard experiences: Volunteer, Organization (dark green), Corporate/CSR
+- Opportunity displays: 2-column layout for AI analysis + SDG alignment
+- Mobile PWA detail views: hero images, match score badges, "Why this is a good match" sections, SDG circles, task counts, time commitments, teal-to-blue gradient headers
+- Report print CSS: `@page { margin: 15mm 15mm 12mm }` across all 4 generators; `break-inside: avoid` on `tr/td/th` only (NOT on `table {}`)
 
-### Technical Implementations
-The frontend is built with React 18, TypeScript, Vite, Wouter, TanStack Query, Tailwind CSS, Chart.js, React Hook Form, and date-fns, supporting PWA for mobile. The backend uses Node.js with TypeScript, Express.js for REST APIs, WebSockets, and Drizzle ORM with Neon serverless PostgreSQL. The database schema includes AI tracking fields and skill proficiency. An AI matching algorithm uses a 4-factor weighted scoring system (Skills 35%, Trust 30%, Availability 25%, Mission 10%) for volunteer-opportunity and volunteer-organization matches, incorporating an engagement boost and SDG primary priority multiplier. Multi-tenant security enforces data scoping. Key features include email-based profile linking, a full messaging system, automatic project completion tracking, real-time volunteer list updates, a comprehensive notification system, an AI tips service, personalized weekly email digests, and a comprehensive user data validation system with audit logging. Offline mode for activity logging is supported via IndexedDB and service workers for mobile PWA. An immutable verification audit trail (`verification_audit_log` table) records every approve/reject action with IP, user agent, and evidence snapshots for CSRD compliance. Single-tap NGO verification uses time-limited tokens (`verification_tokens` table) allowing one-click verify/reject via email links without login. SMS verification fallback via Twilio sends verification requests to NGOs after 4h timeout with Y/N reply support. Complete user account deletion cascades across all related tables. NGO Impact Summary PDF generates branded HTML reports with SDG alignment, project breakdown, and compliance metrics.
+### Three User Roles
+1. **Volunteer** — logs outcomes, applies to opportunities, tracks assignments
+2. **Organization (NGO)** — verifies volunteer outcomes, manages projects and tasks, generates impact PDFs
+3. **Corporate Partner (CSR)** — accesses verified ESG data, generates compliance reports, manages employee volunteers
+
+### Technical Stack
+- **Frontend**: React 18, TypeScript, Vite, Wouter, TanStack Query v5, Tailwind CSS, Recharts, Chart.js, React Hook Form, date-fns, DOMPurify, shadcn/ui
+- **Backend**: Node.js, TypeScript, Express.js, WebSockets
+- **Database**: Drizzle ORM with Neon serverless PostgreSQL
+- **Auth**: Firebase Auth (Google OAuth + email/password)
+- **PWA**: Web app manifest, service worker (network-first caching), IndexedDB for offline activity logging
+
+### Key Technical Implementations
+- **AI Matching Algorithm**: 4-factor weighted scoring — Skills 35%, Trust 30%, Availability 25%, Mission 10%; engagement boost + SDG primary priority multiplier
+- **Multi-tenant security**: Data scoping enforced per organization/user
+- **Verification audit trail**: `verification_audit_log` table — every approve/reject records IP, user agent, evidence snapshot (CSRD compliance)
+- **Single-tap NGO verification**: Time-limited tokens (`verification_tokens` table) — one-click verify/reject via email link, no login required
+- **SMS verification fallback**: Twilio sends verification requests after 4h timeout; Y/N reply support
+- **Immutable audit trail**: All verification actions are append-only
+- **Performance**: O(1) lookup maps replace O(n) array scans in dashboard aggregation
+- **Account deletion**: Full cascade across all related tables
+- **Email**: Mock SMTP transporter (configurable for SendGrid, Mailgun, nodemailer); weekly digest scheduler (disabled in dev)
+
+### Plan Feature Gating (`shared/plan-features.ts`)
+Single source of truth for subscription tier features. Five tiers:
+
+| Feature | Free | Pilot ($5K/90d) | Starter ($8K/yr) | Growth ($22K/yr) | Enterprise ($38K/yr) |
+|---|---|---|---|---|---|
+| maxNgoPartners | 1 | 5 | 10 | ∞ | ∞ |
+| maxAdminSeats | 1 | 1 | 3 | 10 | ∞ |
+| esgReportExport | ✗ | ✓ | ✓ | ✓ | ✓ |
+| csvExport | ✗ | ✗ | ✓ | ✓ | ✓ |
+| apiAccess | ✗ | ✗ | ✗ | ✓ | ✓ |
+| whiteLabelReports | ✗ | ✗ | ✗ | ✓ | ✓ |
+| advancedAnalytics | ✗ | ✗ | ✗ | ✓ | ✓ |
+| customBranding | ✗ | ✗ | ✓ | ✓ | ✓ |
+| csrdModule | ✗ | ✗ | ✗ | ✓ | ✓ |
+| ssoAccess | ✗ | ✗ | ✗ | ✗ | ✓ |
+| dedicatedCsm | ✗ | ✗ | ✗ | ✗ | ✓ |
+| slaGuarantee | ✗ | ✗ | ✗ | ✗ | ✓ |
+| multiRegion | ✗ | ✗ | ✗ | ✗ | ✓ |
+
+`usePlanFeatures()` hook reads current user's plan via `GET /api/csr/partners` (returns the authenticated user's single partner object including `subscriptionTier`). Falls back to "free" if unavailable.
+
+`<PlanGate feature="..." hasAccess={...}>` wraps features with a blur overlay + lock icon + "Upgrade →" link when access is denied.
+
+**Currently gated in UI:**
+- `esgReportExport`: checked inside `generateReport()` in `csr-reports-exports.tsx` (blocks PDF print for Free tier)
+- `csvExport`: `<PlanGate>` wraps all Quick Data Export sections (org PWA, CSR mobile, CSR desktop)
+
+### Report Generators (4 total, all in `csr-reports-exports.tsx` + `logs.router.ts`)
+1. **Corporate ESG Summary** — `generatePDFContent()` — for CSR corporate users
+2. **Organization Impact Report** — `generateOrgPDFContent()` — for NGO org users
+3. **Corporate ESG via backend** — `GET /api/reports/corporate-esg-summary` in `logs.router.ts`
+4. **NGO Impact Summary PDF** — `GET /api/reports/ngo-impact-summary` in `logs.router.ts`
+
+All four use: navy `#0A2463` "SYNER" + gold `#D4980C` "XUS" footer branding, `@page { margin: 15mm 15mm 12mm }`, row-level table break rules only.
+
+### CSV Exports (Quick Data Export section)
+All four buttons generate actual `.csv` files from live `reportData`:
+- **Employee/Volunteer Hours**: uses `generateCSVContent()` (engagement + impact + financial metrics)
+- **SDG Metrics**: from `reportData.sdgMetrics` — columns: SDG Goal, SDG Name, Hours, Percentage
+- **Project Data**: from `reportData.projectMetrics` — columns: Project Name, Hours, Employees, Status
+- **Financial Data**: from `reportData.financialMetrics` — columns: Metric, Value (hour value, ROI, cost/beneficiary, program cost)
+- **Impact Data** (org PWA only): from `reportData.impactMetrics` — direct/indirect beneficiaries, lives touched, impact/hour
+
+Server-side CSV endpoint: `GET /api/csr/impact-reporting/export/csv` (enforces `requirePlanFeature("csvExport")`)
+
+### Key API Routes
+- `GET /api/csr/partners` — returns current user's single CSR partner object (used by `usePlanFeatures`)
+- `GET /api/csr/partners/list` — returns all partners (used by volunteers for employer selection)
+- `GET /api/csr/impact-reporting` — full reporting data (engagementMetrics, impactMetrics, financialMetrics, sdgMetrics, projectMetrics)
+- `GET /api/csr/impact-reporting/export/csv` — server-side CSV export (plan-gated)
+- `GET /api/reports/corporate-esg-summary` — HTML ESG report (logs.router.ts)
+- `GET /api/reports/ngo-impact-summary` — NGO branded PDF report (logs.router.ts)
+- `POST /api/users/firebase-sync` — syncs Firebase user to Postgres on login
+- `GET /api/users/me` — authenticated current user
+- `GET /api/public-stats` — must be registered BEFORE `app.use(router)` mounts in routes.ts
+
+### Router Registration Order (Critical)
+In `server/routes.ts`: `app.get("/api/public-stats", ...)` MUST be registered before all `app.use(router)` mounts, otherwise it is shadowed by catch-all routers.
 
 ### Feature Specifications
-The platform includes a rebranded landing page with an interactive SDG wheel, a role-based dashboard with real-time KPIs and AI-matched opportunities, and a "Volunteer Insights" section. It supports mobile data collection with impact deduplication, a calendar, interactive impact visualization, AI-powered impact storytelling, and CRUD operations for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. It supports dual user types with distinct flows, project-task hierarchy with AI-powered volunteer recommendations, comprehensive profile settings, multi-step intake forms, and assignment tracking. A unified "My Work" page consolidates Applications, Assignments, and Tasks. The system provides a live and interactive impact narrative on dashboards, comprehensive print CSS for generated reports, and enhanced PDF export functionality. An organization dashboard aggregates key metrics, SDG distribution, project locations, alerts, impact over time, and AI-generated insights. A "Volunteer Spotlight" feature showcases featured volunteers on the landing page. Project and opportunity detail pages for PWA provide optimized views with hero images, match score badges, two-column description layouts with SDG indicators, "Why this is a good match" sections, task counts, time commitments, locations, and CTA buttons. The platform prioritizes verified outcomes over hours tracking, with activity logging focused on outcomes, not hours. Note: AIU (Attributable Impact Units) tracking is reserved for the full platform and is NOT included in this pilot. The platform instead focuses on ground-truth outcomes verified by NGOs.
+- **Landing page**: Interactive SDG wheel, pricing cards (Pilot/Starter/Growth/Enterprise), "Volunteer Spotlight", FAQ (6 shown by default, `showAllFaq` state at ~line 1582), `PricingContactModal` opens on plan CTA click
+- **Unified Dashboard**: Role-aware; shows Volunteer, Organization, or Corporate view
+- **My Work page**: Consolidates Applications, Assignments, and Tasks
+- **Notifications**: Real-time via WebSocket + polling
+- **Calendar**: Event management with project/task linking
+- **Impact Visualization**: SDG breakdown charts, geographic heatmap, verification density strip
+- **AI Insights Modal**: Organization-level AI-generated program insights
+- **Volunteer Performance Modal**: Per-volunteer metrics for org admins
+- **Onboarding Guide**: Step-by-step flow for new users by role
+- **Email Digests**: Weekly personalized digest (disabled in dev)
+- **Offline Mode**: IndexedDB + service worker; activity log syncs on reconnect
 
-### System Design Choices
-Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon. PWA implementation includes a web app manifest, a service worker for offline support with network-first caching, and meta tags for iOS/Android mobile web app support. Performance optimizations include O(1) lookup maps to replace O(n) array lookups for data aggregation, reducing algorithm complexity and improving dashboard load times.
+### Test Accounts
+- **Al Honorat** (volunteer): `alhonorat@gmail.com`, Firebase userId=55
+- **Green Future Alliance** (NGO org): `contact@gfa.org`, Firebase userId=54, orgId=14
+- **Build Smart** (corporate): `csr@buildsmart.com`, userId=58
+
+## File Map (Key Files)
+| File | Purpose |
+|---|---|
+| `client/src/pages/landing.tsx` | Public landing page, pricing section, FAQ |
+| `client/src/pages/csr-reports-exports.tsx` | All 4 report generators + CSV export UI |
+| `client/src/pages/unified-dashboard.tsx` | Role-based dashboard entry point |
+| `client/src/components/plan-gate.tsx` | `<PlanGate>` upgrade overlay component |
+| `client/src/hooks/use-plan-features.ts` | `usePlanFeatures()` hook — reads subscription tier |
+| `shared/plan-features.ts` | Tier definitions + `getPlanFeatures()` |
+| `shared/schema.ts` | Drizzle schema — all tables and insert types |
+| `server/routes/csr.router.ts` | All `/api/csr/*` endpoints |
+| `server/routes/logs.router.ts` | Activity logs + ESG/NGO report generation |
+| `server/routes.ts` | Central router mount — public-stats route order matters |
+| `client/index.html` | PWA meta tags, manifest link |
 
 ## External Dependencies
-
--   **Authentication & User Management**: Firebase Auth, Firebase Firestore, Firebase Storage
--   **Database & Infrastructure**: Neon Database, Drizzle Kit
--   **UI & Visualization**: Radix UI, Chart.js, Tailwind CSS
--   **Development & Build Tools**: TypeScript, Vite, ESBuild
--   **Matching Algorithm**: Python and TypeScript implementation
--   **Email Service**: Mock transporter (configurable for SendGrid, Mailgun, nodemailer)
--   **Location Services**: Google Maps API (for geolocation-based opportunity matching)
--   **Integration Platforms**: Zapier (CRM connectors - Salesforce, HubSpot)
--   **SMS Verification**: Twilio (for SMS verification fallback)
+- **Auth**: Firebase Auth, Firebase Firestore, Firebase Storage
+- **Database**: Neon (serverless PostgreSQL), Drizzle ORM, Drizzle Kit
+- **UI**: Radix UI, shadcn/ui, Recharts, Chart.js, Tailwind CSS, lucide-react
+- **Build**: TypeScript, Vite, ESBuild
+- **Email**: Mock SMTP (configurable: SendGrid, Mailgun, nodemailer)
+- **SMS**: Twilio (NGO verification fallback)
+- **Location**: Google Maps API (geolocation-based opportunity matching)
+- **Integrations**: Zapier (CRM: Salesforce, HubSpot)
+- **Security**: DOMPurify (HTML sanitization before print window write), Sentry (error tracking)

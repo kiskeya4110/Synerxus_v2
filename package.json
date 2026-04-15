@@ -77,11 +77,10 @@
     "compression": "^1.8.1",
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
-    "csurf": "^1.11.0",
     "date-fns": "^3.6.0",
     "dompurify": "^3.3.1",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
@@ -101,7 +100,7 @@
     "multer": "^2.1.1",
     "next-themes": "^0.4.6",
     "node-forge": "^1.4.0",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^8.0.5",
     "openai": "^6.7.0",
     "opossum": "^9.0.0",
     "p-limit": "^7.2.0",
@@ -160,7 +159,6 @@
     "@vitest/coverage-v8": "^4.0.16",
     "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.20",
-    "clinic": "^13.0.0",
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.0",
     "jsdom": "^27.4.0",
@@ -169,8 +167,8 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "vite": "^5.4.14",
-    "vitest": "^4.0.16"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.4"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

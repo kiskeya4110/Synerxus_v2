@@ -256,7 +256,10 @@
       "Read(//tmp/**)",
       "Bash(NODE_ENV=development tsx /home/runner/workspace/server/index.ts)",
       "Bash(read inode:*)",
-      "Read(//proc/**)"
+      "Read(//proc/**)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm list:*)",
+      "Bash(npm show:*)"
     ],
     "deny": [],
     "ask": []

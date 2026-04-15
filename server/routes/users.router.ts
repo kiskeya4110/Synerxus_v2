@@ -2,9 +2,15 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
-import { authRateLimiter } from "../middleware/security";
+import { authRateLimiter, secureCookieOptions } from "../middleware/security";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth";
 import { generateTokenPair, blacklistToken, verifyRefreshToken } from "../middleware/security";
+
+/** Cookie options for the auth JWT — 15 min lifetime matches access token expiry */
+const AUTH_COOKIE_OPTIONS = {
+  ...secureCookieOptions,
+  maxAge: 15 * 60 * 1000, // 15 minutes
+} as const;
 import { isPreapprovedEmail } from "../config/preapproved-emails";
 import { getPaginationParams, paginateArray } from "../pagination";
 
@@ -159,6 +165,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       // Existing user - return with isNewUser: false
       console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
       const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+      res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
       return res.json({ user: safeUserFields(user), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
@@ -173,6 +180,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       // Existing user (linking account) - return with isNewUser: false
       const tokenUser = updatedUser || user;
       const tokens = generateTokenPair({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
+      res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
       return res.json({ user: safeUserFields(tokenUser), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
@@ -256,6 +264,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     broadcastUpdate("user_created", user);
     // New user - return with isNewUser: true
     const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+    res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
     res.status(201).json({ user: safeUserFields(user), isNewUser: true, jwtToken: tokens.accessToken, ...tokens });
   } catch (err) {
     console.error("[firebase-sync] Error creating user:", err);
@@ -275,6 +284,13 @@ usersRouter.post("/logout", authMiddleware, async (req: Request, res: Response) 
     if (refreshToken && typeof refreshToken === "string") {
       await blacklistToken(refreshToken);
     }
+    // Clear the httpOnly auth cookie
+    res.clearCookie("authToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
     res.json({ success: true, message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: "Logout failed" });
@@ -302,6 +318,8 @@ usersRouter.post("/token/refresh", authRateLimiter, async (req: Request, res: Re
     // Rotate: blacklist old refresh token, issue new pair
     await blacklistToken(refreshToken);
     const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
+    // Refresh the httpOnly cookie alongside the response body
+    res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
     res.json({ jwtToken: tokens.accessToken, ...tokens });
   } catch (err) {
     res.status(500).json({ message: "Token refresh failed" });

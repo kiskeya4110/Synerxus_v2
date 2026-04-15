@@ -53,31 +53,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   // Prevents onAuthStateChanged from overwriting state during demo login
   const ignoreNextNullAuthRef = useRef(false);
+  // Holds the timer that fires a silent token refresh before the access token expires
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
-   * Restore demo user from stored JWT token (used on page load when no Firebase session exists).
-   * If no token is available, the session is stale and gets cleared to force re-login.
+   * Schedule a silent token refresh for demo/non-Firebase sessions.
+   * Fires 2 minutes before the access token expires (token lifetime - 120s).
+   * On success, the server rotates the refresh token and sets a new httpOnly cookie.
+   */
+  const scheduleTokenRefresh = useCallback((refreshToken: string, expiresInSeconds: number) => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    const delay = Math.max((expiresInSeconds - 120) * 1000, 0);
+    refreshTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/users/token/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Schedule the next refresh with the new tokens
+          if (data.refreshToken && data.expiresIn) {
+            scheduleTokenRefresh(data.refreshToken, data.expiresIn);
+          }
+        }
+      } catch {
+        // Silent failure — user will be prompted to log in when the cookie expires
+      }
+    }, delay);
+  }, []);
+
+  /**
+   * Restore demo user session on page load when no Firebase session exists.
+   * Auth is handled by the httpOnly cookie set at login — no localStorage token needed.
+   * If the cookie is expired or absent, the server returns 401 and we clear the session.
    */
   const restoreDemoUser = useCallback(async () => {
-    const storedToken = localStorage.getItem('authToken');
-    if (!storedToken) {
-      // No JWT stored — clear stale demo session so user is sent to login
-      localStorage.removeItem('sessionType');
-      localStorage.removeItem('currentUserId');
-      localStorage.removeItem('userType');
-      return;
-    }
     try {
       const response = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${storedToken}` },
+        credentials: 'include', // sends the httpOnly authToken cookie automatically
       });
       if (response.ok) {
         const userData = await response.json();
         setDbUser(userData);
       } else {
-        // Token is expired/invalid — clear demo session
+        // Cookie is expired or absent — clear the stale demo session
         localStorage.removeItem('sessionType');
-        localStorage.removeItem('authToken');
         localStorage.removeItem('currentUserId');
         localStorage.removeItem('userType');
       }
@@ -136,9 +159,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store the Firebase UID so stale sessions from other users can be detected
       localStorage.setItem("sessionFirebaseUid", firebaseUser.uid);
 
-      // Store JWT token for authenticated API calls (used as fallback when Firebase is unavailable)
-      if (data.jwtToken) {
-        localStorage.setItem("authToken", data.jwtToken);
+      // JWT is now set as an httpOnly cookie by the server — no localStorage storage needed.
+      // Schedule silent refresh for demo sessions (Firebase users refresh via Firebase SDK).
+      if (data.refreshToken && data.expiresIn) {
+        scheduleTokenRefresh(data.refreshToken, data.expiresIn);
       }
 
       return { user, isNewUser };
@@ -147,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Don't show toast here - let the caller handle the error display
       return null;
     }
-  }, []);
+  }, [scheduleTokenRefresh]);
 
   // Clear new user flag (after role selection dialog is handled)
   const clearNewUserFlag = useCallback(() => {
@@ -321,9 +345,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem("userType", user.userType || "volunteer");
               localStorage.setItem("sessionType", "demo");
               localStorage.setItem("sessionFirebaseUid", "demo_no_firebase");
-              if (data.jwtToken) {
-                localStorage.setItem("authToken", data.jwtToken);
-              }
+              // JWT cookie is set httpOnly by the server — no localStorage storage needed.
               console.log("[Auth] Demo login successful for existing user:", user.email);
 
               return {
@@ -423,9 +445,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem("userType", userType || "volunteer");
           localStorage.setItem("sessionType", "demo");
           localStorage.setItem("sessionFirebaseUid", "demo_no_firebase");
-          if (data.jwtToken) {
-            localStorage.setItem("authToken", data.jwtToken);
-          }
+          // JWT cookie is set httpOnly by the server — no localStorage storage needed.
 
           // Return a mock user object for compatibility
           return {
@@ -466,6 +486,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Cancel any pending silent refresh
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
       await firebaseSignOut(auth);
       // Clear local state
       setDbUser(null);
@@ -483,6 +508,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('rememberMe');
       localStorage.removeItem('lastLoginTime');
       localStorage.removeItem('pendingOrganizationName');
+      // Clear the httpOnly cookie server-side
+      await fetch('/api/users/logout', {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(() => {}); // best-effort — don't block redirect on failure
       // Redirect to landing page after sign out
       window.location.href = '/';
     } catch (error) {

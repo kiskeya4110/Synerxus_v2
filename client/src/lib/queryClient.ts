@@ -20,8 +20,19 @@ export async function getAuthToken(): Promise<string | null> {
 }
 
 /**
- * Get headers for authenticated API requests
- * Use this for custom fetch calls that need authentication
+ * Read a cookie value by name (used for CSRF token).
+ */
+function getCookieValue(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * Get headers for authenticated API requests.
+ * Firebase users: sends fresh Firebase ID token in Authorization header.
+ * Demo/non-Firebase users: relies on the httpOnly auth cookie (sent automatically
+ * by the browser via credentials:"include") — no localStorage fallback.
+ * All requests include the CSRF token header for state-changing operations.
  */
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
@@ -29,12 +40,13 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
-  } else {
-    // Fallback: use stored JWT token for demo/non-Firebase users
-    const storedToken = localStorage.getItem('authToken');
-    if (storedToken) {
-      headers["Authorization"] = `Bearer ${storedToken}`;
-    }
+  }
+  // Demo users: no Authorization header needed — httpOnly cookie is sent automatically.
+
+  // Always attach the CSRF token so mutation requests pass csrfValidationMiddleware
+  const csrfToken = getCookieValue("csrf-token");
+  if (csrfToken) {
+    headers["x-csrf-token"] = csrfToken;
   }
 
   return headers;

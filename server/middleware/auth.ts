@@ -92,12 +92,21 @@ export async function authMiddleware(
       }
     }
 
+    // Method 2: httpOnly cookie JWT (demo/non-Firebase users; XSS-safe fallback)
+    // Only checked when no Authorization header was present or valid.
+    if (!userId && req.cookies?.authToken) {
+      const cookieDecoded = verifyToken(req.cookies.authToken);
+      if (cookieDecoded?.userId) {
+        userId = cookieDecoded.userId;
+        userFromToken = true;
+        logger.debug(`[Auth] Cookie JWT verified, userId: ${userId}`);
+      }
+    }
+
     // SECURITY: Development auth bypass REMOVED
     // The previous fallback that allowed userId from request body/query/headers
     // was a security vulnerability that could enable user impersonation if
     // NODE_ENV was misconfigured. This has been removed to prevent such attacks.
-    // If you need local development without Firebase, use the JWT token system
-    // with proper authentication flow.
 
     if (!userId) {
       logger.debug(`[Auth] No valid authentication found`);
@@ -204,6 +213,26 @@ export async function optionalAuthMiddleware(
       }
     } else if (authHeader) {
       logger.debug(`[OptionalAuth] Non-Bearer auth header present: ${authHeader.substring(0, 20)}...`);
+    }
+
+    // Cookie JWT fallback for optional auth (same as authMiddleware)
+    if (!req.user && req.cookies?.authToken) {
+      const cookieDecoded = verifyToken(req.cookies.authToken);
+      if (cookieDecoded?.userId) {
+        const optCookieCacheKey = cacheKeys.userProfile(cookieDecoded.userId);
+        let optCookieUser = cache.get<{ id: number; email: string; userType: string; organizationId: number | null; firebaseUid: string | null }>(optCookieCacheKey);
+        if (!optCookieUser) {
+          const dbUser = await storage.getUser(cookieDecoded.userId);
+          if (dbUser) {
+            optCookieUser = { id: dbUser.id, email: dbUser.email, userType: dbUser.userType || "volunteer", organizationId: dbUser.organizationId ?? null, firebaseUid: dbUser.firebaseUid ?? null };
+            cache.set(optCookieCacheKey, optCookieUser, CACHE_TTL.USER_PROFILE);
+          }
+        }
+        if (optCookieUser) {
+          req.user = { id: optCookieUser.id, email: optCookieUser.email, userType: optCookieUser.userType, organizationId: optCookieUser.organizationId, firebaseUid: optCookieUser.firebaseUid };
+          req.userId = optCookieUser.id;
+        }
+      }
     }
 
     // SECURITY: Legacy x-user-id and x-firebase-uid header authentication REMOVED

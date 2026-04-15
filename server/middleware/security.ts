@@ -366,9 +366,9 @@ export function sanitizeInput(
 ): void {
   // Sanitize query parameters
   if (req.query) {
-    for (const key in req.query) {
+    for (const key of Object.keys(req.query)) {
       if (typeof req.query[key] === "string") {
-        req.query[key] = sanitizeString(req.query[key] as string);
+        (req.query as Record<string, string>)[key] = sanitizeString(req.query[key] as string);
       }
     }
   }
@@ -406,7 +406,7 @@ function sanitizeObject(obj: Record<string, any>, depth = 0): void {
   // Prevent deep recursion attacks
   if (depth > 10) return;
 
-  for (const key in obj) {
+  for (const key of Object.keys(obj)) {
     const value = obj[key];
 
     if (typeof value === "string") {

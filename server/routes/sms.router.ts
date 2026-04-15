@@ -16,8 +16,10 @@ function validateTwilioSignature(req: Request): boolean {
   const host = req.headers['host'] || '';
   const url = `${protocol}://${host}${req.originalUrl}`;
 
-  const params = Object.keys(req.body || {}).sort().reduce((acc: string, key: string) => {
-    return acc + key + (req.body[key] || '');
+  const body = req.body || {};
+  const params = Object.keys(body).sort().reduce((acc: string, key: string) => {
+    const value = Object.prototype.hasOwnProperty.call(body, key) ? String(body[key] ?? '') : '';
+    return acc + key + value;
   }, '');
 
   const data = url + params;

@@ -27,7 +27,7 @@ import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
 import { securityHeaders, sanitizeInput, cleanupSecurity, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware } from "./middleware/security";
 import { closeRedis } from "./redis";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
 import { initializeEnv } from "./utils/env";
 import { setupSwagger } from "./swagger";
@@ -584,10 +584,13 @@ app.use((req, res, next) => {
     // Sat1325upgrade: Force kill port before binding to ensure clean start
     if (attempt === 1) {
       try {
-        exec(`fuser -k ${port}/tcp`, (err) => {
-          if (err) logger.debug(`[Server] No lingering processes on port ${port}`);
-          else logger.info(`[Server] Cleaned up lingering processes on port ${port}`);
-        });
+        const safePort = Math.floor(Number(port));
+        if (safePort > 0 && safePort <= 65535) {
+          spawn('fuser', ['-k', `${safePort}/tcp`]).on('close', (code) => {
+            if (code !== 0) logger.debug(`[Server] No lingering processes on port ${safePort}`);
+            else logger.info(`[Server] Cleaned up lingering processes on port ${safePort}`);
+          });
+        }
       } catch (e) {
         // Ignore errors
       }

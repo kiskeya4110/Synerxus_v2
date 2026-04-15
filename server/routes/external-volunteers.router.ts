@@ -163,13 +163,14 @@ externalVolunteersRouter.patch("/external-volunteers/:id", authMiddleware, async
     }
 
     // Only allow updating certain fields
-    const allowedFields = ['fullName', 'email', 'phone', 'notes', 'source', 'isActive'];
+    const { fullName, email, phone, notes, source, isActive } = req.body;
     const updateData: Record<string, any> = {};
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
-      }
-    }
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (notes !== undefined) updateData.notes = notes;
+    if (source !== undefined) updateData.source = source;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
     const updated = await storage.updateExternalVolunteer(id, updateData);
     res.json(updated);

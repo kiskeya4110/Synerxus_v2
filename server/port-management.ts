@@ -1,6 +1,6 @@
 import { Server } from "http";
 import * as fs from "fs";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 import { logger } from "./logger";
 
 /**
@@ -93,10 +93,10 @@ function performPreStartupCleanup(port: number): boolean {
           
           // Attempt to clean up stale socket
           try {
-            execSync(`fuser -k ${port}/tcp 2>/dev/null || true`, { 
-              encoding: 'utf-8', 
-              timeout: 2000 
-            });
+            const safePort = Math.floor(Number(port));
+            if (safePort > 0 && safePort <= 65535) {
+              spawnSync('fuser', ['-k', `${safePort}/tcp`], { timeout: 2000 });
+            }
           } catch (e) {}
         }
       }

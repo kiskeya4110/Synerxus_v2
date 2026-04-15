@@ -131,12 +131,19 @@ export interface SortParams {
  * // GET /api/users?sortBy=createdAt&sortOrder=desc
  * const { sortBy, sortOrder } = getSortParams(req, 'id', 'asc');
  */
+const ALLOWED_SORT_FIELDS = new Set([
+  'id', 'createdAt', 'updatedAt', 'date', 'name', 'fullName', 'displayName',
+  'email', 'status', 'type', 'userType', 'organizationId', 'hours', 'score',
+  'lastMessageAt', 'earnedAt', 'displayOrder', 'startDate', 'endDate',
+]);
+
 export function getSortParams(
   req: Request,
   defaultSortBy: string = 'id',
   defaultOrder: 'asc' | 'desc' = 'asc'
 ): SortParams {
-  const sortBy = (req.query.sortBy as string) || defaultSortBy;
+  const requested = (req.query.sortBy as string) || defaultSortBy;
+  const sortBy = ALLOWED_SORT_FIELDS.has(requested) ? requested : defaultSortBy;
   const sortOrder = ((req.query.sortOrder as string) || defaultOrder).toLowerCase() as 'asc' | 'desc';
 
   // Validate sort order

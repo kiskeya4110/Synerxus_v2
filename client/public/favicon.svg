@@ -1,44 +1,60 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  
-  <!-- Top-Left Square - Navy (FILLED) -->
-  <path d="
-    M 128 30.72
-    L 261.12 30.72
-    L 261.12 235.52
-    L 56.32000000000001 235.52
-    L 56.32000000000001 102.39999999999999
-    Q 56.32000000000001 30.72 128 30.72
-    Z
-  " fill="#0F172A" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- White background -->
+  <rect width="512" height="512" fill="white"/>
 
-  <!-- Top-Right Square - Orange (BORDER ONLY) -->
-  <path d="
-    M 317.44000000000005 46.08
-    L 435.20000000000005 46.08
-    Q 491.52000000000004 46.08 491.52000000000004 102.39999999999999
-    L 491.52000000000004 220.16000000000003
-    L 317.44000000000005 220.16000000000003
-    Z
-  " stroke="#C2410C" stroke-width="30.72" fill="none" stroke-linejoin="round" />
+  <!--
+    Synerxus infinity / Möbius-strip mark.
+    Layer order (back → front):
+      1. Full figure-8 outline in steel-blue
+      2. Orange diagonal ribbon (lower-left → upper-right)
+      3. Re-draw the arcs that sit "above" the orange ribbon
+  -->
 
-  <!-- Bottom-Left Square - Yellow (FILLED) -->
-  <path d="
-    M 5.1200000000000045 276.48
-    L 209.92000000000002 276.48
-    L 209.92000000000002 481.28000000000003
-    L 76.8 481.28000000000003
-    Q 5.1200000000000045 481.28000000000003 5.1200000000000045 409.6
-    L 5.1200000000000045 276.48
-    Z
-  " fill="#FACC15" />
+  <!-- 1. Full figure-8 stroke — steel blue -->
+  <path
+    d="M256,256
+       C256,186 194,114 144,114
+       C94,114  62,178  62,256
+       C62,334  94,398  144,398
+       C194,398 256,326 256,256
+       C256,186 318,114 368,114
+       C418,114 450,178 450,256
+       C450,334 418,398 368,398
+       C318,398 256,326 256,256 Z"
+    fill="none"
+    stroke="#5B7080"
+    stroke-width="64"
+    stroke-linejoin="round"
+  />
 
-  <!-- Bottom-Right Square - Light Blue (FILLED) -->
-  <path d="
-    M 250.88000000000002 276.48
-    L 455.68000000000006 276.48
-    L 455.68000000000006 409.6
-    Q 455.68000000000006 481.28000000000003 384.00000000000006 481.28000000000003
-    L 250.88000000000002 481.28000000000003
-    Z
-  " fill="#7DD3FC" />
+  <!-- 2. Orange diagonal ribbon — bottom-left to top-right -->
+  <line
+    x1="82" y1="408"
+    x2="430" y2="104"
+    stroke="#D4730A"
+    stroke-width="64"
+    stroke-linecap="round"
+  />
+
+  <!-- 3a. Upper-left arc of figure-8 redrawn above orange -->
+  <path
+    d="M256,256
+       C256,186 194,114 144,114
+       C94,114  62,178  62,256"
+    fill="none"
+    stroke="#5B7080"
+    stroke-width="64"
+    stroke-linecap="round"
+  />
+
+  <!-- 3b. Lower-right arc of figure-8 redrawn above orange -->
+  <path
+    d="M256,256
+       C256,326 318,398 368,398
+       C418,398 450,334 450,256"
+    fill="none"
+    stroke="#5B7080"
+    stroke-width="64"
+    stroke-linecap="round"
+  />
 </svg>

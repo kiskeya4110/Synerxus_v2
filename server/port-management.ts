@@ -95,7 +95,7 @@ function performPreStartupCleanup(port: number): boolean {
           try {
             const safePort = Math.floor(Number(port));
             if (safePort > 0 && safePort <= 65535) {
-              spawnSync('fuser', ['-k', `${safePort}/tcp`], { timeout: 2000 });
+              try { spawnSync('fuser', ['-k', `${safePort}/tcp`], { timeout: 2000 }); } catch (e) {}
             }
           } catch (e) {}
         }

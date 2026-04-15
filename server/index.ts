@@ -586,7 +586,9 @@ app.use((req, res, next) => {
       try {
         const safePort = Math.floor(Number(port));
         if (safePort > 0 && safePort <= 65535) {
-          spawn('fuser', ['-k', `${safePort}/tcp`]).on('close', (code) => {
+          const fuser = spawn('fuser', ['-k', `${safePort}/tcp`]);
+          fuser.on('error', () => logger.debug(`[Server] fuser not available on port ${safePort}`));
+          fuser.on('close', (code) => {
             if (code !== 0) logger.debug(`[Server] No lingering processes on port ${safePort}`);
             else logger.info(`[Server] Cleaned up lingering processes on port ${safePort}`);
           });

@@ -10,6 +10,27 @@ import { getPaginationParams, paginateArray } from "../pagination";
 
 export const usersRouter = Router();
 
+/**
+ * Return only the user fields the client needs.
+ * Explicitly allowlisting prevents future DB columns from leaking automatically.
+ */
+function safeUserFields(user: Record<string, any>) {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    username: user.username,
+    userType: user.userType,
+    organizationId: user.organizationId ?? null,
+    isAdmin: user.isAdmin ?? false,
+    profileImageUrl: user.profileImageUrl ?? null,
+    avatar: user.avatar ?? null,
+    createdAt: user.createdAt,
+    firebaseUid: user.firebaseUid,  // frontend session comparison
+    skills: user.skills ?? null,
+  };
+}
+
 // Broadcast function type (will be injected)
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -138,7 +159,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       // Existing user - return with isNewUser: false
       console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
       const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
-      return res.json({ ...user, isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
+      return res.json({ user: safeUserFields(user), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
     user = await storage.getUserByEmail(email);
@@ -152,7 +173,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       // Existing user (linking account) - return with isNewUser: false
       const tokenUser = updatedUser || user;
       const tokens = generateTokenPair({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
-      return res.json({ ...updatedUser, isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
+      return res.json({ user: safeUserFields(tokenUser), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
     }
 
     console.log(`[firebase-sync] No existing user found for email: ${email}, userType: ${userType || 'not provided'}`);
@@ -235,7 +256,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     broadcastUpdate("user_created", user);
     // New user - return with isNewUser: true
     const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
-    res.status(201).json({ ...user, isNewUser: true, jwtToken: tokens.accessToken, ...tokens });
+    res.status(201).json({ user: safeUserFields(user), isNewUser: true, jwtToken: tokens.accessToken, ...tokens });
   } catch (err) {
     console.error("[firebase-sync] Error creating user:", err);
     const error = handleValidationError(err);

@@ -1,14 +1,15 @@
 /**
  * SMS Fallback Verification Service
- * 
+ *
  * When an NGO doesn't respond to a push notification within 4 hours,
  * this service sends an SMS to the NGO contact: "Reply Y/N to verify [volunteer]'s outcome."
- * 
- * Current state: Scaffolded for Twilio integration. 
+ *
+ * Current state: Scaffolded for Twilio integration.
  * In production, configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER.
  */
 
 import { storage } from "../storage";
+import crypto from "crypto";
 
 interface SMSVerificationConfig {
   timeoutHours: number;
@@ -33,11 +34,21 @@ interface PendingVerification {
   createdAt: Date;
   smsSentAt?: Date;
   smsRetryCount: number;
+  verificationPin: string;
 }
+
+interface NgoPhoneRateEntry {
+  count: number;
+  windowStart: number; // epoch ms
+}
+
+// Max SMS per NGO phone number per hour
+const MAX_SMS_PER_NGO_PER_HOUR = 3;
 
 export class SMSVerificationService {
   private config: SMSVerificationConfig;
   private pendingQueue: Map<number, PendingVerification> = new Map();
+  private ngoRateMap: Map<string, NgoPhoneRateEntry> = new Map();
   private checkInterval: NodeJS.Timeout | null = null;
 
   constructor(config: Partial<SMSVerificationConfig> = {}) {
@@ -58,11 +69,35 @@ export class SMSVerificationService {
     }
   }
 
-  addToQueue(verification: Omit<PendingVerification, 'smsRetryCount'>) {
+  addToQueue(verification: Omit<PendingVerification, 'smsRetryCount' | 'verificationPin'>) {
+    const verificationPin = crypto.randomInt(100000, 999999).toString();
     this.pendingQueue.set(verification.logId, {
       ...verification,
       smsRetryCount: 0,
+      verificationPin,
     });
+  }
+
+  /**
+   * Check if a given NGO phone is within the rate limit (3 SMS/hour).
+   * Returns true if sending is allowed, false if the limit is exceeded.
+   */
+  private checkNgoRateLimit(phone: string): boolean {
+    const now = Date.now();
+    const entry = this.ngoRateMap.get(phone);
+
+    if (!entry || now - entry.windowStart >= 60 * 60 * 1000) {
+      // Start a fresh 1-hour window
+      this.ngoRateMap.set(phone, { count: 1, windowStart: now });
+      return true;
+    }
+
+    if (entry.count >= MAX_SMS_PER_NGO_PER_HOUR) {
+      return false;
+    }
+
+    entry.count++;
+    return true;
   }
 
   removeFromQueue(logId: number) {
@@ -84,7 +119,13 @@ export class SMSVerificationService {
   }
 
   private async sendVerificationSMS(verification: PendingVerification): Promise<boolean> {
-    const message = `[Synerxus] ${verification.volunteerName} logged: "${verification.outcomeText}" for ${verification.projectName}. Reply Y to confirm, N to reject.`;
+    if (!this.checkNgoRateLimit(verification.ngoContactPhone)) {
+      console.warn(`[SMS Verification] Rate limit exceeded for NGO phone ${verification.ngoContactPhone} — skipping SMS for log #${verification.logId}`);
+      return false;
+    }
+
+    const pin = verification.verificationPin;
+    const message = `[Synerxus] ${verification.volunteerName} logged: "${verification.outcomeText}" for ${verification.projectName}. Reply Y${pin} to confirm or N${pin} to reject. Reply STOP to opt out.`;
 
     try {
       const twilioSid = process.env.TWILIO_ACCOUNT_SID;
@@ -133,14 +174,18 @@ export class SMSVerificationService {
   async processWebhookReply(from: string, body: string): Promise<{ success: boolean; action: 'approved' | 'rejected' | 'unknown'; logId: number | null }> {
     const trimmed = body.trim().toUpperCase();
 
-    if (trimmed !== 'Y' && trimmed !== 'N') {
+    // Expected format: Y<PIN> or N<PIN> (e.g. "Y123456" or "N123456")
+    const match = trimmed.match(/^([YN])(\d{6})$/);
+    if (!match) {
       return { success: false, action: 'unknown', logId: null };
     }
+
+    const [, directionChar, suppliedPin] = match;
 
     let matchedVerification: PendingVerification | null = null;
     const entries = Array.from(this.pendingQueue.entries());
     for (const [, verification] of entries) {
-      if (verification.ngoContactPhone === from) {
+      if (verification.ngoContactPhone === from && verification.verificationPin === suppliedPin) {
         matchedVerification = verification;
         break;
       }
@@ -150,7 +195,7 @@ export class SMSVerificationService {
       return { success: false, action: 'unknown', logId: null };
     }
 
-    const action = trimmed === 'Y' ? 'approved' : 'rejected';
+    const action = directionChar === 'Y' ? 'approved' : 'rejected';
 
     try {
       await storage.updateVolunteerActivity(matchedVerification.logId, {

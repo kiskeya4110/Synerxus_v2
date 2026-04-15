@@ -162,5 +162,31 @@ export function initializeEnv(): void {
     console.log(`[Config] Cluster Mode: enabled (${env.CLUSTER_WORKERS || "auto"} workers)`);
   }
 
+  // ── Production security checks ──────────────────────────────────────────
+  if (env.NODE_ENV === "production") {
+    const missing: string[] = [];
+
+    if (!process.env.JWT_SECRET && !process.env.SESSION_SECRET) {
+      missing.push("JWT_SECRET (or SESSION_SECRET) — required for signing auth tokens");
+    }
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+      missing.push("REFRESH_TOKEN_SECRET — required for refresh token signing");
+    }
+    if (!process.env.CORS_WHITELIST) {
+      missing.push("CORS_WHITELIST — required to restrict cross-origin requests");
+    }
+    if (!process.env.APP_ORIGIN) {
+      missing.push("APP_ORIGIN — required for HSTS, CSP WebSocket directive, and cookie domain");
+    }
+
+    if (missing.length > 0) {
+      console.error("\n[Config] CRITICAL: Missing required production environment variables:");
+      missing.forEach((m) => console.error(`  ✗  ${m}`));
+      console.error("\nServer cannot start safely without these variables.\n");
+      process.exit(1);
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   console.log("[Config] Environment validation complete\n");
 }

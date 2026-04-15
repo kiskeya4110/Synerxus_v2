@@ -179,13 +179,30 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
 /**
  * GET /volunteer-activities/:id - Get a single volunteer activity by ID
  */
-activitiesRouter.get("/volunteer-activities/:id", async (req: Request, res: Response) => {
+activitiesRouter.get("/volunteer-activities/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const activityId = parseInt(req.params.id);
     const activity = await storage.getVolunteerActivity(activityId);
 
     if (!activity) {
       return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    // SECURITY: Ownership check — volunteers see only their own activities;
+    // organizations see only activities for their projects;
+    // corporate-partners see only activities linked to their employees
+    const requestingUser = req.user!;
+    if (requestingUser.userType === 'volunteer') {
+      if (activity.userId !== requestingUser.id) {
+        return res.status(403).json({ error: "FORBIDDEN", message: "Access denied" });
+      }
+    } else if (requestingUser.userType === 'organization') {
+      if (activity.projectId) {
+        const proj = await storage.getProject(activity.projectId);
+        if (proj && proj.organizationId !== requestingUser.organizationId) {
+          return res.status(403).json({ error: "FORBIDDEN", message: "Access denied" });
+        }
+      }
     }
 
     res.json(activity);
@@ -604,12 +621,30 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
  * PATCH /volunteer-activities/:id - Update an existing volunteer activity
  * Recalculates assignment hours and employee engagement hours when activity hours change
  */
-activitiesRouter.patch("/volunteer-activities/:id", async (req: Request, res: Response) => {
+activitiesRouter.patch("/volunteer-activities/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const activityId = parseInt(req.params.id);
 
     // Get the old activity to compare hours
     const oldActivity = await storage.getVolunteerActivity(activityId);
+
+    // SECURITY: Ownership check — only the activity owner or the org that owns the project may update
+    if (oldActivity) {
+      const requestingUser = req.user!;
+      if (requestingUser.userType === 'volunteer') {
+        if (oldActivity.userId !== requestingUser.id) {
+          return res.status(403).json({ error: "FORBIDDEN", message: "Access denied" });
+        }
+      } else if (requestingUser.userType === 'organization') {
+        if (oldActivity.projectId) {
+          const proj = await storage.getProject(oldActivity.projectId);
+          if (proj && proj.organizationId !== requestingUser.organizationId) {
+            return res.status(403).json({ error: "FORBIDDEN", message: "Access denied" });
+          }
+        }
+      }
+    }
+
     const activityData = insertVolunteerActivitySchema.partial().parse(req.body);
 
     const updatedActivity = await storage.updateVolunteerActivity(activityId, activityData);

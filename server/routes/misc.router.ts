@@ -9,6 +9,7 @@ import { sendInvitationEmail } from "../email-digest-service";
 import { notifyNewAssignment, emailTransporter, EMAIL_FROM } from "../notification-service";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware } from "../middleware/auth";
+import { sensitiveRateLimiter } from "../middleware/security";
 import { getAuthenticatedUser } from "./utils";
 import { db } from "../db";
 import { volunteerActivities } from "@shared/schema";
@@ -825,7 +826,7 @@ miscRouter.get("/ai/explain", async (req, res) => {
  * 1. If user with email exists and is a volunteer -> create project_assignment with status='pending'
  * 2. If user doesn't exist -> send invitation email to join the platform
  */
-miscRouter.post("/invitations/send", async (req, res) => {
+miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async (req, res) => {
   try {
     const { email, role, projectId, message, organizationId } = req.body;
 
@@ -938,7 +939,7 @@ miscRouter.post("/invitations/send", async (req, res) => {
  * Bulk import volunteers from CSV
  * POST /invitations/bulk-import
  */
-miscRouter.post("/invitations/bulk-import", async (req, res) => {
+miscRouter.post("/invitations/bulk-import", authMiddleware, async (req, res) => {
   try {
     // In a real implementation with file upload middleware (e.g., multer):
     // const file = req.file;
@@ -1032,7 +1033,7 @@ miscRouter.get("/invitations/pending", async (req, res) => {
 });
 
 // ── Public contact / pricing enquiry (unauthenticated) ───────────────────────
-miscRouter.post("/contact", async (req: Request, res: Response) => {
+miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Response) => {
   try {
     const { name, company, email, plan, message } = req.body as {
       name: string;

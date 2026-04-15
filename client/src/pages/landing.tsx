@@ -1273,10 +1273,10 @@ function buildSampleReportHtml(): string {
 }
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
-  pilot: "Pilot — $5,000 / 90 days",
-  starter: "Starter — From $8,000/yr",
-  growth: "Growth — From $22,000/yr",
-  enterprise: "Enterprise — From $38,000/yr",
+  pilot: "Verified Impact Pilot",
+  starter: "Verified Impact Pilot",
+  growth: "Verified Impact Pilot",
+  enterprise: "Verified Impact Pilot",
   demo: "Book a Demo",
 };
 
@@ -3401,403 +3401,134 @@ export default function Landing() {
         <section
           id="pricing"
           className="py-10 md:py-16 bg-slate-50 border-t border-slate-100"
+          aria-labelledby="pricing-title"
         >
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             {/* Header */}
-            <div className="text-center mb-8">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
-                Pricing
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3">
-                Verified Outcomes for Audit-Ready ESG Reporting
+            <div className="text-center mb-10">
+              <h2
+                id="pricing-title"
+                className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3"
+              >
+                Verify Impact with Synerxus
               </h2>
-              <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
-                Turn volunteer activity into third-party verified evidence — so your ESG reports survive auditor scrutiny.
+              <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+                Join our verified impact pilot and experience the only evidence
+                infrastructure that makes ESG claims audit-ready.
               </p>
             </div>
 
-            {/* Free NGO callout — top of pricing */}
-            <div className="mb-8 rounded-2xl bg-[#0A1F44] px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#D4980C] flex items-center justify-center">
-                <ShieldCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm leading-snug">
-                  NGO verification is always free — no hidden costs for your
-                  partner organizations.
-                </p>
-                <p className="text-blue-200 text-xs mt-1 leading-relaxed">
-                  When you pay for Synerxus, you're not buying verification —
-                  you're buying exclusive access to high-impact NGO partners who
-                  verify outcomes as a fundraising asset, not as a favour.
-                </p>
-              </div>
-            </div>
+            {/* Two-column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
-            {/* Pricing cards — 4 tiers */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-              {/* Pilot */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
-                <div className="mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Pilot
-                  </span>
-                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
-                    $5,000
-                  </div>
-                  <div className="text-xs text-slate-400 font-medium mb-2">
-                    90 days · validation sprint
-                  </div>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    Validate fit before rollout — no commitment required.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                    Evidence Infrastructure
-                  </p>
-                  <ul className="space-y-1.5">
+              {/* Left column — Value proposition */}
+              <div className="space-y-8">
+
+                {/* The Verification Gap */}
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0A1F44] uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    The Verification Gap
+                  </h3>
+                  <ul className="space-y-3">
                     {[
-                      "1 program",
-                      "50 verified outcomes",
-                      "NGO verification workflow",
-                      "SDG-tagged audit trail",
-                    ].map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-2 text-xs text-slate-600"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        {f}
+                      "92% of ESG claims remain self-reported and entirely unverified",
+                      "When auditors ask \"How do you know this outcome actually occurred?\", organizations have no defensible answer",
+                      "The era of unverified impact claims has ended — CSRD enforcement begins April 2025",
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span className="flex-shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="mb-5 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
-                    Free for NGO Partners
-                  </p>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Auto-generated "Verified Impact Summary" PDFs they can send
-                    to <em>any</em> funder — at no cost.
-                  </p>
-                </div>
-                <div className="mb-4 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <p className="text-[10px] text-emerald-700 font-semibold leading-snug">
-                    → $5K credited toward annual plan if converted within 30
-                    days
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setPricingPlan("pilot")}
-                  variant="outline"
-                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
-                >
-                  Start a $5K Pilot
-                </Button>
-              </div>
 
-              {/* Starter */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
-                <div className="mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Starter
-                  </span>
-                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
-                    From $8,000
-                    <span className="text-base font-semibold text-slate-400">
-                      /yr
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 font-medium mb-2">
-                    Prove impact for B Corp recertification
-                  </div>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    Small ESG teams building defensible impact evidence.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                    Evidence Infrastructure
-                  </p>
-                  <ul className="space-y-1.5">
+                {/* What You Get */}
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0A1F44] uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#0A1F44] flex-shrink-0" />
+                    What You Get
+                  </h3>
+                  <ul className="space-y-2.5">
                     {[
-                      "Free verification for up to 10 NGO partners",
-                      "50 verified outcomes/month",
-                      "Immutable audit trail",
-                      "PDF evidence exports",
-                    ].map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-2 text-xs text-slate-600"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        {f}
+                      "NGO-verified outcomes with immutable audit trails",
+                      "100% verification rate within 72h SLA",
+                      "Support for global frameworks: CSRD, ESRS, GRI, SASB, TCFD",
+                      "Audit-ready evidence that reduces evidence-gathering burden by 60–70%",
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="mb-5 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
-                    Free for NGO Partners
-                  </p>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    1-tap verification (&lt;15 seconds) becomes their
-                    fundraising asset — free on the Synerxus app.
-                  </p>
-                </div>
-                <div className="mb-4 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[10px] text-slate-500 leading-snug">
-                    +$12/outcome overage · +$5K NGO incentive guarantee
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setPricingPlan("starter")}
-                  variant="outline"
-                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
-                >
-                  See Pricing
-                </Button>
-              </div>
 
-              {/* Growth */}
-              <div className="bg-[#0A1F44] rounded-2xl border border-[#0A1F44] p-6 flex flex-col relative shadow-xl">
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#D4980C] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap">
-                  Most Popular
-                </span>
-                <div className="mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
-                    Growth
-                  </span>
-                  <div className="mt-1.5 text-2xl font-extrabold text-white">
-                    From $22,000
-                    <span className="text-base font-semibold text-blue-300">
-                      /yr
-                    </span>
-                  </div>
-                  <div className="text-xs text-blue-300 font-medium mb-2">
-                    Scale verified programs across regions
-                  </div>
-                  <p className="text-blue-200 text-xs leading-relaxed">
-                    Multi-program teams scaling globally with verified evidence.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300 mb-2">
-                    Evidence Infrastructure
-                  </p>
-                  <ul className="space-y-1.5">
+                {/* Pilot Benefits */}
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0A1F44] uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-[#0A8C6A] flex-shrink-0" />
+                    Pilot Benefits
+                  </h3>
+                  <ul className="space-y-2.5">
                     {[
-                      "Unlimited NGO partners (all free)",
-                      "250 verified outcomes/month",
-                      "CSRD/ESRS export templates",
-                      "API access for data integration",
-                    ].map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-2 text-xs text-blue-100"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5 text-[#D4980C] flex-shrink-0 mt-0.5" />
-                        {f}
+                      "Full implementation support from our team",
+                      "Dedicated onboarding for your NGO partners",
+                      "Priority access to new features and capabilities",
+                      "Expert guidance on CSRD readiness",
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <CheckCircle className="h-4 w-4 text-[#0A8C6A] flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="mb-5 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
-                    Free for NGO Partners
-                  </p>
-                  <p className="text-xs text-blue-200 leading-relaxed">
-                    "Verified by Synerxus" badge increases their credibility
-                    with funders — automatically.
-                  </p>
-                </div>
-                <div className="mb-4 px-3 py-2 rounded-xl bg-white/10 border border-white/10">
-                  <p className="text-[10px] text-blue-200 leading-snug">
-                    +$15/outcome overage · +$7.5K Auditor Export Package (Q4
-                    pre-audit)
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setPricingPlan("growth")}
-                  className="w-full bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold rounded-xl shadow text-sm"
-                >
-                  Request a Custom Quote
-                </Button>
               </div>
 
-              {/* Enterprise */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
-                <div className="mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Enterprise
-                  </span>
-                  <div className="mt-1.5 text-2xl font-extrabold text-[#0A1F44]">
-                    From $38,000
-                    <span className="text-base font-semibold text-slate-400">
-                      /yr
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 font-medium mb-2">
-                    Global compliance readiness
-                  </div>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    Compliance teams managing global ESG risk and regulatory reporting.
+              {/* Right column — Pilot invitation */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col gap-6 shadow-sm">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#0A1F44] mb-3 leading-snug">
+                    Join Our Verified Impact Pilot
+                  </h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">
+                    Be among the first to deploy NGO-verified outcomes with full
+                    implementation support. We'll work with you to validate your
+                    verification loop and prepare for CSRD assurance.
                   </p>
                 </div>
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                    Evidence Infrastructure
-                  </p>
-                  <ul className="space-y-1.5">
-                    {[
-                      "Unlimited programs & NGOs (all free)",
-                      "Multi-region reporting (EU/US/APAC)",
-                      "SSO/SAML + SOC 2",
-                      "SLA-backed 72h verification",
-                    ].map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-2 text-xs text-slate-600"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="mb-5 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C] mb-2">
-                    Free for NGO Partners
-                  </p>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Priority verification support so their reporting needs are
-                    always met — zero cost to them.
-                  </p>
-                </div>
-                <div className="mb-4 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[10px] text-slate-500 leading-snug">
-                    +$8/outcome overage · +$10K/region · +$12K Pre-Audit Package
-                    · Custom integrations
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setPricingPlan("enterprise")}
-                  variant="outline"
-                  className="w-full border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-semibold rounded-xl text-sm"
-                >
-                  Talk to Sales
-                </Button>
-              </div>
-            </div>
 
-            {/* What happens next */}
-            <div className="rounded-2xl bg-[#0A1F44] px-6 py-6 md:px-8 md:py-7">
-              <h3 className="text-sm font-extrabold text-white uppercase tracking-wider mb-5">
-                What happens next
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  {
-                    step: "1",
-                    title: "Send your enquiry",
-                    desc: "Fill in the form — takes 60 seconds. We'll receive it instantly.",
-                  },
-                  {
-                    step: "2",
-                    title: "30-min discovery call",
-                    desc: "We'll map your ESG reporting goals and confirm the right plan for your team.",
-                  },
-                  {
-                    step: "3",
-                    title: "Start your Pilot",
-                    desc: "Go live in days. First verified impact report delivered within 90 days.",
-                  },
-                ].map((item) => (
-                  <div key={item.step} className="flex gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#D4980C] flex items-center justify-center">
-                      <span className="text-[11px] font-extrabold text-white">
-                        {item.step}
-                      </span>
+                {/* Trust signals */}
+                <div className="rounded-xl bg-slate-50 border border-slate-100 px-5 py-4 space-y-2.5">
+                  {[
+                    { icon: <Clock className="h-4 w-4 text-[#0A8C6A]" />, text: "72h SLA — first verified outcomes in days" },
+                    { icon: <ShieldCheck className="h-4 w-4 text-[#0A8C6A]" />, text: "CSRD · ESRS · GRI · SASB · TCFD ready" },
+                    { icon: <FileCheck className="h-4 w-4 text-[#0A8C6A]" />, text: "Immutable audit trail from day one" },
+                  ].map(({ icon, text }) => (
+                    <div key={text} className="flex items-center gap-3">
+                      <span className="flex-shrink-0">{icon}</span>
+                      <span className="text-xs text-slate-600">{text}</span>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-blue-200 mt-0.5 leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
 
-            {/* Why NGOs Love Synerxus */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-6 md:p-8">
-              <div className="mb-5">
-                <h3 className="text-base font-extrabold text-[#0A1F44] mb-1">
-                  Why NGOs verify outcomes for free — and why that matters to
-                  you
-                </h3>
-                <p className="text-slate-500 text-xs leading-relaxed">
-                  This isn't charity. It's how we build the supply-side network
-                  that makes your impact data defensible.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                {[
-                  {
-                    icon: <FileCheck className="h-4 w-4 text-[#D4980C]" />,
-                    title: "Funding tool",
-                    desc: 'Auto-generated "Verified Impact Summary" PDFs they can send to any funder.',
-                  },
-                  {
-                    icon: <Clock className="h-4 w-4 text-[#D4980C]" />,
-                    title: "1-tap verification",
-                    desc: "Takes <15 seconds via the Synerxus app or SMS. Zero training needed.",
-                  },
-                  {
-                    icon: <ShieldCheck className="h-4 w-4 text-[#D4980C]" />,
-                    title: "Credibility boost",
-                    desc: '"Verified by Synerxus" badge increases NGO credibility with funders.',
-                  },
-                  {
-                    icon: <CheckCircle className="h-4 w-4 text-[#D4980C]" />,
-                    title: "Zero cost",
-                    desc: "No fees, no contracts, no hidden costs — ever.",
-                  },
-                ].map((item) => (
-                  <div key={item.title} className="flex gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#D4980C]/10 flex items-center justify-center mt-0.5">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#0A1F44]">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <p className="text-xs text-slate-500 max-w-xl">
-                  Competitors like Benevity and YourCause track self-reported
-                  hours but don't verify outcomes at the source. Synerxus makes
-                  verification free for NGOs—creating a network effect that
-                  makes your ESG data permanently more defensible than any tool
-                  that doesn't prioritize verification at the source.
-                </p>
-                <Button
-                  onClick={() => setPricingPlan("demo")}
-                  size="sm"
-                  className="flex-shrink-0 bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold rounded-xl whitespace-nowrap"
-                >
-                  Book a Demo
-                </Button>
+                {/* CTAs */}
+                <div className="flex flex-col gap-3 pt-1">
+                  <Button
+                    onClick={() => setPricingPlan("pilot")}
+                    className="w-full bg-[#0A8C6A] hover:bg-[#087a5c] text-white font-bold rounded-xl text-sm py-3 shadow"
+                  >
+                    Apply for Pilot
+                  </Button>
+                  <button
+                    onClick={() => setPricingPlan("demo")}
+                    className="text-[#0A1F44] text-xs font-medium underline underline-offset-2 hover:text-[#0A8C6A] transition-colors text-center"
+                  >
+                    View our verification methodology
+                  </button>
+                </div>
               </div>
             </div>
           </div>

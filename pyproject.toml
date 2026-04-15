@@ -3,7 +3,11 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "pillow==12.2.0",
+    "python-jose[cryptography]==3.4.0",
+    "python-multipart==0.0.22",
+]
 
 [[tool.uv.index]]
 explicit = true

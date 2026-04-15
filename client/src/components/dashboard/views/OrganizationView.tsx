@@ -478,7 +478,7 @@ const OrganizationView = memo(function OrganizationView({
     if (!reportContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(reportContent.rawHtml);
+      printWindow.document.write(DOMPurify.sanitize(reportContent.rawHtml, { FORCE_BODY: true, ADD_TAGS: ['style', 'link', 'meta'], ADD_ATTR: ['style', 'class', 'id', 'href', 'rel', 'charset', 'content', 'name'] }));
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();

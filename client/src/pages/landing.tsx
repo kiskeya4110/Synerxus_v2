@@ -1538,12 +1538,12 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const printReport = () => {
-    const w = window.open("", "_blank");
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, "_blank");
     if (!w) return;
-    w.document.write(html);
-    w.document.close();
     w.focus();
-    setTimeout(() => w.print(), 600);
+    setTimeout(() => { w.print(); URL.revokeObjectURL(url); }, 600);
   };
 
   return (

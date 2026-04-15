@@ -166,7 +166,6 @@ export async function optionalAuthMiddleware(
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      logger.debug(`[OptionalAuth] Processing Bearer token (length: ${token.length})`);
 
       // First try to verify as our own JWT token
       const jwtDecoded = verifyToken(token);
@@ -212,7 +211,6 @@ export async function optionalAuthMiddleware(
         }
       }
     } else if (authHeader) {
-      logger.debug(`[OptionalAuth] Non-Bearer auth header present: ${authHeader.substring(0, 20)}...`);
     }
 
     // Cookie JWT fallback for optional auth (same as authMiddleware)

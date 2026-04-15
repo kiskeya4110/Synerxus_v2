@@ -5,14 +5,14 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration for Synerxus
 const firebaseConfig = {
-  apiKey: "AIzaSyAXgxscrI7ymmfUuFJvZ3CeAIz_a_wzT7w",
-  authDomain: "synerxus-1302e.firebaseapp.com",
-  databaseURL: "https://synerxus-1302e-default-rtdb.firebaseio.com",
-  projectId: "synerxus-1302e",
-  storageBucket: "synerxus-1302e.firebasestorage.app",
-  messagingSenderId: "629501536901",
-  appId: "1:629501536901:web:cda40c4aff2711d9fd97ec",
-  measurementId: "G-R6LRMPYRGY"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase

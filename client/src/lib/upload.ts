@@ -16,7 +16,6 @@ async function getAuthToken(): Promise<string | null> {
       // Get fresh ID token (Firebase automatically refreshes expired tokens)
       // Force refresh to ensure token is not expired
       const token = await user.getIdToken(true);
-      console.log('[Upload] Got Firebase auth token for user:', user.email);
       return token;
     } else {
       console.log('[Upload] No current user, waiting for auth state...');
@@ -26,7 +25,6 @@ async function getAuthToken(): Promise<string | null> {
         const unsubscribe = auth.onAuthStateChanged((authUser) => {
           unsubscribe();
           if (authUser) {
-            console.log('[Upload] Auth state resolved, getting token for:', authUser.email);
             authUser.getIdToken(true).then(resolve).catch((err) => {
               console.error('[Upload] Failed to get token after auth state change:', err);
               resolve(null);
@@ -92,13 +90,11 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
     console.log('[Upload] Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type);
 
     // Get Firebase ID token for secure authentication
-    console.log('[Upload] Getting auth token...');
     let token = await getAuthToken();
     if (!token) {
       console.error('[Upload] No auth token available');
       throw new Error('Authentication required. Please sign in again and try uploading.');
     }
-    console.log('[Upload] Auth token obtained, proceeding with upload...');
 
     let response: Response;
     try {
@@ -120,7 +116,6 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
         try {
           // Force token refresh
           token = await user.getIdToken(true);
-          console.log('[Upload] Got fresh token, retrying upload...');
 
           response = await performUpload(token);
           console.log('[Upload] Retry response status:', response.status);

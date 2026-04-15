@@ -1429,7 +1429,7 @@ export default function OrganizationDashboardNew() {
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[9999] flex flex-col bg-white">
           {/* Inject report styles into head scope */}
-          <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+          <style dangerouslySetInnerHTML={{ __html: reportContent.styles.replace(/<\/style>/gi, '').replace(/expression\s*\(/gi, '').replace(/javascript\s*:/gi, '').replace(/@import\b/gi, '') + `
             @media print {
               body > *:not(#synerxus-report-overlay) { display: none !important; }
               #synerxus-report-overlay { position: static !important; }

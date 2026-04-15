@@ -259,7 +259,8 @@
       "Read(//proc/**)",
       "Bash(npm uninstall:*)",
       "Bash(npm list:*)",
-      "Bash(npm show:*)"
+      "Bash(npm show:*)",
+      "Bash([ -f \"client/public/$file\" ])"
     ],
     "deny": [],
     "ask": []

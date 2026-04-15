@@ -172,7 +172,7 @@ export function SDGCircularWheel({ scale = 1.0 }: SDGCircularWheelProps = {}) {
                 />
                 {/* Logo */}
                 <img
-                  src="/synerxus-esg-logo.png"
+                  src="/synerxus-esg-logo.png?v=2"
                   alt="Synerxus"
                   className="relative z-10 w-4/5 h-4/5 object-contain"
                   style={{

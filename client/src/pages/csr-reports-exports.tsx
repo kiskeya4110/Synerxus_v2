@@ -576,7 +576,7 @@ export default function CSRReportsExports() {
             <div class="report-header">
               <div class="header-left">
                 <div class="logo-container">
-                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 44px; width: auto;" />
+                  <img src="${window.location.origin}/synerxus-esg-logo.png?v=2" alt="Synerxus" style="height: 44px; width: auto;" />
                   <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
                     <span style="font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;">
                       <span style="color:#0A2463;">SYNERXUS</span>
@@ -671,7 +671,7 @@ export default function CSRReportsExports() {
 
           <div class="report-footer">
             <div class="footer-logo">
-              <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
+              <img src="${window.location.origin}/synerxus-esg-logo.png?v=2" alt="Synerxus" style="height: 28px; width: auto;" />
             </div>
             <div class="footer-tagline"><span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></div>
             <div class="footer-generated">
@@ -1280,7 +1280,7 @@ export default function CSRReportsExports() {
             <div class="report-header">
               <div class="header-left">
                 <div class="logo-container">
-                  <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 44px; width: auto;" />
+                  <img src="${window.location.origin}/synerxus-esg-logo.png?v=2" alt="Synerxus" style="height: 44px; width: auto;" />
                   <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
                     <span style="font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Arial,sans-serif;">
                       <span style="color:#0A2463;">SYNERXUS</span>
@@ -1796,7 +1796,7 @@ export default function CSRReportsExports() {
           <div class="report-footer">
             <div class="footer-top">
               <div class="footer-logo-block">
-                <img src="${window.location.origin}/synerxus-esg-logo.png" alt="Synerxus" style="height:28px;width:auto;" />
+                <img src="${window.location.origin}/synerxus-esg-logo.png?v=2" alt="Synerxus" style="height:28px;width:auto;" />
                 <div style="font-size:11px;line-height:1.6;color:#6b7280;">
                   <div><span style="color:#D4980C;font-weight:700;">Impacts.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
                   <div>ISAE 3000 Revised · Audit-Supported</div>
@@ -2466,7 +2466,7 @@ export default function CSRReportsExports() {
           {/* Report Section Header with Synerxus branding */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "4px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <img src="/synerxus-esg-logo.png" alt="Synerxus" style={{ height: "44px", width: "auto" }} />
+              <img src="/synerxus-esg-logo.png?v=2" alt="Synerxus" style={{ height: "44px", width: "auto" }} />
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
                 <span style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1 }}>
                   <span style={{ color: "#0A2463" }}>SYNERXUS</span>

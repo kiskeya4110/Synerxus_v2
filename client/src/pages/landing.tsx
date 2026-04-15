@@ -1874,7 +1874,7 @@ export default function Landing() {
                 the UN SDGs.
               </p>
 
-              <div className="flex flex-row gap-2 sm:gap-3 mb-10">
+              <div className="flex flex-wrap gap-2 sm:gap-3 mb-10">
                 {isLoggedIn ? (
                   <Link href="/dashboard">
                     <Button
@@ -1896,14 +1896,15 @@ export default function Landing() {
                         Get Started
                       </Button>
                     </Link>
-                    <Button
-                      size="lg"
-                      onClick={() => setShowSampleReport(true)}
-                      className="bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg border-0 text-sm sm:text-base"
-                      data-testid="button-sign-in-hero"
-                    >
-                      See a Sample Report
-                    </Button>
+                    <Link href="/signup">
+                      <Button
+                        size="lg"
+                        className="bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg border-0 text-sm sm:text-base"
+                        data-testid="button-join-volunteer-ngo-hero"
+                      >
+                        Join as Volunteer / NGO
+                      </Button>
+                    </Link>
                   </>
                 )}
               </div>
@@ -2073,7 +2074,19 @@ export default function Landing() {
         </div>
 
         {/* ── Section 2: Problem ── */}
-        <section id="problem" className="py-10 md:py-16 bg-white">
+        <section id="problem" className="relative py-10 md:py-16 bg-white overflow-visible">
+          {!isLoggedIn && (
+            <button
+              onClick={() => setShowSampleReport(true)}
+              className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 w-28 h-28 flex flex-col items-center justify-center text-center rotate-12 hover:scale-110 transition-transform cursor-pointer animate-pulse z-10"
+              style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)", background: "#D4980C" }}
+              data-testid="button-sample-report-stamp"
+            >
+              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">See</span>
+              <span className="text-[#0A1F44] font-extrabold text-[11px] uppercase tracking-wide leading-tight">Sample</span>
+              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">Report</span>
+            </button>
+          )}
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">

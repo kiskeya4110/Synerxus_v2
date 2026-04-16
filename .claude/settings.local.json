@@ -260,7 +260,9 @@
       "Bash(npm uninstall:*)",
       "Bash(npm list:*)",
       "Bash(npm show:*)",
-      "Bash([ -f \"client/public/$file\" ])"
+      "Bash([ -f \"client/public/$file\" ])",
+      "Bash(awk '{print $9, \"\\(\" $5 \"\\)\"}')",
+      "Bash(awk 'NR>=189 && NR<=400 {print NR\": \"$0}')"
     ],
     "deny": [],
     "ask": []

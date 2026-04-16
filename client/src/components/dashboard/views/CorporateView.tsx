@@ -1032,7 +1032,7 @@ const CorporateView = memo(function CorporateView({
           {/* Branding header */}
           <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4">
             <div className="flex items-center gap-4">
-              <img src="/synerxus-esg-logo.png?v=2" alt="Synerxus" className="h-9 w-auto" />
+              <img src="/favicon-512.png" alt="Synerxus" className="h-9 w-auto" />
               <div className="w-px h-8 bg-slate-200" />
               <div>
                 <div className="text-sm font-bold text-slate-900 leading-tight">CSR / ESG Reports</div>

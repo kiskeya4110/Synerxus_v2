@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Clock,
@@ -52,9 +52,9 @@ import Footer from "@/components/layout/footer";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useViewportDetection } from "@/hooks/use-mobile";
+import { useVolunteerPageData } from "@/hooks/use-volunteer-page-data";
 import { formatDecimal } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
-import { getAuthHeaders } from "@/lib/queryClient";
 
 // SDG Data
 const SDG_OPTIONS = [
@@ -813,102 +813,37 @@ export default function VolunteerDashboardNew() {
     }
   }, [userType, navigate]);
 
-  // Fetch user data - wait for auth to resolve to use correct userId
-  const { data: currentUser, isLoading: isLoadingUser } = useQuery({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
-        if (!response.ok) return null;
-        return response.json();
-      } catch (error) {
-        console.warn("Failed to fetch user:", error);
-        return null;
-      }
-    },
-    enabled: !!userId && !authLoading,
-  });
+  // All volunteer page data — errors are surfaced via toast below, not swallowed
+  const {
+    userData: currentUser,
+    summaryData: dashboardData,
+    projects,
+    logs: recentLogs,
+    assignments: assignedProjects,
+    isLoading: isLoadingUser,
+    isLoadingDashboard,
+    isLoadingLogs,
+    isLoadingAssigned,
+    errors: dataErrors,
+  } = useVolunteerPageData(userId, authLoading);
 
-  // Fetch dashboard data
-  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/dashboard/summary", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/dashboard/summary?userId=${userId}`, {
-        headers, credentials: "include"
-      });
-      if (!response.ok) throw new Error(`Failed to fetch dashboard: ${response.status}`);
-      return response.json();
-    },
-    enabled: !!userId && !authLoading,
-    staleTime: 0,
-    retry: 2,
-  });
+  // Surface data-fetch failures to the user instead of silently returning empty state
+  useEffect(() => {
+    if (dataErrors.user) toast({ title: "Could not load profile", description: "Check your connection and try again.", variant: "destructive" });
+  }, [dataErrors.user]);
+  useEffect(() => {
+    if (dataErrors.summary) toast({ title: "Could not load dashboard data", description: "Some metrics may be unavailable.", variant: "destructive" });
+  }, [dataErrors.summary]);
+  useEffect(() => {
+    if (dataErrors.logs) toast({ title: "Could not load activity logs", description: "Recent logs may be unavailable.", variant: "destructive" });
+  }, [dataErrors.logs]);
+  useEffect(() => {
+    if (dataErrors.assignments) toast({ title: "Could not load assigned projects", description: "Project list may be unavailable.", variant: "destructive" });
+  }, [dataErrors.assignments]);
 
-  // Fetch projects
-  const { data: projects = [] } = useQuery({
-    queryKey: ["/api/projects", userId],
-    queryFn: async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`/api/projects?userId=${userId}`, { headers, credentials: "include" });
-        if (!response.ok) return [];
-        return response.json();
-      } catch (error) {
-        console.warn("Failed to fetch projects:", error);
-        return [];
-      }
-    },
-    enabled: !!userId,
-  });
-
-  // Fetch recent impact logs
-  const { data: recentLogs = [], isLoading: isLoadingLogs } = useQuery({
-    queryKey: ["/api/logs", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/logs?user_id=${userId}`, {
-        headers, credentials: "include"
-      });
-      if (!response.ok) throw new Error(`Failed to fetch logs: ${response.status}`);
-      const logs = await response.json();
-      return logs.slice(0, 10).map((log: any) => ({
-        id: log.id,
-        projectName: log.project?.name || log.project_name || "Unknown Project",
-        hours: log.hours,
-        status: log.verificationStatus || log.verification_status || log.status || "pending",
-        createdAt: log.createdAt || log.created_at,
-        outcomeType: log.outcomes || log.outcome_type,
-        outcomeValue: log.outcomeQuantity || log.outcome_value,
-        sdgGoals: log.sdgTags || log.sdg_goals,
-      }));
-    },
-    enabled: !!userId,
-    staleTime: 0,
-    retry: 2,
-  });
-
-  // Use matched opportunities from dashboard data (works for all volunteers via main users table)
+  // Matched opportunities derived from dashboard summary
   const matchedProjects = (dashboardData?.matchedOpportunities || []).slice(0, 4);
   const isLoadingMatches = isLoadingDashboard;
-
-  // Fetch assigned projects with enriched KPI data
-  const { data: assignedProjects = [], isLoading: isLoadingAssigned } = useQuery({
-    queryKey: ["/api/project-assignments/details", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/project-assignments/details?volunteerId=${userId}`, {
-        headers, credentials: "include"
-      });
-      if (!response.ok) throw new Error(`Failed to fetch assignments: ${response.status}`);
-      const data = await response.json();
-      return data.filter((a: any) => a.status !== 'declined');
-    },
-    enabled: !!userId,
-    staleTime: 0,
-    retry: 2,
-  });
 
   // Demo data fallback
   const demoUser = useMemo(() => {

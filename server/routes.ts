@@ -77,6 +77,7 @@ import { calculateOrganizationAIU } from "./aiu-service";
 import { aiRecommendationsRouter } from "./routes/ai-recommendations.router";
 import { externalVolunteersRouter } from "./routes/external-volunteers.router";
 import { smsRouter } from "./routes/sms.router";
+import { gamificationRouter } from "./routes/gamification.router";
 import uptimeMonitor from "./services/uptime-monitor";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
@@ -496,6 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/invitation-codes", invitationCodesRouter); // Handles invitation codes for invite-only platform
   app.use("/api", externalVolunteersRouter); // Handles /external-volunteers for org admin volunteer logging
   app.use("/api", smsRouter); // Handles /sms/webhook (Twilio), /sms/status
+  app.use("/api", gamificationRouter); // Handles /leaderboard, /organization-leaderboard, /user-badges, /volunteer-spotlight, /banner-stats, /team-overview
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.
@@ -6099,6 +6101,11 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       res.status(500).json({ message: "Error fetching leaderboard stats" });
     }
   });
+
+  // NOTE: /api/leaderboard, /organization-leaderboard, /user-badges,
+  // /volunteer-spotlight, /banner-stats, /team-overview are now handled by
+  // gamificationRouter (mounted above). The inline definitions below are
+  // unreachable dead code — TODO: remove them in a follow-up cleanup pass.
 
   app.get("/api/leaderboard", async (req, res) => {
     try {

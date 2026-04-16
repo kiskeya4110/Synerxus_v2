@@ -328,7 +328,7 @@ export default function ImpactReportGenerator() {
                 <CardContent>
                   <div id="report-content" className="text-sm leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-h-[600px] overflow-y-auto font-sans">
                     <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
-                      <img src="/synerxus-esg-logo.png?v=2" alt="Synerxus" style={{ height: "32px", width: "auto" }} />
+                      <img src="/favicon-512.png" alt="Synerxus" style={{ height: "32px", width: "auto" }} />
                       <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Impact Report</span>
                     </div>
                     <div className="whitespace-pre-wrap">

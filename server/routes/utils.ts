@@ -2,6 +2,9 @@ import type { Request, Response } from "express";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { storage } from "../storage";
+import { db } from "../db";
+import { eq } from "drizzle-orm";
+import { projectAiuSettings } from "../../shared/schema";
 
 /**
  * Authenticated user type from auth middleware
@@ -359,3 +362,4 @@ export async function updateAiuKpiFromImpacts(projectId: number): Promise<void> 
     // Don't throw - this is a background operation that shouldn't fail the main request
   }
 }
+

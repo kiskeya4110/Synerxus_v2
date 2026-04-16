@@ -80,7 +80,7 @@ export default function VolunteerBottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-2 max-w-[428px] mx-auto z-50 shadow-lg"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 max-w-[428px] mx-auto z-50 shadow-lg"
       style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid grid-cols-5">
@@ -90,12 +90,14 @@ export default function VolunteerBottomNav() {
             onClick={() => handleNavClick(tab.path)}
             className={`flex flex-col items-center justify-center py-1 w-full rounded-lg transition-all ${
               isActive(tab.path)
-                ? 'text-[#7a5200] bg-[#D4980C]/50'
-                : 'text-stone-500 hover:text-[#7a5200]'
+                ? 'text-sky-700 bg-sky-200'
+                : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'
             }`}
             data-testid={`nav-${tab.id}`}
           >
-            <tab.icon className="w-5 h-5 mb-1" />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5">
+              <tab.icon className="w-4 h-4" />
+            </div>
             <span className="text-[10px] font-medium">{tab.label}</span>
           </button>
         ))}

@@ -74,7 +74,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
         <div className="grid grid-cols-5 max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
@@ -94,15 +94,17 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                     }
                   }
                 }}
-                className={`flex flex-col items-center justify-center py-1.5 mx-auto w-full rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
+                className={`flex flex-col items-center justify-center py-1 mx-auto w-full rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive
-                    ? 'text-stone-900 bg-[#D4980C]'
-                    : 'text-stone-600 hover:text-[#7a5200] hover:bg-[#D4980C]/50'
+                    ? 'text-sky-700 bg-sky-200'
+                    : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'
                 }`}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 data-testid={`nav-${item.id}`}
               >
-                <item.icon className={`w-5 h-5 mb-0.5 pointer-events-none ${isActive ? 'stroke-[2.5]' : ''}`} />
+                <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+                  <item.icon className={`w-4 h-4 pointer-events-none ${isActive ? 'stroke-[2.5]' : ''}`} />
+                </div>
                 <span className="text-[9px] font-medium pointer-events-none">{item.label}</span>
               </button>
             );

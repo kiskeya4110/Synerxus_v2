@@ -4796,51 +4796,61 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
         Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100/95 backdrop-blur-md border-t border-slate-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex justify-around items-center max-w-[428px] mx-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'dashboard' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'dashboard' ? 'text-sky-700 bg-sky-200' : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-home"
           >
-            <Home className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+              <Home className={`w-4 h-4 pointer-events-none ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
+            </div>
             <span className="text-[9px] font-semibold pointer-events-none">Home</span>
           </button>
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'projects' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'projects' ? 'text-sky-700 bg-sky-200' : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-projects"
           >
-            <Briefcase className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+              <Briefcase className={`w-4 h-4 pointer-events-none ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
+            </div>
             <span className="text-[9px] font-semibold pointer-events-none">Projects</span>
           </button>
           <button
             onClick={() => setActiveTab('potential')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'potential' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'potential' ? 'text-sky-700 bg-sky-200' : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-potentials"
           >
-            <Sparkles className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+              <Sparkles className={`w-4 h-4 pointer-events-none ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
+            </div>
             <span className="text-[9px] font-semibold pointer-events-none">Potentials</span>
           </button>
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'messages' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'messages' ? 'text-sky-700 bg-sky-200' : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-messages"
           >
-            <MessageCircle className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+              <MessageCircle className={`w-4 h-4 pointer-events-none ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
+            </div>
             <span className="text-[9px] font-semibold pointer-events-none">Messages</span>
           </button>
           <button
             onClick={() => setActiveTab('more')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'more' ? 'text-indigo-600 bg-indigo-100' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${activeTab === 'more' ? 'text-sky-700 bg-sky-200' : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'}`}
             style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-more"
           >
-            <MoreHorizontal className={`w-5 h-5 mb-0.5 pointer-events-none ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
+            <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+              <MoreHorizontal className={`w-4 h-4 pointer-events-none ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
+            </div>
             <span className="text-[9px] font-semibold pointer-events-none">More</span>
           </button>
         </div>

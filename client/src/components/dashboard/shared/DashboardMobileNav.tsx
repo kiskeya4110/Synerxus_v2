@@ -85,7 +85,7 @@ export default function DashboardMobileNav({
   if (userType === 'volunteer') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-2 z-[160] shadow-lg"
+        className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="grid grid-cols-5 items-end max-w-md mx-auto">
@@ -100,15 +100,15 @@ export default function DashboardMobileNav({
                 className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                   isPrimary
                     ? isActive
-                      ? 'bg-[#D4980C] text-stone-900 -mt-3 shadow-md'
-                      : 'text-stone-500 -mt-3 hover:bg-[#D4980C] hover:text-stone-900'
+                      ? 'bg-sky-300 text-sky-900 -mt-3 shadow-md'
+                      : 'text-slate-500 -mt-3 bg-sky-50 hover:bg-sky-200 hover:text-sky-700'
                     : isActive
-                      ? 'text-[#7a5200] bg-[#D4980C]/50'
-                      : 'text-stone-500 hover:text-[#7a5200] hover:bg-[#D4980C]/50'
+                      ? 'text-sky-700 bg-sky-200'
+                      : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'
                 }`}
               >
-                <div className={`flex items-center justify-center ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
-                  <item.icon className={isPrimary ? 'w-6 h-6' : 'w-5 h-5'} />
+                <div className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                  <item.icon className={isPrimary ? 'w-5 h-5' : 'w-4 h-4'} />
                 </div>
                 <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
               </button>
@@ -124,7 +124,7 @@ export default function DashboardMobileNav({
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-2 z-[160] shadow-lg"
+          className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           <div className="grid grid-cols-5 items-end max-w-md mx-auto">
@@ -139,16 +139,16 @@ export default function DashboardMobileNav({
                   className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
                     isPrimary
                       ? isActive
-                        ? 'bg-[#D4980C] text-stone-900 -mt-3 shadow-md'
-                        : 'text-stone-500 -mt-3 hover:bg-[#D4980C] hover:text-stone-900'
+                        ? 'bg-sky-300 text-sky-900 -mt-3 shadow-md'
+                        : 'text-slate-500 -mt-3 bg-sky-50 hover:bg-sky-200 hover:text-sky-700'
                       : isActive
-                        ? 'text-[#7a5200] bg-[#D4980C]/50'
-                        : 'text-stone-500 hover:text-[#7a5200] hover:bg-[#D4980C]/50'
+                        ? 'text-sky-700 bg-sky-200'
+                        : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'
                   }`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <div className={`flex items-center justify-center ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
-                    <item.icon className={isPrimary ? 'w-6 h-6' : 'w-5 h-5'} />
+                  <div className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                    <item.icon className={isPrimary ? 'w-5 h-5' : 'w-4 h-4'} />
                   </div>
                   <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
                 </button>
@@ -215,7 +215,7 @@ export default function DashboardMobileNav({
   if (userType === 'corporate-partner') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#D4980C]/20 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-slate-100"
         style={{
           boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
           paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
@@ -229,13 +229,13 @@ export default function DashboardMobileNav({
               <button
                 key={item.id}
                 onClick={item.action}
-                className="flex flex-col items-center justify-end min-w-[56px] min-h-[48px] pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95"
+                className={`flex flex-col items-center justify-end min-w-[56px] min-h-[48px] pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95 rounded-xl ${isActive ? 'bg-sky-200' : 'bg-sky-50'}`}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className={`flex items-center justify-center h-8 w-8 rounded-lg pointer-events-none ${isActive ? 'bg-[#D4980C]/50' : ''}`}>
-                  <item.icon className={`w-5 h-5 pointer-events-none ${isActive ? 'text-[#7a5200]' : 'text-slate-600'}`} />
+                <div className={`flex items-center justify-center h-8 w-8 rounded-lg bg-stone-50 pointer-events-none`}>
+                  <item.icon className={`w-4 h-4 pointer-events-none ${isActive ? 'text-sky-700' : 'text-slate-600'}`} />
                 </div>
-                <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-[#7a5200] font-semibold' : 'text-slate-600'}`}>
+                <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-sky-700 font-semibold' : 'text-slate-600'}`}>
                   {item.label}
                 </span>
               </button>

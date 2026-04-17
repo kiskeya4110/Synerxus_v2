@@ -927,7 +927,7 @@ export default function CSRReportsExports() {
           {/* Report Section Header with Synerxus branding */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "4px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <img src="/favicon-512.png" alt="Synerxus" style={{ height: "44px", width: "auto" }} />
+              <img src="/synerxus-esg-logo.png" alt="Synerxus" style={{ height: "44px", width: "auto" }} />
               <div style={{ width: "1px", height: "36px", backgroundColor: "#e5e7eb", margin: "0 4px" }} />
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>CSR / ESG Reports</div>

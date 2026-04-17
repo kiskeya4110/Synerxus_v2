@@ -14,11 +14,11 @@ interface LogoProps {
 }
 
 const SIZES = {
-  xs: { height: 28 },
-  sm: { height: 36 },
-  md: { height: 44 },
-  lg: { height: 56 },
-  xl: { height: 72 },
+  xs: { height: 28, imgMult: 1.0125 },
+  sm: { height: 36, imgMult: 1.125 },
+  md: { height: 44, imgMult: 1.125 },
+  lg: { height: 56, imgMult: 1.125 },
+  xl: { height: 72, imgMult: 1.125 },
 };
 
 export default function Logo({
@@ -104,7 +104,7 @@ export default function Logo({
         <img
           src="/synerxus-esg-logo.png"
           alt="Synerxus"
-          style={{ height: `${Math.round(config.height * 1.25)}px`, width: 'auto', display: 'block', flexShrink: 0 }}
+          style={{ height: `${Math.round(config.height * config.imgMult)}px`, width: 'auto', display: 'block', flexShrink: 0 }}
         />
       </div>
 

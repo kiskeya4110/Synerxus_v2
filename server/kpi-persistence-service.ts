@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { storage } from "./storage";
 import { extractSdgsFromProjects } from "./sdg-utils";
 import { calculateVolunteerAIU } from "./aiu-service";
@@ -202,7 +203,7 @@ export async function persistVolunteerKPIs(userId: number): Promise<void> {
     });
 
   } catch (error) {
-    console.error(`[KPI Persistence] Failed to persist volunteer KPIs for user ${userId}:`, error);
+    logger.error(`[KPI Persistence] Failed to persist volunteer KPIs for user ${userId}:`, error);
   }
 }
 
@@ -386,7 +387,7 @@ export async function persistOrganizationKPIs(organizationId: number): Promise<v
     await storage.upsertKpiSnapshot(snapshotData);
 
   } catch (error) {
-    console.error(`[KPI Persistence] Failed to persist organization KPIs for org ${organizationId}:`, error);
+    logger.error(`[KPI Persistence] Failed to persist organization KPIs for org ${organizationId}:`, error);
   }
 }
 

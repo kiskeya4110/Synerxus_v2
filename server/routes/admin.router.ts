@@ -1,9 +1,10 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { extractUserId, getAuthenticatedUser } from "./utils";
 import { authMiddleware } from "../middleware/auth";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "../email-digest-service";
-import OpenAI from "openai";
+import { aiService } from "../services/ai-service";
 import { queueMiddleware } from "../request-queue";
 import { db } from "../db";
 import { volunteerActivities, organizations, employeeEngagement, projects } from "@shared/schema";
@@ -42,7 +43,7 @@ adminRouter.delete("/users/me", async (req: Request, res: Response) => {
       ...result
     });
   } catch (err) {
-    console.error("Error deleting user account:", err);
+    logger.error("Error deleting user account:", err);
     res.status(500).json({ message: "Failed to delete account" });
   }
 });
@@ -138,7 +139,7 @@ adminRouter.get("/user-validation/:userId", async (req: Request, res: Response) 
       checkedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Error validating user data:", err);
+    logger.error("Error validating user data:", err);
     res.status(500).json({ message: "Failed to validate user data" });
   }
 });
@@ -236,7 +237,7 @@ adminRouter.post("/user-validation/:userId/sync-name", async (req: Request, res:
       displayName: trimmedName
     });
   } catch (err) {
-    console.error("Error syncing user name:", err);
+    logger.error("Error syncing user name:", err);
     res.status(500).json({ message: "Failed to sync user name" });
   }
 });
@@ -263,7 +264,7 @@ adminRouter.get("/user-validation/:userId/audit-logs", async (req: Request, res:
     const auditLogs = await storage.getUserDataAuditLogs(userId);
     res.json(auditLogs);
   } catch (err) {
-    console.error("Error fetching audit logs:", err);
+    logger.error("Error fetching audit logs:", err);
     res.status(500).json({ message: "Failed to fetch audit logs" });
   }
 });
@@ -286,7 +287,7 @@ adminRouter.get("/user-validation/discrepancies/unresolved", async (req: Request
     const discrepancies = await storage.getUnresolvedDiscrepancies(authenticatedUserId);
     res.json(discrepancies);
   } catch (err) {
-    console.error("Error fetching unresolved discrepancies:", err);
+    logger.error("Error fetching unresolved discrepancies:", err);
     res.status(500).json({ message: "Failed to fetch unresolved discrepancies" });
   }
 });
@@ -329,7 +330,7 @@ adminRouter.post("/user-validation/discrepancies/:id/resolve", async (req: Reque
 
     res.json(resolved);
   } catch (err) {
-    console.error("Error resolving discrepancy:", err);
+    logger.error("Error resolving discrepancy:", err);
     res.status(500).json({ message: "Failed to resolve discrepancy" });
   }
 });
@@ -418,11 +419,6 @@ adminRouter.post("/generate-impact-report", queueMiddleware('heavy'), async (req
       // DEDUPLICATE the keyStories to remove repeated metrics
       const cleanStories = deduplicateMetrics(keyStories);
 
-      const openai = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      });
-
       // Extract aggregated totals from metrics
       const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
       const totalHours = metrics?.totalHours || 0;
@@ -460,17 +456,13 @@ ${skills ? `\nKey skills: ${skills}` : ""}
 
 Write a short, compelling story that highlights the organization's real impact. Be specific but concise. Focus on outcomes and people helped.`;
 
-        const shortCompletion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
+        const shortStory = await aiService.chat(
+          [
             { role: "system", content: shortSystemPrompt },
             { role: "user", content: shortUserPrompt },
           ],
-          temperature: 0.7,
-          max_tokens: 150,
-        });
-
-        const shortStory = shortCompletion.choices[0]?.message?.content;
+          { temperature: 0.7, maxTokens: 150 }
+        ) || null;
         if (!shortStory) {
           return res.status(500).json({ message: "Failed to generate story" });
         }
@@ -544,17 +536,13 @@ CRITICAL REMINDERS:
 - If you reference any metric, it must ONLY appear once in the entire report
 - For volunteer reports, celebrate personal contribution and growth`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
+      const reportContent = await aiService.chat(
+        [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.5,
-        max_tokens: 2500,
-      });
-
-      const reportContent = completion.choices[0]?.message?.content;
+        { temperature: 0.5, maxTokens: 2500 }
+      ) || null;
       if (!reportContent) {
         return res.status(500).json({ message: "Failed to generate report content" });
       }
@@ -565,14 +553,14 @@ CRITICAL REMINDERS:
         success: true,
       });
     } catch (openaiErr: any) {
-      console.error("OpenAI API Error:", openaiErr.message || openaiErr);
+      logger.error("OpenAI API Error:", openaiErr.message || openaiErr);
       return res.status(503).json({
         message: "OpenAI service unavailable. Check API key configuration.",
         error: openaiErr.message
       });
     }
   } catch (err) {
-    console.error("Error generating impact report:", err);
+    logger.error("Error generating impact report:", err);
     res.status(500).json({ message: "Failed to generate impact report" });
   }
 });
@@ -604,7 +592,7 @@ adminRouter.post("/email-digest/send", queueMiddleware('heavy'), async (req: Req
       });
     }
   } catch (err) {
-    console.error("Error sending email digest:", err);
+    logger.error("Error sending email digest:", err);
     res.status(500).json({ message: "Error sending email digest" });
   }
 });
@@ -632,7 +620,7 @@ adminRouter.post("/email-digest/send-all", queueMiddleware('heavy'), async (req:
       ...result
     });
   } catch (err) {
-    console.error("Error sending all digests:", err);
+    logger.error("Error sending all digests:", err);
     res.status(500).json({ message: "Error sending digests" });
   }
 });
@@ -667,7 +655,7 @@ adminRouter.post("/email-digest/organization/:organizationId", queueMiddleware('
       });
     }
   } catch (err) {
-    console.error("Error sending org digest:", err);
+    logger.error("Error sending org digest:", err);
     res.status(500).json({ message: "Error sending digest" });
   }
 });
@@ -697,7 +685,7 @@ adminRouter.patch("/email-digest/preferences/volunteer", async (req: Request, re
       success: true
     });
   } catch (err) {
-    console.error("Error toggling volunteer digest preference:", err);
+    logger.error("Error toggling volunteer digest preference:", err);
     res.status(500).json({ message: "Error updating digest preference" });
   }
 });
@@ -732,7 +720,7 @@ adminRouter.patch("/email-digest/preferences/organization", async (req: Request,
       success: true
     });
   } catch (err) {
-    console.error("Error toggling organization digest preference:", err);
+    logger.error("Error toggling organization digest preference:", err);
     res.status(500).json({ message: "Error updating digest preference" });
   }
 });
@@ -761,7 +749,7 @@ adminRouter.get("/organizations", async (req: Request, res: Response) => {
     const organizations = await storage.listOrganizations();
     res.json(organizations);
   } catch (err) {
-    console.error("Error fetching organizations for admin:", err);
+    logger.error("Error fetching organizations for admin:", err);
     res.status(500).json({ message: "Failed to fetch organizations" });
   }
 });
@@ -815,7 +803,7 @@ adminRouter.post("/organizations/:orgId/approval", async (req: Request, res: Res
       organization: updated,
     });
   } catch (err) {
-    console.error("Error updating organization approval:", err);
+    logger.error("Error updating organization approval:", err);
     res.status(500).json({ message: "Failed to update organization approval" });
   }
 });
@@ -973,7 +961,7 @@ adminRouter.get("/admin/diagnose-volunteer-employer", async (req: Request, res: 
       diagnostics
     });
   } catch (err) {
-    console.error("Error diagnosing volunteer-employer link:", err);
+    logger.error("Error diagnosing volunteer-employer link:", err);
     res.status(500).json({ message: "Failed to diagnose volunteer-employer link" });
   }
 });
@@ -1047,7 +1035,7 @@ adminRouter.post("/admin/link-volunteer-employer", async (req: Request, res: Res
       return res.status(400).json({ message: "Invalid method. Use 'profile' or 'link'" });
     }
   } catch (err) {
-    console.error("Error linking volunteer to employer:", err);
+    logger.error("Error linking volunteer to employer:", err);
     res.status(500).json({ message: "Failed to link volunteer to employer" });
   }
 });
@@ -1172,7 +1160,7 @@ adminRouter.post("/admin/backfill-employer-engagement", queueMiddleware('heavy')
       results
     });
   } catch (err) {
-    console.error("Error backfilling employer engagement:", err);
+    logger.error("Error backfilling employer engagement:", err);
     res.status(500).json({ message: "Failed to backfill employer engagement" });
   }
 });
@@ -1247,7 +1235,7 @@ adminRouter.post("/admin/create-ngo-account", async (req: Request, res: Response
         canManageProjects: true,
       });
     } catch (memberErr) {
-      console.error("Error creating org member (non-critical):", memberErr);
+      logger.error("Error creating org member (non-critical):", memberErr);
     }
 
     res.status(201).json({
@@ -1260,7 +1248,7 @@ adminRouter.post("/admin/create-ngo-account", async (req: Request, res: Response
         : "No password set. User will need to use password reset flow."
     });
   } catch (err) {
-    console.error("Error creating NGO account:", err);
+    logger.error("Error creating NGO account:", err);
     res.status(500).json({ message: "Failed to create NGO account" });
   }
 });
@@ -1329,7 +1317,7 @@ adminRouter.post("/admin/create-draft-project", async (req: Request, res: Respon
       }
     });
   } catch (err) {
-    console.error("Error creating draft project:", err);
+    logger.error("Error creating draft project:", err);
     res.status(500).json({ message: "Failed to create draft project" });
   }
 });
@@ -1611,7 +1599,7 @@ adminRouter.get("/pilot-dashboard", async (req: Request, res: Response) => {
       auditMetrics,
     });
   } catch (err) {
-    console.error("Error fetching pilot dashboard data:", err);
+    logger.error("Error fetching pilot dashboard data:", err);
     res.status(500).json({ message: "Failed to load dashboard data" });
   }
 });

@@ -26,14 +26,16 @@ import {
   RefreshCw,
   ChevronRight,
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { User as UserType, Notification } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import type { User as UserType } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
-import { getAuthHeaders } from "@/lib/queryClient";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useUserType } from "@/hooks/use-user-type";
+import { useNotifications, type Notification as AppNotification } from "@/hooks/use-notifications";
 
 // Desktop nav items — minimal chrome, tabs live on the dashboard
 const VOLUNTEER_NAV_ITEMS = [
@@ -99,76 +101,31 @@ export default function VolunteerNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { signOut } = useAuth();
-  const queryClient = useQueryClient();
-  const userId = localStorage.getItem("currentUserId");
+  const userIdStr = useCurrentUserId();
+  const userId = userIdStr ? parseInt(userIdStr) : null;
 
-  // Fetch current user
   const { data: currentUser } = useQuery<UserType>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : "/api/users/me";
-      const response = await fetch(url);
-      return response.ok ? response.json() : null;
-    },
+    queryKey: ["/api/users/me"],
     enabled: !!userId,
   });
 
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
-      return response.ok ? response.json() : [];
-    },
-    enabled: !!userId,
-    staleTime: 30000,
-    refetchInterval: 60000,
-  });
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAsReadPending,
+    clearAll,
+    clearAllPending,
+    deleteOne,
+    deleteOnePending,
+    deleteAll,
+    deleteAllPending,
+  } = useNotifications(userId);
 
-  // Mark notification as read
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Clear all (mark all read)
-  const clearAllMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Delete single notification
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Delete all notifications
-  const deleteAllMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
+  const markAsReadMutation = { mutate: markAsRead, isPending: markAsReadPending };
+  const clearAllMutation = { mutate: () => clearAll(), isPending: clearAllPending };
+  const deleteNotificationMutation = { mutate: deleteOne, isPending: deleteOnePending };
+  const deleteAllMutation = { mutate: () => deleteAll(), isPending: deleteAllPending };
 
   // Prevent body scroll when notifications panel is open
   useEffect(() => {
@@ -182,10 +139,10 @@ export default function VolunteerNav() {
     };
   }, [notificationsOpen]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+
 
   // Handle notification click — mark as read and close panel
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: AppNotification) => {
     if (!notification.read) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -207,7 +164,7 @@ export default function VolunteerNav() {
     (route) => location === route || location.startsWith(route + "/")
   );
 
-  const storedUserType = localStorage.getItem("userType");
+  const storedUserType = useUserType();
   const effectiveUserType = currentUser?.userType || storedUserType;
 
   if (effectiveUserType !== "volunteer" || isPwaRoute || isStandaloneRoute) {
@@ -487,7 +444,7 @@ export default function VolunteerNav() {
                   <p className="text-slate-400 text-xs mt-1">You'll see updates here when there's activity</p>
                 </div>
               ) : (
-                notifications.map((notification: Notification) => {
+                notifications.map((notification: AppNotification) => {
                   const { icon: NotifIcon, bg } = getNotificationIcon(notification.type);
                   const isUnread = !notification.read;
 

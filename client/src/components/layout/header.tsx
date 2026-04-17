@@ -41,11 +41,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useUserType } from "@/hooks/use-user-type";
 import Logo from "@/components/ui/logo";
-import { queryClient, getAuthHeaders } from "@/lib/queryClient";
+import { getAuthHeaders } from "@/lib/queryClient";
+import { useNotifications } from "@/hooks/use-notifications";
 import type { User as DBUser } from "@shared/schema";
 
 function getRelativeTime(date: Date): string {
@@ -99,6 +101,7 @@ export default function Header() {
   const [location, setLocation] = useLocation();
   const { toggleSidebar } = useSidebarContext();
   const userId = useCurrentUserId();
+  const storedUserType = useUserType();
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   // Fetch current user via the default authenticated query function
@@ -131,67 +134,25 @@ export default function Header() {
     enabled: !!currentUser?.id && currentUser?.userType === 'volunteer'
   });
 
-  // Fetch real notifications from API
-  const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
-    queryKey: ["/api/notifications", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: !!userId,
-    staleTime: 0, // Always fetch fresh data after invalidation
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchInterval: 60000, // Refetch every minute as backup
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-  });
+  const {
+    notifications,
+    unreadCount,
+    refetch: refetchNotifications,
+    markAsRead,
+    markAsReadPending,
+    clearAll,
+    clearAllPending,
+    deleteOne,
+    deleteOnePending,
+    deleteAll,
+    deleteAllPending,
+  } = useNotifications(typeof userId === 'string' ? parseInt(userId) : userId);
 
-  // Mark single notification as read
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Mark all notifications as read
-  const clearAllMutation = useMutation({
-    mutationFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const response = await fetch(`/api/notifications/clear-all?userId=${id}`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Delete single notification
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
-
-  // Delete all notifications
-  const deleteAllMutation = useMutation({
-    mutationFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const response = await fetch(`/api/notifications/delete-all?userId=${id}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    },
-  });
+  // Alias to preserve existing call sites below
+  const markAsReadMutation = { mutate: markAsRead, isPending: markAsReadPending };
+  const clearAllMutation = { mutate: clearAll, isPending: clearAllPending };
+  const deleteNotificationMutation = { mutate: deleteOne, isPending: deleteOnePending };
+  const deleteAllMutation = { mutate: deleteAll, isPending: deleteAllPending };
 
   // Hide header for organization users and PWA routes (which have their own headers)
   const isPwaRoute = location.endsWith('/pwa');
@@ -199,8 +160,6 @@ export default function Header() {
   if (currentUser?.userType === 'organization' || isPwaRoute) {
     return null;
   }
-
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
 
   const handleSignOut = async () => {
     try {
@@ -224,7 +183,7 @@ export default function Header() {
   const handleLogoClick = () => {
     if (user) {
       // Navigate to correct dashboard based on userType
-      const userType = localStorage.getItem('userType') || currentUser?.userType;
+      const userType = storedUserType || currentUser?.userType;
       if (userType === 'corporate-partner') {
         setLocation('/csr-dashboard');
       } else if (userType === 'organization') {

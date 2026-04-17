@@ -416,6 +416,30 @@ export function getVerifiedUserId(req: Request): number | null {
 }
 
 /**
+ * Require GDPR data-processing consent before accessing personal data routes.
+ * Must run after authMiddleware (requires req.user).
+ */
+export async function requireDataConsent(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({ error: "UNAUTHORIZED", message: "Authentication required." });
+    return;
+  }
+  const user = await storage.getUser(req.user.id);
+  if (!user?.dataConsent) {
+    res.status(403).json({
+      error: "CONSENT_REQUIRED",
+      message: "Data processing consent is required to access this resource.",
+    });
+    return;
+  }
+  next();
+}
+
+/**
  * Get user ID - only from verified sources (no legacy fallback)
  * @deprecated Use getVerifiedUserId instead
  */

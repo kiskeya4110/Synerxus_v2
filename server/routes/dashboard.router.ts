@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import {
@@ -216,7 +217,7 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
         totalAiuEarned = orgAiuSummary.totalAiu;
       }
     } catch (aiuError) {
-      console.error("Error calculating organization AIU:", aiuError);
+      logger.error("Error calculating organization AIU:", aiuError);
     }
 
     // Fallback: If no AIU from service, use hours-based calculation
@@ -554,10 +555,10 @@ dashboardRouter.get("/organization", authMiddleware, async (req: Request, res: R
 
     // Persist KPIs after dashboard computation (fire-and-forget)
     persistOrganizationKPIs(organizationId).catch(err =>
-      console.error("[KPI] Error persisting org KPIs after dashboard load:", err)
+      logger.error("[KPI] Error persisting org KPIs after dashboard load:", err)
     );
   } catch (err) {
-    console.error("Error fetching organization dashboard:", err);
+    logger.error("Error fetching organization dashboard:", err);
     res.status(500).json({ message: "Failed to fetch organization dashboard" });
   }
 });
@@ -599,7 +600,7 @@ dashboardRouter.get("/summary", authMiddleware, async (req: Request, res: Respon
       // Persist org KPIs after dashboard computation (fire-and-forget)
       const orgId = user.organizationId || userIdNum;
       persistOrganizationKPIs(orgId).catch(err =>
-        console.error("[KPI] Error persisting org KPIs after summary load:", err)
+        logger.error("[KPI] Error persisting org KPIs after summary load:", err)
       );
     } else if (user.userType === 'volunteer') {
       const dashboardData = await getDashboardDataForVolunteer(userIdNum);
@@ -623,13 +624,13 @@ dashboardRouter.get("/summary", authMiddleware, async (req: Request, res: Respon
 
       // Persist volunteer KPIs after dashboard computation (fire-and-forget)
       persistVolunteerKPIs(userIdNum).catch(err =>
-        console.error("[KPI] Error persisting volunteer KPIs after summary load:", err)
+        logger.error("[KPI] Error persisting volunteer KPIs after summary load:", err)
       );
     } else {
       return res.status(400).json({ message: "Invalid user type" });
     }
   } catch (err) {
-    console.error("Error fetching dashboard summary:", err);
+    logger.error("Error fetching dashboard summary:", err);
     res.status(500).json({ message: "Failed to fetch dashboard summary" });
   }
 });
@@ -657,7 +658,7 @@ dashboardRouter.get("/sdg-contributions", authMiddleware, async (req: Request, r
     const sdgData = await getSDGContributionsForOrganization(userIdNum);
     res.json(sdgData);
   } catch (err) {
-    console.error("Error fetching SDG contributions:", err);
+    logger.error("Error fetching SDG contributions:", err);
     res.status(500).json({ message: "Failed to fetch SDG contributions" });
   }
 });
@@ -684,7 +685,7 @@ dashboardRouter.get("/dashboard/kpis/:entityType/:entityId", async (req: Request
 
     res.json(snapshot);
   } catch (err) {
-    console.error("Error fetching KPI snapshot:", err);
+    logger.error("Error fetching KPI snapshot:", err);
     res.status(500).json({ message: "Failed to fetch KPI snapshot" });
   }
 });
@@ -733,7 +734,7 @@ dashboardRouter.get("/organization/kpi-status", authMiddleware, async (req: Requ
       lastSync: kpiSnapshot?.computedAt || null,
     });
   } catch (err) {
-    console.error("Error fetching KPI status:", err);
+    logger.error("Error fetching KPI status:", err);
     res.status(500).json({ message: "Failed to fetch KPI status" });
   }
 });
@@ -794,7 +795,7 @@ dashboardRouter.post("/organization/sync-kpis", authMiddleware, async (req: Requ
       snapshot: kpiSnapshot,
     });
   } catch (err) {
-    console.error("Error syncing KPIs:", err);
+    logger.error("Error syncing KPIs:", err);
     res.status(500).json({ message: "Failed to sync KPIs" });
   }
 });
@@ -1031,7 +1032,7 @@ dashboardRouter.get("/organization/report", authMiddleware, async (req: Request,
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("Error generating organization report:", err);
+    logger.error("Error generating organization report:", err);
     res.status(500).json({ message: "Failed to generate report" });
   }
 });

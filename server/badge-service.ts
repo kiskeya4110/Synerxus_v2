@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { storage } from "./storage";
 import type { Badge, UserBadge, InsertBadge } from "@shared/schema";
 import { notifyBadgeEarned } from "./notification-service";
@@ -279,18 +280,18 @@ export async function checkAndAwardBadges(userId: number): Promise<Badge[]> {
           progressPercentage: 100,
         });
         newlyAwardedBadges.push(badge);
-        console.log(`[Badge] Awarded "${badge.name}" to user ${userId}`);
+        logger.info(`[Badge] Awarded "${badge.name}" to user ${userId}`);
 
         // Send notification to user about earned badge
         notifyBadgeEarned(userId, badge.id, badge.name, badge.icon, badge.tier).catch(err => {
-          console.error(`[Badge] Failed to send notification for badge ${badge.id}:`, err);
+          logger.error(`[Badge] Failed to send notification for badge ${badge.id}:`, err);
         });
       } catch (error: any) {
         // Handle unique constraint violation (badge already exists)
         if (error.code === '23505') {
-          console.log(`[Badge] User ${userId} already has badge "${badge.name}"`);
+          logger.info(`[Badge] User ${userId} already has badge "${badge.name}"`);
         } else {
-          console.error(`[Badge] Error awarding badge: ${error.message}`);
+          logger.error(`[Badge] Error awarding badge: ${error.message}`);
         }
       }
     }
@@ -299,7 +300,7 @@ export async function checkAndAwardBadges(userId: number): Promise<Badge[]> {
   // Update badge count in leaderboard stats if badges were awarded
   if (newlyAwardedBadges.length > 0) {
     const badgeCount = await storage.countUserBadges(userId);
-    console.log(`[Badge] User ${userId} now has ${badgeCount} badges`);
+    logger.info(`[Badge] User ${userId} now has ${badgeCount} badges`);
   }
 
   return newlyAwardedBadges;
@@ -359,11 +360,11 @@ export async function awardBadgeManually(
     progressPercentage: 100,
   });
 
-  console.log(`[Badge] Manually awarded "${badge.name}" to user ${userId}`);
+  logger.info(`[Badge] Manually awarded "${badge.name}" to user ${userId}`);
 
   // Send notification to user about earned badge
   notifyBadgeEarned(userId, badge.id, badge.name, badge.icon, badge.tier).catch(err => {
-    console.error(`[Badge] Failed to send notification for manual award:`, err);
+    logger.error(`[Badge] Failed to send notification for manual award:`, err);
   });
 
   return userBadge;
@@ -443,20 +444,20 @@ export async function seedDefaultBadges(): Promise<void> {
   const existingBadges = await storage.listBadges();
 
   if (existingBadges.length > 0) {
-    console.log(`[Badge] ${existingBadges.length} badges already exist, skipping seed`);
+    logger.info(`[Badge] ${existingBadges.length} badges already exist, skipping seed`);
     return;
   }
 
-  console.log(`[Badge] Seeding ${DEFAULT_BADGES.length} default badges...`);
+  logger.info(`[Badge] Seeding ${DEFAULT_BADGES.length} default badges...`);
 
   for (const badge of DEFAULT_BADGES) {
     try {
       await storage.createBadge(badge);
-      console.log(`[Badge] Created badge: ${badge.name}`);
+      logger.info(`[Badge] Created badge: ${badge.name}`);
     } catch (error: any) {
-      console.error(`[Badge] Error creating badge ${badge.name}: ${error.message}`);
+      logger.error(`[Badge] Error creating badge ${badge.name}: ${error.message}`);
     }
   }
 
-  console.log(`[Badge] Badge seeding complete`);
+  logger.info(`[Badge] Badge seeding complete`);
 }

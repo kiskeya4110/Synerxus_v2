@@ -46,7 +46,7 @@ import { updateVolunteerProfileWithUser } from "./profile-service";
 import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange, setNotificationBroadcast } from "./notification-service";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest, sendInvitationEmail } from "./email-digest-service";
 import { registerChatRoutes } from "./replit_integrations/chat";
-import OpenAI from "openai";
+import { aiService } from "./services/ai-service";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { getPaginationParams, paginateArray } from "./pagination";
 import { verifyToken } from "./middleware/auth";
@@ -119,7 +119,7 @@ async function detectDuplicateImpact(
     
     return { isDuplicate: false };
   } catch (err) {
-    console.error("Error detecting duplicate impacts:", err);
+    logger.error("Error detecting duplicate impacts:", err);
     return { isDuplicate: false };
   }
 }
@@ -196,7 +196,7 @@ function extractUserId(req: Request): number | null {
   if (!userIdStr) return null;
   const userId = parseInt(userIdStr);
   if (!isNaN(userId)) {
-    console.warn(`[Security] DEPRECATED: Legacy userId extraction for ${userId} in routes.ts. Migrate to JWT auth.`);
+    logger.warn(`[Security] DEPRECATED: Legacy userId extraction for ${userId} in routes.ts. Migrate to JWT auth.`);
   }
   return isNaN(userId) ? null : userId;
 }
@@ -285,7 +285,7 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
 
     return Math.round(Math.min(combinedProgress, 100));
   } catch (err) {
-    console.error("Error calculating project progress:", err);
+    logger.error("Error calculating project progress:", err);
     return 0;
   }
 }
@@ -529,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(users);
     } catch (err) {
-      console.error("Error fetching users:", err);
+      logger.error("Error fetching users:", err);
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
@@ -549,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(user);
     } catch (err) {
-      console.error("Error fetching user:", err);
+      logger.error("Error fetching user:", err);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
@@ -607,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataConsentDate: dataConsent === true ? new Date() : null,
       } as any);
 
-      console.log(`[Consent] User ${userId} consent recorded: ${dataConsent} at ${new Date().toISOString()}`);
+      logger.info(`[Consent] User ${userId} consent recorded: ${dataConsent} at ${new Date().toISOString()}`);
 
       res.json({
         success: true,
@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataConsentDate: updatedUser?.dataConsentDate,
       });
     } catch (err) {
-      console.error("Error recording consent:", err);
+      logger.error("Error recording consent:", err);
       res.status(500).json({ message: "Failed to record consent" });
     }
   });
@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(organizations);
     } catch (err) {
-      console.error("Error fetching organizations:", err);
+      logger.error("Error fetching organizations:", err);
       res.status(500).json({ message: "Failed to fetch organizations" });
     }
   });
@@ -749,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(orgStats);
     } catch (err) {
-      console.error("Error fetching organization public stats:", err);
+      logger.error("Error fetching organization public stats:", err);
       res.status(500).json({ message: "Failed to fetch organization stats" });
     }
   });
@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(organization);
     } catch (err) {
-      console.error("Error fetching organization:", err);
+      logger.error("Error fetching organization:", err);
       res.status(500).json({ message: "Failed to fetch organization" });
     }
   });
@@ -866,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(enrichedProjects);
     } catch (err) {
-      console.error("Error fetching projects:", err);
+      logger.error("Error fetching projects:", err);
       res.status(500).json({ message: "Failed to fetch projects" });
     }
   });
@@ -906,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(project);
     } catch (err) {
-      console.error("Error fetching project:", err);
+      logger.error("Error fetching project:", err);
       res.status(500).json({ message: "Failed to fetch project" });
     }
   });
@@ -1092,7 +1092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (err) {
-      console.error("Error getting project match analysis:", err);
+      logger.error("Error getting project match analysis:", err);
       res.status(500).json({ message: "Failed to get match analysis" });
     }
   });
@@ -1203,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projects: results
       });
     } catch (err) {
-      console.error("Error recalculating project completion:", err);
+      logger.error("Error recalculating project completion:", err);
       res.status(500).json({ message: "Failed to recalculate project completion" });
     }
   });
@@ -1279,7 +1279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err.message === "Invalid user type") {
         return res.status(400).json({ message: "Invalid user type" });
       }
-      console.error("Error fetching tasks:", err);
+      logger.error("Error fetching tasks:", err);
       res.status(500).json({ message: "Failed to fetch tasks" });
     }
   });
@@ -1323,7 +1323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(task);
     } catch (err) {
-      console.error("Error fetching task:", err);
+      logger.error("Error fetching task:", err);
       res.status(500).json({ message: "Failed to fetch task" });
     }
   });
@@ -1379,7 +1379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completionPercentage,
           ...(newStatus !== project?.status && { status: newStatus })
         });
-        console.log(`[Task Create] Updated project ${task.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
+        logger.info(`[Task Create] Updated project ${task.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
         
         // Broadcast project update
         const updatedProject = await storage.getProject(task.projectId);
@@ -1495,7 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completionPercentage,
           ...(newStatus !== project?.status && { status: newStatus })
         });
-        console.log(`[Task Update] Updated project ${updatedTask.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
+        logger.info(`[Task Update] Updated project ${updatedTask.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
         
         // Broadcast project update as well
         const updatedProject = await storage.getProject(updatedTask.projectId);
@@ -1608,7 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(recommendedVolunteers);
     } catch (err) {
-      console.error("Error getting recommended volunteers for task:", err);
+      logger.error("Error getting recommended volunteers for task:", err);
       res.status(500).json({ message: "Failed to get recommended volunteers" });
     }
   });
@@ -1688,7 +1688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(recommendedVolunteers);
     } catch (err) {
-      console.error("Error getting recommended volunteers for project:", err);
+      logger.error("Error getting recommended volunteers for project:", err);
       res.status(500).json({ message: "Failed to get recommended volunteers" });
     }
   });
@@ -1709,7 +1709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(activities);
     } catch (err) {
-      console.error("Error fetching volunteer activities:", err);
+      logger.error("Error fetching volunteer activities:", err);
       res.status(500).json({ message: "Failed to fetch volunteer activities" });
     }
   });
@@ -1725,7 +1725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(activity);
     } catch (err) {
-      console.error("Error fetching volunteer activity:", err);
+      logger.error("Error fetching volunteer activity:", err);
       res.status(500).json({ message: "Failed to fetch volunteer activity" });
     }
   });
@@ -1766,7 +1766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalHoursLogged: totalHoursLogged
           });
         } catch (updateErr) {
-          console.error("Error updating assignment or project progress:", updateErr);
+          logger.error("Error updating assignment or project progress:", updateErr);
           // Don't fail the activity creation if update fails
         }
       }
@@ -1829,14 +1829,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     }
                   }
                 } catch (sdgErr) {
-                  console.error("Error updating SDG-specific hours for challenge:", sdgErr);
+                  logger.error("Error updating SDG-specific hours for challenge:", sdgErr);
                   // Non-critical
                 }
               }
             }
           }
         } catch (crsErr) {
-          console.error("Error updating employee engagement hours:", crsErr);
+          logger.error("Error updating employee engagement hours:", crsErr);
           // Non-critical, don't fail the activity creation
         }
       }
@@ -1886,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } catch (updateErr) {
-          console.error("Error updating assignment hoursCompleted:", updateErr);
+          logger.error("Error updating assignment hoursCompleted:", updateErr);
           // Don't fail the activity update if assignment update fails
         }
       }
@@ -1918,7 +1918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (csrErr) {
-          console.error("Error updating employee engagement hours on activity update:", csrErr);
+          logger.error("Error updating employee engagement hours on activity update:", csrErr);
           // Non-critical, don't fail the activity update
         }
       }
@@ -1964,7 +1964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(metrics);
     } catch (err) {
-      console.error("Error fetching impact metrics:", err);
+      logger.error("Error fetching impact metrics:", err);
       res.status(500).json({ message: "Failed to fetch impact metrics" });
     }
   });
@@ -1980,7 +1980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(metric);
     } catch (err) {
-      console.error("Error fetching impact metric:", err);
+      logger.error("Error fetching impact metric:", err);
       res.status(500).json({ message: "Failed to fetch impact metric" });
     }
   });
@@ -2032,7 +2032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(impacts);
     } catch (err) {
-      console.error("Error fetching project impacts:", err);
+      logger.error("Error fetching project impacts:", err);
       res.status(500).json({ message: "Failed to fetch project impacts" });
     }
   });
@@ -2048,7 +2048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(impact);
     } catch (err) {
-      console.error("Error fetching project impact:", err);
+      logger.error("Error fetching project impact:", err);
       res.status(500).json({ message: "Failed to fetch project impact" });
     }
   });
@@ -2090,7 +2090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             completionPercentage: progressPercentage
           });
         } catch (updateErr) {
-          console.error("Error updating project progress:", updateErr);
+          logger.error("Error updating project progress:", updateErr);
           // Don't fail impact creation if progress update fails
         }
       }
@@ -2133,7 +2133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const events = await storage.listCalendarEvents();
       res.json(events);
     } catch (err) {
-      console.error("Error fetching calendar events:", err);
+      logger.error("Error fetching calendar events:", err);
       res.status(500).json({ message: "Failed to fetch calendar events" });
     }
   });
@@ -2149,7 +2149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(event);
     } catch (err) {
-      console.error("Error fetching calendar event:", err);
+      logger.error("Error fetching calendar event:", err);
       res.status(500).json({ message: "Failed to fetch calendar event" });
     }
   });
@@ -2197,7 +2197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("calendar_event_deleted", { id: eventId });
       res.status(204).send();
     } catch (err) {
-      console.error("Error deleting calendar event:", err);
+      logger.error("Error deleting calendar event:", err);
       res.status(500).json({ message: "Failed to delete calendar event" });
     }
   });
@@ -2225,7 +2225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(allMessages);
     } catch (err) {
-      console.error("Error fetching messages:", err);
+      logger.error("Error fetching messages:", err);
       res.status(500).json({ message: "Failed to fetch messages" });
     }
   });
@@ -2247,7 +2247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const conversation = await storage.listConversation(currentUserId, otherUserId);
       res.json(conversation);
     } catch (err) {
-      console.error("Error fetching conversation:", err);
+      logger.error("Error fetching conversation:", err);
       res.status(500).json({ message: "Failed to fetch conversation" });
     }
   });
@@ -2266,7 +2266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message.subject || undefined
         );
       } catch (notifyErr) {
-        console.error("Failed to create message notification:", notifyErr);
+        logger.error("Failed to create message notification:", notifyErr);
       }
 
       broadcastUpdate("message_created", message);
@@ -2289,7 +2289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("message_read", updatedMessage);
       res.json(updatedMessage);
     } catch (err) {
-      console.error("Error marking message as read:", err);
+      logger.error("Error marking message as read:", err);
       res.status(500).json({ message: "Failed to mark message as read" });
     }
   });
@@ -2327,7 +2327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(formattedMatches);
     } catch (err) {
-      console.error("Error fetching matched opportunities:", err);
+      logger.error("Error fetching matched opportunities:", err);
       res.status(500).json({ message: "Failed to fetch matched opportunities", error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -2369,7 +2369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(enrichedOpportunities);
     } catch (err) {
-      console.error("Error fetching opportunities with match scores:", err);
+      logger.error("Error fetching opportunities with match scores:", err);
       res.status(500).json({ message: "Failed to fetch opportunities" });
     }
   });
@@ -2414,7 +2414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(opportunities);
     } catch (err) {
-      console.error("Error fetching opportunities:", err);
+      logger.error("Error fetching opportunities:", err);
       res.status(500).json({ message: "Failed to fetch opportunities" });
     }
   });
@@ -2474,7 +2474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(enrichedOpportunity);
     } catch (err) {
-      console.error("Error fetching opportunity:", err);
+      logger.error("Error fetching opportunity:", err);
       res.status(500).json({ message: "Failed to fetch opportunity" });
     }
   });
@@ -2637,7 +2637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (err) {
-      console.error("Error getting opportunity match analysis:", err);
+      logger.error("Error getting opportunity match analysis:", err);
       res.status(500).json({ message: "Failed to get match analysis" });
     }
   });
@@ -2830,7 +2830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const matchScore = await storage.getMatchScore(opportunityId, parseInt(volunteerId as string));
       res.json(matchScore);
     } catch (err) {
-      console.error("Error calculating match score:", err);
+      logger.error("Error calculating match score:", err);
       res.status(500).json({ message: "Failed to calculate match score" });
     }
   });
@@ -2907,7 +2907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(enrichedAssignments);
     } catch (err) {
-      console.error("Error fetching project assignments:", err);
+      logger.error("Error fetching project assignments:", err);
       res.status(500).json({ message: "Failed to fetch project assignments" });
     }
   });
@@ -2934,7 +2934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(assignment);
     } catch (err) {
-      console.error("Error fetching project assignment:", err);
+      logger.error("Error fetching project assignment:", err);
       res.status(500).json({ message: "Failed to fetch project assignment" });
     }
   });
@@ -3115,7 +3115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               activities
             };
           } catch (error) {
-            console.error(`Error enriching assignment ${assignment.id}:`, error);
+            logger.error(`Error enriching assignment ${assignment.id}:`, error);
             return {
               ...assignment,
               hoursCommitted: assignment.hoursCommitted || 0,
@@ -3128,7 +3128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(enrichedAssignments);
     } catch (err) {
-      console.error("Error fetching enriched assignments:", err);
+      logger.error("Error fetching enriched assignments:", err);
       res.status(500).json({ message: "Failed to fetch enriched assignments" });
     }
   });
@@ -3145,7 +3145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("project_assignment_deleted", { id: assignmentId });
       res.status(204).send();
     } catch (err) {
-      console.error("Error deleting project assignment:", err);
+      logger.error("Error deleting project assignment:", err);
       res.status(500).json({ message: "Failed to delete project assignment" });
     }
   });
@@ -3186,7 +3186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(volunteer);
     } catch (err) {
-      console.error("Error fetching current user's volunteer profile:", err);
+      logger.error("Error fetching current user's volunteer profile:", err);
       res.status(500).json({ message: "Failed to fetch volunteer profile" });
     }
   });
@@ -3299,11 +3299,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Validate all volunteers have IDs before sending response
-      console.log(`[Organization Volunteers API] Processing ${volunteersWithStats.length} volunteers for organization ${organizationId} (${volunteerIdsFromAssignments.size} from assignments, ${volunteerIdsFromRelationships.size} from relationships)`);
+      logger.info(`[Organization Volunteers API] Processing ${volunteersWithStats.length} volunteers for organization ${organizationId} (${volunteerIdsFromAssignments.size} from assignments, ${volunteerIdsFromRelationships.size} from relationships)`);
 
       const validVolunteers = volunteersWithStats.filter((v, index) => {
         if (!v.id) {
-          console.error(`[Organization Volunteers API] ❌ CRITICAL: Volunteer at index ${index} has no ID! Filtering out.`, {
+          logger.error(`[Organization Volunteers API] ❌ CRITICAL: Volunteer at index ${index} has no ID! Filtering out.`, {
             displayName: v.displayName,
             email: v.email,
             hours: v.hours,
@@ -3312,18 +3312,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           return false; // Filter out volunteers without IDs
         }
-        console.log(`[Organization Volunteers API] ✓ Volunteer ${index + 1}: ID=${v.id}, Name="${v.displayName}", Email="${v.email}"`);
+        logger.info(`[Organization Volunteers API] ✓ Volunteer ${index + 1}: ID=${v.id}, Name="${v.displayName}", Email="${v.email}"`);
         return true;
       });
 
       if (validVolunteers.length !== volunteersWithStats.length) {
-        console.error(`[Organization Volunteers API] ⚠️ Filtered out ${volunteersWithStats.length - validVolunteers.length} volunteers with missing IDs`);
+        logger.error(`[Organization Volunteers API] ⚠️ Filtered out ${volunteersWithStats.length - validVolunteers.length} volunteers with missing IDs`);
       }
 
-      console.log(`[Organization Volunteers API] Returning ${validVolunteers.length} valid volunteers`);
+      logger.info(`[Organization Volunteers API] Returning ${validVolunteers.length} valid volunteers`);
       res.json(validVolunteers);
     } catch (err) {
-      console.error("Error fetching organization volunteers:", err);
+      logger.error("Error fetching organization volunteers:", err);
       res.status(500).json({ message: "Failed to fetch organization volunteers", error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -3352,7 +3352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(volunteers);
     } catch (err) {
-      console.error("Error fetching volunteers:", err);
+      logger.error("Error fetching volunteers:", err);
       res.status(500).json({ message: "Failed to fetch volunteers" });
     }
   });
@@ -3361,10 +3361,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/volunteers/:id/performance", async (req, res) => {
     try {
       const volunteerId = parseInt(req.params.id);
-      console.log(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
+      logger.info(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
 
       if (!volunteerId || isNaN(volunteerId)) {
-        console.error(`[Performance API] Invalid volunteer ID: ${req.params.id}`);
+        logger.error(`[Performance API] Invalid volunteer ID: ${req.params.id}`);
         return res.status(400).json({ error: "Invalid volunteer ID" });
       }
 
@@ -3374,18 +3374,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Safely fetch volunteer activities
       try {
         activities = await storage.listVolunteerActivitiesByUser(volunteerId);
-        console.log(`[Performance API] Found ${activities.length} activities for volunteer ${volunteerId}`);
+        logger.info(`[Performance API] Found ${activities.length} activities for volunteer ${volunteerId}`);
       } catch (error) {
-        console.error(`[Performance API] Error fetching activities:`, error);
+        logger.error(`[Performance API] Error fetching activities:`, error);
         activities = [];
       }
 
       // Safely fetch volunteer projects
       try {
         projectAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
-        console.log(`[Performance API] Found ${projectAssignments.length} project assignments for volunteer ${volunteerId}`);
+        logger.info(`[Performance API] Found ${projectAssignments.length} project assignments for volunteer ${volunteerId}`);
       } catch (error) {
-        console.error(`[Performance API] Error fetching project assignments:`, error);
+        logger.error(`[Performance API] Error fetching project assignments:`, error);
         projectAssignments = [];
       }
 
@@ -3439,7 +3439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If no data exists, generate demo data for better UX
       let finalData;
       if (activities.length === 0 && projectAssignments.length === 0) {
-        console.log(`[Performance API] No real data found. Generating demo data for volunteer ${volunteerId}`);
+        logger.info(`[Performance API] No real data found. Generating demo data for volunteer ${volunteerId}`);
 
         // Generate realistic demo data
         const demoTotalHours = Math.floor(Math.random() * 100) + 50; // 50-150 hours
@@ -3538,10 +3538,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
 
-      console.log(`[Performance API] Returning data:`, JSON.stringify(finalData, null, 2));
+      logger.info(`[Performance API] Returning data:`, JSON.stringify(finalData, null, 2));
       res.json(finalData);
     } catch (error) {
-      console.error("[Performance API] Critical error, returning demo data:", error);
+      logger.error("[Performance API] Critical error, returning demo data:", error);
 
       // Return demo data even on error to ensure UI always works
       const errorDemoData = {
@@ -3594,7 +3594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(volunteer);
     } catch (err) {
-      console.error("Error fetching volunteer:", err);
+      logger.error("Error fetching volunteer:", err);
       res.status(500).json({ message: "Failed to fetch volunteer" });
     }
   });
@@ -3642,7 +3642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("volunteer_deleted", { id: volunteerId });
       res.status(204).send();
     } catch (err) {
-      console.error("Error deleting volunteer:", err);
+      logger.error("Error deleting volunteer:", err);
       res.status(500).json({ message: "Failed to delete volunteer" });
     }
   });
@@ -3650,12 +3650,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Matchable Organization Routes ===
   app.get("/api/matchable-organizations", async (req, res) => {
     try {
-      console.log("[MatchableOrg] Fetching matchable organizations...");
+      logger.info("[MatchableOrg] Fetching matchable organizations...");
       const organizations = await storage.listMatchableOrganizations();
-      console.log("[MatchableOrg] Found", organizations.length, "organizations");
+      logger.info("[MatchableOrg] Found", organizations.length, "organizations");
       res.json(organizations);
     } catch (err: any) {
-      console.error("[MatchableOrg] Error fetching matchable organizations:", err.message, err.stack);
+      logger.error("[MatchableOrg] Error fetching matchable organizations:", err.message, err.stack);
       res.status(500).json({ message: "Failed to fetch matchable organizations", error: err.message });
     }
   });
@@ -3671,7 +3671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(organization);
     } catch (err) {
-      console.error("Error fetching matchable organization:", err);
+      logger.error("Error fetching matchable organization:", err);
       res.status(500).json({ message: "Failed to fetch matchable organization" });
     }
   });
@@ -3719,7 +3719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("matchable_organization_deleted", { id: organizationId });
       res.status(204).send();
     } catch (err) {
-      console.error("Error deleting matchable organization:", err);
+      logger.error("Error deleting matchable organization:", err);
       res.status(500).json({ message: "Failed to delete matchable organization" });
     }
   });
@@ -3740,7 +3740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(matches);
     } catch (err) {
-      console.error("Error fetching matches:", err);
+      logger.error("Error fetching matches:", err);
       res.status(500).json({ message: "Failed to fetch matches" });
     }
   });
@@ -3756,7 +3756,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(match);
     } catch (err) {
-      console.error("Error fetching match:", err);
+      logger.error("Error fetching match:", err);
       res.status(500).json({ message: "Failed to fetch match" });
     }
   });
@@ -3813,7 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("match_deleted", { id: matchId });
       res.status(204).send();
     } catch (err) {
-      console.error("Error deleting match:", err);
+      logger.error("Error deleting match:", err);
       res.status(500).json({ message: "Failed to delete match" });
     }
   });
@@ -3853,7 +3853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result);
     } catch (err) {
-      console.error("Error running matchmaker:", err);
+      logger.error("Error running matchmaker:", err);
       res.status(500).json({ 
         message: "Failed to run matchmaker", 
         error: err instanceof Error ? err.message : String(err)
@@ -3907,7 +3907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total_matches: matches.length
       });
     } catch (err) {
-      console.error("Error getting volunteer matches:", err);
+      logger.error("Error getting volunteer matches:", err);
       // Return empty matches on error instead of 500 to prevent client-side errors
       res.json({
         volunteer_id: req.params.id,
@@ -3964,7 +3964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total_matches: matches.length
       });
     } catch (err) {
-      console.error("Error getting organization matches:", err);
+      logger.error("Error getting organization matches:", err);
       res.status(500).json({
         message: "Failed to get organization matches",
         error: err instanceof Error ? err.message : String(err)
@@ -4117,7 +4117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           aiuEarned = orgAiuSummary.totalAiu;
         }
       } catch (err) {
-        console.error('Failed to calculate organization AIU:', err);
+        logger.error('Failed to calculate organization AIU:', err);
       }
 
       // Fallback if aiu-service returns 0 or fails
@@ -4425,7 +4425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (err) {
-      console.error("Error fetching organization dashboard:", err);
+      logger.error("Error fetching organization dashboard:", err);
       res.status(500).json({ message: "Failed to fetch organization dashboard" });
     }
   });
@@ -4491,7 +4491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid user type" });
       }
     } catch (err) {
-      console.error("Error fetching dashboard summary:", err);
+      logger.error("Error fetching dashboard summary:", err);
       res.status(500).json({ message: "Failed to fetch dashboard summary" });
     }
   });
@@ -4524,7 +4524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sdgData = await getSDGContributionsForOrganization(userIdNum);
       res.json(sdgData);
     } catch (err) {
-      console.error("Error fetching SDG contributions:", err);
+      logger.error("Error fetching SDG contributions:", err);
       res.status(500).json({ message: "Failed to fetch SDG contributions" });
     }
   });
@@ -4557,14 +4557,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If no keyword matches or only one match, use AI for better suggestions
       if (keywordSuggestions.length < 2) {
         try {
-          const openai = new OpenAI({
-            apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-            baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-          });
-
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
+          const aiResponse = (await aiService.chat(
+            [
               {
                 role: "system",
                 content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
@@ -4576,11 +4570,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                 content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
               }
             ],
-            temperature: 0.3,
-            max_tokens: 50,
-          });
-
-          const aiResponse = completion.choices[0]?.message?.content?.trim();
+            { temperature: 0.3, maxTokens: 50 }
+          )).trim();
           if (aiResponse) {
             try {
               const aiSDGs = JSON.parse(aiResponse);
@@ -4588,11 +4579,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                 suggestedSDGs = aiSDGs.slice(0, 3);
               }
             } catch (parseErr) {
-              console.error("Failed to parse AI response:", parseErr);
+              logger.error("Failed to parse AI response:", parseErr);
             }
           }
         } catch (aiErr) {
-          console.error("AI SDG suggestion failed, using keyword-based:", aiErr);
+          logger.error("AI SDG suggestion failed, using keyword-based:", aiErr);
         }
       }
 
@@ -4612,7 +4603,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         project: updatedProject
       });
     } catch (err) {
-      console.error("Error auto-linking SDGs:", err);
+      logger.error("Error auto-linking SDGs:", err);
       res.status(500).json({ 
         message: "Failed to auto-link SDGs",
         error: err instanceof Error ? err.message : String(err)
@@ -4657,14 +4648,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           // If no keyword matches or only one match, use AI
           if (keywordSuggestions.length < 2) {
             try {
-              const openai = new OpenAI({
-                apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-                baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-              });
-
-              const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [
+              const aiResponse = (await aiService.chat(
+                [
                   {
                     role: "system",
                     content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
@@ -4676,11 +4661,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                     content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
                   }
                 ],
-                temperature: 0.3,
-                max_tokens: 50,
-              });
-
-              const aiResponse = completion.choices[0]?.message?.content?.trim();
+                { temperature: 0.3, maxTokens: 50 }
+              )).trim();
               if (aiResponse) {
                 try {
                   const aiSDGs = JSON.parse(aiResponse);
@@ -4688,11 +4670,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                     suggestedSDGs = aiSDGs.slice(0, 3);
                   }
                 } catch (parseErr) {
-                  console.error("Failed to parse AI response:", parseErr);
+                  logger.error("Failed to parse AI response:", parseErr);
                 }
               }
             } catch (aiErr) {
-              console.error("AI SDG suggestion failed for project", project.id, aiErr);
+              logger.error("AI SDG suggestion failed for project", project.id, aiErr);
             }
           }
 
@@ -4730,7 +4712,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         results
       });
     } catch (err) {
-      console.error("Error in batch auto-link:", err);
+      logger.error("Error in batch auto-link:", err);
       res.status(500).json({ 
         message: "Failed to batch auto-link SDGs",
         error: err instanceof Error ? err.message : String(err)
@@ -4826,7 +4808,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
             }
           }
         } catch (err) {
-          console.error("Error updating legacy volunteer table (non-critical):", err);
+          logger.error("Error updating legacy volunteer table (non-critical):", err);
           // This is legacy data, don't fail the request if it errors
         }
       }
@@ -4840,7 +4822,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         volunteerProfile
       });
     } catch (err) {
-      console.error("Error updating volunteer profile:", err);
+      logger.error("Error updating volunteer profile:", err);
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }
@@ -4871,7 +4853,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       
       const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail, city, country } = req.body;
-      console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country });
+      logger.info('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name, city, country });
       
       // Create organization if it doesn't exist
       if (!user.organizationId && name) {
@@ -4911,7 +4893,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         if (city !== undefined) orgUpdates.city = city;
         if (country !== undefined) orgUpdates.country = country;
 
-        console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
+        logger.info('[OrganizationProfile] Updating organization with:', orgUpdates);
         
         if (Object.keys(orgUpdates).length > 0) {
           await storage.updateOrganization(user.organizationId, orgUpdates);
@@ -4952,7 +4934,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
             }
           }
         } catch (err) {
-          console.error("Error updating matchable organization profile:", err);
+          logger.error("Error updating matchable organization profile:", err);
           // Continue even if matching profile update fails
         }
       }
@@ -4960,7 +4942,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
     } catch (err) {
-      console.error("Error updating organization profile:", err);
+      logger.error("Error updating organization profile:", err);
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }
@@ -4995,10 +4977,10 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       try {
         volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
         if (volunteerProfile) {
-          console.log(`[Profile GET] Retrieved profile for user ${userId}, skillRatings:`, JSON.stringify(volunteerProfile.skillRatings));
+          logger.info(`[Profile GET] Retrieved profile for user ${userId}, skillRatings:`, JSON.stringify(volunteerProfile.skillRatings));
         }
       } catch (err) {
-        console.error("Error fetching volunteer profile:", err);
+        logger.error("Error fetching volunteer profile:", err);
       }
       
       // Calculate profile completion based on filled fields
@@ -5014,7 +4996,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         volunteerProfile
       });
     } catch (err) {
-      console.error("Error fetching volunteer profile:", err);
+      logger.error("Error fetching volunteer profile:", err);
       res.status(500).json({ message: "Failed to fetch volunteer profile" });
     }
   });
@@ -5053,7 +5035,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         try {
           matchableOrganization = await storage.getMatchableOrganizationByEmail(user.email);
         } catch (err) {
-          console.error("Error fetching matchable organization:", err);
+          logger.error("Error fetching matchable organization:", err);
         }
       }
       
@@ -5063,7 +5045,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         try {
           organizationProfile = await storage.getOrganizationProfileByOrgId(user.organizationId);
         } catch (err) {
-          console.error("Error fetching organization profile:", err);
+          logger.error("Error fetching organization profile:", err);
         }
       }
       
@@ -5080,7 +5062,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         matchableOrganization
       });
     } catch (err) {
-      console.error("Error fetching organization profile:", err);
+      logger.error("Error fetching organization profile:", err);
       res.status(500).json({ message: "Failed to fetch organization profile" });
     }
   });
@@ -5114,7 +5096,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         volunteerProfile
       });
     } catch (err) {
-      console.error("Error fetching volunteer profile:", err);
+      logger.error("Error fetching volunteer profile:", err);
       res.status(500).json({ message: "Failed to fetch volunteer profile" });
     }
   });
@@ -5133,14 +5115,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(400).json({ message: "userId must be a valid number" });
       }
       
-      console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
+      logger.info(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
       
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      console.log(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
+      logger.info(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
       
       // Always calculate total hours from availability slots
       if (req.body.availability && Array.isArray(req.body.availability) && req.body.availability.length > 0) {
@@ -5154,10 +5136,10 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         // If not provided, use the calculated hours from slots
         if (req.body.weeklyAvailability) {
           const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
-          console.log(`[Intake POST CRITICAL] User ${userId} - Setting weeklyAvailability to min(${req.body.weeklyAvailability}, ${totalAvailabilityHours}) = ${availabilityHours}`);
+          logger.info(`[Intake POST CRITICAL] User ${userId} - Setting weeklyAvailability to min(${req.body.weeklyAvailability}, ${totalAvailabilityHours}) = ${availabilityHours}`);
           req.body.weeklyAvailability = availabilityHours;
         } else {
-          console.log(`[Intake POST CRITICAL] User ${userId} - Auto-calculating weeklyAvailability from slots = ${totalAvailabilityHours}`);
+          logger.info(`[Intake POST CRITICAL] User ${userId} - Auto-calculating weeklyAvailability from slots = ${totalAvailabilityHours}`);
           req.body.weeklyAvailability = totalAvailabilityHours;
         }
       } else if (!req.body.weeklyAvailability) {
@@ -5165,9 +5147,9 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         req.body.weeklyAvailability = 0;
       }
       
-      console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
-      console.log(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
-      console.log(`[Intake POST] Received yearsOfExperience for user ${userId}:`, JSON.stringify(req.body.yearsOfExperience));
+      logger.info(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
+      logger.info(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
+      logger.info(`[Intake POST] Received yearsOfExperience for user ${userId}:`, JSON.stringify(req.body.yearsOfExperience));
       
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
       
@@ -5182,25 +5164,25 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         profilePhotoUrl: req.body.profilePhotoUrl || existingProfile?.profilePhotoUrl || null // Preserve existing photo if no new one provided
       };
       
-      console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
-      console.log(`[Intake POST] Saving profile data with availability:`, JSON.stringify(profileData.availability));
-      console.log(`[Intake POST] Saving profile data with yearsOfExperience:`, JSON.stringify(profileData.yearsOfExperience));
+      logger.info(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
+      logger.info(`[Intake POST] Saving profile data with availability:`, JSON.stringify(profileData.availability));
+      logger.info(`[Intake POST] Saving profile data with yearsOfExperience:`, JSON.stringify(profileData.yearsOfExperience));
       
       let profile;
       if (existingProfile) {
-        console.log(`[Intake POST CRITICAL] UPDATING existing profile for user ${userId}. New weeklyAvailability: ${profileData.weeklyAvailability}`);
+        logger.info(`[Intake POST CRITICAL] UPDATING existing profile for user ${userId}. New weeklyAvailability: ${profileData.weeklyAvailability}`);
         profile = await storage.updateVolunteerProfile(existingProfile.id, profileData);
       } else {
-        console.log(`[Intake POST CRITICAL] CREATING new profile for user ${userId}. weeklyAvailability: ${profileData.weeklyAvailability}`);
+        logger.info(`[Intake POST CRITICAL] CREATING new profile for user ${userId}. weeklyAvailability: ${profileData.weeklyAvailability}`);
         profile = await storage.createVolunteerProfile(profileData);
       }
       
-      console.log(`[Intake POST CRITICAL] Profile saved for user ${userId}. Fetching to verify...`);
+      logger.info(`[Intake POST CRITICAL] Profile saved for user ${userId}. Fetching to verify...`);
       const savedProfile = await storage.getVolunteerProfileByUserId(userId);
-      console.log(`[Intake POST CRITICAL] VERIFIED: User ${userId} now has weeklyAvailability = ${savedProfile?.weeklyAvailability}`);
-      console.log(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
-      console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
-      console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
+      logger.info(`[Intake POST CRITICAL] VERIFIED: User ${userId} now has weeklyAvailability = ${savedProfile?.weeklyAvailability}`);
+      logger.info(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
+      logger.info(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
+      logger.info(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
       
       // Update user's displayName, userType, and skills if needed (profile photo saved to volunteerProfiles)
       const updates: any = {};
@@ -5221,7 +5203,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       // Create or update matchable volunteer for algorithm
       if (profile) {
         const matchableVolId = `vol_${user.email}`;
-        console.log(`Creating/updating matchable volunteer: ${matchableVolId}`);
+        logger.info(`Creating/updating matchable volunteer: ${matchableVolId}`);
         const existingMatchableVol = await storage.getVolunteer(matchableVolId);
         
         // Use the updated name from request body, not the stale user object
@@ -5237,19 +5219,19 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           sdgGoals: profile.preferredSdgs || []
         };
         
-        console.log('Matchable volunteer data:', JSON.stringify(matchableVolData, null, 2));
+        logger.info('Matchable volunteer data:', JSON.stringify(matchableVolData, null, 2));
         
         if (existingMatchableVol) {
-          console.log('Updating existing matchable volunteer');
+          logger.info('Updating existing matchable volunteer');
           await storage.updateVolunteer(matchableVolId, matchableVolData);
         } else {
-          console.log('Creating new matchable volunteer');
+          logger.info('Creating new matchable volunteer');
           await storage.createVolunteer({
             id: matchableVolId,
             ...matchableVolData
           } as any);
         }
-        console.log('Matchable volunteer created/updated successfully');
+        logger.info('Matchable volunteer created/updated successfully');
       }
       
       broadcastUpdate("volunteer_profile_updated", profile);
@@ -5261,7 +5243,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         volunteerProfile: profile
       });
     } catch (err) {
-      console.error("Error saving volunteer profile:", err);
+      logger.error("Error saving volunteer profile:", err);
       res.status(500).json({ message: "Failed to save volunteer profile" });
     }
   });
@@ -5283,7 +5265,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       const profile = await storage.getOrganizationProfileByOrgId(organizationId);
       res.json(profile);
     } catch (err) {
-      console.error("Error fetching organization profile:", err);
+      logger.error("Error fetching organization profile:", err);
       res.status(500).json({ message: "Failed to fetch organization profile" });
     }
   });
@@ -5395,7 +5377,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       broadcastUpdate("organization_profile_updated", profile);
       res.json(profile);
     } catch (err) {
-      console.error("Error saving organization profile:", err);
+      logger.error("Error saving organization profile:", err);
       res.status(500).json({ message: "Failed to save organization profile" });
     }
   });
@@ -5420,7 +5402,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       res.json(notifications);
     } catch (err) {
-      console.error("Error fetching notifications:", err);
+      logger.error("Error fetching notifications:", err);
       res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
@@ -5439,7 +5421,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
 
       res.json({ success: true, clearedCount: count });
     } catch (err) {
-      console.error("Error clearing notifications:", err);
+      logger.error("Error clearing notifications:", err);
       res.status(500).json({ message: "Failed to clear notifications" });
     }
   });
@@ -5460,7 +5442,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
 
       res.json(notification);
     } catch (err) {
-      console.error("Error marking notification as read:", err);
+      logger.error("Error marking notification as read:", err);
       res.status(500).json({ message: "Failed to mark notification as read" });
     }
   });
@@ -5479,7 +5461,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
 
       res.json({ success: true, deletedCount: count });
     } catch (err) {
-      console.error("Error deleting all notifications:", err);
+      logger.error("Error deleting all notifications:", err);
       res.status(500).json({ message: "Failed to delete notifications" });
     }
   });
@@ -5501,7 +5483,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
 
       res.json({ success: true, notification });
     } catch (err) {
-      console.error("Error deleting notification:", err);
+      logger.error("Error deleting notification:", err);
       res.status(500).json({ message: "Failed to delete notification" });
     }
   });
@@ -5592,7 +5574,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         checkedAt: new Date().toISOString()
       });
     } catch (err) {
-      console.error("Error validating user data:", err);
+      logger.error("Error validating user data:", err);
       res.status(500).json({ message: "Failed to validate user data" });
     }
   });
@@ -5685,7 +5667,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         displayName: trimmedName
       });
     } catch (err) {
-      console.error("Error syncing user name:", err);
+      logger.error("Error syncing user name:", err);
       res.status(500).json({ message: "Failed to sync user name" });
     }
   });
@@ -5707,7 +5689,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       const auditLogs = await storage.getUserDataAuditLogs(userId);
       res.json(auditLogs);
     } catch (err) {
-      console.error("Error fetching audit logs:", err);
+      logger.error("Error fetching audit logs:", err);
       res.status(500).json({ message: "Failed to fetch audit logs" });
     }
   });
@@ -5725,7 +5707,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       const discrepancies = await storage.getUnresolvedDiscrepancies(authenticatedUserId);
       res.json(discrepancies);
     } catch (err) {
-      console.error("Error fetching unresolved discrepancies:", err);
+      logger.error("Error fetching unresolved discrepancies:", err);
       res.status(500).json({ message: "Failed to fetch unresolved discrepancies" });
     }
   });
@@ -5763,7 +5745,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       res.json(resolved);
     } catch (err) {
-      console.error("Error resolving discrepancy:", err);
+      logger.error("Error resolving discrepancy:", err);
       res.status(500).json({ message: "Failed to resolve discrepancy" });
     }
   });
@@ -5833,10 +5815,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         // DEDUPLICATE the keyStories to remove repeated metrics
         const cleanStories = deduplicateMetrics(keyStories);
         
-        const openai = new OpenAI({
-          apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-          baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-        });
+
 
         const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. 
 
@@ -5885,17 +5864,13 @@ REPORT FORMAT:
 
 CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY appear once in the entire report. If similar metrics exist, combine them into totals.`;
 
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
+        const reportContent = await aiService.chat(
+          [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          temperature: 0.5,
-          max_tokens: 2500,
-        });
-
-        const reportContent = completion.choices[0]?.message?.content;
+          { temperature: 0.5, maxTokens: 2500 }
+        ) || null;
         if (!reportContent) {
           return res.status(500).json({ message: "Failed to generate report content" });
         }
@@ -5906,14 +5881,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           success: true,
         });
       } catch (openaiErr: any) {
-        console.error("OpenAI API Error:", openaiErr.message || openaiErr);
+        logger.error("OpenAI API Error:", openaiErr.message || openaiErr);
         return res.status(503).json({ 
           message: "OpenAI service unavailable. Check API key configuration.",
           error: openaiErr.message 
         });
       }
     } catch (err) {
-      console.error("Error generating impact report:", err);
+      logger.error("Error generating impact report:", err);
       res.status(500).json({ message: "Failed to generate impact report" });
     }
   });
@@ -5939,7 +5914,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         });
       }
     } catch (err) {
-      console.error("Error sending email digest:", err);
+      logger.error("Error sending email digest:", err);
       res.status(500).json({ message: "Error sending email digest" });
     }
   });
@@ -5962,7 +5937,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         ...result
       });
     } catch (err) {
-      console.error("Error sending all digests:", err);
+      logger.error("Error sending all digests:", err);
       res.status(500).json({ message: "Error sending digests" });
     }
   });
@@ -5992,7 +5967,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         });
       }
     } catch (err) {
-      console.error("Error sending org digest:", err);
+      logger.error("Error sending org digest:", err);
       res.status(500).json({ message: "Error sending digest" });
     }
   });
@@ -6018,7 +5993,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         success: true
       });
     } catch (err) {
-      console.error("Error toggling volunteer digest preference:", err);
+      logger.error("Error toggling volunteer digest preference:", err);
       res.status(500).json({ message: "Error updating digest preference" });
     }
   });
@@ -6049,7 +6024,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         success: true
       });
     } catch (err) {
-      console.error("Error toggling organization digest preference:", err);
+      logger.error("Error toggling organization digest preference:", err);
       res.status(500).json({ message: "Error updating digest preference" });
     }
   });
@@ -6097,7 +6072,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         lastActivityDate: activities.length > 0 ? activities[activities.length - 1].date : null,
       });
     } catch (err) {
-      console.error("Error fetching leaderboard stats:", err);
+      logger.error("Error fetching leaderboard stats:", err);
       res.status(500).json({ message: "Error fetching leaderboard stats" });
     }
   });
@@ -6163,7 +6138,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       return res.json(sorted.slice(0, limit));
     } catch (err) {
-      console.error("Error fetching leaderboard:", err);
+      logger.error("Error fetching leaderboard:", err);
       res.status(500).json({ message: "Error fetching leaderboard" });
     }
   });
@@ -6232,7 +6207,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       return res.json(sorted.slice(0, limit));
     } catch (err) {
-      console.error("Error fetching org leaderboard:", err);
+      logger.error("Error fetching org leaderboard:", err);
       res.status(500).json({ message: "Error fetching organization leaderboard" });
     }
   });
@@ -6251,7 +6226,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       return res.json([]);
     } catch (err) {
-      console.error("Error fetching user badges:", err);
+      logger.error("Error fetching user badges:", err);
       res.status(500).json({ message: "Error fetching badges" });
     }
   });
@@ -6324,7 +6299,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (err) {
-      console.error("Error fetching volunteer spotlight:", err);
+      logger.error("Error fetching volunteer spotlight:", err);
       res.json({ spotlight: null });
     }
   });
@@ -6356,7 +6331,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json({ stats });
     } catch (err) {
-      console.error("Error fetching banner stats:", err);
+      logger.error("Error fetching banner stats:", err);
       res.json({ 
         stats: [
           "📊 Real-time volunteer impact metrics loading...",
@@ -6493,7 +6468,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         beneficiaries: totalVolunteers * 15, // Estimated beneficiaries
       });
     } catch (err) {
-      console.error("Error fetching team overview:", err);
+      logger.error("Error fetching team overview:", err);
       res.status(500).json({ error: "Failed to fetch team overview" });
     }
   });
@@ -6536,7 +6511,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         totalPartners: csrPartners.length
       });
     } catch (err) {
-      console.error("Error fetching CSR diagnostic:", err);
+      logger.error("Error fetching CSR diagnostic:", err);
       res.status(500).json({ error: "Failed to fetch diagnostic data" });
     }
   });
@@ -6653,10 +6628,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const employeesFromUsersResult = await db.execute(
         sql`SELECT id, display_name, department_name, job_title_at_company FROM users WHERE employer_id = ${userPartner.id}`
       );
-      console.log('[CSR DEBUG] userPartner.id:', userPartner.id);
-      console.log('[CSR DEBUG] employeesFromUsersResult:', JSON.stringify(employeesFromUsersResult));
+      logger.info('[CSR DEBUG] userPartner.id:', userPartner.id);
+      logger.info('[CSR DEBUG] employeesFromUsersResult:', JSON.stringify(employeesFromUsersResult));
       const employeesFromUsers = employeesFromUsersResult.rows || [];
-      console.log('[CSR DEBUG] employeesFromUsers:', JSON.stringify(employeesFromUsers));
+      logger.info('[CSR DEBUG] employeesFromUsers:', JSON.stringify(employeesFromUsers));
       // Use Number() conversion to handle string/number type mismatches from database
       const employeesFromProfiles = volunteerProfiles.filter((vp: any) => {
         const vpEmployerId = vp.employerId ? Number(vp.employerId) : null;
@@ -6862,7 +6837,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           
           if (!geoResult) {
             // If we can't geocode, skip this project from the map
-            console.log(`CSR Map: Could not geocode location "${projectLocation}" for project ${projectId}`);
+            logger.info(`CSR Map: Could not geocode location "${projectLocation}" for project ${projectId}`);
             return null;
           }
           
@@ -7259,7 +7234,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         })()
       });
     } catch (err) {
-      console.error("Error fetching CSR dashboard:", err);
+      logger.error("Error fetching CSR dashboard:", err);
       res.status(500).json({ error: "Failed to fetch dashboard" });
     }
   });
@@ -7343,7 +7318,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (err) {
-      console.error("Error fetching engagement funnel:", err);
+      logger.error("Error fetching engagement funnel:", err);
       res.status(500).json({ error: "Failed to fetch funnel" });
     }
   });
@@ -7442,7 +7417,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json({ employees: employees.sort((a, b) => b.hours - a.hours) });
     } catch (err) {
-      console.error("Error fetching funnel stage:", err);
+      logger.error("Error fetching funnel stage:", err);
       res.status(500).json({ error: "Failed to fetch stage" });
     }
   });
@@ -7602,7 +7577,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         totalActions: reviews.length + insights.length + flagged.length
       });
     } catch (err) {
-      console.error("Error fetching pending actions:", err);
+      logger.error("Error fetching pending actions:", err);
       res.status(500).json({ error: "Failed to fetch actions" });
     }
   });
@@ -7764,7 +7739,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (err) {
-      console.error("Error fetching impact reporting:", err);
+      logger.error("Error fetching impact reporting:", err);
       res.status(500).json({ error: "Failed to fetch impact metrics" });
     }
   });
@@ -7824,7 +7799,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       res.setHeader("Content-Disposition", `attachment; filename="csr-impact-report-${new Date().toISOString().split('T')[0]}.csv"`);
       res.send(csv);
     } catch (err) {
-      console.error("Error exporting CSV:", err);
+      logger.error("Error exporting CSV:", err);
       res.status(500).json({ error: "Failed to export CSV" });
     }
   });
@@ -8038,7 +8013,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       res.setHeader("Content-Disposition", `attachment; filename="${userPartner.companyName.replace(/\s+/g, '-')}-${reportTitle.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.html"`);
       res.send(html);
     } catch (err) {
-      console.error("Error exporting PDF:", err);
+      logger.error("Error exporting PDF:", err);
       res.status(500).json({ error: "Failed to export report" });
     }
   });
@@ -8063,7 +8038,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const created = await storage.createCSRPartner?.(partner) || { id: Date.now() };
       res.json(created);
     } catch (err) {
-      console.error("Error creating CSR partner:", err);
+      logger.error("Error creating CSR partner:", err);
       res.status(500).json({ error: "Failed to create partner" });
     }
   });
@@ -8080,7 +8055,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Return the first partner (corporate admin typically has one) or empty array
       res.json(userPartners.length > 0 ? userPartners[0] : null);
     } catch (err) {
-      console.error("Error fetching CSR partners:", err);
+      logger.error("Error fetching CSR partners:", err);
       res.status(500).json({ error: "Failed to fetch partners" });
     }
   });
@@ -8091,7 +8066,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const allPartners = await storage.listCSRPartners?.() || [];
       res.json(allPartners);
     } catch (err) {
-      console.error("Error fetching CSR partners list:", err);
+      logger.error("Error fetching CSR partners list:", err);
       res.status(500).json({ error: "Failed to fetch partners" });
     }
   });
@@ -8119,7 +8094,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       }
       res.json(updated);
     } catch (err) {
-      console.error("Error updating CSR partner:", err);
+      logger.error("Error updating CSR partner:", err);
       res.status(500).json({ error: "Failed to update partner" });
     }
   });
@@ -8163,7 +8138,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // 4. Notify relevant stakeholders
 
       // For now, we'll just log it and return success
-      console.log("Recognition created:", recognition);
+      logger.info("Recognition created:", recognition);
 
       res.json({
         success: true,
@@ -8171,7 +8146,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         message: `Recognition sent to ${employee.displayName || 'the employee'}`
       });
     } catch (err) {
-      console.error("Error creating recognition:", err);
+      logger.error("Error creating recognition:", err);
       res.status(500).json({ error: "Failed to send recognition" });
     }
   });
@@ -8192,7 +8167,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       
       res.json(link);
     } catch (err) {
-      console.error("Error linking volunteer to employer:", err);
+      logger.error("Error linking volunteer to employer:", err);
       res.status(500).json({ error: "Failed to link employer" });
     }
   });
@@ -8204,7 +8179,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const link = await storage.getVolunteerEmployerLink?.(parseInt(volunteerId));
       res.json(link || null);
     } catch (err) {
-      console.error("Error fetching employer link:", err);
+      logger.error("Error fetching employer link:", err);
       res.status(500).json({ error: "Failed to fetch employer" });
     }
   });
@@ -8233,7 +8208,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const created = await storage.createCSRChallenge?.(challenge) || { id: Date.now() };
       res.json(created);
     } catch (err) {
-      console.error("Error creating CSR challenge:", err);
+      logger.error("Error creating CSR challenge:", err);
       res.status(500).json({ error: "Failed to create challenge" });
     }
   });
@@ -8250,7 +8225,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(challenges);
     } catch (err) {
-      console.error("Error fetching CSR challenges:", err);
+      logger.error("Error fetching CSR challenges:", err);
       res.status(500).json({ error: "Failed to fetch challenges" });
     }
   });
@@ -8274,7 +8249,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const created = await storage.createProjectBudgetLink?.(budgetLink) || { id: Date.now() };
       res.json(created);
     } catch (err) {
-      console.error("Error creating budget link:", err);
+      logger.error("Error creating budget link:", err);
       res.status(500).json({ error: "Failed to create budget link" });
     }
   });
@@ -8294,7 +8269,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(budgetLinks);
     } catch (err) {
-      console.error("Error fetching budget links:", err);
+      logger.error("Error fetching budget links:", err);
       res.status(500).json({ error: "Failed to fetch budget links" });
     }
   });
@@ -8321,7 +8296,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const created = await storage.createVerifiedOutput?.(output) || { id: Date.now() };
       res.json(created);
     } catch (err) {
-      console.error("Error creating verified output:", err);
+      logger.error("Error creating verified output:", err);
       res.status(500).json({ error: "Failed to create verified output" });
     }
   });
@@ -8344,7 +8319,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(outputs);
     } catch (err) {
-      console.error("Error fetching verified outputs:", err);
+      logger.error("Error fetching verified outputs:", err);
       res.status(500).json({ error: "Failed to fetch verified outputs" });
     }
   });
@@ -8433,7 +8408,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         ]
       });
     } catch (err) {
-      console.error("Error fetching engagement summary:", err);
+      logger.error("Error fetching engagement summary:", err);
       res.status(500).json({ error: "Failed to fetch engagement summary" });
     }
   });
@@ -8490,7 +8465,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(commitments);
     } catch (err) {
-      console.error("Error fetching commitments:", err);
+      logger.error("Error fetching commitments:", err);
       res.status(500).json({ error: "Failed to fetch commitments" });
     }
   });
@@ -8554,7 +8529,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(goals);
     } catch (err) {
-      console.error("Error fetching CSR goals:", err);
+      logger.error("Error fetching CSR goals:", err);
       res.status(500).json({ error: "Failed to fetch CSR goals" });
     }
   });
@@ -8609,7 +8584,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         commitments: userCommitments
       });
     } catch (err) {
-      console.error("Error fetching impact dashboard:", err);
+      logger.error("Error fetching impact dashboard:", err);
       res.status(500).json({ error: "Failed to fetch impact dashboard" });
     }
   });
@@ -8644,7 +8619,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // In a real implementation, this would send emails/notifications
       // For now, we'll just log and return success
-      console.log(`Sending engagement tips to ${inactiveEmployees.length} inactive employees from organization ${user.organizationId}`);
+      logger.info(`Sending engagement tips to ${inactiveEmployees.length} inactive employees from organization ${user.organizationId}`);
 
       // Simulate sending tips (in production, integrate with email service)
       const tipsSent = inactiveEmployees.map((emp: any) => ({
@@ -8662,7 +8637,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         details: tipsSent
       });
     } catch (err) {
-      console.error("Error sending engagement tips:", err);
+      logger.error("Error sending engagement tips:", err);
       res.status(500).json({ error: "Failed to send engagement tips" });
     }
   });
@@ -8702,7 +8677,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const data = await response.json();
       res.json(data);
     } catch (err) {
-      console.error("Error simulating match:", err);
+      logger.error("Error simulating match:", err);
       res.status(500).json({ error: "Failed to simulate match" });
     }
   });
@@ -8722,7 +8697,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         contentType: "multipart/form-data"
       });
     } catch (err) {
-      console.error("Error ingesting image:", err);
+      logger.error("Error ingesting image:", err);
       res.status(500).json({ error: "Failed to ingest image" });
     }
   });
@@ -8733,7 +8708,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const data = await proxyToPython("/api/ai/explain", req);
       res.json(data);
     } catch (err) {
-      console.error("Error fetching AI explanation:", err);
+      logger.error("Error fetching AI explanation:", err);
       res.status(500).json({ error: "Failed to fetch AI explanation" });
     }
   });
@@ -8780,14 +8755,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       });
 
       if (!emailResult.success) {
-        console.error(`Failed to send invitation email to ${email}:`, emailResult.error);
+        logger.error(`Failed to send invitation email to ${email}:`, emailResult.error);
         return res.status(500).json({
           error: "Failed to send invitation email",
           details: emailResult.error
         });
       }
 
-      console.log(`Invitation email sent to ${email} as ${role} for organization ${organization.name}`);
+      logger.info(`Invitation email sent to ${email} as ${role} for organization ${organization.name}`);
 
       res.status(200).json({
         success: true,
@@ -8805,7 +8780,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (error) {
-      console.error("Error sending invitation:", error);
+      logger.error("Error sending invitation:", error);
       res.status(500).json({ error: "Failed to send invitation" });
     }
   });
@@ -8967,7 +8942,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // For now, simulate successful import
       const count = Math.floor(Math.random() * 10) + 5; // Random 5-15
 
-      console.log(`Bulk import: ${count} invitations sent`);
+      logger.info(`Bulk import: ${count} invitations sent`);
 
       res.status(200).json({
         success: true,
@@ -8980,7 +8955,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (error) {
-      console.error("Error importing volunteers:", error);
+      logger.error("Error importing volunteers:", error);
       res.status(500).json({ error: "Failed to import volunteers" });
     }
   });
@@ -9164,7 +9139,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
-      console.error("Error fetching enhanced admin stats:", error);
+      logger.error("Error fetching enhanced admin stats:", error);
       res.status(500).json({ error: "Failed to fetch enhanced admin stats" });
     }
   });
@@ -9214,7 +9189,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         pendingApprovals: Number(pendingOrgs[0]?.count || 0)
       });
     } catch (error) {
-      console.error("Error fetching admin stats:", error);
+      logger.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
     }
   });
@@ -9278,7 +9253,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (error) {
-      console.error("Error fetching admin users:", error);
+      logger.error("Error fetching admin users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
     }
   });
@@ -9329,7 +9304,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(enrichedActivity);
     } catch (error) {
-      console.error("Error fetching admin activity:", error);
+      logger.error("Error fetching admin activity:", error);
       res.status(500).json({ error: "Failed to fetch activity" });
     }
   });
@@ -9372,7 +9347,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       res.json(enrichedOrgs);
     } catch (error) {
-      console.error("Error fetching admin organizations:", error);
+      logger.error("Error fetching admin organizations:", error);
       res.status(500).json({ error: "Failed to fetch organizations" });
     }
   });
@@ -9406,7 +9381,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         pid: process.pid
       });
     } catch (error) {
-      console.error("Error fetching system info:", error);
+      logger.error("Error fetching system info:", error);
       res.status(500).json({ error: "Failed to fetch system info" });
     }
   });
@@ -9588,7 +9563,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       });
     } catch (error) {
-      console.error("Error fetching locations:", error);
+      logger.error("Error fetching locations:", error);
       res.status(500).json({ error: "Failed to fetch locations" });
     }
   });

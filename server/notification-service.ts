@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { storage } from "./storage";
 import type { InsertNotification } from "@shared/schema";
 import nodemailer from "nodemailer";
@@ -17,7 +18,7 @@ async function broadcastToUser(userId: number, notification: InsertNotification)
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error broadcasting notification:", error);
+    logger.error("Error broadcasting notification:", error);
   }
 }
 
@@ -64,7 +65,7 @@ function createEmailTransporter() {
   // Mock transporter for development
   return {
     sendMail: async (options: any) => {
-      console.log(`[EMAIL-MOCK] To: ${options.to}, Subject: ${options.subject}`);
+      logger.info(`[EMAIL-MOCK] To: ${options.to}, Subject: ${options.subject}`);
       return { response: "Email queued (mock)", messageId: `mock-${Date.now()}` };
     },
   };
@@ -80,7 +81,7 @@ export interface SMSProvider {
 
 class NoOpSMSProvider implements SMSProvider {
   async sendSMS(to: string, body: string): Promise<{ success: boolean; messageId?: string }> {
-    console.log(`[SMS-NOOP] To: ${to}, Body: ${body.substring(0, 80)}...`);
+    logger.info(`[SMS-NOOP] To: ${to}, Body: ${body.substring(0, 80)}...`);
     return { success: true, messageId: `sms-noop-${Date.now()}` };
   }
 }
@@ -92,7 +93,7 @@ export interface PushProvider {
 
 class NoOpPushProvider implements PushProvider {
   async sendPush(userId: number, title: string, body: string): Promise<{ success: boolean }> {
-    console.log(`[PUSH-NOOP] User: ${userId}, Title: ${title}, Body: ${body.substring(0, 80)}...`);
+    logger.info(`[PUSH-NOOP] User: ${userId}, Title: ${title}, Body: ${body.substring(0, 80)}...`);
     return { success: true };
   }
 }
@@ -120,7 +121,7 @@ export async function notifyProjectUpdate(
     await storage.createNotification(notification);
     await broadcastToUser(userId, notification);
   } catch (error) {
-    console.error("Error creating project update notification:", error);
+    logger.error("Error creating project update notification:", error);
   }
 }
 
@@ -134,7 +135,7 @@ export async function notifyNewAssignment(
     const organization = await storage.getOrganization(organizationId);
 
     if (!project || !organization) {
-      console.error("Project or organization not found for notification");
+      logger.error("Project or organization not found for notification");
       return;
     }
 
@@ -152,7 +153,7 @@ export async function notifyNewAssignment(
     await storage.createNotification(notification);
     await broadcastToUser(volunteerId, notification);
   } catch (error) {
-    console.error("Error creating assignment notification:", error);
+    logger.error("Error creating assignment notification:", error);
   }
 }
 
@@ -168,7 +169,7 @@ export async function notifyApplicationStatusChange(
       : await storage.getOpportunity(opportunityId);
 
     if (!opportunity) {
-      console.error("Opportunity not found for notification");
+      logger.error("Opportunity not found for notification");
       return;
     }
 
@@ -199,7 +200,7 @@ export async function notifyApplicationStatusChange(
     await storage.createNotification(notification);
     await broadcastToUser(volunteerId, notification);
   } catch (error) {
-    console.error("Error creating application status notification:", error);
+    logger.error("Error creating application status notification:", error);
   }
 }
 
@@ -229,7 +230,7 @@ export async function broadcastCriticalUpdate(
       });
     }
   } catch (error) {
-    console.error("Error broadcasting critical update:", error);
+    logger.error("Error broadcasting critical update:", error);
   }
 }
 
@@ -263,7 +264,7 @@ export async function notifyTaskAssigned(
     await storage.createNotification(notification);
     await broadcastToUser(volunteerId, notification);
   } catch (error) {
-    console.error("Error creating task assignment notification:", error);
+    logger.error("Error creating task assignment notification:", error);
   }
 }
 
@@ -276,7 +277,7 @@ export async function notifyNewMessage(
     const sender = await storage.getUser(senderId);
 
     if (!sender) {
-      console.error("Sender not found for notification");
+      logger.error("Sender not found for notification");
       return;
     }
 
@@ -295,7 +296,7 @@ export async function notifyNewMessage(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating new message notification:", error);
+    logger.error("Error creating new message notification:", error);
   }
 }
 
@@ -308,7 +309,7 @@ export async function notifyOpportunityMatch(
     const opportunity = await storage.getOpportunity(opportunityId);
 
     if (!opportunity) {
-      console.error("Opportunity not found for notification");
+      logger.error("Opportunity not found for notification");
       return;
     }
 
@@ -327,7 +328,7 @@ export async function notifyOpportunityMatch(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating opportunity match notification:", error);
+    logger.error("Error creating opportunity match notification:", error);
   }
 }
 
@@ -349,7 +350,7 @@ export async function notifyProjectCompletion(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating project completion notification:", error);
+    logger.error("Error creating project completion notification:", error);
   }
 }
 
@@ -363,7 +364,7 @@ export async function notifyVolunteerJoined(
     const project = await storage.getProject(projectId);
 
     if (!volunteer || !project) {
-      console.error("Volunteer or project not found for notification");
+      logger.error("Volunteer or project not found for notification");
       return;
     }
 
@@ -380,7 +381,7 @@ export async function notifyVolunteerJoined(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating volunteer joined notification:", error);
+    logger.error("Error creating volunteer joined notification:", error);
   }
 }
 
@@ -397,7 +398,7 @@ export async function notifyThreadMessage(
     const sender = await storage.getUser(senderId);
 
     if (!sender) {
-      console.error("Sender not found for thread message notification");
+      logger.error("Sender not found for thread message notification");
       return;
     }
 
@@ -416,7 +417,7 @@ export async function notifyThreadMessage(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating thread message notification:", error);
+    logger.error("Error creating thread message notification:", error);
   }
 }
 
@@ -434,14 +435,14 @@ export async function notifyNewApplication(
     const volunteer = await storage.getUser(volunteerId);
 
     if (!opportunity || !volunteer) {
-      console.error("Opportunity or volunteer not found for notification");
+      logger.error("Opportunity or volunteer not found for notification");
       return;
     }
 
     // Get the organization to find organization users to notify
     const organization = await storage.getOrganization(opportunity.organizationId);
     if (!organization) {
-      console.error("Organization not found for notification");
+      logger.error("Organization not found for notification");
       return;
     }
 
@@ -449,7 +450,7 @@ export async function notifyNewApplication(
     const orgUsers = await storage.listUsersByOrganization(opportunity.organizationId);
 
     if (!orgUsers || orgUsers.length === 0) {
-      console.error("No organization users found for notification");
+      logger.error("No organization users found for notification");
       return;
     }
 
@@ -473,7 +474,7 @@ export async function notifyNewApplication(
       await storage.createNotification(notification);
     }
   } catch (error) {
-    console.error("Error creating new application notification:", error);
+    logger.error("Error creating new application notification:", error);
   }
 }
 
@@ -491,13 +492,13 @@ export async function sendNewApplicationEmail(
     const volunteer = await storage.getUser(volunteerId);
 
     if (!opportunity || !volunteer) {
-      console.error("[EMAIL] Opportunity or volunteer not found for application email");
+      logger.error("[EMAIL] Opportunity or volunteer not found for application email");
       return;
     }
 
     const organization = await storage.getOrganization(opportunity.organizationId);
     if (!organization) {
-      console.error("[EMAIL] Organization not found for application email");
+      logger.error("[EMAIL] Organization not found for application email");
       return;
     }
 
@@ -506,7 +507,7 @@ export async function sendNewApplicationEmail(
     const usersWithEmail = orgUsers.filter(u => u.email);
 
     if (usersWithEmail.length === 0) {
-      console.log("[EMAIL] No organization users with email found");
+      logger.info("[EMAIL] No organization users with email found");
       return;
     }
 
@@ -565,13 +566,13 @@ export async function sendNewApplicationEmail(
           subject: `New Application: ${volunteerName} applied for "${opportunity.title}"`,
           html: emailHtml,
         });
-        console.log(`[EMAIL] Application notification sent to ${orgUser.email}`);
+        logger.info(`[EMAIL] Application notification sent to ${orgUser.email}`);
       } catch (emailError) {
-        console.error(`[EMAIL] Failed to send to ${orgUser.email}:`, emailError);
+        logger.error(`[EMAIL] Failed to send to ${orgUser.email}:`, emailError);
       }
     }
   } catch (error) {
-    console.error("[EMAIL] Error sending new application email:", error);
+    logger.error("[EMAIL] Error sending new application email:", error);
   }
 }
 
@@ -617,7 +618,7 @@ export async function notifyAiuVerification(
 
     await storage.createNotification(notification);
   } catch (error) {
-    console.error("Error creating AIU verification notification:", error);
+    logger.error("Error creating AIU verification notification:", error);
   }
 }
 
@@ -663,7 +664,7 @@ export async function notifyProjectVolunteersAiuVerification(
       );
     }
   } catch (error) {
-    console.error("Error notifying project volunteers about AIU verification:", error);
+    logger.error("Error notifying project volunteers about AIU verification:", error);
   }
 }
 
@@ -683,7 +684,7 @@ export async function notifyPendingImpact(
     // Get project to find organization
     const project = await storage.getProject(projectId);
     if (!project || !project.organizationId) {
-      console.log("[Notification] No organization found for project:", projectId);
+      logger.info("[Notification] No organization found for project:", projectId);
       return;
     }
 
@@ -703,7 +704,7 @@ export async function notifyPendingImpact(
     // Get organization users to notify
     const orgUsers = await storage.listUsersByOrganization(project.organizationId);
     if (!orgUsers || orgUsers.length === 0) {
-      console.log("[Notification] No organization users found to notify for org:", project.organizationId);
+      logger.info("[Notification] No organization users found to notify for org:", project.organizationId);
       return;
     }
 
@@ -726,9 +727,9 @@ export async function notifyPendingImpact(
       await storage.createNotification(notification);
     }
 
-    console.log(`[Notification] Pending impact notification sent to ${orgUsers.length} organization users`);
+    logger.info(`[Notification] Pending impact notification sent to ${orgUsers.length} organization users`);
   } catch (error) {
-    console.error("Error creating pending impact notification:", error);
+    logger.error("Error creating pending impact notification:", error);
   }
 }
 
@@ -747,7 +748,7 @@ export async function notifyPendingActivity(
     // Get project to find organization
     const project = await storage.getProject(projectId);
     if (!project || !project.organizationId) {
-      console.log("[Notification] No organization found for project:", projectId);
+      logger.info("[Notification] No organization found for project:", projectId);
       return;
     }
 
@@ -758,7 +759,7 @@ export async function notifyPendingActivity(
     // Get organization users to notify
     const orgUsers = await storage.listUsersByOrganization(project.organizationId);
     if (!orgUsers || orgUsers.length === 0) {
-      console.log("[Notification] No organization users found to notify for org:", project.organizationId);
+      logger.info("[Notification] No organization users found to notify for org:", project.organizationId);
       return;
     }
 
@@ -799,12 +800,12 @@ export async function notifyPendingActivity(
         orgUser.id,
         notification.title,
         messageBody
-      ).catch(err => console.error("[PUSH] Failed:", err));
+      ).catch(err => logger.error("[PUSH] Failed:", err));
     }
 
-    console.log(`[Notification] Pending activity notification sent to ${orgUsers.length} organization users`);
+    logger.info(`[Notification] Pending activity notification sent to ${orgUsers.length} organization users`);
   } catch (error) {
-    console.error("Error creating pending activity notification:", error);
+    logger.error("Error creating pending activity notification:", error);
   }
 }
 
@@ -837,8 +838,8 @@ export async function notifyBadgeEarned(
     };
 
     await storage.createNotification(notification);
-    console.log(`[Notification] Badge earned notification sent to user ${userId} for badge "${badgeName}"`);
+    logger.info(`[Notification] Badge earned notification sent to user ${userId} for badge "${badgeName}"`);
   } catch (error) {
-    console.error("Error creating badge earned notification:", error);
+    logger.error("Error creating badge earned notification:", error);
   }
 }

@@ -1,10 +1,11 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertApplicationSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
 import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication, sendNewApplicationEmail } from "../notification-service";
-import OpenAI from "openai";
+import { aiService } from "../services/ai-service";
 import { getPaginationParams, paginateArray } from "../pagination";
 
 export const applicationsRouter = Router();
@@ -73,7 +74,7 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
     const pagination = getPaginationParams(req);
     res.json(paginateArray(enrichedApplications, pagination));
   } catch (err) {
-    console.error("Error fetching applications:", err);
+    logger.error("Error fetching applications:", err);
     res.status(500).json({ message: "Failed to fetch applications" });
   }
 });
@@ -179,7 +180,7 @@ applicationsRouter.get("/my-engagements", async (req: Request, res: Response) =>
 
     res.json(engagements);
   } catch (err) {
-    console.error("Error fetching engagements:", err);
+    logger.error("Error fetching engagements:", err);
     res.status(500).json({ message: "Failed to fetch engagements" });
   }
 });
@@ -277,7 +278,7 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       );
     } catch (relationshipError) {
       // Log but don't fail the application if relationship creation fails
-      console.warn("Failed to create volunteer-organization relationship:", relationshipError);
+      logger.warn("Failed to create volunteer-organization relationship:", relationshipError);
     }
 
     // Auto-assign volunteer to project immediately upon application
@@ -302,7 +303,7 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       }
     } catch (assignError) {
       // Log but don't fail the application if assignment fails
-      console.warn("Auto-assignment on application failed:", assignError);
+      logger.warn("Auto-assignment on application failed:", assignError);
     }
 
     // Notify organization users about the new application
@@ -315,12 +316,12 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
       );
     } catch (notifyError) {
       // Log but don't fail the application if notification fails
-      console.warn("Failed to send application notification:", notifyError);
+      logger.warn("Failed to send application notification:", notifyError);
     }
 
     // Send instant email to organization (non-blocking)
     sendNewApplicationEmail(opportunityId, volunteerId, application.id, matchScore).catch(err =>
-      console.warn("Failed to send application email:", err)
+      logger.warn("Failed to send application email:", err)
     );
 
     broadcastUpdate("application_created", application);
@@ -393,7 +394,7 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
           }
         );
       } catch (relationshipError) {
-        console.warn("Failed to update volunteer-organization relationship:", relationshipError);
+        logger.warn("Failed to update volunteer-organization relationship:", relationshipError);
       }
 
       // Ensure we have a projectId - create project from opportunity if none exists
@@ -402,7 +403,7 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
       if (!projectId) {
         // Auto-create a project from the opportunity so volunteers can log time/impact
         try {
-          console.log(`[Application Review] Opportunity ${opportunity.id} has no projectId, creating project from opportunity data`);
+          logger.info(`[Application Review] Opportunity ${opportunity.id} has no projectId, creating project from opportunity data`);
 
           const newProject = await storage.createProject({
             name: opportunity.title,
@@ -425,13 +426,13 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
           });
 
           projectId = newProject.id;
-          console.log(`[Application Review] Created project ${projectId} from opportunity ${opportunity.id}`);
+          logger.info(`[Application Review] Created project ${projectId} from opportunity ${opportunity.id}`);
 
           // Update the opportunity to link to the new project
           await storage.updateOpportunity(opportunity.id, { projectId: newProject.id });
-          console.log(`[Application Review] Linked opportunity ${opportunity.id} to project ${projectId}`);
+          logger.info(`[Application Review] Linked opportunity ${opportunity.id} to project ${projectId}`);
         } catch (projectError) {
-          console.error(`[Application Review] Failed to create project from opportunity ${opportunity.id}:`, projectError);
+          logger.error(`[Application Review] Failed to create project from opportunity ${opportunity.id}:`, projectError);
           // Don't fail the entire acceptance - volunteer is still accepted, just might not have a project yet
         }
       }
@@ -451,7 +452,7 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
             respondedAt: new Date(),
             hoursCommitted: opportunity.ongoingHoursPerWeek || 0
           });
-          console.log(`[Application Review] Updated assignment ${existingAssignment.id} to active for volunteer ${application.volunteerId}`);
+          logger.info(`[Application Review] Updated assignment ${existingAssignment.id} to active for volunteer ${application.volunteerId}`);
         } else {
           // Create new assignment if none exists
           try {
@@ -464,13 +465,13 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
               respondedAt: new Date(),
               hoursCommitted: opportunity.ongoingHoursPerWeek || 0
             });
-            console.log(`[Application Review] Created new assignment for volunteer ${application.volunteerId} on project ${projectId}`);
+            logger.info(`[Application Review] Created new assignment for volunteer ${application.volunteerId} on project ${projectId}`);
           } catch (assignmentError: any) {
             // Handle duplicate assignment error gracefully
             if (assignmentError.message?.includes('already assigned')) {
-              console.log(`[Application Review] Volunteer ${application.volunteerId} already has an assignment on project ${projectId}`);
+              logger.info(`[Application Review] Volunteer ${application.volunteerId} already has an assignment on project ${projectId}`);
             } else {
-              console.error(`[Application Review] Failed to create assignment:`, assignmentError);
+              logger.error(`[Application Review] Failed to create assignment:`, assignmentError);
             }
           }
         }
@@ -492,7 +493,7 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
           hours: 0
         });
       } else {
-        console.warn(`[Application Review] No project available for accepted application ${applicationId}. Volunteer may not be able to log time.`);
+        logger.warn(`[Application Review] No project available for accepted application ${applicationId}. Volunteer may not be able to log time.`);
       }
     }
 
@@ -509,7 +510,7 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
           }
         );
       } catch (relationshipError) {
-        console.warn("Failed to update volunteer-organization relationship:", relationshipError);
+        logger.warn("Failed to update volunteer-organization relationship:", relationshipError);
       }
 
       if (opportunity.projectId) {
@@ -673,11 +674,6 @@ applicationsRouter.get("/:id/volunteer-insights", async (req: Request, res: Resp
     let aiInsights = null;
 
     try {
-      const openai = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      });
-
       const prompt = `You are an expert HR advisor helping an organization review a volunteer application. Analyze the volunteer's background and provide actionable insights.
 
 VOLUNTEER PROFILE:
@@ -739,17 +735,13 @@ Provide your analysis in the following JSON format:
 
 Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be balanced but constructive.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
+      const aiResponse = await aiService.chat(
+        [
           { role: "system", content: "You are an expert HR advisor. Respond only with valid JSON." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 1000
-      });
-
-      const aiResponse = completion.choices[0]?.message?.content;
+        { temperature: 0.7, maxTokens: 1000 }
+      );
       if (aiResponse) {
         try {
           // Extract JSON from response (handle markdown code blocks)
@@ -759,11 +751,11 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
           const jsonStr = jsonMatch[1] || aiResponse;
           aiInsights = JSON.parse(jsonStr.trim());
         } catch (parseErr) {
-          console.error("Failed to parse AI insights:", parseErr);
+          logger.error("Failed to parse AI insights:", parseErr);
         }
       }
     } catch (aiErr) {
-      console.error("AI insights generation failed:", aiErr);
+      logger.error("AI insights generation failed:", aiErr);
     }
 
     // Build fallback insights if AI fails
@@ -826,7 +818,7 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
       }
     });
   } catch (err) {
-    console.error("Error generating volunteer insights:", err);
+    logger.error("Error generating volunteer insights:", err);
     res.status(500).json({ message: "Failed to generate volunteer insights" });
   }
 });
@@ -893,7 +885,7 @@ applicationsRouter.get("/:id/match-analysis", async (req: Request, res: Response
       }
     });
   } catch (err) {
-    console.error("Error getting match analysis:", err);
+    logger.error("Error getting match analysis:", err);
     res.status(500).json({ message: "Failed to get match analysis" });
   }
 });
@@ -938,7 +930,7 @@ applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Resp
 
     // If no projectId on opportunity, create a project
     if (!projectId) {
-      console.log(`[Repair Assignment] Creating project for opportunity ${opportunity.id}`);
+      logger.info(`[Repair Assignment] Creating project for opportunity ${opportunity.id}`);
 
       const newProject = await storage.createProject({
         name: opportunity.title,
@@ -964,7 +956,7 @@ applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Resp
 
       // Link opportunity to new project
       await storage.updateOpportunity(opportunity.id, { projectId: newProject.id });
-      console.log(`[Repair Assignment] Created and linked project ${projectId} to opportunity ${opportunity.id}`);
+      logger.info(`[Repair Assignment] Created and linked project ${projectId} to opportunity ${opportunity.id}`);
     }
 
     // Create the assignment
@@ -989,7 +981,7 @@ applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Resp
         }
       );
 
-      console.log(`[Repair Assignment] Created assignment ${newAssignment.id} for volunteer ${application.volunteerId}`);
+      logger.info(`[Repair Assignment] Created assignment ${newAssignment.id} for volunteer ${application.volunteerId}`);
 
       res.json({
         message: "Assignment repaired successfully",
@@ -1007,7 +999,7 @@ applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Resp
       throw assignmentError;
     }
   } catch (err) {
-    console.error("Error repairing assignment:", err);
+    logger.error("Error repairing assignment:", err);
     res.status(500).json({ message: "Failed to repair assignment" });
   }
 });
@@ -1136,11 +1128,11 @@ applicationsRouter.post("/repair-all", async (req: Request, res: Response) => {
       }
     }
 
-    console.log(`[Repair All] Completed: ${results.repaired} repaired, ${results.alreadyOk} already ok, ${results.failed} failed out of ${results.total} accepted applications`);
+    logger.info(`[Repair All] Completed: ${results.repaired} repaired, ${results.alreadyOk} already ok, ${results.failed} failed out of ${results.total} accepted applications`);
 
     res.json(results);
   } catch (err) {
-    console.error("Error repairing all applications:", err);
+    logger.error("Error repairing all applications:", err);
     res.status(500).json({ message: "Failed to repair applications" });
   }
 });

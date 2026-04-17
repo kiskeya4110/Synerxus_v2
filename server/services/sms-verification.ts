@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 /**
  * SMS Fallback Verification Service
  *
@@ -59,7 +60,7 @@ export class SMSVerificationService {
     this.checkInterval = setInterval(() => {
       this.checkPendingVerifications();
     }, 60 * 60 * 1000);
-    console.log('[SMS Verification] Service started - checking every hour for unverified outcomes');
+    logger.info('[SMS Verification] Service started - checking every hour for unverified outcomes');
   }
 
   stop() {
@@ -120,7 +121,7 @@ export class SMSVerificationService {
 
   private async sendVerificationSMS(verification: PendingVerification): Promise<boolean> {
     if (!this.checkNgoRateLimit(verification.ngoContactPhone)) {
-      console.warn(`[SMS Verification] Rate limit exceeded for NGO phone ${verification.ngoContactPhone} — skipping SMS for log #${verification.logId}`);
+      logger.warn(`[SMS Verification] Rate limit exceeded for NGO phone ${verification.ngoContactPhone} — skipping SMS for log #${verification.logId}`);
       return false;
     }
 
@@ -133,8 +134,8 @@ export class SMSVerificationService {
       const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
       if (!twilioSid || !twilioToken || !twilioPhone) {
-        console.log(`[SMS Verification] Would send SMS to ${verification.ngoContactPhone}: ${message}`);
-        console.log('[SMS Verification] Twilio not configured - SMS not sent. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER to enable.');
+        logger.info(`[SMS Verification] Would send SMS to ${verification.ngoContactPhone}: ${message}`);
+        logger.info('[SMS Verification] Twilio not configured - SMS not sent. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER to enable.');
         verification.smsSentAt = new Date();
         return false;
       }
@@ -156,17 +157,17 @@ export class SMSVerificationService {
       );
 
       if (response.ok) {
-        console.log(`[SMS Verification] SMS sent to ${verification.ngoName} for log #${verification.logId}`);
+        logger.info(`[SMS Verification] SMS sent to ${verification.ngoName} for log #${verification.logId}`);
         verification.smsSentAt = new Date();
         verification.smsRetryCount++;
         return true;
       } else {
         const error = await response.text();
-        console.error(`[SMS Verification] Failed to send SMS: ${error}`);
+        logger.error(`[SMS Verification] Failed to send SMS: ${error}`);
         return false;
       }
     } catch (error) {
-      console.error('[SMS Verification] Error sending SMS:', error);
+      logger.error('[SMS Verification] Error sending SMS:', error);
       return false;
     }
   }
@@ -205,10 +206,10 @@ export class SMSVerificationService {
 
       this.removeFromQueue(matchedVerification.logId);
 
-      console.log(`[SMS Verification] Log #${matchedVerification.logId} ${action} via SMS from ${from}`);
+      logger.info(`[SMS Verification] Log #${matchedVerification.logId} ${action} via SMS from ${from}`);
       return { success: true, action, logId: matchedVerification.logId };
     } catch (err) {
-      console.error(`[SMS Verification] Failed to process webhook reply:`, err);
+      logger.error(`[SMS Verification] Failed to process webhook reply:`, err);
       return { success: false, action, logId: matchedVerification.logId };
     }
   }

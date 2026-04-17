@@ -1,7 +1,6 @@
-/**
- * Centralized hook for accessing current user ID
- * Replaces scattered localStorage calls throughout the app
- */
+import { useAuth } from "./use-auth";
+
 export function useCurrentUserId(): string | null {
-  return localStorage.getItem('currentUserId');
+  const { dbUser } = useAuth();
+  return dbUser?.id?.toString() ?? localStorage.getItem('currentUserId');
 }

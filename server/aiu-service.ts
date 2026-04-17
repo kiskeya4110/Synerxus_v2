@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 /**
  * AIU (Attributable Impact Units) Service
  *

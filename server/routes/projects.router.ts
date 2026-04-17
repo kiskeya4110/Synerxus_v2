@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertProjectSchema, updateProjectSchema, projectAiuSettings, opportunities, type Project } from "@shared/schema";
@@ -57,7 +58,7 @@ async function syncProjectToOpportunity(project: Project): Promise<void> {
         .update(opportunities)
         .set(opportunityData)
         .where(eq(opportunities.id, existingOpportunity.id));
-      console.log(`[Project->Opportunity] Updated opportunity ${existingOpportunity.id} for project ${project.id}`);
+      logger.info(`[Project->Opportunity] Updated opportunity ${existingOpportunity.id} for project ${project.id}`);
     } else {
       // Create new opportunity
       const [newOpportunity] = await db
@@ -67,10 +68,10 @@ async function syncProjectToOpportunity(project: Project): Promise<void> {
           createdAt: new Date(),
         })
         .returning();
-      console.log(`[Project->Opportunity] Created opportunity ${newOpportunity.id} for project ${project.id}`);
+      logger.info(`[Project->Opportunity] Created opportunity ${newOpportunity.id} for project ${project.id}`);
     }
   } catch (error) {
-    console.error(`[Project->Opportunity] Error syncing project ${project.id}:`, error);
+    logger.error(`[Project->Opportunity] Error syncing project ${project.id}:`, error);
     // Don't throw - we don't want to fail the project operation if opportunity sync fails
   }
 }
@@ -184,10 +185,10 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
 // POST /api/projects - Create new project
 projectsRouter.post("/", async (req: Request, res: Response) => {
   try {
-    console.log("[Projects] Creating project, request body:", JSON.stringify(req.body, null, 2));
+    logger.info("[Projects] Creating project, request body:", JSON.stringify(req.body, null, 2));
     const user = req.user as any;
     const projectData = insertProjectSchema.parse(req.body);
-    console.log("[Projects] Parsed project data:", JSON.stringify(projectData, null, 2));
+    logger.info("[Projects] Parsed project data:", JSON.stringify(projectData, null, 2));
 
     const effectiveOrgId = (user?.organizationId || (req as any).session?.organizationId || projectData.organizationId);
     
@@ -197,7 +198,7 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
 
     const payload = { ...projectData, organizationId: effectiveOrgId };
     const project = await storage.createProject(payload);
-    console.log("[Projects] Project created successfully:", project.id, project.name);
+    logger.info("[Projects] Project created successfully:", project.id, project.name);
 
     // Sync project to opportunities table - each project is discoverable as an opportunity
     await syncProjectToOpportunity(project);
@@ -205,14 +206,14 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
     // Persist org KPIs (fire-and-forget)
     if (project.organizationId) {
       persistOrganizationKPIs(project.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after project creation:", err)
+        logger.error("[KPI] Error persisting KPIs after project creation:", err)
       );
     }
 
     broadcastUpdate("project_created", project);
     res.status(201).json(project);
   } catch (err: any) {
-    console.error("[Projects] Error creating project:", err.message, err.stack);
+    logger.error("[Projects] Error creating project:", err.message, err.stack);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }
@@ -225,26 +226,26 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
     if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
     const user = req.user;
 
-    console.log("[Projects] DELETE request for project:", projectId);
-    console.log("[Projects] User from auth:", user ? { id: user.id, orgId: user.organizationId, type: user.userType } : "NO USER");
+    logger.info("[Projects] DELETE request for project:", projectId);
+    logger.info("[Projects] User from auth:", user ? { id: user.id, orgId: user.organizationId, type: user.userType } : "NO USER");
 
     if (!user) {
-      console.log("[Projects] No user found after auth middleware");
+      logger.info("[Projects] No user found after auth middleware");
       return res.status(401).json({ message: "Authentication required" });
     }
 
     // Get the project to verify ownership
     const project = await storage.getProject(projectId);
     if (!project) {
-      console.log("[Projects] Project not found:", projectId);
+      logger.info("[Projects] Project not found:", projectId);
       return res.status(404).json({ message: "Project not found" });
     }
 
-    console.log("[Projects] Project found:", { id: project.id, orgId: project.organizationId });
+    logger.info("[Projects] Project found:", { id: project.id, orgId: project.organizationId });
 
     // Check if user has permission (must be from the same organization)
     if (project.organizationId !== user.organizationId) {
-      console.log("[Projects] Permission denied. User org:", user.organizationId, "Project org:", project.organizationId);
+      logger.info("[Projects] Permission denied. User org:", user.organizationId, "Project org:", project.organizationId);
       return res.status(403).json({ message: "You don't have permission to delete this project" });
     }
 
@@ -258,10 +259,10 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
 
       if (existingOpportunity) {
         await db.delete(opportunities).where(eq(opportunities.id, existingOpportunity.id));
-        console.log("[Projects] Deleted related opportunity:", existingOpportunity.id);
+        logger.info("[Projects] Deleted related opportunity:", existingOpportunity.id);
       }
     } catch (oppErr) {
-      console.error("[Projects] Error deleting opportunity:", oppErr);
+      logger.error("[Projects] Error deleting opportunity:", oppErr);
       // Continue with project deletion even if opportunity delete fails
     }
 
@@ -269,15 +270,15 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
     const deleted = await storage.deleteProject(projectId);
 
     if (deleted) {
-      console.log("[Projects] Project deleted successfully:", projectId);
+      logger.info("[Projects] Project deleted successfully:", projectId);
       broadcastUpdate("project_deleted", { id: projectId });
       res.status(200).json({ success: true, message: "Project deleted successfully" });
     } else {
-      console.log("[Projects] Failed to delete project:", projectId);
+      logger.info("[Projects] Failed to delete project:", projectId);
       res.status(500).json({ message: "Failed to delete project" });
     }
   } catch (err: any) {
-    console.error("[Projects] Error deleting project:", err.message, err.stack);
+    logger.error("[Projects] Error deleting project:", err.message, err.stack);
     res.status(500).json({ message: "Failed to delete project", error: err.message });
   }
 });
@@ -382,7 +383,7 @@ projectsRouter.get("/:id/metrics", async (req: Request, res: Response) => {
       lastUpdated: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Error fetching project metrics:", err);
+    logger.error("Error fetching project metrics:", err);
     res.status(500).json({ message: "Failed to fetch project metrics" });
   }
 });
@@ -414,7 +415,7 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
     // Persist org KPIs (fire-and-forget)
     if (updatedProject.organizationId) {
       persistOrganizationKPIs(updatedProject.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after project update:", err)
+        logger.error("[KPI] Error persisting KPIs after project update:", err)
       );
     }
 
@@ -454,7 +455,7 @@ projectsRouter.get("/:id/aiu-settings", async (req: Request, res: Response) => {
 
     res.json(settings);
   } catch (err) {
-    console.error("Error fetching AIU settings:", err);
+    logger.error("Error fetching AIU settings:", err);
     res.status(500).json({ message: "Failed to fetch AIU settings" });
   }
 });
@@ -722,12 +723,12 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
                 }
               });
 
-              console.log(`[CSR] Created AIU verified output for ${volunteerUser.email} at employer ${employerIdNum}: ${volunteerData.aiu} AIU`);
+              logger.info(`[CSR] Created AIU verified output for ${volunteerUser.email} at employer ${employerIdNum}: ${volunteerData.aiu} AIU`);
             }
           }
         }
       } catch (csrErr) {
-        console.error("Error updating CSR data for verified AIU:", csrErr);
+        logger.error("Error updating CSR data for verified AIU:", csrErr);
         // Non-critical, don't fail the verification
       }
     }
@@ -751,7 +752,7 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
   } catch (err) {
     // Properly serialize error for logging - prevents [object Object]
     const errorMessage = err instanceof Error ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
-    console.error("Error verifying AIU:", errorMessage);
+    logger.error("Error verifying AIU:", errorMessage);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }
@@ -770,7 +771,7 @@ projectsRouter.post("/sync-opportunities", async (req: Request, res: Response) =
         await syncProjectToOpportunity(project);
         synced++;
       } catch (err) {
-        console.error(`Failed to sync project ${project.id}:`, err);
+        logger.error(`Failed to sync project ${project.id}:`, err);
         errors++;
       }
     }
@@ -782,7 +783,7 @@ projectsRouter.post("/sync-opportunities", async (req: Request, res: Response) =
       errors,
     });
   } catch (err) {
-    console.error("Error syncing projects to opportunities:", err);
+    logger.error("Error syncing projects to opportunities:", err);
     res.status(500).json({ message: "Failed to sync projects to opportunities" });
   }
 });

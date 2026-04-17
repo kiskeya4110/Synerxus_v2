@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest, getAuthHeaders } from "@/lib/queryClient";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useNotifications } from "@/hooks/use-notifications";
 import {
   FolderOpen, Users, Plus, User,
   Bell, LogOut, Menu, X, MoreVertical, Home, ClipboardList,
@@ -59,7 +61,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const userId = localStorage.getItem('currentUserId');
+  const userIdStr = useCurrentUserId();
+  const userId = userIdStr ? parseInt(userIdStr) : null;
 
   // Don't render web header on PWA routes or mobile devices
   const isPwaRoute = location.endsWith('/pwa');
@@ -68,37 +71,22 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
     return null;
   }
 
-  // Fetch notifications for organization user
-  const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
-    queryKey: ["/api/notifications", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
-      if (!response.ok) return [];
-      return response.json();
-    },
-    enabled: !!userId,
-    staleTime: 0, // Always fetch fresh data after invalidation
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchInterval: 60000, // Refetch every minute as backup
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-  });
-
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
+  const { notifications, unreadCount, refetch: refetchNotifications, markAsRead } = useNotifications(userId);
 
   // Fetch application details when a notification is selected
   const { data: applicationDetails } = useQuery({
     queryKey: ["/api/applications", selectedNotification?.relatedEntityId],
     queryFn: async () => {
       if (!selectedNotification?.relatedEntityId || selectedNotification?.relatedEntityType !== 'application') return null;
-      const response = await fetch(`/api/applications/${selectedNotification.relatedEntityId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/applications/${selectedNotification.relatedEntityId}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       const app = await response.json();
 
       // Fetch opportunity and volunteer details
       const [oppRes, volRes] = await Promise.all([
-        fetch(`/api/opportunities/${app.opportunityId}`),
-        fetch(`/api/users/${app.volunteerId}`)
+        fetch(`/api/opportunities/${app.opportunityId}`, { headers, credentials: "include" }),
+        fetch(`/api/users/${app.volunteerId}`, { headers, credentials: "include" })
       ]);
 
       return {
@@ -115,7 +103,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
     queryKey: ["/api/intake/volunteer-profile", applicationDetails?.volunteerId],
     queryFn: async () => {
       if (!applicationDetails?.volunteerId) return null;
-      const response = await fetch(`/api/intake/volunteer-profile?userId=${applicationDetails.volunteerId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${applicationDetails.volunteerId}`, { headers, credentials: "include" });
       if (!response.ok) return null;
       return response.json();
     },
@@ -128,7 +117,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
       return await apiRequest("POST", `/api/applications/${applicationId}/review`, {
         status,
         notes,
-        reviewerId: parseInt(userId || "0")
+        reviewerId: userId ?? 0
       });
     },
     onSuccess: (_, variables) => {
@@ -153,18 +142,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
   const handleNotificationClick = async (notification: any) => {
     try {
-      // Mark notification as read on backend
-      const response = await fetch(`/api/notifications/${notification.id}/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark notification as read');
-      }
-
-      // Invalidate cache to refresh notification list
-      await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+      markAsRead(notification.id);
 
       // For application notifications, show details in panel instead of navigating
       const notificationType = notification.type || '';

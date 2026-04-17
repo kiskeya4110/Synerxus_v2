@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { Opportunity, VolunteerProfile, User } from "@shared/schema";
 import { normalizeSkillsWithSynonyms, normalizeSkillWithSynonyms, findPartialMatch } from "./skill-synonyms";
 
@@ -82,7 +83,7 @@ export async function getMatchingWeights(): Promise<MatchingWeights> {
       return cachedWeights;
     }
   } catch (error) {
-    console.warn("Could not fetch matching weights from database, using defaults:", error);
+    logger.warn("Could not fetch matching weights from database, using defaults:", error);
   }
 
   return DEFAULT_WEIGHTS;
@@ -117,7 +118,7 @@ export async function getVolunteerCompletionRate(volunteerId: number): Promise<n
     const baseRate = completed / relevantAssignments.length;
     return baseRate;
   } catch (error) {
-    console.warn("Could not calculate volunteer completion rate:", error);
+    logger.warn("Could not calculate volunteer completion rate:", error);
     return undefined;
   }
 }
@@ -943,10 +944,10 @@ export function findTopVolunteers(
     matchReasons: string[];
   }
 > {
-  console.log(`[findTopVolunteers] Input: ${volunteers.length} volunteers, limit=${limit}`);
+  logger.info(`[findTopVolunteers] Input: ${volunteers.length} volunteers, limit=${limit}`);
 
   const volunteerTypeFiltered = volunteers.filter((vol) => vol.userType === "volunteer");
-  console.log(`[findTopVolunteers] After userType filter: ${volunteerTypeFiltered.length} volunteers`);
+  logger.info(`[findTopVolunteers] After userType filter: ${volunteerTypeFiltered.length} volunteers`);
 
   const scoredVolunteers = volunteerTypeFiltered
     .map((vol) => {
@@ -960,7 +961,7 @@ export function findTopVolunteers(
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, limit);
 
-  console.log(`[findTopVolunteers] Output: ${scoredVolunteers.length} volunteers, top score: ${scoredVolunteers[0]?.matchScore || 'N/A'}`);
+  logger.info(`[findTopVolunteers] Output: ${scoredVolunteers.length} volunteers, top score: ${scoredVolunteers[0]?.matchScore || 'N/A'}`);
   return scoredVolunteers;
 }
 
@@ -1050,7 +1051,7 @@ export async function trackMatchAnalytics(
     });
   } catch (error) {
     // Non-critical - log but don't fail the match operation
-    console.warn("Failed to track match analytics:", error);
+    logger.warn("Failed to track match analytics:", error);
   }
 }
 
@@ -1074,7 +1075,7 @@ export async function updateMatchOutcome(
       await storage.updateMatchAnalytics?.(existing.id, { outcome });
     }
   } catch (error) {
-    console.warn("Failed to update match outcome:", error);
+    logger.warn("Failed to update match outcome:", error);
   }
 }
 
@@ -1095,7 +1096,7 @@ export async function recordMatchFeedback(
       await storage.updateMatchAnalytics?.(existing.id, { volunteerFeedback: feedback });
     }
   } catch (error) {
-    console.warn("Failed to record match feedback:", error);
+    logger.warn("Failed to record match feedback:", error);
   }
 }
 
@@ -1157,7 +1158,7 @@ export async function getMatchEffectivenessMetrics(): Promise<{
       conversionRate: Math.round(conversionRate * 10) / 10,
     };
   } catch (error) {
-    console.warn("Failed to get match effectiveness metrics:", error);
+    logger.warn("Failed to get match effectiveness metrics:", error);
     return {
       totalMatches: 0,
       avgScore: 0,

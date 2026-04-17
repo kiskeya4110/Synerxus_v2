@@ -1,6 +1,7 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import {
@@ -112,6 +113,7 @@ const headerNavItems = [
 export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", hideHeader = false }: CSRLayoutProps) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
+  const userId = useCurrentUserId();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -205,7 +207,6 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
   };
 
   // Fetch CSR partner data to get company name
-  const userId = localStorage.getItem("currentUserId");
 
   const { data: csrPartner } = useQuery({
     queryKey: ["/api/csr/partners", userId],

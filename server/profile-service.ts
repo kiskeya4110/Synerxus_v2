@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { db } from "./db";
 import { users, volunteerProfiles, organizations, organizationProfiles, matchableOrganizations } from "@shared/schema";
 import { eq } from "drizzle-orm";

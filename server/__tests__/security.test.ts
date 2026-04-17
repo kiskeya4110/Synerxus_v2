@@ -1,4 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Force TokenBlacklist to always use its in-memory fallback Map by making Redis throw
+vi.mock("../redis", () => ({
+  getRedisClient: vi.fn().mockRejectedValue(new Error("Redis not available in tests")),
+}));
+
 import {
   tokenBlacklist,
   generateTokenPair,
@@ -9,27 +15,26 @@ import {
 describe("Security Middleware", () => {
   describe("TokenBlacklist", () => {
     beforeEach(() => {
-      // Clear blacklist between tests
-      (tokenBlacklist as any).blacklist.clear();
+      (tokenBlacklist as any).fallback.clear();
     });
 
-    it("should add token to blacklist", () => {
+    it("should add token to blacklist", async () => {
       const token = "test-token-123";
-      const expiresAt = Date.now() + 3600000; // 1 hour from now
+      const expiresAt = Date.now() + 3600000;
 
-      tokenBlacklist.add(token, expiresAt);
+      await tokenBlacklist.add(token, expiresAt);
 
-      expect(tokenBlacklist.isBlacklisted(token)).toBe(true);
+      expect(await tokenBlacklist.isBlacklisted(token)).toBe(true);
     });
 
-    it("should return false for non-blacklisted token", () => {
-      expect(tokenBlacklist.isBlacklisted("unknown-token")).toBe(false);
+    it("should return false for non-blacklisted token", async () => {
+      expect(await tokenBlacklist.isBlacklisted("unknown-token")).toBe(false);
     });
 
-    it("should track blacklist size", () => {
-      tokenBlacklist.add("token1", Date.now() + 3600000);
-      tokenBlacklist.add("token2", Date.now() + 3600000);
-      tokenBlacklist.add("token3", Date.now() + 3600000);
+    it("should track blacklist size", async () => {
+      await tokenBlacklist.add("token1", Date.now() + 3600000);
+      await tokenBlacklist.add("token2", Date.now() + 3600000);
+      await tokenBlacklist.add("token3", Date.now() + 3600000);
 
       expect(tokenBlacklist.size()).toBe(3);
     });
@@ -51,7 +56,7 @@ describe("Security Middleware", () => {
       expect(tokens).toHaveProperty("expiresIn");
       expect(typeof tokens.accessToken).toBe("string");
       expect(typeof tokens.refreshToken).toBe("string");
-      expect(tokens.expiresIn).toBe(15 * 60); // 15 minutes
+      expect(tokens.expiresIn).toBe(15 * 60);
     });
 
     it("should generate different access and refresh tokens", () => {
@@ -69,9 +74,9 @@ describe("Security Middleware", () => {
       organizationId: null,
     };
 
-    it("should verify valid refresh token", () => {
+    it("should verify valid refresh token", async () => {
       const tokens = generateTokenPair(testUser);
-      const payload = verifyRefreshToken(tokens.refreshToken);
+      const payload = await verifyRefreshToken(tokens.refreshToken);
 
       expect(payload).not.toBeNull();
       expect(payload?.userId).toBe(testUser.id);
@@ -79,26 +84,25 @@ describe("Security Middleware", () => {
       expect(payload?.type).toBe("refresh");
     });
 
-    it("should reject access token as refresh token", () => {
+    it("should reject access token as refresh token", async () => {
       const tokens = generateTokenPair(testUser);
-      const payload = verifyRefreshToken(tokens.accessToken);
+      const payload = await verifyRefreshToken(tokens.accessToken);
 
       expect(payload).toBeNull();
     });
 
-    it("should reject invalid token", () => {
-      const payload = verifyRefreshToken("invalid-token");
+    it("should reject invalid token", async () => {
+      const payload = await verifyRefreshToken("invalid-token");
 
       expect(payload).toBeNull();
     });
 
-    it("should reject blacklisted refresh token", () => {
+    it("should reject blacklisted refresh token", async () => {
       const tokens = generateTokenPair(testUser);
 
-      // Blacklist the refresh token
-      blacklistToken(tokens.refreshToken);
+      await blacklistToken(tokens.refreshToken);
 
-      const payload = verifyRefreshToken(tokens.refreshToken);
+      const payload = await verifyRefreshToken(tokens.refreshToken);
       expect(payload).toBeNull();
     });
   });
@@ -112,22 +116,21 @@ describe("Security Middleware", () => {
     };
 
     beforeEach(() => {
-      (tokenBlacklist as any).blacklist.clear();
+      (tokenBlacklist as any).fallback.clear();
     });
 
-    it("should blacklist a valid JWT token", () => {
+    it("should blacklist a valid JWT token", async () => {
       const tokens = generateTokenPair(testUser);
 
-      blacklistToken(tokens.accessToken);
+      await blacklistToken(tokens.accessToken);
 
-      expect(tokenBlacklist.isBlacklisted(tokens.accessToken)).toBe(true);
+      expect(await tokenBlacklist.isBlacklisted(tokens.accessToken)).toBe(true);
     });
 
-    it("should handle invalid token gracefully", () => {
+    it("should handle invalid token gracefully", async () => {
       const invalidToken = "not-a-real-jwt";
 
-      // Should not throw
-      expect(() => blacklistToken(invalidToken)).not.toThrow();
+      await expect(blacklistToken(invalidToken)).resolves.not.toThrow();
     });
   });
 });

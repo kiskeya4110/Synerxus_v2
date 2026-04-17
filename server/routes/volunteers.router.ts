@@ -1,9 +1,10 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { findTopVolunteers } from "../matching-algorithm";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requireDataConsent } from "../middleware/auth";
 
 export const volunteersRouter = Router();
 
@@ -46,7 +47,7 @@ volunteersRouter.get("/me", authMiddleware, async (req: Request, res: Response) 
 
     res.json(volunteer);
   } catch (err) {
-    console.error("Error fetching current user's volunteer profile:", err);
+    logger.error("Error fetching current user's volunteer profile:", err);
     res.status(500).json({ message: "Failed to fetch volunteer profile" });
   }
 });
@@ -64,6 +65,13 @@ volunteersRouter.get("/profile/:userId", authMiddleware, async (req: Request, re
     const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.dataConsent) {
+      return res.status(403).json({
+        error: "CONSENT_REQUIRED",
+        message: "This volunteer has not consented to data processing.",
+      });
     }
 
     // Get volunteer profile
@@ -88,7 +96,7 @@ volunteersRouter.get("/profile/:userId", authMiddleware, async (req: Request, re
       volunteerProfile: mergedProfile
     });
   } catch (err) {
-    console.error("Error fetching volunteer profile:", err);
+    logger.error("Error fetching volunteer profile:", err);
     res.status(500).json({ message: "Failed to fetch volunteer profile" });
   }
 });
@@ -117,7 +125,7 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
 
     // Get the actual organization ID from the user record
     const orgId = user.organizationId;
-    console.log(`[Matches API] User ${userIdNum} has organizationId: ${orgId}`);
+    logger.info(`[Matches API] User ${userIdNum} has organizationId: ${orgId}`);
     if (!orgId) {
       return res.status(400).json({ message: "Organization user does not have an associated organization" });
     }
@@ -125,11 +133,11 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
     // Get organization's open opportunities to match against
     const orgOpportunities = await storage.listOpportunitiesByOrganization(orgId);
     const openOpportunities = orgOpportunities.filter(opp => opp.status === 'open');
-    console.log(`[Matches API] Found ${orgOpportunities.length} total opportunities, ${openOpportunities.length} open`);
+    logger.info(`[Matches API] Found ${orgOpportunities.length} total opportunities, ${openOpportunities.length} open`);
 
     if (openOpportunities.length === 0) {
       // No opportunities to match against - return empty array
-      console.log(`[Matches API] No open opportunities found for org ${orgId}`);
+      logger.info(`[Matches API] No open opportunities found for org ${orgId}`);
       return res.json([]);
     }
 
@@ -159,17 +167,17 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
     // Match volunteers against the organization's most representative opportunity
     // (using first open opportunity as baseline)
     const representativeOpportunity = openOpportunities[0];
-    console.log(`[Matches API] Matching against opportunity: "${representativeOpportunity.title}" (ID: ${representativeOpportunity.id})`);
-    console.log(`[Matches API] Opportunity required skills: ${JSON.stringify(representativeOpportunity.requiredSkills)}`);
-    console.log(`[Matches API] Opportunity SDGs: ${JSON.stringify(representativeOpportunity.sdgGoals)}, primary: ${representativeOpportunity.primarySdg}`);
-    console.log(`[Matches API] Total volunteers to match: ${volunteersWithProfiles.length}`);
+    logger.info(`[Matches API] Matching against opportunity: "${representativeOpportunity.title}" (ID: ${representativeOpportunity.id})`);
+    logger.info(`[Matches API] Opportunity required skills: ${JSON.stringify(representativeOpportunity.requiredSkills)}`);
+    logger.info(`[Matches API] Opportunity SDGs: ${JSON.stringify(representativeOpportunity.sdgGoals)}, primary: ${representativeOpportunity.primarySdg}`);
+    logger.info(`[Matches API] Total volunteers to match: ${volunteersWithProfiles.length}`);
 
     const matchedVolunteers = findTopVolunteers(
       representativeOpportunity,
       volunteersWithProfiles as any,
       100 // Get all volunteers, will filter by threshold
     );
-    console.log(`[Matches API] findTopVolunteers returned ${matchedVolunteers.length} volunteers`);
+    logger.info(`[Matches API] findTopVolunteers returned ${matchedVolunteers.length} volunteers`);
 
     // Helper to normalize skill names for comparison
     const normalizeSkill = (skill: any): string => {
@@ -193,7 +201,7 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
 
     // Log top scores before filtering
     const topScores = matchedVolunteers.slice(0, 5).map((v: any) => ({ name: v.displayName, score: v.matchScore }));
-    console.log(`[Matches API] Top 5 match scores before threshold (${threshold}): ${JSON.stringify(topScores)}`);
+    logger.info(`[Matches API] Top 5 match scores before threshold (${threshold}): ${JSON.stringify(topScores)}`);
 
     // Filter by threshold and enrich with computed matching data
     const enrichedVolunteers = matchedVolunteers
@@ -270,7 +278,7 @@ volunteersRouter.get("/matches", authMiddleware, async (req: Request, res: Respo
 
     res.json(enrichedVolunteers);
   } catch (err) {
-    console.error("Error fetching matched volunteers:", err);
+    logger.error("Error fetching matched volunteers:", err);
     res.status(500).json({ message: "Failed to fetch matched volunteers", error: err instanceof Error ? err.message : String(err) });
   }
 });
@@ -365,7 +373,7 @@ volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) =>
     const volunteers = await storage.listVolunteers();
     res.json(volunteers);
   } catch (err) {
-    console.error("Error fetching volunteers:", err);
+    logger.error("Error fetching volunteers:", err);
     res.status(500).json({ message: "Failed to fetch volunteers" });
   }
 });
@@ -377,10 +385,10 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
     // SECURITY: Use authenticated user from session
     const requestingUser = getAuthenticatedUser(req, res);
     if (!requestingUser) return;
-    console.log(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
+    logger.info(`[Performance API] Fetching performance data for volunteer ${volunteerId}`);
 
     if (!volunteerId || isNaN(volunteerId)) {
-      console.error(`[Performance API] Invalid volunteer ID: ${req.params.id}`);
+      logger.error(`[Performance API] Invalid volunteer ID: ${req.params.id}`);
       return res.status(400).json({ error: "Invalid volunteer ID" });
     }
 
@@ -397,7 +405,7 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
       const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
       const hasOrgProject = volunteerAssignments.some(a => orgProjectIds.has(a.projectId));
       if (!hasOrgProject) {
-        console.log(`[Performance API] Org ${requestingUser.organizationId} denied - volunteer not on their projects`);
+        logger.info(`[Performance API] Org ${requestingUser.organizationId} denied - volunteer not on their projects`);
         return res.status(403).json({ error: "You can only view performance data for volunteers assigned to your projects" });
       }
     }
@@ -413,18 +421,18 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
     // Safely fetch volunteer activities
     try {
       activities = await storage.listVolunteerActivitiesByUser(volunteerId);
-      console.log(`[Performance API] Found ${activities.length} activities for volunteer ${volunteerId}`);
+      logger.info(`[Performance API] Found ${activities.length} activities for volunteer ${volunteerId}`);
     } catch (error) {
-      console.error(`[Performance API] Error fetching activities:`, error);
+      logger.error(`[Performance API] Error fetching activities:`, error);
       activities = [];
     }
 
     // Safely fetch volunteer projects
     try {
       projectAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
-      console.log(`[Performance API] Found ${projectAssignments.length} project assignments for volunteer ${volunteerId}`);
+      logger.info(`[Performance API] Found ${projectAssignments.length} project assignments for volunteer ${volunteerId}`);
     } catch (error) {
-      console.error(`[Performance API] Error fetching project assignments:`, error);
+      logger.error(`[Performance API] Error fetching project assignments:`, error);
       projectAssignments = [];
     }
 
@@ -526,7 +534,7 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
     // If no data exists, generate demo data for better UX
     let finalData;
     if (activities.length === 0 && projectAssignments.length === 0) {
-      console.log(`[Performance API] No real data found. Generating demo data for volunteer ${volunteerId}`);
+      logger.info(`[Performance API] No real data found. Generating demo data for volunteer ${volunteerId}`);
 
       // Generate realistic demo data
       const demoTotalHours = Math.floor(Math.random() * 100) + 50; // 50-150 hours
@@ -623,10 +631,10 @@ volunteersRouter.get("/:id/performance", authMiddleware, async (req: Request, re
       };
     }
 
-    console.log(`[Performance API] Returning data:`, JSON.stringify(finalData, null, 2));
+    logger.info(`[Performance API] Returning data:`, JSON.stringify(finalData, null, 2));
     res.json(finalData);
   } catch (error) {
-    console.error("[Performance API] Critical error, returning demo data:", error);
+    logger.error("[Performance API] Critical error, returning demo data:", error);
 
     // Return demo data even on error to ensure UI always works
     const errorDemoData = {
@@ -681,7 +689,7 @@ volunteersRouter.get("/:id", async (req: Request, res: Response) => {
 
     res.json(volunteer);
   } catch (err) {
-    console.error("Error fetching volunteer:", err);
+    logger.error("Error fetching volunteer:", err);
     res.status(500).json({ message: "Failed to fetch volunteer" });
   }
 });
@@ -732,7 +740,7 @@ volunteersRouter.delete("/:id", async (req: Request, res: Response) => {
     broadcastUpdate("volunteer_deleted", { id: volunteerId });
     res.status(204).send();
   } catch (err) {
-    console.error("Error deleting volunteer:", err);
+    logger.error("Error deleting volunteer:", err);
     res.status(500).json({ message: "Failed to delete volunteer" });
   }
 });
@@ -756,7 +764,7 @@ volunteersRouter.post("/:id/simulate-match", async (req: Request, res: Response)
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error("Error simulating match:", err);
+    logger.error("Error simulating match:", err);
     res.status(500).json({ error: "Failed to simulate match" });
   }
 });
@@ -892,7 +900,7 @@ volunteersRouter.get("/spotlight", async (req: Request, res: Response) => {
       return res.json({ spotlight: null });
     }
   } catch (err) {
-    console.error("Error fetching spotlight:", err);
+    logger.error("Error fetching spotlight:", err);
     res.status(500).json({ message: "Failed to fetch spotlight" });
   }
 });
@@ -913,7 +921,7 @@ volunteersRouter.post("/employers", async (req: Request, res: Response) => {
 
     res.json(link);
   } catch (err) {
-    console.error("Error linking volunteer to employer:", err);
+    logger.error("Error linking volunteer to employer:", err);
     res.status(500).json({ error: "Failed to link employer" });
   }
 });
@@ -925,7 +933,7 @@ volunteersRouter.get("/employers/:volunteerId", async (req: Request, res: Respon
     const link = await storage.getVolunteerEmployerLink?.(parseInt(volunteerId));
     res.json(link || null);
   } catch (err) {
-    console.error("Error fetching employer link:", err);
+    logger.error("Error fetching employer link:", err);
     res.status(500).json({ error: "Failed to fetch employer" });
   }
 });

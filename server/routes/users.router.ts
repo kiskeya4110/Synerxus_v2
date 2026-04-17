@@ -5,6 +5,7 @@ import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { authRateLimiter, secureCookieOptions } from "../middleware/security";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth";
 import { generateTokenPair, blacklistToken, verifyRefreshToken } from "../middleware/security";
+import { logger } from "../logger";
 
 /** Cookie options for the auth JWT — 15 min lifetime matches access token expiry */
 const AUTH_COOKIE_OPTIONS = {
@@ -370,5 +371,18 @@ usersRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) =>
   } catch (err) {
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
+  }
+});
+
+// DELETE /api/users/me — GDPR Article 17 right to erasure
+usersRouter.delete("/me", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const result = await storage.deleteUserAndData(userId);
+    res.clearCookie("authToken");
+    res.json({ message: "Account and associated data deleted", deletedTables: result.deletedTables });
+  } catch (err) {
+    logger.error("[GDPR] Account deletion failed for userId:", req.user?.id);
+    res.status(500).json({ message: "Failed to delete account" });
   }
 });

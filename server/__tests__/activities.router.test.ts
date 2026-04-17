@@ -40,6 +40,11 @@ const mockStorage = {
   updateAIUSetting: vi.fn(),
   // For permission checking in approval routes
   listOrganizationMembers: vi.fn(),
+  markNotificationsReadByEntity: vi.fn().mockResolvedValue(undefined),
+  createVerificationAuditLog: vi.fn().mockResolvedValue({ id: 1 }),
+  listVolunteerEmployerLinks: vi.fn().mockResolvedValue([]),
+  listCSRPartners: vi.fn().mockResolvedValue([]),
+  listUsers: vi.fn().mockResolvedValue([]),
 };
 
 // Mock the storage module - hoisted to top
@@ -154,9 +159,9 @@ describe('Activities Router', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.verificationStatus).toBe('approved');
-      expect(mockStorage.updateVolunteerActivity).toHaveBeenCalledWith(1, {
-        verificationStatus: 'approved',
-      });
+      expect(mockStorage.updateVolunteerActivity).toHaveBeenCalledWith(1,
+        expect.objectContaining({ verificationStatus: 'approved' })
+      );
     });
 
     it('should return 404 for non-existent activity', async () => {

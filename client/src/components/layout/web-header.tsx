@@ -6,6 +6,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "@/components/ui/logo";
@@ -20,7 +21,7 @@ export default function WebHeader({ transparent = false, activeTab }: WebHeaderP
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const userId = localStorage.getItem('currentUserId');
+  const userId = useCurrentUserId();
 
   // Fetch current user
   const { data: currentUser, isError: isUserError, refetch: refetchUser } = useQuery<UserType>({

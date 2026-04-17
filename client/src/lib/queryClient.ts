@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { auth } from "./firebase";
+import logger from "./logger";
 
 /**
  * Get current Firebase user's ID token for API authentication
@@ -14,7 +15,7 @@ export async function getAuthToken(): Promise<string | null> {
       return await user.getIdToken();
     }
   } catch (error) {
-    console.error("Error getting auth token:", error);
+    logger.error("Error getting auth token:", error);
   }
   return null;
 }
@@ -65,13 +66,13 @@ export async function authenticatedFetch<T>(url: string): Promise<T | null> {
     });
 
     if (!response.ok) {
-      console.error(`[authenticatedFetch] GET ${url} failed with status ${response.status}`);
+      logger.error(`[authenticatedFetch] GET ${url} failed with status ${response.status}`);
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error(`[authenticatedFetch] Error fetching ${url}:`, error);
+    logger.error(`[authenticatedFetch] Error fetching ${url}:`, error);
     return null;
   }
 }
@@ -92,13 +93,13 @@ export async function authenticatedPost<T>(url: string, data: unknown): Promise<
     });
 
     if (!response.ok) {
-      console.error(`[authenticatedPost] POST ${url} failed with status ${response.status}`);
+      logger.error(`[authenticatedPost] POST ${url} failed with status ${response.status}`);
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error(`[authenticatedPost] Error posting to ${url}:`, error);
+    logger.error(`[authenticatedPost] Error posting to ${url}:`, error);
     return null;
   }
 }
@@ -129,7 +130,7 @@ export async function apiRequest(
   });
 
   if (!res.ok) {
-    console.error(`[apiRequest] ${method} ${url} failed with status ${res.status}`);
+    logger.error(`[apiRequest] ${method} ${url} failed with status ${res.status}`);
   }
 
   await throwIfResNotOk(res);

@@ -3,18 +3,18 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 export default function MobileNav() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const userId = localStorage.getItem('currentUserId');
+  const userId = useCurrentUserId();
   const { data: currentUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return null;
-      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) return null;
       return response.json();
     },

@@ -10,9 +10,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useAIUDisplay } from "@/hooks/use-feature-flags";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
-import { getAuthHeaders } from "@/lib/queryClient";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useNotifications, type Notification as AppNotification } from "@/hooks/use-notifications";
 import type { Notification, User as UserType } from "@shared/schema";
 
 interface OrganizationPWAHeaderProps {
@@ -42,79 +43,31 @@ export default function OrganizationPWAHeader({
   const isAIUEnabled = useAIUDisplay();
   const [showMenu, setShowMenu] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const userId = localStorage.getItem('currentUserId');
+  const userIdStr = useCurrentUserId();
+  const userId = userIdStr ? parseInt(userIdStr) : null;
 
-  // Fetch current user to check admin status
   const { data: currentUser } = useQuery<UserType>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
-      const response = await fetch(url);
-      return response.ok ? response.json() : null;
-    },
-    enabled: !!userId
-  });
-
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
-      return response.ok ? response.json() : [];
-    },
+    queryKey: ["/api/users/me"],
     enabled: !!userId,
-    staleTime: 30000,
-    refetchInterval: 60000,
   });
 
-  // Mark notification as read mutation
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAsReadPending,
+    clearAll,
+    clearAllPending,
+    deleteOne,
+    deleteOnePending,
+    deleteAll,
+    deleteAllPending,
+  } = useNotifications(userId);
 
-  // Clear all notifications mutation (mark all as read)
-  const clearAllNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Delete notification mutation (soft delete with timestamp)
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Delete all notifications mutation
-  const deleteAllNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Get unread notifications count
-  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+  const markAsReadMutation = { mutate: markAsRead, isPending: markAsReadPending };
+  const clearAllNotificationsMutation = { mutate: () => clearAll(), isPending: clearAllPending };
+  const deleteNotificationMutation = { mutate: deleteOne, isPending: deleteOnePending };
+  const deleteAllNotificationsMutation = { mutate: () => deleteAll(), isPending: deleteAllPending };
 
   // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
@@ -148,7 +101,7 @@ export default function OrganizationPWAHeader({
   };
 
   // Get navigation path for notification (MVP routes only)
-  const getNotificationPath = (notification: Notification): string => {
+  const getNotificationPath = (notification: AppNotification): string => {
     const { type, relatedEntityType, relatedEntityId } = notification;
 
     switch (type) {
@@ -171,7 +124,7 @@ export default function OrganizationPWAHeader({
   };
 
   // Handle notification click
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: AppNotification) => {
     if (!notification.read) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -502,7 +455,7 @@ export default function OrganizationPWAHeader({
                   <p className="text-slate-400 text-xs mt-1">You'll see updates here when there's activity</p>
                 </div>
               ) : (
-                notifications.slice(0, 10).map((notification: Notification) => {
+                notifications.slice(0, 10).map((notification: AppNotification) => {
                   const { icon: NotifIcon, bg } = getNotificationIcon(notification.type);
                   const isUnread = !notification.read;
 

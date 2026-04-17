@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { storage } from "./storage";
 import { calculateMatchScore } from "./matching-algorithm";
 import { User, Opportunity, Project } from "@shared/schema";
@@ -54,7 +55,7 @@ export async function getVisibleProjectIdsForVolunteer(
       }
     });
   } catch (error) {
-    console.error("Error loading applications for visible project IDs:", error);
+    logger.error("Error loading applications for visible project IDs:", error);
   }
 
   // Optionally include AI-matched opportunities with high scores
@@ -67,7 +68,7 @@ export async function getVisibleProjectIdsForVolunteer(
         }
       });
     } catch (error) {
-      console.error("Error getting AI-matched projects:", error);
+      logger.error("Error getting AI-matched projects:", error);
       // Continue without AI matches if there's an error
     }
   }
@@ -346,7 +347,7 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
 
     return allItems;
   } catch (error) {
-    console.error("Error getting projects for volunteer:", error);
+    logger.error("Error getting projects for volunteer:", error);
     throw error;
   }
 }
@@ -869,7 +870,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
       const orgAiuSummary = await calculateOrganizationAIU(organizationId);
       organizationTotalAiu = orgAiuSummary?.totalAiu || 0;
     } catch (error) {
-      console.error(`[Dashboard] Failed to calculate AIU for organization ${organizationId}:`, error);
+      logger.error(`[Dashboard] Failed to calculate AIU for organization ${organizationId}:`, error);
     }
 
     // Calculate total hours for proportional AIU distribution
@@ -1026,7 +1027,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
 
     return result;
   } catch (error) {
-    console.error("Error getting dashboard data for organization:", error);
+    logger.error("Error getting dashboard data for organization:", error);
     throw error;
   }
 }
@@ -1461,7 +1462,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const aiuSummary = await calculateVolunteerAIU(userId);
       volunteerTotalAiu = aiuSummary?.totalAiu || 0;
     } catch (error) {
-      console.error(`[Dashboard] Failed to calculate AIU for volunteer ${userId}:`, error);
+      logger.error(`[Dashboard] Failed to calculate AIU for volunteer ${userId}:`, error);
     }
 
     // Compute real monthly impact data (hours, people impacted, and AIU) using shared utility
@@ -1543,7 +1544,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     return result;
   } catch (error) {
-    console.error("Error getting dashboard data for volunteer:", error);
+    logger.error("Error getting dashboard data for volunteer:", error);
     throw error;
   }
 }
@@ -1628,7 +1629,7 @@ export async function getSDGContributionsForOrganization(userId: number) {
       totalEngagementHours: totalHours,
     };
   } catch (error) {
-    console.error("Error getting SDG contributions for organization:", error);
+    logger.error("Error getting SDG contributions for organization:", error);
     throw error;
   }
 }

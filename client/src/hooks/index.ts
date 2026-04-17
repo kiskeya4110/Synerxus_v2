@@ -40,8 +40,9 @@ export { useOnboarding } from "./use-onboarding";
 // Mobile detection
 export { useIsMobile } from "./use-mobile";
 
-// User ID
+// User ID and type
 export { useCurrentUserId } from "./use-current-user-id";
+export { useUserType } from "./use-user-type";
 
 // Animation
 export { useCounterAnimation } from "./use-counter-animation";

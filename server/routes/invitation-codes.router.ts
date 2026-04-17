@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import { insertInvitationCodeSchema } from "@shared/schema";
@@ -26,7 +27,7 @@ invitationCodesRouter.get("/", authMiddleware, async (req: Request, res: Respons
     const codes = await storage.listInvitationCodes(user.organizationId || undefined);
     res.json(codes);
   } catch (err) {
-    console.error("Error fetching invitation codes:", err);
+    logger.error("Error fetching invitation codes:", err);
     res.status(500).json({ message: "Failed to fetch invitation codes" });
   }
 });
@@ -67,7 +68,7 @@ invitationCodesRouter.post("/", authMiddleware, async (req: Request, res: Respon
 
     res.status(201).json(invitationCode);
   } catch (err) {
-    console.error("Error creating invitation code:", err);
+    logger.error("Error creating invitation code:", err);
     res.status(500).json({ message: "Failed to create invitation code" });
   }
 });
@@ -89,7 +90,7 @@ invitationCodesRouter.post("/validate", async (req: Request, res: Response) => {
 
     res.json(validation);
   } catch (err) {
-    console.error("Error validating invitation code:", err);
+    logger.error("Error validating invitation code:", err);
     res.status(500).json({ valid: false, message: "Failed to validate invitation code" });
   }
 });
@@ -112,7 +113,7 @@ invitationCodesRouter.post("/:code/use", async (req: Request, res: Response) => 
 
     res.json({ success: true, message: "Invitation code used successfully" });
   } catch (err) {
-    console.error("Error using invitation code:", err);
+    logger.error("Error using invitation code:", err);
     res.status(500).json({ message: "Failed to use invitation code" });
   }
 });
@@ -132,7 +133,7 @@ invitationCodesRouter.delete("/:id", authMiddleware, async (req: Request, res: R
     await storage.deactivateInvitationCode(parseInt(id));
     res.json({ success: true, message: "Invitation code deactivated" });
   } catch (err) {
-    console.error("Error deactivating invitation code:", err);
+    logger.error("Error deactivating invitation code:", err);
     res.status(500).json({ message: "Failed to deactivate invitation code" });
   }
 });
@@ -148,7 +149,7 @@ invitationCodesRouter.get("/settings", async (req: Request, res: Response) => {
       updatedAt: inviteOnly?.updatedAt
     });
   } catch (err) {
-    console.error("Error fetching platform settings:", err);
+    logger.error("Error fetching platform settings:", err);
     res.status(500).json({ message: "Failed to fetch platform settings" });
   }
 });
@@ -175,7 +176,7 @@ invitationCodesRouter.put("/settings", authMiddleware, async (req: Request, res:
 
     res.json({ success: true, inviteOnlyMode });
   } catch (err) {
-    console.error("Error updating platform settings:", err);
+    logger.error("Error updating platform settings:", err);
     res.status(500).json({ message: "Failed to update platform settings" });
   }
 });

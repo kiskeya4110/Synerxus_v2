@@ -13,6 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useUserType } from "@/hooks/use-user-type";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "@/components/ui/logo";
 import { getAuthHeaders } from "@/lib/queryClient";
@@ -31,7 +33,8 @@ export default function CorporateNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { signOut } = useAuth();
-  const userId = localStorage.getItem("currentUserId");
+  const userId = useCurrentUserId();
+  const storedUserType = useUserType();
 
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
@@ -43,7 +46,6 @@ export default function CorporateNav() {
     enabled: !!userId,
   });
 
-  const storedUserType = localStorage.getItem("userType");
   const effectiveUserType = currentUser?.userType || storedUserType;
 
   const isPwaRoute = location.endsWith("/pwa");

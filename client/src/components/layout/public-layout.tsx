@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useUserType } from "@/hooks/use-user-type";
 import { useQuery } from "@tanstack/react-query";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import { Bell, Menu, X } from "lucide-react";
@@ -17,8 +19,8 @@ export function PublicLayout({ children, activeTab, showFooter = true }: PublicL
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const userId = localStorage.getItem("currentUserId");
-  const userType = localStorage.getItem("userType");
+  const userId = useCurrentUserId();
+  const userType = useUserType();
 
   // Determine dashboard path based on user type
   const getDashboardPath = () => {

@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 /**
  * AIU (Attributable Impact Units) API Router
  *
@@ -64,7 +65,7 @@ aiuRouter.get("/volunteer/:volunteerId", async (req: Request, res: Response) => 
 
     res.json(summary);
   } catch (error) {
-    console.error("Error fetching volunteer AIU:", error);
+    logger.error("Error fetching volunteer AIU:", error);
     res.status(500).json({ error: "Failed to calculate volunteer AIU" });
   }
 });
@@ -83,7 +84,7 @@ aiuRouter.get("/volunteer/:volunteerId/quick", async (req: Request, res: Respons
     const stats = await getVolunteerQuickAIUStats(volunteerId);
     res.json(stats);
   } catch (error) {
-    console.error("Error fetching quick AIU stats:", error);
+    logger.error("Error fetching quick AIU stats:", error);
     res.status(500).json({ error: "Failed to get quick AIU stats" });
   }
 });
@@ -106,7 +107,7 @@ aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
 
     res.json(summary);
   } catch (error) {
-    console.error("Error fetching project AIU:", error);
+    logger.error("Error fetching project AIU:", error);
     res.status(500).json({ error: "Failed to calculate project AIU" });
   }
 });
@@ -185,7 +186,7 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
 
     res.json(summary);
   } catch (error) {
-    console.error("Error fetching organization AIU:", error);
+    logger.error("Error fetching organization AIU:", error);
     res.status(500).json({ error: "Failed to calculate organization AIU" });
   }
 });
@@ -219,7 +220,7 @@ aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
     const report = await generateCSRAIUReport(reportingPeriod);
     res.json(report);
   } catch (error) {
-    console.error("Error generating CSR report:", error);
+    logger.error("Error generating CSR report:", error);
     res.status(500).json({ error: "Failed to generate CSR AIU report" });
   }
 });
@@ -277,7 +278,7 @@ aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Respon
     );
     res.send(csv);
   } catch (error) {
-    console.error("Error exporting AIU CSV:", error);
+    logger.error("Error exporting AIU CSV:", error);
     res.status(500).json({ error: "Failed to export AIU data" });
   }
 });
@@ -340,7 +341,7 @@ aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Respo
     );
     res.json(jsonExport);
   } catch (error) {
-    console.error("Error exporting AIU JSON:", error);
+    logger.error("Error exporting AIU JSON:", error);
     res.status(500).json({ error: "Failed to export AIU data" });
   }
 });
@@ -395,7 +396,7 @@ aiuRouter.post("/calculate", async (req: Request, res: Response) => {
     const result = calculateProjectAIUs(input);
     res.json(result);
   } catch (error) {
-    console.error("Error calculating AIU:", error);
+    logger.error("Error calculating AIU:", error);
     res.status(500).json({ error: "Failed to calculate AIU" });
   }
 });

@@ -646,3 +646,21 @@ export function csrfValidationMiddleware(
 
   next();
 }
+
+/**
+ * Request timeout middleware — aborts requests that take longer than the given ms.
+ * Sends 503 if the response has not started; otherwise closes the connection.
+ */
+export function requestTimeout(ms = 30_000) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const timer = setTimeout(() => {
+      if (!res.headersSent) {
+        logger.warn(`[Timeout] ${req.method} ${req.path} exceeded ${ms}ms`);
+        res.status(503).json({ error: "REQUEST_TIMEOUT", message: "Request took too long. Please try again." });
+      }
+    }, ms);
+    res.on("finish", () => clearTimeout(timer));
+    res.on("close", () => clearTimeout(timer));
+    next();
+  };
+}

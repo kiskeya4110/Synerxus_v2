@@ -3,12 +3,14 @@ import { storage } from "../storage";
 import {
   insertVolunteerActivitySchema,
   volunteerActivities as volunteerActivitiesTable,
+  verificationAuditLog as verificationAuditLogTable,
   type VolunteerActivity,
   type InsertVerificationAuditLog,
 } from "@shared/schema";
-import { and, gte, inArray } from "drizzle-orm";
-import { db } from "../db";
-import { authMiddleware } from "../middleware/auth";
+import { and, eq, gte, inArray } from "drizzle-orm";
+import { db, withTransaction } from "../db";
+import { logger } from "../logger";
+import { authMiddleware, requireDataConsent } from "../middleware/auth";
 import { checkAndAwardBadges } from "../badge-service";
 import {
   sendActivityApprovalNotification,
@@ -69,7 +71,7 @@ export function setBroadcastFn(fn: BroadcastFn) {
  * POST /logs - Create a new impact log (status=PENDING)
  * Volunteers submit hours and outcomes for verification
  */
-logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => {
+logsRouter.post("/logs", authMiddleware, requireDataConsent, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
 
@@ -135,7 +137,7 @@ logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => 
         project?.name,
         activity.outcomeText
       ).catch(err => {
-        console.error("Failed to send pending activity notification:", err);
+        logger.error("Failed to send pending activity notification:", err);
       });
     }
 
@@ -157,7 +159,7 @@ logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => 
           createdAt: new Date(),
         });
       }
-    } catch (e) { console.warn('[SMS Queue] Failed to queue:', e); }
+    } catch (e) { logger.warn('[SMS Queue] Failed to queue:', e); }
 
     try {
       if (activity.projectId) {
@@ -181,12 +183,12 @@ logsRouter.post("/logs", authMiddleware, async (req: Request, res: Response) => 
           expiresAt,
         });
       }
-    } catch (e) { console.warn('[Token] Failed to create verification tokens:', e); }
+    } catch (e) { logger.warn('[Token] Failed to create verification tokens:', e); }
 
     broadcastUpdate("log_created", activity);
     res.status(201).json(activity);
   } catch (err) {
-    console.error("Error creating impact log:", err);
+    logger.error("Error creating impact log:", err);
     res.status(500).json({ message: "Failed to create impact log" });
   }
 });
@@ -332,7 +334,7 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
 
     res.json(enrichedLogs);
   } catch (err) {
-    console.error("Error fetching impact logs:", err);
+    logger.error("Error fetching impact logs:", err);
     res.status(500).json({ message: "Failed to fetch impact logs" });
   }
 });
@@ -456,7 +458,7 @@ logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) 
       logs: enrichedLogs
     });
   } catch (err: any) {
-    console.error("Error fetching corporate verified logs:", err?.message, err?.stack);
+    logger.error("Error fetching corporate verified logs:", err?.message, err?.stack);
     res.status(500).json({ message: "Failed to fetch verified logs", error: err?.message });
   }
 });
@@ -522,7 +524,7 @@ logsRouter.get("/logs/:id", authMiddleware, async (req: Request, res: Response) 
       } : null
     });
   } catch (err) {
-    console.error("Error fetching impact log:", err);
+    logger.error("Error fetching impact log:", err);
     res.status(500).json({ message: "Failed to fetch impact log" });
   }
 });
@@ -627,7 +629,7 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
         }
       }
     } catch (limitErr) {
-      console.error("[PlanLimit] Error checking outcome limit:", limitErr);
+      logger.error("[PlanLimit] Error checking outcome limit:", limitErr);
       // Non-fatal — do not block verification if the check itself errors
     }
 
@@ -648,34 +650,32 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
       verificationUpdate.editedSdgTags = editedSdgTags.filter((t: any) => typeof t === 'number');
     }
 
-    const updatedActivity = await storage.updateVolunteerActivity(logId, verificationUpdate);
+    const auditEntry: InsertVerificationAuditLog = {
+      activityId: logId,
+      projectId: activity.projectId || undefined,
+      organizationId: req.user?.organizationId || undefined,
+      action: 'approved',
+      previousStatus: activity.verificationStatus || 'pending',
+      newStatus: 'approved',
+      performedBy: reviewerId!,
+      performedByRole: req.user?.userType || 'organization',
+      volunteerId: activity.userId,
+      ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+      userAgent: req.headers['user-agent'] || undefined,
+      geolocation: typeof activity.geolocation === 'string' ? activity.geolocation : undefined,
+      evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
+      changeDetails: editedOutcomeText || editedOutcomeQuantity || editedSdgTags ? {
+        editedOutcomeText: editedOutcomeText || null,
+        editedOutcomeQuantity: editedOutcomeQuantity || null,
+        editedSdgTags: editedSdgTags || null,
+      } : undefined,
+    };
 
-    // Write immutable audit log entry
-    try {
-      const auditEntry: InsertVerificationAuditLog = {
-        activityId: logId,
-        projectId: activity.projectId || undefined,
-        organizationId: req.user?.organizationId || undefined,
-        action: 'approved',
-        previousStatus: activity.verificationStatus || 'pending',
-        newStatus: 'approved',
-        performedBy: reviewerId!,
-        performedByRole: req.user?.userType || 'organization',
-        volunteerId: activity.userId,
-        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
-        userAgent: req.headers['user-agent'] || undefined,
-        geolocation: typeof activity.geolocation === 'string' ? activity.geolocation : undefined,
-        evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
-        changeDetails: editedOutcomeText || editedOutcomeQuantity || editedSdgTags ? {
-          editedOutcomeText: editedOutcomeText || null,
-          editedOutcomeQuantity: editedOutcomeQuantity || null,
-          editedSdgTags: editedSdgTags || null,
-        } : undefined,
-      };
-      await storage.createVerificationAuditLog(auditEntry);
-    } catch (auditErr) {
-      console.error("[Audit] Failed to write audit log for log verification:", auditErr);
-    }
+    const updatedActivity = await withTransaction(async (tx) => {
+      const [updated] = await tx.update(volunteerActivitiesTable).set(verificationUpdate).where(eq(volunteerActivitiesTable.id, logId)).returning();
+      await tx.insert(verificationAuditLogTable).values(auditEntry);
+      return updated;
+    });
 
     // Update CSR employee engagement for verified logs
     if (activity.userId && activity.hours) {
@@ -791,33 +791,33 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
                   }
                 }
               } catch (sdgErr) {
-                console.error("Error updating SDG-specific hours for challenge:", sdgErr);
+                logger.error("Error updating SDG-specific hours for challenge:", sdgErr);
               }
             }
 
-            console.log(`[CSR] Updated employee engagement for ${user.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
+            logger.info(`[CSR] Updated employee engagement for ${user.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
           }
         }
       } catch (csrErr) {
-        console.error("Error updating CSR employee engagement:", csrErr);
+        logger.error("Error updating CSR employee engagement:", csrErr);
         // Non-critical, don't fail the verification
       }
     }
 
     // Mark related pending_approval notifications as read
     storage.markNotificationsReadByEntity("volunteer_activity", logId).catch(err => {
-      console.error("Failed to mark notifications as read:", err);
+      logger.error("Failed to mark notifications as read:", err);
     });
 
     // Send email notification to volunteer
     sendActivityApprovalNotification(logId, 'approved', reviewerId).catch(err => {
-      console.error("Failed to send verification notification:", err);
+      logger.error("Failed to send verification notification:", err);
     });
 
     // Check and award badges after verification
     if (activity.userId) {
       checkAndAwardBadges(activity.userId).catch(err => {
-        console.error("Failed to check badges:", err);
+        logger.error("Failed to check badges:", err);
       });
       // Invalidate the volunteer's dashboard cache so verifiedHours updates immediately
       invalidateCache.forUser(activity.userId);
@@ -828,7 +828,7 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
     broadcastUpdate("log_verified", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
-    console.error("Error verifying impact log:", err);
+    logger.error("Error verifying impact log:", err);
     res.status(500).json({ message: "Failed to verify impact log" });
   }
 });
@@ -875,52 +875,51 @@ logsRouter.patch("/logs/:id/reject", authMiddleware, async (req: Request, res: R
       }
     }
 
-    // Update with rejection data
-    const updatedActivity = await storage.updateVolunteerActivity(logId, {
+    const rejectionUpdate = {
       verificationStatus: 'rejected',
       rejectedReason: reason.trim(),
       verifiedBy: reviewerId,
       verifiedAt: new Date()
-    } as any);
+    } as any;
+
+    const rejectionAuditEntry: InsertVerificationAuditLog = {
+      activityId: logId,
+      projectId: activity.projectId || undefined,
+      organizationId: req.user?.organizationId || undefined,
+      action: 'rejected',
+      previousStatus: activity.verificationStatus || 'pending',
+      newStatus: 'rejected',
+      performedBy: reviewerId!,
+      performedByRole: req.user?.userType || 'organization',
+      volunteerId: activity.userId,
+      ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+      userAgent: req.headers['user-agent'] || undefined,
+      reason: reason.trim(),
+      evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
+    };
+
+    const updatedActivity = await withTransaction(async (tx) => {
+      const [updated] = await tx.update(volunteerActivitiesTable).set(rejectionUpdate).where(eq(volunteerActivitiesTable.id, logId)).returning();
+      await tx.insert(verificationAuditLogTable).values(rejectionAuditEntry);
+      return updated;
+    });
 
     // Mark related pending_approval notifications as read
     storage.markNotificationsReadByEntity("volunteer_activity", logId).catch(err => {
-      console.error("Failed to mark notifications as read:", err);
+      logger.error("Failed to mark notifications as read:", err);
     });
 
     // Send email notification to volunteer
     sendActivityApprovalNotification(logId, 'rejected', reviewerId).catch(err => {
-      console.error("Failed to send rejection notification:", err);
+      logger.error("Failed to send rejection notification:", err);
     });
 
     smsVerificationService.removeFromQueue(logId);
 
-    try {
-      const previousStatus = activity.verificationStatus || 'pending';
-      const auditEntry: InsertVerificationAuditLog = {
-        activityId: logId,
-        projectId: activity.projectId || undefined,
-        organizationId: req.user?.organizationId || undefined,
-        action: 'rejected',
-        previousStatus,
-        newStatus: 'rejected',
-        performedBy: reviewerId!,
-        performedByRole: req.user?.userType || 'organization',
-        volunteerId: activity.userId,
-        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
-        userAgent: req.headers['user-agent'] || undefined,
-        reason: reason.trim(),
-        evidenceSnapshot: activity.evidenceUrls ? { urls: activity.evidenceUrls } : undefined,
-      };
-      await storage.createVerificationAuditLog(auditEntry);
-    } catch (auditErr) {
-      console.error("[Audit] Failed to write audit log for rejection:", auditErr);
-    }
-
     broadcastUpdate("log_rejected", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
-    console.error("Error rejecting impact log:", err);
+    logger.error("Error rejecting impact log:", err);
     res.status(500).json({ message: "Failed to reject impact log" });
   }
 });
@@ -962,7 +961,7 @@ logsRouter.get("/logs/:id/suggested-sdgs", authMiddleware, async (req: Request, 
       currentTags: activity.sdgTags || []
     });
   } catch (err) {
-    console.error("Error fetching SDG suggestions:", err);
+    logger.error("Error fetching SDG suggestions:", err);
     res.status(500).json({ message: "Failed to fetch SDG suggestions" });
   }
 });
@@ -1113,7 +1112,7 @@ logsRouter.get("/reports/export", authMiddleware, async (req: Request, res: Resp
       return res.status(400).json({ message: "Invalid format. Use 'csv' or 'pdf'" });
     }
   } catch (err) {
-    console.error("Error exporting report:", err);
+    logger.error("Error exporting report:", err);
     res.status(500).json({ message: "Failed to export report" });
   }
 });
@@ -1137,7 +1136,7 @@ logsRouter.get("/audit-trail/:activityId", authMiddleware, async (req: Request, 
     const logs = await storage.listVerificationAuditLogs(activityId);
     res.json(logs);
   } catch (err) {
-    console.error("Error fetching audit trail:", err);
+    logger.error("Error fetching audit trail:", err);
     res.status(500).json({ message: "Failed to fetch audit trail" });
   }
 });
@@ -1158,7 +1157,7 @@ logsRouter.get("/audit-trail/project/:projectId", authMiddleware, async (req: Re
     const logs = await storage.listVerificationAuditLogs(undefined, projectId);
     res.json(logs);
   } catch (err) {
-    console.error("Error fetching project audit trail:", err);
+    logger.error("Error fetching project audit trail:", err);
     res.status(500).json({ message: "Failed to fetch project audit trail" });
   }
 });
@@ -1210,20 +1209,20 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     }
 
     // Direct DB query with date filter — bypasses storage abstraction layer
-    console.log('[report] timePeriod:', timePeriod, '| reportSince:', reportSince?.toISOString(), '| projectIds:', projectIds);
+    logger.info('[report] timePeriod:', timePeriod, '| reportSince:', reportSince?.toISOString(), '| projectIds:', projectIds);
     let allActivities: any[] = [];
     if (projectIds.length > 0) {
       const projectFilter = inArray(volunteerActivitiesTable.projectId, projectIds);
       if (reportSince) {
         const filteredQuery = db.select().from(volunteerActivitiesTable).where(and(projectFilter, gte(volunteerActivitiesTable.date, reportSince)));
-        console.log('[report] filtered SQL:', filteredQuery.toSQL());
+        logger.info('[report] filtered SQL:', filteredQuery.toSQL());
         const rows = await filteredQuery;
         allActivities = rows as any[];
       } else {
         const rows = await db.select().from(volunteerActivitiesTable).where(projectFilter);
         allActivities = rows as any[];
       }
-      console.log('[report] total rows fetched:', allActivities.length, '| sample dates:', allActivities.slice(0, 3).map((r: any) => r.date));
+      logger.info('[report] total rows fetched:', allActivities.length, '| sample dates:', allActivities.slice(0, 3).map((r: any) => r.date));
     }
 
     const verified = allActivities.filter(a => a.verificationStatus === 'approved');
@@ -2298,7 +2297,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     res.setHeader('Content-Disposition', `inline; filename="ngo-impact-summary-${new Date().toISOString().split('T')[0]}.html"`);
     res.send(html);
   } catch (err) {
-    console.error("Error generating NGO impact summary:", err);
+    logger.error("Error generating NGO impact summary:", err);
     res.status(500).json({ message: "Failed to generate impact summary report" });
   }
 });
@@ -3087,7 +3086,7 @@ ${_assuranceDiagHtml}
     res.setHeader('Content-Disposition', `inline; filename="corporate-esg-report-${now.toISOString().split('T')[0]}.html"`);
     res.send(html);
   } catch (err) {
-    console.error("Error generating corporate ESG report:", err);
+    logger.error("Error generating corporate ESG report:", err);
     res.status(500).json({ message: "Failed to generate ESG report" });
   }
 });
@@ -3150,7 +3149,7 @@ logsRouter.get("/verify/:token", async (req: Request, res: Response) => {
         ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
         userAgent: req.headers['user-agent'] || undefined,
       });
-    } catch (e) { console.warn('[Audit] Token verify audit failed:', e); }
+    } catch (e) { logger.warn('[Audit] Token verify audit failed:', e); }
 
     const user = activity.userId ? await storage.getUser(activity.userId) : null;
     const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
@@ -3169,7 +3168,7 @@ logsRouter.get("/verify/:token", async (req: Request, res: Response) => {
       ));
     }
   } catch (err) {
-    console.error("Error processing verification token:", err);
+    logger.error("Error processing verification token:", err);
     res.status(500).send(renderTokenPage("Error", "An unexpected error occurred while processing the verification.", "error"));
   }
 });
@@ -3232,7 +3231,7 @@ logsRouter.get("/volunteer-spotlight", async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    console.error("Error fetching volunteer spotlight:", err);
+    logger.error("Error fetching volunteer spotlight:", err);
     res.json({ spotlight: null });
   }
 });
@@ -3263,7 +3262,7 @@ logsRouter.get("/banner-stats", async (req: Request, res: Response) => {
       ],
     });
   } catch (err) {
-    console.error("Error fetching banner stats:", err);
+    logger.error("Error fetching banner stats:", err);
     res.json({
       stats: [
         "📊 Real-time volunteer impact metrics loading...",

@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import {
@@ -213,7 +214,7 @@ csrRouter.get("/csr/diagnostic", authMiddleware, requireCSRAccess, async (req: R
       totalPartners: csrPartners.length
     });
   } catch (err) {
-    console.error("Error fetching CSR diagnostic:", err);
+    logger.error("Error fetching CSR diagnostic:", err);
     res.status(500).json({ error: "Failed to fetch diagnostic data" });
   }
 });
@@ -275,7 +276,7 @@ csrRouter.get("/csr/dashboard", authMiddleware, requireCSRAccess, queueMiddlewar
       shouldFilterByDate = dateRange.shouldFilter;
       startDate = dateRange.startDate;
       endDate = dateRange.endDate;
-      console.log(`[CSR Dashboard] Time filter applied: ${timePeriod}, filtering from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      logger.info(`[CSR Dashboard] Time filter applied: ${timePeriod}, filtering from ${startDate.toISOString()} to ${endDate.toISOString()}`);
     } else if (startDateStr || endDateStr) {
       shouldFilterByDate = true;
       startDate = startDateStr ? new Date(startDateStr) : new Date(0);
@@ -866,7 +867,7 @@ csrRouter.get("/csr/dashboard", authMiddleware, requireCSRAccess, queueMiddlewar
       })()
     });
   } catch (err) {
-    console.error("Error fetching CSR dashboard:", err);
+    logger.error("Error fetching CSR dashboard:", err);
     res.status(500).json({ error: "Failed to fetch dashboard" });
   }
 });
@@ -936,7 +937,7 @@ csrRouter.get("/csr/engagement-funnel", authMiddleware, requireCSRAccess, async 
       }
     });
   } catch (err) {
-    console.error("Error fetching engagement funnel:", err);
+    logger.error("Error fetching engagement funnel:", err);
     res.status(500).json({ error: "Failed to fetch funnel" });
   }
 });
@@ -1026,7 +1027,7 @@ csrRouter.get("/csr/engagement-funnel-stage", authMiddleware, requireCSRAccess, 
 
     res.json({ employees: employees.sort((a, b) => b.hours - a.hours) });
   } catch (err) {
-    console.error("Error fetching funnel stage:", err);
+    logger.error("Error fetching funnel stage:", err);
     res.status(500).json({ error: "Failed to fetch stage" });
   }
 });
@@ -1228,7 +1229,7 @@ csrRouter.get("/csr/pending-actions", authMiddleware, requireCSRAccess, async (r
       totalActions: reviews.length + insights.length + flagged.length + pendingVerification.length
     });
   } catch (err) {
-    console.error("Error fetching pending actions:", err);
+    logger.error("Error fetching pending actions:", err);
     res.status(500).json({ error: "Failed to fetch actions" });
   }
 });
@@ -1403,7 +1404,7 @@ csrRouter.get("/csr/notifications", authMiddleware, requireCSRAccess, async (req
 
     res.json({ notifications: notifications.slice(0, 10) });
   } catch (err) {
-    console.error("Error fetching CSR notifications:", err);
+    logger.error("Error fetching CSR notifications:", err);
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
@@ -1620,7 +1621,7 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
       }
     });
   } catch (err) {
-    console.error("Error fetching impact reporting:", err);
+    logger.error("Error fetching impact reporting:", err);
     res.status(500).json({ error: "Failed to fetch impact metrics" });
   }
 });
@@ -1647,7 +1648,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
       headers: internalHeaders
     });
     if (!impactResponse.ok) {
-      console.error(`Impact reporting API returned ${impactResponse.status}`);
+      logger.error(`Impact reporting API returned ${impactResponse.status}`);
       return res.status(502).json({ error: "Failed to fetch impact data" });
     }
 
@@ -1655,7 +1656,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
     try {
       impactData = await impactResponse.json();
     } catch (jsonErr) {
-      console.error("Failed to parse impact data JSON:", jsonErr);
+      logger.error("Failed to parse impact data JSON:", jsonErr);
       return res.status(502).json({ error: "Invalid impact data format" });
     }
 
@@ -1708,7 +1709,7 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
     res.setHeader("Content-Disposition", `attachment; filename="csr-impact-report-${new Date().toISOString().split('T')[0]}.csv"`);
     res.send(csv);
   } catch (err) {
-    console.error("Error exporting CSV:", err);
+    logger.error("Error exporting CSV:", err);
     res.status(500).json({ error: "Failed to export CSV" });
   }
 });
@@ -1737,7 +1738,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
       headers: pdfHeaders
     });
     if (!impactResponse.ok) {
-      console.error(`Impact reporting API returned ${impactResponse.status}`);
+      logger.error(`Impact reporting API returned ${impactResponse.status}`);
       return res.status(502).json({ error: "Failed to fetch impact data" });
     }
 
@@ -1745,7 +1746,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
     try {
       impactData = await impactResponse.json();
     } catch (jsonErr) {
-      console.error("Failed to parse impact data JSON:", jsonErr);
+      logger.error("Failed to parse impact data JSON:", jsonErr);
       return res.status(502).json({ error: "Invalid impact data format" });
     }
 
@@ -1959,7 +1960,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
     res.setHeader("Content-Disposition", `attachment; filename="${userPartner.companyName.replace(/\s+/g, '-')}-${reportTitle.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.html"`);
     res.send(html);
   } catch (err) {
-    console.error("Error exporting PDF:", err);
+    logger.error("Error exporting PDF:", err);
     res.status(500).json({ error: "Failed to export report" });
   }
 });
@@ -1989,7 +1990,7 @@ csrRouter.post("/csr/partners", async (req: Request, res: Response) => {
     const created = await storage.createCSRPartner?.(partner) || { id: Date.now() };
     res.json(created);
   } catch (err) {
-    console.error("Error creating CSR partner:", err);
+    logger.error("Error creating CSR partner:", err);
     res.status(500).json({ error: "Failed to create partner" });
   }
 });
@@ -2024,7 +2025,7 @@ csrRouter.get("/csr/partners", authMiddleware, async (req: Request, res: Respons
 
     res.json(partner);
   } catch (err) {
-    console.error("Error fetching CSR partners:", err);
+    logger.error("Error fetching CSR partners:", err);
     res.status(500).json({ error: "Failed to fetch partners" });
   }
 });
@@ -2038,7 +2039,7 @@ csrRouter.get("/csr/partners/list", async (req: Request, res: Response) => {
     const allPartners = await storage.listCSRPartners?.() || [];
     res.json(allPartners);
   } catch (err) {
-    console.error("Error fetching CSR partners list:", err);
+    logger.error("Error fetching CSR partners list:", err);
     res.status(500).json({ error: "Failed to fetch partners" });
   }
 });
@@ -2069,7 +2070,7 @@ csrRouter.patch("/csr/partners/:id", async (req: Request, res: Response) => {
     }
     res.json(updated);
   } catch (err) {
-    console.error("Error updating CSR partner:", err);
+    logger.error("Error updating CSR partner:", err);
     res.status(500).json({ error: "Failed to update partner" });
   }
 });
@@ -2116,7 +2117,7 @@ csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) =>
     // 4. Notify relevant stakeholders
 
     // For now, we'll just log it and return success
-    console.log("Recognition created:", recognition);
+    logger.info("Recognition created:", recognition);
 
     res.json({
       success: true,
@@ -2124,7 +2125,7 @@ csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) =>
       message: `Recognition sent to ${employee.displayName || 'the employee'}`
     });
   } catch (err) {
-    console.error("Error creating recognition:", err);
+    logger.error("Error creating recognition:", err);
     res.status(500).json({ error: "Failed to send recognition" });
   }
 });
@@ -2150,7 +2151,7 @@ csrRouter.post("/volunteer-employers", authMiddleware, requireNgoPartnerQuota(),
 
     res.json(link);
   } catch (err) {
-    console.error("Error linking volunteer to employer:", err);
+    logger.error("Error linking volunteer to employer:", err);
     res.status(500).json({ error: "Failed to link employer" });
   }
 });
@@ -2165,7 +2166,7 @@ csrRouter.get("/volunteer-employers/:volunteerId", async (req: Request, res: Res
     const link = await storage.getVolunteerEmployerLink?.(parseInt(volunteerId));
     res.json(link || null);
   } catch (err) {
-    console.error("Error fetching employer link:", err);
+    logger.error("Error fetching employer link:", err);
     res.status(500).json({ error: "Failed to fetch employer" });
   }
 });
@@ -2199,7 +2200,7 @@ csrRouter.post("/csr/challenges", async (req: Request, res: Response) => {
     const created = await storage.createCSRChallenge?.(challenge) || { id: Date.now() };
     res.json(created);
   } catch (err) {
-    console.error("Error creating CSR challenge:", err);
+    logger.error("Error creating CSR challenge:", err);
     res.status(500).json({ error: "Failed to create challenge" });
   }
 });
@@ -2219,7 +2220,7 @@ csrRouter.get("/csr/challenges", async (req: Request, res: Response) => {
 
     res.json(challenges);
   } catch (err) {
-    console.error("Error fetching CSR challenges:", err);
+    logger.error("Error fetching CSR challenges:", err);
     res.status(500).json({ error: "Failed to fetch challenges" });
   }
 });
@@ -2269,7 +2270,7 @@ csrRouter.post("/csr/budget-links", authMiddleware, async (req: Request, res: Re
     const created = await storage.createProjectBudgetLink?.(budgetLink) || { id: Date.now() };
     res.json(created);
   } catch (err) {
-    console.error("Error creating budget link:", err);
+    logger.error("Error creating budget link:", err);
     res.status(500).json({ error: "Failed to create budget link" });
   }
 });
@@ -2292,7 +2293,7 @@ csrRouter.get("/csr/budget-links", async (req: Request, res: Response) => {
 
     res.json(budgetLinks);
   } catch (err) {
-    console.error("Error fetching budget links:", err);
+    logger.error("Error fetching budget links:", err);
     res.status(500).json({ error: "Failed to fetch budget links" });
   }
 });
@@ -2324,7 +2325,7 @@ csrRouter.post("/csr/verified-outputs", async (req: Request, res: Response) => {
     const created = await storage.createVerifiedOutput?.(output) || { id: Date.now() };
     res.json(created);
   } catch (err) {
-    console.error("Error creating verified output:", err);
+    logger.error("Error creating verified output:", err);
     res.status(500).json({ error: "Failed to create verified output" });
   }
 });
@@ -2350,7 +2351,7 @@ csrRouter.get("/csr/verified-outputs", async (req: Request, res: Response) => {
 
     res.json(outputs);
   } catch (err) {
-    console.error("Error fetching verified outputs:", err);
+    logger.error("Error fetching verified outputs:", err);
     res.status(500).json({ error: "Failed to fetch verified outputs" });
   }
 });
@@ -2936,7 +2937,7 @@ csrRouter.get("/employee-engagement/summary", queueMiddleware('heavy'), async (r
       }
     });
   } catch (err) {
-    console.error("Error fetching engagement summary:", err);
+    logger.error("Error fetching engagement summary:", err);
     res.status(500).json({ error: "Failed to fetch engagement summary" });
   }
 });
@@ -2999,7 +3000,7 @@ csrRouter.get("/employee-engagement/commitments", async (req: Request, res: Resp
 
     res.json(commitments);
   } catch (err) {
-    console.error("Error fetching commitments:", err);
+    logger.error("Error fetching commitments:", err);
     res.status(500).json({ error: "Failed to fetch commitments" });
   }
 });
@@ -3072,7 +3073,7 @@ csrRouter.get("/employee-engagement/csr-goals", async (req: Request, res: Respon
 
     res.json(goals);
   } catch (err) {
-    console.error("Error fetching CSR goals:", err);
+    logger.error("Error fetching CSR goals:", err);
     res.status(500).json({ error: "Failed to fetch CSR goals" });
   }
 });
@@ -3133,7 +3134,7 @@ csrRouter.get("/employee-engagement/impact-dashboard/:userId", async (req: Reque
       commitments: userCommitments
     });
   } catch (err) {
-    console.error("Error fetching impact dashboard:", err);
+    logger.error("Error fetching impact dashboard:", err);
     res.status(500).json({ error: "Failed to fetch impact dashboard" });
   }
 });
@@ -3171,7 +3172,7 @@ csrRouter.post("/employee-engagement/send-tips", async (req: Request, res: Respo
 
     // In a real implementation, this would send emails/notifications
     // For now, we'll just log and return success
-    console.log(`Sending engagement tips to ${inactiveEmployees.length} inactive employees from organization ${user.organizationId}`);
+    logger.info(`Sending engagement tips to ${inactiveEmployees.length} inactive employees from organization ${user.organizationId}`);
 
     // Simulate sending tips (in production, integrate with email service)
     const tipsSent = inactiveEmployees.map((emp: any) => ({
@@ -3189,7 +3190,7 @@ csrRouter.post("/employee-engagement/send-tips", async (req: Request, res: Respo
       details: tipsSent
     });
   } catch (err) {
-    console.error("Error sending engagement tips:", err);
+    logger.error("Error sending engagement tips:", err);
     res.status(500).json({ error: "Failed to send engagement tips" });
   }
 });

@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import {
@@ -171,7 +172,7 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
 
     res.json(activities);
   } catch (err) {
-    console.error("Error fetching volunteer activities:", err);
+    logger.error("Error fetching volunteer activities:", err);
     res.status(500).json({ message: "Failed to fetch volunteer activities" });
   }
 });
@@ -207,7 +208,7 @@ activitiesRouter.get("/volunteer-activities/:id", authMiddleware, async (req: Re
 
     res.json(activity);
   } catch (err) {
-    console.error("Error fetching volunteer activity:", err);
+    logger.error("Error fetching volunteer activity:", err);
     res.status(500).json({ message: "Failed to fetch volunteer activity" });
   }
 });
@@ -259,7 +260,7 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
           totalHoursLogged: totalProjectHours
         });
       } catch (updateErr) {
-        console.error("Error updating assignment or project progress:", updateErr);
+        logger.error("Error updating assignment or project progress:", updateErr);
         // Don't fail the activity creation if update fails
       }
     }
@@ -279,7 +280,7 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
           activity.hours || 0
         );
       } catch (notifyErr) {
-        console.error("Error sending pending activity notification:", notifyErr);
+        logger.error("Error sending pending activity notification:", notifyErr);
         // Don't fail activity creation if notification fails
       }
     }
@@ -288,7 +289,7 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
     if (activity.userId) {
       const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
       persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after activity creation:", err)
+        logger.error("[KPI] Error persisting KPIs after activity creation:", err)
       );
     }
 
@@ -487,7 +488,7 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
           totalHoursLogged: totalProjectHours
         });
       } catch (updateErr) {
-        console.error("Error updating project progress for admin-logged activity:", updateErr);
+        logger.error("Error updating project progress for admin-logged activity:", updateErr);
       }
     }
 
@@ -503,7 +504,7 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
           totalHoursLogged: totalProjectHours
         });
       } catch (updateErr) {
-        console.error("Error updating project progress for external volunteer activity:", updateErr);
+        logger.error("Error updating project progress for external volunteer activity:", updateErr);
       }
     }
 
@@ -589,11 +590,11 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
               }
             });
 
-            console.log(`[CSR] Admin-logged activity: Updated employee engagement for ${volunteer.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
+            logger.info(`[CSR] Admin-logged activity: Updated employee engagement for ${volunteer.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
           }
         }
       } catch (csrErr) {
-        console.error("Error updating CSR integration for admin-logged activity:", csrErr);
+        logger.error("Error updating CSR integration for admin-logged activity:", csrErr);
         // Non-critical, don't fail the creation
       }
     }
@@ -601,7 +602,7 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
     // Persist KPIs (fire-and-forget)
     if (activity.userId) {
       persistKPIsForActivity(activity.userId, userOrg.id).catch(err =>
-        console.error("[KPI] Error persisting KPIs after admin activity creation:", err)
+        logger.error("[KPI] Error persisting KPIs after admin activity creation:", err)
       );
     }
 
@@ -611,7 +612,7 @@ activitiesRouter.post("/admin/volunteer-activities", authMiddleware, async (req:
       message: autoApprove ? "Activity logged and approved" : "Activity logged and pending approval"
     });
   } catch (err) {
-    console.error("Error creating admin-logged activity:", err);
+    logger.error("Error creating admin-logged activity:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }
@@ -687,7 +688,7 @@ activitiesRouter.patch("/volunteer-activities/:id", authMiddleware, async (req: 
           totalHoursLogged: totalProjectHours
         });
       } catch (updateErr) {
-        console.error("Error updating assignment or project progress:", updateErr);
+        logger.error("Error updating assignment or project progress:", updateErr);
         // Don't fail the activity update if update fails
       }
     }
@@ -721,7 +722,7 @@ activitiesRouter.patch("/volunteer-activities/:id", authMiddleware, async (req: 
           }
         }
       } catch (csrErr) {
-        console.error("Error updating employee engagement hours on activity update:", csrErr);
+        logger.error("Error updating employee engagement hours on activity update:", csrErr);
         // Non-critical, don't fail the activity update
       }
     }
@@ -730,7 +731,7 @@ activitiesRouter.patch("/volunteer-activities/:id", authMiddleware, async (req: 
     if (updatedActivity.userId) {
       const project = updatedActivity.projectId ? await storage.getProject(updatedActivity.projectId) : null;
       persistKPIsForActivity(updatedActivity.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after activity update:", err)
+        logger.error("[KPI] Error persisting KPIs after activity update:", err)
       );
     }
 
@@ -765,7 +766,7 @@ activitiesRouter.get("/impact-metrics", async (req: Request, res: Response) => {
 
     res.json(metrics);
   } catch (err) {
-    console.error("Error fetching impact metrics:", err);
+    logger.error("Error fetching impact metrics:", err);
     res.status(500).json({ message: "Failed to fetch impact metrics" });
   }
 });
@@ -784,7 +785,7 @@ activitiesRouter.get("/impact-metrics/:id", async (req: Request, res: Response) 
 
     res.json(metric);
   } catch (err) {
-    console.error("Error fetching impact metric:", err);
+    logger.error("Error fetching impact metric:", err);
     res.status(500).json({ message: "Failed to fetch impact metric" });
   }
 });
@@ -849,7 +850,7 @@ activitiesRouter.get("/project-impacts", async (req: Request, res: Response) => 
 
     res.json(impacts);
   } catch (err) {
-    console.error("Error fetching project impacts:", err);
+    logger.error("Error fetching project impacts:", err);
     res.status(500).json({ message: "Failed to fetch project impacts" });
   }
 });
@@ -868,7 +869,7 @@ activitiesRouter.get("/project-impacts/:id", async (req: Request, res: Response)
 
     res.json(impact);
   } catch (err) {
-    console.error("Error fetching project impact:", err);
+    logger.error("Error fetching project impact:", err);
     res.status(500).json({ message: "Failed to fetch project impact" });
   }
 });
@@ -917,7 +918,7 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
           completionPercentage: progressPercentage
         });
       } catch (updateErr) {
-        console.error("Error updating project progress:", updateErr);
+        logger.error("Error updating project progress:", updateErr);
         // Don't fail impact creation if progress update fails
       }
 
@@ -925,7 +926,7 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
       try {
         await updateAiuKpiFromImpacts(impact.projectId);
       } catch (aiuErr) {
-        console.error("Error updating AIU settings:", aiuErr);
+        logger.error("Error updating AIU settings:", aiuErr);
         // Don't fail impact creation if AIU update fails
       }
     }
@@ -941,7 +942,7 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
           impact.value
         );
       } catch (notifyErr) {
-        console.error("Error sending pending impact notification:", notifyErr);
+        logger.error("Error sending pending impact notification:", notifyErr);
         // Don't fail impact creation if notification fails
       }
     }
@@ -950,7 +951,7 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
     if (impact.userId) {
       const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
       persistKPIsForActivity(impact.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after impact creation:", err)
+        logger.error("[KPI] Error persisting KPIs after impact creation:", err)
       );
     }
 
@@ -987,7 +988,7 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
       try {
         await updateAiuKpiFromImpacts(updatedImpact.projectId);
       } catch (aiuErr) {
-        console.error("Error updating AIU settings:", aiuErr);
+        logger.error("Error updating AIU settings:", aiuErr);
         // Don't fail impact update if AIU update fails
       }
     }
@@ -996,7 +997,7 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
     if (updatedImpact.userId) {
       const project = updatedImpact.projectId ? await storage.getProject(updatedImpact.projectId) : null;
       persistKPIsForActivity(updatedImpact.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after impact update:", err)
+        logger.error("[KPI] Error persisting KPIs after impact update:", err)
       );
     }
 
@@ -1098,7 +1099,7 @@ activitiesRouter.get("/pending-approvals", authMiddleware, async (req: Request, 
 
     res.json(results);
   } catch (err) {
-    console.error("Error fetching pending approvals:", err);
+    logger.error("Error fetching pending approvals:", err);
     res.status(500).json({ message: "Failed to fetch pending approvals" });
   }
 });
@@ -1164,7 +1165,7 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
       };
       await (storage as any).createVerificationAuditLog?.(auditEntry);
     } catch (auditErr) {
-      console.error("[Audit] Failed to write audit log for activity approval:", auditErr);
+      logger.error("[Audit] Failed to write audit log for activity approval:", auditErr);
       // Don't fail the approval if audit log fails - log and continue
     }
 
@@ -1274,11 +1275,11 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
                   }
                 }
               } catch (sdgErr) {
-                console.error("Error updating SDG-specific hours for challenge:", sdgErr);
+                logger.error("Error updating SDG-specific hours for challenge:", sdgErr);
               }
             }
 
-            console.log(`[CSR] Updated employee engagement for ${user.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
+            logger.info(`[CSR] Updated employee engagement for ${user.email} at employer ${employerIdNum} with ${activity.hours}h verified hours`);
           }
         }
 
@@ -1286,23 +1287,23 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
         if (volunteerProfile?.id) {
           // Note: If you want to track total hours on volunteer profile, add a totalVerifiedHours field
           // For now, we ensure the leaderboard stats are updated via the existing activity records
-          console.log(`[Volunteer] Activity ${activityId} approved for volunteer profile ${volunteerProfile.id}`);
+          logger.info(`[Volunteer] Activity ${activityId} approved for volunteer profile ${volunteerProfile.id}`);
         }
       } catch (csrErr) {
-        console.error("Error updating CSR employee engagement:", csrErr);
+        logger.error("Error updating CSR employee engagement:", csrErr);
         // Non-critical, don't fail the approval
       }
     }
 
     // Send email notification to volunteer (non-blocking)
     sendActivityApprovalNotification(activityId, 'approved', reviewerId).catch(err => {
-      console.error("Failed to send approval notification:", err);
+      logger.error("Failed to send approval notification:", err);
     });
 
     // Check and award badges after activity approval (non-blocking)
     if (activity.userId) {
       checkAndAwardBadges(activity.userId).catch(err => {
-        console.error("Failed to check badges:", err);
+        logger.error("Failed to check badges:", err);
       });
     }
 
@@ -1310,19 +1311,19 @@ activitiesRouter.post("/volunteer-activities/:id/approve", authMiddleware, async
     if (activity.userId) {
       const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
       persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after activity approval:", err)
+        logger.error("[KPI] Error persisting KPIs after activity approval:", err)
       );
     }
 
     // Clean up stale pending_approval notifications for this activity
     storage.markNotificationsReadByEntity("volunteer_activity", activityId).catch(err =>
-      console.error("[Notification] Failed to clear stale pending_approval notifications:", err)
+      logger.error("[Notification] Failed to clear stale pending_approval notifications:", err)
     );
 
     broadcastUpdate("activity_approved", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
-    console.error("Error approving activity:", err);
+    logger.error("Error approving activity:", err);
     res.status(500).json({ message: "Failed to approve activity" });
   }
 });
@@ -1384,31 +1385,31 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
       };
       await (storage as any).createVerificationAuditLog?.(auditEntry);
     } catch (auditErr) {
-      console.error("[Audit] Failed to write audit log for activity rejection:", auditErr);
+      logger.error("[Audit] Failed to write audit log for activity rejection:", auditErr);
     }
 
     // Send email notification to volunteer (non-blocking)
     sendActivityApprovalNotification(activityId, 'rejected', req.user?.id).catch(err => {
-      console.error("Failed to send rejection notification:", err);
+      logger.error("Failed to send rejection notification:", err);
     });
 
     // Persist KPIs (fire-and-forget)
     if (activity?.userId) {
       const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
       persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after activity rejection:", err)
+        logger.error("[KPI] Error persisting KPIs after activity rejection:", err)
       );
     }
 
     // Clean up stale pending_approval notifications for this activity
     storage.markNotificationsReadByEntity("volunteer_activity", activityId).catch(err =>
-      console.error("[Notification] Failed to clear stale pending_approval notifications:", err)
+      logger.error("[Notification] Failed to clear stale pending_approval notifications:", err)
     );
 
     broadcastUpdate("activity_rejected", updatedActivity);
     res.json(updatedActivity);
   } catch (err) {
-    console.error("Error rejecting activity:", err);
+    logger.error("Error rejecting activity:", err);
     res.status(500).json({ message: "Failed to reject activity" });
   }
 });
@@ -1458,7 +1459,7 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
       try {
         await updateAiuKpiFromImpacts(updatedImpact.projectId);
       } catch (aiuErr) {
-        console.error("Error updating AIU settings:", aiuErr);
+        logger.error("Error updating AIU settings:", aiuErr);
       }
     }
 
@@ -1519,28 +1520,28 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
             }
           });
 
-          console.log(`[CSR] Created verified output for impact ${impactId} from volunteer ${impact.userId} at employer ${employerIdNum}`);
+          logger.info(`[CSR] Created verified output for impact ${impactId} from volunteer ${impact.userId} at employer ${employerIdNum}`);
         }
       } catch (csrErr) {
-        console.error("Error creating CSR verified output:", csrErr);
+        logger.error("Error creating CSR verified output:", csrErr);
         // Non-critical, don't fail the approval
       }
     }
 
     // Mark related pending_approval notifications as read
     storage.markNotificationsReadByEntity("project_impact", impactId).catch(err => {
-      console.error("Failed to mark notifications as read:", err);
+      logger.error("Failed to mark notifications as read:", err);
     });
 
     // Send email notification to volunteer (non-blocking)
     sendImpactApprovalNotification(impactId, 'approved', reviewerId).catch(err => {
-      console.error("Failed to send impact approval notification:", err);
+      logger.error("Failed to send impact approval notification:", err);
     });
 
     // Check and award badges after impact approval (non-blocking)
     if (impact.userId) {
       checkAndAwardBadges(impact.userId).catch(err => {
-        console.error("Failed to check badges:", err);
+        logger.error("Failed to check badges:", err);
       });
     }
 
@@ -1548,14 +1549,14 @@ activitiesRouter.post("/project-impacts/:id/approve", authMiddleware, async (req
     if (impact.userId) {
       const project = impact.projectId ? await storage.getProject(impact.projectId) : null;
       persistKPIsForActivity(impact.userId, project?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after impact approval:", err)
+        logger.error("[KPI] Error persisting KPIs after impact approval:", err)
       );
     }
 
     broadcastUpdate("impact_approved", updatedImpact);
     res.json(updatedImpact);
   } catch (err) {
-    console.error("Error approving impact:", err);
+    logger.error("Error approving impact:", err);
     res.status(500).json({ message: "Failed to approve impact" });
   }
 });
@@ -1603,32 +1604,32 @@ activitiesRouter.post("/project-impacts/:id/reject", authMiddleware, async (req:
       try {
         await updateAiuKpiFromImpacts(updatedImpact.projectId);
       } catch (aiuErr) {
-        console.error("Error updating AIU settings:", aiuErr);
+        logger.error("Error updating AIU settings:", aiuErr);
       }
     }
 
     // Mark related pending_approval notifications as read
     storage.markNotificationsReadByEntity("project_impact", impactId).catch(err => {
-      console.error("Failed to mark notifications as read:", err);
+      logger.error("Failed to mark notifications as read:", err);
     });
 
     // Send email notification to volunteer (non-blocking)
     sendImpactApprovalNotification(impactId, 'rejected', req.user?.id).catch(err => {
-      console.error("Failed to send impact rejection notification:", err);
+      logger.error("Failed to send impact rejection notification:", err);
     });
 
     // Persist KPIs (fire-and-forget)
     if (impact?.userId) {
       const impactProject = impact.projectId ? await storage.getProject(impact.projectId) : null;
       persistKPIsForActivity(impact.userId, impactProject?.organizationId).catch(err =>
-        console.error("[KPI] Error persisting KPIs after impact rejection:", err)
+        logger.error("[KPI] Error persisting KPIs after impact rejection:", err)
       );
     }
 
     broadcastUpdate("impact_rejected", updatedImpact);
     res.json(updatedImpact);
   } catch (err) {
-    console.error("Error rejecting impact:", err);
+    logger.error("Error rejecting impact:", err);
     res.status(500).json({ message: "Failed to reject impact" });
   }
 });

@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useUserType } from "@/hooks/use-user-type";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -79,8 +80,7 @@ export default function OrganizationNav() {
     navigate("/");
   };
 
-  // Use localStorage userType as fallback
-  const storedUserType = localStorage.getItem("userType");
+  const storedUserType = useUserType();
   const effectiveUserType = currentUser?.userType || storedUserType;
 
   // Don't show on PWA routes or landing/login routes

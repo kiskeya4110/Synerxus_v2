@@ -2,10 +2,11 @@ import { useLocation } from "wouter";
 import { Home, Briefcase, FolderKanban, BarChart3, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 export default function VolunteerBottomNav() {
   const [location, setLocation] = useLocation();
-  const userId = localStorage.getItem('currentUserId');
+  const userId = useCurrentUserId();
 
   // Fetch current user to verify volunteer type
   const { data: currentUser } = useQuery<UserType>({

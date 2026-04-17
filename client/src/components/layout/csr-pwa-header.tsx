@@ -26,10 +26,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
-import { getAuthHeaders } from "@/lib/queryClient";
-import type { Notification } from "@shared/schema";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useNotifications, type Notification as AppNotification } from "@/hooks/use-notifications";
 
 interface CSRPWAHeaderProps {
   companyName?: string;
@@ -52,68 +51,28 @@ export default function CSRPWAHeader({
   const { signOut } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const userId = localStorage.getItem('currentUserId');
+  const userIdStr = useCurrentUserId();
+  const userId = userIdStr ? parseInt(userIdStr) : null;
 
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", userId],
-    queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/notifications`, { headers, credentials: "include" });
-      return response.ok ? response.json() : [];
-    },
-    enabled: !!userId,
-    staleTime: 30000,
-    refetchInterval: 60000,
-  });
+  const {
+    notifications,
+    unreadCount: fetchedUnreadCount,
+    markAsRead,
+    markAsReadPending,
+    clearAll,
+    clearAllPending,
+    deleteOne,
+    deleteOnePending,
+    deleteAll,
+    deleteAllPending,
+  } = useNotifications(userId);
 
-  // Mark notification as read mutation
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
+  const markAsReadMutation = { mutate: markAsRead, isPending: markAsReadPending };
+  const clearAllNotificationsMutation = { mutate: () => clearAll(), isPending: clearAllPending };
+  const deleteNotificationMutation = { mutate: deleteOne, isPending: deleteOnePending };
+  const deleteAllNotificationsMutation = { mutate: () => deleteAll(), isPending: deleteAllPending };
 
-  // Clear all notifications mutation (mark all as read)
-  const clearAllNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/clear-all?userId=${userId}`, { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Delete notification mutation (soft delete with timestamp)
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Delete all notifications mutation
-  const deleteAllNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/notifications/delete-all?userId=${userId}`, { method: 'DELETE' });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
-    }
-  });
-
-  // Get unread notifications count (use prop if provided, otherwise calculate from fetched data)
-  const unreadCount = notificationCount || notifications.filter((n: Notification) => !n.read).length;
+  const unreadCount = notificationCount || fetchedUnreadCount;
 
   // Prevent body scroll when menu or notifications panel is open
   useEffect(() => {
@@ -159,7 +118,7 @@ export default function CSRPWAHeader({
   };
 
   // Get navigation path for notification (MVP routes only)
-  const getNotificationPath = (notification: Notification): string => {
+  const getNotificationPath = (notification: AppNotification): string => {
     const { relatedEntityType, relatedEntityId } = notification;
 
     if (relatedEntityType === 'project' && relatedEntityId) {
@@ -169,7 +128,7 @@ export default function CSRPWAHeader({
   };
 
   // Handle notification click
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: AppNotification) => {
     if (!notification.read) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -380,7 +339,7 @@ export default function CSRPWAHeader({
                   <p className="text-slate-400 text-xs mt-1">You'll see updates here when there's activity</p>
                 </div>
               ) : (
-                notifications.slice(0, 10).map((notification: Notification) => {
+                notifications.slice(0, 10).map((notification: AppNotification) => {
                   const { icon: NotifIcon, bg } = getNotificationIcon(notification.type);
                   const isUnread = !notification.read;
 

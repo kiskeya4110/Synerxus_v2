@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 interface OrganizationWelcomeBannerProps {
   className?: string;
@@ -7,7 +8,7 @@ interface OrganizationWelcomeBannerProps {
 }
 
 export default function OrganizationWelcomeBanner({ className = "", pageTitle = "Verify Hub" }: OrganizationWelcomeBannerProps) {
-  const userId = localStorage.getItem("currentUserId");
+  const userId = useCurrentUserId();
 
   // Fetch organization data
   const { data: currentUser } = useQuery<any>({

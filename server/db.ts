@@ -4,6 +4,7 @@ import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
+import { logger } from "./logger";
 
 const { Pool: PgPool } = pg;
 
@@ -83,7 +84,7 @@ function serializeError(err: unknown): string {
   poolMetrics.lastErrorTime = Date.now();
   // Log but don't crash - pool errors on idle clients are often recoverable
   // Use serializeError for proper logging of all error types
-  console.error('[DB Pool] Unexpected error on idle client:', serializeError(err));
+  logger.error('[DB Pool] Unexpected error on idle client:', serializeError(err));
   // The pool will automatically handle reconnection
 });
 
@@ -182,7 +183,7 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     client.release();
     return true;
   } catch (error) {
-    console.error('[DB] Health check failed:', error);
+    logger.error('[DB] Health check failed:', error);
     return false;
   }
 }
@@ -213,7 +214,7 @@ export async function withTransaction<T>(
       return await callback(tx);
     } catch (error) {
       // Transaction will be automatically rolled back by Drizzle
-      console.error('[DB Transaction] Error, rolling back:', error);
+      logger.error('[DB Transaction] Error, rolling back:', error);
       throw error;
     }
   });

@@ -25,7 +25,7 @@ import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
-import { securityHeaders, sanitizeInput, cleanupSecurity, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware } from "./middleware/security";
+import { securityHeaders, sanitizeInput, cleanupSecurity, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware, requestTimeout } from "./middleware/security";
 import { closeRedis } from "./redis";
 import { spawn } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
@@ -408,6 +408,7 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 app.use(sanitizeInput); // Sanitize user inputs
 app.use(csrfTokenMiddleware);
 app.use(csrfValidationMiddleware);
+app.use('/api', requestTimeout(30_000));
 
 app.use((req, res, next) => {
   const start = Date.now();

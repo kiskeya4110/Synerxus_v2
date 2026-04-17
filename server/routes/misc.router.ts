@@ -1,9 +1,10 @@
+import { logger } from "../logger";
 import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "../task-matching-service";
-import OpenAI from "openai";
+import { aiService } from "../services/ai-service";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { sendInvitationEmail } from "../email-digest-service";
 import { notifyNewAssignment, emailTransporter, EMAIL_FROM } from "../notification-service";
@@ -52,7 +53,7 @@ miscRouter.get("/public-stats", async (_req: Request, res: Response) => {
       avgVerificationHours,
     });
   } catch (err) {
-    console.error("public-stats error:", err);
+    logger.error("public-stats error:", err);
     res.status(500).json({ message: "Failed to load stats" });
   }
 });
@@ -297,7 +298,7 @@ miscRouter.get("/opportunities/:id/match-score", async (req, res) => {
     const matchScore = await storage.getMatchScore(opportunityId, parseInt(volunteerId as string));
     res.json(matchScore);
   } catch (err) {
-    console.error("Error calculating match score:", err);
+    logger.error("Error calculating match score:", err);
     res.status(500).json({ message: "Failed to calculate match score" });
   }
 });
@@ -401,7 +402,7 @@ miscRouter.get("/tasks/:taskId/recommended-volunteers", queueMiddleware('heavy')
 
     res.json(recommendedVolunteers);
   } catch (err) {
-    console.error("Error getting recommended volunteers for task:", err);
+    logger.error("Error getting recommended volunteers for task:", err);
     res.status(500).json({ message: "Failed to get recommended volunteers" });
   }
 });
@@ -482,7 +483,7 @@ miscRouter.get("/projects/:projectId/recommended-volunteers", queueMiddleware('h
 
     res.json(recommendedVolunteers);
   } catch (err) {
-    console.error("Error getting recommended volunteers for project:", err);
+    logger.error("Error getting recommended volunteers for project:", err);
     res.status(500).json({ message: "Failed to get recommended volunteers" });
   }
 });
@@ -520,14 +521,8 @@ miscRouter.post("/projects/:id/auto-link-sdgs", authMiddleware, async (req, res)
     // If no keyword matches or only one match, use AI for better suggestions
     if (keywordSuggestions.length < 2) {
       try {
-        const openai = new OpenAI({
-          apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-          baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-        });
-
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
+        const aiResponse = (await aiService.chat(
+          [
             {
               role: "system",
               content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
@@ -539,11 +534,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
               content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
             }
           ],
-          temperature: 0.3,
-          max_tokens: 50,
-        });
-
-        const aiResponse = completion.choices[0]?.message?.content?.trim();
+          { temperature: 0.3, maxTokens: 50 }
+        )).trim();
         if (aiResponse) {
           try {
             const aiSDGs = JSON.parse(aiResponse);
@@ -551,11 +543,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
               suggestedSDGs = aiSDGs.slice(0, 3);
             }
           } catch (parseErr) {
-            console.error("Failed to parse AI response:", parseErr);
+            logger.error("Failed to parse AI response:", parseErr);
           }
         }
       } catch (aiErr) {
-        console.error("AI SDG suggestion failed, using keyword-based:", aiErr);
+        logger.error("AI SDG suggestion failed, using keyword-based:", aiErr);
       }
     }
 
@@ -575,7 +567,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       project: updatedProject
     });
   } catch (err) {
-    console.error("Error auto-linking SDGs:", err);
+    logger.error("Error auto-linking SDGs:", err);
     res.status(500).json({
       message: "Failed to auto-link SDGs",
       error: err instanceof Error ? err.message : String(err)
@@ -623,14 +615,8 @@ miscRouter.post("/projects/batch/auto-link-sdgs", authMiddleware, async (req, re
         // If no keyword matches or only one match, use AI
         if (keywordSuggestions.length < 2) {
           try {
-            const openai = new OpenAI({
-              apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-              baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-            });
-
-            const completion = await openai.chat.completions.create({
-              model: "gpt-4o-mini",
-              messages: [
+            const aiResponse = (await aiService.chat(
+              [
                 {
                   role: "system",
                   content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
@@ -642,11 +628,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                   content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
                 }
               ],
-              temperature: 0.3,
-              max_tokens: 50,
-            });
-
-            const aiResponse = completion.choices[0]?.message?.content?.trim();
+              { temperature: 0.3, maxTokens: 50 }
+            )).trim();
             if (aiResponse) {
               try {
                 const aiSDGs = JSON.parse(aiResponse);
@@ -654,11 +637,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
                   suggestedSDGs = aiSDGs.slice(0, 3);
                 }
               } catch (parseErr) {
-                console.error("Failed to parse AI response:", parseErr);
+                logger.error("Failed to parse AI response:", parseErr);
               }
             }
           } catch (aiErr) {
-            console.error("AI SDG suggestion failed for project", project.id, aiErr);
+            logger.error("AI SDG suggestion failed for project", project.id, aiErr);
           }
         }
 
@@ -696,7 +679,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       results
     });
   } catch (err) {
-    console.error("Error in batch auto-link:", err);
+    logger.error("Error in batch auto-link:", err);
     res.status(500).json({
       message: "Failed to batch auto-link SDGs",
       error: err instanceof Error ? err.message : String(err)
@@ -719,7 +702,7 @@ miscRouter.get("/notifications", authMiddleware, async (req, res) => {
 
     res.json(notifications);
   } catch (err) {
-    console.error("Error fetching notifications:", err);
+    logger.error("Error fetching notifications:", err);
     res.status(500).json({ message: "Failed to fetch notifications" });
   }
 });
@@ -747,7 +730,7 @@ miscRouter.post("/notifications/:id/read", authMiddleware, async (req, res) => {
 
     res.json(notification);
   } catch (err) {
-    console.error("Error marking notification as read:", err);
+    logger.error("Error marking notification as read:", err);
     res.status(500).json({ message: "Failed to mark notification as read" });
   }
 });
@@ -776,7 +759,7 @@ miscRouter.post("/volunteers/:id/simulate-match", queueMiddleware('heavy'), asyn
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error("Error simulating match:", err);
+    logger.error("Error simulating match:", err);
     res.status(500).json({ error: "Failed to simulate match" });
   }
 });
@@ -797,7 +780,7 @@ miscRouter.post("/images/ingest", async (req, res) => {
       contentType: "multipart/form-data"
     });
   } catch (err) {
-    console.error("Error ingesting image:", err);
+    logger.error("Error ingesting image:", err);
     res.status(500).json({ error: "Failed to ingest image" });
   }
 });
@@ -811,7 +794,7 @@ miscRouter.get("/ai/explain", async (req, res) => {
     const data = await proxyToPython("/api/ai/explain", req);
     res.json(data);
   } catch (err) {
-    console.error("Error fetching AI explanation:", err);
+    logger.error("Error fetching AI explanation:", err);
     res.status(500).json({ error: "Failed to fetch AI explanation" });
   }
 });
@@ -875,7 +858,7 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
           invitationResult.assignmentId = assignment.id;
           invitationResult.volunteerId = existingUser.id;
 
-          console.log(`[Invitation] Created project assignment for existing volunteer ${email} (ID: ${existingUser.id})`);
+          logger.info(`[Invitation] Created project assignment for existing volunteer ${email} (ID: ${existingUser.id})`);
         } catch (err: any) {
           // Handle duplicate assignment
           if (err.name === 'DuplicateAssignmentError') {
@@ -890,7 +873,7 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
         // No project specified - just create a volunteer-organization relationship
         invitationResult.isExistingUser = true;
         invitationResult.volunteerId = existingUser.id;
-        console.log(`[Invitation] Volunteer ${email} already exists, no project assignment created`);
+        logger.info(`[Invitation] Volunteer ${email} already exists, no project assignment created`);
       }
     } else {
       // New user or non-volunteer - send invitation email
@@ -911,12 +894,12 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
         invitationResult.emailMessageId = emailResult.messageId;
 
         if (emailResult.success) {
-          console.log(`[Invitation] Email sent to new user ${email} for ${organization.name}`);
+          logger.info(`[Invitation] Email sent to new user ${email} for ${organization.name}`);
         } else {
-          console.log(`[Invitation] Email failed for ${email}: ${emailResult.error}`);
+          logger.info(`[Invitation] Email failed for ${email}: ${emailResult.error}`);
         }
       } catch (emailErr) {
-        console.error(`[Invitation] Email error for ${email}:`, emailErr);
+        logger.error(`[Invitation] Email error for ${email}:`, emailErr);
         invitationResult.emailSent = false;
         invitationResult.emailError = 'Failed to send email';
       }
@@ -930,7 +913,7 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
       invitation: invitationResult
     });
   } catch (error) {
-    console.error("Error sending invitation:", error);
+    logger.error("Error sending invitation:", error);
     res.status(500).json({ error: "Failed to send invitation" });
   }
 });
@@ -954,7 +937,7 @@ miscRouter.post("/invitations/bulk-import", authMiddleware, async (req, res) => 
     // For now, simulate successful import
     const count = Math.floor(Math.random() * 10) + 5; // Random 5-15
 
-    console.log(`Bulk import: ${count} invitations sent`);
+    logger.info(`Bulk import: ${count} invitations sent`);
 
     res.status(200).json({
       success: true,
@@ -967,7 +950,7 @@ miscRouter.post("/invitations/bulk-import", authMiddleware, async (req, res) => 
       }
     });
   } catch (error) {
-    console.error("Error importing volunteers:", error);
+    logger.error("Error importing volunteers:", error);
     res.status(500).json({ error: "Failed to import volunteers" });
   }
 });
@@ -1027,7 +1010,7 @@ miscRouter.get("/invitations/pending", async (req, res) => {
       total: enrichedInvitations.length
     });
   } catch (error) {
-    console.error("Error fetching pending invitations:", error);
+    logger.error("Error fetching pending invitations:", error);
     res.status(500).json({ error: "Failed to fetch pending invitations" });
   }
 });
@@ -1068,10 +1051,10 @@ miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Resp
       html: `<pre style="font-family:sans-serif;font-size:14px;">${textBody.replace(/</g, "&lt;")}</pre>`,
     });
 
-    console.log(`[CONTACT] Enquiry received from ${email} for plan: ${plan}`);
+    logger.info(`[CONTACT] Enquiry received from ${email} for plan: ${plan}`);
     res.json({ ok: true });
   } catch (error) {
-    console.error("[CONTACT] Failed to send enquiry email:", error);
+    logger.error("[CONTACT] Failed to send enquiry email:", error);
     res.status(500).json({ error: "Failed to send enquiry. Please email hello@synerxus.com directly." });
   }
 });

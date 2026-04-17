@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import {
   users,
   organizations,
@@ -2738,84 +2739,84 @@ export class DatabaseStorage implements IStorage {
       await db.delete(notifications).where(eq(notifications.userId, userId));
       deletedTables.push("notifications");
     } catch (err) {
-      console.error("Error deleting notifications:", err);
+      logger.error("Error deleting notifications:", err);
     }
 
     try {
       await db.delete(orgMessages).where(or(eq(orgMessages.senderId, userId), eq(orgMessages.receiverId, userId)));
       deletedTables.push("orgMessages");
     } catch (err) {
-      console.error("Error deleting orgMessages:", err);
+      logger.error("Error deleting orgMessages:", err);
     }
 
     try {
       await db.delete(storyLikes).where(eq(storyLikes.userId, userId));
       deletedTables.push("storyLikes");
     } catch (err) {
-      console.error("Error deleting storyLikes:", err);
+      logger.error("Error deleting storyLikes:", err);
     }
 
     try {
       await db.delete(volunteerStories).where(eq(volunteerStories.volunteerId, userId));
       deletedTables.push("volunteerStories");
     } catch (err) {
-      console.error("Error deleting volunteerStories:", err);
+      logger.error("Error deleting volunteerStories:", err);
     }
 
     try {
       await db.delete(userBadges).where(eq(userBadges.userId, userId));
       deletedTables.push("userBadges");
     } catch (err) {
-      console.error("Error deleting userBadges:", err);
+      logger.error("Error deleting userBadges:", err);
     }
 
     try {
       await db.delete(applications).where(eq(applications.volunteerId, userId));
       deletedTables.push("applications");
     } catch (err) {
-      console.error("Error deleting applications:", err);
+      logger.error("Error deleting applications:", err);
     }
 
     try {
       await db.delete(savedOpportunities).where(eq(savedOpportunities.volunteerId, userId));
       deletedTables.push("savedOpportunities");
     } catch (err) {
-      console.error("Error deleting savedOpportunities:", err);
+      logger.error("Error deleting savedOpportunities:", err);
     }
 
     try {
       await db.delete(rejectedOpportunities).where(eq(rejectedOpportunities.volunteerId, userId));
       deletedTables.push("rejectedOpportunities");
     } catch (err) {
-      console.error("Error deleting rejectedOpportunities:", err);
+      logger.error("Error deleting rejectedOpportunities:", err);
     }
 
     try {
       await db.delete(projectAssignments).where(eq(projectAssignments.volunteerId, userId));
       deletedTables.push("projectAssignments");
     } catch (err) {
-      console.error("Error deleting projectAssignments:", err);
+      logger.error("Error deleting projectAssignments:", err);
     }
 
     try {
       await db.delete(volunteerActivities).where(eq(volunteerActivities.userId, userId));
       deletedTables.push("volunteerActivities");
     } catch (err) {
-      console.error("Error deleting volunteerActivities:", err);
+      logger.error("Error deleting volunteerActivities:", err);
     }
 
     try {
       await db.delete(volunteerProfiles).where(eq(volunteerProfiles.userId, userId));
       deletedTables.push("volunteerProfiles");
     } catch (err) {
-      console.error("Error deleting volunteerProfiles:", err);
+      logger.error("Error deleting volunteerProfiles:", err);
     }
 
     try {
       await db.delete(organizationMembers).where(eq(organizationMembers.userId, userId));
       deletedTables.push("organizationMembers");
     } catch (err) {
-      console.error("Error deleting organizationMembers:", err);
+      logger.error("Error deleting organizationMembers:", err);
     }
 
     if (user.email) {
@@ -2829,7 +2830,7 @@ export class DatabaseStorage implements IStorage {
           deletedTables.push("volunteers");
         }
       } catch (err) {
-        console.error("Error deleting matches/volunteers:", err);
+        logger.error("Error deleting matches/volunteers:", err);
       }
     }
 
@@ -2837,7 +2838,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(users).where(eq(users.id, userId));
       deletedTables.push("users");
     } catch (err) {
-      console.error("Error deleting user:", err);
+      logger.error("Error deleting user:", err);
     }
 
     return { deletedTables };

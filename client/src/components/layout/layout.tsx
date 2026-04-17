@@ -8,6 +8,7 @@ import VolunteerBottomNav from "./volunteer-bottom-nav";
 import Footer from "./footer";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import { useOnboarding } from "@/hooks/use-onboarding";
 
 interface LayoutProps {
@@ -18,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
   const { startOnboarding, isCompleted } = useOnboarding();
-  const currentUserId = localStorage.getItem('currentUserId');
+  const currentUserId = useCurrentUserId();
 
   // Check both Firebase user AND localStorage userId for auth state
   const isAuthenticated = user || currentUserId;

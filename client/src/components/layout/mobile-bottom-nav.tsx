@@ -37,7 +37,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
     <>
       <div className="h-16 md:hidden" />
       <nav
-        className="fixed bottom-0 left-0 right-0 h-16 grid grid-cols-5 items-center px-1 pb-[env(safe-area-inset-bottom,0px)] z-50 md:hidden bg-slate-100 border-t border-slate-200 shadow-[0_-2px_16px_rgba(0,0,0,0.08)]"
+        className="fixed bottom-0 left-0 right-0 h-16 grid grid-cols-5 items-center px-1 pb-[env(safe-area-inset-bottom,0px)] z-40 md:hidden bg-slate-100 border-t border-slate-200 shadow-[0_-2px_16px_rgba(0,0,0,0.08)]"
         data-testid="mobile-bottom-nav"
       >
         {NAV_ITEMS.map((item) => {

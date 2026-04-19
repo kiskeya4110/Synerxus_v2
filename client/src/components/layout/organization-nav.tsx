@@ -186,7 +186,7 @@ export default function OrganizationNav() {
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
 
                   {/* Menu Panel */}
-                  <div className="absolute right-0 top-full mt-2 w-64 z-50 rounded-xl border border-stone-200 bg-white shadow-xl overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-64 z-[60] rounded-xl border border-stone-200 bg-white shadow-xl overflow-hidden">
                     {/* Org Info Header */}
                     <div className="px-4 py-3 bg-stone-50 border-b border-stone-200">
                       <div className="flex items-center gap-3">
@@ -257,7 +257,7 @@ export default function OrganizationNav() {
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t border-stone-200 py-2">
+                    <div className="border-t border-stone-200 py-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"

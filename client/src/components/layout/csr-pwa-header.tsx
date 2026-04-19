@@ -198,6 +198,7 @@ export default function CSRPWAHeader({
         <div className="fixed inset-0 z-[100] bg-black/50" onClick={() => setShowMenu(false)}>
           <div
             className="absolute right-0 top-0 bottom-0 w-72 bg-white shadow-2xl animate-in slide-in-from-right duration-300"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Menu Header */}
@@ -247,7 +248,7 @@ export default function CSRPWAHeader({
             </div>
 
             {/* Logout Button */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
               <button
                 onClick={() => {
                   setShowMenu(false);

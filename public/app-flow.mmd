@@ -1,0 +1,93 @@
+flowchart TD
+    LANDING["/landing — Landing Page"]
+    LOGIN["/login — Firebase Auth"]
+    SIGNUP["/signup — Role Selector"]
+
+    %% ── SIDE 1: CORPORATE ──────────────────────────────
+    subgraph CORP ["⬛ Side 1 — Corporate (ESG Buyer)"]
+        INTAKE_C["/signup/corporate\nCorporate Intake"]
+        C_DASH["/dashboard — CSR Dashboard\nESG metrics · SDG alignment · engagement"]
+        C_REPORTS["/corporate/reports\nReports & Exports · PDF / Excel"]
+        C_SETTINGS["/corporate/settings\nProfile Settings"]
+
+        subgraph FIREWALL ["🔒 Firewall — Employee Volunteers\n(scoped to this company only)"]
+            EMP_VOL["Employee Volunteer\nLogs hours · tied to corporate account"]
+            V_LOG["/volunteer/log/:projectId\nLog Activity"]
+            V_HISTORY["/volunteer/history\nActivity History"]
+            V_SETTINGS["/volunteer/settings\nProfile Settings"]
+        end
+    end
+
+    %% ── SIDE 2: NGO ─────────────────────────────────────
+    subgraph NGO ["⬜ Side 2 — NGO / Organization (Impact Supplier)"]
+        INTAKE_N["/signup/organization\nNGO Intake"]
+        N_DASH["/dashboard — NGO Dashboard\nProject pipeline · verification queue"]
+        N_PROJECT["/projects/:id\nProject Detail"]
+        N_EDIT["/projects/:id/edit\nEdit Project"]
+        N_POST["/post-core-opportunity\nPost Opportunity"]
+        N_LOG["/ngo/log-hours\nLog Volunteer Hours"]
+        N_SETTINGS["/ngo/settings\nProfile Settings"]
+    end
+
+    %% ── ADMIN ────────────────────────────────────────────
+    subgraph ADMIN ["🔑 Admin (Platform Operator)"]
+        A_PILOT["/admin/pilot-dashboard\nPilot Dashboard · Org approvals · User mgmt"]
+    end
+
+    %% ── UTILITY ──────────────────────────────────────────
+    ORGS["/organizations — Directory"]
+    LEGAL["/terms · /privacy · /help"]
+
+    %% ── ENTRY FLOW ───────────────────────────────────────
+    LANDING --> LOGIN
+    LANDING --> SIGNUP
+    SIGNUP --> INTAKE_C
+    SIGNUP --> INTAKE_N
+    LOGIN --> C_DASH
+    LOGIN --> N_DASH
+    INTAKE_C --> C_DASH
+    INTAKE_N --> N_DASH
+
+    %% ── CORPORATE FLOW ───────────────────────────────────
+    C_DASH --> C_REPORTS
+    C_DASH --> C_SETTINGS
+    C_DASH --> EMP_VOL
+    EMP_VOL --> V_LOG
+    EMP_VOL --> V_HISTORY
+    EMP_VOL --> V_SETTINGS
+
+    %% ── NGO FLOW ─────────────────────────────────────────
+    N_DASH --> N_PROJECT
+    N_PROJECT --> N_EDIT
+    N_DASH --> N_POST
+    N_DASH --> N_LOG
+    N_DASH --> N_SETTINGS
+
+    %% ── MARKETPLACE TRANSACTION ──────────────────────────
+    V_LOG -->|"verified impact log"| N_DASH
+    N_DASH -->|"SDG · ESG verified data"| C_DASH
+
+    %% ── ADMIN ────────────────────────────────────────────
+    LOGIN --> A_PILOT
+
+    %% ── UTILITY ──────────────────────────────────────────
+    LANDING --> ORGS
+    LANDING --> LEGAL
+
+    %% ── STYLES ───────────────────────────────────────────
+    classDef auth     fill:#fef3c7,stroke:#f59e0b,color:#92400e
+    classDef intake   fill:#dcfce7,stroke:#22c55e,color:#14532d
+    classDef csr      fill:#fce7f3,stroke:#db2777,color:#831843
+    classDef emp      fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef ngo      fill:#d1fae5,stroke:#059669,color:#064e3b
+    classDef admin    fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    classDef util     fill:#f1f5f9,stroke:#94a3b8,color:#475569
+    classDef public   fill:#e0e7ff,stroke:#818cf8,color:#3730a3
+
+    class LANDING,ORGS,LEGAL public
+    class LOGIN,SIGNUP auth
+    class INTAKE_C,INTAKE_N intake
+    class C_DASH,C_REPORTS,C_SETTINGS csr
+    class EMP_VOL,V_LOG,V_HISTORY,V_SETTINGS emp
+    class N_DASH,N_PROJECT,N_EDIT,N_POST,N_LOG,N_SETTINGS ngo
+    class A_PILOT admin

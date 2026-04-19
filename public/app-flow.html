@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synerxus — App Flow Diagram</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 40px 32px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 36px;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ─── Node styles ────────────────────────────────────── */
+    .node {
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .node-public   { background: #e0e7ff; border: 1.5px solid #818cf8; color: #3730a3; }
+    .node-auth     { background: #fef3c7; border: 1.5px solid #f59e0b; color: #92400e; }
+    .node-intake   { background: #dcfce7; border: 1.5px solid #22c55e; color: #14532d; }
+    .node-unified  { background: #6366f1; border: 1.5px solid #4338ca; color: #fff; font-size: 14px; padding: 12px 32px; }
+    .node-vol      { background: #ede9fe; border: 1.5px solid #7c3aed; color: #4c1d95; }
+    .node-ngo      { background: #d1fae5; border: 1.5px solid #059669; color: #064e3b; }
+    .node-csr      { background: #fce7f3; border: 1.5px solid #db2777; color: #831843; }
+    .node-admin    { background: #fee2e2; border: 1.5px solid #ef4444; color: #7f1d1d; }
+    .node-util     { background: #f1f5f9; border: 1.5px solid #94a3b8; color: #475569; }
+
+    /* ─── Arrows ─────────────────────────────────────────── */
+    .arrow-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 0;
+    }
+    .arrow-down .line { width: 2px; height: 24px; background: #94a3b8; }
+    .arrow-down .head {
+      width: 0; height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #94a3b8;
+    }
+
+    /* ─── Horizontal split ───────────────────────────────── */
+    .split-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .split-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* horizontal connector line above splits */
+    .h-connector {
+      position: relative;
+      height: 24px;
+    }
+    .h-line {
+      position: absolute;
+      top: 0;
+      height: 2px;
+      background: #94a3b8;
+    }
+    .v-down-line {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      background: #94a3b8;
+    }
+
+    /* ─── Section labels ─────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      margin-top: 28px;
+    }
+
+    /* ─── Role columns layout ────────────────────────────── */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 28px;
+    }
+
+    .role-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .role-header {
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .role-item {
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 11.5px;
+      font-weight: 500;
+      text-align: center;
+      border: 1.5px solid;
+    }
+
+    .vol-theme  { background: #ede9fe; border-color: #7c3aed; color: #4c1d95; }
+    .ngo-theme  { background: #d1fae5; border-color: #059669; color: #064e3b; }
+    .csr-theme  { background: #fce7f3; border-color: #db2777; color: #831843; }
+    .adm-theme  { background: #fee2e2; border-color: #ef4444; color: #7f1d1d; }
+
+    .role-route {
+      font-size: 10px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      opacity: .7;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ─── Auth flow row ──────────────────────────────────── */
+    .auth-row {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ─── Signup row ─────────────────────────────────────── */
+    .signup-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    /* ─── Legend ─────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Data flow section ──────────────────────────────── */
+    .data-flow {
+      margin-top: 48px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .data-flow h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+    }
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 24px;
+      overflow-x: auto;
+    }
+    .pipe-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .pipe-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .pipe-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      max-width: 80px;
+      color: #1e293b;
+    }
+    .pipe-sub {
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
+      max-width: 80px;
+    }
+    .pipe-arrow {
+      font-size: 20px;
+      color: #94a3b8;
+      margin: 0 8px;
+      padding-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    @media print {
+      body { background: white; padding: 20px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Synerxus — App Flow Diagram</h1>
+  <p class="subtitle">CSR Impact Data Platform · Volunteer · NGO · Corporate · Admin</p>
+
+  <div class="flow">
+
+    <!-- ── Public Entry ── -->
+    <div class="section-label">Entry</div>
+    <div class="node node-public">/landing — Landing Page</div>
+
+    <div class="arrow-down"><div class="line"></div><div class="head"></div></div>
+
+    <!-- ── Auth ── -->
+    <div class="auth-row">
+      <div class="node node-auth">/login — Firebase Auth</div>
+      <div style="color:#94a3b8;font-size:13px;padding:0 8px;">or</div>
+      <div class="node node-auth">/signup — Role Selector</div>
+    </div>
+
+    <div class="arrow-down"><div class="line"></div><div class="head"></div></div>
+
+    <!-- ── Intake Forms ── -->
+    <div class="section-label">Profile Setup (new users)</div>
+    <div class="signup-row">
+      <div class="node node-intake">/signup/volunteer<br><span style="font-size:10px;font-weight:400">Volunteer Intake</span></div>
+      <div class="node node-intake">/signup/organization<br><span style="font-size:10px;font-weight:400">NGO Intake</span></div>
+      <div class="node node-intake">/signup/corporate<br><span style="font-size:10px;font-weight:400">Corporate Intake</span></div>
+    </div>
+
+    <div class="arrow-down"><div class="line"></div><div class="head"></div></div>
+
+    <!-- ── Unified Dashboard ── -->
+    <div class="section-label">Authenticated Core</div>
+    <div class="node node-unified">/dashboard — Unified Dashboard<br><span style="font-size:11px;font-weight:400;opacity:.85">Role detected → renders Volunteer / NGO / CSR view</span></div>
+
+  </div>
+
+  <!-- ── Role columns ── -->
+  <div style="display:flex;justify-content:center;">
+    <div class="roles-grid">
+
+      <!-- Volunteer -->
+      <div class="role-col">
+        <div class="role-header vol-theme">👤 Volunteer</div>
+        <div class="role-item vol-theme">Impact Wallet<span class="role-route">/dashboard</span></div>
+        <div class="role-item vol-theme">Log Activity<span class="role-route">/volunteer/log/:projectId</span></div>
+        <div class="role-item vol-theme">Activity History<span class="role-route">/volunteer/history</span></div>
+        <div class="role-item vol-theme">Discover Opportunities<span class="role-route">/opportunities</span></div>
+        <div class="role-item vol-theme">Opportunity Detail<span class="role-route">/opportunities/:id</span></div>
+        <div class="role-item vol-theme">Profile Settings<span class="role-route">/volunteer/settings</span></div>
+      </div>
+
+      <!-- NGO -->
+      <div class="role-col">
+        <div class="role-header ngo-theme">🏢 NGO / Organization</div>
+        <div class="role-item ngo-theme">Project Pipeline<span class="role-route">/dashboard</span></div>
+        <div class="role-item ngo-theme">Project Detail<span class="role-route">/projects/:id</span></div>
+        <div class="role-item ngo-theme">Edit Project<span class="role-route">/projects/:id/edit</span></div>
+        <div class="role-item ngo-theme">Post Opportunity<span class="role-route">/post-core-opportunity</span></div>
+        <div class="role-item ngo-theme">Log Volunteer Hours<span class="role-route">/ngo/log-hours</span></div>
+        <div class="role-item ngo-theme">Profile Settings<span class="role-route">/ngo/settings</span></div>
+      </div>
+
+      <!-- CSR / Corporate -->
+      <div class="role-col">
+        <div class="role-header csr-theme">📊 CSR / Corporate</div>
+        <div class="role-item csr-theme">ESG Dashboard<span class="role-route">/dashboard</span></div>
+        <div class="role-item csr-theme">Reports &amp; Exports<span class="role-route">/corporate/reports</span></div>
+        <div class="role-item csr-theme">PDF / Excel Export<span class="role-route">client-side print</span></div>
+        <div class="role-item csr-theme">SDG Metrics<span class="role-route">/dashboard → SDG tab</span></div>
+        <div class="role-item csr-theme">Employee Engagement<span class="role-route">/dashboard → Engage tab</span></div>
+        <div class="role-item csr-theme">Profile Settings<span class="role-route">/corporate/settings</span></div>
+      </div>
+
+      <!-- Admin -->
+      <div class="role-col">
+        <div class="role-header adm-theme">🔑 Admin</div>
+        <div class="role-item adm-theme">Pilot Dashboard<span class="role-route">/admin/pilot-dashboard</span></div>
+        <div class="role-item adm-theme">Org Approvals<span class="role-route">/dashboard → Admin tab</span></div>
+        <div class="role-item adm-theme">User Management<span class="role-route">/dashboard → Admin tab</span></div>
+        <div class="role-item util-theme" style="background:#f1f5f9;border-color:#94a3b8;color:#475569;">Organizations Dir.<span class="role-route">/organizations</span></div>
+        <div class="role-item util-theme" style="background:#f1f5f9;border-color:#94a3b8;color:#475569;">Terms / Privacy / Help<span class="role-route">/terms · /privacy · /help</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Core Data Pipeline ── -->
+  <div style="display:flex;justify-content:center;">
+    <div class="data-flow">
+      <h2>Core Impact Data Pipeline</h2>
+      <div class="pipeline">
+
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:#ede9fe;">🤝</div>
+          <div class="pipe-label">Volunteer Matched</div>
+          <div class="pipe-sub">AI matches to NGO project</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:#dbeafe;">📝</div>
+          <div class="pipe-label">Logs Impact</div>
+          <div class="pipe-sub">Hours + outcome + photo</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:#d1fae5;">✅</div>
+          <div class="pipe-label">NGO Verifies</div>
+          <div class="pipe-sub">Approval or rejection</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:#fce7f3;">📈</div>
+          <div class="pipe-label">CSR Sees Data</div>
+          <div class="pipe-sub">SDG metrics + ESG report</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:#fef3c7;">📄</div>
+          <div class="pipe-label">Export / Report</div>
+          <div class="pipe-sub">PDF / Excel via print API</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Legend ── -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#e0e7ff;border:1.5px solid #818cf8;"></div>Public / Landing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border:1.5px solid #f59e0b;"></div>Auth</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1.5px solid #22c55e;"></div>Intake / Signup</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6366f1;border:1.5px solid #4338ca;"></div>Unified Dashboard</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ede9fe;border:1.5px solid #7c3aed;"></div>Volunteer</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1.5px solid #059669;"></div>NGO / Organization</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fce7f3;border:1.5px solid #db2777;"></div>CSR / Corporate</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1.5px solid #ef4444;"></div>Admin</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f1f5f9;border:1.5px solid #94a3b8;"></div>Utility / Public</div>
+  </div>
+
+  <p style="text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;">
+    Synerxus · Generated 2026-04-19 · Print this page (Ctrl+P / Cmd+P) to export as PDF
+  </p>
+
+</body>
+</html>

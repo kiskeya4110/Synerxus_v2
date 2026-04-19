@@ -269,7 +269,7 @@ export default function OrganizationPWAHeader({
           />
 
           {/* Menu Panel - with safe area padding */}
-          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
             {/* Menu Header */}
             <div
               className="px-4 py-4 flex items-center justify-between flex-shrink-0"
@@ -360,7 +360,7 @@ export default function OrganizationPWAHeader({
               ))}
 
               {/* Logout - Separate at bottom */}
-              <div className="py-2 border-t border-slate-200 mt-2">
+              <div className="py-2 border-t border-slate-200 mt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
                 <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-red-50"

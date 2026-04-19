@@ -14,11 +14,11 @@ interface LogoProps {
 }
 
 const SIZES = {
-  xs: { height: 28, imgMult: 0.95 },
-  sm: { height: 36, imgMult: 1.03 },
-  md: { height: 44, imgMult: 1.03 },
-  lg: { height: 56, imgMult: 1.03 },
-  xl: { height: 72, imgMult: 1.03 },
+  xs: { height: 28, imgMult: 0.82 },
+  sm: { height: 36, imgMult: 0.92 },
+  md: { height: 44, imgMult: 0.92 },
+  lg: { height: 56, imgMult: 0.92 },
+  xl: { height: 72, imgMult: 0.92 },
 };
 
 export default function Logo({

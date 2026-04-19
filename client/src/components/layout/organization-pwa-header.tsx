@@ -319,9 +319,9 @@ export default function OrganizationPWAHeader({
             {/* Menu Sections */}
             <div className="flex-1 overflow-y-auto">
               {menuSections.map((section, sectionIndex) => (
-                <div key={sectionIndex} className="py-2">
+                <div key={sectionIndex} className="py-1">
                   {/* Section Title */}
-                  <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <p className="px-4 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     {section.title}
                   </p>
                   {/* Section Items */}
@@ -331,7 +331,7 @@ export default function OrganizationPWAHeader({
                       <button
                         key={itemIndex}
                         onClick={() => { setShowMenu(false); item.action(); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                           isAdminItem
                             ? 'hover:bg-purple-50 active:bg-purple-100'
                             : 'hover:bg-slate-50 active:bg-slate-100'
@@ -360,10 +360,10 @@ export default function OrganizationPWAHeader({
               ))}
 
               {/* Logout - Separate at bottom */}
-              <div className="py-2 border-t border-slate-200 mt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
+              <div className="py-1 border-t border-slate-200 mt-1 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-red-50"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-red-50"
                 >
                   <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                     <LogOut className="w-5 h-5 text-red-600" />

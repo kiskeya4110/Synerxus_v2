@@ -229,7 +229,7 @@ export default function CSRPWAHeader({
             </div>
 
             {/* Menu Items */}
-            <div className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+            <div className="p-3 space-y-0.5 overflow-y-auto max-h-[calc(100vh-180px)]">
               {menuItems.map((item) => (
                 <button
                   key={item.path}
@@ -237,7 +237,7 @@ export default function CSRPWAHeader({
                     setShowMenu(false);
                     navigate(item.path);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
                 >
                   <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}>
                     <item.icon className={`w-5 h-5 ${item.textColor}`} />
@@ -248,7 +248,7 @@ export default function CSRPWAHeader({
             </div>
 
             {/* Logout Button */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}>
               <button
                 onClick={() => {
                   setShowMenu(false);

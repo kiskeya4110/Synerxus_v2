@@ -186,7 +186,7 @@ export default function OrganizationNav() {
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
 
                   {/* Menu Panel */}
-                  <div className="absolute right-0 top-full mt-2 w-64 z-[60] rounded-xl border border-stone-200 bg-white shadow-xl overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-64 z-[60] rounded-xl border border-stone-200 bg-white shadow-xl overflow-hidden">
                     {/* Org Info Header */}
                     <div className="px-4 py-3 bg-stone-50 border-b border-stone-200">
                       <div className="flex items-center gap-3">
@@ -209,7 +209,7 @@ export default function OrganizationNav() {
                     </div>
 
                     {/* Nav Items (mobile only — hidden on lg+ where top bar shows them) */}
-                    <div className="py-2 border-b border-stone-100 lg:hidden">
+                    <div className="py-1 border-b border-stone-100 lg:hidden">
                       {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.startsWith("/dashboard");
@@ -217,7 +217,7 @@ export default function OrganizationNav() {
                           <Link key={item.href} href={item.href}>
                             <button
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                 isActive
                                   ? "bg-indigo-50 text-indigo-600"
                                   : "text-stone-700 hover:bg-stone-50"
@@ -233,7 +233,7 @@ export default function OrganizationNav() {
                     </div>
 
                     {/* Menu Items */}
-                    <div className="py-2">
+                    <div className="py-1">
                       {MENU_ITEMS.map((item) => {
                         const Icon = item.icon;
                         const isActive = location === item.href;
@@ -241,7 +241,7 @@ export default function OrganizationNav() {
                           <Link key={item.href} href={item.href}>
                             <button
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                 isActive
                                   ? "bg-indigo-50 text-indigo-600"
                                   : "text-stone-700 hover:bg-stone-50"
@@ -257,10 +257,10 @@ export default function OrganizationNav() {
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t border-stone-200 py-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
+                    <div className="border-t border-stone-200 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
                         <span className="text-sm font-medium">Sign Out</span>

@@ -306,7 +306,7 @@ export default function VolunteerNav() {
                       </div>
 
                       {/* Menu Items */}
-                      <div className="py-2">
+                      <div className="py-1">
                         {MENU_ITEMS.map((item) => {
                           const Icon = item.icon;
                           const isActive = location === item.href;
@@ -314,7 +314,7 @@ export default function VolunteerNav() {
                             <Link key={item.href} href={item.href}>
                               <button
                                 className={cn(
-                                  "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                   isActive
                                     ? "bg-primary/10 text-primary"
                                     : "text-foreground hover:bg-stone-100"
@@ -331,7 +331,7 @@ export default function VolunteerNav() {
 
                       {/* Admin Section */}
                       {currentUser?.isAdmin && (
-                        <div className="border-t border-border py-2">
+                        <div className="border-t border-border py-1">
                           <p className="px-4 pt-1 pb-0.5 text-[10px] font-bold text-cyan-500 uppercase tracking-wider">Admin</p>
                           <Link href="/admin/pilot-dashboard">
                             <button
@@ -346,10 +346,10 @@ export default function VolunteerNav() {
                       )}
 
                       {/* Logout */}
-                      <div className="border-t border-border py-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
+                      <div className="border-t border-border pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-destructive hover:bg-destructive/10 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2 text-left text-destructive hover:bg-destructive/10 transition-colors"
                         >
                           <LogOut className="h-4 w-4" />
                           <span className="text-sm font-medium">Sign Out</span>

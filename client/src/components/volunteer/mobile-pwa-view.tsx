@@ -3573,10 +3573,10 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             </div>
 
             {/* Danger Zone - Logout */}
-            <div className="pt-4 border-t border-slate-700">
+            <div className="pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t border-slate-700 mt-2">
               <button
                 onClick={handleLogout}
-                className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl p-4 font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl px-4 py-3 font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
                 data-testid="button-logout"
               >
                 <LogOut className="w-5 h-5" />
@@ -4796,7 +4796,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
         Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100/95 backdrop-blur-md border-t border-slate-200 px-2 pt-2 z-40 shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100/95 backdrop-blur-md border-t border-slate-200 px-2 pt-1.5 z-40 shadow-lg" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <div className="flex justify-around items-center max-w-[428px] mx-auto">
           <button
             onClick={() => setActiveTab('dashboard')}

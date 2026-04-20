@@ -109,7 +109,9 @@ logsRouter.post("/logs", authMiddleware, requireDataConsent, async (req: Request
     // Server-side SDG auto-suggestion: merge client sdgTags + project SDGs + text-based suggestions
     const clientSdgTags: number[] = Array.isArray(req.body.sdgTags) ? req.body.sdgTags : [];
     const textSdgTags = req.body.outcomeText ? suggestSDGsFromText(req.body.outcomeText) : [];
-    const outcomeSdgTags = req.body.outcomes ? mapOutcomeTypeToSDGs(req.body.outcomes) : [];
+    const submittedOutcomeType = req.body.outcome_type || req.body.outcomes || validationResult.data.outcomes || null;
+    const submittedOutcomeText = req.body.outcomeText || req.body.outcome_text || null;
+    const outcomeSdgTags = submittedOutcomeType ? mapOutcomeTypeToSDGs(submittedOutcomeType) : [];
     const mergedSdgTags = Array.from(new Set([
       ...clientSdgTags,
       ...textSdgTags,
@@ -119,7 +121,7 @@ logsRouter.post("/logs", authMiddleware, requireDataConsent, async (req: Request
 
     const activity = await storage.createVolunteerActivity({
       ...validationResult.data,
-      outcomeText: req.body.outcomeText || null,
+      outcomeText: submittedOutcomeText,
       geolocation: req.body.geolocation || null,
       deviceId: req.body.deviceId || null,
       sdgTags: mergedSdgTags.length > 0 ? mergedSdgTags : null,
@@ -153,7 +155,7 @@ logsRouter.post("/logs", authMiddleware, requireDataConsent, async (req: Request
           volunteerId: activity.userId as number,
           volunteerName: smsUser?.displayName || 'Volunteer',
           projectName: smsProject?.name || 'Project',
-          outcomeText: activity.outcomes || activity.description || '',
+          outcomeText: activity.outcomeText || activity.outcomes || activity.description || '',
           ngoContactPhone: orgProfile.contactPhone,
           ngoName: org.name || 'Organization',
           createdAt: new Date(),

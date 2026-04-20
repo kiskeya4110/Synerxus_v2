@@ -321,6 +321,7 @@ export default function LogActivity() {
       setSelectedKpi("");
       setKpiQuantity("");
       setHoursWorked("");
+      setBeneficiaryCount("");
       setPhotoUrl("");
       setDate(new Date());
       setIsSubmitting(false);
@@ -410,6 +411,7 @@ export default function LogActivity() {
         setSelectedKpi("");
         setKpiQuantity("");
         setHoursWorked("");
+        setBeneficiaryCount("");
         setPhotoUrl("");
         setDate(new Date());
         setIsSubmitting(false);

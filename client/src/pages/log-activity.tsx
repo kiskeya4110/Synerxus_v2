@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -290,19 +291,16 @@ export default function LogActivity() {
   // Log activity mutation
   const logActivityMutation = useMutation({
     mutationFn: async (activityData: any) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/logs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify(activityData),
       });
       if (!response.ok) {
-        const fallbackResponse = await fetch("/api/volunteer-activities", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(activityData),
-        });
-        if (!fallbackResponse.ok) throw new Error("Failed to log activity");
-        return fallbackResponse.json();
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.message || `Failed to log activity (${response.status})`);
       }
       return response.json();
     },

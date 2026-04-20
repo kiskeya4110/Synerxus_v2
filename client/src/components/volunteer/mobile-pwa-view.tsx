@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { getAuthHeaders } from "@/lib/queryClient";
 import {
   LineChart,
   Line,
@@ -1052,14 +1053,16 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   // Log activity mutation
   const logActivityMutation = useMutation({
     mutationFn: async (activityData: any) => {
-      const response = await fetch("/api/volunteer-activities", {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch("/api/logs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify(activityData),
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.message || "Failed to log activity");
       }
 
@@ -1102,13 +1105,15 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     }
 
     logActivityMutation.mutate({
-      userId: parseInt(userId),
       projectId: parseInt(logActivityProjectId),
       taskId: logActivityTaskId ? parseInt(logActivityTaskId) : null,
-      date: logActivityDate,
+      date: new Date(logActivityDate).toISOString(),
       hours: parseFloat(logActivityHours),
-      description: logActivityDescription,
-      activityType: logActivityType,
+      description: logActivityDescription || null,
+      outcomes: logActivityDescription || logActivityType || "volunteer_activity",
+      outcomeText: logActivityDescription || null,
+      outcomeType: "individual",
+      verificationStatus: "pending",
     });
   };
 
@@ -1135,9 +1140,11 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
   // Record impact mutation
   const recordImpactMutation = useMutation({
     mutationFn: async (impactData: any) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/project-impacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify(impactData),
       });
       if (!response.ok) {

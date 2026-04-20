@@ -55,6 +55,7 @@ import { useViewportDetection } from "@/hooks/use-mobile";
 import { useVolunteerPageData } from "@/hooks/use-volunteer-page-data";
 import { formatDecimal } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // SDG Data
 const SDG_OPTIONS = [
@@ -222,21 +223,28 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
 
   const logMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/logs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: userId,
-          project_id: parseInt(data.projectId),
+          projectId: parseInt(data.projectId),
           hours: parseFloat(data.hours),
-          outcome_type: data.outcome,
-          outcome_value: data.outcomeValue ? parseInt(data.outcomeValue) : null,
+          outcomes: data.outcome,
+          outcomeText: data.activity ? `${data.activity}: ${data.outcome}` : data.outcome,
+          outcomeQuantity: data.outcomeValue ? parseInt(data.outcomeValue) : null,
+          outcomeType: "individual",
           description: data.description,
-          sdg_goals: data.sdgs,
-          status: "pending",
+          sdgTags: data.sdgs.length > 0 ? data.sdgs : null,
+          date: new Date().toISOString(),
+          verificationStatus: "pending",
         }),
       });
-      if (!response.ok) throw new Error("Failed to log impact");
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.message || "Failed to log impact");
+      }
       return response.json();
     },
     onSuccess: () => {

@@ -170,7 +170,7 @@ export default function OrganizationsPWA() {
       <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
         {/* Page Title */}
         <div className="px-4 pt-4 pb-2">
           <h1 className="text-xl font-bold text-gray-900">Organizations</h1>

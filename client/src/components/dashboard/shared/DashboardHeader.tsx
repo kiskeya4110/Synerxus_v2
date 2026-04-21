@@ -53,7 +53,6 @@ function getMenuSections(userType: string | null, navigate: (path: string) => vo
       {
         title: "MAIN",
         items: [
-          { icon: Home, label: "Dashboard", desc: "Your impact overview", action: () => navigate('/dashboard') },
           { icon: Target, label: "Projects", desc: "AI-matched opportunities", action: () => navigate('/dashboard') },
           { icon: BarChart3, label: "Impact Wallet", desc: "Track your impact", action: () => navigate('/dashboard') },
         ]
@@ -385,7 +384,7 @@ export default function DashboardHeader({
 
       {/* Full Screen Menu Overlay */}
       {showMenu && (
-        <div className="fixed inset-0 z-[100] flex flex-col">
+        <div className="fixed inset-0 z-[200] flex flex-col">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -393,7 +392,7 @@ export default function DashboardHeader({
           />
 
           {/* Menu Panel */}
-          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full flex flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200" style={{ maxHeight: '100dvh', paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             {/* Menu Header */}
             <div
               className="px-4 py-4 flex items-center justify-between flex-shrink-0"
@@ -453,7 +452,7 @@ export default function DashboardHeader({
             )}
 
             {/* Menu Sections */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               {menuSections.map((section, sectionIndex) => (
                 <div key={sectionIndex} className="py-2">
                   <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -462,7 +461,7 @@ export default function DashboardHeader({
                   {section.items.map((item, itemIndex) => (
                     <button
                       key={itemIndex}
-                      onClick={() => { setShowMenu(false); item.action(); }}
+                      onClick={() => { setShowMenu(false); window.scrollTo(0, 0); item.action(); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 active:bg-slate-100"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
@@ -484,7 +483,7 @@ export default function DashboardHeader({
                     Admin
                   </p>
                   <button
-                    onClick={() => { setShowMenu(false); navigate('/admin/pilot-dashboard'); }}
+                    onClick={() => { setShowMenu(false); window.scrollTo(0, 0); navigate('/admin/pilot-dashboard'); }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cyan-50 active:bg-cyan-100"
                   >
                     <div className="w-9 h-9 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
@@ -497,22 +496,22 @@ export default function DashboardHeader({
                   </button>
                 </div>
               )}
+            </div>
 
-              {/* Logout */}
-              <div className="py-2 border-t border-slate-200 mt-2">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-red-50"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <LogOut className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-semibold text-red-600">Logout</span>
-                    <p className="text-xs text-red-400">Sign out safely</p>
-                  </div>
-                </button>
-              </div>
+            {/* Logout — pinned to bottom, always visible */}
+            <div className="flex-shrink-0 border-t border-slate-200">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-red-50"
+              >
+                <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <LogOut className="w-5 h-5 text-red-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-semibold text-red-600">Logout</span>
+                  <p className="text-xs text-red-400">Sign out safely</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>

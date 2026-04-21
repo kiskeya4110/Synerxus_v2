@@ -277,9 +277,9 @@ export default function DiscoverOpportunitiesPWA() {
       <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 w-full max-w-full">
         {/* Hero Section */}
-        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-800 px-4 pt-4 pb-6">
+        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-800 px-4 pt-3 pb-4">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-300" />
             Discover Opportunities
@@ -317,7 +317,7 @@ export default function DiscoverOpportunitiesPWA() {
           )}
 
           {/* Search Bar */}
-          <div className="relative mt-4">
+          <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70" />
             <input
               type="text"
@@ -331,7 +331,7 @@ export default function DiscoverOpportunitiesPWA() {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="mt-3 flex items-center gap-2 text-white/90 text-sm hover:text-white transition-colors"
+            className="mt-2 flex items-center gap-2 text-white/90 text-sm hover:text-white transition-colors"
           >
             <Filter className="w-4 h-4" />
             <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
@@ -339,10 +339,10 @@ export default function DiscoverOpportunitiesPWA() {
           </button>
         </div>
 
-        <div className="space-y-4 p-4 -mt-2">
+        <div className="space-y-3 p-3 -mt-2">
           {/* Filters */}
           {showFilters && (
-            <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl p-3 border border-stone-200 shadow-sm space-y-2">
               <h3 className="text-stone-800 font-semibold text-sm">Filters</h3>
 
               {/* Category Filter */}
@@ -381,15 +381,15 @@ export default function DiscoverOpportunitiesPWA() {
           {/* Top Matches */}
           {topMatches.length > 0 && (
             <div>
-              <h2 className="text-stone-800 text-lg font-semibold mb-3 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-stone-800 text-base font-semibold mb-2 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
                 Top Matches for You
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {topMatches.map((opp) => (
                   <div
                     key={opp.id}
-                    className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+                    className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-3 text-white shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
                     onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -413,7 +413,7 @@ export default function DiscoverOpportunitiesPWA() {
                     </div>
 
                     {opp.matchReasons && opp.matchReasons.length > 0 && (
-                      <div className="my-3 text-xs bg-white/10 backdrop-blur-sm rounded-lg p-2">
+                      <div className="my-2 text-xs bg-white/10 backdrop-blur-sm rounded-lg p-2">
                         <p className="font-semibold mb-1 flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Why this matches:
@@ -422,7 +422,7 @@ export default function DiscoverOpportunitiesPWA() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 text-xs mb-3 text-blue-100">
+                    <div className="flex items-center gap-3 text-xs mb-2 text-blue-100">
                       {opp.location && (
                         <div className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
@@ -458,18 +458,18 @@ export default function DiscoverOpportunitiesPWA() {
 
           {/* All Opportunities */}
           <div>
-            <h2 className="text-stone-800 text-lg font-semibold mb-3">
+            <h2 className="text-stone-800 text-base font-semibold mb-2">
               All Opportunities ({filteredOpportunities.length})
             </h2>
 
             {filteredOpportunities.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-stone-200 shadow-sm">
-                <Search className="w-12 h-12 mx-auto text-stone-400 mb-3" />
+              <div className="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-sm">
+                <Search className="w-10 h-10 mx-auto text-stone-400 mb-2" />
                 <p className="text-stone-800 font-medium">No opportunities found</p>
                 <p className="text-stone-500 text-sm mt-1">Try adjusting your filters</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {filteredOpportunities.map((opp) => {
                   const matchScore = opp.matchScore ?? 0;
                   const matchGradient = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
@@ -483,7 +483,7 @@ export default function DiscoverOpportunitiesPWA() {
                       onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                     >
                       {/* Match Score Header */}
-                      <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
+                      <div className={`bg-gradient-to-r ${matchGradient} px-3 py-2 flex items-center justify-between`}>
                         <div className="flex items-center gap-3 text-white">
                           <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                             <span className="text-base font-bold">{matchScore}%</span>
@@ -504,13 +504,13 @@ export default function DiscoverOpportunitiesPWA() {
                         )}
                       </div>
 
-                      <div className="p-4">
+                      <div className="p-3">
                         {/* Title & Organization */}
-                        <h3 className="text-stone-800 font-semibold text-base mb-1">
+                        <h3 className="text-stone-800 font-semibold text-sm mb-0.5">
                           {opp.title}
                         </h3>
                         {opp.organizationName && (
-                          <div className="flex items-center gap-1 text-stone-500 text-xs mb-2">
+                          <div className="flex items-center gap-1 text-stone-500 text-xs mb-1.5">
                             <Building2 className="w-3 h-3" />
                             <span>{opp.organizationName}</span>
                           </div>
@@ -518,14 +518,14 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Description */}
                         {opp.description && (
-                          <p className="text-stone-600 text-sm line-clamp-2 mb-3">
+                          <p className="text-stone-600 text-sm line-clamp-2 mb-2">
                             {opp.description}
                           </p>
                         )}
 
                         {/* SDG Goals */}
                         {opp.sdgGoals && opp.sdgGoals.length > 0 && (
-                          <div className="flex gap-1.5 mb-3">
+                          <div className="flex gap-1 mb-2">
                             {opp.sdgGoals.slice(0, 4).map((sdg) => (
                               <div
                                 key={sdg}
@@ -545,7 +545,7 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Match Reasons */}
                         {opp.matchReasons && opp.matchReasons.length > 0 && (
-                          <div className="bg-indigo-50 rounded-xl p-3 mb-3">
+                          <div className="bg-indigo-50 rounded-xl p-2 mb-2">
                             <p className="text-indigo-700 text-xs font-semibold mb-1 flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" />
                               Why this matches you
@@ -555,7 +555,7 @@ export default function DiscoverOpportunitiesPWA() {
                         )}
 
                         {/* Meta Info */}
-                        <div className="flex flex-wrap gap-2 text-xs text-stone-600 mb-3">
+                        <div className="flex flex-wrap gap-1.5 text-xs text-stone-600 mb-2">
                           {opp.location && (
                             <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-lg">
                               <MapPin className="w-3 h-3" />
@@ -578,8 +578,8 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Skills */}
                         {opp.requiredSkills && opp.requiredSkills.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-stone-500 text-xs mb-1.5 font-medium">Required Skills:</p>
+                          <div className="mb-2">
+                            <p className="text-stone-500 text-xs mb-1 font-medium">Required Skills:</p>
                             <div className="flex flex-wrap gap-1.5">
                               {opp.requiredSkills.slice(0, 3).map((skill, idx) => (
                                 <span key={idx} className="text-xs px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg font-medium">

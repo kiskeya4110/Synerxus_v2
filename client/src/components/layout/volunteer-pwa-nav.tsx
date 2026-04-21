@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Home, Briefcase, Sparkles, ClipboardList, MoreHorizontal, X, BarChart3 } from "lucide-react";
+import { Briefcase, Sparkles, ClipboardList, MoreHorizontal, X, BarChart3 } from "lucide-react";
 
 interface VolunteerPWANavProps {
   userId?: string;
-  activeTab?: 'home' | 'projects' | 'potentials' | 'log' | 'more';
+  activeTab?: 'projects' | 'potentials' | 'log' | 'more';
 }
 
 export default function VolunteerPWANav({ userId: propUserId, activeTab }: VolunteerPWANavProps) {
@@ -25,22 +25,15 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
 
   // Determine active tab from current location if not provided
   const currentTab = activeTab || (() => {
-    if (location === '/volunteer-dashboard' || location === '/dashboard') return 'home';
     if (location.includes('/projects')) return 'projects';
     if (location.includes('discover-opportunities') || location.includes('opportunities')) return 'potentials';
     if (location.includes('log-activity') || location.includes('tab=log-activity')) return 'log';
-    return 'home';
+    return 'projects';
   })();
 
   // All navigation goes back to volunteer-dashboard with tab parameter
   // This maintains consistent framing with PWA header and bottom tray
   const navItems = [
-    {
-      id: 'home' as const,
-      label: 'Home',
-      icon: Home,
-      path: '/volunteer-dashboard?tab=dashboard'
-    },
     {
       id: 'projects' as const,
       label: 'Projects',
@@ -75,7 +68,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
     <>
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
-        <div className="grid grid-cols-5 max-w-md mx-auto">
+        <div className="grid grid-cols-4 max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
             return (

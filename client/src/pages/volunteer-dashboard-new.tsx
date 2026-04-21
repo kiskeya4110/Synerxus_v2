@@ -916,9 +916,9 @@ export default function VolunteerDashboardNew() {
     const sdgsContributed = stats.sdgsAddressed || new Set(projects.flatMap((p: any) => p.sdgGoals || [])).size;
 
     return (
-      <div className="min-h-screen pwa-gradient-bg pb-20">
+      <div className="fixed inset-0 h-[100dvh] pwa-gradient-bg flex flex-col overflow-hidden">
         {/* Header with Logo and Menu */}
-        <header className="bg-white/90 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-30">
+        <header className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-stone-200 z-30">
           <div className="flex items-center justify-between px-5 py-3.5">
             {/* Logo — 40% */}
             <div className="flex-shrink-0" style={{ width: '40%' }}>
@@ -943,14 +943,14 @@ export default function VolunteerDashboardNew() {
 
         {/* Slide-out Menu */}
         {menuOpen && (
-          <div className="fixed inset-0 z-[100] flex">
+          <div className="fixed inset-0 z-[200] flex">
             <div
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="relative ml-auto w-[75%] max-w-[280px] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="relative ml-auto w-[75%] max-w-[280px] h-full flex flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-300" style={{ maxHeight: '100dvh' }}>
               {/* Header */}
-              <div className="bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
+              <div className="flex-shrink-0 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-white/60 text-xs font-medium">Menu</span>
                   <button
@@ -978,15 +978,14 @@ export default function VolunteerDashboardNew() {
               </div>
 
               {/* Menu Items */}
-              <div className="flex-1 overflow-y-auto py-1.5">
+              <div className="flex-1 min-h-0 overflow-y-auto py-1.5">
                 {[
-                  { icon: Home, label: "Dashboard", action: () => { setMenuOpen(false); setMobileTab('home'); } },
                   { icon: BarChart3, label: "Impact Wallet", action: () => { setMenuOpen(false); setMobileTab('wallet'); } },
                   { icon: Target, label: "My Projects", action: () => { setMenuOpen(false); setMobileTab('projects'); } },
                   { icon: Plus, label: "Log Impact", action: () => { setMenuOpen(false); setShowLogModal(true); } },
-                  { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); navigate('/my-work'); } },
-                  { icon: FileText, label: "Log Activity", action: () => { setMenuOpen(false); navigate('/log-activity'); } },
-                  { icon: Settings, label: "Profile Settings", action: () => { setMenuOpen(false); navigate('/volunteer-profile-settings'); } },
+                  { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/my-work'); } },
+                  { icon: FileText, label: "Log Activity", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/log-activity'); } },
+                  { icon: Settings, label: "Profile Settings", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/volunteer-profile-settings'); } },
                 ].map((item, index) => (
                   <button
                     key={index}
@@ -1004,10 +1003,10 @@ export default function VolunteerDashboardNew() {
 
               {/* Admin Section */}
               {dbUser?.isAdmin && (
-                <div className="border-t border-stone-200 px-3 pt-2 pb-1">
+                <div className="flex-shrink-0 border-t border-stone-200 px-3 pt-2 pb-1">
                   <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-wider px-1 py-1.5">Admin</p>
                   <button
-                    onClick={() => { setMenuOpen(false); navigate('/admin/pilot-dashboard'); }}
+                    onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/admin/pilot-dashboard'); }}
                     className="w-full flex items-center gap-3 px-1 py-2.5 transition-colors text-left text-cyan-700 hover:bg-cyan-50 rounded-lg"
                   >
                     <div className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center">
@@ -1020,7 +1019,7 @@ export default function VolunteerDashboardNew() {
               )}
 
               {/* Logout */}
-              <div className="border-t border-stone-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="flex-shrink-0 border-t border-stone-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
@@ -1038,35 +1037,35 @@ export default function VolunteerDashboardNew() {
         )}
 
         {/* Main Content */}
-        <main className="px-4 py-5 space-y-5">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-1 pb-20 space-y-2">
           {/* Home Tab Content */}
           {mobileTab === 'home' && (
             <>
               {/* Welcome Section */}
-              <div className="text-center py-4">
-                <h1 className="text-2xl font-bold text-stone-800 mb-1">
+              <div className="text-center">
+                <h1 className="text-base font-bold text-stone-800 leading-tight">
                   Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}!
                 </h1>
-                <p className="text-stone-600 text-sm">Your impact journey continues</p>
+                <p className="text-stone-600 text-xs">Your impact journey continues</p>
               </div>
 
               {/* Quick Stats Summary */}
-              <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-5 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-3 shadow-lg">
+                <div className="flex items-center justify-between mb-2">
                   <h2 className="text-white font-semibold">Impact Summary</h2>
-                  <span className="text-xs text-indigo-200 bg-indigo-500/30 px-2 py-1 rounded-full">This Month</span>
+                  <span className="text-xs text-indigo-200 bg-indigo-500/30 px-2 py-0.5 rounded-full">This Month</span>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.hoursLogged}</p>
+                    <p className="text-2xl font-bold text-white">{stats.hoursLogged}</p>
                     <p className="text-xs text-indigo-200">Hours</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.totalProjects}</p>
+                    <p className="text-2xl font-bold text-white">{stats.totalProjects}</p>
                     <p className="text-xs text-indigo-200">Projects</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white">{stats.totalPeopleImpacted}</p>
+                    <p className="text-2xl font-bold text-white">{stats.totalPeopleImpacted}</p>
                     <p className="text-xs text-indigo-200">People Helped</p>
                   </div>
                 </div>
@@ -1074,41 +1073,41 @@ export default function VolunteerDashboardNew() {
 
               {/* Quick Actions */}
               <div>
-                <h2 className="text-stone-800 font-semibold mb-3">Quick Actions</h2>
-                <div className="grid grid-cols-2 gap-3">
+                <h2 className="text-stone-800 font-semibold mb-2">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setShowLogModal(true)}
-                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
+                    className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col items-center gap-1.5 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-emerald-600" />
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-emerald-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">Log Impact</span>
                   </button>
                   <button
                     onClick={() => navigate('/discover-opportunities')}
-                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
+                    className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col items-center gap-1.5 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Search className="w-5 h-5 text-blue-600" />
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Search className="w-4 h-4 text-blue-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">Find Projects</span>
                   </button>
                   <button
                     onClick={() => setMobileTab('wallet')}
-                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
+                    className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col items-center gap-1.5 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-amber-600" />
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-amber-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">View Wallet</span>
                   </button>
                   <button
                     onClick={() => navigate('/volunteer-profile-settings')}
-                    className="bg-white border border-stone-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-stone-50 transition-colors shadow-sm"
+                    className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col items-center gap-1.5 hover:bg-stone-50 transition-colors shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                      <User className="w-5 h-5 text-purple-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <User className="w-4 h-4 text-purple-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">My Profile</span>
                   </button>
@@ -1118,7 +1117,7 @@ export default function VolunteerDashboardNew() {
               {/* Recent Activity Preview */}
               {recentLogs.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <h2 className="text-stone-800 font-semibold">Recent Activity</h2>
                     <button
                       onClick={() => navigate('/my-work')}
@@ -1129,7 +1128,7 @@ export default function VolunteerDashboardNew() {
                   </div>
                   <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100 shadow-sm">
                     {recentLogs.slice(0, 5).map((log: any) => (
-                      <div key={log.id} className="px-4 py-3 space-y-1.5">
+                      <div key={log.id} className="px-4 py-2 space-y-1">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-stone-800">{log.projectName || 'Project'}</p>
@@ -1176,51 +1175,51 @@ export default function VolunteerDashboardNew() {
           {mobileTab === 'wallet' && (
             <>
               {/* Core Metrics - 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 {/* Total Hours */}
-                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <Clock className="h-4 w-4 text-blue-600" />
                     <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
-                  <p className="text-xs text-stone-500 mt-1">{stats.verifiedHours} verified</p>
+                  <p className="text-2xl font-bold text-stone-800">{stats.hoursLogged}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{stats.verifiedHours} verified</p>
                 </div>
 
                 {/* People Impacted */}
-                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs font-medium text-stone-500 uppercase">People</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
-                  <p className="text-xs text-stone-500 mt-1">people impacted</p>
+                  <p className="text-2xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">people impacted</p>
                 </div>
 
                 {/* SDGs Addressed */}
-                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <Globe className="h-4 w-4 text-amber-600" />
                     <span className="text-xs font-medium text-stone-500 uppercase">SDGs</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.sdgsAddressed}</p>
-                  <p className="text-xs text-stone-500 mt-1">goals addressed</p>
+                  <p className="text-2xl font-bold text-stone-800">{stats.sdgsAddressed}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">goals addressed</p>
                 </div>
 
                 {/* Projects */}
-                <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <Globe className="h-4 w-4 text-indigo-600" />
                     <span className="text-xs font-medium text-stone-500 uppercase">Projects</span>
                   </div>
-                  <p className="text-3xl font-bold text-stone-800">{stats.totalProjects}</p>
-                  <p className="text-xs text-stone-500 mt-1">{stats.projectsActive} active</p>
+                  <p className="text-2xl font-bold text-stone-800">{stats.totalProjects}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{stats.projectsActive} active</p>
                 </div>
               </div>
 
               {/* Pending Verification Notice */}
               {stats.pendingVerifications > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-amber-600" />
                     <span className="text-sm font-medium text-amber-700">
@@ -1232,7 +1231,7 @@ export default function VolunteerDashboardNew() {
 
               {/* Recent Logs */}
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+                <div className="px-4 py-2 border-b border-stone-100 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-stone-800">Recent Activity</h2>
                   <button onClick={() => navigate('/my-work')} className="text-xs text-indigo-600 hover:text-indigo-700">View All →</button>
                 </div>
@@ -1243,7 +1242,7 @@ export default function VolunteerDashboardNew() {
                     </div>
                   )}
                   {!isLoadingLogs && recentLogs.map((log: any) => (
-                    <div key={log.id} className="px-4 py-3 space-y-1.5">
+                    <div key={log.id} className="px-4 py-2 space-y-1">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-stone-800">{log.projectName || 'Project'}</p>
@@ -1283,7 +1282,7 @@ export default function VolunteerDashboardNew() {
                   {!isLoadingLogs && recentLogs.length === 0 && (
                     <button
                       onClick={() => setShowLogModal(true)}
-                      className="w-full px-4 py-8 text-center hover:bg-stone-50 transition-colors"
+                      className="w-full px-4 py-5 text-center hover:bg-stone-50 transition-colors"
                     >
                       <p className="text-sm text-stone-500">No activity yet</p>
                       <p className="text-xs text-indigo-600 mt-1">Tap to log your first impact →</p>
@@ -1304,11 +1303,11 @@ export default function VolunteerDashboardNew() {
               </div>
 
               {isLoadingAssigned ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-5">
                   <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-emerald-600"></div>
                 </div>
               ) : assignedProjects.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {assignedProjects.map((assignment: any) => {
                     // Fallback: look up project from projects array if enrichment didn't provide it
                     const projectData = assignment.project || projects.find((p: any) => p.id === assignment.projectId);
@@ -1331,7 +1330,7 @@ export default function VolunteerDashboardNew() {
                     return (
                       <div
                         key={assignment.id}
-                        className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
+                        className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm"
                       >
                         <div className="flex items-start justify-between mb-1">
                           <div className="flex-1 min-w-0 pr-2">
@@ -1348,7 +1347,7 @@ export default function VolunteerDashboardNew() {
                         </div>
 
                         {/* KPI row */}
-                        <div className="flex gap-4 mt-3 pt-3 border-t border-stone-100">
+                        <div className="flex gap-3 mt-2 pt-2 border-t border-stone-100">
                           <div className="text-center">
                             <p className="text-sm font-bold text-stone-800">{hoursLogged}</p>
                             <p className="text-[10px] text-stone-500">hrs logged</p>
@@ -1375,34 +1374,34 @@ export default function VolunteerDashboardNew() {
                   })}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
-                  <Target className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-4 text-center">
+                  <Target className="h-8 w-8 text-stone-300 mx-auto mb-1.5" />
                   <p className="text-sm font-medium text-stone-800">No projects yet</p>
-                  <p className="text-xs text-stone-500 mt-1">
+                  <p className="text-xs text-stone-500 mt-0.5">
                     Apply to opportunities below to get assigned to projects
                   </p>
                 </div>
               )}
 
               {/* ── Section 2: Suggested For You (AI matches) ── */}
-              <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center justify-between mt-1">
                 <h2 className="text-lg font-semibold text-stone-800">Suggested For You</h2>
                 <span className="text-xs text-stone-500">4-Factor AI Match</span>
               </div>
 
               {isLoadingMatches ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-5">
                   <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-600"></div>
                 </div>
               ) : matchedProjects.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {matchedProjects.map((match: any, index: number) => (
                     <div
                       key={match.id || index}
-                      className="bg-white rounded-xl p-4 border border-stone-200 shadow-sm"
+                      className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm"
                       onClick={() => navigate(`/opportunities/${match.id}`)}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between mb-1.5">
                         <div className="flex-1">
                           <h3 className="text-sm font-semibold text-stone-800">
                             {match.organizationName || 'Organization'}
@@ -1420,7 +1419,7 @@ export default function VolunteerDashboardNew() {
                       </div>
 
                       {/* Match Factors */}
-                      <div className="flex flex-wrap gap-1.5 mt-3">
+                      <div className="flex flex-wrap gap-1 mt-1.5">
                         {(match.matchBreakdown?.skillMatch || 0) > 0 && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                             Skills +{Math.round(match.matchBreakdown.skillMatch)}
@@ -1445,7 +1444,7 @@ export default function VolunteerDashboardNew() {
 
                       {/* SDG Tags */}
                       {match.sdgGoals && match.sdgGoals.length > 0 && (
-                        <div className="flex gap-1 mt-3 pt-3 border-t border-stone-100">
+                        <div className="flex gap-1 mt-1.5 pt-1.5 border-t border-stone-100">
                           {match.sdgGoals.slice(0, 4).map((sdg: number) => (
                             <span
                               key={sdg}
@@ -1461,13 +1460,13 @@ export default function VolunteerDashboardNew() {
                   ))}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
+                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-4 text-center">
                   <p className="text-xs text-stone-500">
                     Complete your profile to get personalised suggestions
                   </p>
                   <button
                     onClick={() => navigate('/volunteer-profile-settings')}
-                    className="mt-3 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="mt-2 px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
                   >
                     Complete Profile
                   </button>

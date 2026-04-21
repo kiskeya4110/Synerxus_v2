@@ -281,7 +281,7 @@ export default function VolunteerNav() {
                     />
 
                     {/* Menu Panel */}
-                    <div className="absolute right-0 top-full mt-2 w-64 z-[60] rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-64 z-[60] rounded-xl border border-border bg-card shadow-xl overflow-y-auto max-h-[calc(100dvh-5rem-3.5rem)]">
                       {/* User Info Header */}
                       <div className="px-4 py-3 bg-secondary/50 border-b border-border">
                         <div className="flex items-center gap-3">

@@ -775,53 +775,53 @@ export default function OrganizationDashboardNew() {
           <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto px-4 py-5 space-y-5" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 space-y-3" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Core Metrics - 2x2 Grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {/* Pending Verification */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <span className="text-xs font-medium text-gray-500 uppercase">Pending</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.pendingVerifications}</p>
-              <p className="text-xs text-gray-500 mt-1">to verify</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pendingVerifications}</p>
+              <p className="text-xs text-gray-500 mt-0.5">to verify</p>
             </div>
 
             {/* Total Hours */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1">
                 <Clock className="h-4 w-4 text-blue-600" />
                 <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.totalHours}</p>
-              <p className="text-xs text-gray-500 mt-1">total logged</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+              <p className="text-xs text-gray-500 mt-0.5">total logged</p>
             </div>
 
             {/* Active Projects */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1">
                 <FolderOpen className="h-4 w-4 text-indigo-600" />
                 <span className="text-xs font-medium text-gray-500 uppercase">Projects</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.activeProjects}</p>
-              <p className="text-xs text-gray-500 mt-1">active</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
+              <p className="text-xs text-gray-500 mt-0.5">active</p>
             </div>
 
             {/* Total Volunteers */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1">
                 <Users className="h-4 w-4 text-emerald-600" />
                 <span className="text-xs font-medium text-gray-500 uppercase">Volunteers</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.totalVolunteers}</p>
-              <p className="text-xs text-gray-500 mt-1">contributing</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalVolunteers}</p>
+              <p className="text-xs text-gray-500 mt-0.5">contributing</p>
             </div>
           </div>
 
           {/* Verification Queue Preview */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <Shield className="h-4 w-4 text-amber-600" />
                 Pending Verification
@@ -834,8 +834,8 @@ export default function OrganizationDashboardNew() {
             </div>
             <div className="divide-y divide-gray-100">
               {pendingVerifications.map((item) => (
-                <div key={item.id} className="px-4 py-3">
-                  <div className="flex items-center justify-between mb-2">
+                <div key={item.id} className="px-4 py-2">
+                  <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
                         {item.volunteerName.charAt(0)}
@@ -847,10 +847,10 @@ export default function OrganizationDashboardNew() {
                     </div>
                   </div>
                   {item.description && (
-                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">{item.description}</p>
+                    <p className="text-xs text-gray-600 mb-1.5 line-clamp-2">{item.description}</p>
                   )}
                   {item.sdgGoals && item.sdgGoals.length > 0 && (
-                    <div className="flex gap-1 mb-2">
+                    <div className="flex gap-1 mb-1.5">
                       {item.sdgGoals.map((sdg) => (
                         <span key={sdg} className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white bg-emerald-600">
                           SDG {sdg}

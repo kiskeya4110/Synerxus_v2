@@ -154,7 +154,7 @@ export default function OpportunityDetailPWA() {
       <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
 
       {/* Main scrollable content */}
-      <div className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20 w-full max-w-full">
         {/* Hero Image Section */}
       <div className="relative w-full h-64 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />
@@ -163,8 +163,8 @@ export default function OpportunityDetailPWA() {
 
       {/* Match Score Badge - Only show for volunteers */}
       {isVolunteer && opportunity.matchScore && (
-        <div className="px-4 -mt-8 relative z-10 mb-4">
-          <div className="bg-white rounded-lg shadow-md px-4 py-3 inline-flex items-center gap-2 border border-emerald-100">
+        <div className="px-4 -mt-6 relative z-10 mb-3">
+          <div className="bg-white rounded-lg shadow-md px-3 py-2 inline-flex items-center gap-2 border border-emerald-100">
             <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
               {Math.round(opportunity.matchScore)}%
             </div>
@@ -179,17 +179,17 @@ export default function OpportunityDetailPWA() {
       {/* Main Content Card */}
       <div className="px-4 pb-4">
         <Card className="overflow-hidden">
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="p-4 space-y-3">
             {/* Title */}
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">{opportunity.title}</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">{opportunity.title}</h2>
               <p className="text-sm text-slate-600">{opportunity.description}</p>
             </div>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* Left: Description with SDG */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <h3 className="font-semibold text-slate-900 text-sm">Description</h3>
                 {sdgGoal && (
                   <div className="flex flex-col items-center gap-2">
@@ -259,9 +259,9 @@ export default function OpportunityDetailPWA() {
             </div>
 
             {/* Expected Tasks */}
-            <div className="border-t pt-4">
-              <h3 className="font-semibold text-slate-900 mb-3">Expected Tasks</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="border-t pt-3">
+              <h3 className="font-semibold text-slate-900 mb-2">Expected Tasks</h3>
+              <div className="grid grid-cols-2 gap-2">
                 {/* Time Commitment */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-700">Time Commitment & Location</p>

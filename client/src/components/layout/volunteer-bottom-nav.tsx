@@ -68,6 +68,7 @@ export default function VolunteerBottomNav() {
   };
 
   const handleNavClick = (path: string) => {
+    window.scrollTo(0, 0);
     if (path.includes('#')) {
       const [route, hash] = path.split('#');
       setLocation(route);

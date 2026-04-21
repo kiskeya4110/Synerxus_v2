@@ -380,9 +380,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
-  // Broadcast updates to all connected clients (only in production)
+  // Broadcast updates to all connected clients
   const broadcastUpdate = (type: string, data: any) => {
-    if (wss && process.env.NODE_ENV === "production") {
+    if (wss) {
       const message = JSON.stringify({ type, data });
       wss.clients.forEach((client) => {
         if (client.readyState === 1) { // OPEN

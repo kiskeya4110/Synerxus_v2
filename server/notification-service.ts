@@ -725,6 +725,7 @@ export async function notifyPendingImpact(
       };
 
       await storage.createNotification(notification);
+      await broadcastToUser(orgUser.id, notification);
     }
 
     logger.info(`[Notification] Pending impact notification sent to ${orgUsers.length} organization users`);

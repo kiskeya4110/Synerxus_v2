@@ -794,6 +794,7 @@ export async function notifyPendingActivity(
       };
 
       await storage.createNotification(notification);
+      await broadcastToUser(orgUser.id, notification);
 
       // Push notification stub (Phase 2)
       pushProvider.sendPush(

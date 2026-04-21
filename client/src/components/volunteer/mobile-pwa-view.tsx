@@ -1079,6 +1079,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       setLogActivityHours("");
       setLogActivityDescription("");
       setLogActivityDate(new Date().toISOString().split('T')[0]);
+      setLogActivityType("volunteering");
       // Refetch data
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });

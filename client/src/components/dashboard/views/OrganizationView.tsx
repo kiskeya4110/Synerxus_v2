@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useEffect } from "react";
+import { useState, useMemo, memo, useEffect, useCallback } from "react";
 import DOMPurify from "dompurify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -37,6 +37,7 @@ import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid } from "@/components/ui/section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { formatDecimal } from "@/lib/format-utils";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 
@@ -431,6 +432,25 @@ const OrganizationView = memo(function OrganizationView({
   const [isApprovingAll, setIsApprovingAll] = useState(false);
   const [activeTab, setActiveTab] = useState(() => orgTab === 'reports' ? 'reports' : 'overview');
 
+  // Invalidate verification queue on real-time WebSocket events
+  const handleWsMessage = useCallback((msg: { type: string; data: any }) => {
+    const isActivityOrImpactEvent =
+      msg.type === 'log_created' ||
+      msg.type === 'volunteer_activity_created' ||
+      msg.type === 'project_impact_created' ||
+      msg.type === 'activity_approved' ||
+      msg.type === 'activity_rejected' ||
+      msg.type === 'impact_approved' ||
+      msg.type === 'impact_rejected' ||
+      (msg.type === 'notification' && msg.data?.type === 'pending_approval');
+    if (isActivityOrImpactEvent) {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+    }
+  }, [queryClient]);
+  useWebSocket({ onMessage: handleWsMessage });
+
   // History/Verification tab state
   const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [visibleCount, setVisibleCount] = useState(20);
@@ -537,14 +557,18 @@ const OrganizationView = memo(function OrganizationView({
     enabled: !!activeUser?.organizationId,
     staleTime: 15_000,
     gcTime: 2 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5 * 60_000,
   });
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
     queryKey: ["/api/projects", activeUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/projects?organizationId=${activeUser.organizationId}`
+        `/api/projects?organizationId=${activeUser.organizationId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load projects");
       return response.json();
@@ -636,6 +660,8 @@ const OrganizationView = memo(function OrganizationView({
     enabled: !!activeUser?.organizationId,
     staleTime: 15_000,
     gcTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5 * 60_000,
   });
 
   // Computed stats for report preview visuals — mirrors server-side filter logic exactly

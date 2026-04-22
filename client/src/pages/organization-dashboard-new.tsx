@@ -516,8 +516,10 @@ export default function OrganizationDashboardNew() {
   const { data: pendingData, isLoading: isLoadingPending, refetch: refetchPending } = useQuery({
     queryKey: ["/api/pending-approvals", currentUser?.organizationId],
     queryFn: async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/pending-approvals?organizationId=${currentUser.organizationId}`
+        `/api/pending-approvals?organizationId=${currentUser.organizationId}`,
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load pending approvals");
       return response.json();

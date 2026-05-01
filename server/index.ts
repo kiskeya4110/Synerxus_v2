@@ -35,6 +35,13 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
+const SENSITIVE_RESPONSE_PATHS = [
+  "/api/users/firebase-sync",
+  "/api/users/token/refresh",
+  "/api/users/logout",
+  "/api/users/me",
+];
+
 // Database schema check: Verify critical columns exist
 async function checkDatabaseSchema() {
   const criticalColumns = [
@@ -425,7 +432,13 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (fullUrl.startsWith("/api")) {
       let logLine = `${req.method} ${fullUrl} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
+
+      const shouldLogResponseBody =
+        process.env.NODE_ENV !== "production" &&
+        capturedJsonResponse &&
+        !SENSITIVE_RESPONSE_PATHS.some((path) => fullUrl.startsWith(path));
+
+      if (shouldLogResponseBody) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 

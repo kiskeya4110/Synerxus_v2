@@ -18,9 +18,8 @@ const swaggerDefinition = {
 
       ## Authentication
 
-      Most endpoints require authentication. Use one of these methods:
+      Most endpoints require authentication.
       - **Bearer Token**: Include \`Authorization: Bearer <token>\` header
-      - **Firebase UID**: Include \`X-Firebase-UID: <uid>\` header
 
       ## Rate Limiting
 
@@ -48,11 +47,6 @@ const swaggerDefinition = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-      },
-      firebaseAuth: {
-        type: "apiKey",
-        in: "header",
-        name: "X-Firebase-UID",
       },
     },
     schemas: {
@@ -254,6 +248,11 @@ const swaggerSpec = swaggerJsdoc(options);
  * Setup Swagger UI
  */
 export function setupSwagger(app: Express): void {
+  if (process.env.NODE_ENV === "production") {
+    console.log("[Swagger] Disabled in production");
+    return;
+  }
+
   // Swagger JSON endpoint
   app.get("/api/docs/swagger.json", (req, res) => {
     res.setHeader("Content-Type", "application/json");

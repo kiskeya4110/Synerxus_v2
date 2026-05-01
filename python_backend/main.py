@@ -9,11 +9,13 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import pytesseract
+from pytesseract import TesseractNotFoundError
 from PIL import Image
 import io
 import re
 import json
 from datetime import datetime
+import os
 
 # Security constants
 MAX_FILE_SIZE_MB = 10
@@ -28,9 +30,12 @@ app = FastAPI(
 )
 
 # Enable CORS for frontend
+allowed_origins = [origin.strip() for origin in os.getenv("CORS_WHITELIST", "").split(",") if origin.strip()]
+is_production = os.getenv("NODE_ENV") == "production"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=allowed_origins if allowed_origins else (["http://localhost:3000", "http://localhost:5000"] if not is_production else []),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -145,8 +150,14 @@ async def ingest_image(file: UploadFile = File(...)):
                 detail=f"Image dimensions exceed maximum of {MAX_IMAGE_DIMENSION}x{MAX_IMAGE_DIMENSION} pixels"
             )
 
-        # Perform OCR
-        extracted_text = pytesseract.image_to_string(image)
+        # Perform OCR. If the Tesseract binary is unavailable in the runtime,
+        # degrade gracefully so ingestion can still proceed for manual review.
+        ocr_status = "ok"
+        try:
+            extracted_text = pytesseract.image_to_string(image)
+        except TesseractNotFoundError:
+            extracted_text = ""
+            ocr_status = "unavailable"
 
         # Extract structured data from text
         extraction_result = extract_kpi_from_text(extracted_text)
@@ -176,7 +187,8 @@ async def ingest_image(file: UploadFile = File(...)):
             'content_type': file.content_type,
             'ingestion_timestamp': datetime.utcnow().isoformat(),
             'image_size': len(contents),
-            'requires_review': overall_confidence < 0.7
+            'requires_review': overall_confidence < 0.7,
+            'ocr_status': ocr_status,
         }
 
         return IngestedData(

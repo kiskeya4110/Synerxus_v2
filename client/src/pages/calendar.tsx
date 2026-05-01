@@ -509,7 +509,7 @@ export default function Calendar() {
       </div>
 
       {/* Bottom Navigation for PWA */}
-      {isPWAView && <VolunteerPWANav activeTab="home" />}
+      {isPWAView && <VolunteerPWANav activeTab="more" />}
     </div>
   );
 }

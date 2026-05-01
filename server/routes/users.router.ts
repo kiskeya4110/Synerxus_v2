@@ -103,7 +103,7 @@ usersRouter.get("/me", authMiddleware, async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(user);
+    res.json(safeUserFields(user));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch current user" });
   }
@@ -141,7 +141,7 @@ usersRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
       });
     }
 
-    res.json(user);
+    res.json(safeUserFields(user));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch user" });
   }
@@ -167,7 +167,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       console.log(`[firebase-sync] Found user by firebaseUid: ${user.id} (${user.email})`);
       const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
       res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
-      return res.json({ user: safeUserFields(user), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
+      return res.json({ user: safeUserFields(user), isNewUser: false, ...tokens });
     }
 
     user = await storage.getUserByEmail(email);
@@ -182,7 +182,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       const tokenUser = updatedUser || user;
       const tokens = generateTokenPair({ ...tokenUser, userType: tokenUser.userType || "volunteer" });
       res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
-      return res.json({ user: safeUserFields(tokenUser), isNewUser: false, jwtToken: tokens.accessToken, ...tokens });
+      return res.json({ user: safeUserFields(tokenUser), isNewUser: false, ...tokens });
     }
 
     console.log(`[firebase-sync] No existing user found for email: ${email}, userType: ${userType || 'not provided'}`);
@@ -266,7 +266,7 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     // New user - return with isNewUser: true
     const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
     res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
-    res.status(201).json({ user: safeUserFields(user), isNewUser: true, jwtToken: tokens.accessToken, ...tokens });
+    res.status(201).json({ user: safeUserFields(user), isNewUser: true, ...tokens });
   } catch (err) {
     console.error("[firebase-sync] Error creating user:", err);
     const error = handleValidationError(err);
@@ -321,7 +321,7 @@ usersRouter.post("/token/refresh", authRateLimiter, async (req: Request, res: Re
     const tokens = generateTokenPair({ ...user, userType: user.userType || "volunteer" });
     // Refresh the httpOnly cookie alongside the response body
     res.cookie("authToken", tokens.accessToken, AUTH_COOKIE_OPTIONS);
-    res.json({ jwtToken: tokens.accessToken, ...tokens });
+    res.json(tokens);
   } catch (err) {
     res.status(500).json({ message: "Token refresh failed" });
   }
@@ -367,7 +367,7 @@ usersRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) =>
     }
 
     broadcastUpdate("user_updated", updatedUser);
-    res.json(updatedUser);
+    res.json(safeUserFields(updatedUser));
   } catch (err) {
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });

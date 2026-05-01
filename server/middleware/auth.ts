@@ -183,7 +183,7 @@ export async function optionalAuthMiddleware(
         if (optUser) {
           req.user = { id: optUser.id, email: optUser.email, userType: optUser.userType, organizationId: optUser.organizationId, firebaseUid: optUser.firebaseUid };
           req.userId = optUser.id;
-          logger.debug(`[OptionalAuth] User attached: ${optUser.id} (${optUser.email})`);
+          logger.debug(`[OptionalAuth] User attached: ${optUser.id}`);
         }
       } else {
         // Try to verify as Firebase ID token (cryptographically signed)
@@ -202,7 +202,7 @@ export async function optionalAuthMiddleware(
               firebaseUid: user.firebaseUid,
             };
             req.userId = user.id;
-            logger.debug(`[OptionalAuth] Firebase user attached: ${user.id} (${user.email})`);
+            logger.debug(`[OptionalAuth] Firebase user attached: ${user.id}`);
           } else {
             logger.warn(`[OptionalAuth] Firebase user not found in DB for uid: ${firebaseDecoded.uid}`);
           }

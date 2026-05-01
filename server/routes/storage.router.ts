@@ -190,7 +190,7 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
       });
     }
 
-    logger.info(`[Storage] Upload request from user ${req.user.id} (${req.user.email}) for path: ${pathParam}, fileSize: ${req.file?.size || 0}`);
+    logger.info(`[Storage] Upload request from user ${req.user.id} for path: ${pathParam}, fileSize: ${req.file?.size || 0}`);
 
     // Parse options from query
     const imageType = (req.query.imageType as ImageType) || "profile";

@@ -646,7 +646,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
             </div>
           </div>
         </div>
-        <VolunteerPWANav activeTab="home" />
+        <VolunteerPWANav activeTab="more" />
       </div>
     );
   }

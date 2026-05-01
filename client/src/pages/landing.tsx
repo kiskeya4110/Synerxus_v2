@@ -48,6 +48,12 @@ const HERO_SLIDES = [
   "/hero-planters.png",
 ];
 
+function shouldRenderHeroSlide(activeIndex: number, slideIndex: number) {
+  const distance = Math.abs(activeIndex - slideIndex);
+  const wrapDistance = HERO_SLIDES.length - distance;
+  return Math.min(distance, wrapDistance) <= 1;
+}
+
 const PIPELINE_STEPS: {
   label: string;
   sub: string;
@@ -1543,7 +1549,10 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
     const w = window.open(url, "_blank");
     if (!w) return;
     w.focus();
-    setTimeout(() => { w.print(); URL.revokeObjectURL(url); }, 600);
+    setTimeout(() => {
+      w.print();
+      URL.revokeObjectURL(url);
+    }, 600);
   };
 
   return (
@@ -1893,7 +1902,7 @@ export default function Landing() {
                         className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
                         data-testid="button-join-hero"
                       >
-                        Get Started
+                        Start Verifying Impact
                       </Button>
                     </Link>
                     <Link href="/signup">
@@ -1902,7 +1911,7 @@ export default function Landing() {
                         className="bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg border-0 text-sm sm:text-base"
                         data-testid="button-join-volunteer-ngo-hero"
                       >
-                        Join as Volunteer / NGO
+                        Join the Verification Network
                       </Button>
                     </Link>
                   </>
@@ -1964,16 +1973,20 @@ export default function Landing() {
                     );
                   }}
                 >
-                  {HERO_SLIDES.map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      alt={`ESG impact slide ${i + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                      style={{ opacity: heroSlide === i ? 1 : 0 }}
-                      loading={i === 0 ? "eager" : "lazy"}
-                    />
-                  ))}
+                  {HERO_SLIDES.map((src, i) =>
+                    shouldRenderHeroSlide(heroSlide, i) ? (
+                      <img
+                        key={i}
+                        src={src}
+                        alt={`ESG impact slide ${i + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+                        style={{ opacity: heroSlide === i ? 1 : 0 }}
+                        loading={i === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                        fetchPriority={i === 0 ? "high" : "auto"}
+                      />
+                    ) : null,
+                  )}
                 </div>
 
                 {/* Dot navigation */}
@@ -2074,17 +2087,30 @@ export default function Landing() {
         </div>
 
         {/* ── Section 2: Problem ── */}
-        <section id="problem" className="relative py-10 md:py-16 bg-white overflow-visible">
+        <section
+          id="problem"
+          className="relative py-10 md:py-16 bg-white overflow-visible"
+        >
           {!isLoggedIn && (
             <button
               onClick={() => setShowSampleReport(true)}
               className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 w-28 h-28 flex flex-col items-center justify-center text-center rotate-12 hover:scale-110 transition-transform cursor-pointer animate-pulse z-10"
-              style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)", background: "#D4980C" }}
+              style={{
+                clipPath:
+                  "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                background: "#D4980C",
+              }}
               data-testid="button-sample-report-stamp"
             >
-              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">See</span>
-              <span className="text-[#0A1F44] font-extrabold text-[11px] uppercase tracking-wide leading-tight">Sample</span>
-              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">Report</span>
+              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">
+                See
+              </span>
+              <span className="text-[#0A1F44] font-extrabold text-[11px] uppercase tracking-wide leading-tight">
+                Sample
+              </span>
+              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">
+                Report
+              </span>
             </button>
           )}
           <div className="max-w-6xl mx-auto px-6 md:px-10">
@@ -3433,10 +3459,8 @@ export default function Landing() {
 
             {/* Two-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-
               {/* Left column — Value proposition */}
               <div className="space-y-8">
-
                 {/* The Verification Gap */}
                 <div>
                   <h3 className="text-sm font-extrabold text-[#0A1F44] uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -3446,12 +3470,14 @@ export default function Landing() {
                   <ul className="space-y-3">
                     {[
                       "92% of ESG claims remain self-reported and entirely unverified",
-                      "When auditors ask \"How do you know this outcome actually occurred?\", organizations have no defensible answer",
+                      'When auditors ask "How do you know this outcome actually occurred?", organizations have no defensible answer',
                       "The era of unverified impact claims has ended — CSRD enforcement begins April 2025",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <span className="flex-shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
+                        <span className="text-sm text-slate-600 leading-relaxed">
+                          {item}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -3472,7 +3498,9 @@ export default function Landing() {
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
+                        <span className="text-sm text-slate-600 leading-relaxed">
+                          {item}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -3493,7 +3521,9 @@ export default function Landing() {
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 text-[#0A8C6A] flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-600 leading-relaxed">{item}</span>
+                        <span className="text-sm text-slate-600 leading-relaxed">
+                          {item}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -3516,9 +3546,18 @@ export default function Landing() {
                 {/* Trust signals */}
                 <div className="rounded-xl bg-slate-50 border border-slate-100 px-5 py-4 space-y-2.5">
                   {[
-                    { icon: <Clock className="h-4 w-4 text-[#0A8C6A]" />, text: "72h SLA — first verified outcomes in days" },
-                    { icon: <ShieldCheck className="h-4 w-4 text-[#0A8C6A]" />, text: "CSRD · ESRS · GRI · SASB · TCFD ready" },
-                    { icon: <FileCheck className="h-4 w-4 text-[#0A8C6A]" />, text: "Immutable audit trail from day one" },
+                    {
+                      icon: <Clock className="h-4 w-4 text-[#0A8C6A]" />,
+                      text: "72h SLA — first verified outcomes in days",
+                    },
+                    {
+                      icon: <ShieldCheck className="h-4 w-4 text-[#0A8C6A]" />,
+                      text: "CSRD · ESRS · GRI · SASB · TCFD ready",
+                    },
+                    {
+                      icon: <FileCheck className="h-4 w-4 text-[#0A8C6A]" />,
+                      text: "Immutable audit trail from day one",
+                    },
                   ].map(({ icon, text }) => (
                     <div key={text} className="flex items-center gap-3">
                       <span className="flex-shrink-0">{icon}</span>
@@ -3681,37 +3720,39 @@ export default function Landing() {
                   q: "Does Synerxus provide formal ESG assurance?",
                   a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
                 },
-              ].slice(0, showAllFaq ? undefined : 6).map(({ q, a }, i) => (
-                <details
-                  key={i}
-                  className="group py-5 border-b border-slate-100"
-                >
-                  <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
-                    <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
-                      {q}
-                    </span>
-                    <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 18 18"
-                        fill="none"
-                      >
-                        <path
-                          d="M4.5 6.75L9 11.25L13.5 6.75"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
-                    {a}
-                  </p>
-                </details>
-              ))}
+              ]
+                .slice(0, showAllFaq ? undefined : 6)
+                .map(({ q, a }, i) => (
+                  <details
+                    key={i}
+                    className="group py-5 border-b border-slate-100"
+                  >
+                    <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
+                      <span className="font-semibold text-[#0A1F44] text-sm md:text-base leading-snug">
+                        {q}
+                      </span>
+                      <span className="flex-shrink-0 mt-0.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 18 18"
+                          fill="none"
+                        >
+                          <path
+                            d="M4.5 6.75L9 11.25L13.5 6.75"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-slate-500 text-sm leading-relaxed">
+                      {a}
+                    </p>
+                  </details>
+                ))}
             </div>
 
             <div className="text-center mt-8">
@@ -3723,14 +3764,26 @@ export default function Landing() {
                   <>
                     Show Less
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 10L8 6L12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path
+                        d="M4 10L8 6L12 10"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </>
                 ) : (
                   <>
                     See 12 More Questions
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path
+                        d="M4 6L8 10L12 6"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </>
                 )}

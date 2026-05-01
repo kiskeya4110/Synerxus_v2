@@ -49,7 +49,7 @@ import { registerChatRoutes } from "./replit_integrations/chat";
 import { aiService } from "./services/ai-service";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 import { getPaginationParams, paginateArray } from "./pagination";
-import { verifyToken } from "./middleware/auth";
+import { authMiddleware, verifyToken } from "./middleware/auth";
 import { logger } from "./logger";
 
 // ===== ROUTER MODULE IMPORTS =====
@@ -182,6 +182,23 @@ function handleValidationError(err: unknown) {
   return {
     status: 500,
     message: err instanceof Error ? err.message : "Unknown error occurred"
+  };
+}
+
+function safeUserFields(user: Record<string, any>) {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    username: user.username,
+    userType: user.userType,
+    organizationId: user.organizationId ?? null,
+    isAdmin: user.isAdmin ?? false,
+    profileImageUrl: user.profileImageUrl ?? null,
+    avatar: user.avatar ?? null,
+    createdAt: user.createdAt,
+    firebaseUid: user.firebaseUid,
+    skills: user.skills ?? null,
   };
 }
 
@@ -506,13 +523,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes
   // === User Routes ===
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", authMiddleware, async (req, res) => {
     try {
+      const requestingUser = req.user!;
       const { userType, paginate } = req.query;
       const cacheKey = userType ? `users:type:${userType}` : 'users:all';
 
       // Use cache with 60 second TTL
-      const users = await cache.getOrSet(cacheKey, async () => {
+      let users = await cache.getOrSet(cacheKey, async () => {
         const allUsers = await storage.listUsers();
         if (userType) {
           return allUsers.filter((u: any) => u.userType === userType);
@@ -520,14 +538,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return allUsers;
       }, 60000);
 
+      if (requestingUser.userType === 'organization' && requestingUser.organizationId) {
+        users = users.filter((u: any) =>
+          u.organizationId === requestingUser.organizationId || u.id === requestingUser.id
+        );
+      } else if (requestingUser.userType === 'corporate-partner') {
+        users = users.filter((u: any) =>
+          u.organizationId === requestingUser.organizationId || u.id === requestingUser.id
+        );
+      } else if (requestingUser.userType === 'volunteer') {
+        users = users.filter((u: any) => u.id === requestingUser.id);
+      }
+
+      const safeUsers = users.map((user: any) => safeUserFields(user));
+
       // Support optional pagination (backwards compatible)
       if (paginate === 'true' || req.query.page || req.query.limit) {
         const paginationParams = getPaginationParams(req);
-        const paginatedResult = paginateArray(users, paginationParams);
+        const paginatedResult = paginateArray(safeUsers, paginationParams);
         return res.json(paginatedResult);
       }
 
-      res.json(users);
+      res.json(safeUsers);
     } catch (err) {
       logger.error("Error fetching users:", err);
       res.status(500).json({ message: "Failed to fetch users" });
@@ -538,16 +570,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This was a critical security vulnerability. The modular usersRouter.get("/me", authMiddleware, ...)
   // now handles this route with proper authentication.
 
-  app.get("/api/users/:id", async (req, res) => {
+  app.get("/api/users/:id", authMiddleware, async (req, res) => {
     try {
+      const authUser = req.user!;
       const userId = parseInt(req.params.id);
       const user = await storage.getUser(userId);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
-      res.json(user);
+
+      const isOwnProfile = authUser.id === userId;
+      const isSameOrganization = authUser.organizationId && authUser.organizationId === user.organizationId;
+
+      if (!isOwnProfile && !isSameOrganization) {
+        return res.json({
+          id: user.id,
+          displayName: user.displayName,
+          avatar: user.avatar,
+          userType: user.userType,
+        });
+      }
+
+      res.json(safeUserFields(user));
     } catch (err) {
       logger.error("Error fetching user:", err);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -560,28 +605,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
+      const { isAdmin, ...safeData } = userData as any;
+      const user = await storage.createUser(safeData);
       
       broadcastUpdate("user_created", user);
-      res.status(201).json(user);
+      res.status(201).json(safeUserFields(user));
     } catch (err) {
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", authMiddleware, async (req, res) => {
     try {
+      const authUser = req.user!;
       const userId = parseInt(req.params.id);
+      if (authUser.id !== userId) {
+        return res.status(403).json({ message: "You can only update your own profile" });
+      }
       const userData = insertUserSchema.partial().parse(req.body);
+      const { userType, isAdmin, organizationId, firebaseUid, ...safeData } = userData as any;
       
-      const updatedUser = await storage.updateUser(userId, userData);
+      const updatedUser = await storage.updateUser(userId, safeData);
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
       broadcastUpdate("user_updated", updatedUser);
-      res.json(updatedUser);
+      res.json(safeUserFields(updatedUser));
     } catch (err) {
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
@@ -5122,7 +5173,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(404).json({ message: "User not found" });
       }
       
-      logger.info(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
+      logger.info(`[Intake POST CRITICAL] User created for intake flow: ${user.id}`);
       
       // Always calculate total hours from availability slots
       if (req.body.availability && Array.isArray(req.body.availability) && req.body.availability.length > 0) {

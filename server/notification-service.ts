@@ -566,9 +566,9 @@ export async function sendNewApplicationEmail(
           subject: `New Application: ${volunteerName} applied for "${opportunity.title}"`,
           html: emailHtml,
         });
-        logger.info(`[EMAIL] Application notification sent to ${orgUser.email}`);
+        logger.info(`[EMAIL] Application notification sent to organization user ${orgUser.id}`);
       } catch (emailError) {
-        logger.error(`[EMAIL] Failed to send to ${orgUser.email}:`, emailError);
+        logger.error(`[EMAIL] Failed to send application notification to organization user ${orgUser.id}:`, emailError);
       }
     }
   } catch (error) {

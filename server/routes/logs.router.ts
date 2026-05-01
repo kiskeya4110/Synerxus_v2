@@ -28,6 +28,7 @@ import { getPlanFeatures } from "../../shared/plan-features";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { impactTextVerificationService } from "../services/impact-text-verification";
 
 // Read logo once at module load time, embed as base64 data URI for print reliability
 function loadLogoDataUri(): string {
@@ -128,6 +129,10 @@ logsRouter.post("/logs", authMiddleware, requireDataConsent, async (req: Request
       sdgTags: mergedSdgTags.length > 0 ? mergedSdgTags : null,
       verificationStatus: 'pending'
     });
+
+    if (submittedOutcomeText || validationResult.data.description || validationResult.data.outcomes) {
+      impactTextVerificationService.enqueue(activity.id, { force: true });
+    }
 
     // Notify organization about new pending log
     if (activity.projectId && activity.userId) {
@@ -463,6 +468,39 @@ logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) 
   } catch (err: any) {
     logger.error("Error fetching corporate verified logs:", err?.message, err?.stack);
     res.status(500).json({ message: "Failed to fetch verified logs", error: err?.message });
+  }
+});
+
+/**
+ * GET /logs/:id/text-verification - Background text-verification result for an impact log
+ * Non-blocking heuristic analysis that can later be upgraded to an AI-backed verifier.
+ */
+logsRouter.get("/logs/:id/text-verification", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const logId = parseInt(req.params.id);
+    const activity = await storage.getVolunteerActivity(logId);
+
+    if (!activity) {
+      return res.status(404).json({ message: "Impact log not found" });
+    }
+
+    const requestingUser = req.user!;
+    if (requestingUser.userType === 'volunteer') {
+      if (activity.userId !== requestingUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else if (requestingUser.userType === 'organization' && activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      if (project && project.organizationId !== requestingUser.organizationId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    }
+
+    const result = impactTextVerificationService.getOrQueue(logId);
+    res.json(result);
+  } catch (err) {
+    logger.error("Error fetching text verification result:", err);
+    res.status(500).json({ message: "Failed to fetch text verification result" });
   }
 });
 
@@ -827,6 +865,7 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
     }
 
     smsVerificationService.removeFromQueue(logId);
+    impactTextVerificationService.enqueue(logId, { force: true });
 
     broadcastUpdate("log_verified", updatedActivity);
     res.json(updatedActivity);

@@ -159,7 +159,7 @@
     "@vitest/coverage-v8": "^4.0.16",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.10",
-    "esbuild": "^0.25.12"
+    "esbuild": "^0.25.12",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.13",
     "supertest": "^7.1.4",

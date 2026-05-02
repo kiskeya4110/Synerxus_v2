@@ -54,3 +54,7 @@ integrations = ["javascript_database:1.0.0", "javascript_openai_ai_integrations:
 
 [objectStorage]
 defaultBucketID = "replit-objstore-b928168b-1062-4875-8363-d4dea6e30b71"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000

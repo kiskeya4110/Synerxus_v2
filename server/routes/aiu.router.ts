@@ -21,12 +21,19 @@ import {
   type AIUCalculationInput,
 } from "@shared/aiu-calculations";
 import { authMiddleware } from "../middleware/auth";
+import { isAIUDisplayEnabled } from "@shared/feature-flags";
 import { storage } from "../storage";
 
 export const aiuRouter = Router();
 
-// All AIU routes require a valid session
+// All AIU routes require a valid session and the AIU feature to be enabled
 aiuRouter.use(authMiddleware);
+aiuRouter.use((_req, res, next) => {
+  if (!isAIUDisplayEnabled()) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  next();
+});
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,16 +44,16 @@ async function callerIsAdmin(req: Request): Promise<boolean> {
 }
 
 /**
- * Determines whether the authenticated caller may access data for a given
- * project. Returns `{ project, allowed }`.
+ * Determines whether the authenticated caller may access project-level
+ * analytics and exports. Returns `{ project, allowed }`.
  *
- * Access rules:
+ * Access rules (org-scoped — volunteers are excluded because project exports
+ * contain all volunteers' names, hours, KPI data, and verification status):
  *  - Platform admin: always allowed.
  *  - Organization user: only if the project belongs to their org.
- *  - Volunteer: only if they have an assignment to the project.
- *  - All other user types (corporate-partner, etc.): denied.
+ *  - All other user types (volunteer, corporate-partner, etc.): denied.
  */
-async function resolveProjectAccess(
+async function resolveProjectOrgAccess(
   req: Request,
   projectId: number,
 ): Promise<{ project: Awaited<ReturnType<typeof storage.getProject>>; allowed: boolean }> {
@@ -63,15 +70,6 @@ async function resolveProjectAccess(
     caller.organizationId === project.organizationId
   ) {
     return { project, allowed: true };
-  }
-
-  if (caller.userType === "volunteer") {
-    const assignments = await storage.listProjectAssignmentsByVolunteer(caller.id);
-    const activeStatuses = new Set(["active", "completed"]);
-    const assigned = assignments.some(
-      (a) => a.projectId === projectId && activeStatuses.has(a.status),
-    );
-    return { project, allowed: assigned };
   }
 
   return { project, allowed: false };
@@ -131,7 +129,8 @@ aiuRouter.get("/volunteer/:volunteerId/quick", async (req: Request, res: Respons
 
 /**
  * GET /api/aiu/project/:projectId
- * Org users must own the project; volunteers must be assigned; admins unrestricted.
+ * Org users must own the project; admins unrestricted.
+ * Volunteers are denied — project exports contain all volunteers' sensitive data.
  */
 aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
   try {
@@ -140,7 +139,7 @@ aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid project ID" });
     }
 
-    const { project, allowed } = await resolveProjectAccess(req, projectId);
+    const { project, allowed } = await resolveProjectOrgAccess(req, projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
@@ -261,7 +260,7 @@ aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
 
 /**
  * GET /api/aiu/project/:projectId/export/csv
- * Same ownership rules as GET /project/:projectId.
+ * Org owners and admins only — contains all volunteers' names, hours, and KPI data.
  */
 aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Response) => {
   try {
@@ -270,7 +269,7 @@ aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Respon
       return res.status(400).json({ error: "Invalid project ID" });
     }
 
-    const { project, allowed } = await resolveProjectAccess(req, projectId);
+    const { project, allowed } = await resolveProjectOrgAccess(req, projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
@@ -319,7 +318,7 @@ aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Respon
 
 /**
  * GET /api/aiu/project/:projectId/export/json
- * Same ownership rules as GET /project/:projectId.
+ * Org owners and admins only — contains all volunteers' names, hours, and KPI data.
  */
 aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Response) => {
   try {
@@ -328,7 +327,7 @@ aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Respo
       return res.status(400).json({ error: "Invalid project ID" });
     }
 
-    const { project, allowed } = await resolveProjectAccess(req, projectId);
+    const { project, allowed } = await resolveProjectOrgAccess(req, projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 

@@ -256,3 +256,98 @@ export type ImageType = typeof IMAGE_CONFIG.IMAGE_TYPES[number];
 export type AllowedMimeType = typeof IMAGE_CONFIG.ALLOWED_MIME_TYPES[number];
 export type RoleWeight = keyof typeof IMPACT_CONFIG.ROLE_WEIGHTS;
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
+
+// ============================================
+// DOMAIN: EVIDENCE STATUSES
+// ============================================
+
+export const EVIDENCE_STATUS = {
+  PENDING: 'pending',
+  VERIFIED: 'verified',
+  REJECTED: 'rejected',
+  INCOMPLETE: 'incomplete',
+} as const;
+export type EvidenceStatus = typeof EVIDENCE_STATUS[keyof typeof EVIDENCE_STATUS];
+export const EVIDENCE_STATUS_VALUES: EvidenceStatus[] = [
+  EVIDENCE_STATUS.PENDING,
+  EVIDENCE_STATUS.VERIFIED,
+  EVIDENCE_STATUS.REJECTED,
+  EVIDENCE_STATUS.INCOMPLETE,
+];
+
+// ============================================
+// DOMAIN: EVIDENCE CONFIDENCE TIERS
+// ============================================
+
+export const CONFIDENCE_TIER = {
+  VERIFIED: 'verified',
+  PARTNER_REPORTED: 'partner_reported',
+  DERIVED_MAPPED: 'derived_mapped',
+} as const;
+export type ConfidenceTier = typeof CONFIDENCE_TIER[keyof typeof CONFIDENCE_TIER];
+export const CONFIDENCE_TIER_LABELS: Record<ConfidenceTier, string> = {
+  [CONFIDENCE_TIER.VERIFIED]: 'Verified',
+  [CONFIDENCE_TIER.PARTNER_REPORTED]: 'Partner-Reported',
+  [CONFIDENCE_TIER.DERIVED_MAPPED]: 'Derived / Mapped',
+};
+
+// ============================================
+// DOMAIN: STANDARD ROLE LABELS
+// ============================================
+
+export const ROLE = {
+  ADMIN: 'admin',
+  ORGANIZATION: 'organization',
+  CORPORATE_PARTNER: 'corporate-partner',
+  VOLUNTEER: 'volunteer',
+  VERIFIER: 'verifier',
+  AUDITOR: 'auditor',
+} as const;
+export type Role = typeof ROLE[keyof typeof ROLE];
+export const ROLE_LABELS: Record<Role, string> = {
+  [ROLE.ADMIN]: 'Administrator',
+  [ROLE.ORGANIZATION]: 'NGO / Organization',
+  [ROLE.CORPORATE_PARTNER]: 'Corporate Partner',
+  [ROLE.VOLUNTEER]: 'Volunteer',
+  [ROLE.VERIFIER]: 'Authorized Verifier',
+  [ROLE.AUDITOR]: 'Independent Auditor',
+};
+
+// ============================================
+// DOMAIN: REPORT SECTION LABELS
+// ============================================
+
+export const REPORT_SECTION = {
+  EXECUTIVE_SNAPSHOT: 'executive_snapshot',
+  EVIDENCE_CONFIDENCE_TIERS: 'evidence_confidence_tiers',
+  EVIDENCE_QUALITY_SCORECARD: 'evidence_quality_scorecard',
+  FRAMEWORK_ALIGNMENT: 'framework_alignment',
+  SAMPLE_VERIFIED_EVIDENCE_RECORDS: 'sample_verified_evidence_records',
+  NEGATIVE_IMPACT_SCREENING_SUMMARY: 'negative_impact_screening_summary',
+  CONTRIBUTION_PATHWAY: 'contribution_pathway',
+  METHODOLOGY_AND_DEFINITIONS: 'methodology_and_definitions',
+  ASSURANCE_BOUNDARY_STATEMENT: 'assurance_boundary_statement',
+} as const;
+export type ReportSection = typeof REPORT_SECTION[keyof typeof REPORT_SECTION];
+export const REPORT_SECTION_LABELS: Record<ReportSection, string> = {
+  [REPORT_SECTION.EXECUTIVE_SNAPSHOT]: 'Section 1: Executive Snapshot',
+  [REPORT_SECTION.EVIDENCE_CONFIDENCE_TIERS]: 'Section 2: Evidence Confidence Tiers',
+  [REPORT_SECTION.EVIDENCE_QUALITY_SCORECARD]: 'Section 3: Evidence Quality Scorecard',
+  [REPORT_SECTION.FRAMEWORK_ALIGNMENT]: 'Section 4: Framework Alignment for Reporting Support',
+  [REPORT_SECTION.SAMPLE_VERIFIED_EVIDENCE_RECORDS]: 'Section 5: Sample Verified Evidence Records',
+  [REPORT_SECTION.NEGATIVE_IMPACT_SCREENING_SUMMARY]: 'Section 6: Negative Impact Screening Summary',
+  [REPORT_SECTION.CONTRIBUTION_PATHWAY]: 'Section 7: Contribution Pathway',
+  [REPORT_SECTION.METHODOLOGY_AND_DEFINITIONS]: 'Section 8: Methodology & Definitions',
+  [REPORT_SECTION.ASSURANCE_BOUNDARY_STATEMENT]: 'Section 9: Assurance Boundary Statement',
+};
+export const REPORT_SECTION_ORDER: ReportSection[] = [
+  REPORT_SECTION.EXECUTIVE_SNAPSHOT,
+  REPORT_SECTION.EVIDENCE_CONFIDENCE_TIERS,
+  REPORT_SECTION.EVIDENCE_QUALITY_SCORECARD,
+  REPORT_SECTION.FRAMEWORK_ALIGNMENT,
+  REPORT_SECTION.SAMPLE_VERIFIED_EVIDENCE_RECORDS,
+  REPORT_SECTION.NEGATIVE_IMPACT_SCREENING_SUMMARY,
+  REPORT_SECTION.CONTRIBUTION_PATHWAY,
+  REPORT_SECTION.METHODOLOGY_AND_DEFINITIONS,
+  REPORT_SECTION.ASSURANCE_BOUNDARY_STATEMENT,
+];

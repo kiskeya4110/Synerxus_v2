@@ -364,34 +364,40 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
  */
 logsRouter.get("/logs/corporate-verified", authMiddleware, async (_req: Request, res: Response) => {
   try {
-    const { sdg, start_date, end_date, outcome_type, project_id, corporate_id } = _req.query;
+    const { sdg, start_date, end_date, outcome_type, project_id } = _req.query;
 
-    // If corporate_id provided, filter to only volunteers linked to that corporate partner
-    let allowedUserIds: Set<number> | null = null;
-    if (corporate_id) {
-      const corporateUserId = parseInt(corporate_id as string);
-      const allPartners = await storage.listCSRPartners?.() || [];
-      const partner = allPartners.find((p: any) => p.userId === corporateUserId);
-      if (partner) {
-        const allProfiles = await storage.listVolunteerProfiles?.() || [];
-        // Direct profile links (employerId = partner.id)
-        const directLinkedUserIds = allProfiles
-          .filter((p: any) => p.employerId && parseInt(String(p.employerId)) === partner.id)
-          .map((p: any) => p.userId as number);
-        // Explicit employer-link table (volunteerId references volunteerProfiles.id)
-        const explicitLinks = await (storage as any).listVolunteerEmployerLinksByPartnerId?.(partner.id) || [];
-        const explicitLinkedUserIds = allProfiles
-          .filter((p: any) => explicitLinks.some((l: any) => l.volunteerId === p.id))
-          .map((p: any) => p.userId as number);
-        allowedUserIds = new Set([...directLinkedUserIds, ...explicitLinkedUserIds]);
-      }
+    // Only corporate-partner accounts may access this feed
+    const callerUser = _req.user!;
+    if (callerUser.userType !== 'corporate-partner') {
+      return res.status(403).json({ message: "Only corporate partners can access this feed" });
     }
 
-    // Get all approved activities
+    // Resolve the CSR partner record that belongs to the authenticated caller.
+    // Ignore any client-supplied corporate_id — always scope to the caller's own identity.
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const partner = allPartners.find((p: any) => p.userId === callerUser.id);
+    if (!partner) {
+      return res.status(403).json({ message: "No corporate partner profile found for this account" });
+    }
+
+    // Build the set of volunteer user IDs linked to this partner
+    const allProfiles = await storage.listVolunteerProfiles?.() || [];
+    // Direct profile links (employerId = partner.id)
+    const directLinkedUserIds = allProfiles
+      .filter((p: any) => p.employerId && parseInt(String(p.employerId)) === partner.id)
+      .map((p: any) => p.userId as number);
+    // Explicit employer-link table (volunteerId references volunteerProfiles.id)
+    const explicitLinks = await (storage as any).listVolunteerEmployerLinksByPartnerId?.(partner.id) || [];
+    const explicitLinkedUserIds = allProfiles
+      .filter((p: any) => explicitLinks.some((l: any) => l.volunteerId === p.id))
+      .map((p: any) => p.userId as number);
+    const allowedUserIds = new Set<number>([...directLinkedUserIds, ...explicitLinkedUserIds]);
+
+    // Get all approved activities scoped to this partner's volunteers only
     const allActivities = await storage.listVolunteerActivities();
     const approvedActivities = allActivities.filter(
       (a: any) => a.verificationStatus === 'approved' &&
-        (allowedUserIds === null || (a.userId && allowedUserIds.has(a.userId)))
+        a.userId != null && allowedUserIds.has(a.userId)
     );
 
     // Batch-fetch all referenced entities upfront, then enrich synchronously

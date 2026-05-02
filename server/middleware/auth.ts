@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { logger } from "../logger";
 import { verifyFirebaseIdToken } from "../lib/firebase-admin";
 import { cache, CACHE_TTL, cacheKeys } from "../cache";
+import { tokenBlacklist } from "./security";
 
 // Extend Express Request to include user
 declare global {
@@ -67,6 +68,15 @@ export async function authMiddleware(
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
 
+      // Check blacklist before accepting the token
+      if (await tokenBlacklist.isBlacklisted(token)) {
+        res.status(401).json({
+          error: "TOKEN_REVOKED",
+          message: "This token has been revoked. Please log in again.",
+        });
+        return;
+      }
+
       // First try to verify as our own JWT token
       const jwtDecoded = verifyToken(token);
       if (jwtDecoded?.userId) {
@@ -95,7 +105,15 @@ export async function authMiddleware(
     // Method 2: httpOnly cookie JWT (demo/non-Firebase users; XSS-safe fallback)
     // Only checked when no Authorization header was present or valid.
     if (!userId && req.cookies?.authToken) {
-      const cookieDecoded = verifyToken(req.cookies.authToken);
+      const cookieToken = req.cookies.authToken;
+      if (await tokenBlacklist.isBlacklisted(cookieToken)) {
+        res.status(401).json({
+          error: "TOKEN_REVOKED",
+          message: "This token has been revoked. Please log in again.",
+        });
+        return;
+      }
+      const cookieDecoded = verifyToken(cookieToken);
       if (cookieDecoded?.userId) {
         userId = cookieDecoded.userId;
         userFromToken = true;
@@ -167,6 +185,13 @@ export async function optionalAuthMiddleware(
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
 
+      // Check blacklist before accepting the token
+      if (await tokenBlacklist.isBlacklisted(token)) {
+        logger.debug(`[OptionalAuth] Token is blacklisted, skipping`);
+        next();
+        return;
+      }
+
       // First try to verify as our own JWT token
       const jwtDecoded = verifyToken(token);
       if (jwtDecoded?.userId) {
@@ -215,7 +240,13 @@ export async function optionalAuthMiddleware(
 
     // Cookie JWT fallback for optional auth (same as authMiddleware)
     if (!req.user && req.cookies?.authToken) {
-      const cookieDecoded = verifyToken(req.cookies.authToken);
+      const cookieToken = req.cookies.authToken;
+      if (await tokenBlacklist.isBlacklisted(cookieToken)) {
+        logger.debug(`[OptionalAuth] Cookie token is blacklisted, skipping`);
+        next();
+        return;
+      }
+      const cookieDecoded = verifyToken(cookieToken);
       if (cookieDecoded?.userId) {
         const optCookieCacheKey = cacheKeys.userProfile(cookieDecoded.userId);
         let optCookieUser = cache.get<{ id: number; email: string; userType: string; organizationId: number | null; firebaseUid: string | null }>(optCookieCacheKey);

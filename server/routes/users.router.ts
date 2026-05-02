@@ -281,6 +281,10 @@ usersRouter.post("/logout", authMiddleware, async (req: Request, res: Response) 
     if (authHeader?.startsWith("Bearer ")) {
       await blacklistToken(authHeader.slice(7));
     }
+    // Also blacklist the cookie token so cookie-based sessions are fully revoked
+    if (req.cookies?.authToken && typeof req.cookies.authToken === "string") {
+      await blacklistToken(req.cookies.authToken);
+    }
     const { refreshToken } = req.body;
     if (refreshToken && typeof refreshToken === "string") {
       await blacklistToken(refreshToken);

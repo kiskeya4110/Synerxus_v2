@@ -56,61 +56,93 @@ function shouldRenderHeroSlide(activeIndex: number, slideIndex: number) {
 const PIPELINE_STEPS: {
   label: string;
   sub: string;
+  caption: string;
+  image: string;
   color: string;
   x: number;
   y: number;
   detail: string;
-  mobileImage?: string;
+  schema: { label: string; value: string }[];
 }[] = [
   {
-    label: "Activity Converted to Evidence",
-    sub: "Outcomes & hours recorded · structured for review",
+    label: "Activity Captured",
+    sub: "Program activity and volunteer time recorded",
+    caption: "Activity captured as evidence input",
+    image: "/1%20-Process%20-%20Activity%20Captured.png",
     color: "#1D4ED8",
     x: 11,
     y: 55,
     detail:
-      "Field activity is captured as an outcome record with hours, project context, and the result delivered.",
-    mobileImage: undefined,
+      "ESG program activity is captured with supporting context such as volunteer time, program boundary, and delivery context.",
+    schema: [
+      { label: "Record type", value: "Activity input" },
+      { label: "Captures", value: "Program activity, participant context, supporting hours" },
+      { label: "Evidence role", value: "Level 1 activity reporting" },
+    ],
   },
   {
-    label: "Partner Confirmation",
-    sub: "Authorized verifier reviews the outcome",
+    label: "Output Documented",
+    sub: "Delivered outputs are structured for review",
+    caption: "Output documented in operational terms",
+    image: "/2%20-%20Process%20-%20Output%20Documented.png",
     color: "#D4980C",
     x: 29,
     y: 55,
     detail:
-      "An authorized NGO partner provides independent confirmation that the outcome is suitable for evidence use.",
-    mobileImage: undefined,
+      "The delivered output is documented in operational language, such as kits distributed, filters installed, workshops delivered, or households reached.",
+    schema: [
+      { label: "Record type", value: "Output record" },
+      { label: "Captures", value: "Delivered output, quantity, program context" },
+      { label: "Evidence role", value: "Level 2 output tracking" },
+    ],
   },
   {
-    label: "Outcome Verified",
-    sub: "Independent confirmation added",
+    label: "Partner Confirmation",
+    sub: "Authorized partner confirms the output",
+    caption: "Authorized partner confirms delivery",
+    image: "/3%20-%20Process%20-%20Partner%20Confirmation.png",
     color: "#059669",
     x: 50,
     y: 55,
     detail:
-      "The confirmed outcome becomes a verified source record with clear ownership, timing, and partner context.",
-    mobileImage: undefined,
+      "An authorized partner confirms the output through a lightweight verification workflow, creating independence from the original submitter.",
+    schema: [
+      { label: "Record type", value: "Confirmation event" },
+      { label: "Captures", value: "Verifier role, confirmation status, review timestamp" },
+      { label: "Evidence role", value: "Independent confirmation" },
+    ],
   },
   {
-    label: "Evidence Object Created",
-    sub: "Structured record · timestamp & region",
+    label: "Evidence Record Created",
+    sub: "Structured record for reporting workflows",
+    caption: "Verified evidence record created",
+    image: "/4%20-Process%20-%20Evidence%20Record.png",
     color: "#0A1F44",
     x: 71,
     y: 55,
     detail:
-      "Every verified event is represented as structured evidence: outcome, hours, authorized verifier, timestamp, region, and framework alignment.",
-    mobileImage: undefined,
+      "The confirmed output becomes a structured evidence record with output, activity context, authorized verifier, timestamp, region, and framework alignment support.",
+    schema: [
+      { label: "Record type", value: "Verified evidence record" },
+      { label: "Captures", value: "Output, activity context, partner confirmation, timestamp, region" },
+      { label: "Evidence role", value: "Level 4 verified evidence" },
+    ],
   },
   {
-    label: "Evidence Pack Delivered",
-    sub: "Audit-ready evidence for ESG teams",
+    label: "Reporting Support",
+    sub: "Evidence prepared for assurance review",
+    caption: "Evidence supports reporting and assurance prep",
+    image: "/5%20-%20Process%20-%20Reporting%20Support.png",
     color: "#7C3AED",
     x: 89,
     y: 55,
     detail:
-      "Corporate ESG teams receive audit-ready evidence that supports reporting and assurance preparation across relevant frameworks.",
-    mobileImage: undefined,
+      "ESG teams receive audit-ready evidence that supports reporting and assurance preparation without replacing independent assurance providers.",
+    schema: [
+      { label: "Record type", value: "Evidence pack" },
+      { label: "Captures", value: "Framework alignment support, sample-ready records, reporting context" },
+      { label: "Evidence role", value: "Reporting and assurance preparation" },
+    ],
   },
 ];
 
@@ -136,8 +168,8 @@ const CUSTODY_STEPS: {
   {
     Icon: ShieldCheck,
     num: "02",
-    label: "NGO Partner Confirms",
-    sub: "An authorized NGO verifier confirms whether the outcome can be trusted.",
+    label: "Partner Confirms",
+    sub: "An authorized verifier confirms whether the output can be trusted.",
     color: "#EA580C",
     bg: "#FFF7ED",
     detail:
@@ -186,7 +218,7 @@ function HowItWorksSection({
             How It Works
           </span>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#0A1F44]">
-            From Ground-Level Activity to Boardroom ESG Report
+            Activity to Verified Evidence Record
           </h2>
           <a
             href="/Synerxus-Verification-Methodology-v1.1.pdf"
@@ -235,11 +267,13 @@ function HowItWorksSection({
                       onClick={() => setActiveStep(isOpen ? null : i)}
                       aria-expanded={isOpen}
                     >
-                      <span
-                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow"
-                        style={{ backgroundColor: step.color }}
-                      >
-                        {i + 1}
+                      <span className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                        <img
+                          src={step.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="block font-extrabold text-[#0A1F44] text-sm leading-snug">
@@ -275,9 +309,33 @@ function HowItWorksSection({
                           className="h-0.5 rounded-full mb-3 opacity-50"
                           style={{ backgroundColor: step.color }}
                         />
+                        <img
+                          src={step.image}
+                          alt={step.caption}
+                          className="mb-3 aspect-[16/9] w-full rounded-xl border border-slate-200 object-cover"
+                          loading="lazy"
+                        />
+                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                          {step.caption}
+                        </p>
                         <p className="text-slate-500 text-sm leading-relaxed">
                           {step.detail}
                         </p>
+                        <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden">
+                          {step.schema.map((row) => (
+                            <div
+                              key={row.label}
+                              className="grid grid-cols-[96px_1fr] gap-3 border-b border-slate-200 last:border-b-0 px-3 py-2"
+                            >
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                {row.label}
+                              </span>
+                              <span className="text-xs font-medium text-slate-600">
+                                {row.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -339,88 +397,43 @@ function HowItWorksSection({
           })}
         </div>
 
-        {/* ── Desktop: image + hotspots (hidden below md) ── */}
+        {/* ── Desktop: evidence workflow (hidden below md) ── */}
         <div className="hidden md:block">
-          {/* Image with absolutely-positioned hotspots */}
-          <div
-            className="shadow-xl border border-slate-200 bg-white relative rounded-2xl"
-            style={{ overflow: "visible" }}
-          >
-            {/* overflow:hidden wrapper crops the whitespace; the outer div stays overflow:visible for tooltips */}
-            <div className="overflow-hidden rounded-2xl">
-              <img
-                src="/optimized/esg-verification-process.webp"
-                alt="ESG Impact Verification Process — 5 Steps"
-                className="w-full block"
-                loading="eager"
-                style={{
-                  display: "block",
-                  marginTop: "-8%",
-                  marginBottom: "-8%",
-                }}
-              />
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-xl p-5">
+            <div className="grid grid-cols-5 gap-3">
+              {PIPELINE_STEPS.map((step, i) => {
+                const isActive = activeStep === i;
+                return (
+                  <button
+                    key={`${step.label}-${i}`}
+                    type="button"
+                    onMouseEnter={() => setActiveStep(i)}
+                    onMouseLeave={() => setActiveStep(null)}
+                    onClick={() => setActiveStep(isActive ? null : i)}
+                    className={`relative text-left rounded-xl border p-3 min-h-[236px] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/30 ${
+                      isActive
+                        ? "bg-blue-50 shadow-md"
+                        : "bg-slate-50 hover:bg-white hover:shadow-sm"
+                    }`}
+                    style={{
+                      borderColor: isActive ? step.color : "#e2e8f0",
+                    }}
+                  >
+                    <span className="block aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 bg-white mb-3">
+                      <img
+                        src={step.image}
+                        alt={step.caption}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </span>
+                    {i < PIPELINE_STEPS.length - 1 && (
+                      <ArrowRight className="absolute -right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-
-            {/* Unlabelled hotspots at each step's diagram position */}
-            {PIPELINE_STEPS.map((step, i) => (
-              <button
-                key={`${step.label}-${i}`}
-                onMouseEnter={() => setActiveStep(i)}
-                onMouseLeave={() => setActiveStep(null)}
-                onClick={() => setActiveStep(activeStep === i ? null : i)}
-                aria-label={step.label}
-                className="absolute group focus:outline-none"
-                style={{
-                  left: `${step.x}%`,
-                  top: `${step.y}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-              >
-                {/* Outer pulse ring */}
-                <span
-                  className="absolute rounded-full animate-ping"
-                  style={{
-                    inset: "-6px",
-                    backgroundColor: step.color,
-                    opacity: 0.3,
-                    animationDuration: `${1.8 + i * 0.15}s`,
-                  }}
-                />
-                {/* Inner dot — no label */}
-                <span
-                  className={`relative block rounded-full border-2 border-white shadow-md transition-all duration-200 ${
-                    activeStep === i ? "scale-150" : "group-hover:scale-125"
-                  }`}
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: activeStep === i ? step.color : step.color,
-                    opacity: activeStep === i ? 1 : 0.85,
-                  }}
-                />
-
-                {/* Tooltip — appears above dot; flips right-aligned near right edge */}
-                <span
-                  className={`absolute bottom-full mb-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-2xl pointer-events-none text-left transition-all duration-150 ${
-                    activeStep === i
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
-                  } ${step.x > 65 ? "right-0" : "left-0"}`}
-                  style={{ minWidth: "170px", zIndex: 10 }}
-                >
-                  <span
-                    className="block w-full h-0.5 rounded-full mb-2 opacity-60"
-                    style={{ backgroundColor: step.color }}
-                  />
-                  <span className="block text-xs font-bold text-[#0A1F44] leading-snug">
-                    {step.label}
-                  </span>
-                  <span className="block text-[10px] text-slate-400 mt-1 leading-snug">
-                    {step.sub}
-                  </span>
-                </span>
-              </button>
-            ))}
           </div>
 
           {/* Detail panel */}
@@ -777,7 +790,7 @@ function buildSampleReportHtml(): string {
       date: "2026-03-22",
       emp: "Ana P.",
       ngo: "Urban Green Corridors",
-      outcome: "Job-readiness workshop — 42 trainees certified",
+      outcome: "Job-readiness workshop — 42 trainees completed",
       hours: 8,
       geo: false,
       method: "App",
@@ -939,7 +952,7 @@ function buildSampleReportHtml(): string {
         <span style="color:#fff;">SYNERXUS</span> · <span style="color:#D4980C;">Impact,</span> <span style="color:#fff;">Verified.</span>
       </div>
       <h1 style="color:#fff;font-size:18px;">Corporate ESG Impact Report</h1>
-      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
+      <div style="color:#93c5fd;font-size:10px;margin-top:2px;">UN SDG-Aligned · Partner-Confirmed Outputs · Supports Audit Procedures</div>
     </div>
     <div style="text-align:right;color:#cbd5e1;font-size:10px;">
       <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ESG-2026-0407-ACME</div>
@@ -953,20 +966,20 @@ function buildSampleReportHtml(): string {
 <!-- SAMPLE NOTICE -->
 <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:20px;break-inside:avoid;">
   <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:.5px;margin-bottom:4px;">&#9888; SAMPLE REPORT — ILLUSTRATIVE DATA ONLY</div>
-  <div style="font-size:10px;color:#78350f;line-height:1.6;">This is a <strong>sample report</strong> using fictitious data to demonstrate the Synerxus verification architecture. It mirrors the exact structure delivered to corporate ESG teams. All names, figures, and organisations are illustrative. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Synerxus is designed to reduce auditor evidence-gathering by 60–70%; it does not replace auditor judgment per ISAE 3000.</div>
+  <div style="font-size:10px;color:#78350f;line-height:1.6;">This is a <strong>sample report</strong> using fictitious data to demonstrate the Synerxus verification architecture. It mirrors the structure that can be delivered to corporate ESG teams. All names, figures, and organisations are illustrative. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Synerxus creates structured evidence that supports assurance preparation; it does not replace auditor judgment per ISAE 3000.</div>
 </div>
 
 <!-- SECTION 1: EXECUTIVE SNAPSHOT -->
 <div style="margin-bottom:20px;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">3</div><div class="kpi-sub">organisations</div></div>
-    <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">47</div><div class="kpi-sub">of 120 linked</div></div>
-    <div class="kpi"><div class="kpi-label">NGO-Confirmed Outcomes</div><div class="kpi-value">134</div><div class="kpi-sub">186 total units</div></div>
-    <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">1,678</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">39,290</div><div class="kpi-sub">NGO-tracked</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; NGO partner estimates. Sample 15–30% per ISAE 3000.</div></div>
+    <div class="kpi"><div class="kpi-label">Authorized Partners</div><div class="kpi-value">3</div><div class="kpi-sub">organisations</div></div>
+    <div class="kpi"><div class="kpi-label">Participants Linked</div><div class="kpi-value">47</div><div class="kpi-sub">of 120 linked</div></div>
+    <div class="kpi"><div class="kpi-label">Partner-Confirmed Outputs</div><div class="kpi-value">134</div><div class="kpi-sub">186 total units</div></div>
+    <div class="kpi"><div class="kpi-label">Supporting Hours</div><div class="kpi-value">1,678</div><div class="kpi-sub">linked to confirmed outputs</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">39,290</div><div class="kpi-sub">partner-tracked</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Partner estimates. Sample 15–30% for assurance review.</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">85%</div><div class="kpi-sub">avg 16h turnaround</div></div>
-    <div class="kpi"><div class="kpi-label">Avg Hours / Employee</div><div class="kpi-value">35.7h</div><div class="kpi-sub">NGO-verified</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Hours / Employee</div><div class="kpi-value">35.7h</div><div class="kpi-sub">linked to confirmed outputs</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">7</div><div class="kpi-sub">goals impacted</div></div>
   </div>
 
@@ -986,10 +999,10 @@ function buildSampleReportHtml(): string {
       <div style="padding:16px 20px;background:#F9FAFB;">
         <div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">39,290 Verified</div>
         <div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Beneficiaries</div>
-        <div style="font-size:10px;color:#6B7280;margin-top:6px;">NGO-Tracked</div>
+        <div style="font-size:10px;color:#6B7280;margin-top:6px;">Partner-tracked</div>
       </div>
     </div>
-    <div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:.03em;">Management Reporting Verified — WEF SCM · GRI · SASB · TCFD · ISAE 3000 Revised</div>
+    <div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:.03em;">Management Reporting Verified — GRI · SASB · ESRS · ISAE 3000 Preparation</div>
   </div>
 
   <!-- Global sustainability assurance boundary indicator -->
@@ -999,26 +1012,26 @@ function buildSampleReportHtml(): string {
       <div style="background:#E5E7EB;height:18px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:8px;">
         <div style="width:65%;height:100%;background:#0A2463;display:flex;align-items:center;padding-left:8px;"><span style="font-size:9px;color:#F9FAFB;font-weight:700;">65%</span></div>
       </div>
-      <div style="font-size:10.5px;color:#374151;font-weight:600;margin-bottom:4px;">WEF SCM · GRI · SASB · TCFD · SEC Climate Rules Aligned <span style="color:#0891B2;">(Management Reporting Verified)</span></div>
-      <div style="font-size:9px;color:#6B7280;font-style:italic;padding-top:6px;border-top:1px solid #E5E7EB;margin-top:6px;">* Independent auditor procedures per ISAE 3000 required for formal assurance. Synerxus reduces evidence-gathering burden — it does not replace auditor judgment or opinion.</div>
+      <div style="font-size:10.5px;color:#374151;font-weight:600;margin-bottom:4px;">WEF SCM · GRI · SASB · ESRS Support <span style="color:#0891B2;">(Management Reporting Verified)</span></div>
+      <div style="font-size:9px;color:#6B7280;font-style:italic;padding-top:6px;border-top:1px solid #E5E7EB;margin-top:6px;">* Independent auditor procedures per ISAE 3000 required for formal assurance. Synerxus supports evidence preparation — it does not replace auditor judgment or opinion.</div>
     </div>
   </div>
 
   <!-- Framework disclosure support -->
   <div class="section">
-    <div class="section-header"><h2>Global Framework Alignment Status (WEF · GRI · SASB · TCFD)</h2></div>
+    <div class="section-header"><h2>Framework Alignment Support (GRI · SASB · ESRS)</h2></div>
     <table>
       <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">Disclosure Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
       <tbody>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Workforce development requirements (GRI 403, SASB SO-ES-110.C)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 47 employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community engagement requirements (GRI 413, SASB SO-ES-110.A, TCFD Principle 7)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 3 NGO partners, 134 verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community engagement evidence (GRI 413, ESRS S3 where material)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 3 partners, 134 verified records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Impact disclosure requirements (GRI 301, SASB SO-ES-110.B)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 39,290 beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Impact disclosure requirements — Negative impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; None disclosed this period</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
         <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">Monitoring processes requirements (GRI 103, SASB SO-ES-110.D)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 85% verification rate, 16h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
       </tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike self-reported hours-only systems, Synerxus delivers <strong>NGO-verified outcomes and supporting hours</strong> as structured, audit-ready evidence that can support WEF SCM, GRI, SASB, TCFD and UN SDG reporting preparation.</div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike self-reported hours-only systems, Synerxus delivers <strong>partner-confirmed outputs and supporting hours</strong> as structured, audit-ready evidence that can support GRI, SASB, ESRS and UN SDG reporting preparation where applicable.</div>
 </div>
 
 <!-- VERIFICATION BOUNDARY MATRIX -->
@@ -1029,7 +1042,7 @@ function buildSampleReportHtml(): string {
     <div style="display:grid;grid-template-columns:1fr 1fr;">
       <div style="border-right:1px solid #E5E7EB;">
         <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#0891B2;background:#F0FDFF;border-bottom:1px solid #E5E7EB;">Included (Verified)</div>
-        ${["NGO-confirmed outcomes", "Defined review window", "Validated beneficiary counts", "Structured evidence records"].map((item, i, arr) => `<div style="padding:7px 16px;font-size:10.5px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ${item}</div>`).join("")}
+        ${["Partner-confirmed outputs", "Defined review window", "Supported beneficiary counts", "Structured evidence records"].map((item, i, arr) => `<div style="padding:7px 16px;font-size:10.5px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ${item}</div>`).join("")}
       </div>
       <div>
         <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#374151;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Excluded (Not Verified)</div>
@@ -1039,28 +1052,28 @@ function buildSampleReportHtml(): string {
   </div>
 </div>
 
-<!-- SECTION 2: NGO PARTNERSHIPS -->
+<!-- SECTION 2: PARTNER CONFIRMATION -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: NGO Partnership Impact</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: Partner-Confirmed Outputs</h3>
   <div class="section">
-    <div class="section-header"><h2>Sponsored NGO Partners — Verified Impact</h2></div>
+    <div class="section-header"><h2>Authorized Partners — Verified Evidence</h2></div>
     <table>
-      <thead><tr><th>NGO Partner</th><th>Location</th><th>Verified Outcomes</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Audit Status</th></tr></thead>
+      <thead><tr><th>Authorized Partner</th><th>Location</th><th>Verified Records</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Audit Status</th></tr></thead>
       <tbody>${ngoRows}</tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Framework Relevance:</strong> GRI 413-1 and WEF People pillar require disclosure of community engagement. Community engagement requirements (GRI 413, SASB SO-ES-110.A, TCFD Principle 7) apply globally. This section proves direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> GRI 413 relates to local communities, and ESRS S3 relates to affected communities when those communities are material. This section organizes partner-confirmed output evidence that can support community-facing reporting workflows.</div>
 </div>
 
-<!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
+<!-- SECTION 3: ACTIVITY CONTEXT -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (WEF People · GRI 404-1)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Activity Context</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
     <div class="section">
       <div class="section-header"><h2>Participation Metrics</h2></div>
       <table><tbody>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">47</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">1,678h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Participants Linked</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">47</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Supporting Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">1,678h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; linked to confirmed outputs</span></td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">35.7h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8h industry avg</td></tr>
         <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">293</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Platform-tracked</span></td></tr>
       </tbody></table>
@@ -1071,14 +1084,14 @@ function buildSampleReportHtml(): string {
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">Verification Rate</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">85%</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. N/A (competitors)</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;">Verification SLA</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">16h avg</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">target: ≤72h</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">SDGs Addressed</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">7 goals</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 2.3 avg (Fortune 500)</td></tr>
-        <tr><td style="padding:7px 10px;font-size:11px;">NGO Partners</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">3</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8 avg (Benevity)</td></tr>
+        <tr><td style="padding:7px 10px;font-size:11px;">Authorized Partners</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">3</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">linked programs</td></tr>
       </tbody></table>
     </div>
   </div>
   <div class="section">
-    <div class="section-header"><h2>Top Employee Contributors (Verified Outcomes)</h2></div>
+    <div class="section-header"><h2>Top Contributors (Verified Records)</h2></div>
     <table>
-      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Verified Outcomes</th><th style="text-align:center;">Hours</th><th>NGO Partners</th><th>Skills Deployed</th></tr></thead>
+      <thead><tr><th>Contributor</th><th>Dept.</th><th style="text-align:center;">Verified Records</th><th style="text-align:center;">Hours</th><th>Partners</th><th>Skills Deployed</th></tr></thead>
       <tbody>${empRows}</tbody>
     </table>
   </div>
@@ -1092,7 +1105,7 @@ function buildSampleReportHtml(): string {
       <span style="color:#6B7280;">Partner-confirmed</span>
     </div>
   </div>
-  <div class="note">&#128161; <strong>Framework Relevance:</strong> WEF People pillar and GRI 404-1 require workforce skills disclosure. Workforce development requirements (GRI 403, SASB SO-ES-110.C) apply globally. This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> Workforce and community program evidence can support relevant disclosure preparation where applicable. This section links employee activity to partner-confirmed outputs without claiming causal attribution.</div>
 </div>
 
 <!-- SECTION 4: SDG ALIGNMENT -->
@@ -1108,17 +1121,17 @@ function buildSampleReportHtml(): string {
   <div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">
     <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">SDG Alignment — Verified Outcome Distribution</div>
     <div style="padding:12px 16px;background:#F9FAFB;">${sdgBarRows}</div>
-    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to verified outcomes only. SDG alignment confirmed by NGO program directors.</div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to verified outcomes only. SDG alignment confirmed by authorized partners.</div>
   </div>
 </div>
 
 <!-- SECTION 5: AUDIT TRAIL -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Evidence Records (Audit Trail)</h3>
   <div class="section">
     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Structured Records for Auditor Sampling (showing 10 of 134)</h2></div>
     <table>
-      <thead><tr><th>Date</th><th>Employee</th><th>NGO Partner</th><th>Outcome Verified</th><th style="text-align:center;">Hours</th><th>Method</th><th>Geolocation</th></tr></thead>
+      <thead><tr><th>Date</th><th>Contributor</th><th>Partner</th><th>Output Confirmed</th><th style="text-align:center;">Hours</th><th>Method</th><th>Region</th></tr></thead>
       <tbody>${auditRows}</tbody>
     </table>
   </div>
@@ -1154,13 +1167,13 @@ function buildSampleReportHtml(): string {
     </div>
     <div style="padding:10px 16px;background:#F0FDFF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;">
       <span style="color:#0891B2;font-size:14px;">&#x2193;</span>
-      <span style="font-size:10px;color:#0891B2;font-weight:700;">NGO Verification &#x2713; within 72h</span>
+      <span style="font-size:10px;color:#0891B2;font-weight:700;">Partner confirmation &#x2713;</span>
       <span style="font-size:10px;color:#6B7280;">&#x2192;</span>
       <span style="font-size:10px;color:#374151;font-weight:600;">Structured Evidence Record</span>
     </div>
   </div>
   <div style="background:#f0f9ff;border:0.5px solid #bae6fd;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#0369a1;margin-top:8px;">
-    &#128269; <strong>Auditor Use Case:</strong> Randomly sample 15–30% of outcomes for direct NGO confirmation. Each record includes verifier identity, timestamp, and contact information for the NGO programme director.
+    &#128269; <strong>Auditor Use Case:</strong> Randomly sample outcomes for direct partner confirmation. Each record includes authorized verifier context, timestamp, and program reference information.
   </div>
 </div>
 
@@ -1174,7 +1187,7 @@ function buildSampleReportHtml(): string {
       ${["Screening Dimension", "Status", "Outcomes Affected", "Verification Method"].map((h, i) => `<div style="padding:6px 12px;font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;${i < 3 ? "border-right:1px solid #E5E7EB;" : ""}">${h}</div>`).join("")}
     </div>
     ${[
-      { dim: "Community Harm", method: "NGO Program Director" },
+      { dim: "Community Harm", method: "Authorized Partner" },
       { dim: "Environmental Effects", method: "Community Liaison" },
       { dim: "Resource Displacement", method: "Project Coordinator" },
       { dim: "Beneficiary Concerns", method: "Structured Survey" },
@@ -1198,9 +1211,9 @@ function buildSampleReportHtml(): string {
     <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Contribution Chain — Verification Node</div>
     <div style="padding:16px;background:#F9FAFB;display:flex;align-items:center;flex-wrap:wrap;">
       ${[
-        { label: "Volunteer Activity", verified: false, sla: "" },
+        { label: "Program Activity", verified: false, sla: "" },
         {
-          label: "NGO Verification &#x2713;",
+          label: "Partner Confirmation &#x2713;",
           verified: true,
           sla: "16h Avg SLA",
         },
@@ -1219,12 +1232,12 @@ function buildSampleReportHtml(): string {
         )
         .join("")}
     </div>
-    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Independent NGO verification is the trust mechanism — not self-reported activity.</div>
+    <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Independent partner confirmation is the trust mechanism — not self-reported activity alone.</div>
   </div>
   <!-- Assurance boundary diagram -->
   <div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;margin-top:16px;">
     <div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:.05em;text-transform:uppercase;">Assurance Boundary: Global Verification Scope</div>
-    <div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides verified outcome data supporting multiple global sustainability frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce auditor evidence-gathering burden by 60–70% but does not replace independent assurance per ISAE 3000.</div>
+    <div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides verified evidence records that can support relevant sustainability reporting workflows (UN SDGs, GRI, SASB and ESRS). It supports assurance preparation but does not replace independent assurance per ISAE 3000.</div>
     <div style="padding:16px;background:#F9FAFB;">
       <div style="display:flex;flex-direction:column;align-items:center;">
         <div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#F9FAFB;text-align:center;">
@@ -1234,7 +1247,7 @@ function buildSampleReportHtml(): string {
         <div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>
         <div style="width:88%;padding:10px 16px;border:1.5px solid #0891B2;border-radius:4px;background:#F0FDFF;text-align:center;">
           <div style="font-size:10px;font-weight:700;color:#0A2463;">Synerxus: Management Reporting Verified &#x2713;</div>
-          <div style="font-size:9px;color:#0891B2;margin-top:2px;">(NGO Verification)</div>
+          <div style="font-size:9px;color:#0891B2;margin-top:2px;">(Partner Confirmation)</div>
         </div>
         <div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>
         <div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">
@@ -1246,10 +1259,10 @@ function buildSampleReportHtml(): string {
       <div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">
         <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:8px;">&#x2705; What Synerxus Provides</div>
         <ul style="margin:0;padding:0;list-style:none;">
-          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with structured evidence records</li>
-          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence objects for GRI 413, SASB SO-ES-110</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Partner-confirmed outputs with structured evidence records</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence records for GRI 413 and ESRS S3 support where applicable</li>
           <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Evidence that can support materiality review workflows</li>
-          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Global framework alignment (SDGs, GRI, SASB, TCFD)</li>
+          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Framework alignment support (SDGs, GRI, SASB, ESRS)</li>
         </ul>
       </div>
       <div style="padding:12px 14px;background:#fef2f2;">
@@ -1666,7 +1679,7 @@ const EVIDENCE_FIELDS = [
     id: "verifier",
     label: "Verifier",
     cardLabel: "Verifier",
-    cardValue: "Authorized NGO verifier",
+    cardValue: "Authorized partner verifier",
     meaning: "The authorized third party associated with the confirmation.",
     auditValue:
       "It signals that the record is not based only on the original activity submitter.",
@@ -2064,10 +2077,10 @@ function JoinNetworkModal({
               </span>
               <span>
                 <span className="block text-base font-bold text-[#0A1F44]">
-                  Join as NGO Partner
+                  Join as Verification Partner
                 </span>
                 <span className="block text-sm text-slate-600 mt-1">
-                  Verify project outcomes and generate audit-ready impact reports.
+                  Confirm outputs and create structured evidence records for reporting workflows.
                 </span>
               </span>
             </div>
@@ -2075,7 +2088,7 @@ function JoinNetworkModal({
 
           <button
             type="button"
-            onClick={() => onSelectRole("/signup/volunteer")}
+            onClick={() => onSelectRole("/signup/corporate")}
             className="w-full text-left rounded-xl border border-slate-200 p-5 hover:border-[#0A1F44] hover:bg-blue-50/60 transition-colors"
           >
             <div className="flex items-start gap-4">
@@ -2084,10 +2097,10 @@ function JoinNetworkModal({
               </span>
               <span>
                 <span className="block text-base font-bold text-[#0A1F44]">
-                  Join as Volunteer
+                  Join as ESG Team
                 </span>
                 <span className="block text-sm text-slate-600 mt-1">
-                  Log your impact and contribute to verified, audit-ready outcomes.
+                  Link activity data, partner-confirmed outputs, and framework support in one evidence workflow.
                 </span>
               </span>
             </div>
@@ -2421,20 +2434,17 @@ export default function Landing() {
                 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-[#0A1F44] mb-5"
                 data-testid="text-hero-title"
               >
-                The Verification Layer
-                <span className="text-[#0A1F44]"> for </span>
-              <span className="text-[#D4980C]">
-                  CSR, ESG, and Global Impact Programs.
-                </span>
+                Turn ESG Activity Into Audit-Ready Evidence
               </h1>
 
               <p
                 className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed"
                 data-testid="text-hero-description"
               >
-                NGO-verified outcomes converted into structured, audit-ready
-                evidence for ESG reporting and assurance preparation under WEF,
-                GRI, SASB, TCFD and the UN SDGs.
+                Synerxus helps organizations convert volunteer time,
+                partner-delivered outputs, and ESG program activity into
+                independently confirmed evidence records that support reporting
+                and assurance preparation.
               </p>
 
               <div className="flex flex-wrap gap-2 sm:gap-3 mb-10">
@@ -2490,7 +2500,7 @@ export default function Landing() {
               {/* Trust badge strip */}
               <div className="grid grid-cols-2 gap-2 mt-1 justify-items-start">
                 {[
-                  "NGO-Verified Outcomes",
+                  "Partner-Confirmed Outputs",
                   "Immutable Audit Trail",
                   "Global Framework Support",
                   "SDG-Aligned Impact",
@@ -2572,7 +2582,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── NGO Partner Strip ── */}
+        {/* ── Partner Strip ── */}
         <div className="bg-slate-50 border-y border-slate-100 py-4 px-6">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap text-center sm:text-left">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 flex-shrink-0">
@@ -2659,8 +2669,9 @@ export default function Landing() {
                     Participate in the Verification Network
                   </h2>
                   <p className="text-sm md:text-base text-slate-600 mt-2 max-w-2xl">
-                    NGOs verify outcomes. Volunteers log measurable,
-                    traceable impact data that becomes audit-ready evidence.
+                    ESG teams capture activity and output data. Authorized
+                    partners confirm what was delivered so Synerxus can create
+                    structured, audit-ready evidence records.
                   </p>
                 </div>
 
@@ -2673,33 +2684,33 @@ export default function Landing() {
                   >
                     <span className="flex items-center gap-3 text-[#0A1F44] font-bold">
                       <ShieldCheck className="h-5 w-5 text-emerald-600" />
-                      For NGOs
+                      For Partners
                     </span>
                     <span className="block mt-2 text-sm text-slate-600">
-                      Join as NGO Partner
+                      Join as Verification Partner
                     </span>
                     <span className="block mt-1 text-xs text-slate-500 leading-relaxed">
-                      Verify outcomes in seconds and generate funder-ready
-                      reports automatically.
+                      Confirm outputs through lightweight workflows and
+                      generate funder-ready reports.
                     </span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => selectNetworkRole("/signup/volunteer")}
+                    onClick={() => selectNetworkRole("/signup/corporate")}
                     className="text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-[#0A1F44] p-5 transition-colors"
                     data-testid="button-split-join-volunteer"
                   >
                     <span className="flex items-center gap-3 text-[#0A1F44] font-bold">
                       <UserPlus className="h-5 w-5 text-blue-600" />
-                      For Volunteers
+                      For ESG Teams
                     </span>
                     <span className="block mt-2 text-sm text-slate-600">
-                      Join as Volunteer
+                      Book a Demo
                     </span>
                     <span className="block mt-1 text-xs text-slate-500 leading-relaxed">
-                      Log your work as verified impact and contribute to
-                      audit-ready outcomes.
+                      Connect activity data, partner-confirmed outputs, and
+                      framework alignment support.
                     </span>
                   </button>
                 </div>
@@ -2716,10 +2727,13 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
-                The World Runs on Unverified Impact Claims
+                ESG Claims Are Only as Strong as the Evidence Behind Them
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto">
-                Three Broken Systems. One Verification Gap. Synerxus Closes It.
+                ESG, CSR, corporate volunteering, and social value programs
+                often rely on self-reported activity data. Hours,
+                participation, and internal summaries are useful, but they are
+                not enough when stakeholders ask what actually happened.
               </p>
             </div>
 
@@ -2728,20 +2742,20 @@ export default function Landing() {
                 {
                   icon: <Building2 className="h-7 w-7 text-[#0A1F44]" />,
                   segment: "ESG Teams",
-                  pain: "70% of disclosures rely on self-reported data.",
-                  quote: '"ESG frameworks require evidence, not narratives."',
+                  pain: "Need evidence that can withstand assurance, investor scrutiny, and regulatory review.",
+                  quote: '"Reporting claims need reviewable evidence."',
                 },
                 {
                   icon: <Users className="h-7 w-7 text-[#0A1F44]" />,
                   segment: "Corporate Volunteering",
-                  pain: "Hours logged ≠ outcomes delivered.",
-                  quote: '"No independent confirmation."',
+                  pain: "Volunteer hours are useful, but time alone does not confirm outcomes delivered.",
+                  quote: '"Time is context, not the endpoint."',
                 },
                 {
                   icon: <Globe className="h-7 w-7 text-[#0A1F44]" />,
-                  segment: "NGOs & Cities",
-                  pain: "Fragmented proof and manual reporting.",
-                  quote: '"Impact is real, but unverifiable."',
+                  segment: "Partners & Cities",
+                  pain: "Outputs are often real, but evidence is fragmented across spreadsheets, photos, emails, and reports.",
+                  quote: '"Evidence is scattered across systems."',
                 },
               ].map((card) => (
                 <div
@@ -2764,7 +2778,7 @@ export default function Landing() {
               Synerxus{" "}
               <span className="relative inline-block">
                 <span className="relative z-10">
-                  Closes The Verification Gap.
+                  Creates The Verified Evidence Layer.
                 </span>
                 <span className="absolute inset-x-0 bottom-1 h-[6px] bg-[#D4980C]/30 rounded-full -z-0" />
               </span>
@@ -2784,28 +2798,28 @@ export default function Landing() {
           const GAP_LAYERS = [
             {
               id: "Level 5",
-              label: "Causal Proof (RCT)",
-              sub: "Academic-grade — not scalable for enterprise ESG",
+              label: "Causal Proof / RCT",
+              sub: "Did the intervention cause the change?",
               dim: true,
               synerxus: false,
-              status: "Not enterprise-viable",
+              status: "Outside normal Synerxus scope",
               statusBg: "bg-slate-100",
               statusText: "text-slate-500",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-slate-50/60 opacity-55",
-              tools: ["Academic RCTs", "Longitudinal studies", "Control group trials"],
+              tools: ["Randomized evaluations", "Longitudinal studies", "Control group trials"],
               detail:
-                "Academic-grade causal attribution via Randomised Controlled Trials. Highly rigorous, but prohibitively expensive and not scalable for enterprise ESG reporting.",
+                "Level 5 causal proof establishes stronger attribution, often through randomized controlled trials. It is rigorous, but typically too slow and expensive for recurring ESG operations.",
             },
             {
               id: "Level 4",
-              label: "Verification",
-              sub: "The missing layer — Synerxus fills this",
+              label: "Verified Evidence",
+              sub: "Was the activity or output independently confirmed?",
               dim: false,
               synerxus: true,
-              status: "✦ Synerxus fills this",
+              status: "Synerxus core product",
               statusBg: "bg-[#D4980C]/15",
               statusText: "text-[#D4980C]",
               badgeBg: "bg-[#D4980C]",
@@ -2815,58 +2829,58 @@ export default function Landing() {
               cardIdle: "border-[#D4980C]/40 bg-[#FFFDF5]/80",
               tools: [],
               detail:
-                "Synerxus fills the missing evidence layer between self-reported activity and formal assurance. Verified outcomes are organized against relevant framework references, turning ESG claims into audit-ready evidence without implying certification.",
+                "Synerxus delivers Level 4: verified evidence at operational scale. Partner-confirmed outputs are converted into structured evidence records that support reporting and assurance preparation without implying certification or causal proof.",
             },
             {
               id: "Level 3",
-              label: "Trackers",
-              sub: "Log hours only — no outcome proof",
+              label: "Outcome Support / Estimation",
+              sub: "What likely changed?",
               dim: false,
               synerxus: false,
-              status: "Saturated",
+              status: "Supported where methodology exists",
               statusBg: "bg-[#D4980C]/10",
               statusText: "text-[#D4980C]",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["Benevity", "Goodera", "YourCause"],
+              tools: ["Partner methodologies", "Beneficiary estimates", "Outcome models"],
               detail:
-                "Track volunteer hours and log activities effectively — but cannot prove that the promised outcomes were actually delivered to beneficiaries.",
+                "Outcome support estimates what likely changed, such as households reached or beneficiaries served. Synerxus can support this level when a credible partner methodology exists, but does not present estimates as causal proof.",
             },
             {
               id: "Level 2",
-              label: "Aggregators",
-              sub: "Display data — no independent confirmation",
+              label: "Output Tracking",
+              sub: "What was delivered?",
               dim: false,
               synerxus: false,
-              status: "Saturated",
+              status: "Captured and structured",
               statusBg: "bg-blue-100",
               statusText: "text-blue-700",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["Sopact", "IRIS+", "WEF UpLink"],
+              tools: ["Kits distributed", "Filters installed", "Workshops delivered"],
               detail:
-                "Aggregate and visualise impact data beautifully — but the underlying inputs remain self-reported and unverified, limiting defensibility.",
+                "Output tracking records what was delivered by a program or partner. Synerxus structures this information and links it to confirmation when it becomes verified evidence.",
             },
             {
               id: "Level 1",
-              label: "Reporting Frameworks",
-              sub: "Define what to report — accept self-declared numbers",
+              label: "Activity Reporting",
+              sub: "Did people participate?",
               dim: false,
               synerxus: false,
-              status: "Saturated",
+              status: "Captured as input",
               statusBg: "bg-violet-100",
               statusText: "text-violet-700",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
-              tools: ["WEF SCM", "GRI Standards", "SASB · TCFD"],
+              tools: ["Volunteer hours", "Attendance", "Participation logs"],
               detail:
-                "Define what to report and in what format — but accept self-declared numbers. They create demand for verified data; Synerxus provides the supply.",
+                "Activity reporting captures participation, including volunteer time and attendance. Synerxus treats this as useful input, not the endpoint of the evidence chain.",
             },
           ];
           const activeLayer = activeGapLayer
@@ -2929,7 +2943,7 @@ export default function Landing() {
                 {layer.tools.length > 0 ? (
                   <div className="mb-5">
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-semibold">
-                      Existing tools at this level
+                      Examples at this level
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {layer.tools.map((t) => (
@@ -2945,8 +2959,7 @@ export default function Landing() {
                 ) : (
                   <div className="mb-5 px-3 py-2.5 rounded-xl bg-[#FFFBF0] border border-[#D4980C]/30">
                     <p className="text-xs text-[#7a5200] font-medium">
-                      No platform existed here before Synerxus — this is the
-                      white space.
+                      Synerxus owns this Level 4 evidence layer.
                     </p>
                   </div>
                 )}
@@ -2982,14 +2995,15 @@ export default function Landing() {
                   {/* Section header */}
                   <div className="text-center mb-7">
                     <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
-                      The Gap
+                      Evidence Ladder
                     </span>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44]">
-                      The Missing Infrastructure
+                      The Synerxus Evidence Ladder
                     </h2>
                     <p className="text-slate-500 text-sm md:text-base mt-3 max-w-xl mx-auto">
-                      Every layer of the impact stack exists — except the one
-                      that makes it credible.
+                      Activity moves through output and outcome support before
+                      it becomes verified evidence. Causal proof is a higher
+                      bar outside normal operating scope.
                       <span className="block mt-1 text-slate-400 text-xs">
                         Click any layer to explore.
                       </span>
@@ -3194,11 +3208,11 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
-                Verify What Actually Happened
+                Verify Activity and Outputs
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto">
-                Four capabilities that turn impact claims into defensible
-                evidence.
+                Four capabilities that turn ESG activity into stronger,
+                audit-ready evidence.
               </p>
             </div>
 
@@ -3206,8 +3220,8 @@ export default function Landing() {
               {[
                 {
                   icon: <Clock className="h-6 w-6 text-blue-600" />,
-                  title: "Real-Time Outcome Verification",
-                  desc: "NGO staff confirm deliverables within 72 hours — no lag, no backlogs.",
+                  title: "Partner-Confirmed Outputs",
+                  desc: "Authorized partners confirm outputs through a lightweight verification workflow.",
                   bg: "bg-blue-100",
                 },
                 {
@@ -3218,14 +3232,14 @@ export default function Landing() {
                 },
                 {
                   icon: <BarChart2 className="h-6 w-6 text-emerald-600" />,
-                  title: "SDG + ESG Alignment",
-                  desc: "Automatic mapping to WEF, GRI, SASB and TCFD — reports that compliance officers trust globally.",
+                  title: "Framework Alignment Support",
+                  desc: "Structured evidence can support relevant GRI, SASB, ESRS, ISAE 3000, and SDG reporting workflows.",
                   bg: "bg-emerald-100",
                 },
                 {
                   icon: <AlertTriangle className="h-6 w-6 text-[#D4980C]" />,
-                  title: "Negative Impact Screening",
-                  desc: "Mandatory at verification — prevents greenwashing before it enters your reports.",
+                  title: "Assurance Boundary Discipline",
+                  desc: "Synerxus supports reporting and assurance preparation without replacing auditors or claiming causal attribution.",
                   bg: "bg-[#D4980C]/10",
                 },
               ].map((feat) => (
@@ -3539,7 +3553,7 @@ export default function Landing() {
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
                 Built for Every Organization
                 <br />
-                That Needs Verified Impact
+                That Needs Stronger Evidence
               </h2>
             </div>
 
@@ -3549,21 +3563,21 @@ export default function Landing() {
                   icon: <BarChart2 className="h-6 w-6 text-blue-700" />,
                   audience: "ESG Teams",
                   benefit:
-                    "WEF- and GRI-aligned evidence — audit-defensible from day one, supporting multiple global sustainability frameworks.",
+                    "Structured evidence records that support reporting and assurance preparation across relevant frameworks.",
                   bg: "bg-blue-100",
                 },
                 {
                   icon: <Users className="h-6 w-6 text-[#0A1F44]" />,
                   audience: "Corporate Volunteering",
                   benefit:
-                    "Move beyond hours logged — verify outcomes and show true employee impact.",
+                    "Move beyond hours logged by linking volunteer time to partner-confirmed outputs.",
                   bg: "bg-slate-100",
                 },
                 {
                   icon: <ShieldCheck className="h-6 w-6 text-emerald-700" />,
-                  audience: "NGOs",
+                  audience: "Implementing Partners",
                   benefit:
-                    "Show funders verified, timestamped impact — effortlessly and credibly.",
+                    "Confirm delivered outputs and turn fragmented documentation into structured evidence.",
                   bg: "bg-emerald-100",
                 },
                 {
@@ -3584,7 +3598,7 @@ export default function Landing() {
                   icon: <Building2 className="h-6 w-6 text-violet-700" />,
                   audience: "Impact Investors",
                   benefit:
-                    "Portfolio-wide verification of social outcomes — from commitment to delivery.",
+                    "Portfolio-wide evidence records that show whether supported programs delivered reported outputs.",
                   bg: "bg-violet-100",
                 },
               ].map((card) => (
@@ -3628,12 +3642,12 @@ export default function Landing() {
                   {
                     target: publicStats?.totalVerifiedOutcomes ?? null,
                     suffix: "",
-                    label: "Verified Outcomes",
+                    label: "Verified Records",
                   },
                   {
                     target: publicStats?.totalVerifiedHours ?? null,
                     suffix: "",
-                    label: "Verified Hours",
+                    label: "Supporting Hours",
                   },
                   {
                     target:
@@ -3651,7 +3665,7 @@ export default function Landing() {
                   {
                     target: publicStats?.activeNGOs ?? null,
                     suffix: "",
-                    label: "Active NGOs",
+                    label: "Active Partners",
                   },
                   {
                     target: publicStats
@@ -3700,9 +3714,9 @@ export default function Landing() {
                 Every Verified Outcome, Mapped to the UN SDGs
               </h2>
               <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
-                Synerxus automatically tags each NGO-verified outcome to the
-                relevant SDG — creating a traceable chain from ground-level
-                delivery to ESG disclosure across all 17 goals.
+                Synerxus tags each partner-confirmed output to relevant SDGs,
+                creating a traceable chain from ground-level delivery to ESG
+                reporting workflows.
               </p>
               <p className="text-slate-400 text-xs mt-2">
                 Click any goal to learn more.
@@ -3870,8 +3884,9 @@ export default function Landing() {
               })()}
 
             <p className="text-center text-xs text-slate-400">
-              Every Synerxus-verified outcome carries an immutable SDG tag —
-              audit-ready for GRI, SASB, TCFD and WEF SCM disclosure.
+              Every Synerxus-verified record carries an SDG tag and structured
+              framework context for GRI, SASB, and ESRS support where
+              applicable.
             </p>
           </div>
         </section>
@@ -3979,9 +3994,19 @@ export default function Landing() {
                 Verify Impact with Synerxus
               </h2>
               <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-                Join our verified impact pilot and experience the only evidence
-                infrastructure that makes ESG claims audit-ready.
+                Join our verified impact pilot and experience a verification
+                layer for ESG, CSR, corporate volunteering, and social value
+                programs.
               </p>
+            </div>
+
+            <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950 leading-relaxed">
+              <strong>Boundary statement:</strong> Synerxus provides
+              structured, independently confirmed evidence that supports
+              reporting and assurance preparation. Synerxus does not replace
+              independent assurance providers, provide formal assurance
+              opinions, guarantee regulatory compliance, or establish causal
+              attribution.
             </div>
 
             {/* Two-column layout */}
@@ -3996,9 +4021,9 @@ export default function Landing() {
                   </h3>
                   <ul className="space-y-3">
                     {[
-                      "92% of ESG claims remain self-reported and entirely unverified",
+                      "Many ESG and CSR claims still rely on self-reported activity data",
                       'When auditors ask "How do you know this outcome actually occurred?", organizations have no defensible answer',
-                      "The era of unverified impact claims has ended — CSRD enforcement begins April 2025",
+                      "CSRD and related sustainability reporting requirements are increasing pressure on companies to produce stronger, assurance-ready evidence",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <span className="flex-shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -4018,10 +4043,11 @@ export default function Landing() {
                   </h3>
                   <ul className="space-y-2.5">
                     {[
-                      "NGO-verified outcomes with structured evidence records",
-                      "Verification workflows configured to agreed operating targets",
-                      "Support for global frameworks: CSRD, ESRS, GRI, SASB, TCFD",
-                      "Audit-ready evidence that supports assurance preparation",
+                      "Partner-confirmed output evidence",
+                      "Volunteer time linked to verified outputs",
+                      "Structured evidence records",
+                      "Framework alignment support",
+                      "Reporting and assurance preparation support",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -4042,9 +4068,9 @@ export default function Landing() {
                   <ul className="space-y-2.5">
                     {[
                       "Full implementation support from our team",
-                      "Dedicated onboarding for your NGO partners",
+                      "Dedicated onboarding for authorized partners",
                       "Priority access to new features and capabilities",
-                      "Expert guidance on CSRD readiness",
+                      "Evidence preparation support for relevant reporting workflows",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 text-[#0A8C6A] flex-shrink-0 mt-0.5" />
@@ -4064,9 +4090,10 @@ export default function Landing() {
                     Join Our Verified Impact Pilot
                   </h3>
                   <p className="text-slate-500 text-sm leading-relaxed">
-                    Be among the first to deploy NGO-verified outcomes with full
+                    Be among the first to deploy partner-confirmed outputs with full
                     implementation support. We'll work with you to validate your
-                    verification loop and prepare for CSRD assurance.
+                    verification workflow and prepare evidence for reporting and
+                    assurance review.
                   </p>
                 </div>
 
@@ -4075,11 +4102,11 @@ export default function Landing() {
                   {[
                     {
                       icon: <Clock className="h-4 w-4 text-[#0A8C6A]" />,
-                      text: "72h SLA — first verified outcomes in days",
+                      text: "Operating targets configured during onboarding",
                     },
                     {
                       icon: <ShieldCheck className="h-4 w-4 text-[#0A8C6A]" />,
-                      text: "CSRD · ESRS · GRI · SASB · TCFD ready",
+                      text: "CSRD · ESRS · GRI · SASB support where applicable",
                     },
                     {
                       icon: <FileCheck className="h-4 w-4 text-[#0A8C6A]" />,
@@ -4181,15 +4208,15 @@ export default function Landing() {
               {[
                 {
                   q: "Does Synerxus replace our existing activity systems?",
-                  a: "No. Synerxus is the independent verification layer between existing activity systems and ESG reporting workflows. It adds NGO-confirmed outcomes and structured, audit-ready evidence on top of records you already manage.",
+                  a: "No. Synerxus is the independent verification layer between existing activity systems and ESG reporting workflows. It adds partner-confirmed outputs and structured, audit-ready evidence on top of records you already manage.",
                 },
                 {
                   q: "Who independently confirms the outcomes?",
-                  a: "Authorized NGO partners confirm whether an outcome is suitable for verified evidence use. Synerxus records the confirmed result as structured evidence without replacing the independent judgment of auditors or assurance providers.",
+                  a: "Authorized partners confirm whether an output is suitable for verified evidence use. Synerxus records the confirmed result as structured evidence without replacing the independent judgment of auditors or assurance providers.",
                 },
                 {
                   q: "Which reporting frameworks does Synerxus support?",
-                  a: "Synerxus evidence can support reporting and assurance preparation across WEF Stakeholder Capitalism Metrics, GRI Standards, SASB, TCFD, SEC Climate, CSRD/ESRS, and UN SDGs. Framework references indicate alignment support, not certification or a compliance guarantee.",
+                  a: "Synerxus evidence can support reporting and assurance preparation across relevant frameworks, including GRI Standards, SASB, CSRD/ESRS, ISAE 3000 preparation workflows, and UN SDGs. Framework references indicate alignment support, not certification or a compliance guarantee. TCFD is relevant only where the program has climate-related community or workforce evidence.",
                 },
                 {
                   q: "What does an evidence object contain?",
@@ -4200,8 +4227,8 @@ export default function Landing() {
                   a: "Verification timing depends on partner response and program context. Enterprise deployments can set operating targets for response windows during onboarding.",
                 },
                 {
-                  q: "Can we use Synerxus across multiple NGO partners and geographies?",
-                  a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each NGO partner is onboarded once and can verify outcomes across all corporate programs they are linked to. Reports aggregate verified data across all partners, SDGs, and geographies in one dashboard.",
+                  q: "Can we use Synerxus across multiple partners and geographies?",
+                  a: "Yes. Synerxus is built for multi-program, multi-geography deployment. Each authorized partner is onboarded once and can confirm outputs across the corporate programs they are linked to. Reports aggregate verified data across partners, SDGs, and geographies in one dashboard.",
                 },
                 {
                   q: "How does Synerxus integrate with our existing systems?",
@@ -4236,12 +4263,12 @@ export default function Landing() {
                   a: "ISAE 3000 is a standard used by external auditors for assurance over non-financial information. Synerxus provides independently confirmed, timestamped, structured evidence that can support ISAE 3000 assurance preparation. Formal assurance still requires an independent assurance provider.",
                 },
                 {
-                  q: "What happens if an NGO rejects a verification request?",
-                  a: "If a verifier flags an outcome as inaccurate or unverifiable, it is marked as rejected and excluded from all ESG reports and audit trails. Rejected outcomes are logged separately and disclosed in compliance reports for transparency — global sustainability frameworks require disclosure of negative or unverified outcomes as well. The submitting volunteer or program manager is notified and can resubmit with additional evidence.",
+                  q: "What happens if a partner rejects a verification request?",
+                  a: "If a verifier flags an output as inaccurate or unverifiable, it is marked as rejected and excluded from verified evidence packs. Rejected records are logged separately for transparency. The submitting program manager is notified and can resubmit with additional evidence.",
                 },
                 {
                   q: "Who verifies the outcomes — do verifiers work for Synerxus?",
-                  a: "No. Verifiers are always independent of Synerxus and independent of the person submitting the outcome. They are NGO staff, program directors, beneficiaries, or employer representatives who are directly involved in the activity. This independence is a core requirement of ISAE 3000 and is fundamental to the credibility of the evidence. Synerxus facilitates the request and records the result — we do not influence or participate in the verification decision.",
+                  a: "No. Verifiers are independent of Synerxus and independent of the person submitting the outcome. They may be NGO staff, city teams, implementing partners, approved program operators, beneficiaries, or employer representatives who are directly involved in the activity. Synerxus facilitates the request and records the result; we do not influence or participate in the verification decision.",
                 },
                 {
                   q: "Does Synerxus provide formal ESG assurance?",
@@ -4302,7 +4329,7 @@ export default function Landing() {
                   </>
                 ) : (
                   <>
-                    See 12 More Questions
+                    See More Questions
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path
                         d="M4 6L8 10L12 6"
@@ -4378,12 +4405,12 @@ export default function Landing() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#0A1F44]">
-                    NGO-Confirmed Outcomes
+                    Partner-Confirmed Outputs
                   </p>
                   <p className="text-xs text-slate-500">
-                    Every outcome is verified by the receiving NGO partner
-                    within a 72-hour window. NGO staff can confirm or refine the
-                    SDG tag before the record is locked.
+                    Outputs are independently confirmed by authorized partners
+                    through a lightweight verification workflow. Partners can
+                    confirm or refine the SDG tag before the record is locked.
                   </p>
                 </div>
               </div>
@@ -4397,8 +4424,8 @@ export default function Landing() {
                   </p>
                   <p className="text-xs text-slate-500">
                     Verified data is locked and timestamped with its SDG
-                    mapping, producing audit-ready evidence aligned to all 17 UN
-                    SDGs — aligned to WEF SCM, GRI, SASB and TCFD.
+                    mapping, producing audit-ready evidence that can support
+                    relevant SDG, GRI, SASB, and ESRS workflows.
                   </p>
                 </div>
               </div>

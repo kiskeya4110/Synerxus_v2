@@ -2,12 +2,26 @@ import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertApplicationSchema } from "@shared/schema";
+import { z } from "zod";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
 import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication, sendNewApplicationEmail } from "../notification-service";
 import { aiService } from "../services/ai-service";
 import { getPaginationParams, paginateArray } from "../pagination";
 import { authMiddleware } from "../middleware/auth";
+
+/**
+ * Narrow schema for the public application-creation endpoint.
+ * Only contains fields a volunteer is permitted to supply.
+ * All server-owned fields (volunteerId, organizationId, projectId, status,
+ * reviewedBy, reviewedAt, notes, matchScore) are intentionally excluded so
+ * they can never be supplied by the caller.
+ */
+const createApplicationSchema = z.object({
+  opportunityId: z.number().int().positive(),
+  coverLetter: z.string().optional().nullable(),
+  resumeUrl: z.string().optional().nullable(),
+});
 
 export const applicationsRouter = Router();
 
@@ -309,8 +323,12 @@ applicationsRouter.post("/", authMiddleware, async (req: Request, res: Response)
       });
     }
 
-    const validatedData = insertApplicationSchema.parse(req.body);
-    const { opportunityId } = validatedData;
+    // SECURITY: Use the narrow createApplicationSchema which only allows applicant-owned
+    // fields. insertApplicationSchema is intentionally NOT used here because it includes
+    // server-owned lifecycle fields (status, reviewedBy, reviewedAt, notes, volunteerId,
+    // organizationId, projectId, matchScore) that must never be caller-supplied.
+    const applicantInput = createApplicationSchema.parse(req.body);
+    const { opportunityId } = applicantInput;
 
     // SECURITY: Always use the authenticated user's ID — never a caller-supplied volunteerId
     const volunteerId = authUser.id;
@@ -355,13 +373,20 @@ applicationsRouter.post("/", authMiddleware, async (req: Request, res: Response)
       // Continue with application creation even if match score calculation fails
     }
 
-    // Create application with direct organization and project links
+    // Create application with direct organization and project links.
+    // SECURITY: Use whitelisted applicantInput only — never spread validatedData which
+    // may contain caller-supplied lifecycle fields (status, reviewedBy, reviewedAt, notes).
     const application = await storage.createApplication({
-      ...validatedData,
+      ...applicantInput,
       volunteerId, // Always the authenticated user's ID
       organizationId: opportunity.organizationId, // Direct link to organization
       projectId: opportunity.projectId || null, // Direct link to project if applicable
-      matchScore
+      matchScore,
+      // Explicitly set review/lifecycle fields to their safe initial values
+      status: "pending",
+      reviewedBy: null,
+      reviewedAt: null,
+      notes: null,
     });
 
     // Create or update volunteer-organization relationship
@@ -455,9 +480,10 @@ applicationsRouter.patch("/:id", authMiddleware, async (req: Request, res: Respo
       }
     }
 
-    // Volunteers may only update safe applicant-owned fields
+    // Volunteers may only update safe applicant-owned fields.
+    // SECURITY: 'notes' is an organization review field and must NOT be writable by volunteers.
     if (authUser.userType === "volunteer") {
-      const VOLUNTEER_ALLOWED = new Set(["coverLetter", "message", "notes", "availability"]);
+      const VOLUNTEER_ALLOWED = new Set(["coverLetter", "message", "availability"]);
       const attempted = Object.keys(req.body).filter(k => !VOLUNTEER_ALLOWED.has(k));
       if (attempted.length > 0) {
         return res.status(403).json({

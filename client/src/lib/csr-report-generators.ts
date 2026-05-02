@@ -140,7 +140,7 @@ export function generateOrgPDFContent(
           .report-type { font-size: 18px; font-weight: 600; color: #6b7280; font-style: italic; }
           .report-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #6b7280; margin-top: 8px; }
           .meta-divider { color: #d1d5db; }
-          .blockchain-verified { display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: 600; }
+          .evidence-confirmed { display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: 600; }
 
           .impact-score-box h4 { font-size: 11px; color: #d97706; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
           .impact-score-value { font-size: 36px; font-weight: 800; color: #92400e; }
@@ -240,7 +240,7 @@ export function generateOrgPDFContent(
               <div class="report-meta">
                 <span>📅 ${currentDate}</span>
                 <span class="meta-divider">|</span>
-                <span class="blockchain-verified">✓ Blockchain Verified</span>
+                <span class="evidence-confirmed">✓ Evidence Confirmed</span>
               </div>
               ${filterLabel ? `<div style="margin-top: 8px; font-size: 12px; color: #6b7280;">🔍 ${filterLabel}</div>` : ""}
             </div>
@@ -495,7 +495,7 @@ export function generatePDFContent(
 
           .report-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #6b7280; margin-top: 8px; }
           .meta-divider { color: #d1d5db; }
-          .blockchain-verified { display: flex; align-items: center; gap: 4px; color: #10b981; font-weight: 600; }
+          .evidence-confirmed { display: flex; align-items: center; gap: 4px; color: #10b981; font-weight: 600; }
 
           .impact-score-box h4 { font-size: 11px; color: #3b82f6; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
           .impact-score-value { font-size: 36px; font-weight: 800; color: #1e3a8a; }
@@ -708,7 +708,7 @@ export function generatePDFContent(
               <div class="report-meta">
                 <span>📅 ${currentDate}</span>
                 <span class="meta-divider">|</span>
-                <span class="blockchain-verified">✓ Blockchain Verified</span>
+                <span class="evidence-confirmed">✓ Evidence Confirmed</span>
               </div>
               ${filterLabel ? `<div style="margin-top:8px;font-size:12px;color:#6b7280;">🔍 ${filterLabel}</div>` : ""}
             </div>
@@ -964,7 +964,7 @@ export function generatePDFContent(
           <div class="verification-record">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(148,163,184,0.2);">
               <div class="vr-header" style="margin-bottom:0;">▸ Sample Verification Record</div>
-              <span style="font-family:'Courier New',monospace;font-size:9px;color:#475569;background:rgba(71,85,105,0.15);padding:3px 8px;border-radius:4px;">hash: 0x4a7f2c…d9e831</span>
+              <span style="font-family:'Courier New',monospace;font-size:9px;color:#475569;background:rgba(71,85,105,0.15);padding:3px 8px;border-radius:4px;">evidence ref: SYN-EV-004821</span>
             </div>
             <div class="vr-row"><span class="vr-key">record_id</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val green">SYN-VR-2024-00847</span></div>
             <div class="vr-row"><span class="vr-key">submitted_by</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val">J. Mwangi · Project Lead, ${companyName}</span></div>
@@ -1013,9 +1013,9 @@ export function generatePDFContent(
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"volunteer_hours"</span>: <span class="ev-val num">48</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"beneficiaries_direct"</span>: <span class="ev-val num">312</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"ngo_verified"</span>: <span class="ev-val bool">true</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"verification_method"</span>: <span class="ev-val str">"NGO_ATTESTATION + ATTENDANCE_REGISTER"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"authorized_verifier"</span>: <span class="ev-val str">"Authorized NGO verifier"</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"assurance_standard"</span>: <span class="ev-val str">"ISAE 3000 Revised"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"blockchain_hash"</span>: <span class="ev-val str">"0x4a7f2c...d9e831"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"evidence_reference"</span>: <span class="ev-val str">"SYN-EV-004821"</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"timestamp_utc"</span>: <span class="ev-val str">"2024-03-14T13:47:00Z"</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"gri_disclosure"</span>: <span class="ev-val str">"GRI 413-1"</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"sasb_indicator"</span>: <span class="ev-val str">"HC-MS-310a.1"</span>,</div>
@@ -1108,7 +1108,7 @@ export function generatePDFContent(
           <div class="assurance-grid">
             <div class="assurance-panel synerxus">
               <div class="assurance-panel-header syn">✅ What Synerxus Provides</div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>NGO-verified outcomes with immutable audit trails</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>NGO-verified outcomes with structured evidence records</span></div>
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Structured evidence objects for GRI 413, SASB SO-ES-110</span></div>
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Stakeholder impact alignment via negative impact screening</span></div>
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Global framework alignment (SDGs, GRI, SASB, TCFD)</span></div>
@@ -1118,7 +1118,7 @@ export function generatePDFContent(
               <div class="assurance-item"><span class="assurance-icon">◆</span><span>Formal assurance opinion (independent auditor required)</span></div>
               <div class="assurance-item"><span class="assurance-icon">◆</span><span>Causal attribution (requires RCTs)</span></div>
               <div class="assurance-item"><span class="assurance-icon">◆</span><span>Financial valuation (SROI not calculated)</span></div>
-              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory compliance guarantee (auditor judgment required)</span></div>
+              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory compliance conclusions (auditor judgment required)</span></div>
             </div>
           </div>
           <p style="font-size:9px;color:#6b7280;font-style:italic;margin-top:10px;padding:8px 12px;background:#fffbeb;border-radius:4px;border:1px solid #fde68a;">For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per ISAE 3000 remains required.</p>

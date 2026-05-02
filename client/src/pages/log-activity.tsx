@@ -30,22 +30,6 @@ interface OutcomeTemplate {
   sortOrder: number;
 }
 
-
-// Generate a simple device fingerprint from browser info
-function getDeviceFingerprint(): string {
-  const ua = navigator.userAgent || "";
-  const screen = `${window.screen.width}x${window.screen.height}`;
-  const lang = navigator.language || "";
-  const raw = `${ua}|${screen}|${lang}`;
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    const char = raw.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return `dev_${Math.abs(hash).toString(36)}`;
-}
-
 // KPI Tile Component
 function KpiTile({
   template,
@@ -175,12 +159,6 @@ export default function LogActivity() {
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
   }, []);
-
-  // Device fingerprint
-  const [deviceId] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return getDeviceFingerprint();
-  });
 
   // Fetch current user via the default authenticated query function
   const { data: currentUser } = useQuery<User>({
@@ -380,7 +358,6 @@ export default function LogActivity() {
       beneficiaryCount: beneficiaryCount && parseFloat(beneficiaryCount) > 0 ? Math.round(parseFloat(beneficiaryCount)) : null,
       sdgTags: sdgTags.length > 0 ? sdgTags : null,
       geolocation: geolocation || null,
-      deviceId: deviceId || null,
       evidenceUrls: photoUrl ? [photoUrl] : [],
       verificationStatus: 'pending'
     };

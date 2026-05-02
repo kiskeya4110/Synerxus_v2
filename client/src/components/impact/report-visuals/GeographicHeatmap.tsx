@@ -136,7 +136,7 @@ export default function GeographicHeatmap({
         <span>
           Avg. SLA: <strong style={{ color: "#0A2463" }}>{avgSLA}h</strong>
         </span>
-        <span style={{ color: "#6B7280" }}>SMS + PWA Verified</span>
+        <span style={{ color: "#6B7280" }}>Partner-confirmed</span>
       </div>
     </div>
   );

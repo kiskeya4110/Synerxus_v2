@@ -503,10 +503,11 @@ export default function CSRReportsExports() {
   // CSR Mobile PWA View (for corporate users)
   if (isMobile) {
     return (
-      <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-        <CSRMobileHeader title="Reports & Exports" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
+      <div className="pwa-shell bg-[#faf9f7] flex flex-col">
+        <div className="pwa-frame">
+          <CSRMobileHeader title="Reports & Exports" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
 
-        <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
+        <main className="pwa-scroll pb-20 px-3 pt-3">
           {/* Category Pills - Light colors for better contrast */}
           <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
             {categories.map((cat) => (
@@ -638,7 +639,8 @@ export default function CSRReportsExports() {
           </PlanGate>
         </main>
 
-        <CSRMobileNav activeTab="reports" />
+          <CSRMobileNav activeTab="reports" />
+        </div>
       </div>
     );
   }
@@ -937,7 +939,7 @@ export default function CSRReportsExports() {
                 <div style={{ fontSize: "12px", color: "#6b7280" }}>Verified impact data · Audit-ready exports</div>
               </div>
             </div>
-            <span style={{ fontSize: "11px", fontWeight: "600", padding: "4px 12px", borderRadius: "20px", backgroundColor: "#dbeafe", color: "#1e40af" }}>✓ Blockchain Verified</span>
+            <span style={{ fontSize: "11px", fontWeight: "600", padding: "4px 12px", borderRadius: "20px", backgroundColor: "#dbeafe", color: "#1e40af" }}>✓ Evidence Confirmed</span>
           </div>
 
           {/* Entity Filters */}

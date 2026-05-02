@@ -17,6 +17,8 @@ import {
   HardHat,
   ArrowRight,
   Loader2,
+  LogOut,
+  UserPlus,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
 import React, {
@@ -27,25 +29,22 @@ import React, {
   type RefObject,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import esgVerificationProcessImg from "@assets/Copilot_20260407_120309_1775588622996.png";
-import heroSlide1 from "@assets/How_ESG_Talent_Retention_1775528985996.png";
-import heroSlide2 from "@assets/Corporate_data_presentation_1775529421335.png";
-import heroSlide3 from "@assets/Corporate_sustainabi_1775529421337.png";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import { useAuth } from "@/hooks/use-auth";
 
 const HERO_SLIDES = [
-  heroSlide1,
-  "/hero-volunteer-hand.png",
-  "/hero-aid-relief.png",
-  heroSlide2,
-  "/hero-village-build.png",
-  "/hero-coaching.png",
-  heroSlide3,
-  "/hero-community.png",
-  "/hero-construction.png",
-  "/hero-construction-tutorial.png",
-  "/hero-planters.png",
+  "/optimized/hero-esg-retention.webp",
+  "/optimized/hero-volunteer-hand.webp",
+  "/optimized/hero-aid-relief.webp",
+  "/optimized/hero-data-presentation.webp",
+  "/optimized/hero-village-build.webp",
+  "/optimized/hero-coaching.webp",
+  "/optimized/hero-sustainability.webp",
+  "/optimized/hero-community.webp",
+  "/optimized/hero-construction.webp",
+  "/optimized/hero-construction-tutorial.webp",
+  "/optimized/hero-planters.webp",
 ];
 
 function shouldRenderHeroSlide(activeIndex: number, slideIndex: number) {
@@ -64,53 +63,53 @@ const PIPELINE_STEPS: {
   mobileImage?: string;
 }[] = [
   {
-    label: "Volunteer Logs Activity",
-    sub: "Outcomes & hours recorded · in-field volunteer work",
+    label: "Activity Converted to Evidence",
+    sub: "Outcomes & hours recorded · structured for review",
     color: "#1D4ED8",
     x: 11,
     y: 55,
     detail:
-      "Volunteers record outcomes, hours, skills applied, and beneficiary counts in real time via mobile — timestamped and linked to a specific project the moment it happens.",
+      "Field activity is captured as an outcome record with hours, project context, and the result delivered.",
     mobileImage: undefined,
   },
   {
-    label: "NGO Verification Request",
-    sub: "SMS / App notification sent · review link provided",
+    label: "Partner Confirmation",
+    sub: "Authorized verifier reviews the outcome",
     color: "#D4980C",
     x: 29,
     y: 55,
     detail:
-      "The assigned NGO partner receives an instant verification request by SMS or in-app notification. A review link is provided — no platform login required to confirm.",
+      "An authorized NGO partner provides independent confirmation that the outcome is suitable for evidence use.",
     mobileImage: undefined,
   },
   {
-    label: "One-Tap Verification",
-    sub: "NGO confirms results · verified instantly",
+    label: "Outcome Verified",
+    sub: "Independent confirmation added",
     color: "#059669",
     x: 50,
     y: 55,
     detail:
-      "The NGO verifier confirms both the outcome and hours in under 15 seconds via a single tap — no paperwork, no back-and-forth. Verification is captured the moment it happens.",
+      "The confirmed outcome becomes a verified source record with clear ownership, timing, and partner context.",
     mobileImage: undefined,
   },
   {
-    label: "Immutable Audit Trail",
-    sub: "Secure records captured · timestamp & geolocation",
+    label: "Evidence Object Created",
+    sub: "Structured record · timestamp & region",
     color: "#0A1F44",
     x: 71,
     y: 55,
     detail:
-      "Every verified event is sealed into an immutable audit record — verifier identity, device ID, GPS coordinates, timestamp, and SDG mapping captured automatically for WEF, GRI and global ESG compliance.",
+      "Every verified event is represented as structured evidence: outcome, hours, authorized verifier, timestamp, region, and framework alignment.",
     mobileImage: undefined,
   },
   {
-    label: "Impact Report Delivered",
-    sub: "PDF sent via SMS & email · audit-ready report",
+    label: "Evidence Pack Delivered",
+    sub: "Audit-ready evidence for ESG teams",
     color: "#7C3AED",
     x: 89,
     y: 55,
     detail:
-      "Corporate ESG teams receive a branded, audit-ready PDF impact report — every outcome traceable to a direct NGO confirmation, aligned to WEF SCM, GRI, SASB and TCFD.",
+      "Corporate ESG teams receive audit-ready evidence that supports reporting and assurance preparation across relevant frameworks.",
     mobileImage: undefined,
   },
 ];
@@ -128,41 +127,41 @@ const CUSTODY_STEPS: {
     Icon: FileCheck,
     num: "01",
     label: "Deliverable Completed",
-    sub: "Volunteer logs outcomes, hours & beneficiaries in real time via mobile — timestamped at the moment it happens.",
+    sub: "Outcome, hours, and project context are recorded as structured evidence inputs.",
     color: "#0D9488",
     bg: "#F0FDFA",
     detail:
-      "Every submission captures GPS location, device fingerprint, timestamp, volunteer ID, hours contributed, beneficiary count, and a free-text outcome description — all before a verifier is ever contacted.",
+      "A completed activity is converted into a clear outcome record that can be reviewed by an authorized partner and used in audit-ready evidence workflows.",
   },
   {
     Icon: ShieldCheck,
     num: "02",
-    label: "NGO Verifies",
-    sub: "Partner NGO confirms results with a single tap — no login required, under 15 seconds.",
+    label: "NGO Partner Confirms",
+    sub: "An authorized NGO verifier confirms whether the outcome can be trusted.",
     color: "#EA580C",
     bg: "#FFF7ED",
     detail:
-      "The assigned NGO programme director receives an instant push or SMS notification. A single tap confirms or flags the outcome. Single-tap confirmation via the Synerxus app or SMS. No training required. Average response time: 16 hours.",
+      "The partner confirmation creates independence between the person submitting activity and the organization validating the result.",
   },
   {
     Icon: Lock,
     num: "03",
     label: "Evidence Object Created",
-    sub: "Record sealed with GPS coordinates, device ID, verifier identity & SDG mapping — tamper-proof.",
+    sub: "Record structured with outcome, verifier, timestamp, region, and framework alignment.",
     color: "#DB2777",
     bg: "#FDF2F8",
     detail:
-      "The confirmed outcome is sealed into an immutable Evidence Object: verifier identity, device ID, GPS coordinates, timestamp, SDG mapping, and a cryptographic hash. Records cannot be retroactively edited — meeting ISAE 3000 chain-of-custody requirements.",
+      "The confirmed outcome becomes an Evidence Object that can support audit sampling, reporting workflows, and third-party assurance preparation.",
   },
   {
     Icon: BarChart2,
     num: "04",
-    label: "ESG / SDG Reporting",
-    sub: "Audit-ready PDF delivered to corporate ESG teams — every claim traceable to an NGO confirmation.",
+    label: "Audit-Ready Evidence",
+    sub: "Evidence packs support ESG reporting and assurance preparation.",
     color: "#2563EB",
     bg: "#EFF6FF",
     detail:
-      "Verified outcomes are aggregated into GRI-, SASB-, TCFD-, and WEF SCM-aligned reports with a full evidence trail. Auditors receive a ready-made evidence pack — reducing assurance preparation time by 60–70%.",
+      "Verified outcomes are organized against relevant ESG frameworks. Synerxus supports audit preparation; formal assurance and compliance conclusions remain with independent providers.",
   },
 ];
 
@@ -350,7 +349,7 @@ function HowItWorksSection({
             {/* overflow:hidden wrapper crops the whitespace; the outer div stays overflow:visible for tooltips */}
             <div className="overflow-hidden rounded-2xl">
               <img
-                src={esgVerificationProcessImg}
+                src="/optimized/esg-verification-process.webp"
                 alt="ESG Impact Verification Process — 5 Steps"
                 className="w-full block"
                 loading="eager"
@@ -1019,7 +1018,7 @@ function buildSampleReportHtml(): string {
       </tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — aligned to WEF SCM, GRI 413-1, SASB, TCFD and UN SDGs across all major global reporting frameworks.</div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike self-reported hours-only systems, Synerxus delivers <strong>NGO-verified outcomes and supporting hours</strong> as structured, audit-ready evidence that can support WEF SCM, GRI, SASB, TCFD and UN SDG reporting preparation.</div>
 </div>
 
 <!-- VERIFICATION BOUNDARY MATRIX -->
@@ -1030,7 +1029,7 @@ function buildSampleReportHtml(): string {
     <div style="display:grid;grid-template-columns:1fr 1fr;">
       <div style="border-right:1px solid #E5E7EB;">
         <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#0891B2;background:#F0FDFF;border-bottom:1px solid #E5E7EB;">Included (Verified)</div>
-        ${["NGO-confirmed outcomes", "72h verification window", "Validated beneficiary counts", "Immutable audit trails"].map((item, i, arr) => `<div style="padding:7px 16px;font-size:10.5px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ${item}</div>`).join("")}
+        ${["NGO-confirmed outcomes", "Defined review window", "Validated beneficiary counts", "Structured evidence records"].map((item, i, arr) => `<div style="padding:7px 16px;font-size:10.5px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ${item}</div>`).join("")}
       </div>
       <div>
         <div style="padding:8px 16px;font-size:10px;font-weight:700;color:#374151;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Excluded (Not Verified)</div>
@@ -1090,7 +1089,7 @@ function buildSampleReportHtml(): string {
     <div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">
       <span>Verification Rate: <strong style="color:#0A2463;">85%</strong></span>
       <span>Avg. SLA: <strong style="color:#0A2463;">16h</strong></span>
-      <span style="color:#6B7280;">SMS + PWA Verified</span>
+      <span style="color:#6B7280;">Partner-confirmed</span>
     </div>
   </div>
   <div class="note">&#128161; <strong>Framework Relevance:</strong> WEF People pillar and GRI 404-1 require workforce skills disclosure. Workforce development requirements (GRI 403, SASB SO-ES-110.C) apply globally. This section proves employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
@@ -1117,7 +1116,7 @@ function buildSampleReportHtml(): string {
 <div style="margin-bottom:20px;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
   <div class="section">
-    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Immutable Records for Auditor Sampling (showing 10 of 134)</h2></div>
+    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Structured Records for Auditor Sampling (showing 10 of 134)</h2></div>
     <table>
       <thead><tr><th>Date</th><th>Employee</th><th>NGO Partner</th><th>Outcome Verified</th><th style="text-align:center;">Hours</th><th>Method</th><th>Geolocation</th></tr></thead>
       <tbody>${auditRows}</tbody>
@@ -1131,7 +1130,7 @@ function buildSampleReportHtml(): string {
       <div style="background:#E5E7EB;height:20px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:6px;"><div style="width:85%;height:100%;background:#0A2463;"></div></div>
       <div style="display:flex;flex-direction:column;gap:4px;">
         <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0A2463;border-radius:1px;flex-shrink:0;"></div><span style="font-size:9.5px;color:#374151;font-weight:600;">85% verified within 72h SLA</span></div>
-        <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0891B2;border-radius:1px;flex-shrink:0;"></div><span style="font-size:9.5px;color:#374151;font-weight:600;">100% immutable audit trails maintained</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0891B2;border-radius:1px;flex-shrink:0;"></div><span style="font-size:9.5px;color:#374151;font-weight:600;">Structured evidence records maintained</span></div>
       </div>
     </div>
     <div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps verified against stated SLA. 72h SLA matches boundary definition for defensibility.</div>
@@ -1146,7 +1145,7 @@ function buildSampleReportHtml(): string {
       </div>
       <div style="border-right:1px solid #E5E7EB;">
         <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Audit Trail</div>
-        ${["Timestamp", "Verifier ID", "Geolocation", "Device Hash"].map((item, i, arr) => `<div style="padding:5px 14px;font-size:10px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}">&#x2022; ${item}</div>`).join("")}
+        ${["Timestamp", "Authorized verifier", "Region", "Evidence reference"].map((item, i, arr) => `<div style="padding:5px 14px;font-size:10px;color:#374151;${i < arr.length - 1 ? "border-bottom:1px solid #F3F4F6;" : ""}">&#x2022; ${item}</div>`).join("")}
       </div>
       <div>
         <div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Regulatory Metadata</div>
@@ -1157,7 +1156,7 @@ function buildSampleReportHtml(): string {
       <span style="color:#0891B2;font-size:14px;">&#x2193;</span>
       <span style="font-size:10px;color:#0891B2;font-weight:700;">NGO Verification &#x2713; within 72h</span>
       <span style="font-size:10px;color:#6B7280;">&#x2192;</span>
-      <span style="font-size:10px;color:#374151;font-weight:600;">Immutable Record Locked</span>
+      <span style="font-size:10px;color:#374151;font-weight:600;">Structured Evidence Record</span>
     </div>
   </div>
   <div style="background:#f0f9ff;border:0.5px solid #bae6fd;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#0369a1;margin-top:8px;">
@@ -1247,9 +1246,9 @@ function buildSampleReportHtml(): string {
       <div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">
         <div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:8px;">&#x2705; What Synerxus Provides</div>
         <ul style="margin:0;padding:0;list-style:none;">
-          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with immutable audit trails</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with structured evidence records</li>
           <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence objects for GRI 413, SASB SO-ES-110</li>
-          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Double materiality compliance via negative impact screening</li>
+          <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Evidence that can support materiality review workflows</li>
           <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Global framework alignment (SDGs, GRI, SASB, TCFD)</li>
         </ul>
       </div>
@@ -1259,7 +1258,7 @@ function buildSampleReportHtml(): string {
           <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Formal assurance opinion (independent auditor required)</li>
           <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Causal attribution (requires RCTs)</li>
           <li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Financial valuation (SROI not calculated)</li>
-          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance guarantee (auditor judgment required)</li>
+          <li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance conclusions (auditor judgment required)</li>
         </ul>
       </div>
     </div>
@@ -1303,6 +1302,14 @@ function PricingContactModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -1341,6 +1348,9 @@ function PricingContactModal({
     >
       <div
         className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-7"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pricing-contact-title"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -1356,7 +1366,10 @@ function PricingContactModal({
             <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="h-7 w-7 text-emerald-500" />
             </div>
-            <h3 className="text-lg font-extrabold text-[#0A1F44] mb-2">
+            <h3
+              id="pricing-contact-title"
+              className="text-lg font-extrabold text-[#0A1F44] mb-2"
+            >
               Request received!
             </h3>
             <p className="text-slate-500 text-sm leading-relaxed mb-5">
@@ -1380,7 +1393,10 @@ function PricingContactModal({
                 <ShieldCheck className="h-5 w-5 text-[#D4980C]" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-[#0A1F44] leading-tight">
+                <h3
+                  id="pricing-contact-title"
+                  className="text-base font-extrabold text-[#0A1F44] leading-tight"
+                >
                   Get in touch
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1543,6 +1559,14 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
   const html = useMemo(() => buildSampleReportHtml(), []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const printReport = () => {
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1556,13 +1580,18 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex flex-col bg-white">
+    <div
+      className="fixed inset-0 z-[500] flex flex-col bg-white"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sample-report-title"
+    >
       {/* Toolbar */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white shadow-sm flex-shrink-0">
         <div className="flex items-center gap-3">
           <Logo size="sm" clickable={false} />
           <span className="text-sm font-bold text-[#0A1F44] hidden sm:block">
-            Corporate ESG Impact Report
+            <span id="sample-report-title">Sample ESG Evidence Pack</span>
           </span>
           <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4980C]/10 text-[#D4980C] rounded-full border border-[#D4980C]/20 uppercase tracking-wider">
             Sample
@@ -1604,14 +1633,474 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
         srcDoc={html}
         title="Sample Synerxus ESG Impact Report"
         className="flex-1 w-full border-0"
-        sandbox="allow-same-origin allow-popups"
+        sandbox="allow-popups"
       />
+    </div>
+  );
+}
+
+const EVIDENCE_FIELDS = [
+  {
+    id: "outcome",
+    label: "Outcome",
+    cardLabel: "Outcome",
+    cardValue: "3 water filters installed",
+    meaning: "The confirmed result in plain operational language.",
+    auditValue:
+      "It gives audit and reporting teams a concrete result to review instead of a broad ESG claim.",
+    reliability:
+      "The result is independently confirmed and presented as structured evidence.",
+  },
+  {
+    id: "hours",
+    label: "Hours",
+    cardLabel: "Hours",
+    cardValue: "6.5 hours",
+    meaning: "Supporting context for the effort associated with the confirmed result.",
+    auditValue:
+      "It helps teams understand the contribution behind the outcome without making hours the primary evidence.",
+    reliability:
+      "The hours sit beside the independently confirmed outcome as supporting context.",
+  },
+  {
+    id: "verifier",
+    label: "Verifier",
+    cardLabel: "Verifier",
+    cardValue: "Authorized NGO verifier",
+    meaning: "The authorized third party associated with the confirmation.",
+    auditValue:
+      "It signals that the record is not based only on the original activity submitter.",
+    reliability:
+      "Independent confirmation increases trust in the evidence record.",
+  },
+  {
+    id: "geo",
+    label: "Location",
+    cardLabel: "Location",
+    cardValue: "Region (captured)",
+    meaning: "The general region associated with the verified result.",
+    auditValue:
+      "It helps audit and reporting teams connect evidence to the relevant program boundary.",
+    reliability:
+      "Location context makes the record more traceable for review.",
+  },
+  {
+    id: "framework",
+    label: "Framework Alignment",
+    cardLabel: "Frameworks",
+    cardValue: "SDG · GRI · ESRS",
+    meaning: "The sustainability frameworks this outcome can support.",
+    auditValue:
+      "It gives assurance and reporting teams a structured starting point for evidence review.",
+    reliability:
+      "Framework alignment is shown as support for the confirmed record, not as a compliance guarantee.",
+  },
+];
+
+const EVIDENCE_FRAMEWORKS = [
+  {
+    id: "sdg",
+    label: "SDG",
+    detail:
+      "This record can support ESG reporting and assurance preparation for relevant outcome areas.",
+  },
+  {
+    id: "gri",
+    label: "GRI",
+    detail:
+      "This record can support reporting and audit preparation for local stakeholder impact evidence.",
+  },
+  {
+    id: "esrs",
+    label: "ESRS",
+    detail:
+      "This record can support affected-community evidence review within reporting workflows.",
+  },
+  {
+    id: "isae",
+    label: "ISAE 3000",
+    detail:
+      "This record can support assurance preparation by giving auditors structured evidence to review.",
+  },
+];
+
+function EvidenceObjectSection() {
+  const [activeField, setActiveField] = useState(EVIDENCE_FIELDS[0]);
+  const [activeFramework, setActiveFramework] = useState(EVIDENCE_FRAMEWORKS[0]);
+  const [feedback, setFeedback] = useState("Outcome selected");
+
+  const selectField = (field: (typeof EVIDENCE_FIELDS)[number]) => {
+    setActiveField(field);
+    setFeedback(`${field.label} selected`);
+  };
+
+  const selectFramework = (framework: (typeof EVIDENCE_FRAMEWORKS)[number]) => {
+    setActiveFramework(framework);
+    setFeedback(`${framework.label} framework support shown`);
+  };
+
+  const cardRows = [
+    EVIDENCE_FIELDS[0],
+    EVIDENCE_FIELDS[1],
+    EVIDENCE_FIELDS[2],
+    EVIDENCE_FIELDS[3],
+    EVIDENCE_FIELDS[4],
+  ];
+
+  return (
+    <section
+      id="verification-stack"
+      className="py-12 md:py-16 bg-slate-950 text-white"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
+        <div className="max-w-3xl mb-8 md:mb-10">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 text-blue-200 border border-blue-400/20 text-xs font-bold uppercase tracking-wider mb-4">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Evidence Object
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
+            The missing evidence layer auditors actually need.
+          </h2>
+          <p className="text-slate-300 text-sm md:text-base mt-4 leading-relaxed">
+            Synerxus converts field activity into verified, traceable,
+            audit-ready evidence objects with independent confirmation attached.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-start">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 sm:p-4 md:p-5 shadow-2xl overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                    Field Explorer
+                  </p>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Click a field to see why it matters.
+                  </p>
+                </div>
+                <span className="w-fit max-w-full text-[11px] text-green-200 bg-green-500/10 border border-green-400/20 rounded-full px-2.5 py-1 truncate">
+                  {feedback}
+                </span>
+              </div>
+
+              <div className="-mx-3.5 sm:mx-0 overflow-x-auto sm:overflow-visible px-3.5 sm:px-0 pb-1 sm:pb-0">
+                <div className="flex sm:grid sm:grid-cols-2 gap-2.5 min-w-0">
+                {EVIDENCE_FIELDS.map((field) => {
+                  const isActive = activeField.id === field.id;
+                  return (
+                    <button
+                      key={field.id}
+                      type="button"
+                      onClick={() => selectField(field)}
+                      aria-pressed={isActive}
+                      className={`group shrink-0 sm:shrink text-left rounded-xl border px-3.5 py-3 transition-all duration-200 min-w-[132px] sm:min-w-0 ${
+                        isActive
+                          ? "border-blue-400 bg-blue-500/15 shadow-[0_0_0_1px_rgba(96,165,250,0.25)]"
+                          : "border-white/10 bg-white/[0.03] hover:border-blue-300/60 hover:bg-blue-500/10"
+                      }`}
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-semibold text-white">
+                          {field.label}
+                        </span>
+                        <ArrowRight
+                          className={`h-3.5 w-3.5 transition-transform ${
+                            isActive
+                              ? "text-blue-300 translate-x-0.5"
+                              : "text-slate-500 group-hover:text-blue-300 group-hover:translate-x-0.5"
+                          }`}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+                </div>
+              </div>
+
+              <div
+                key={activeField.id}
+                className="mt-4 rounded-xl border border-blue-400/20 bg-blue-950/35 p-3.5 sm:p-4 transition-all duration-300"
+              >
+                <h3 className="text-base font-bold text-white mb-3">
+                  {activeField.label}
+                </h3>
+                <div className="space-y-3 text-sm leading-relaxed">
+                  <p className="text-slate-300">
+                    <span className="font-semibold text-blue-200">
+                      What it means:
+                    </span>{" "}
+                    {activeField.meaning}
+                  </p>
+                  <p className="text-slate-300">
+                    <span className="font-semibold text-green-200">
+                      Audit value:
+                    </span>{" "}
+                    {activeField.auditValue}
+                  </p>
+                  <p className="text-slate-300">
+                    <span className="font-semibold text-purple-200">
+                      Why it builds trust:
+                    </span>{" "}
+                    {activeField.reliability}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-purple-400/20 bg-purple-500/10 p-3.5 sm:p-4 md:p-5 overflow-hidden">
+              <p className="text-xs font-bold uppercase tracking-wider text-purple-200 mb-3">
+                Framework Mapping Layer
+              </p>
+              <div className="-mx-3.5 sm:mx-0 overflow-x-auto sm:overflow-visible px-3.5 sm:px-0 pb-1 sm:pb-0 mb-4">
+                <div className="flex sm:flex-wrap gap-2">
+                {EVIDENCE_FRAMEWORKS.map((framework) => {
+                  const isActive = activeFramework.id === framework.id;
+                  return (
+                    <button
+                      key={framework.id}
+                      type="button"
+                      onClick={() => selectFramework(framework)}
+                      aria-pressed={isActive}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+                        isActive
+                          ? "border-purple-300 bg-purple-300 text-slate-950"
+                          : "border-purple-300/30 bg-purple-300/10 text-purple-100 hover:bg-purple-300/20"
+                      }`}
+                    >
+                      {framework.label}
+                    </button>
+                  );
+                })}
+                </div>
+              </div>
+              <div
+                key={activeFramework.id}
+                className="rounded-xl bg-slate-950/45 border border-purple-300/20 p-3"
+              >
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  {activeFramework.detail}
+                </p>
+                <p className="text-[11px] text-purple-200 mt-2">
+                  Supports audit preparation, not a compliance guarantee.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-white to-slate-100 text-slate-950 shadow-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Evidence Object · Sample
+                  </p>
+                  <h3 className="text-xl font-extrabold text-slate-950 mt-1">
+                    Audit-Ready Evidence Record
+                  </h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 text-green-700 border border-green-200 px-3 py-1 text-xs font-extrabold">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  VERIFIED
+                </span>
+              </div>
+
+              <div className="p-5 space-y-3">
+                {cardRows.map((row) => {
+                  const isActive = activeField.id === row.id;
+                  return (
+                    <button
+                      key={row.id}
+                      type="button"
+                      onClick={() => {
+                        const field = EVIDENCE_FIELDS.find(
+                          (item) => item.id === row.id,
+                        );
+                        if (field) selectField(field);
+                        else setFeedback("Evidence field highlighted");
+                      }}
+                      className={`w-full text-left rounded-xl border px-4 py-3 transition-all ${
+                        isActive
+                          ? "border-blue-400 bg-blue-50 shadow-[0_0_0_2px_rgba(59,130,246,0.12)]"
+                          : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                      }`}
+                    >
+                      <span className="flex items-start justify-between gap-4">
+                        <span>
+                          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            {row.cardLabel}
+                          </span>
+                          <span className="block text-sm font-bold text-slate-900 mt-1">
+                            {row.cardValue}
+                          </span>
+                        </span>
+                        <span
+                          className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                            isActive ? "bg-blue-500" : "bg-slate-300"
+                          }`}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Timestamp
+                    </p>
+                    <p className="text-sm font-bold text-slate-900 mt-1">
+                      Timestamp captured
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Evidence summary
+                    </p>
+                    <p className="text-sm font-bold text-slate-900 mt-1">
+                      Confirmed output · supporting context
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 mb-2">
+                    Framework support
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {EVIDENCE_FRAMEWORKS.map((framework) => (
+                      <button
+                        key={framework.id}
+                        type="button"
+                        onClick={() => selectFramework(framework)}
+                        className="rounded-full bg-white border border-purple-200 text-purple-800 text-xs font-bold px-2.5 py-1 hover:bg-purple-100 transition-colors"
+                      >
+                        {framework.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-green-400/20 bg-slate-900 p-5 shadow-2xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-green-300 mb-2">
+                Audit Context
+              </p>
+              <p className="text-lg font-bold text-white leading-snug">
+                This record is independently confirmed and structured for audit
+                and reporting workflows.
+              </p>
+              <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+                The evidence object gives reviewers a traceable, audit-ready
+                source record while showing only outputs and trust signals.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function JoinNetworkModal({
+  onClose,
+  onSelectRole,
+}: {
+  onClose: () => void;
+  onSelectRole: (route: string) => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="join-network-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C] mb-1">
+              Verification Network
+            </p>
+            <h2
+              id="join-network-title"
+              className="text-2xl font-extrabold text-[#0A1F44]"
+            >
+              Join the Verification Network
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Close join network modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-3">
+          <button
+            type="button"
+            onClick={() => onSelectRole("/signup/organization")}
+            className="w-full text-left rounded-xl border border-slate-200 p-5 hover:border-[#0A1F44] hover:bg-blue-50/60 transition-colors"
+          >
+            <div className="flex items-start gap-4">
+              <span className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </span>
+              <span>
+                <span className="block text-base font-bold text-[#0A1F44]">
+                  Join as NGO Partner
+                </span>
+                <span className="block text-sm text-slate-600 mt-1">
+                  Verify project outcomes and generate audit-ready impact reports.
+                </span>
+              </span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectRole("/signup/volunteer")}
+            className="w-full text-left rounded-xl border border-slate-200 p-5 hover:border-[#0A1F44] hover:bg-blue-50/60 transition-colors"
+          >
+            <div className="flex items-start gap-4">
+              <span className="w-11 h-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
+                <UserPlus className="w-5 h-5" />
+              </span>
+              <span>
+                <span className="block text-base font-bold text-[#0A1F44]">
+                  Join as Volunteer
+                </span>
+                <span className="block text-sm text-slate-600 mt-1">
+                  Log your impact and contribute to verified, audit-ready outcomes.
+                </span>
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function Landing() {
   const [, navigate] = useLocation();
+  const { signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSampleReport, setShowSampleReport] = useState(false);
   const [heroSlide, setHeroSlide] = useState(0);
@@ -1621,6 +2110,7 @@ export default function Landing() {
   const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
   const [pricingPlan, setPricingPlan] = useState<string | null>(null);
+  const [showJoinNetwork, setShowJoinNetwork] = useState(false);
   const [custodyActive, setCustodyActive] = useState<number | null>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1678,6 +2168,40 @@ export default function Landing() {
 
   const isLoggedIn = !!storedUserId && !!currentUser?.id;
 
+  const handleSignOut = async () => {
+    setMobileMenuOpen(false);
+    await signOut();
+  };
+
+  const openJoinNetwork = () => {
+    setMobileMenuOpen(false);
+    setShowJoinNetwork(true);
+  };
+
+  const selectNetworkRole = (route: string) => {
+    setShowJoinNetwork(false);
+    navigate(route);
+  };
+
+  const focusLandingTop = (event?: React.MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    setMobileMenuOpen(false);
+
+    const scrollToTop = () => {
+      window.history.replaceState(null, "", "/landing");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.getElementById("landing-top")?.focus({ preventScroll: true });
+    };
+
+    if (window.location.pathname !== "/landing") {
+      navigate("/landing");
+      window.setTimeout(scrollToTop, 0);
+      return;
+    }
+
+    scrollToTop();
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col overflow-x-hidden w-full">
       {showSampleReport && (
@@ -1689,22 +2213,31 @@ export default function Landing() {
           onClose={() => setPricingPlan(null)}
         />
       )}
+      {showJoinNetwork && (
+        <JoinNetworkModal
+          onClose={() => setShowJoinNetwork(false)}
+          onSelectRole={selectNetworkRole}
+        />
+      )}
       {/* ── Navigation ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm safe-area-top">
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-3 flex justify-between items-center">
-          <Link href="/landing">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
-              <Logo size="sm" showMotto={true} />
-            </div>
-          </Link>
+          <button
+            type="button"
+            onClick={focusLandingTop}
+            className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 text-left"
+            aria-label="Go to top of landing page"
+          >
+            <Logo size="sm" showMotto={true} />
+          </button>
 
           <div className="hidden md:flex items-center gap-1">
             {[
               { label: "How It Works", anchor: "how-it-works" },
-              { label: "For Teams", anchor: "for-teams" },
-              { label: "See Impact", anchor: "verification-stack" },
-              { label: "Pricing", anchor: "pricing" },
-              { label: "FAQ", anchor: "faq" },
+              { label: "Evidence", anchor: "verification-stack" },
+              { label: "Solutions", anchor: "for-teams" },
+              { label: "Compliance", anchor: "pricing" },
+              { label: "Resources", anchor: "faq" },
             ].map(({ label, anchor }) => (
               <a
                 key={anchor}
@@ -1718,36 +2251,45 @@ export default function Landing() {
 
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {isLoggedIn ? (
-              <Link href="/dashboard">
-                <Button
-                  size="sm"
-                  className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
-                  data-testid="button-my-dashboard"
-                >
-                  My Dashboard
-                </Button>
-              </Link>
-            ) : (
               <>
-                <Link href="/login">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="whitespace-nowrap border-[#0A1F44] text-[#0A1F44] font-semibold text-sm px-4 rounded-xl hover:bg-[#0A1F44] hover:text-white"
-                    data-testid="button-login-nav"
-                  >
-                    Log In
-                  </Button>
-                </Link>
-                <Link href="/signup">
+                <Link href="/dashboard">
                   <Button
                     size="sm"
                     className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
-                    data-testid="button-sign-up-nav"
+                    data-testid="button-my-dashboard"
                   >
-                    Sign Up
+                    My Dashboard
                   </Button>
                 </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="whitespace-nowrap border-slate-300 text-slate-700 font-semibold text-sm px-3 rounded-xl hover:bg-slate-100"
+                  data-testid="button-logout-nav"
+                >
+                  <LogOut className="h-4 w-4 mr-1.5" />
+                  Log Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  onClick={openJoinNetwork}
+                  className="whitespace-nowrap bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold text-sm px-4 rounded-xl shadow-sm border border-[#D4980C]/40"
+                  data-testid="button-join-network-nav"
+                >
+                  Join Network
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setPricingPlan("demo")}
+                  className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
+                  data-testid="button-book-demo-nav"
+                >
+                  Book Demo
+                </Button>
               </>
             )}
           </div>
@@ -1775,10 +2317,10 @@ export default function Landing() {
               <div className="px-4 py-3 space-y-1 border-b border-slate-100">
                 {[
                   { label: "How It Works", anchor: "how-it-works" },
-                  { label: "For Teams", anchor: "for-teams" },
-                  { label: "See Impact", anchor: "verification-stack" },
-                  { label: "Pricing", anchor: "pricing" },
-                  { label: "FAQ", anchor: "faq" },
+                  { label: "Evidence", anchor: "verification-stack" },
+                  { label: "Solutions", anchor: "for-teams" },
+                  { label: "Compliance", anchor: "pricing" },
+                  { label: "Resources", anchor: "faq" },
                 ].map(({ label, anchor }) => (
                   <a
                     key={anchor}
@@ -1792,37 +2334,47 @@ export default function Landing() {
               </div>
               <div className="px-4 py-3 space-y-2">
                 {isLoggedIn ? (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate("/dashboard");
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
-                    data-testid="button-my-dashboard"
-                  >
-                    My Dashboard
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate("/dashboard");
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
+                      data-testid="button-my-dashboard"
+                    >
+                      My Dashboard
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-sm text-center flex items-center justify-center gap-2"
+                      data-testid="button-logout-nav"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Log Out
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        navigate("/login");
+                        openJoinNetwork();
                       }}
-                      className="w-full py-2.5 px-4 rounded-xl border border-[#0A1F44] text-[#0A1F44] font-semibold text-sm text-center"
-                      data-testid="button-login-nav"
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#D4980C] text-[#0A1F44] font-bold text-sm text-center shadow-sm border border-[#D4980C]/40"
+                      data-testid="button-join-network-nav"
                     >
-                      Log In
+                      Join Network
                     </button>
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        navigate("/signup");
+                        setPricingPlan("demo");
                       }}
                       className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
-                      data-testid="button-sign-up-nav"
+                      data-testid="button-book-demo-nav"
                     >
-                      Sign Up
+                      Book Demo
                     </button>
                   </>
                 )}
@@ -1838,8 +2390,10 @@ export default function Landing() {
       >
         {/* ── Section 1: Hero ── */}
         <section
+          id="landing-top"
           className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/60 to-blue-100/80 py-10 md:py-16"
           data-testid="section-hero"
+          tabIndex={-1}
         >
           {/* Decorative SVG wave top-right */}
           <svg
@@ -1869,8 +2423,8 @@ export default function Landing() {
               >
                 The Verification Layer
                 <span className="text-[#0A1F44]"> for </span>
-                <span className="text-[#D4980C]">
-                  CSR, ESG, and Global Community Impact.
+              <span className="text-[#D4980C]">
+                  CSR, ESG, and Global Impact Programs.
                 </span>
               </h1>
 
@@ -1878,9 +2432,9 @@ export default function Landing() {
                 className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed"
                 data-testid="text-hero-description"
               >
-                Real-time, NGO-verified outcomes with immutable audit trails —
-                built for global ESG reporting under WEF, GRI, SASB, TCFD and
-                the UN SDGs.
+                NGO-verified outcomes converted into structured, audit-ready
+                evidence for ESG reporting and assurance preparation under WEF,
+                GRI, SASB, TCFD and the UN SDGs.
               </p>
 
               <div className="flex flex-wrap gap-2 sm:gap-3 mb-10">
@@ -1896,24 +2450,31 @@ export default function Landing() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/signup/corporate">
-                      <Button
-                        size="lg"
-                        className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
-                        data-testid="button-join-hero"
-                      >
-                        Start Verifying Impact
-                      </Button>
-                    </Link>
-                    <Link href="/signup">
-                      <Button
-                        size="lg"
-                        className="bg-[#D4980C] hover:bg-[#B07F0A] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg border-0 text-sm sm:text-base"
-                        data-testid="button-join-volunteer-ngo-hero"
-                      >
-                        Join the Verification Network
-                      </Button>
-                    </Link>
+                    <Button
+                      size="lg"
+                      onClick={() => setPricingPlan("demo")}
+                      className="bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-bold px-4 sm:px-8 rounded-xl shadow-lg text-sm sm:text-base"
+                      data-testid="button-book-demo-hero"
+                    >
+                      Book Demo
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => setShowSampleReport(true)}
+                      className="border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-white font-bold px-4 sm:px-8 rounded-xl shadow-sm text-sm sm:text-base"
+                      data-testid="button-view-sample-evidence-hero"
+                    >
+                      View Sample Evidence
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={openJoinNetwork}
+                      className="bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold px-4 sm:px-6 rounded-xl shadow-lg text-sm sm:text-base border border-[#D4980C]/40"
+                      data-testid="button-join-network-hero"
+                    >
+                      Join Network
+                    </Button>
                   </>
                 )}
               </div>
@@ -2029,7 +2590,7 @@ export default function Landing() {
                   Limitless Foundation
                 </p>
                 <p className="text-[10px] text-slate-400 leading-tight">
-                  Zambia · Community &amp; Youth Impact
+                  Zambia · Youth &amp; Field Impact
                 </p>
               </div>
               <span className="flex-shrink-0 ml-1 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
@@ -2086,6 +2647,67 @@ export default function Landing() {
           </div>
         </div>
 
+        {!isLoggedIn && (
+          <section className="bg-white border-b border-slate-100 py-8 md:py-10">
+            <div className="max-w-6xl mx-auto px-6 md:px-10">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                    Verification Network
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-[#0A1F44]">
+                    Participate in the Verification Network
+                  </h2>
+                  <p className="text-sm md:text-base text-slate-600 mt-2 max-w-2xl">
+                    NGOs verify outcomes. Volunteers log measurable,
+                    traceable impact data that becomes audit-ready evidence.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:min-w-[520px]">
+                  <button
+                    type="button"
+                    onClick={() => selectNetworkRole("/signup/organization")}
+                    className="text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-[#0A1F44] p-5 transition-colors"
+                    data-testid="button-split-join-ngo-partner"
+                  >
+                    <span className="flex items-center gap-3 text-[#0A1F44] font-bold">
+                      <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                      For NGOs
+                    </span>
+                    <span className="block mt-2 text-sm text-slate-600">
+                      Join as NGO Partner
+                    </span>
+                    <span className="block mt-1 text-xs text-slate-500 leading-relaxed">
+                      Verify outcomes in seconds and generate funder-ready
+                      reports automatically.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => selectNetworkRole("/signup/volunteer")}
+                    className="text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-[#0A1F44] p-5 transition-colors"
+                    data-testid="button-split-join-volunteer"
+                  >
+                    <span className="flex items-center gap-3 text-[#0A1F44] font-bold">
+                      <UserPlus className="h-5 w-5 text-blue-600" />
+                      For Volunteers
+                    </span>
+                    <span className="block mt-2 text-sm text-slate-600">
+                      Join as Volunteer
+                    </span>
+                    <span className="block mt-1 text-xs text-slate-500 leading-relaxed">
+                      Log your work as verified impact and contribute to
+                      audit-ready outcomes.
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── Section 2: Problem ── */}
         <section
           id="problem"
@@ -2102,14 +2724,14 @@ export default function Landing() {
               }}
               data-testid="button-sample-report-stamp"
             >
-              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">
-                See
+              <span className="text-white font-extrabold text-[10px] uppercase tracking-wide leading-tight">
+                View
               </span>
-              <span className="text-[#0A1F44] font-extrabold text-[11px] uppercase tracking-wide leading-tight">
+              <span className="text-[#0A1F44] font-extrabold text-[10px] uppercase tracking-wide leading-tight">
                 Sample
               </span>
-              <span className="text-white font-extrabold text-[11px] uppercase tracking-wide leading-tight">
-                Report
+              <span className="text-white font-extrabold text-[10px] uppercase tracking-wide leading-tight">
+                Evidence
               </span>
             </button>
           )}
@@ -2193,7 +2815,7 @@ export default function Landing() {
               statusText: "text-slate-500",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
-              cardActive: "border-slate-300 bg-slate-50 shadow-sm",
+              cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-slate-50/60 opacity-55",
               tools: ["Big 4 Auditors", "ISAE 3000 firms", "PwC ESG Assurance"],
               detail:
@@ -2215,7 +2837,7 @@ export default function Landing() {
               cardIdle: "border-[#D4980C]/40 bg-[#FFFDF5]/80",
               tools: [],
               detail:
-                "No platform provided real-time, NGO-confirmed outcome verification tied to an immutable audit trail — until now. Every verified outcome is automatically tagged to the relevant UN SDG (1–17) and mapped to WEF, GRI, SASB and TCFD metrics, turning ESG claims into audit-ready evidence.",
+                "Synerxus fills the missing evidence layer between self-reported activity and formal assurance. Verified outcomes are organized against relevant framework references, turning ESG claims into audit-ready evidence without implying certification.",
             },
             {
               id: "Level 3",
@@ -2228,7 +2850,7 @@ export default function Landing() {
               statusText: "text-[#D4980C]",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
-              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
               tools: ["Benevity", "Goodera", "YourCause"],
               detail:
@@ -2245,7 +2867,7 @@ export default function Landing() {
               statusText: "text-blue-700",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
-              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
               tools: ["Sopact", "IRIS+", "WEF UpLink"],
               detail:
@@ -2262,7 +2884,7 @@ export default function Landing() {
               statusText: "text-violet-700",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
-              cardActive: "border-[#0A1F44]/30 bg-white shadow-md",
+              cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-white",
               tools: ["WEF SCM", "GRI Standards", "SASB · TCFD"],
               detail:
@@ -2426,11 +3048,11 @@ export default function Landing() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div
-                                    className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
+                                    className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#B07F0A]" : isActive ? "text-blue-800" : "text-[#0A1F44]"}`}
                                   >
                                     {layer.label}
                                   </div>
-                                  <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                                  <div className={`text-[11px] mt-0.5 leading-snug font-medium ${isActive && !layer.synerxus ? "text-blue-600" : isActive && layer.synerxus ? "text-[#92680A]" : "text-slate-400"}`}>
                                     {layer.sub}
                                   </div>
                                 </div>
@@ -2439,7 +3061,7 @@ export default function Landing() {
                                     <Logo size="xs" clickable={false} />
                                   ) : (
                                     <span
-                                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${layer.statusBg} ${layer.statusText}`}
+                                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive ? "bg-blue-100 text-blue-700" : `${layer.statusBg} ${layer.statusText}`}`}
                                     >
                                       {layer.status}
                                     </span>
@@ -2522,11 +3144,11 @@ export default function Landing() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div
-                                  className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
+                                  className={`font-bold text-sm leading-tight ${layer.synerxus ? "text-[#B07F0A]" : isActive ? "text-blue-800" : "text-[#0A1F44]"}`}
                                 >
                                   {layer.label}
                                 </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                                <div className={`text-[11px] mt-0.5 leading-snug font-medium ${isActive && !layer.synerxus ? "text-blue-600" : isActive && layer.synerxus ? "text-[#92680A]" : "text-slate-400"}`}>
                                   {layer.sub}
                                 </div>
                               </div>
@@ -2535,7 +3157,7 @@ export default function Landing() {
                                   <Logo size="xs" clickable={false} />
                                 ) : (
                                   <span
-                                    className={`hidden sm:inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full ${layer.statusBg} ${layer.statusText}`}
+                                    className={`hidden sm:inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive ? "bg-blue-100 text-blue-700" : `${layer.statusBg} ${layer.statusText}`}`}
                                   >
                                     {layer.status}
                                   </span>
@@ -3009,81 +3631,8 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Section 6: Verification Stack ── */}
-        <section
-          id="verification-stack"
-          className="py-10 md:py-14 bg-[#0A1F44]"
-        >
-          <div className="max-w-5xl mx-auto px-6 md:px-10 text-center">
-            <span className="inline-block px-4 py-1 rounded-full bg-[#D4980C]/20 text-[#D4980C] text-xs font-bold uppercase tracking-wider mb-5">
-              Accurate Global Impact Stack Workflow
-            </span>
-
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-6">
-              Synerxus is the independent verification layer
-              <br className="hidden md:block" /> between input trackers and
-              impact aggregators
-            </h2>
-
-            <p className="text-blue-300 text-sm md:text-base max-w-2xl mx-auto mb-10 leading-relaxed">
-              We complement existing systems by transforming self-reported
-              activity data into audit-supportive evidence through NGO-confirmed
-              outcomes with immutable audit trails.
-            </p>
-
-            <div className="flex flex-col md:flex-row items-center justify-center gap-0">
-              {[
-                {
-                  label: "Trackers",
-                  sub: "Log inputs & volunteer hours",
-                  bg: "bg-blue-800",
-                  textColor: "text-white",
-                  subColor: "text-blue-300",
-                },
-                {
-                  label: "Synerxus",
-                  sub: "Verifies delivery with NGO-confirmed outcomes",
-                  bg: "bg-[#D4980C]",
-                  textColor: "text-[#0A1F44]",
-                  subColor: "text-[#0A1F44]/70",
-                },
-                {
-                  label: "Aggregators",
-                  sub: "Display outcomes & reporting",
-                  bg: "bg-blue-800",
-                  textColor: "text-white",
-                  subColor: "text-blue-300",
-                },
-                {
-                  label: "Evaluators",
-                  sub: "Prove causality & long-term impact",
-                  bg: "bg-blue-800",
-                  textColor: "text-white",
-                  subColor: "text-blue-300",
-                },
-              ].map((node, i, arr) => (
-                <div
-                  key={node.label}
-                  className="flex flex-col md:flex-row items-center"
-                >
-                  <div
-                    className={`${node.bg} rounded-xl px-5 py-4 w-48 text-center shadow-lg`}
-                  >
-                    <p className={`font-bold text-sm ${node.textColor} mb-1`}>
-                      {node.label}
-                    </p>
-                    <p className={`text-xs ${node.subColor} leading-snug`}>
-                      {node.sub}
-                    </p>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <ArrowRight className="h-5 w-5 text-[#D4980C] my-2 md:my-0 md:mx-2 rotate-90 md:rotate-0 flex-shrink-0" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* ── Section 6: Evidence Object ── */}
+        <EvidenceObjectSection />
 
         {/* ── Section 7: Impact Metrics ── */}
         <section
@@ -3370,7 +3919,7 @@ export default function Landing() {
                 {
                   title: "Green Future Alliance",
                   tag: "Environmental",
-                  desc: "Watershed restoration verified across 7 active projects — immutable audit trails delivered to corporate ESG teams within 48 hours.",
+                  desc: "Watershed restoration verified across 7 active projects, with structured evidence delivered to corporate ESG teams.",
                   tagColor: "bg-emerald-100 text-emerald-800",
                   sdgs: [
                     { n: 6, color: "#26BDE2", name: "Clean Water" },
@@ -3491,10 +4040,10 @@ export default function Landing() {
                   </h3>
                   <ul className="space-y-2.5">
                     {[
-                      "NGO-verified outcomes with immutable audit trails",
-                      "100% verification rate within 72h SLA",
+                      "NGO-verified outcomes with structured evidence records",
+                      "Verification workflows configured to agreed operating targets",
                       "Support for global frameworks: CSRD, ESRS, GRI, SASB, TCFD",
-                      "Audit-ready evidence that reduces evidence-gathering burden by 60–70%",
+                      "Audit-ready evidence that supports assurance preparation",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -3591,7 +4140,7 @@ export default function Landing() {
           {/* Background image — right half, fades into navy on the left */}
           <div className="hidden md:block absolute inset-y-0 right-0 w-1/2 pointer-events-none">
             <img
-              src={heroSlide3}
+              src="/optimized/hero-sustainability.webp"
               alt=""
               aria-hidden="true"
               className="w-full h-full object-cover object-center"
@@ -3615,21 +4164,19 @@ export default function Landing() {
                 just impact narratives.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/signup">
-                  <Button
-                    size="lg"
-                    className="bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold px-8 rounded-xl shadow-lg"
-                  >
-                    Start Free Trial
-                  </Button>
-                </Link>
                 <Button
                   size="lg"
-                  variant="outline"
                   onClick={() => setPricingPlan("demo")}
-                  className="border-2 border-white text-white font-bold px-8 rounded-xl hover:bg-white hover:text-[#0A1F44] transition-colors"
+                  className="bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold px-8 rounded-xl shadow-lg"
                 >
-                  Book a Demo
+                  Book Demo
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={openJoinNetwork}
+                  className="bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold px-8 rounded-xl shadow-lg border border-[#D4980C]/40"
+                >
+                  Join Network
                 </Button>
               </div>
             </div>
@@ -3653,24 +4200,24 @@ export default function Landing() {
             <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-10">
               {[
                 {
-                  q: "Does Synerxus replace our existing volunteer tracking platform?",
-                  a: "No. Synerxus is the independent verification layer that sits between your activity tracker (e.g. Benevity, Goodera) and your ESG aggregator or reporting framework. We add NGO-confirmed outcomes and immutable audit trails on top of what you already have.",
+                  q: "Does Synerxus replace our existing activity systems?",
+                  a: "No. Synerxus is the independent verification layer between existing activity systems and ESG reporting workflows. It adds NGO-confirmed outcomes and structured, audit-ready evidence on top of records you already manage.",
                 },
                 {
-                  q: "How does NGO verification actually work?",
-                  a: "After a volunteer logs an activity, the assigned NGO partner receives an instant SMS or in-app verification request. They confirm or flag the outcome with a single tap — no login required — in under 15 seconds. The result is sealed into a tamper-proof evidence record.",
+                  q: "Who independently confirms the outcomes?",
+                  a: "Authorized NGO partners confirm whether an outcome is suitable for verified evidence use. Synerxus records the confirmed result as structured evidence without replacing the independent judgment of auditors or assurance providers.",
                 },
                 {
                   q: "Which reporting frameworks does Synerxus support?",
-                  a: "Synerxus is built around the WEF Stakeholder Capitalism Metrics as its primary framework, with alignment to GRI Standards, SASB, TCFD, SEC Climate Rules, and UN SDGs. These global frameworks are supported natively — community engagement (GRI 413, SASB SO-ES-110.A), workforce development (GRI 403), and impact disclosure (GRI 301) data points are mapped automatically. Every verified outcome creates a traceable chain of evidence for third-party assurance under ISAE 3000 Revised.",
+                  a: "Synerxus evidence can support reporting and assurance preparation across WEF Stakeholder Capitalism Metrics, GRI Standards, SASB, TCFD, SEC Climate, CSRD/ESRS, and UN SDGs. Framework references indicate alignment support, not certification or a compliance guarantee.",
                 },
                 {
-                  q: "What does an immutable audit trail actually contain?",
-                  a: "Each Evidence Object captures: verifier identity, device ID, GPS coordinates, timestamp, outcome description, hours, beneficiary count, and SDG mapping — all sealed at the moment of verification. Records cannot be retroactively edited.",
+                  q: "What does an evidence object contain?",
+                  a: "Each Evidence Object presents the verified outcome, hours as supporting context, authorized verifier, timestamp, general region, and framework alignment. It is designed to be traceable for review without exposing proprietary verification mechanics.",
                 },
                 {
                   q: "How long does verification typically take?",
-                  a: "Our average verification turnaround is 16 hours, with a target SLA of 72 hours. NGOs are notified instantly and can verify from any mobile device without creating an account.",
+                  a: "Verification timing depends on partner response and program context. Enterprise deployments can set operating targets for response windows during onboarding.",
                 },
                 {
                   q: "Can we use Synerxus across multiple NGO partners and geographies?",
@@ -3678,23 +4225,23 @@ export default function Landing() {
                 },
                 {
                   q: "How does Synerxus integrate with our existing systems?",
-                  a: "Synerxus is designed as an additive verification layer — it does not replace your existing platforms. It connects to your current volunteer management tools (e.g. Benevity, Goodera, SAP Concur) via API or CSV export, appending NGO-verified outcome data to your existing activity records. For ESG aggregators and global sustainability reporting frameworks, Synerxus exports audit-ready data in GRI, SASB, TCFD, and ISO 26000 formats. Enterprise integrations are handled by our onboarding team during setup — no developer resources required on your side.",
+                  a: "Synerxus is designed as an additive verification layer. It can support API or CSV-based workflows that append verified outcome evidence to existing activity records. Integration scope, security review, and data handling requirements are confirmed during enterprise onboarding.",
                 },
                 {
                   q: "What is WEF SCM?",
-                  a: "WEF SCM stands for the World Economic Forum Stakeholder Capitalism Metrics — a universal set of sustainability indicators created by the WEF in collaboration with Deloitte, EY, KPMG, and PwC. Synerxus uses WEF SCM as its primary framework backbone because it was specifically designed to harmonise GRI, SASB, TCFD, SEC Climate Rules, and UN SDGs into a single standard. This means evidence collected once on Synerxus can satisfy reporting requirements across all major global frameworks simultaneously, without reformatting.",
+                  a: "WEF SCM stands for the World Economic Forum Stakeholder Capitalism Metrics, a sustainability measurement framework developed with major accounting firms. Synerxus can organize verified evidence against WEF SCM themes where applicable, while final reporting and assurance conclusions remain the responsibility of the customer and its advisors.",
                 },
                 {
                   q: "Does Synerxus support EU sustainability reporting (CSRD/ESRS)?",
-                  a: "Yes. For organisations operating in the EU, Synerxus data supports CSRD/ESRS reporting requirements. CSRD (Corporate Sustainability Reporting Directive) mandates detailed, audited sustainability reports for large EU companies. Synerxus-verified outcomes map to the relevant ESRS community engagement and workforce topics. Because Synerxus is built on global frameworks (GRI, SASB, TCFD, WEF SCM), EU organisations get CSRD-supportive data as part of the broader global reporting package — no separate EU-specific setup required.",
+                  a: "Synerxus evidence can support CSRD/ESRS reporting preparation where verified outcomes are relevant to required disclosures. It does not determine materiality, issue assurance opinions, or guarantee regulatory compliance.",
                 },
                 {
                   q: "What is GRI?",
-                  a: "GRI stands for the Global Reporting Initiative, one of the world's most widely used sustainability reporting frameworks, adopted by over 10,000 organisations in 100+ countries. GRI Standards cover economic, environmental, and social impacts. Synerxus verified outcomes are automatically mapped to relevant GRI standards, particularly GRI 413 (Local Communities) and GRI 403 (Occupational Health & Safety), so your data is ready for GRI-based disclosures without additional work.",
+                  a: "GRI stands for the Global Reporting Initiative, a widely used sustainability reporting framework. Synerxus verified outcomes can support GRI-aligned disclosure preparation when the underlying activity is relevant to the selected GRI topic.",
                 },
                 {
                   q: "What is SASB?",
-                  a: "SASB stands for the Sustainability Accounting Standards Board, a US-based framework that defines industry-specific sustainability metrics for investors. SASB standards vary by sector — for example, a financial services firm and a manufacturing company will report on different sustainability indicators. Synerxus applies the applicable SASB indicators to your verified outcomes based on your industry, ensuring your ESG data is relevant and comparable to peers in your sector.",
+                  a: "SASB refers to industry-specific sustainability disclosure topics used by investors and reporting teams. Synerxus can help organize verified outcome evidence against relevant SASB themes where applicable.",
                 },
                 {
                   q: "What is TCFD?",
@@ -3702,11 +4249,11 @@ export default function Landing() {
                 },
                 {
                   q: "What are the UN SDGs?",
-                  a: "The UN SDGs — Sustainable Development Goals — are 17 global goals adopted by all United Nations member states in 2015, ranging from No Poverty (SDG 1) and Quality Education (SDG 4) to Climate Action (SDG 13) and Partnerships for the Goals (SDG 17). Every activity and outcome logged on Synerxus is automatically mapped to one or more SDGs based on what was achieved and who was served. This makes it straightforward to report on your SDG contribution in annual reports and stakeholder communications.",
+                  a: "The UN Sustainable Development Goals are 17 global goals adopted by UN member states. Synerxus can show SDG alignment for verified outcomes where there is a reasonable relationship between the activity and the goal.",
                 },
                 {
                   q: "What is ISAE 3000?",
-                  a: "ISAE 3000 is the International Standard on Assurance Engagements 3000 — the global auditing standard used by external auditors (Big 4 and others) when providing assurance over non-financial (ESG) reports. It requires verifiable evidence, a documented chain of custody, and independence between the activity submitter and the verifier. Synerxus is structured specifically to meet ISAE 3000 evidence requirements: every verified outcome includes third-party confirmation, timestamps, device metadata, and a tamper-proof hash — reducing auditor evidence-gathering effort by 60–70%. Formal assurance still requires an independent auditor; Synerxus generates the evidence they need.",
+                  a: "ISAE 3000 is a standard used by external auditors for assurance over non-financial information. Synerxus provides independently confirmed, timestamped, structured evidence that can support ISAE 3000 assurance preparation. Formal assurance still requires an independent assurance provider.",
                 },
                 {
                   q: "What happens if an NGO rejects a verification request?",
@@ -3718,7 +4265,7 @@ export default function Landing() {
                 },
                 {
                   q: "Does Synerxus provide formal ESG assurance?",
-                  a: "No. Synerxus provides verified impact evidence — structured, third-party-confirmed data that supports ESG assurance. Formal assurance (a signed audit opinion) must be issued by an independent, accredited assurance provider such as a Big 4 firm, per ISAE 3000 or equivalent national standards. What Synerxus does is dramatically reduce the evidence-gathering burden for those auditors — instead of spending weeks collecting and validating source documents, auditors receive a ready-made, immutable evidence pack.",
+                  a: "No. Synerxus provides structured, audit-ready evidence and supports assurance preparation. It does not replace independent assurance providers or guarantee regulatory compliance.",
                 },
               ]
                 .slice(0, showAllFaq ? undefined : 6)

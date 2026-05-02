@@ -59,7 +59,7 @@ export default function PWAPageGuard({
   // Show loading state while detecting viewport
   if (isLoading) {
     return (
-      <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
+      <div className="pwa-shell bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-4">
           <Logo size="lg" clickable={false} className="animate-pulse" />
           <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function PWAPageGuard({
   // If not mobile, don't render content (redirect will happen)
   if (!isMobile) {
     return (
-      <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
+      <div className="pwa-shell bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-4">
           <Logo size="lg" clickable={false} />
           <p className="text-sm text-slate-500">Redirecting to full view...</p>
@@ -95,7 +95,8 @@ export default function PWAPageGuard({
  */
 export function PWALoadingSkeleton() {
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] flex flex-col overflow-hidden max-w-[428px] mx-auto">
+    <div className="pwa-shell bg-[#faf9f7] flex flex-col overflow-hidden">
+      <div className="pwa-frame">
       {/* Header skeleton */}
       <div
         className="px-4 py-3 flex items-center justify-between"
@@ -148,6 +149,7 @@ export function PWALoadingSkeleton() {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

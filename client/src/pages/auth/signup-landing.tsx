@@ -7,7 +7,7 @@ const ROLE_OPTIONS = [
   {
     id: "volunteer",
     title: "Volunteer",
-    description: "Log your hours, track outcomes, and see your verified impact in action.",
+    description: "Log your impact and contribute to verified, audit-ready outcomes.",
     icon: Heart,
     href: "/signup/volunteer",
     free: true,
@@ -20,8 +20,8 @@ const ROLE_OPTIONS = [
   },
   {
     id: "organization",
-    title: "NGO / Organization",
-    description: "Verify volunteer outcomes, connect with corporate partners, and build your impact credibility.",
+    title: "NGO Partner",
+    description: "Verify project outcomes and generate audit-ready impact reports.",
     icon: Globe,
     href: "/signup/organization",
     free: true,
@@ -70,9 +70,9 @@ export default function SignupLanding() {
           <a href="/landing" className="inline-block hover:opacity-80 transition-opacity mb-5">
             <Logo size="lg" />
           </a>
-          <h1 className="text-2xl font-extrabold text-[#0A1F44]">Join Synerxus</h1>
+          <h1 className="text-2xl font-extrabold text-[#0A1F44]">Join the Verification Network</h1>
           <p className="text-slate-500 mt-1.5 text-sm">
-            Choose how you want to participate
+            Choose how you contribute to verified impact evidence
           </p>
         </div>
 

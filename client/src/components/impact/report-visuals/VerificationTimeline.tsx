@@ -1,12 +1,10 @@
 interface VerificationTimelineProps {
   slaComplianceRate?: number;
-  immutableRate?: number;
   period?: string;
 }
 
 export default function VerificationTimeline({
   slaComplianceRate = 85,
-  immutableRate = 100,
   period = "Q1 2026",
 }: VerificationTimelineProps) {
   return (
@@ -87,7 +85,7 @@ export default function VerificationTimeline({
               }}
             />
             <span style={{ fontSize: "9.5px", color: "#374151", fontWeight: 600 }}>
-              {immutableRate}% immutable audit trails maintained
+              Structured evidence records maintained
             </span>
           </div>
         </div>

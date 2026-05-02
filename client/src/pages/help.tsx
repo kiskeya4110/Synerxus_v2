@@ -88,7 +88,7 @@ const faqData: FAQItem[] = [
     category: "Corporate Partners",
     question: "What is the Impact Score?",
     answer:
-      "Impact Score is our proprietary metric that quantifies social impact by combining volunteer hours, people impacted, and SDG alignment into a single, comparable score.",
+      "Impact Score summarizes verified contribution signals for internal prioritization. It is not a compliance score, certification, or assurance opinion.",
   },
   {
     category: "SDG Goals",
@@ -172,7 +172,7 @@ export default function Help() {
             <Users className="h-8 w-8 mx-auto mb-3 text-blue-600" />
             <h3 className="font-semibold">For Volunteers</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Find opportunities
+              Log verified impact
             </p>
           </CardContent>
         </Card>

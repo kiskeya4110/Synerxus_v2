@@ -255,8 +255,8 @@ export default function OrganizationIntakeSimple() {
   const isLoading = submitMutation.isPending || isGoogleLoading;
 
   return (
-    <div className="min-h-screen bg-stone-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-stone-50 py-8 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
           <Logo size="md" className="mx-auto mb-3" />
@@ -265,8 +265,8 @@ export default function OrganizationIntakeSimple() {
         </div>
 
         <Card className="shadow-lg">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <CardContent className="p-6 md:p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
               {/* Organization Name */}
               <div>
@@ -298,7 +298,7 @@ export default function OrganizationIntakeSimple() {
               </div>
 
               {/* SDG Focus Areas */}
-              <div>
+              <div className="lg:col-span-2">
                 <Label>SDG Focus Areas * (Select 1-3)</Label>
                 <p className="text-xs text-gray-500 mb-2">{selectedSdgs.length}/3 selected</p>
                 <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
@@ -325,7 +325,7 @@ export default function OrganizationIntakeSimple() {
               </div>
 
               {/* Skills Needed */}
-              <div>
+              <div className="lg:col-span-2">
                 <Label>Skills Needed *</Label>
                 <p className="text-xs text-gray-500 mb-2">Select all that apply</p>
                 <div className="flex flex-wrap gap-2">
@@ -350,9 +350,9 @@ export default function OrganizationIntakeSimple() {
               </div>
 
               {/* Outcome Types */}
-              <div>
+              <div className="lg:col-span-2">
                 <Label>Outcome Types You Track *</Label>
-                <p className="text-xs text-gray-500 mb-2">What volunteers help with</p>
+                <p className="text-xs text-gray-500 mb-2">Outcomes your NGO can verify</p>
                 <div className="grid grid-cols-2 gap-2">
                   {OUTCOME_TYPES.map(outcome => (
                     <button
@@ -374,7 +374,7 @@ export default function OrganizationIntakeSimple() {
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-200 pt-4">
+              <div className="border-t border-gray-200 pt-4 lg:col-span-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Your Contact Info</p>
               </div>
 
@@ -429,7 +429,7 @@ export default function OrganizationIntakeSimple() {
               </div>
 
               {/* Terms */}
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 lg:col-span-2">
                 <Checkbox
                   id="terms"
                   checked={watch("termsAccepted")}
@@ -440,12 +440,12 @@ export default function OrganizationIntakeSimple() {
                   I agree to the <a href="/terms" className="text-indigo-600 underline">NGO Partner Terms</a>
                 </Label>
               </div>
-              {errors.termsAccepted && <p className="text-sm text-red-500">{errors.termsAccepted.message}</p>}
+              {errors.termsAccepted && <p className="text-sm text-red-500 lg:col-span-2">{errors.termsAccepted.message}</p>}
 
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 disabled={isLoading}
               >
@@ -460,7 +460,7 @@ export default function OrganizationIntakeSimple() {
               </Button>
 
               {/* Divider */}
-              <div className="relative">
+              <div className="relative lg:col-span-2">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
                 </div>
@@ -473,7 +473,7 @@ export default function OrganizationIntakeSimple() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
@@ -486,7 +486,7 @@ export default function OrganizationIntakeSimple() {
                 Sign up with Google
               </Button>
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-gray-500 lg:col-span-2">
                 Already have an account? <a href="/login" className="text-indigo-600 font-medium">Log in</a>
               </p>
             </form>

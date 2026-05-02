@@ -54,16 +54,6 @@ const SDG_OPTIONS = [
   { value: 17, label: "Partnerships for the Goals", color: "#19486A" },
 ];
 
-const DIASPORA_OPTIONS = [
-  "Haiti",
-  "Zambia",
-  "Philippines",
-  "Zimbabwe",
-  "Mexico",
-  "Other",
-  "None",
-];
-
 // ============================================================================
 // SCHEMA - MVP fields only
 // ============================================================================
@@ -78,7 +68,6 @@ const volunteerSchema = z.object({
   inviteCode: z.string().optional(),
   skills: z.array(z.string()).min(1, "Select at least one skill").max(3, "Maximum 3 skills"),
   sdgInterests: z.array(z.number()).min(1, "Select at least one SDG").max(3, "Maximum 3 SDGs"),
-  diaspora: z.array(z.string()).optional(),
   termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms"),
 });
 
@@ -106,7 +95,6 @@ export default function VolunteerIntakeSimple() {
       inviteCode: "",
       skills: [],
       sdgInterests: [],
-      diaspora: [],
       termsAccepted: false,
     },
   });
@@ -114,7 +102,6 @@ export default function VolunteerIntakeSimple() {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form;
   const selectedSkills = watch("skills") || [];
   const selectedSdgs = watch("sdgInterests") || [];
-  const selectedDiaspora = watch("diaspora") || [];
   const inviteCode = watch("inviteCode");
 
   // Validate invite code
@@ -189,7 +176,6 @@ export default function VolunteerIntakeSimple() {
             volunteerName: data.name,
             skills: data.skills,
             preferredSdgs: data.sdgInterests,
-            diasporaConnections: data.diaspora || [],
             inviteCode: data.inviteCode || null,
             onboardingCompleted: true,
           }),
@@ -257,26 +243,11 @@ export default function VolunteerIntakeSimple() {
     }
   };
 
-  const toggleDiaspora = (country: string) => {
-    const current = selectedDiaspora;
-    if (country === "None") {
-      setValue("diaspora", current.includes("None") ? [] : ["None"]);
-      return;
-    }
-    // Remove "None" if selecting another option
-    const withoutNone = current.filter(c => c !== "None");
-    if (current.includes(country)) {
-      setValue("diaspora", withoutNone.filter(c => c !== country));
-    } else {
-      setValue("diaspora", [...withoutNone, country]);
-    }
-  };
-
   const isLoading = submitMutation.isPending || isGoogleLoading;
 
   return (
-    <div className="min-h-screen bg-stone-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-stone-50 py-8 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
           <Logo size="md" className="mx-auto mb-3" />
@@ -285,8 +256,8 @@ export default function VolunteerIntakeSimple() {
         </div>
 
         <Card className="shadow-lg">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <CardContent className="p-6 md:p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
               {/* Full Name */}
               <div>
@@ -365,7 +336,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* Skills */}
-              <div>
+              <div className="lg:col-span-2">
                 <Label>Skills * (Select 1-3)</Label>
                 <p className="text-xs text-gray-500 mb-2">{selectedSkills.length}/3 selected</p>
                 <div className="flex flex-wrap gap-2">
@@ -392,7 +363,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* SDG Interests */}
-              <div>
+              <div className="lg:col-span-2">
                 <Label>SDG Interests * (Select 1-3)</Label>
                 <p className="text-xs text-gray-500 mb-2">{selectedSdgs.length}/3 selected</p>
                 <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
@@ -418,32 +389,8 @@ export default function VolunteerIntakeSimple() {
                 {errors.sdgInterests && <p className="text-sm text-red-500 mt-1">{errors.sdgInterests.message}</p>}
               </div>
 
-              {/* Diaspora Connection (Optional) */}
-              <div>
-                <Label>Diaspora Connection (Optional)</Label>
-                <p className="text-xs text-gray-500 mb-2">Select countries you have cultural ties to</p>
-                <div className="flex flex-wrap gap-2">
-                  {DIASPORA_OPTIONS.map(country => (
-                    <button
-                      key={country}
-                      type="button"
-                      onClick={() => toggleDiaspora(country)}
-                      disabled={isLoading}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                        selectedDiaspora.includes(country)
-                          ? "bg-teal-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-teal-50 hover:text-teal-700"
-                      }`}
-                    >
-                      {selectedDiaspora.includes(country) && <Check className="h-3 w-3 inline mr-1" />}
-                      {country}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Terms */}
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 lg:col-span-2">
                 <Checkbox
                   id="terms"
                   checked={watch("termsAccepted")}
@@ -454,12 +401,12 @@ export default function VolunteerIntakeSimple() {
                   I agree to the <a href="/terms" className="text-indigo-600 underline">Terms of Service</a> and <a href="/privacy" className="text-indigo-600 underline">Privacy Policy</a>
                 </Label>
               </div>
-              {errors.termsAccepted && <p className="text-sm text-red-500">{errors.termsAccepted.message}</p>}
+              {errors.termsAccepted && <p className="text-sm text-red-500 lg:col-span-2">{errors.termsAccepted.message}</p>}
 
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 disabled={isLoading}
               >
@@ -474,7 +421,7 @@ export default function VolunteerIntakeSimple() {
               </Button>
 
               {/* Divider */}
-              <div className="relative">
+              <div className="relative lg:col-span-2">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
                 </div>
@@ -487,7 +434,7 @@ export default function VolunteerIntakeSimple() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
@@ -500,7 +447,7 @@ export default function VolunteerIntakeSimple() {
                 Sign up with Google
               </Button>
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-gray-500 lg:col-span-2">
                 Already have an account? <a href="/login" className="text-indigo-600 font-medium">Log in</a>
               </p>
             </form>

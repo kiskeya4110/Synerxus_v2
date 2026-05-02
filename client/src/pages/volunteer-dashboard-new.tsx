@@ -693,8 +693,8 @@ function ActiveProjects({ projects, isLoading }: ActiveProjectsProps) {
     return (
       <EmptyState
         title="No active projects"
-        description="Browse opportunities to find projects that match your interests"
-        action={{ label: "Find Projects", onClick: () => {} }}
+        description="Select verified projects where your work can become traceable impact data"
+        action={{ label: "View Projects", onClick: () => {} }}
         size="sm"
       />
     );
@@ -1477,56 +1477,56 @@ export default function VolunteerDashboardNew() {
         </main>
 
         {/* Bottom Navigation Tray - 5 tabs with Home in middle */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-[160] shadow-lg" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-          <div className="grid grid-cols-5 max-w-md mx-auto">
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-t border-emerald-200 px-1 pt-2 z-[160] shadow-lg pwa-bottom-nav" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+          <div className="grid grid-cols-5 max-w-[428px] mx-auto">
             {/* Wallet */}
             <button
               onClick={() => setMobileTab('wallet')}
-              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl transition-colors ${
                 mobileTab === 'wallet' ? 'text-emerald-700 bg-emerald-100' : 'text-stone-500 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <BarChart3 className="w-5 h-5 mb-1" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><BarChart3 className="w-5 h-5" /></span>
               <span className="text-[10px] font-semibold">Wallet</span>
             </button>
 
             {/* Projects (AI-matched top 4) */}
             <button
               onClick={() => setMobileTab('projects')}
-              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl transition-colors ${
                 mobileTab === 'projects' ? 'text-emerald-700 bg-emerald-100' : 'text-stone-500 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
             >
-              <Target className="w-5 h-5 mb-1" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><Target className="w-5 h-5" /></span>
               <span className="text-[10px] font-semibold">Projects</span>
             </button>
 
             {/* Home - Primary Center Button */}
             <button
               onClick={() => setMobileTab('home')}
-              className={`flex flex-col items-center justify-center py-2 w-full rounded-xl shadow-md -mt-3 transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl shadow-md -mt-3 transition-colors ${
                 mobileTab === 'home' ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-600 hover:bg-emerald-600 hover:text-white'
               }`}
             >
-              <Home className="w-6 h-6 mb-0.5" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><Home className="w-6 h-6" /></span>
               <span className="text-[10px] font-semibold">Home</span>
             </button>
 
             {/* Log Impact */}
             <button
               onClick={() => setShowLogModal(true)}
-              className="flex flex-col items-center justify-center py-2 w-full rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+              className="flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
             >
-              <Plus className="w-5 h-5 mb-1" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><Plus className="w-5 h-5" /></span>
               <span className="text-[10px] font-semibold">Log</span>
             </button>
 
             {/* History */}
             <button
               onClick={() => navigate('/my-work')}
-              className="flex flex-col items-center justify-center py-2 w-full rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+              className="flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
             >
-              <FileText className="w-5 h-5 mb-1" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><FileText className="w-5 h-5" /></span>
               <span className="text-[10px] font-semibold">History</span>
             </button>
           </div>

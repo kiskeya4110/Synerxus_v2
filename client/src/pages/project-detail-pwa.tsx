@@ -689,9 +689,9 @@ export default function ProjectDetailPWA() {
 
   // Other users (volunteer, CSR) get the standard PWA header/nav layout
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-x-hidden">
+    <div className="pwa-shell bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col">
       {/* Centered App Container */}
-      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+      <div className="pwa-frame">
         {/* PWA Header - Standard volunteer/CSR header */}
         <PWAHeader />
 
@@ -699,7 +699,7 @@ export default function ProjectDetailPWA() {
         <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
         {/* Project Context Header - shows project name with back button */}
-        <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-3 shadow-sm border-b border-slate-200 flex-shrink-0">
+        <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-3 shadow-sm border-b border-slate-200 flex-shrink-0 pwa-compact-x">
           <div className="flex items-center">
             <button
               onClick={handleBack}
@@ -716,7 +716,7 @@ export default function ProjectDetailPWA() {
         </div>
 
         {/* Main scrollable content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24">
+        <main className="pwa-scroll pb-24">
           {renderProjectContent()}
         </main>
 

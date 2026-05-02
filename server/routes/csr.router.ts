@@ -5,7 +5,8 @@ import {
   insertEmployeeCommitmentSchema,
   insertEmployeeActivityLogSchema,
   insertEmployeeMilestoneSchema,
-  insertCSRCommitmentGoalSchema
+  insertCSRCommitmentGoalSchema,
+  insertOrganizationSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -17,6 +18,21 @@ import { getPlanFeatures } from "../../shared/plan-features";
 import { getAuthenticatedUser } from "./utils";
 
 export const csrRouter = Router();
+
+interface NgoPartnerSuggestion {
+  source: "synerxus" | "propublica" | "wikidata";
+  sourceId: string;
+  name: string;
+  description?: string | null;
+  website?: string | null;
+  contactEmail?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  address?: string | null;
+  registrationNumber?: string | null;
+  profileUrl?: string | null;
+}
 
 // ===== HELPER FUNCTIONS =====
 
@@ -45,6 +61,93 @@ function safeParseDate(value: any): Date | null {
  */
 function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [];
+}
+
+function normalizeSuggestionName(value: string | null | undefined): string {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function dedupeNgoSuggestions(suggestions: NgoPartnerSuggestion[]): NgoPartnerSuggestion[] {
+  const seen = new Set<string>();
+  const deduped: NgoPartnerSuggestion[] = [];
+
+  for (const suggestion of suggestions) {
+    const name = normalizeSuggestionName(suggestion.name);
+    if (!name) continue;
+
+    const key = `${name.toLowerCase()}|${suggestion.registrationNumber || ""}|${suggestion.source}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push({ ...suggestion, name });
+  }
+
+  return deduped.slice(0, 25);
+}
+
+async function getProPublicaSuggestions(query: string, state?: string): Promise<NgoPartnerSuggestion[]> {
+  const params = new URLSearchParams({ q: query, "c_code[id]": "3" });
+  if (state) params.set("state[id]", state.toUpperCase());
+
+  const response = await fetch(`https://projects.propublica.org/nonprofits/api/v2/search.json?${params.toString()}`, {
+    headers: { "User-Agent": "Synerxus NGO partner search (support@synerxus.com)" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`ProPublica search failed with ${response.status}`);
+  }
+
+  const payload = await response.json() as { organizations?: any[] };
+  return safeArray(payload.organizations).slice(0, 10).map((org: any) => ({
+    source: "propublica",
+    sourceId: org.ein ? String(org.ein) : normalizeSuggestionName(org.name),
+    name: normalizeSuggestionName(org.name),
+    description: org.ntee_code ? `IRS 501(c)(3), NTEE ${org.ntee_code}` : "IRS 501(c)(3) nonprofit",
+    website: org.guidestar_url || org.nccs_url || null,
+    city: org.city || null,
+    state: org.state || null,
+    country: "United States",
+    address: [org.address, org.city, org.state, org.zipcode].filter(Boolean).join(", ") || null,
+    registrationNumber: org.strein || (org.ein ? String(org.ein) : null),
+    profileUrl: org.guidestar_url || org.nccs_url || null,
+  }));
+}
+
+async function getWikidataSuggestions(query: string): Promise<NgoPartnerSuggestion[]> {
+  const params = new URLSearchParams({
+    action: "wbsearchentities",
+    search: query,
+    language: "en",
+    format: "json",
+    limit: "10",
+    origin: "*",
+  });
+
+  const response = await fetch(`https://www.wikidata.org/w/api.php?${params.toString()}`, {
+    headers: { "User-Agent": "Synerxus NGO partner search (support@synerxus.com)" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Wikidata search failed with ${response.status}`);
+  }
+
+  const payload = await response.json() as { search?: any[] };
+  const nonprofitTerms = ["nonprofit", "non-profit", "charity", "foundation", "ngo", "organization", "aid", "relief"];
+
+  return safeArray(payload.search)
+    .filter((item: any) => {
+      const haystack = `${item.label || ""} ${item.description || ""}`.toLowerCase();
+      return nonprofitTerms.some((term) => haystack.includes(term));
+    })
+    .slice(0, 10)
+    .map((item: any) => ({
+      source: "wikidata",
+      sourceId: item.id,
+      name: normalizeSuggestionName(item.label),
+      description: item.description || "Public knowledge base result",
+      website: item.concepturi || null,
+      country: null,
+      profileUrl: item.concepturi || null,
+    }));
 }
 
 /**
@@ -1966,6 +2069,122 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
 });
 
 // ==================== CSR PARTNER MANAGEMENT ROUTES ====================
+
+/**
+ * GET /csr/ngo-partners/suggestions
+ * Search existing Synerxus NGOs and online nonprofit databases for corporation partner setup.
+ */
+csrRouter.get("/csr/ngo-partners/suggestions", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
+  const query = normalizeSuggestionName(req.query.q as string);
+  const state = normalizeSuggestionName(req.query.state as string);
+  const includeOnline = req.query.online !== "false";
+
+  if (query.length < 2) {
+    return res.json({ suggestions: [], sources: [] });
+  }
+
+  try {
+    const organizations = await storage.listOrganizations();
+    const localSuggestions: NgoPartnerSuggestion[] = organizations
+      .filter((org: any) => {
+        const haystack = `${org.name || ""} ${org.description || ""} ${org.city || ""} ${org.country || ""}`.toLowerCase();
+        return haystack.includes(query.toLowerCase());
+      })
+      .slice(0, 10)
+      .map((org: any) => ({
+        source: "synerxus",
+        sourceId: String(org.id),
+        name: org.name,
+        description: org.description || "Existing Synerxus NGO partner",
+        website: org.website || null,
+        contactEmail: org.contactEmail || null,
+        city: org.city || null,
+        country: org.country || null,
+        address: org.address || null,
+        profileUrl: org.website || null,
+      }));
+
+    const externalResults = includeOnline
+      ? await Promise.allSettled([
+          getProPublicaSuggestions(query, state || undefined),
+          getWikidataSuggestions(query),
+        ])
+      : [];
+
+    const onlineSuggestions = externalResults.flatMap((result) => (
+      result.status === "fulfilled" ? result.value : []
+    ));
+
+    const failedSources = externalResults
+      .map((result, index) => ({ result, source: index === 0 ? "propublica" : "wikidata" }))
+      .filter(({ result }) => result.status === "rejected")
+      .map(({ source }) => source);
+
+    res.json({
+      suggestions: dedupeNgoSuggestions([...localSuggestions, ...onlineSuggestions]),
+      sources: includeOnline ? ["synerxus", "propublica", "wikidata"] : ["synerxus"],
+      failedSources,
+    });
+  } catch (err) {
+    logger.error("Error searching NGO partner suggestions:", err);
+    res.status(500).json({ error: "Failed to search NGO partner suggestions" });
+  }
+});
+
+/**
+ * POST /csr/ngo-partners/custom
+ * Allow corporations to add an NGO partner candidate without forcing NGO signup first.
+ */
+csrRouter.post("/csr/ngo-partners/custom", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const orgPayload = insertOrganizationSchema.parse({
+      name: req.body.name,
+      description: req.body.description || req.body.mission || null,
+      website: req.body.website || req.body.profileUrl || null,
+      contactEmail: req.body.contactEmail || null,
+      contactPhone: req.body.contactPhone || null,
+      address: req.body.address || null,
+      city: req.body.city || null,
+      country: req.body.country || null,
+      goals: req.body.mission || req.body.description || null,
+      primarySdgs: Array.isArray(req.body.primarySdgs) ? req.body.primarySdgs : [],
+      needs: Array.isArray(req.body.needs) ? req.body.needs : [],
+      approvalStatus: "pending",
+      approvalNotes: `Added by corporate partner user ${authUser.id}${req.body.source ? ` from ${req.body.source}` : ""}.`,
+    });
+
+    const organization = await storage.createOrganization(orgPayload);
+
+    try {
+      await storage.createOrganizationProfile?.({
+        organizationId: organization.id,
+        organizationType: "NGO",
+        missionStatement: req.body.mission || req.body.description || null,
+        websiteUrl: req.body.website || req.body.profileUrl || null,
+        registrationNumber: req.body.registrationNumber || null,
+        registrationStatus: req.body.registrationNumber ? "registered" : "pending",
+        verificationStatus: "pending",
+        willingForImpactVerification: true,
+        willingToShareData: false,
+        socialMedia: req.body.source || req.body.sourceId ? {
+          importedSource: req.body.source || null,
+          importedSourceId: req.body.sourceId || null,
+          importedProfileUrl: req.body.profileUrl || null,
+        } : null,
+      } as any);
+    } catch (profileErr) {
+      logger.warn("Created NGO organization but failed to create organization profile:", profileErr);
+    }
+
+    res.status(201).json(organization);
+  } catch (err) {
+    const error = handleValidationError(err);
+    res.status(error.status).json({ message: error.message });
+  }
+});
 
 /**
  * POST /csr/partners

@@ -85,10 +85,10 @@ export default function DashboardMobileNav({
   if (userType === 'volunteer') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg"
+        className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg pwa-bottom-nav"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
-        <div className="grid grid-cols-5 items-end max-w-md mx-auto">
+        <div className="grid grid-cols-5 items-end max-w-[428px] mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
             const isPrimary = item.isPrimary;
@@ -97,7 +97,7 @@ export default function DashboardMobileNav({
               <button
                 key={item.id}
                 onClick={item.action}
-                className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
+                className={`flex flex-col items-center justify-end pb-1.5 pt-2 px-1 w-full min-w-0 rounded-xl transition-colors touch-manipulation ${
                   isPrimary
                     ? isActive
                       ? 'bg-sky-300 text-sky-900 -mt-3 shadow-md'
@@ -107,7 +107,7 @@ export default function DashboardMobileNav({
                       : 'text-slate-500 bg-sky-50 hover:text-sky-600 hover:bg-sky-100'
                 }`}
               >
-                <div className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                <div data-pwa-nav-icon className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
                   <item.icon className={isPrimary ? 'w-5 h-5' : 'w-4 h-4'} />
                 </div>
                 <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
@@ -124,10 +124,10 @@ export default function DashboardMobileNav({
     return (
       <>
         <nav
-          className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg"
+          className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 z-[160] shadow-lg pwa-bottom-nav"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
-          <div className="grid grid-cols-5 items-end max-w-md mx-auto">
+          <div className="grid grid-cols-5 items-end max-w-[428px] mx-auto">
             {navItems.map((item) => {
               const isActive = currentTab === item.id;
               const isPrimary = (item as any).isPrimary;
@@ -136,7 +136,7 @@ export default function DashboardMobileNav({
                 <button
                   key={item.id}
                   onClick={() => (item as any).isMore ? setShowMore(true) : item.action?.()}
-                  className={`flex flex-col items-center justify-end pb-1.5 pt-2 w-full rounded-xl transition-colors touch-manipulation ${
+                  className={`flex flex-col items-center justify-end pb-1.5 pt-2 px-1 w-full min-w-0 rounded-xl transition-colors touch-manipulation ${
                     isPrimary
                       ? isActive
                         ? 'bg-sky-300 text-sky-900 -mt-3 shadow-md'
@@ -147,7 +147,7 @@ export default function DashboardMobileNav({
                   }`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <div className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
+                  <div data-pwa-nav-icon className={`flex items-center justify-center rounded-lg bg-stone-50 ${isPrimary ? 'h-8 w-8' : 'h-7 w-7'}`}>
                     <item.icon className={isPrimary ? 'w-5 h-5' : 'w-4 h-4'} />
                   </div>
                   <span className="text-[10px] font-semibold leading-tight mt-0.5">{item.label}</span>
@@ -215,7 +215,7 @@ export default function DashboardMobileNav({
   if (userType === 'corporate-partner') {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-slate-100"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-slate-100 pwa-bottom-nav"
         style={{
           boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
           paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
@@ -229,10 +229,10 @@ export default function DashboardMobileNav({
               <button
                 key={item.id}
                 onClick={item.action}
-                className={`flex flex-col items-center justify-end min-w-[56px] min-h-[48px] pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95 rounded-xl ${isActive ? 'bg-sky-200' : 'bg-sky-50'}`}
+                className={`flex flex-col items-center justify-end min-w-0 min-h-[48px] px-1 pb-1 pt-2 touch-manipulation cursor-pointer active:scale-95 rounded-xl ${isActive ? 'bg-sky-200' : 'bg-sky-50'}`}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className={`flex items-center justify-center h-8 w-8 rounded-lg bg-stone-50 pointer-events-none`}>
+                <div data-pwa-nav-icon className={`flex items-center justify-center h-8 w-8 rounded-lg bg-stone-50 pointer-events-none`}>
                   <item.icon className={`w-4 h-4 pointer-events-none ${isActive ? 'text-sky-700' : 'text-slate-600'}`} />
                 </div>
                 <span className={`text-[10px] font-medium leading-tight mt-0.5 pointer-events-none ${isActive ? 'text-sky-700 font-semibold' : 'text-slate-600'}`}>

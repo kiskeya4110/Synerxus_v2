@@ -27,9 +27,9 @@ export default function AssuranceBoundaryDiagram() {
   ];
 
   const provides = [
-    "NGO-verified outcomes with immutable audit trails",
+    "NGO-verified outcomes with structured evidence records",
     "Structured evidence objects for GRI 413, SASB SO-ES-110",
-    "Double materiality compliance via negative impact screening",
+    "Evidence that can support materiality review workflows",
     "Global framework alignment (SDGs, GRI, SASB, TCFD)",
   ];
 
@@ -37,7 +37,7 @@ export default function AssuranceBoundaryDiagram() {
     "Formal assurance opinion (independent auditor required)",
     "Causal attribution (requires RCTs)",
     "Financial valuation (SROI not calculated)",
-    "Regulatory compliance guarantee (auditor judgment required)",
+    "Regulatory compliance conclusions (auditor judgment required)",
   ];
 
   return (
@@ -78,8 +78,7 @@ export default function AssuranceBoundaryDiagram() {
       >
         This report provides verified outcome data supporting multiple global sustainability
         frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce
-        auditor evidence-gathering burden by 60–70% but does not replace independent assurance
-        per ISAE 3000.
+        assurance preparation but does not replace independent assurance per ISAE 3000.
       </div>
 
       {/* Layered graph */}

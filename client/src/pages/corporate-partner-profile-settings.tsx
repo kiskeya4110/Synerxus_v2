@@ -21,7 +21,7 @@ import {
   getCachedUserProfile
 } from "@/lib/profile-cache";
 import { sdgGoals, getSDGColor } from "@shared/sdg-goals";
-import { Building2, Check, ChevronRight, Save, Bell, Target, Settings as SettingsIcon, Users, Calendar, Globe, FileText, Shield, Mail, Clock, Zap, Award } from "lucide-react";
+import { Building2, Check, ChevronRight, Save, Bell, Target, Settings as SettingsIcon, Users, Calendar, Globe, FileText, Shield, Mail, Clock, Zap, Award, Search, Plus, ExternalLink } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { Label } from "@/components/ui/label";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
@@ -40,6 +40,21 @@ const corporatePartnerSchema = z.object({
 });
 
 type CorporatePartnerForm = z.infer<typeof corporatePartnerSchema>;
+
+type NgoPartnerSuggestion = {
+  source: "synerxus" | "propublica" | "wikidata";
+  sourceId: string;
+  name: string;
+  description?: string | null;
+  website?: string | null;
+  contactEmail?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  address?: string | null;
+  registrationNumber?: string | null;
+  profileUrl?: string | null;
+};
 
 const industryOptions = [
   "Technology",
@@ -124,6 +139,11 @@ export default function CorporatePartnerProfileSettings() {
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [ngoSearch, setNgoSearch] = useState("");
+  const [newNgoName, setNewNgoName] = useState("");
+  const [newNgoWebsite, setNewNgoWebsite] = useState("");
+  const [newNgoEmail, setNewNgoEmail] = useState("");
+  const [newNgoCountry, setNewNgoCountry] = useState("");
 
   const userId = localStorage.getItem('currentUserId');
   const storedUserType = localStorage.getItem('userType');
@@ -196,6 +216,92 @@ export default function CorporatePartnerProfileSettings() {
     initialData: () => getCachedCorporatePartnerProfile(userId),
     ...PROFILE_QUERY_CONFIG,
   });
+
+  const { data: ngoSuggestionData, isFetching: isFetchingNgoSuggestions } = useQuery<{
+    suggestions: NgoPartnerSuggestion[];
+    sources: string[];
+    failedSources?: string[];
+  }>({
+    queryKey: ["/api/csr/ngo-partners/suggestions", ngoSearch],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams({ q: ngoSearch });
+      const response = await fetch(`/api/csr/ngo-partners/suggestions?${params.toString()}`, {
+        headers,
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to search NGO partner suggestions");
+      return response.json();
+    },
+    enabled: ngoSearch.trim().length >= 2,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const addNgoPartnerMutation = useMutation({
+    mutationFn: async (payload: Partial<NgoPartnerSuggestion> & { name: string }) => {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/csr/ngo-partners/custom", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to add NGO partner");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setNewNgoName("");
+      setNewNgoWebsite("");
+      setNewNgoEmail("");
+      setNewNgoCountry("");
+      queryClient.invalidateQueries({ queryKey: ["/api/csr/ngo-partners/suggestions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations"] });
+      toast({
+        title: "NGO partner added",
+        description: "The partner is saved as a pending NGO record and can be used for future verification workflows.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Could not add NGO partner",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addSuggestionAsNgoPartner = (suggestion: NgoPartnerSuggestion) => {
+    addNgoPartnerMutation.mutate({
+      ...suggestion,
+      website: suggestion.website || suggestion.profileUrl || undefined,
+      description: suggestion.description || `Imported from ${suggestion.source}`,
+    });
+  };
+
+  const addManualNgoPartner = () => {
+    const name = newNgoName.trim();
+    if (!name) {
+      toast({
+        title: "NGO name required",
+        description: "Enter the NGO partner name before adding it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addNgoPartnerMutation.mutate({
+      source: "synerxus",
+      sourceId: `manual-${Date.now()}`,
+      name,
+      website: newNgoWebsite.trim() || undefined,
+      contactEmail: newNgoEmail.trim() || undefined,
+      country: newNgoCountry.trim() || undefined,
+      description: "Added manually by corporate partner.",
+    });
+  };
 
   const form = useForm<CorporatePartnerForm>({
     resolver: zodResolver(corporatePartnerSchema),
@@ -694,6 +800,140 @@ export default function CorporatePartnerProfileSettings() {
                         }}
                         error={selectedSdgs.length === 0 ? "Select at least one SDG" : undefined}
                       />
+                    </div>
+                  </div>
+
+                  {/* NGO Partner Management */}
+                  <div className="border-t pt-6 mt-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="w-5 h-5 text-emerald-600" />
+                      <h3 className="text-lg font-semibold">NGO Partners</h3>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Add your own NGO partners or search public nonprofit databases for suggested matches.
+                    </p>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="ngoPartnerSearch" className="text-sm font-medium">Search NGO databases</Label>
+                        <div className="relative mt-1.5">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="ngoPartnerSearch"
+                            value={ngoSearch}
+                            onChange={(event) => setNgoSearch(event.target.value)}
+                            placeholder="Search by NGO name, EIN, city, or cause"
+                            className="pl-9"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Suggestions combine existing Synerxus NGOs with ProPublica Nonprofit Explorer and Wikidata results.
+                        </p>
+                      </div>
+
+                      {ngoSearch.trim().length >= 2 && (
+                        <div className="rounded-lg border divide-y overflow-hidden">
+                          {isFetchingNgoSuggestions ? (
+                            <div className="px-4 py-3 text-sm text-gray-500">Searching NGO partner databases...</div>
+                          ) : (ngoSuggestionData?.suggestions?.length || 0) > 0 ? (
+                            ngoSuggestionData!.suggestions.map((suggestion) => (
+                              <div key={`${suggestion.source}-${suggestion.sourceId}`} className="px-4 py-3 flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-medium text-sm text-gray-900">{suggestion.name}</p>
+                                    <Badge variant="outline" className="capitalize">{suggestion.source}</Badge>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {[suggestion.city, suggestion.state, suggestion.country].filter(Boolean).join(", ") || suggestion.description || "Online database result"}
+                                  </p>
+                                  {suggestion.registrationNumber && (
+                                    <p className="text-xs text-gray-400 mt-1">Registration: {suggestion.registrationNumber}</p>
+                                  )}
+                                  {suggestion.profileUrl && (
+                                    <a
+                                      href={suggestion.profileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
+                                    >
+                                      View source <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  )}
+                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => addSuggestionAsNgoPartner(suggestion)}
+                                  disabled={addNgoPartnerMutation.isPending}
+                                  className="shrink-0"
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500">No suggestions found. Add the NGO manually below.</div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="rounded-lg border p-4">
+                        <h4 className="text-sm font-semibold mb-3">Add NGO manually</h4>
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="newNgoName" className="text-xs">NGO Name</Label>
+                            <Input
+                              id="newNgoName"
+                              value={newNgoName}
+                              onChange={(event) => setNewNgoName(event.target.value)}
+                              placeholder="Green Future Alliance"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newNgoWebsite" className="text-xs">Website</Label>
+                            <Input
+                              id="newNgoWebsite"
+                              value={newNgoWebsite}
+                              onChange={(event) => setNewNgoWebsite(event.target.value)}
+                              placeholder="https://example.org"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newNgoEmail" className="text-xs">Contact Email</Label>
+                            <Input
+                              id="newNgoEmail"
+                              value={newNgoEmail}
+                              onChange={(event) => setNewNgoEmail(event.target.value)}
+                              placeholder="programs@example.org"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newNgoCountry" className="text-xs">Country</Label>
+                            <Input
+                              id="newNgoCountry"
+                              value={newNgoCountry}
+                              onChange={(event) => setNewNgoCountry(event.target.value)}
+                              placeholder="United States"
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-4"
+                          onClick={addManualNgoPartner}
+                          disabled={addNgoPartnerMutation.isPending}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {addNgoPartnerMutation.isPending ? "Adding..." : "Add NGO Partner"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 

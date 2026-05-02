@@ -161,7 +161,7 @@ export default function App() {
           <Route path="/signup/volunteer" component={VolunteerIntakeSimple} />
           <Route path="/signup/organization" component={OrganizationIntakeSimple} />
           <Route path="/signup/corporate" component={CorporateIntakeSimple} />
-          <Route path="/join" component={VolunteerIntakeSimple} />
+          <Route path="/join" component={SignupLanding} />
 
           {/* ================================================================ */}
           {/* UNIFIED DASHBOARD - Single entry point for all roles */}

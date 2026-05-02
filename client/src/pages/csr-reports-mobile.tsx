@@ -284,7 +284,8 @@ export default function CsrReportsMobile({
 
   // ── CSR Corporate Mobile View ─────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
+    <div className="pwa-shell bg-[#faf9f7] flex flex-col">
+      <div className="pwa-frame">
       <CSRMobileHeader
         title="Reports & Exports"
         companyName={companyName}
@@ -292,7 +293,7 @@ export default function CsrReportsMobile({
         onBack={() => navigate("/csr-dashboard")}
       />
 
-      <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
+      <main className="pwa-scroll pb-20 px-3 pt-3">
         {/* Category Pills */}
         <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
           {categories.map((cat) => (
@@ -458,6 +459,7 @@ export default function CsrReportsMobile({
       </main>
 
       <CSRMobileNav activeTab="reports" />
+      </div>
     </div>
   );
 }

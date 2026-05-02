@@ -62,7 +62,7 @@ const corporateSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
     .regex(/[0-9]/, "Password must contain at least 1 number"),
   employeeCount: z.coerce.number().min(1, "Number of employees is required"),
-  ngoPartnerId: z.string().min(1, "Select an NGO partner"),
+  ngoPartnerId: z.string().optional(),
   termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms"),
 });
 
@@ -224,8 +224,8 @@ export default function CorporateIntakeSimple() {
   const isLoading = submitMutation.isPending || isGoogleLoading;
 
   return (
-    <div className="min-h-screen bg-stone-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-stone-50 py-8 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
           <Logo size="md" className="mx-auto mb-3" />
@@ -256,8 +256,8 @@ export default function CorporateIntakeSimple() {
         )}
 
         <Card className="shadow-lg">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <CardContent className="p-6 md:p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
               {/* Company Name */}
               <div>
@@ -324,7 +324,7 @@ export default function CorporateIntakeSimple() {
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-200 pt-4">
+              <div className="border-t border-gray-200 pt-4 lg:col-span-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Pilot Setup</p>
               </div>
 
@@ -344,11 +344,11 @@ export default function CorporateIntakeSimple() {
               </div>
 
               {/* NGO Partner */}
-              <div>
-                <Label>NGO Partner *</Label>
+              <div className="lg:col-span-2">
+                <Label>NGO Partner <span className="text-gray-400 font-normal">(optional)</span></Label>
                 <Select onValueChange={(v) => setValue("ngoPartnerId", v)} disabled={isLoading}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select NGO partner" />
+                    <SelectValue placeholder="Select NGO partner later or choose one now" />
                   </SelectTrigger>
                   <SelectContent>
                     {ngoPartners.map((ngo: any) => (
@@ -359,14 +359,13 @@ export default function CorporateIntakeSimple() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  {ngoPartners.length} NGO partners available
+                  You can link NGO partners now or add them later from your corporate dashboard. {ngoPartners.length} available.
                 </p>
-                {errors.ngoPartnerId && <p className="text-sm text-red-500 mt-1">{errors.ngoPartnerId.message}</p>}
               </div>
 
               {/* Invite Code (Auto-generated, Display Only) */}
               {inviteCode && (
-                <div>
+                <div className="lg:col-span-2">
                   <Label>Your Invite Code</Label>
                   <p className="text-xs text-gray-500 mb-1">Share this with employees to join</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -389,7 +388,7 @@ export default function CorporateIntakeSimple() {
               )}
 
               {/* Terms */}
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 lg:col-span-2">
                 <Checkbox
                   id="terms"
                   checked={watch("termsAccepted")}
@@ -400,12 +399,12 @@ export default function CorporateIntakeSimple() {
                   I agree to the <a href="/terms" className="text-indigo-600 underline">Corporate Terms of Service</a>
                 </Label>
               </div>
-              {errors.termsAccepted && <p className="text-sm text-red-500">{errors.termsAccepted.message}</p>}
+              {errors.termsAccepted && <p className="text-sm text-red-500 lg:col-span-2">{errors.termsAccepted.message}</p>}
 
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 disabled={isLoading}
               >
@@ -419,12 +418,12 @@ export default function CorporateIntakeSimple() {
                 )}
               </Button>
 
-              <p className="text-center text-xs text-gray-500">
+              <p className="text-center text-xs text-gray-500 lg:col-span-2">
                 No credit card required. See verified impact in minutes.
               </p>
 
               {/* Divider */}
-              <div className="relative">
+              <div className="relative lg:col-span-2">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
                 </div>
@@ -437,7 +436,7 @@ export default function CorporateIntakeSimple() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full lg:col-span-2"
                 size="lg"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
@@ -450,7 +449,7 @@ export default function CorporateIntakeSimple() {
                 Sign up with Google
               </Button>
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-gray-500 lg:col-span-2">
                 Already have an account? <a href="/login" className="text-indigo-600 font-medium">Log in</a>
               </p>
             </form>

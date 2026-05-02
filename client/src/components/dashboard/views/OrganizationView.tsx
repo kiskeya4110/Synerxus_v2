@@ -1,5 +1,4 @@
 import { useState, useMemo, memo, useEffect, useCallback } from "react";
-import DOMPurify from "dompurify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -33,6 +32,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Stat } from "@/components/ui/stat";
+import {
+  prepareReportContent,
+  sanitizeReportBody,
+  sanitizeReportStyles,
+} from "@/lib/report-sanitizer";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid } from "@/components/ui/section";
 import { useToast } from "@/hooks/use-toast";
@@ -480,12 +484,7 @@ const OrganizationView = memo(function OrganizationView({
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const rawHtml = await response.text();
-      // Parse out styles and body so we can render inline without an iframe
-      const parser = new DOMParser();
-      const parsedDoc = parser.parseFromString(rawHtml, 'text/html');
-      const styles = Array.from(parsedDoc.querySelectorAll('style')).map(s => s.textContent || '').join('\n');
-      const body = parsedDoc.body.innerHTML;
-      setReportContent({ rawHtml, styles, body });
+      setReportContent(prepareReportContent(rawHtml));
     } catch (err) {
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the report. Please try again.", variant: "destructive" });
@@ -498,7 +497,7 @@ const OrganizationView = memo(function OrganizationView({
     if (!reportContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(DOMPurify.sanitize(reportContent.rawHtml, { FORCE_BODY: true, ADD_TAGS: ['style', 'link', 'meta'], ADD_ATTR: ['style', 'class', 'id', 'href', 'rel', 'charset', 'content', 'name'] }));
+      printWindow.document.write(reportContent.rawHtml);
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
@@ -1719,13 +1718,13 @@ const OrganizationView = memo(function OrganizationView({
               {reportContent && (
                 <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
                   {/* Inject report styles */}
-                  <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+                  <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
                     @media print {
                       body > *:not(#synerxus-report-overlay) { display: none !important; }
                       #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
                       #synerxus-report-overlay .report-header-bar { display: none !important; }
                     }
-                  `}} />
+                  `)}} />
                   {/* Header bar */}
                   <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
                     <button
@@ -1756,7 +1755,7 @@ const OrganizationView = memo(function OrganizationView({
                   {/* Report body rendered inline */}
                   <div
                     className="flex-1 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
                   />
                 </div>
               )}
@@ -2239,13 +2238,13 @@ const OrganizationView = memo(function OrganizationView({
           {/* Full-screen report viewer overlay */}
           {reportContent && (
             <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-              <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+              <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
                 @media print {
                   body > *:not(#synerxus-report-overlay) { display: none !important; }
                   #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
                   #synerxus-report-overlay .report-header-bar { display: none !important; }
                 }
-              `}} />
+              `)}} />
               <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
                 <button
                   onClick={closeReport}
@@ -2274,18 +2273,7 @@ const OrganizationView = memo(function OrganizationView({
               </div>
               <div
                 className="flex-1 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, {
-                  ADD_ATTR: [
-                    'style', 'class', 'id',
-                    // SVG presentation attributes stripped by default
-                    'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linejoin',
-                    'font-size', 'font-family', 'font-weight', 'text-anchor',
-                    'cx', 'cy', 'r', 'x1', 'y1', 'x2', 'y2', 'points',
-                    'transform', 'opacity',
-                  ],
-                  ADD_TAGS: ['svg', 'polygon', 'polyline', 'line', 'circle', 'text', 'path', 'rect', 'g'],
-                  FORCE_BODY: true,
-                }) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
               />
             </div>
           )}

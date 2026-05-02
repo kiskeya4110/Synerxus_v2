@@ -366,21 +366,21 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
-        <div className="flex items-center justify-between px-5 py-3.5">
+        <div className="flex items-center justify-between px-4 py-3.5 pwa-compact-x">
           {/* Logo — 40% */}
-          <div className="flex-shrink-0" style={{ width: '40%' }}>
+          <div className="flex-shrink min-w-0" style={{ width: '40%' }}>
             <Logo size="xs" variant="full" theme="light" />
           </div>
           {/* Type label — 30% */}
-          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Impact Wallet</span>
+          <div className="flex-shrink min-w-0 flex justify-center" style={{ width: '30%' }}>
+            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wide truncate">Impact Wallet</span>
           </div>
           {/* Actions — 20% */}
-          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '20%' }}>
+          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '26%' }}>
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               <Bell className="w-4 h-4 text-stone-500 pointer-events-none" />
@@ -393,7 +393,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-hamburger-menu"
               aria-label="Open navigation menu"
@@ -414,7 +414,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           />
 
           {/* Menu Panel - Compact design */}
-          <div className="relative ml-auto w-[75%] max-w-[280px] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+          <div className="relative ml-auto w-[min(82vw,280px)] h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
             {/* Menu Header - Compact brand gradient */}
             <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-4 py-3 pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
               <div className="flex items-center justify-between mb-2">
@@ -525,7 +525,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
       {/* Notifications Modal */}
       {notificationsOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-6">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -533,7 +533,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           />
 
           {/* Notifications Panel */}
-          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-[min(24rem,calc(100vw-1.5rem))] bg-white rounded-2xl shadow-2xl max-h-[85dvh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="bg-stone-50 border-b border-stone-200 px-4 py-4">
               <div className="flex items-center justify-between">

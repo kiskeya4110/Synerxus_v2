@@ -678,7 +678,7 @@ export default function MyTasks({ embedded = false, ...rest }: MyTasksProps) {
             <Card className="p-12 text-center">
               <p className="text-gray-500">You're not assigned to any projects yet</p>
               <p className="text-sm text-gray-400 mt-2">
-                Browse opportunities to find projects to join
+                Select a verified project to start logging measurable impact
               </p>
             </Card>
           )}

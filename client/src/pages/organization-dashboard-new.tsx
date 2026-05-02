@@ -25,8 +25,12 @@ import {
   Menu,
   FileText,
 } from "lucide-react";
-import DOMPurify from "dompurify";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
+import {
+  prepareReportContent,
+  sanitizeReportBody,
+  sanitizeReportStyles,
+} from "@/lib/report-sanitizer";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "@/components/ui/card";
@@ -656,11 +660,7 @@ export default function OrganizationDashboardNew() {
       const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
-      // Parse the HTML and extract styles + body content so we can render inline (no iframe needed)
-      const parser = new DOMParser();
-      const parsedDoc = parser.parseFromString(html, 'text/html');
-      const styles = Array.from(parsedDoc.querySelectorAll('style')).map(s => s.textContent || '').join('\n');
-      const body = parsedDoc.body.innerHTML;
+      const { styles, body } = prepareReportContent(html);
       setReportContent({ styles, body });
     } catch (err) {
       console.error("Synerxus report generation failed:", err);
@@ -760,9 +760,9 @@ export default function OrganizationDashboardNew() {
   // Skip simplified mobile view when on reports tab so the full reports UI renders
   if (isMobile && activeTab !== 'reports') {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-stone-100 text-stone-900 flex flex-col overflow-hidden">
+      <div className="pwa-shell bg-stone-100 text-stone-900 flex flex-col">
         {/* Centered App Container */}
-        <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+        <div className="pwa-frame">
           {/* Shared PWA Header with working hamburger menu */}
           <OrganizationPWAHeader
             organizationName={organization?.name || "Verify Hub"}
@@ -777,7 +777,7 @@ export default function OrganizationDashboardNew() {
           <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 space-y-3" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
+          <main className="pwa-scroll px-4 py-2 space-y-3 pwa-compact-x" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Core Metrics - 2x2 Grid */}
           <div className="grid grid-cols-2 gap-2">
             {/* Pending Verification */}
@@ -1431,13 +1431,13 @@ export default function OrganizationDashboardNew() {
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[9999] flex flex-col bg-white">
           {/* Inject report styles into head scope */}
-          <style dangerouslySetInnerHTML={{ __html: reportContent.styles.replace(/<\/style>/gi, '').replace(/expression\s*\(/gi, '').replace(/javascript\s*:/gi, '').replace(/@import\b/gi, '') + `
+          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
             @media print {
               body > *:not(#synerxus-report-overlay) { display: none !important; }
               #synerxus-report-overlay { position: static !important; }
               #synerxus-report-overlay .report-toolbar { display: none !important; }
             }
-          `}} />
+          `)}} />
           {/* Toolbar */}
           <div className="report-toolbar flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0">
             <span className="text-sm font-semibold text-stone-800">Impact Report Preview</span>
@@ -1459,7 +1459,7 @@ export default function OrganizationDashboardNew() {
           {/* Report body rendered inline */}
           <div
             className="flex-1 overflow-auto"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
           />
         </div>
       )}

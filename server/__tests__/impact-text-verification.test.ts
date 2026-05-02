@@ -118,4 +118,35 @@ describe("Impact Text Verification Service", () => {
     expect(result?.confidence).toBe(0.83);
     expect(result?.suggestedSdgs).toContain(10);
   });
+
+  it("reports aggregate queue and result metrics without exposing source text", async () => {
+    vi.mocked(storage.getVolunteerActivity).mockResolvedValue({
+      id: 404,
+      projectId: 14,
+      outcomeText: "Delivered tutoring to 12 students after school.",
+      description: null,
+      outcomes: "education",
+      editedOutcomeText: null,
+      editedSdgTags: null,
+      sdgTags: [4],
+      outcomeQuantity: 12,
+      beneficiaryCount: 12,
+    } as any);
+    vi.mocked(storage.getProject).mockResolvedValue({
+      id: 14,
+      sdgGoals: [4],
+    } as any);
+
+    impactTextVerificationService.enqueue(404, { force: true });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    const metrics = impactTextVerificationService.getMetrics();
+
+    expect(metrics.persistedResults).toBeGreaterThan(0);
+    expect(metrics.completedCount).toBeGreaterThan(0);
+    expect(metrics.statuses.complete).toBeGreaterThan(0);
+    expect(metrics.averageConfidence).not.toBeNull();
+    expect(metrics.recommendations.approve + metrics.recommendations.review + metrics.recommendations.reject).toBeGreaterThan(0);
+    expect(JSON.stringify(metrics)).not.toContain("Delivered tutoring");
+  });
 });

@@ -38,6 +38,24 @@ export interface ImpactTextVerificationResult {
   error?: string | null;
 }
 
+export interface ImpactTextVerificationMetrics {
+  queueDepth: number;
+  activeWorkers: number;
+  persistedResults: number;
+  aiSecondPassEnabled: boolean;
+  hasAIProviderConfig: boolean;
+  persistEnabled: boolean;
+  persistPath: string | null;
+  recommendations: Record<"approve" | "review" | "reject", number>;
+  statuses: Record<ImpactTextVerificationStatus, number>;
+  sources: Record<ImpactTextVerificationResult["source"], number>;
+  flags: Record<string, number>;
+  averageConfidence: number | null;
+  completedCount: number;
+  failedCount: number;
+  lastGeneratedAt: string | null;
+}
+
 interface QueueItem {
   logId: number;
   force: boolean;
@@ -245,6 +263,73 @@ class ImpactTextVerificationService {
 
     this.enqueue(logId);
     return defaultResult(logId, "queued");
+  }
+
+  getMetrics(): ImpactTextVerificationMetrics {
+    const recommendations: ImpactTextVerificationMetrics["recommendations"] = {
+      approve: 0,
+      review: 0,
+      reject: 0,
+    };
+    const statuses: ImpactTextVerificationMetrics["statuses"] = {
+      queued: 0,
+      processing: 0,
+      complete: 0,
+      failed: 0,
+    };
+    const sources: ImpactTextVerificationMetrics["sources"] = {
+      heuristic: 0,
+      "heuristic+ai": 0,
+    };
+    const flags: Record<string, number> = {};
+    let confidenceTotal = 0;
+    let confidenceCount = 0;
+    let lastGeneratedAt: string | null = null;
+
+    for (const result of Array.from(this.persistedResults.values())) {
+      const status = result.status;
+      const source = result.source;
+      statuses[status] += 1;
+      sources[source] += 1;
+
+      if (result.recommendation) {
+        const recommendation = result.recommendation;
+        recommendations[recommendation] += 1;
+      }
+
+      if (typeof result.confidence === "number") {
+        confidenceTotal += result.confidence;
+        confidenceCount += 1;
+      }
+
+      for (const flag of result.flags) {
+        flags[flag] = (flags[flag] || 0) + 1;
+      }
+
+      if (result.generatedAt && (!lastGeneratedAt || result.generatedAt > lastGeneratedAt)) {
+        lastGeneratedAt = result.generatedAt;
+      }
+    }
+
+    return {
+      queueDepth: this.queue.length,
+      activeWorkers: this.activeWorkers,
+      persistedResults: this.persistedResults.size,
+      aiSecondPassEnabled: isAISecondPassEnabled(),
+      hasAIProviderConfig: hasAIProviderConfig(),
+      persistEnabled: Boolean(this.persistPath),
+      persistPath: this.persistPath,
+      recommendations,
+      statuses,
+      sources,
+      flags,
+      averageConfidence: confidenceCount > 0
+        ? Number((confidenceTotal / confidenceCount).toFixed(2))
+        : null,
+      completedCount: statuses.complete,
+      failedCount: statuses.failed,
+      lastGeneratedAt,
+    };
   }
 
   enqueue(logId: number, options: { force?: boolean } = {}): void {

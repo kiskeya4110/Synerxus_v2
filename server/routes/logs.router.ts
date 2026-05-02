@@ -472,6 +472,28 @@ logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) 
 });
 
 /**
+ * GET /logs/text-verification/metrics - Operational metrics for text verification.
+ * Returns aggregate queue/result health only; raw outcome text remains available only per-log.
+ */
+logsRouter.get("/logs/text-verification/metrics", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const requestingUser = req.user!;
+
+    if (requestingUser.userType !== 'organization' && requestingUser.userType !== 'admin') {
+      const dbUser = await storage.getUser(requestingUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin or organization access required" });
+      }
+    }
+
+    res.json(impactTextVerificationService.getMetrics());
+  } catch (err) {
+    logger.error("Error fetching text verification metrics:", err);
+    res.status(500).json({ message: "Failed to fetch text verification metrics" });
+  }
+});
+
+/**
  * GET /logs/:id/text-verification - Background text-verification result for an impact log
  * Non-blocking heuristic analysis that can later be upgraded to an AI-backed verifier.
  */

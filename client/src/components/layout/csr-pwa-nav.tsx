@@ -46,7 +46,7 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] max-w-[428px] mx-auto z-40 border-t border-[#D4980C]/20 shadow-lg bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50"
+      className="fixed bottom-0 left-0 right-0 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pwa-bottom-nav z-40 border-t border-[#D4980C]/20 shadow-lg bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50"
     >
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
@@ -55,14 +55,16 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all touch-manipulation cursor-pointer active:scale-95 min-w-[56px] min-h-[44px] ${
+              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all touch-manipulation cursor-pointer active:scale-95 min-w-0 min-h-[44px] ${
                 isActive
                   ? 'bg-[#D4980C]/50 text-[#7a5200] font-semibold'
                   : 'bg-transparent text-stone-600 font-medium'
               }`}
               data-testid={`nav-csr-${item.id}`}
             >
-              <item.icon className="w-5 h-5 mb-0.5 pointer-events-none" />
+              <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center">
+                <item.icon className="w-5 h-5 pointer-events-none" />
+              </span>
               <span className="text-[10px] pointer-events-none">{item.label}</span>
             </button>
           );

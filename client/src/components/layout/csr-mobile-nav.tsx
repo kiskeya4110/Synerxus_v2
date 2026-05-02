@@ -30,7 +30,7 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-1.5 max-w-[428px] mx-auto z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-1.5 pwa-bottom-nav z-50 shadow-lg"
       style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid grid-cols-5">
@@ -42,12 +42,14 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
             <button
               key={item.id}
               onClick={() => handleNavClick(item)}
-              className={`flex flex-col items-center justify-center py-1 w-full rounded transition-all ${
+              className={`flex flex-col items-center justify-center py-1 px-1 w-full min-w-0 rounded transition-all ${
                 isActive ? 'text-[#7a5200] bg-[#D4980C]/50' : 'text-stone-500 hover:text-[#7a5200]'
               }`}
               data-testid={`csr-nav-${item.id}`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#7a5200]' : 'text-stone-500'}`} />
+              <span data-pwa-nav-icon className="w-7 h-6 flex items-center justify-center">
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#7a5200]' : 'text-stone-500'}`} />
+              </span>
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>
           );
@@ -70,10 +72,10 @@ export function CSRMobileHeader({ title, companyName, showBackButton, onBack }: 
 
   return (
     <header
-      className="bg-gradient-to-r from-purple-50 via-violet-50 to-purple-100 text-purple-900 px-3 pb-2 flex items-center justify-between sticky top-0 z-50 shadow-lg"
+      className="bg-gradient-to-r from-purple-50 via-violet-50 to-purple-100 text-purple-900 px-3 pb-2 flex items-center justify-between sticky top-0 z-50 shadow-lg pwa-compact-x"
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         {showBackButton && (
           <button
             onClick={onBack || (() => navigate('/csr-dashboard'))}
@@ -84,10 +86,10 @@ export function CSRMobileHeader({ title, companyName, showBackButton, onBack }: 
             </svg>
           </button>
         )}
-        <span className="font-semibold text-sm truncate max-w-[180px] text-purple-900">{title}</span>
+        <span className="font-semibold text-sm truncate max-w-[min(180px,55vw)] text-purple-900">{title}</span>
       </div>
       {companyName && (
-        <div className="text-[10px] text-purple-700 truncate max-w-[100px]">{companyName}</div>
+        <div className="text-[10px] text-purple-700 truncate max-w-[28vw]">{companyName}</div>
       )}
     </header>
   );

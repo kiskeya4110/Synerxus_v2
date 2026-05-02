@@ -17,7 +17,7 @@
     "start:cluster": "NODE_OPTIONS='--max-old-space-size=1024' NODE_ENV=production node dist/index-cluster.js",
     "start:production": "NODE_OPTIONS='--max-old-space-size=1024' NODE_ENV=production CLUSTER_MODE=true node dist/index-cluster.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push",
+    "db:push": "npx drizzle-kit push",
     "synerxus": "./start-synerxus.sh",
     "seed": "tsx dummy/seed-data.ts",
     "seed:bulk": "tsx dummy/seed-bulk.ts",
@@ -78,7 +78,7 @@
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
     "date-fns": "^3.6.0",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.4.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
@@ -86,7 +86,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^8.3.2",
     "express-session": "^1.18.1",
-    "fast-xml-parser": "^5.5.9",
+    "fast-xml-parser": "^5.7.2",
     "firebase": "^11.8.1",
     "firebase-admin": "^13.6.0",
     "framer-motion": "^11.13.1",
@@ -157,12 +157,10 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.2",
     "@vitest/coverage-v8": "^4.0.16",
-    "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.30.4",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.25.12",
     "jsdom": "^27.4.0",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.13",
     "supertest": "^7.1.4",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
@@ -172,5 +170,9 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1",
+    "uuid": "^14.0.0"
   }
 }

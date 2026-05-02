@@ -58,9 +58,9 @@ export default function OrganizationPWALayout({
   }, [onRefresh]);
 
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full pwa-gradient-bg text-stone-900 flex flex-col overflow-hidden">
+    <div className="pwa-shell pwa-gradient-bg text-stone-900 flex flex-col">
       {/* Centered App Container */}
-      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col overflow-hidden">
+      <div className="pwa-frame">
         {/* Shared Header */}
         <OrganizationPWAHeader
           organizationName={organizationName}
@@ -75,7 +75,7 @@ export default function OrganizationPWALayout({
 
         {/* Main Content - scrollable area between header and nav */}
         <main
-          className="flex-1 overflow-y-auto overflow-x-hidden"
+          className="pwa-scroll"
           style={{
             paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
           }}

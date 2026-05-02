@@ -1,5 +1,4 @@
 import { useState, useMemo, memo, useEffect } from "react";
-import DOMPurify from "dompurify";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -13,6 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import {
+  prepareReportContent,
+  sanitizeReportBody,
+  sanitizeReportStyles,
+} from "@/lib/report-sanitizer";
 
 // ── Corporate tab configuration ───────────────────────────────────────────────
 // To add a new tab: append one entry here + add a matching conditional block.
@@ -235,11 +239,7 @@ const CorporateView = memo(function CorporateView({
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const rawHtml = await response.text();
-      const parser = new DOMParser();
-      const parsedDoc = parser.parseFromString(rawHtml, 'text/html');
-      const styles = Array.from(parsedDoc.querySelectorAll('style')).map(s => s.textContent || '').join('\n');
-      const body = parsedDoc.body.innerHTML;
-      setReportContent({ rawHtml, styles, body });
+      setReportContent(prepareReportContent(rawHtml));
     } catch (err) {
       console.error("Report generation failed:", err);
       toast({ title: "Report failed", description: "Could not generate the ESG report. Please try again.", variant: "destructive" });
@@ -254,7 +254,7 @@ const CorporateView = memo(function CorporateView({
     if (!reportContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(DOMPurify.sanitize(reportContent.rawHtml, { FORCE_BODY: true, ADD_TAGS: ['style', 'link', 'meta'], ADD_ATTR: ['style', 'class', 'id', 'href', 'rel', 'charset', 'content', 'name'] }));
+      printWindow.document.write(reportContent.rawHtml);
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
@@ -282,13 +282,13 @@ const CorporateView = memo(function CorporateView({
         {/* Report overlay */}
         {reportContent && (
           <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-            <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+            <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
               @media print {
                 body > *:not(#synerxus-report-overlay) { display: none !important; }
                 #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
                 #synerxus-report-overlay .report-header-bar { display: none !important; }
               }
-            `}} />
+            `)}} />
             <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
               <button
                 onClick={closeReport}
@@ -317,7 +317,7 @@ const CorporateView = memo(function CorporateView({
             </div>
             <div
               className="flex-1 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
             />
           </div>
         )}
@@ -639,13 +639,13 @@ const CorporateView = memo(function CorporateView({
       {/* Report overlay */}
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-          <style dangerouslySetInnerHTML={{ __html: reportContent.styles + `
+          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
             @media print {
               body > *:not(#synerxus-report-overlay) { display: none !important; }
               #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
               #synerxus-report-overlay .report-header-bar { display: none !important; }
             }
-          `}} />
+          `)}} />
           <div className="report-header-bar flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
             <button
               onClick={closeReport}
@@ -674,7 +674,7 @@ const CorporateView = memo(function CorporateView({
           </div>
           <div
             className="flex-1 overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
           />
         </div>
       )}
@@ -1039,7 +1039,7 @@ const CorporateView = memo(function CorporateView({
                 <div className="text-[10px] text-slate-500 leading-tight">Verified impact data · Audit-ready exports</div>
               </div>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">✓ Blockchain Verified</span>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">✓ Evidence Confirmed</span>
           </div>
 
           {/* Entity Filters */}
@@ -1187,10 +1187,10 @@ const CorporateView = memo(function CorporateView({
                   </button>
                 </div>
               </div>
-              <style dangerouslySetInnerHTML={{ __html: reportContent.styles }} />
+              <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles) }} />
               <div
                 className="p-6 max-h-[70vh] overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reportContent.body, { ADD_ATTR: ['style', 'class', 'id'], FORCE_BODY: true }) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
               />
             </div>
           )}

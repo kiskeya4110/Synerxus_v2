@@ -794,7 +794,7 @@ const VolunteerView = memo(function VolunteerView({
                 <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
                   <FolderOpen className="h-10 w-10 text-stone-300 mx-auto mb-2" />
                   <p className="text-sm text-stone-500">No projects assigned yet</p>
-                  <p className="text-xs text-stone-400 mt-1">Browse opportunities below to find projects</p>
+                  <p className="text-xs text-stone-400 mt-1">Select a verified project to log measurable impact</p>
                 </div>
               )}
 

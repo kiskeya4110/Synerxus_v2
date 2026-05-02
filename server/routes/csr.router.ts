@@ -6,7 +6,8 @@ import {
   insertEmployeeActivityLogSchema,
   insertEmployeeMilestoneSchema,
   insertCSRCommitmentGoalSchema,
-  insertOrganizationSchema
+  insertOrganizationSchema,
+  type VolunteerEmployerLink
 } from "@shared/schema";
 import { z, ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -260,10 +261,11 @@ async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>>
     }
   });
 
-  // Method 2: Explicit link via volunteerEmployerLinks table
+  // Method 2: Explicit link via volunteerEmployerLinks table — only verified links grant membership
   employerLinks.forEach((link: any) => {
     const linkPartnerId = link.partnerId ? Number(link.partnerId) : null;
-    if (linkPartnerId === partnerId && link.verificationStatus !== 'rejected') {
+    const status = link.verificationStatus;
+    if (linkPartnerId === partnerId && (status === 'verified' || status === 'approved')) {
       // Get the userId from the volunteer profile
       const profile = volunteerProfiles.find((vp: any) => vp.id === link.volunteerId);
       if (profile?.userId) {
@@ -273,6 +275,42 @@ async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>>
   });
 
   return employeeUserIds;
+}
+
+/**
+ * Helper: look up a volunteer profile row by user id.
+ * Returns undefined when the user has no volunteer profile.
+ */
+async function getVolunteerProfileByUserId(userId: number): Promise<any | undefined> {
+  const profiles = await storage.listVolunteerProfiles?.() || [];
+  return profiles.find((vp: any) => vp.userId === userId);
+}
+
+/**
+ * Helper: return the verified employer link for a given *user* id (not volunteer-profile id).
+ * Only returns links with verificationStatus 'verified' or 'approved'; pending/rejected links
+ * do not grant CSR tenant membership and are treated as absent.
+ */
+async function getEmployerLinkByUserId(userId: number): Promise<VolunteerEmployerLink | undefined> {
+  const profile = await getVolunteerProfileByUserId(userId);
+  if (!profile) return undefined;
+  const link = await storage.getVolunteerEmployerLink?.(profile.id);
+  if (!link) return undefined;
+  const status = link.verificationStatus;
+  return (status === 'verified' || status === 'approved') ? link : undefined;
+}
+
+/**
+ * Authorization helper: confirms a project is within a CSR partner's authorized scope.
+ * A project is considered authorized when at least one of the partner's verified employees
+ * holds a project assignment for it. This prevents partners from attaching budget or output
+ * records to projects that have no relationship with their employee population.
+ */
+async function isProjectAuthorizedForPartner(projectId: number, partnerId: number): Promise<boolean> {
+  const linkedEmployeeIds = await getLinkedEmployeeUserIds(partnerId);
+  if (linkedEmployeeIds.size === 0) return false;
+  const assignments = await storage.listProjectAssignmentsByProject?.(projectId) || [];
+  return assignments.some((a: any) => linkedEmployeeIds.has(a.volunteerId));
 }
 
 // ==================== CSR DIAGNOSTIC & DASHBOARD ROUTES ====================
@@ -2220,7 +2258,7 @@ csrRouter.post("/csr/partners", authMiddleware, async (req: Request, res: Respon
     const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
 
     const partner = {
-      userId: authUser.id, // SECURITY: Always derive from session
+      userId: authUser.id,
       companyName,
       contactEmail,
       contactPhone,
@@ -2284,7 +2322,16 @@ csrRouter.get("/csr/partners/list", authMiddleware, async (req: Request, res: Re
     if (!authUser) return;
 
     const allPartners = await storage.listCSRPartners?.() || [];
-    res.json(allPartners);
+
+    // Return only the minimal public fields needed for employer selection;
+    // sensitive financial/internal fields are never exposed in this listing.
+    const safeList = allPartners.map((p: any) => ({
+      id: p.id,
+      companyName: p.companyName,
+      industryType: p.industryType,
+      logoUrl: p.logoUrl
+    }));
+    res.json(safeList);
   } catch (err) {
     logger.error("Error fetching CSR partners list:", err);
     res.status(500).json({ error: "Failed to fetch partners" });
@@ -2342,15 +2389,28 @@ csrRouter.patch("/csr/partners/:id", authMiddleware, async (req: Request, res: R
  * POST /csr/recognize-employee
  * Employee Recognition - Recognize top performers
  */
-csrRouter.post("/csr/recognize-employee", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/csr/recognize-employee", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
+
+    // Only CSR partner accounts may issue recognitions
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
 
     const { employeeId, badge, message, rewards } = req.body;
 
     if (!employeeId || !badge || !message) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Verify the target employee is actually linked to the caller's partner
+    const linkedEmployeeIds = await getLinkedEmployeeUserIds(callerPartner.id);
+    if (!linkedEmployeeIds.has(parseInt(employeeId))) {
+      return res.status(403).json({ error: "Access denied: this employee is not linked to your partner" });
     }
 
     // Get the user details
@@ -2369,7 +2429,7 @@ csrRouter.post("/csr/recognize-employee", authMiddleware, async (req: Request, r
       employeeName: employee.displayName || "Unknown Employee",
       badge,
       message,
-      recognizedBy: authUser.id, // SECURITY: Always derive from session
+      recognizedBy: authUser.id,
       recognizerName: recognizer?.displayName || "CSR Admin",
       rewards: rewards || [],
       createdAt: new Date().toISOString(),
@@ -2404,10 +2464,29 @@ csrRouter.post("/csr/recognize-employee", authMiddleware, async (req: Request, r
  */
 csrRouter.post("/volunteer-employers", authMiddleware, requireNgoPartnerQuota(), async (req: Request, res: Response) => {
   try {
-    const { volunteerId, partnerId, employeeId, department, jobTitle } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    // volunteerId FK references volunteerProfiles.id, not users.id
+    const volunteerProfile = await getVolunteerProfileByUserId(authUser.id);
+    if (!volunteerProfile) {
+      return res.status(400).json({ error: "No volunteer profile found for your account" });
+    }
+
+    const { partnerId, employeeId, department, jobTitle } = req.body;
+
+    // Verify the target partner exists before creating a link
+    if (!partnerId) {
+      return res.status(400).json({ error: "partnerId is required" });
+    }
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const targetPartner = allPartners.find((p: any) => p.id === partnerId);
+    if (!targetPartner) {
+      return res.status(404).json({ error: "CSR partner not found" });
+    }
 
     const link = await storage.createVolunteerEmployerLink?.({
-      volunteerId,
+      volunteerId: volunteerProfile.id, // FK to volunteerProfiles.id
       partnerId,
       employeeId,
       department,
@@ -2431,14 +2510,30 @@ csrRouter.get("/volunteer-employers/:volunteerId", authMiddleware, async (req: R
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
-    const requestedId = parseInt(req.params.volunteerId);
+    // The URL param is a volunteerProfiles.id (not users.id)
+    const requestedProfileId = parseInt(req.params.volunteerId);
 
-    // Volunteers may only view their own employer link
-    if (authUser.userType === 'volunteer' && authUser.id !== requestedId) {
-      return res.status(403).json({ error: "Access denied: you can only view your own employer link" });
+    if (authUser.userType === 'volunteer') {
+      // Volunteers may only view their own employer link — verify profile ownership
+      const ownProfile = await getVolunteerProfileByUserId(authUser.id);
+      if (!ownProfile || ownProfile.id !== requestedProfileId) {
+        return res.status(403).json({ error: "Access denied: you can only view your own employer link" });
+      }
+    } else {
+      // CSR partner accounts may only look up links for volunteers belonging to their own partner
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+      if (!callerPartner) {
+        return res.status(403).json({ error: "No CSR partner profile found for your account" });
+      }
+      const link = await storage.getVolunteerEmployerLink?.(requestedProfileId);
+      if (link && link.partnerId !== callerPartner.id) {
+        return res.status(403).json({ error: "Access denied: this volunteer is not linked to your partner" });
+      }
+      return res.json(link || null);
     }
 
-    const link = await storage.getVolunteerEmployerLink?.(requestedId);
+    const link = await storage.getVolunteerEmployerLink?.(requestedProfileId);
     res.json(link || null);
   } catch (err) {
     logger.error("Error fetching employer link:", err);
@@ -2452,7 +2547,7 @@ csrRouter.get("/volunteer-employers/:volunteerId", authMiddleware, async (req: R
  * POST /csr/challenges
  * Create a new CSR Challenge
  */
-csrRouter.post("/csr/challenges", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/csr/challenges", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -2494,7 +2589,7 @@ csrRouter.post("/csr/challenges", authMiddleware, async (req: Request, res: Resp
  * GET /csr/challenges
  * List CSR Challenges
  */
-csrRouter.get("/csr/challenges", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/challenges", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -2522,34 +2617,51 @@ csrRouter.get("/csr/challenges", authMiddleware, async (req: Request, res: Respo
  * POST /csr/budget-links
  * Create a Project Budget Link
  */
-csrRouter.post("/csr/budget-links", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/csr/budget-links", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
-    const { projectId, partnerId, budgetLineItem, allocatedBudget, volunteerHoursValue, attributedTo } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    // Enforce maxPrograms limit
-    if (partnerId) {
-      const partners = await storage.listCSRPartners?.() || [];
-      const partner = partners.find((p: any) => p.id === partnerId);
-      if (partner) {
-        const planFeatures = getPlanFeatures(partner.subscriptionTier);
-        if (planFeatures.maxPrograms !== Infinity) {
-          const existingLinks = await storage.listProjectBudgetLinks?.() || [];
-          const partnerLinks = existingLinks.filter((b: any) => b.partnerId === partnerId);
-          const distinctProjects = new Set(partnerLinks.map((b: any) => b.projectId)).size;
-          const isNewProject = !partnerLinks.some((b: any) => b.projectId === projectId);
-          if (isNewProject && distinctProjects >= planFeatures.maxPrograms) {
-            return res.status(402).json({
-              error: "Program limit reached",
-              message: `Your ${planFeatures.label} plan allows up to ${planFeatures.maxPrograms} program(s). Upgrade to add more.`
-            });
-          }
-        }
+    // Resolve partnerId from the authenticated user's own partner profile — never trust client-supplied partnerId
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
+
+    const resolvedPartnerId = callerPartner.id;
+    const { projectId, budgetLineItem, allocatedBudget, volunteerHoursValue, attributedTo } = req.body;
+
+    // Verify the project exists and is within this partner's authorized scope
+    if (projectId) {
+      const project = await storage.getProject?.(parseInt(projectId));
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const authorized = await isProjectAuthorizedForPartner(parseInt(projectId), resolvedPartnerId);
+      if (!authorized) {
+        return res.status(403).json({ error: "Access denied: your organization has no employee engagement on this project" });
+      }
+    }
+
+    // Enforce maxPrograms limit against the authenticated partner
+    const planFeatures = getPlanFeatures(callerPartner.subscriptionTier);
+    if (planFeatures.maxPrograms !== Infinity) {
+      const existingLinks = await storage.listProjectBudgetLinks?.() || [];
+      const partnerLinks = existingLinks.filter((b: any) => b.partnerId === resolvedPartnerId);
+      const distinctProjects = new Set(partnerLinks.map((b: any) => b.projectId)).size;
+      const isNewProject = !partnerLinks.some((b: any) => b.projectId === projectId);
+      if (isNewProject && distinctProjects >= planFeatures.maxPrograms) {
+        return res.status(402).json({
+          error: "Program limit reached",
+          message: `Your ${planFeatures.label} plan allows up to ${planFeatures.maxPrograms} program(s). Upgrade to add more.`
+        });
       }
     }
 
     const budgetLink = {
       projectId,
-      partnerId,
+      partnerId: resolvedPartnerId,
       budgetLineItem,
       allocatedBudget,
       volunteerHoursValue: volunteerHoursValue || 50,
@@ -2570,7 +2682,7 @@ csrRouter.post("/csr/budget-links", authMiddleware, async (req: Request, res: Re
  * GET /csr/budget-links
  * List Project Budget Links
  */
-csrRouter.get("/csr/budget-links", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/budget-links", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -2603,7 +2715,7 @@ csrRouter.get("/csr/budget-links", authMiddleware, async (req: Request, res: Res
  * POST /csr/verified-outputs
  * Create a Verified Output
  */
-csrRouter.post("/csr/verified-outputs", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/csr/verified-outputs", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -2616,9 +2728,21 @@ csrRouter.post("/csr/verified-outputs", authMiddleware, async (req: Request, res
 
     const { projectId, outputType, outputValue, evidence } = req.body;
 
+    // Verify the project exists and is within this partner's authorized scope
+    if (projectId) {
+      const project = await storage.getProject?.(parseInt(projectId));
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const authorized = await isProjectAuthorizedForPartner(parseInt(projectId), callerPartner.id);
+      if (!authorized) {
+        return res.status(403).json({ error: "Access denied: your organization has no employee engagement on this project" });
+      }
+    }
+
     const output = {
       projectId,
-      partnerId: callerPartner.id, // SECURITY: Always derive from session
+      partnerId: callerPartner.id,
       outputType,
       outputValue,
       verificationStatus: "pending",
@@ -2642,7 +2766,7 @@ csrRouter.post("/csr/verified-outputs", authMiddleware, async (req: Request, res
  * GET /csr/verified-outputs
  * List Verified Outputs
  */
-csrRouter.get("/csr/verified-outputs", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/csr/verified-outputs", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -2683,7 +2807,6 @@ csrRouter.get("/employee-engagement/summary", authMiddleware, queueMiddleware('h
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
-    // SECURITY: Always use the authenticated user's ID — never a caller-supplied userId
     const resolvedUserId = authUser.id;
 
     // Get CSR Partner for this user - check both corporate admin and employee roles
@@ -3268,12 +3391,27 @@ csrRouter.post("/employee-engagement/log-hours", authMiddleware, async (req: Req
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
-    const { commitmentId, partnerId, hoursLogged, tasksCompleted, skillsApplied, checkinType } = req.body;
+    const { hoursLogged, tasksCompleted, skillsApplied, checkinType } = req.body;
+    const commitmentId = req.body.commitmentId !== undefined ? Number(req.body.commitmentId) : undefined;
+
+    // Verify the referenced commitment belongs to the authenticated user
+    let resolvedPartnerId: number | undefined;
+    if (commitmentId) {
+      const commitments = await storage.listEmployeeCommitments?.() || [];
+      const commitment = commitments.find((c: any) => c.id === commitmentId);
+      if (!commitment) {
+        return res.status(404).json({ error: "Commitment not found" });
+      }
+      if (commitment.userId !== authUser.id) {
+        return res.status(403).json({ error: "Access denied: this commitment does not belong to your account" });
+      }
+      resolvedPartnerId = commitment.partnerId;
+    }
 
     const validated = insertEmployeeActivityLogSchema.parse({
       commitmentId,
-      userId: authUser.id, // SECURITY: Always derive from session
-      partnerId,
+      userId: authUser.id,
+      partnerId: resolvedPartnerId,
       hoursLogged,
       tasksCompleted: tasksCompleted || [],
       skillsApplied: skillsApplied || [],
@@ -3283,13 +3421,15 @@ csrRouter.post("/employee-engagement/log-hours", authMiddleware, async (req: Req
 
     const created = await storage.createEmployeeActivityLog?.(validated) || { id: Date.now() };
 
-    // Update commitment hours
-    const commitments = await storage.listEmployeeCommitments?.() || [];
-    const commitment = commitments.find((c: any) => c.id === commitmentId);
-    if (commitment) {
-      await storage.updateEmployeeCommitment?.(commitmentId, {
-        hoursCompleted: (commitment.hoursCompleted || 0) + hoursLogged
-      });
+    // Update commitment hours — re-use the already-fetched (and ownership-verified) commitment
+    if (commitmentId && resolvedPartnerId !== undefined) {
+      const commitments = await storage.listEmployeeCommitments?.() || [];
+      const commitment = commitments.find((c: any) => c.id === commitmentId);
+      if (commitment) {
+        await storage.updateEmployeeCommitment?.(commitmentId, {
+          hoursCompleted: (commitment.hoursCompleted || 0) + hoursLogged
+        });
+      }
     }
 
     res.json(created);
@@ -3344,10 +3484,41 @@ csrRouter.post("/employee-engagement/commitments", authMiddleware, async (req: R
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
-    const { partnerId, organizationId, projectId, hoursCommitted, skillsApplied } = req.body;
+    const { organizationId, projectId, hoursCommitted, skillsApplied } = req.body;
+    const partnerId = req.body.partnerId !== undefined ? Number(req.body.partnerId) : undefined;
+
+    // Verify the supplied partnerId is the partner the authenticated user is actually linked to
+    if (partnerId) {
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const isOwnPartner = allPartners.some((p: any) => p.id === partnerId && p.userId === authUser.id);
+      const employerLink = await getEmployerLinkByUserId(authUser.id);
+      const isLinkedPartner = employerLink && employerLink.partnerId === partnerId;
+      if (!isOwnPartner && !isLinkedPartner) {
+        return res.status(403).json({ error: "Access denied: you are not linked to the specified partner" });
+      }
+    }
+
+    // Verify referenced organization and project exist and are mutually consistent
+    let resolvedOrg: any;
+    if (organizationId) {
+      resolvedOrg = await storage.getOrganization?.(parseInt(organizationId));
+      if (!resolvedOrg) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+    }
+    if (projectId) {
+      const project = await storage.getProject?.(parseInt(projectId));
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      // If organizationId was also supplied, the project must belong to that organization
+      if (organizationId && project.organizationId !== parseInt(organizationId)) {
+        return res.status(400).json({ error: "Project does not belong to the specified organization" });
+      }
+    }
 
     const validated = insertEmployeeCommitmentSchema.parse({
-      userId: authUser.id, // SECURITY: Always derive from session
+      userId: authUser.id,
       partnerId,
       organizationId,
       projectId,
@@ -3368,7 +3539,7 @@ csrRouter.post("/employee-engagement/commitments", authMiddleware, async (req: R
  * POST /employee-engagement/milestones
  * Award Employee Milestone
  */
-csrRouter.post("/employee-engagement/milestones", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/milestones", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -3382,9 +3553,15 @@ csrRouter.post("/employee-engagement/milestones", authMiddleware, async (req: Re
 
     const { userId, milestoneType, milestoneValue } = req.body;
 
+    // Verify the target user is actually linked to the caller's partner
+    const linkedEmployeeIds = await getLinkedEmployeeUserIds(callerPartner.id);
+    if (!linkedEmployeeIds.has(parseInt(userId))) {
+      return res.status(403).json({ error: "Access denied: this user is not linked to your partner" });
+    }
+
     const validated = insertEmployeeMilestoneSchema.parse({
       userId,
-      partnerId: callerPartner.id, // SECURITY: Always derive from session
+      partnerId: callerPartner.id,
       milestoneType,
       milestoneValue,
       earnedDate: new Date()
@@ -3402,7 +3579,7 @@ csrRouter.post("/employee-engagement/milestones", authMiddleware, async (req: Re
  * GET /employee-engagement/csr-goals
  * Get CSR Commitment Goals
  */
-csrRouter.get("/employee-engagement/csr-goals", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/csr-goals", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -3433,7 +3610,7 @@ csrRouter.get("/employee-engagement/csr-goals", authMiddleware, async (req: Requ
  * POST /employee-engagement/csr-goals
  * Set CSR Commitment Goals
  */
-csrRouter.post("/employee-engagement/csr-goals", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/csr-goals", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
@@ -3447,7 +3624,7 @@ csrRouter.post("/employee-engagement/csr-goals", authMiddleware, async (req: Req
     const { year, targetEmployeePercent, targetTotalHours, targetSdgs } = req.body;
 
     const validated = insertCSRCommitmentGoalSchema.parse({
-      partnerId: callerPartner.id, // SECURITY: Always derive from session
+      partnerId: callerPartner.id,
       year,
       targetEmployeePercent,
       targetTotalHours,
@@ -3473,18 +3650,41 @@ csrRouter.get("/employee-engagement/impact-dashboard/:userId", authMiddleware, a
 
     const uid = parseInt(req.params.userId);
 
-    // Volunteers may only view their own dashboard
-    if (authUser.userType === 'volunteer' && authUser.id !== uid) {
-      return res.status(403).json({ error: "Access denied: you can only view your own impact dashboard" });
+    let viewerPartnerId: number | undefined;
+
+    if (authUser.userType === 'volunteer') {
+      // Volunteers may only view their own dashboard
+      if (authUser.id !== uid) {
+        return res.status(403).json({ error: "Access denied: you can only view your own impact dashboard" });
+      }
+    } else {
+      // CSR partner accounts may only view dashboards for employees linked to their own partner
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+      if (!callerPartner) {
+        return res.status(403).json({ error: "No CSR partner profile found for your account" });
+      }
+      const linkedEmployeeIds = await getLinkedEmployeeUserIds(callerPartner.id);
+      if (!linkedEmployeeIds.has(uid)) {
+        return res.status(403).json({ error: "Access denied: this user is not linked to your partner" });
+      }
+      viewerPartnerId = callerPartner.id;
     }
 
     const activities = await storage.listEmployeeActivityLogs?.() || [];
     const commitments = await storage.listEmployeeCommitments?.() || [];
     const milestones = await storage.listEmployeeMilestones?.() || [];
 
-    const userActivities = activities.filter((a: any) => a.userId === uid);
-    const userCommitments = commitments.filter((c: any) => c.userId === uid);
-    const userMilestones = milestones.filter((m: any) => m.userId === uid);
+    // Filter by the target user; if a CSR partner is viewing, additionally scope to their partner
+    const userActivities = activities.filter((a: any) =>
+      a.userId === uid && (viewerPartnerId === undefined || a.partnerId === viewerPartnerId)
+    );
+    const userCommitments = commitments.filter((c: any) =>
+      c.userId === uid && (viewerPartnerId === undefined || c.partnerId === viewerPartnerId)
+    );
+    const userMilestones = milestones.filter((m: any) =>
+      m.userId === uid && (viewerPartnerId === undefined || m.partnerId === viewerPartnerId)
+    );
 
     const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
     const economicValue = totalHours * 34.79; // $34.79/hour standard rate
@@ -3510,14 +3710,20 @@ csrRouter.get("/employee-engagement/impact-dashboard/:userId", authMiddleware, a
  * POST /employee-engagement/send-tips
  * Send engagement tips to inactive employees
  */
-csrRouter.post("/employee-engagement/send-tips", authMiddleware, async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/send-tips", authMiddleware, requireCSRAccess, async (req: Request, res: Response) => {
   try {
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
+    // Only CSR partner accounts may send engagement tips
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
+
     const { stage } = req.body;
 
-    // SECURITY: Always use the authenticated user's ID — never a caller-supplied userId
     const user = await storage.getUser?.(authUser.id);
     if (!user || !user.organizationId) {
       return res.status(404).json({ error: "User or organization not found" });

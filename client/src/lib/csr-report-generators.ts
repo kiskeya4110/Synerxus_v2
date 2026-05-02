@@ -10,6 +10,7 @@
 
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 import type { ReportTemplate } from "@/types/csr-reports.types";
+import { SYNERXUS_BOUNDARY_STATEMENT } from "@shared/content/boundary-statements";
 
 // ── File download helper ──────────────────────────────────────────────────────
 
@@ -1277,7 +1278,7 @@ export function generatePDFContent(
         <!-- ═══ Enhanced Footer ═══ -->
         <div class="report-footer">
           <div class="no-break" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #3b82f6;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:10px;color:#1e3a8a;line-height:1.6;">
-            <strong>Closing Evidence Boundary Statement:</strong> Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+            <strong>Closing Evidence Boundary Statement:</strong> ${SYNERXUS_BOUNDARY_STATEMENT}
           </div>
           <div class="footer-top">
             <div class="footer-logo-block">

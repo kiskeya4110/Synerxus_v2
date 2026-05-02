@@ -7,6 +7,7 @@ import {
   type VolunteerActivity,
   type InsertVerificationAuditLog,
 } from "@shared/schema";
+import { SYNERXUS_BOUNDARY_STATEMENT } from "@shared/content/boundary-statements";
 import { and, eq, gte, inArray } from "drizzle-orm";
 import { db, withTransaction } from "../db";
 import { logger } from "../logger";
@@ -3189,7 +3190,7 @@ ${_boundMatrixHtml}
     </div>
   </div>
   ${_contribChainHtml}
-  <div class="warn-note">&#9888; <strong>Boundary Statement:</strong> Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</div>
+  <div class="warn-note">&#9888; <strong>Boundary Statement:</strong> ${SYNERXUS_BOUNDARY_STATEMENT}</div>
 </div>
 
 ${_assuranceDiagHtml}

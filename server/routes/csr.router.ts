@@ -8,7 +8,7 @@ import {
   insertCSRCommitmentGoalSchema,
   insertOrganizationSchema
 } from "@shared/schema";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { queueMiddleware } from "../request-queue";
 import { authMiddleware, requireCSRAccess } from "../middleware/auth";
@@ -2140,20 +2140,42 @@ csrRouter.post("/csr/ngo-partners/custom", authMiddleware, requireCSRAccess, asy
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
 
+    // SECURITY: Whitelist client-supplied fields. Server controls approvalStatus,
+    // approvalNotes, verificationStatus, and any registration/audit metadata so a
+    // corporate partner cannot self-approve or self-verify a custom NGO record.
+    const customNgoInputSchema = z.object({
+      name: z.string().min(1).max(255),
+      description: z.string().max(5000).optional().nullable(),
+      mission: z.string().max(5000).optional().nullable(),
+      website: z.string().url().max(2048).optional().nullable().or(z.literal("")),
+      profileUrl: z.string().url().max(2048).optional().nullable().or(z.literal("")),
+      contactEmail: z.string().email().max(255).optional().nullable().or(z.literal("")),
+      contactPhone: z.string().max(50).optional().nullable(),
+      address: z.string().max(500).optional().nullable(),
+      city: z.string().max(120).optional().nullable(),
+      country: z.string().max(120).optional().nullable(),
+      primarySdgs: z.array(z.union([z.number().int(), z.string()])).optional().default([]),
+      needs: z.array(z.string()).optional().default([]),
+      registrationNumber: z.string().max(120).optional().nullable(),
+      source: z.string().max(120).optional().nullable(),
+      sourceId: z.string().max(255).optional().nullable(),
+    }).strict();
+    const input = customNgoInputSchema.parse(req.body);
+
     const orgPayload = insertOrganizationSchema.parse({
-      name: req.body.name,
-      description: req.body.description || req.body.mission || null,
-      website: req.body.website || req.body.profileUrl || null,
-      contactEmail: req.body.contactEmail || null,
-      contactPhone: req.body.contactPhone || null,
-      address: req.body.address || null,
-      city: req.body.city || null,
-      country: req.body.country || null,
-      goals: req.body.mission || req.body.description || null,
-      primarySdgs: Array.isArray(req.body.primarySdgs) ? req.body.primarySdgs : [],
-      needs: Array.isArray(req.body.needs) ? req.body.needs : [],
+      name: input.name,
+      description: input.description || input.mission || null,
+      website: input.website || input.profileUrl || null,
+      contactEmail: input.contactEmail || null,
+      contactPhone: input.contactPhone || null,
+      address: input.address || null,
+      city: input.city || null,
+      country: input.country || null,
+      goals: input.mission || input.description || null,
+      primarySdgs: input.primarySdgs,
+      needs: input.needs,
       approvalStatus: "pending",
-      approvalNotes: `Added by corporate partner user ${authUser.id}${req.body.source ? ` from ${req.body.source}` : ""}.`,
+      approvalNotes: `Added by corporate partner user ${authUser.id}${input.source ? ` from ${input.source}` : ""}.`,
     });
 
     const organization = await storage.createOrganization(orgPayload);
@@ -2162,17 +2184,17 @@ csrRouter.post("/csr/ngo-partners/custom", authMiddleware, requireCSRAccess, asy
       await storage.createOrganizationProfile?.({
         organizationId: organization.id,
         organizationType: "NGO",
-        missionStatement: req.body.mission || req.body.description || null,
-        websiteUrl: req.body.website || req.body.profileUrl || null,
-        registrationNumber: req.body.registrationNumber || null,
-        registrationStatus: req.body.registrationNumber ? "registered" : "pending",
+        missionStatement: input.mission || input.description || null,
+        websiteUrl: input.website || input.profileUrl || null,
+        registrationNumber: input.registrationNumber || null,
+        registrationStatus: input.registrationNumber ? "registered" : "pending",
         verificationStatus: "pending",
         willingForImpactVerification: true,
         willingToShareData: false,
-        socialMedia: req.body.source || req.body.sourceId ? {
-          importedSource: req.body.source || null,
-          importedSourceId: req.body.sourceId || null,
-          importedProfileUrl: req.body.profileUrl || null,
+        socialMedia: input.source || input.sourceId ? {
+          importedSource: input.source || null,
+          importedSourceId: input.sourceId || null,
+          importedProfileUrl: input.profileUrl || null,
         } : null,
       } as any);
     } catch (profileErr) {

@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { z } from "zod";
 import { storage } from "../storage";
 import { insertOrganizationSchema, insertOrganizationMemberSchema } from "@shared/schema";
 import { handleValidationError, getAuthenticatedUser } from "./utils";
@@ -7,6 +8,22 @@ import { isPreapprovedEmail } from "../config/preapproved-emails";
 import { authMiddleware } from "../middleware/auth";
 import { getPaginationParams, paginateArray } from "../pagination";
 import { randomBytes } from "crypto";
+
+// Whitelist for direct member-add: caller may only supply identity + role/title/department
+// + per-permission booleans. Server controls organizationId, status, invitedBy, invitedAt,
+// acceptedAt, createdAt, updatedAt — preventing audit-trail forgery and self-promotion.
+const addMemberInputSchema = z.object({
+  userId: z.coerce.number().int().positive(),
+  role: z.enum(["admin", "hr", "manager", "member"]).default("member"),
+  title: z.string().max(120).optional().nullable(),
+  department: z.string().max(120).optional().nullable(),
+  canApproveHours: z.boolean().optional(),
+  canApproveApplications: z.boolean().optional(),
+  canManageProjects: z.boolean().optional(),
+  canManageMembers: z.boolean().optional(),
+  canViewReports: z.boolean().optional(),
+  canEditOrganization: z.boolean().optional(),
+}).strict();
 
 export const organizationsRouter = Router();
 
@@ -323,22 +340,29 @@ organizationsRouter.post("/:id/members", authMiddleware, async (req: Request, re
       return res.status(404).json({ message: "Organization not found" });
     }
 
+    // SECURITY: Whitelist client-supplied fields. Server hard-codes organizationId,
+    // invitedBy, invitedAt, and status — these are audit-trail / tenancy fields that
+    // a malicious caller must not be able to inject via mass assignment.
+    const input = addMemberInputSchema.parse(req.body);
+
     // Check if user exists
-    const userId = req.body.userId;
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(input.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Check if already a member
-    const existingMember = await storage.getOrganizationMemberByUserAndOrg(userId, orgId);
+    const existingMember = await storage.getOrganizationMemberByUserAndOrg(input.userId, orgId);
     if (existingMember) {
       return res.status(409).json({ message: "User is already a member of this organization" });
     }
 
     const memberData = insertOrganizationMemberSchema.parse({
-      ...req.body,
-      organizationId: orgId
+      ...input,
+      organizationId: orgId,
+      invitedBy: authUser.id,
+      invitedAt: new Date(),
+      status: "active",
     });
 
     const member = await storage.createOrganizationMember(memberData);

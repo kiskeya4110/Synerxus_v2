@@ -743,7 +743,11 @@ export default function ProjectPortfolio() {
             🟢 Low Risk
           </button>
         </div>
-        <button onClick={() => alert("New Project creation form would open here. (Feature coming soon)")} style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+        <button
+          onClick={() => navigate("/projects")}
+          title="Open the Projects page to create a new project"
+          style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}
+        >
           <Plus style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> New Project
         </button>
       </div>

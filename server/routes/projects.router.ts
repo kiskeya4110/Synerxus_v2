@@ -420,7 +420,9 @@ projectsRouter.patch("/:id", authMiddleware, async (req: Request, res: Response)
 
     verifyOwnership(user, existingProject);
 
-    const projectData = updateProjectSchema.parse(req.body);
+    // SECURITY: Strip organizationId from client payload — tenant ownership is
+    // immutable and must never be overwritten by a client-supplied value.
+    const { organizationId: _discarded, ...projectData } = updateProjectSchema.parse(req.body);
     const updatedProject = await storage.updateProject(projectId, projectData);
 
     if (!updatedProject) {

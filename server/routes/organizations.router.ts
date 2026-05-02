@@ -611,8 +611,11 @@ organizationsRouter.get("/team-invitations/by-token/:token", async (req: Request
     // Get organization details
     const organization = await storage.getOrganization(invitation.organizationId);
 
+    // SECURITY: Strip the token from the response — the caller already has it
+    const { invitationToken: _token, ...safeInvitation } = invitation;
+
     res.json({
-      invitation,
+      invitation: safeInvitation,
       organization: organization ? {
         id: organization.id,
         name: organization.name,
@@ -652,6 +655,21 @@ organizationsRouter.post("/team-invitations/by-token/:token/accept", authMiddlew
     const user = await storage.getUser(authUser.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // SECURITY: Verify the authenticated user is the intended recipient.
+    // If the invitation targets a specific user (by ID or email), only that
+    // user may redeem it. Platform admins are exempt from this check.
+    const isAdmin = user.isAdmin === true;
+    if (!isAdmin) {
+      const emailMatches = invitation.inviteeEmail &&
+        user.email?.toLowerCase() === invitation.inviteeEmail.toLowerCase();
+      const idMatches = invitation.inviteeId && invitation.inviteeId === user.id;
+      const hasSpecificRecipient = invitation.inviteeEmail || invitation.inviteeId;
+
+      if (hasSpecificRecipient && !emailMatches && !idMatches) {
+        return res.status(403).json({ message: "This invitation was issued to a different recipient" });
+      }
     }
 
     // Check if user is already a member
@@ -1070,11 +1088,29 @@ organizationsRouter.post("/:id/invitation-templates", authMiddleware, async (req
 });
 
 // GET /api/organizations/:id/team-invitations - List team invitations for an organization
-organizationsRouter.get("/:id/team-invitations", async (req: Request, res: Response) => {
+organizationsRouter.get("/:id/team-invitations", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
+
+    // SECURITY: Only org members or platform admins may list invitations
+    const callerUser = await storage.getUser(authUser.id);
+    const callerBelongsToOrg = callerUser?.organizationId === orgId;
+    const callerIsMember = callerBelongsToOrg
+      ? true
+      : !!(await storage.getOrganizationMemberByUserAndOrg(authUser.id, orgId));
+    if (!callerBelongsToOrg && !callerIsMember && !callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const invitations = await storage.listTeamInvitations(orgId);
-    res.json(invitations);
+
+    // SECURITY: Strip the secret join token from every record before returning
+    const safeInvitations = invitations.map(({ invitationToken: _t, ...rest }) => rest);
+
+    res.json(safeInvitations);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch team invitations" });
   }

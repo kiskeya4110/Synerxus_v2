@@ -2,14 +2,8 @@ import { logger } from "../logger";
 /**
  * AIU (Attributable Impact Units) API Router
  *
- * Provides endpoints for AIU calculations at all levels:
- * - Volunteer: Individual AIU summaries
- * - Project: Project-level AIU calculations
- * - Organization: Organization-wide AIU aggregation
- * - CSR: Comprehensive CSR reporting
- *
- * All endpoints require authentication. Each handler additionally
- * verifies that the caller belongs to the referenced tenant.
+ * All endpoints require authentication. Handlers additionally verify that
+ * the caller belongs to the referenced tenant before returning data.
  */
 
 import { Router, Request, Response } from "express";
@@ -31,41 +25,50 @@ import { storage } from "../storage";
 
 export const aiuRouter = Router();
 
-// All AIU routes require authentication
+// All AIU routes require a valid session
 aiuRouter.use(authMiddleware);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** True when the authenticated user is a platform admin. */
-const isAdmin = (req: Request) => !!(req.user as any)?.isAdmin;
+/** Returns true when the authenticated user is a platform admin. */
+async function callerIsAdmin(req: Request): Promise<boolean> {
+  const user = await storage.getUser(req.user!.id);
+  return !!user?.isAdmin;
+}
 
 /**
- * Resolves whether the caller may access data for a given project.
- * Returns the project row (truthy) if allowed, null if not found, or
- * undefined if the caller has no permission.
+ * Determines whether the authenticated caller may access data for a given
+ * project. Returns `{ project, allowed }`.
+ *
+ * Access rules:
+ *  - Platform admin: always allowed.
+ *  - Organization user: only if the project belongs to their org.
+ *  - Volunteer: only if they have an assignment to the project.
+ *  - All other user types (corporate-partner, etc.): denied.
  */
-async function resolveProjectAccess(req: Request, projectId: number) {
+async function resolveProjectAccess(
+  req: Request,
+  projectId: number,
+): Promise<{ project: Awaited<ReturnType<typeof storage.getProject>>; allowed: boolean }> {
   const project = await storage.getProject(projectId);
   if (!project) return { project: null, allowed: false };
 
-  const user = req.user as any;
-  if (isAdmin(req)) return { project, allowed: true };
+  if (await callerIsAdmin(req)) return { project, allowed: true };
 
-  // Org users: project must belong to their org
-  if (user.userType === "organization" && user.organizationId === project.organizationId) {
+  const caller = req.user!;
+
+  if (
+    caller.userType === "organization" &&
+    caller.organizationId != null &&
+    caller.organizationId === project.organizationId
+  ) {
     return { project, allowed: true };
   }
 
-  // Volunteers: must be assigned to the project
-  if (user.userType === "volunteer") {
-    const assignments = await storage.listProjectAssignmentsByVolunteer(user.id);
-    const assigned = assignments.some((a: any) => a.projectId === projectId);
+  if (caller.userType === "volunteer") {
+    const assignments = await storage.listProjectAssignmentsByVolunteer(caller.id);
+    const assigned = assignments.some((a) => a.projectId === projectId);
     return { project, allowed: assigned };
-  }
-
-  // Corporate partners may view project AIU for projects in their partner orgs
-  if (user.userType === "corporate-partner") {
-    return { project, allowed: true };
   }
 
   return { project, allowed: false };
@@ -84,8 +87,7 @@ aiuRouter.get("/volunteer/:volunteerId", async (req: Request, res: Response) => 
       return res.status(400).json({ error: "Invalid volunteer ID" });
     }
 
-    const user = req.user as any;
-    if (!isAdmin(req) && user.id !== volunteerId) {
+    if (req.user!.id !== volunteerId && !(await callerIsAdmin(req))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -112,8 +114,7 @@ aiuRouter.get("/volunteer/:volunteerId/quick", async (req: Request, res: Respons
       return res.status(400).json({ error: "Invalid volunteer ID" });
     }
 
-    const user = req.user as any;
-    if (!isAdmin(req) && user.id !== volunteerId) {
+    if (req.user!.id !== volunteerId && !(await callerIsAdmin(req))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -127,8 +128,7 @@ aiuRouter.get("/volunteer/:volunteerId/quick", async (req: Request, res: Respons
 
 /**
  * GET /api/aiu/project/:projectId
- * Caller must own the project (org user), be assigned to it (volunteer),
- * be a corporate partner, or be a platform admin.
+ * Org users must own the project; volunteers must be assigned; admins unrestricted.
  */
 aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
   try {
@@ -142,9 +142,7 @@ aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
     const summary = await calculateProjectAIU(projectId);
-    if (!summary) {
-      return res.status(404).json({ error: "Project not found" });
-    }
+    if (!summary) return res.status(404).json({ error: "Project not found" });
 
     res.json(summary);
   } catch (error) {
@@ -155,7 +153,7 @@ aiuRouter.get("/project/:projectId", async (req: Request, res: Response) => {
 
 /**
  * GET /api/aiu/organization/:organizationId
- * Caller must belong to the organization or be a platform admin.
+ * Caller's organizationId must match, or caller must be a platform admin.
  */
 aiuRouter.get("/organization/:organizationId", async (req: Request, res: Response) => {
   try {
@@ -164,12 +162,11 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
       return res.status(400).json({ error: "Invalid organization ID" });
     }
 
-    const user = req.user as any;
-    if (!isAdmin(req) && user.organizationId !== organizationId) {
+    const caller = req.user!;
+    if (caller.organizationId !== organizationId && !(await callerIsAdmin(req))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // Parse filter parameters
     const projectIdParam = req.query.projectId as string | undefined;
     const startDateParam = req.query.startDate as string | undefined;
     const endDateParam = req.query.endDate as string | undefined;
@@ -213,9 +210,7 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
       organizationId,
       Object.keys(filters).length > 0 ? filters : undefined,
     );
-    if (!summary) {
-      return res.status(404).json({ error: "Organization not found" });
-    }
+    if (!summary) return res.status(404).json({ error: "Organization not found" });
 
     res.json(summary);
   } catch (error) {
@@ -226,13 +221,11 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
 
 /**
  * GET /api/aiu/csr-report
- * Caller must be an organization user, corporate-partner, or platform admin.
+ * Platform admin only — this report aggregates data across all tenants.
  */
 aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
   try {
-    const user = req.user as any;
-    const allowedTypes = ["organization", "corporate-partner"];
-    if (!isAdmin(req) && !allowedTypes.includes(user.userType)) {
+    if (!(await callerIsAdmin(req))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -243,7 +236,9 @@ aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        return res.status(400).json({ error: "Invalid date format. Use ISO 8601 format (YYYY-MM-DD)" });
+        return res
+          .status(400)
+          .json({ error: "Invalid date format. Use ISO 8601 format (YYYY-MM-DD)" });
       }
       if (start >= end) {
         return res.status(400).json({ error: "Start date must be before end date" });
@@ -261,7 +256,7 @@ aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
 
 /**
  * GET /api/aiu/project/:projectId/export/csv
- * Same access control as GET /project/:projectId.
+ * Same ownership rules as GET /project/:projectId.
  */
 aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Response) => {
   try {
@@ -275,9 +270,7 @@ aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Respon
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
     const summary = await calculateProjectAIU(projectId);
-    if (!summary) {
-      return res.status(404).json({ error: "Project not found" });
-    }
+    if (!summary) return res.status(404).json({ error: "Project not found" });
 
     const aiuInput: AIUCalculationInput = {
       kpiBefore: summary.kpiBefore,
@@ -321,7 +314,7 @@ aiuRouter.get("/project/:projectId/export/csv", async (req: Request, res: Respon
 
 /**
  * GET /api/aiu/project/:projectId/export/json
- * Same access control as GET /project/:projectId.
+ * Same ownership rules as GET /project/:projectId.
  */
 aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Response) => {
   try {
@@ -335,9 +328,7 @@ aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Respo
     if (!allowed) return res.status(403).json({ error: "Forbidden" });
 
     const summary = await calculateProjectAIU(projectId);
-    if (!summary) {
-      return res.status(404).json({ error: "Project not found" });
-    }
+    if (!summary) return res.status(404).json({ error: "Project not found" });
 
     const aiuInput: AIUCalculationInput = {
       kpiBefore: summary.kpiBefore,
@@ -387,7 +378,7 @@ aiuRouter.get("/project/:projectId/export/json", async (req: Request, res: Respo
 /**
  * POST /api/aiu/calculate
  * Any authenticated user may use this calculation utility.
- * (No tenant data is read — inputs are caller-supplied.)
+ * All inputs are caller-supplied; no tenant data is read.
  */
 aiuRouter.post("/calculate", async (req: Request, res: Response) => {
   try {

@@ -1399,10 +1399,11 @@ function PricingContactModal({
               id="pricing-contact-title"
               className="text-lg font-extrabold text-[#0A1F44] mb-2"
             >
-              Request received!
+              Request received
             </h3>
             <p className="text-slate-500 text-sm leading-relaxed mb-5">
-              We'll be in touch within one business day to discuss your{" "}
+              Thank you. Your request has been received. A Synerxus team
+              member will follow up regarding your{" "}
               <strong>
                 {PLAN_DISPLAY_NAMES[plan]?.split(" — ")[0] ?? plan}
               </strong>{" "}

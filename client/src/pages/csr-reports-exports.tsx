@@ -110,6 +110,17 @@ export default function CSRReportsExports() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<ReportTemplate | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const scheduleCancelRef = useCallback((node: HTMLButtonElement | null) => {
+    if (node) node.focus();
+  }, []);
+  useEffect(() => {
+    if (!showScheduleModal) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowScheduleModal(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showScheduleModal]);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [exportFormat, setExportFormat] = useState("PDF");
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
@@ -1172,15 +1183,35 @@ export default function CSRReportsExports() {
 
       {/* Schedule Modal */}
       {showScheduleModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "32px", maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#111827", marginBottom: "16px" }}>Schedule Automated Reports</h2>
-            <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "24px" }}>Configure automatic report generation and delivery to stakeholders.</p>
+        <div
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+          onClick={() => setShowScheduleModal(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="schedule-modal-title"
+            aria-describedby="schedule-modal-desc"
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: "white", borderRadius: "12px", padding: "32px", maxWidth: "500px", width: "90%", maxHeight: "80vh", overflowY: "auto" }}
+          >
+            <h2 id="schedule-modal-title" style={{ fontSize: "20px", fontWeight: "bold", color: "#111827", marginBottom: "16px" }}>Schedule Automated Reports</h2>
+            <p id="schedule-modal-desc" style={{ fontSize: "13px", color: "#6b7280", marginBottom: "24px" }}>Configure automatic report generation and delivery to stakeholders.</p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setShowScheduleModal(false);
+                toast({
+                  title: "Request received",
+                  description: "Thank you. Your request has been received. A Synerxus team member will follow up.",
+                });
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
               <div>
-                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Report Type</label>
-                <select style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }}>
+                <label htmlFor="schedule-report-type" style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Report Type</label>
+                <select id="schedule-report-type" name="reportType" required style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }}>
                   {reportTemplates.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -1188,8 +1219,8 @@ export default function CSRReportsExports() {
               </div>
 
               <div>
-                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Frequency</label>
-                <select style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }}>
+                <label htmlFor="schedule-frequency" style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Frequency</label>
+                <select id="schedule-frequency" name="frequency" required style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }}>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
@@ -1197,25 +1228,47 @@ export default function CSRReportsExports() {
               </div>
 
               <div>
-                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Recipients (comma-separated emails)</label>
-                <input type="text" placeholder="ceo@company.com, csr@company.com" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }} />
+                <label htmlFor="schedule-recipients" style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Recipients (comma-separated emails)</label>
+                <input
+                  id="schedule-recipients"
+                  name="recipients"
+                  type="text"
+                  required
+                  pattern="^\s*([^\s,@]+@[^\s,@]+\.[^\s,@]+)(\s*,\s*[^\s,@]+@[^\s,@]+\.[^\s,@]+)*\s*$"
+                  title="Enter one or more email addresses separated by commas"
+                  maxLength={500}
+                  placeholder="ceo@company.com, csr@company.com"
+                  style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #e5e7eb", fontSize: "14px" }}
+                />
               </div>
 
-              <div>
-                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Format</label>
+              <div role="radiogroup" aria-labelledby="schedule-format-label">
+                <span id="schedule-format-label" style={{ fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "8px", display: "block" }}>Format</span>
                 <div style={{ display: "flex", gap: "12px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
-                    <input type="radio" name="format" value="PDF" defaultChecked />
+                  <label htmlFor="schedule-format-pdf" style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                    <input id="schedule-format-pdf" type="radio" name="format" value="PDF" defaultChecked />
                     <span style={{ fontSize: "13px" }}>PDF (Audit-Ready)</span>
                   </label>
                 </div>
               </div>
-            </div>
 
-            <div style={{ display: "flex", gap: "12px", marginTop: "24px", justifyContent: "flex-end" }}>
-              <button onClick={() => setShowScheduleModal(false)} style={{ padding: "10px 20px", backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "6px", cursor: "pointer", fontSize: "14px" }}>Cancel</button>
-              <button onClick={() => { setShowScheduleModal(false); toast({ title: "Scheduled", description: "Report schedule has been saved." }); }} style={{ padding: "10px 20px", backgroundColor: "#1e3a8a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500" }}>Save Schedule</button>
-            </div>
+              <div style={{ display: "flex", gap: "12px", marginTop: "8px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  ref={scheduleCancelRef}
+                  onClick={() => setShowScheduleModal(false)}
+                  style={{ padding: "10px 20px", backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "6px", cursor: "pointer", fontSize: "14px" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: "10px 20px", backgroundColor: "#1e3a8a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500" }}
+                >
+                  Save Schedule
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -166,7 +166,9 @@ aiuRouter.get("/organization/:organizationId", async (req: Request, res: Respons
     }
 
     const caller = req.user!;
-    if (caller.organizationId !== organizationId && !(await callerIsAdmin(req))) {
+    const isOrgOwner =
+      caller.userType === "organization" && caller.organizationId === organizationId;
+    if (!isOrgOwner && !(await callerIsAdmin(req))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 

@@ -1,0 +1,90 @@
+0odzs36x9kkx3.js:21 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+0odzs36x9kkx3.js:21 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+0odzs36x9kkx3.js:21 [LaunchDarkly] LaunchDarkly client initialized
+poetry.js:134 NotSupportedError: Failed to execute 'attachShadow' on 'Element': Shadow root cannot be created on a host which already hosts a shadow tree.
+    at MA.Element.attachShadow (poetry.js:134:39731)
+    at new D2 (poetry.js:148:2733)
+    at gn (poetry.js:134:30163)
+    at Re (poetry.js:134:35696)
+    at poetry.js:134:34356
+    at la (poetry.js:134:33825)
+    at poetry.js:134:36228
+    at Hu (poetry.js:148:2376)
+Ao @ poetry.js:134
+Synerxusv2/task/f44af56f-76cb-4f21-8ad1-51f716002219:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+0i8wy8tbht2ow.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'ambient-light-sensor'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'battery'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'execution-while-not-rendered'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'execution-while-out-of-viewport'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'layout-animations'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'legacy-image-formats'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'navigation-override'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'oversized-images'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'publickey-credentials'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'speaker-selection'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'unoptimized-images'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'unsized-media'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Unrecognized feature: 'pointer-lock'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Allow attribute will take precedence over 'allowfullscreen'.
+C @ 0i8wy8tbht2ow.js:2
+0i8wy8tbht2ow.js:2 Allow attribute will take precedence over 'allowpaymentrequest'.
+C @ 0i8wy8tbht2ow.js:2
+0j210tspwt3vr.js:9 Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev') does not match the recipient window's origin ('https://replit.com').
+w @ 0j210tspwt3vr.js:9
+analytics.google.com/g/collect?v=2&tid=G-MPJY3F1YEL&gtm=45je64t1v9135634466za20g&_p=1777765686223&gcd=13l3l3l3l2l1&npa=0&dma=0&ecid=216051603&_eu=EBAIAGQC&are=1&cid=209774106.1766163413&frm=0&ir=1&pscdl=noapi&rcb=17&sr=1920x1200&uaa=x86&uab=64&uafvl=Google%2520Chrome%3B147.0.7727.138%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.138&uam=&uamb=0&uap=Windows&uapv=19.0.0&uaw=0&ul=en-us&gaf=2&_s=7&tag_exp=0~115938465~115938469~116363097&dl=https%3A%2F%2Freplit.com%2F%40alhonorat%2FSynerxusv2%2Ftask%2Ff44af56f-76cb-4f21-8ad1-51f716002219&dp=%2F%40alhonorat%2FSynerxusv2&dt=replEnvironmentDesktop&sid=1777748637&sct=81&seg=1&_tu=wAQ&en=Viewed%20replEnvironmentDesktop%20Page&_ee=1&ep.event_category=All&ep.value=0&_et=6&tfd=27799:1  Failed to load resource: net::ERR_NETWORK_CHANGED
+059efycqszhhx.js:2 WebSocket connection to 'wss://eval.worf.platform.replit.com/wsv2/v2.public.Q2dZSXlacmF6d1lTQmdqb3R0clBCaUlFZDI5eVpqQUFPdlFCQ2lSak9UWTRNalkxWVMxaU0yVXhMVFJqTWpZdE9XUXdPUzFoTTJRNFpUVXpaVEF6TjJRU0EyNXBlQm9XY21Wd2JHbDBMWEpsY0d3dFptbHNaWE10ZDI5eVppSUtVM2x1WlhKNGRYTjJNaW9KWVd4b2IyNXZjbUYwUWs0S0YzSmxjR3hwZEMxeVpYQnNMV0pzYjJOcmN5MTNiM0ptRWhWeVpYQnNhWFF0Y21Wd2JDMXRaWFJoTFhkdmNtWWFISEpsY0d4cGRDMXRZWEpuWVhKcGJtVXRZbXh2WTJ0ekxYZHZjbVpLQndqNzdNVVVFQUZRQUZvSVpYaHdiRzl5WlhKNEFJSUJGV052Ym01bFkzUnZjbk11Y21Wd2JHbDBMbU52YllvQkdBb1FSRTlmVTBWRFZWSkpW...k5RMDVPVVdkdWRWTlVKVEpHYkhGQlExUjRNMlZyUVdwS2NqTmpjbWhRWVZGV1lsUk9VVzlpT1RCcVZGbE9XbGMzWlZsSFJWQlVPWEJuWlRKYWJHTnVaVzQyVmtWcVZHdEtiV1F5UTJwbGFDVXlSalZ4VFRoc1pVTkRNbFp5VURKU1RVSjFRbUZ5UzFWUVdrRjRUR28ySlRKR1NuaFVkekEwZVVaRGVsVnRiMUF4Um5Od1JYVmpTbXRTVkVSbWJHRlRVbkZISlRKR1RVSmxia1IwVlVNMVdVVTNZMVpzTlhGVFMwRjBkMlpJV0NVeVJsVlZSbnBZVjBsMVNEQmhUams1Y3pWTlMwVXpOMmhHWTNZeFRsSmFVU1V6UkNVelJBPT3jl6uUI9645wvYy_O99Ho6NFZrLHoglc7rTjlofXfvvGLLZDKpmE-WmyNtYb1ffIEM-xPHgssn5lkJbYhzNS4M.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: 
+(anonymous) @ 059efycqszhhx.js:2
+059efycqszhhx.js:2 WebSocket connection to 'wss://eval.worf.platform.replit.com/wsv2/v2.public.Q2dZSXlwcmF6d1lTQmdqcHR0clBCaUlFZDI5eVpqQUFPdlFCQ2lSak9UWTRNalkxWVMxaU0yVXhMVFJqTWpZdE9XUXdPUzFoTTJRNFpUVXpaVEF6TjJRU0EyNXBlQm9XY21Wd2JHbDBMWEpsY0d3dFptbHNaWE10ZDI5eVppSUtVM2x1WlhKNGRYTjJNaW9KWVd4b2IyNXZjbUYwUWs0S0YzSmxjR3hwZEMxeVpYQnNMV0pzYjJOcmN5MTNiM0ptRWhWeVpYQnNhWFF0Y21Wd2JDMXRaWFJoTFhkdmNtWWFISEpsY0d4cGRDMXRZWEpuWVhKcGJtVXRZbXh2WTJ0ekxYZHZjbVpLQndqNzdNVVVFQUZRQUZvSVpYaHdiRzl5WlhKNEFJSUJGV052Ym01bFkzUnZjbk11Y21Wd2JHbDBMbU52YllvQkdBb1FSRTlmVTBWRFZWSkpW...dkdWRWTlVKVEpHYkhGQlExUjRNMlZyUVdwS2NqTmpjbWhRWVZGV1lsUk9VVzlpT1RCcVZGbE9XbGMzWlZsSFJWQlVPWEJuWlRKYWJHTnVaVzQyVmtWcVZHdEtiV1F5UTJwbGFDVXlSalZ4VFRoc1pVTkRNbFp5VURKU1RVSjFRbUZ5UzFWUVdrRjRUR28ySlRKR1NuaFVkekEwZVVaRGVsVnRiMUF4Um5Od1JYVmpTbXRTVkVSbWJHRlRVbkZISlRKR1RVSmxia1IwVlVNMVdVVTNZMVpzTlhGVFMwRjBkMlpJV0NVeVJsVlZSbnBZVjBsMVNEQmhUams1Y3pWTlMwVXpOMmhHWTNZeFRsSmFVU1V6UkNVelJBPT0ZN-TjxsV4yxW6zfH2WmofpTvQk5BpY4u12zQdYL-ECisKSg0nFBM3o3wTtvE2M_CcyhXNzajx2Nl6LeWW2r8C.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ/vdy6e70w' failed: 
+(anonymous) @ 059efycqszhhx.js:2
+04d8l..qnq7ld.js:2 WebSocket is already in CLOSING or CLOSED state.
+send @ 04d8l..qnq7ld.js:2
+stallwart.build.js:1 stallwart: failed ping 1
+0i8wy8tbht2ow.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+C @ 0i8wy8tbht2ow.js:2
+0j210tspwt3vr.js:9 Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev') does not match the recipient window's origin ('https://replit.com').
+w @ 0j210tspwt3vr.js:9
+04d8l..qnq7ld.js:2 WebSocket is already in CLOSING or CLOSED state.
+send @ 04d8l..qnq7ld.js:2
+04d8l..qnq7ld.js:2 WebSocket is already in CLOSING or CLOSED state.
+send @ 04d8l..qnq7ld.js:2
+04d8l..qnq7ld.js:2 WebSocket is already in CLOSING or CLOSED state.
+send @ 04d8l..qnq7ld.js:2
+04d8l..qnq7ld.js:2 WebSocket is already in CLOSING or CLOSED state.
+send @ 04d8l..qnq7ld.js:2
+0i8wy8tbht2ow.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+C @ 0i8wy8tbht2ow.js:2
+0j210tspwt3vr.js:9 Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev') does not match the recipient window's origin ('https://replit.com').
+w @ 0j210tspwt3vr.js:9
+0i8wy8tbht2ow.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+C @ 0i8wy8tbht2ow.js:2
+0j210tspwt3vr.js:9 Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://c968265a-b3e1-4c26-9d09-a3d8e53e037d-00-19r3q39flby1v.worf.replit.dev') does not match the recipient window's origin ('https://replit.com').
+w @ 0j210tspwt3vr.js:9

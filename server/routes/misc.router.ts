@@ -862,6 +862,21 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
       return res.status(404).json({ error: "Organization not found" });
     }
 
+    // Verify the authenticated user belongs to the specified organization
+    const callerUser = await storage.getUser(req.user!.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === parseInt(organizationId);
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      return res.status(403).json({ error: "You do not have permission to send invitations for this organization" });
+    }
+
+    // If a projectId is provided, verify it belongs to this organization
+    if (projectId) {
+      const project = await storage.getProject(parseInt(projectId));
+      if (!project || project.organizationId !== parseInt(organizationId)) {
+        return res.status(403).json({ error: "Project does not belong to this organization" });
+      }
+    }
+
     // Check if user with this email already exists
     const existingUser = await storage.getUserByEmail(email);
 

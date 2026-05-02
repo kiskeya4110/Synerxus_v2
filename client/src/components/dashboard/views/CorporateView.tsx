@@ -127,10 +127,12 @@ const CorporateView = memo(function CorporateView({
   const { data: outcomesData, isLoading, refetch } = useQuery<VerifiedOutcomesResponse>({
     queryKey: ["/api/logs/corporate-verified", queryParams],
     queryFn: async () => {
-      const res = await fetch(`/api/logs/corporate-verified?${queryParams}`);
+      const headers = await getAuthHeaders();
+      const requestInit = { headers, credentials: "include" as const };
+      const res = await fetch(`/api/logs/corporate-verified?${queryParams}`, requestInit);
       if (!res.ok) {
         // Fallback
-        const fallbackRes = await fetch(`/api/logs?corporate_id=${userId}&status=approved`);
+        const fallbackRes = await fetch(`/api/logs?corporate_id=${userId}&status=approved`, requestInit);
         if (!fallbackRes.ok) return { summary: { totalVerifiedOutcomes: 0, sdgsCovered: [], dateRange: { earliest: null, latest: null } }, logs: [] };
         const logs = await fallbackRes.json();
         return {
@@ -192,7 +194,7 @@ const CorporateView = memo(function CorporateView({
   const handleExportCSV = () => {
     if (outcomes.length === 0) return;
 
-    const headers = ["Date", "Outcome", "Type", "Quantity", "SDGs", "NGO", "Volunteer", "Project", "Verified At", "Hours"];
+    const headers = ["Date", "Outcome", "Type", "Quantity", "SDGs", "Partner Organization", "Volunteer", "Project", "Verified At", "Hours"];
     const rows = outcomes.map(o => [
       o.date ? format(new Date(o.date), "yyyy-MM-dd") : "",
       (o.outcomeText || "").replace(/"/g, '""'),
@@ -526,7 +528,7 @@ const CorporateView = memo(function CorporateView({
             <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-slate-700 font-medium mb-1">No verified outcomes yet</h3>
             <p className="text-slate-500 text-sm">
-              {activeFilterCount > 0 ? "Try adjusting your filters." : "Outcomes will appear here once NGOs verify volunteer submissions."}
+              {activeFilterCount > 0 ? "Try adjusting your filters." : "Outcomes will appear here once authorized partner organizations verify submissions."}
             </p>
           </div>
         ) : (
@@ -863,7 +865,7 @@ const CorporateView = memo(function CorporateView({
           <p className="text-slate-500 max-w-md mx-auto">
             {activeFilterCount > 0
               ? "Try adjusting your filters to see more results."
-              : "Verified outcomes will appear here once your partner NGOs verify volunteer submissions."}
+              : "Verified outcomes will appear here once your partner organizations verify submissions."}
           </p>
         </div>
       ) : (
@@ -1099,20 +1101,20 @@ const CorporateView = memo(function CorporateView({
               )}
             </div>
 
-            {/* NGO Partners */}
+            {/* Partner Organizations */}
             <div className="relative">
               <button
                 onClick={() => setReportFilterPanel(reportFilterPanel === 'ngo' ? null : 'ngo')}
                 className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors",
                   selectedNgoNames.length ? "bg-amber-50 border-amber-400 text-amber-700" : "bg-white border-slate-200 text-slate-700")}
               >
-                🌍 NGO Partners {selectedNgoNames.length > 0 && `(${selectedNgoNames.length})`}
+                Partner Organizations {selectedNgoNames.length > 0 && `(${selectedNgoNames.length})`}
                 <ChevronDown className="w-3 h-3" />
               </button>
               {reportFilterPanel === 'ngo' && (
                 <div onMouseDown={(e) => e.stopPropagation()} className="absolute top-full mt-1 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-2 min-w-[210px] max-h-52 overflow-y-auto">
                   {reportNgoOptions.length === 0
-                    ? <p className="text-xs text-slate-400 text-center py-3">No NGO partner data yet</p>
+                    ? <p className="text-xs text-slate-400 text-center py-3">No partner organization data yet</p>
                     : reportNgoOptions.map(name => (
                       <label key={name} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
                         <input type="checkbox" checked={selectedNgoNames.includes(name)} onChange={e => { if (e.target.checked) setSelectedNgoNames(p => [...p, name]); else setSelectedNgoNames(p => p.filter(n => n !== name)); }} className="accent-amber-600" />

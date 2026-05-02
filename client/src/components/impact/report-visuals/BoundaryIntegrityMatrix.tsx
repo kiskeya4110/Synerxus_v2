@@ -1,15 +1,15 @@
 export default function BoundaryIntegrityMatrix() {
   const included = [
-    "NGO-confirmed outcomes",
-    "72h verification window",
-    "Validated beneficiary counts",
-    "Immutable audit trails",
+    "Partner-confirmed outputs",
+    "Authorized verifier timestamp",
+    "Validated beneficiary counts where supplied",
+    "Structured evidence records",
   ];
 
   const excluded = [
-    "Self-reported hours",
-    "Outcomes >72h post-completion",
-    "Projected/estimated numbers",
+    "Unconfirmed self-reported hours",
+    "Unreviewed outputs",
+    "Projected/estimated numbers without partner methodology",
     "Financial SROI valuation",
   ];
 

@@ -291,7 +291,7 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{project.totalHours}h</p>
-          <p className="text-xs text-muted-foreground">Verified Outcomes</p>
+          <p className="text-xs text-muted-foreground">Hours Logged</p>
         </div>
       </div>
 
@@ -688,7 +688,7 @@ const OrganizationView = memo(function OrganizationView({
       .filter((l: any) => l.verifiedAt && l.createdAt)
       .map((l: any) => (new Date(l.verifiedAt).getTime() - new Date(l.createdAt).getTime()) / 3600000)
       .filter((h: number) => h >= 0);
-    const avgSLA = verifyTimes.length > 0
+    const avgTurnaround = verifyTimes.length > 0
       ? Math.round(verifyTimes.reduce((s: number, t: number) => s + t, 0) / verifyTimes.length)
       : 16;
     // Mirror server: editedOutcomeQuantity wins over outcomeQuantity
@@ -722,7 +722,7 @@ const OrganizationView = memo(function OrganizationView({
           outcomes: count as number,
         };
       });
-    return { verificationRate, totalHoursVerified, avgSLA, effectiveBeneficiaries, verifiedCount: verified.length, sdgEntries };
+    return { verificationRate, totalHoursVerified, avgTurnaround, effectiveBeneficiaries, verifiedCount: verified.length, sdgEntries };
   }, [allOrgLogs, reportTimePeriod]);
 
   // Pre-compute filter counts once (avoids repeated .filter() inside render)
@@ -1765,7 +1765,7 @@ const OrganizationView = memo(function OrganizationView({
                 <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
                   <FileText className="h-7 w-7 text-indigo-600" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">NGO Impact Summary</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Partner Impact Summary</h3>
                 <p className="text-xs text-gray-500 mb-3">
                   Verified hours · SDG alignment · Global sustainability framework metrics
                 </p>
@@ -2283,9 +2283,9 @@ const OrganizationView = memo(function OrganizationView({
               <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-8 w-8 text-indigo-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Impact Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Partner Impact Summary</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Global sustainability framework-aligned report with verified hours, SDG alignment, audit trail, and diaspora volunteer impact.
+                Global sustainability framework-aligned report with verified hours, SDG alignment, audit trail, and program impact.
               </p>
               <div className="flex items-center gap-3 justify-center mb-6">
                 <label className="text-xs font-medium text-muted-foreground">Time Period</label>
@@ -2332,7 +2332,7 @@ const OrganizationView = memo(function OrganizationView({
               verifiedOutcomes={reportPreviewStats.verifiedCount}
               verificationRate={reportPreviewStats.verificationRate}
               verifiedHours={reportPreviewStats.totalHoursVerified}
-              avgSLA={reportPreviewStats.avgSLA}
+              avgTurnaround={reportPreviewStats.avgTurnaround}
               verifiedBeneficiaries={reportPreviewStats.effectiveBeneficiaries}
             />
 
@@ -2351,12 +2351,12 @@ const OrganizationView = memo(function OrganizationView({
             />
 
             {/* Section 5: Global Framework Mapping */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — Global Framework Mapping</div>
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — Framework Alignment Support</div>
             <CSRDBoundaryIndicator />
 
             {/* Section 6: Contribution Pathways */}
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 6 — Contribution Pathways</div>
-            <ContributionChain avgSLA={reportPreviewStats.avgSLA} />
+            <ContributionChain avgTurnaround={reportPreviewStats.avgTurnaround} />
 
             {/* Section 7: Negative Impact Screening */}
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 7 — Negative Impact Screening</div>
@@ -2366,13 +2366,13 @@ const OrganizationView = memo(function OrganizationView({
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 8 — Engagement Metrics</div>
             <GeographicHeatmap
               verificationRate={reportPreviewStats.verificationRate}
-              avgSLA={reportPreviewStats.avgSLA}
+              avgTurnaround={reportPreviewStats.avgTurnaround}
             />
 
-            {/* Section 9: Audit Trail */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 9 — Audit Trail</div>
+            {/* Section 9: Evidence Records */}
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 9 — Evidence Records</div>
             <VerificationTimeline
-              slaComplianceRate={reportPreviewStats.verificationRate}
+              confirmationRate={reportPreviewStats.verificationRate}
             />
 
             {/* Section 10: Innovation Scoring (Verified Innovation Scaling Index) */}

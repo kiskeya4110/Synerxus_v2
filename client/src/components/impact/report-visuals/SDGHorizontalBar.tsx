@@ -118,7 +118,7 @@ export default function SDGHorizontalBar({ entries = DEFAULT_ENTRIES }: SDGHoriz
           color: "#9CA3AF",
         }}
       >
-        All percentages refer to verified outcomes only. SDG alignment confirmed by NGO program directors.
+        All percentages refer to partner-confirmed records only. SDG alignment is mapped for reporting support.
       </div>
     </div>
   );

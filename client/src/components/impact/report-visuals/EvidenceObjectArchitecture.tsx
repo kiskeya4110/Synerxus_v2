@@ -5,12 +5,12 @@ export default function EvidenceObjectArchitecture() {
       items: ["Deliverable", "Beneficiaries", "Hours", "Skills Applied"],
     },
     {
-      title: "Audit Trail",
-      items: ["Timestamp", "Verifier ID", "Geolocation", "Device Hash"],
+      title: "Evidence Record",
+      items: ["Timestamp", "Authorized verifier", "General region", "Confirmation method"],
     },
     {
-      title: "Regulatory Metadata",
-      items: ["SDG Primary/Secondary", "Framework Mapping (GRI/SASB/TCFD)", "Project ID", "Corporate Program"],
+      title: "Reporting Metadata",
+      items: ["SDG Primary/Secondary", "Framework support (GRI/SASB/ESRS)", "Project ID", "Corporate Program"],
     },
   ];
 
@@ -100,11 +100,11 @@ export default function EvidenceObjectArchitecture() {
             fontWeight: 700,
           }}
         >
-          NGO Verification ✓ within 72h
+          Partner confirmation ✓
         </span>
         <span style={{ fontSize: "10px", color: "#6B7280" }}>→</span>
         <span style={{ fontSize: "10px", color: "#374151", fontWeight: 600 }}>
-          Immutable Record Locked
+          Structured record created
         </span>
       </div>
     </div>

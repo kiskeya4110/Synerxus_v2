@@ -1,10 +1,10 @@
 interface VerificationTimelineProps {
-  slaComplianceRate?: number;
+  confirmationRate?: number;
   period?: string;
 }
 
 export default function VerificationTimeline({
-  slaComplianceRate = 85,
+  confirmationRate = 85,
   period = "Q1 2026",
 }: VerificationTimelineProps) {
   return (
@@ -28,7 +28,7 @@ export default function VerificationTimeline({
           textTransform: "uppercase",
         }}
       >
-        {period} Verification Timeline — SLA Compliance
+        {period} Confirmation Timeline
       </div>
 
       <div style={{ padding: "14px 16px", background: "#F9FAFB" }}>
@@ -51,7 +51,7 @@ export default function VerificationTimeline({
         >
           <div
             style={{
-              width: `${slaComplianceRate}%`,
+              width: `${confirmationRate}%`,
               height: "100%",
               background: "#0A2463",
             }}
@@ -71,7 +71,7 @@ export default function VerificationTimeline({
               }}
             />
             <span style={{ fontSize: "9.5px", color: "#374151", fontWeight: 600 }}>
-              {slaComplianceRate}% verified within 72h SLA
+              {confirmationRate}% partner-confirmed this period
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -99,7 +99,7 @@ export default function VerificationTimeline({
           color: "#9CA3AF",
         }}
       >
-        Timestamps verified against stated SLA. 72h SLA matches boundary definition for defensibility.
+        Timestamps support evidence review and assurance preparation.
       </div>
     </div>
   );

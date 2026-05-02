@@ -87,56 +87,24 @@ export function generateOrgPDFContent(
             size: A4 portrait;
             margin: 15mm 15mm 12mm;
           }
-          @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { -webkit-print-color-adjust: exact; } }
-          @media print { html, body { margin: 0 !important; } }
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: Arial, sans-serif; margin: 0; padding: 48px 0; color: #333; background: #fff; }
 
-          .report-section {
-            page-break-before: always;
-            break-before: page;
-          }
-          .report-section-cover {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
+          /* Sections start on new page but may run across pages if tall */
+          .report-section { page-break-before: always; break-before: page; }
+          .report-section-cover { page-break-before: avoid; break-before: avoid; page-break-inside: avoid; break-inside: avoid; }
 
-          .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 48px;
-            padding-bottom: 32px;
-            border-bottom: 3px solid #f59e0b;
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
+          .report-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 3px solid #f59e0b; page-break-inside: avoid; break-inside: avoid; }
           .header-left { flex: 2; }
-          .header-right {
-            flex: 1;
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-            padding: 16px;
-            border-radius: 12px;
-            border: 2px solid #f59e0b;
-          }
+          .header-right { flex: 1; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); padding: 16px; border-radius: 12px; border: 2px solid #f59e0b; }
 
-          .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-          }
+          .logo-container { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
           .company-divider { width: 2px; height: 32px; background: #d1d5db; margin: 0 8px; }
           .company-name { font-size: 18px; font-weight: 600; color: #374151; }
 
           .report-title { font-size: 32px; font-weight: 700; color: #111827; margin-bottom: 8px; }
           .report-subtitle { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-          .verified-badge {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white; font-size: 10px; font-weight: 700;
-            padding: 4px 12px; border-radius: 20px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-          }
+          .verified-badge { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
           .report-type { font-size: 18px; font-weight: 600; color: #6b7280; font-style: italic; }
           .report-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #6b7280; margin-top: 8px; }
           .meta-divider { color: #d1d5db; }
@@ -146,27 +114,22 @@ export function generateOrgPDFContent(
           .impact-score-value { font-size: 36px; font-weight: 800; color: #92400e; }
           .impact-score-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
-          h2 {
-            font-size: 20px; font-weight: 700; color: #92400e;
-            margin: 0 0 16px 0; padding-bottom: 8px;
-            border-bottom: 2px solid #f59e0b;
-            page-break-after: avoid;
-            break-after: avoid;
-          }
+          h2 { font-size: 20px; font-weight: 700; color: #92400e; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #f59e0b; page-break-after: avoid; break-after: avoid; }
           h2 + * { page-break-before: avoid; break-before: avoid; }
+          h2 + p { page-break-after: avoid; break-after: avoid; }
+          h2 + p + * { page-break-before: avoid; break-before: avoid; }
+          h2 + p + p { page-break-after: avoid; break-after: avoid; }
+          h2 + p + p + * { page-break-before: avoid; break-before: avoid; }
           h3 { page-break-after: avoid; break-after: avoid; }
           h3 + * { page-break-before: avoid; break-before: avoid; }
-          .report-section, .report-table-block {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
+          h3 + p { page-break-after: avoid; break-after: avoid; }
+          h3 + p + * { page-break-before: avoid; break-before: avoid; }
 
-          .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; page-break-inside: avoid; break-inside: avoid; }
-          .metric-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;
-            page-break-inside: avoid; break-inside: avoid;
-          }
+          /* Protect known self-contained blocks */
+          .report-table-block, .metric-grid, .metric-card, .report-footer { page-break-inside: avoid; break-inside: avoid; }
+
+          .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+          .metric-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; }
           .metric-card.orange { border-left: 4px solid #f59e0b; }
           .metric-card.green { border-left: 4px solid #10b981; }
           .metric-card.blue { border-left: 4px solid #3b82f6; }
@@ -174,8 +137,10 @@ export function generateOrgPDFContent(
           .metric-value { font-size: 28px; font-weight: 800; color: #92400e; }
           .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
-          table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; }
+          /* Tables: thead repeats across pages; individual rows never split */
+          table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 8px; overflow: hidden; page-break-inside: auto; }
           thead { display: table-header-group; }
+          tbody { page-break-inside: auto; }
           th { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
           td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
           tr { page-break-inside: avoid; break-inside: avoid; }
@@ -185,7 +150,7 @@ export function generateOrgPDFContent(
           .progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
           .progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); border-radius: 4px; }
 
-          .report-footer { margin-top: 56px; padding-top: 32px; border-top: 2px solid #e5e7eb; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+          .report-footer { margin-top: 56px; padding-top: 32px; border-top: 2px solid #e5e7eb; text-align: center; }
           .footer-logo { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 12px; }
           .footer-tagline { font-size: 12px; color: #6b7280; font-style: italic; margin-bottom: 12px; }
           .footer-generated { font-size: 13px; color: #374151; margin-bottom: 8px; }
@@ -193,6 +158,36 @@ export function generateOrgPDFContent(
           .footer-copyright { font-size: 11px; color: #9ca3af; margin-top: 16px; }
 
           .sdg-watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.03; pointer-events: none; z-index: -1; }
+
+          /* ── @media print: force browser print engine to honour all rules ── */
+          @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { margin: 0 !important; }
+            body { orphans: 3; widows: 3; }
+            .report-section { page-break-before: always !important; break-before: page !important; }
+            .report-section-cover { page-break-before: avoid !important; break-before: avoid !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+            h2 { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h3 { page-break-after: avoid !important; break-after: avoid !important; }
+            h3 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            table { page-break-inside: auto !important; }
+            thead { display: table-header-group !important; }
+            tbody { page-break-inside: auto !important; }
+            tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+            svg { page-break-inside: avoid !important; break-inside: avoid !important; display: block !important; }
+            h2 { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h2 + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h2 + p + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + p + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h3 { page-break-after: avoid !important; break-after: avoid !important; }
+            h3 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h3 + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h3 + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+            .metric-grid, .metric-card, .report-table-block, .report-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
+          }
         </style>
       </head>
       <body>
@@ -354,73 +349,6 @@ export function generatePDFContent(
   const economicValue = data?.financialMetrics?.volunteerHourValue || 0;
   const roi = data?.financialMetrics?.roi || 0;
   const sdgMetricsData: any[] = (data?.sdgMetrics || []).slice().sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0));
-  const impactScore = data?.impactMetrics?.impactScore || Math.round((participationRate || 0) * 0.8 + 20);
-
-  // Ring chart helper — pure SVG
-  const makeRing = (displayVal: string, pct: number, color: string, metricLabel: string, badge: string, badgeColor: string) => {
-    const r = 52;
-    const circ = 2 * Math.PI * r;
-    const filled = (circ * Math.min(Math.max(pct, 0), 1)).toFixed(1);
-    const empty = (circ - parseFloat(filled)).toFixed(1);
-    return `<div style="text-align:center;padding:8px 4px;">
-      <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="9"/>
-        <circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${filled} ${empty}" stroke-linecap="round" transform="rotate(-90 60 60)"/>
-        <text x="60" y="54" text-anchor="middle" font-size="15" font-weight="800" fill="#111827" font-family="Arial,sans-serif">${displayVal}</text>
-        <text x="60" y="70" text-anchor="middle" font-size="9" fill="#6b7280" font-family="Arial,sans-serif">${Math.round(pct * 100)}%</text>
-      </svg>
-      <div style="font-size:11px;color:#111827;font-weight:700;margin-top:2px;line-height:1.3;">${metricLabel}</div>
-      <div style="font-size:9px;font-weight:700;color:${badgeColor};margin-top:3px;padding:2px 8px;background:${badgeColor}1a;border-radius:10px;display:inline-block;">${badge}</div>
-    </div>`;
-  };
-
-  // Radar chart helper — 6-axis WEF-pillar spider
-  const buildRadarChart = () => {
-    const dims = [
-      { label: "People",       sub: "Engagement",    score: Math.min(100, activeEmployees > 0 ? Math.round((activeEmployees / 300) * 100) : 72) },
-      { label: "Planet",       sub: "Environmental", score: 65 },
-      { label: "Prosperity",   sub: "Economic",      score: Math.min(100, directBeneficiaries > 0 ? Math.round((directBeneficiaries / 8000) * 100) : 58) },
-      { label: "Governance",   sub: "Integrity",     score: 90 },
-      { label: "SDG",          sub: "Coverage",      score: Math.min(100, sdgMetricsData.length > 0 ? Math.round((sdgMetricsData.length / 12) * 100) : 67) },
-      { label: "Verification", sub: "Quality",       score: 95 },
-    ];
-    const cx = 150, cy = 150, R = 100;
-    const N = dims.length;
-    const pt = (i: number, r: number) => {
-      const a = -Math.PI / 2 + i * (2 * Math.PI / N);
-      return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-    };
-    const gridRings = [25, 50, 75, 100].map(pct => {
-      const r = R * pct / 100;
-      const pts = dims.map((_, i) => { const p = pt(i, r); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ");
-      return `<polygon points="${pts}" fill="none" stroke="${pct === 100 ? "#cbd5e1" : "#e5e7eb"}" stroke-width="${pct === 100 ? "1.5" : "0.8"}"/>`;
-    }).join("");
-    const axes = dims.map((_, i) => {
-      const p = pt(i, R);
-      return `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`;
-    }).join("");
-    const dataPts = dims.map((d, i) => { const p = pt(i, R * d.score / 100); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ");
-    const dots = dims.map((d, i) => {
-      const p = pt(i, R * d.score / 100);
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#10b981" stroke="white" stroke-width="2"/>`;
-    }).join("");
-    const labels = dims.map((d, i) => {
-      const p = pt(i, R + 26);
-      const anchor = p.x > cx + 10 ? "start" : p.x < cx - 10 ? "end" : "middle";
-      return `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="${anchor}" font-size="9.5" font-weight="700" fill="#111827" font-family="Arial,sans-serif">${d.label}</text>
-        <text x="${p.x.toFixed(1)}" y="${(p.y + 11).toFixed(1)}" text-anchor="${anchor}" font-size="8" fill="#6b7280" font-family="Arial,sans-serif">${d.sub}</text>
-        <text x="${p.x.toFixed(1)}" y="${(p.y + 22).toFixed(1)}" text-anchor="${anchor}" font-size="9" font-weight="800" fill="#10b981" font-family="Arial,sans-serif">${d.score}%</text>`;
-    }).join("");
-    const pctLabels = [25, 50, 75].map(pct => {
-      const p = pt(0, R * pct / 100);
-      return `<text x="${(p.x + 3).toFixed(1)}" y="${(p.y - 2).toFixed(1)}" font-size="7" fill="#9ca3af" font-family="Arial,sans-serif">${pct}%</text>`;
-    }).join("");
-    return `<svg viewBox="0 0 300 300" width="300" height="300" style="display:block;">
-      ${gridRings}${axes}
-      <polygon points="${dataPts}" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
-      ${dots}${pctLabels}${labels}
-    </svg>`;
-  };
 
   // SDG donut helpers — illustrative fallback keeps Climate Action (SDG 13) dominant
   const illustrativeSDGData = [
@@ -467,7 +395,7 @@ export function generatePDFContent(
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${template.name}</title>
+        <title>${template.name} — ${companyName}</title>
         <style>
           @page { size: A4 portrait; margin: 15mm 15mm 12mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -502,13 +430,37 @@ export function generatePDFContent(
           .impact-score-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
           h2 { font-size: 20px; font-weight: 700; color: #1e3a8a; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #10b981; page-break-after: avoid; break-after: avoid; }
+          /* Keep h2 glued to its immediate sibling */
           h2 + * { page-break-before: avoid; break-before: avoid; }
+          /* If the immediate sibling is an intro <p>, extend the chain to the element after it (the chart/table) */
+          h2 + p { page-break-after: avoid; break-after: avoid; }
+          h2 + p + * { page-break-before: avoid; break-before: avoid; }
+          /* Two intro paragraphs before content */
+          h2 + p + p { page-break-after: avoid; break-after: avoid; }
+          h2 + p + p + * { page-break-before: avoid; break-before: avoid; }
           h3 { page-break-after: avoid; break-after: avoid; }
           h3 + * { page-break-before: avoid; break-before: avoid; }
-          .report-section, .report-table-block { page-break-inside: avoid; break-inside: avoid; }
+          h3 + p { page-break-after: avoid; break-after: avoid; }
+          h3 + p + * { page-break-before: avoid; break-before: avoid; }
 
-          .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; page-break-inside: avoid; break-inside: avoid; }
-          .metric-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
+          /* Sections start on a new page but are allowed to run across pages if tall */
+          .report-section { page-break-before: always; break-before: page; }
+          .report-section-cover { page-break-before: avoid; break-before: avoid; page-break-inside: avoid; break-inside: avoid; }
+          /* Protect known self-contained blocks that should never be split mid-element */
+          .report-table-block,
+          .metric-grid, .metric-card,
+          .scope-grid, .scope-panel,
+          .donut-section, .geo-section,
+          .timeline-sla, .verification-record,
+          .flow-container,
+          .evidence-block,
+          .assurance-grid, .assurance-panel,
+          .framework-bar,
+          .sample-banner,
+          .report-footer { page-break-inside: avoid; break-inside: avoid; }
+
+          .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+          .metric-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; }
           .metric-card.blue { border-left: 4px solid #3b82f6; }
           .metric-card.green { border-left: 4px solid #10b981; }
           .metric-card.purple { border-left: 4px solid #8b5cf6; }
@@ -516,8 +468,10 @@ export function generatePDFContent(
           .metric-value { font-size: 28px; font-weight: 800; color: #1e3a8a; }
           .metric-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
-          table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; }
+          /* Tables: thead repeats across pages; individual rows never split */
+          table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 8px; overflow: hidden; page-break-inside: auto; }
           thead { display: table-header-group; }
+          tbody { page-break-inside: auto; }
           th { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
           td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; page-break-inside: avoid; break-inside: avoid; }
           tr { page-break-inside: avoid; break-inside: avoid; }
@@ -642,6 +596,58 @@ export function generatePDFContent(
           .assurance-panel-header.aud { color:#4c1d95; }
           .assurance-item { display:flex; align-items:flex-start; gap:7px; margin-bottom:7px; font-size:11px; color:#374151; }
           .assurance-icon { flex-shrink:0; font-size:12px; }
+
+          /* ── Utility: any div/section explicitly marked no-break ── */
+          .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .break-before { page-break-before: always !important; break-before: page !important; }
+
+          /* ── @media print: force the browser print engine to honour all rules ── */
+          @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { margin: 0 !important; }
+            body { orphans: 3; widows: 3; }
+
+            .report-section { page-break-before: always !important; break-before: page !important; }
+            .report-section-cover { page-break-before: avoid !important; break-before: avoid !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+
+            h2 { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h2 + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h2 + p + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h2 + p + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h3 { page-break-after: avoid !important; break-after: avoid !important; }
+            h3 + * { page-break-before: avoid !important; break-before: avoid !important; }
+            h3 + p { page-break-after: avoid !important; break-after: avoid !important; }
+            h3 + p + * { page-break-before: avoid !important; break-before: avoid !important; }
+
+            /* Tables: rows never split; header repeats */
+            table { page-break-inside: auto !important; }
+            thead { display: table-header-group !important; }
+            tbody { page-break-inside: auto !important; }
+            tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+
+            /* SVG and visual elements */
+            svg { page-break-inside: avoid !important; break-inside: avoid !important; display: block !important; }
+
+            /* All named block components */
+            .metric-grid, .metric-card,
+            .scope-grid, .scope-panel,
+            .donut-section, .geo-section, .geo-map,
+            .timeline-sla, .verification-record,
+            .flow-container, .flow-box,
+            .evidence-block,
+            .assurance-grid, .assurance-panel,
+            .framework-bar,
+            .sample-banner,
+            .report-footer,
+            .report-table-block,
+            .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
+
+            /* Inline-styled info-box pattern used throughout the report */
+            div[style*="border-radius"] { page-break-inside: avoid !important; break-inside: avoid !important; }
+          }
         </style>
       </head>
       <body>
@@ -667,7 +673,7 @@ export function generatePDFContent(
           </svg>
         </div>
 
-        <!-- ═══ SECTION 1: Header with WEF-first Framework Disclosure ═══ -->
+        <!-- ═══ SECTION 1: Header ═══ -->
         <div class="report-section-cover">
           <div class="sample-banner">
             <div class="sample-banner-text">⚠ SAMPLE REPORT — Illustrative data only · Not for external distribution</div>
@@ -676,15 +682,15 @@ export function generatePDFContent(
             <div class="framework-bar-primary">
               <span class="framework-primary-label">Primary Framework</span>
               <span class="wef-pill">WEF Stakeholder Capitalism Metrics</span>
-              <span class="isae-badge">ISAE 3000 Revised · Audit-Supported</span>
+              <span class="isae-badge">ISAE 3000 Revised · Assurance-Support</span>
             </div>
             <div class="framework-bar-secondary">
-              <span class="secondary-label">Also aligned:</span>
+              <span class="secondary-label">Evidence aligned for:</span>
               <span class="fw-pill">GRI Standards</span>
               <span class="fw-pill">SASB</span>
-              <span class="fw-pill">TCFD</span>
-              <span class="fw-pill global-fw">SEC Climate Rules</span>
+              <span class="fw-pill">ESRS Evidence Alignment</span>
               <span class="fw-pill">UN SDGs</span>
+              <span class="fw-pill">TCFD</span>
             </div>
           </div>
           <div class="report-header">
@@ -696,100 +702,116 @@ export function generatePDFContent(
                     <span style="color:#0A2463;">SYNERXUS</span>
                   </span>
                   <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
-                    <span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
+                    <span style="color:#D4980C;">Evidence.</span> <span style="color:#0A2463;">Verified.</span>
                   </span>
                 </div>
               </div>
               <div class="report-title">${companyName}</div>
               <div class="report-subtitle">
-                <span class="verified-badge">✓ Verified</span>
-                <span class="report-type">${template.name}</span>
+                <span class="verified-badge">✓ Partner-Confirmed</span>
+                <span class="report-type">Verified Evidence Summary</span>
               </div>
+              <div style="font-size:12px;color:#6b7280;font-style:italic;margin-top:4px;margin-bottom:6px;">Prepared for ESG / CSR Reporting and Assurance Support</div>
+              <div style="font-size:11px;font-weight:600;color:#1e3a8a;margin-bottom:8px;">Management Reporting — Verified Evidence Records</div>
               <div class="report-meta">
                 <span>📅 ${currentDate}</span>
                 <span class="meta-divider">|</span>
                 <span class="evidence-confirmed">✓ Evidence Confirmed</span>
+                <span class="meta-divider">|</span>
+                <span style="font-size:12px;color:#6b7280;">Report ID: ${reportId}</span>
               </div>
               ${filterLabel ? `<div style="margin-top:8px;font-size:12px;color:#6b7280;">🔍 ${filterLabel}</div>` : ""}
             </div>
             <div class="header-right">
               <div class="impact-score-box">
-                <h4>Overall Impact Score</h4>
-                <div class="impact-score-value">${impactScore}</div>
-                <div class="impact-score-label">out of 100</div>
+                <h4>SDGs Evidence-Mapped</h4>
+                <div class="impact-score-value">${sdgMetricsData.length || 0}</div>
+                <div class="impact-score-label">Framework-aligned goals</div>
               </div>
+            </div>
+          </div>
+          <div class="no-break" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #3b82f6;border-radius:8px;padding:12px 16px;margin-top:0;">
+            <div style="font-size:10px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">⚠ Evidence Boundary Statement</div>
+            <div style="font-size:11px;color:#374151;line-height:1.6;">Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. <strong>Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</strong> Volunteer time is an input. Partner-confirmed outputs are the verified evidence. Beneficiary reach is partner-reported unless independently verified. Framework alignment is evidence support, not compliance certification.</div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 2: Evidence Snapshot — 3-Tier Classification ═══ -->
+        <div class="report-section">
+          <h2>Evidence Snapshot — Classification by Confidence Tier</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:14px;line-height:1.6;">Metrics in the <strong>Verified</strong> tier are supported by partner confirmation. Metrics in the <strong>Partner-reported</strong> tier are reported by implementing partners according to their own methodology. Metrics in the <strong>Derived / mapped</strong> tier are generated from Synerxus classification and framework alignment rules.</p>
+
+          <div class="no-break" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+            <!-- Tier 1: Verified -->
+            <div class="no-break" style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:2px solid #10b981;border-radius:10px;padding:16px;">
+              <div style="font-size:10px;font-weight:800;color:#065f46;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span style="background:#10b981;color:white;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;">✓</span> Verified</div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${Math.round(totalHours * 0.12) || 24}</strong> <span style="color:#6b7280;">verified evidence records</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${Math.round(totalHours * 0.12) || 24}</strong> <span style="color:#6b7280;">partner-confirmed outputs</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${totalHours.toLocaleString()} hrs</strong> <span style="color:#6b7280;">verified volunteer hours</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>100%</strong> <span style="color:#6b7280;">verification rate</span></div>
+              <div style="font-size:11px;color:#111827;"><strong>4.2h</strong> <span style="color:#6b7280;">avg. time to verify</span></div>
+            </div>
+            <!-- Tier 2: Partner-reported -->
+            <div class="no-break" style="background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border:2px solid #f59e0b;border-radius:10px;padding:16px;">
+              <div style="font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span style="background:#f59e0b;color:white;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;">P</span> Partner-reported</div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${directBeneficiaries.toLocaleString()}</strong> <span style="color:#6b7280;">partner-reported beneficiary reach</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${data?.ngoPartners?.length || 5}</strong> <span style="color:#6b7280;">communities reached (partner-reported)</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><span style="color:#6b7280;">Program reach estimates per partner methodology</span></div>
+              <div style="font-size:11px;color:#6b7280;font-style:italic;margin-top:8px;font-size:10px;">Demographic and geographic reach data are partner-reported and not independently verified unless stated.</div>
+            </div>
+            <!-- Tier 3: Derived / mapped -->
+            <div class="no-break" style="background:linear-gradient(135deg,#faf5ff 0%,#ede9fe 100%);border:2px solid #8b5cf6;border-radius:10px;padding:16px;">
+              <div style="font-size:10px;font-weight:800;color:#4c1d95;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span style="background:#8b5cf6;color:white;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;">~</span> Derived / Mapped</div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><strong>${sdgMetricsData.length || 0}</strong> <span style="color:#6b7280;">SDG goals — mapped for reporting support</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><span style="color:#6b7280;">ESRS / GRI / SASB / TCFD alignment — framework support</span></div>
+              <div style="font-size:11px;color:#111827;margin-bottom:6px;"><span style="color:#6b7280;">Contribution pathways — documented, not causal attribution</span></div>
+              <div style="font-size:11px;color:#111827;"><span style="color:#6b7280;">Skills and project categories — Synerxus classification</span></div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 2: Ring Charts — 4 Hero Metrics ═══ -->
+        <!-- ═══ SECTION 3: Evidence Pipeline ═══ -->
         <div class="report-section">
-          <h2>Executive Metric Snapshot</h2>
-          <div class="ring-grid">
-            ${makeRing(
-              totalHours >= 1000 ? (totalHours / 1000).toFixed(1) + "K" : String(totalHours),
-              Math.min(totalHours / 5000, 1),
-              "#10b981", "Volunteer Hours", "✓ Audited", "#10b981"
-            )}
-            ${makeRing(
-              String(activeEmployees),
-              Math.min(activeEmployees / 500, 1),
-              "#3b82f6", "Active Employees", "✓ Verified", "#3b82f6"
-            )}
-            ${makeRing(
-              participationRate + "%",
-              participationRate / 100,
-              "#8b5cf6", "Participation Rate", "✓ NGO-Confirmed", "#8b5cf6"
-            )}
-            ${makeRing(
-              "100%",
-              1,
-              "#10b981", "Verification Rate", "✓ Fully Audited", "#10b981"
-            )}
-          </div>
-        </div>
-
-        <!-- ═══ SECTION 3: Impact Flow — Volunteer → NGO → Evidence → SDG ═══ -->
-        <div class="report-section">
-          <h2>Impact Pipeline</h2>
+          <h2>Evidence Pipeline</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:12px;line-height:1.6;">This section documents the chain connecting volunteer activity, partner-confirmed output, and reported program reach. It does not claim sole causality or causal attribution.</p>
           <div class="flow-container">
             <div class="flow-box">
               <div class="flow-icon">👥</div>
-              <div class="flow-label">Volunteer Action</div>
+              <div class="flow-label">Volunteer Activity Recorded</div>
               <div class="flow-count">${activeEmployees}</div>
-              <div class="flow-sub">Employees engaged</div>
+              <div class="flow-sub">Employees engaged (input)</div>
             </div>
             <div class="flow-arrow">→</div>
             <div class="flow-box green">
               <div class="flow-icon">🏢</div>
-              <div class="flow-label">NGO Partner</div>
+              <div class="flow-label">Authorized Partner Confirmed Output</div>
               <div class="flow-count">${data?.ngoPartners?.length || 5}</div>
-              <div class="flow-sub">Verified partners</div>
+              <div class="flow-sub">Confirmed partner organizations</div>
             </div>
             <div class="flow-arrow">→</div>
             <div class="flow-box purple">
               <div class="flow-icon">🔗</div>
-              <div class="flow-label">Evidence Object</div>
-              <div class="flow-count">${Math.round(totalHours * 0.12) || 24}</div>
-              <div class="flow-sub">Verified records</div>
+              <div class="flow-label">Partner-Reported Reach Documented</div>
+              <div class="flow-count">${directBeneficiaries.toLocaleString()}</div>
+              <div class="flow-sub">Beneficiary reach (partner-reported)</div>
             </div>
             <div class="flow-arrow">→</div>
             <div class="flow-box gold">
               <div class="flow-icon">🌍</div>
-              <div class="flow-label">SDG Outcome</div>
-              <div class="flow-count">${sdgMetricsData.length || 6}</div>
-              <div class="flow-sub">Goals addressed</div>
+              <div class="flow-label">Evidence Mapped to SDG</div>
+              <div class="flow-count">${sdgMetricsData.length || 0}</div>
+              <div class="flow-sub">Goals — documented output alignment</div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 4: Key Performance Metrics ═══ -->
+        <!-- ═══ SECTION 4: Key Engagement Metrics ═══ -->
         <div class="report-section">
-          <h2>Key Performance Metrics</h2>
+          <h2>Key Engagement Metrics</h2>
           <div class="metric-grid">
             <div class="metric-card blue">
               <div class="metric-value">${totalHours.toLocaleString()}</div>
-              <div class="metric-label">Total Volunteer Hours</div>
+              <div class="metric-label">Verified Volunteer Hours</div>
             </div>
             <div class="metric-card green">
               <div class="metric-value">${activeEmployees}</div>
@@ -801,54 +823,81 @@ export function generatePDFContent(
             </div>
             <div class="metric-card orange">
               <div class="metric-value">${directBeneficiaries.toLocaleString()}</div>
-              <div class="metric-label">Direct Beneficiaries</div>
+              <div class="metric-label">Partner-Reported Beneficiary Reach</div>
             </div>
             <div class="metric-card blue">
               <div class="metric-value">$${Math.round(economicValue / 1000)}K</div>
-              <div class="metric-label">Economic Value</div>
+              <div class="metric-label">Estimated Economic Value</div>
             </div>
             <div class="metric-card green">
-              <div class="metric-value">${roi}%</div>
-              <div class="metric-label">Return on Investment</div>
+              <div class="metric-value">${Math.round(totalHours * 0.12) || 24}</div>
+              <div class="metric-label">Verified Evidence Records</div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 5: Verification Scope Boundary ═══ -->
+        <!-- ═══ SECTION 5: Evidence Quality Scorecard ═══ -->
+        <div class="report-section">
+          <h2>Evidence Quality Scorecard</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:12px;line-height:1.6;">Completeness of evidence fields across verified records. Fields marked as incomplete or pending are not included in the Verified tier counts above.</p>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th style="width:35%">Evidence Field</th>
+                <th style="width:25%">Completeness</th>
+                <th style="width:40%">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Outcome description</td><td><span style="color:#10b981;font-weight:700;">100%</span></td><td>All confirmed records include output description</td></tr>
+              <tr><td>Partner confirmation</td><td><span style="color:#10b981;font-weight:700;">100%</span></td><td>All records carry authorized partner confirmation</td></tr>
+              <tr><td>Verification timestamp</td><td><span style="color:#10b981;font-weight:700;">100%</span></td><td>Records without timestamp classified as Pending, not Verified</td></tr>
+              <tr><td>Verifier role</td><td><span style="color:#10b981;font-weight:700;">100%</span></td><td>Authorized partner role recorded on all verified records</td></tr>
+              <tr><td>Volunteer hours linked</td><td><span style="color:#10b981;font-weight:700;">100%</span></td><td>Hours linked to associated activity records</td></tr>
+              <tr><td>Location context</td><td><span style="color:#f59e0b;font-weight:700;">Country / Region</span></td><td>Sub-national precision varies by partner; precise coordinates not disclosed</td></tr>
+              <tr><td>Sensitive technical metadata</td><td><span style="color:#6b7280;font-weight:700;">Retained internally</span></td><td>Redacted from this management report per redaction policy</td></tr>
+              <tr><td>Beneficiary methodology</td><td><span style="color:#f59e0b;font-weight:700;">Partner-reported</span></td><td>Counting methodology is partner-defined; not independently verified</td></tr>
+              <tr><td>Framework alignment</td><td><span style="color:#8b5cf6;font-weight:700;">Mapped for reporting support</span></td><td>SDG / ESRS / GRI / SASB / TCFD — alignment only, not compliance determination</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ═══ SECTION 6: Verification Scope Boundary ═══ -->
         <div class="report-section">
           <h2>Verification Scope Boundary</h2>
           <div class="scope-grid">
             <div class="scope-panel included">
               <div class="scope-header inc"><span class="scope-badge inc">INCLUDED</span> What IS verified</div>
               <div class="scope-item"><div class="scope-dot inc"></div><span>Direct employee volunteer hours (timesheet-verified)</span></div>
-              <div class="scope-item"><div class="scope-dot inc"></div><span>NGO-confirmed beneficiary outcomes (signed attestations)</span></div>
-              <div class="scope-item"><div class="scope-dot inc"></div><span>GHG Scope 1 &amp; 2 direct operations emissions</span></div>
+              <div class="scope-item"><div class="scope-dot inc"></div><span>Partner-confirmed output evidence records</span></div>
+              <div class="scope-item"><div class="scope-dot inc"></div><span>Framework alignment evidence support where applicable</span></div>
               <div class="scope-item"><div class="scope-dot inc"></div><span>Employee participation and engagement records</span></div>
               <div class="scope-item"><div class="scope-dot inc"></div><span>Community investment cash contributions</span></div>
-              <div class="scope-item"><div class="scope-dot inc"></div><span>Blockchain-anchored evidence objects</span></div>
+              <div class="scope-item"><div class="scope-dot inc"></div><span>Structured evidence records with tamper-evident audit trail</span></div>
             </div>
             <div class="scope-panel excluded">
               <div class="scope-header exc"><span class="scope-badge exc">NOT INCLUDED</span> What IS NOT verified</div>
-              <div class="scope-item"><div class="scope-dot exc"></div><span>Supply chain / Scope 3 indirect emissions</span></div>
-              <div class="scope-item"><div class="scope-dot exc"></div><span>Estimated or projected future outcomes</span></div>
+              <div class="scope-item"><div class="scope-dot exc"></div><span>Long-term or causal impact (requires independent evaluation)</span></div>
+              <div class="scope-item"><div class="scope-dot exc"></div><span>Independent beneficiary reach verification (partner-reported only)</span></div>
               <div class="scope-item"><div class="scope-dot exc"></div><span>Third-party partner financial statements</span></div>
               <div class="scope-item"><div class="scope-dot exc"></div><span>Contractor and agency worker hours</span></div>
-              <div class="scope-item"><div class="scope-dot exc"></div><span>Pro-bono service valuations (self-reported only)</span></div>
               <div class="scope-item"><div class="scope-dot exc"></div><span>Non-Synerxus-platform volunteer activities</span></div>
+              <div class="scope-item"><div class="scope-dot exc"></div><span>Regulatory compliance determination (auditor judgment required)</span></div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 6: SDG Alignment Table ═══ -->
+        <!-- ═══ SECTION 7: SDG Framework Alignment (Mapped) ═══ -->
         <div class="report-section">
-          <h2>SDG Alignment &amp; Impact</h2>
+          <h2>SDG Framework Alignment (Mapped)</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:6px;line-height:1.6;">SDG alignment is derived from Synerxus output classification and documented activity data. Alignment indicates mapping based on documented output — it does not constitute formal SDG compliance certification or independently verified causal attribution to SDG progress.</p>
           <table>
             <thead>
               <tr>
                 <th style="width:40%">SDG Goal</th>
-                <th style="width:25%">Hours Contributed</th>
-                <th style="width:20%">Progress</th>
-                <th style="width:15%">% of Total</th>
+                <th style="width:20%">Volunteer Hours (Input)</th>
+                <th style="width:20%">Mapped Hours Distribution</th>
+                <th style="width:20%">% of Total</th>
               </tr>
             </thead>
             <tbody>
@@ -857,6 +906,7 @@ export function generatePDFContent(
                   <td>
                     <span class="sdg-badge" style="background-color:${getSDGColor(sdg.goal)}">${sdg.goal}</span>
                     <span class="sdg-name">${getSDGName(sdg.goal)}</span>
+                    <div style="font-size:9px;color:#9ca3af;margin-top:2px;">Mapped to SDG ${sdg.goal} based on documented output alignment</div>
                   </td>
                   <td>${(sdg.hours || 0).toLocaleString()} hrs</td>
                   <td><div class="progress-bar"><div class="progress-fill" style="width:${sdg.percentage || 0}%"></div></div></td>
@@ -869,25 +919,26 @@ export function generatePDFContent(
           </table>
         </div>
 
-        <!-- ═══ SECTION 7: SDG Radial Donut Chart ═══ -->
+        <!-- ═══ SECTION 8: SDG Distribution Chart ═══ -->
         <div class="report-section">
-          <h2>SDG Distribution (Radial)</h2>
+          <h2>SDG Evidence Distribution</h2>
+          <p style="font-size:10px;color:#6b7280;margin-bottom:10px;font-style:italic;">Distribution by volunteer hours mapped per SDG framework alignment rules. Mapping is classification-based, not a causal impact measurement.</p>
           <div class="donut-section">
             <div>
               <svg viewBox="0 0 220 220" width="220" height="220">
                 ${buildDonutSlices()}
                 <circle cx="110" cy="110" r="48" fill="white"/>
                 <text x="110" y="106" text-anchor="middle" font-size="13" font-weight="800" fill="#1e3a8a" font-family="Arial,sans-serif">${sdgMetricsData.length || 0}</text>
-                <text x="110" y="121" text-anchor="middle" font-size="9" fill="#6b7280" font-family="Arial,sans-serif">SDGs</text>
+                <text x="110" y="121" text-anchor="middle" font-size="9" fill="#6b7280" font-family="Arial,sans-serif">SDGs mapped</text>
               </svg>
             </div>
             <div>${buildDonutLegend() || "<p style=\"color:#9ca3af;font-size:12px;\">No SDG distribution data available</p>"}</div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 8: Geographic Impact ═══ -->
+        <!-- ═══ SECTION 9: Geographic Coverage ═══ -->
         <div class="report-section">
-          <h2>Geographic Impact</h2>
+          <h2>Geographic Coverage</h2>
           <div class="geo-section">
             <div class="geo-map">
               <svg viewBox="0 0 700 320" width="100%" style="display:block;">
@@ -921,28 +972,28 @@ export function generatePDFContent(
               </svg>
             </div>
             <div class="geo-legend">
-              <div class="geo-legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#10b981;flex-shrink:0;"></div> Verified NGO Partner (4 locations · 3 continents)</div>
+              <div class="geo-legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#10b981;flex-shrink:0;"></div> Confirmed partner organization locations (4 locations · 3 continents). Precise coordinates are not disclosed; country-level data shown.</div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 9: Verification Timeline & SLA Compliance ═══ -->
+        <!-- ═══ SECTION 10: Evidence Confirmation Timeline ═══ -->
         <div class="report-section">
-          <h2>Verification Timeline &amp; SLA Compliance</h2>
+          <h2>Evidence Confirmation Timeline</h2>
           <div class="timeline-sla">
-            <div class="sla-metric"><div class="sla-value">100%</div><div class="sla-label">Within 72h SLA</div></div>
+            <div class="sla-metric"><div class="sla-value">100%</div><div class="sla-label">Partner-confirmed</div></div>
             <div class="sla-divider"></div>
-            <div class="sla-metric"><div class="sla-value">4.2h</div><div class="sla-label">Avg. Verify Time</div></div>
+            <div class="sla-metric"><div class="sla-value">4.2h</div><div class="sla-label">Avg. Confirmation Time</div></div>
             <div class="sla-divider"></div>
-            <div class="sla-metric"><div class="sla-value">${Math.round(totalHours * 0.12) || 24}</div><div class="sla-label">Records Verified</div></div>
+            <div class="sla-metric"><div class="sla-value">${Math.round(totalHours * 0.12) || 24}</div><div class="sla-label">Evidence Records Verified</div></div>
             <div class="sla-divider"></div>
-            <div class="sla-metric"><div class="sla-value">0</div><div class="sla-label">SLA Breaches</div></div>
-            <div style="margin-left:auto;background:#10b981;color:white;font-size:11px;font-weight:700;padding:8px 14px;border-radius:20px;white-space:nowrap;">✓ Fully Compliant</div>
+            <div class="sla-metric"><div class="sla-value">0</div><div class="sla-label">Open Exceptions</div></div>
+            <div style="margin-left:auto;background:#10b981;color:white;font-size:11px;font-weight:700;padding:8px 14px;border-radius:20px;white-space:nowrap;">✓ Structured</div>
           </div>
-          <div style="margin:18px 0 6px 0;page-break-inside:avoid;">
+          <div class="no-break" style="margin:18px 0 6px 0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:700;color:#111827;">Verification Time Distribution (Jan–${new Date().getFullYear()})</span>
-              <span style="font-size:10px;color:#10b981;font-weight:700;">Avg: 29h · SLA ceiling: 72h</span>
+              <span style="font-size:11px;font-weight:700;color:#111827;">Confirmation Time Distribution (Jan–${new Date().getFullYear()})</span>
+              <span style="font-size:10px;color:#10b981;font-weight:700;">Avg: 29h confirmation time</span>
             </div>
             <div style="position:relative;height:32px;background:#e5e7eb;border-radius:8px;overflow:hidden;">
               <div style="width:40.3%;height:100%;background:linear-gradient(90deg,#059669 0%,#10b981 100%);border-radius:8px 0 0 8px;display:flex;align-items:center;padding-left:10px;">
@@ -951,7 +1002,7 @@ export function generatePDFContent(
               <div style="position:absolute;right:0;top:0;width:3px;height:100%;background:#ef4444;"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:8.5px;color:#9ca3af;margin-top:4px;padding:0 1px;">
-              <span>0h</span><span>18h</span><span>36h</span><span>54h</span><span style="color:#ef4444;font-weight:700;">72h SLA</span>
+              <span>0h</span><span>18h</span><span>36h</span><span>54h</span><span style="color:#6b7280;font-weight:700;">review window</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-top:14px;padding:0 2px;">
               ${["Jan 1 — Period Open", "Jan–Mar — Collection", "Q1 Close — Attestation", "Apr — Review", "Today — Published"].map((label, i) => `
@@ -961,183 +1012,285 @@ export function generatePDFContent(
                 </div>`).join("")}
             </div>
           </div>
-          <div class="verification-record">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(148,163,184,0.2);">
-              <div class="vr-header" style="margin-bottom:0;">▸ Sample Verification Record</div>
-              <span style="font-family:'Courier New',monospace;font-size:9px;color:#475569;background:rgba(71,85,105,0.15);padding:3px 8px;border-radius:4px;">evidence ref: SYN-EV-004821</span>
-            </div>
-            <div class="vr-row"><span class="vr-key">record_id</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val green">SYN-VR-2024-00847</span></div>
-            <div class="vr-row"><span class="vr-key">submitted_by</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val">J. Mwangi · Project Lead, ${companyName}</span></div>
-            <div class="vr-row"><span class="vr-key">verified_by</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val green">Hope Foundation NGO · Nairobi, KE</span></div>
-            <div class="vr-row"><span class="vr-key">outcome</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val gold">48 beneficiaries · Digital Literacy · SDG 4</span></div>
-            <div class="vr-row"><span class="vr-key">method</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val">NGO_ATTESTATION + ATTENDANCE_REGISTER + PHOTO</span></div>
-            <div class="vr-row"><span class="vr-key">submitted_at</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val">2024-03-14T09:22:00Z</span></div>
-            <div class="vr-row"><span class="vr-key">verified_at</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val green">2024-03-14T13:47:00Z</span></div>
-            <div class="vr-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(148,163,184,0.2);"><span class="vr-key">time_to_verify</span><span style="color:#94a3b8;margin:0 6px;">:</span><span class="vr-val green" style="font-weight:700;">4h 25m ✓ Within 72h SLA</span></div>
-          </div>
         </div>
 
-        <!-- ═══ SECTION 10: NGO Partners Table ═══ -->
+        <!-- ═══ SECTION 11: Partner Organization Registry ═══ -->
         <div class="report-section">
-          <h2>NGO Partner Registry</h2>
+          <h2>Partner Organization Registry</h2>
           <table>
             <thead>
               <tr>
                 <th>Partner Organization</th>
                 <th>Country</th>
                 <th>WEF Pillar</th>
-                <th>Verified Hours</th>
-                <th>Status</th>
+                <th>Volunteer Hours (Input)</th>
+                <th>Evidence Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td><strong>Hope Foundation</strong></td><td>Kenya 🇰🇪</td><td><span class="pillar-tag pillar-people">People</span><span class="pillar-tag pillar-planet">Planet</span></td><td>312 hrs</td><td style="color:#10b981;font-weight:700;">✓ Verified</td></tr>
-              <tr><td><strong>Digital Access PH</strong></td><td>Philippines 🇵🇭</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>186 hrs</td><td style="color:#10b981;font-weight:700;">✓ Verified</td></tr>
-              <tr><td><strong>Green Futures Zambia</strong></td><td>Zambia 🇿🇲</td><td><span class="pillar-tag pillar-planet">Planet</span></td><td>240 hrs</td><td style="color:#10b981;font-weight:700;">✓ Verified</td></tr>
-              <tr><td><strong>Community Health NG</strong></td><td>Nigeria 🇳🇬</td><td><span class="pillar-tag pillar-people">People</span><span class="pillar-tag pillar-governance">Governance</span></td><td>158 hrs</td><td style="color:#f59e0b;font-weight:700;">⏳ Pending Attestation</td></tr>
-              <tr><td><strong>Ayiti Tech Haiti</strong></td><td>Haiti 🇭🇹</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>94 hrs</td><td style="color:#10b981;font-weight:700;">✓ Verified</td></tr>
+              <tr><td><strong>Hope Foundation</strong></td><td>Kenya 🇰🇪</td><td><span class="pillar-tag pillar-people">People</span><span class="pillar-tag pillar-planet">Planet</span></td><td>312 hrs input</td><td style="color:#10b981;font-weight:700;">✓ Output Confirmed</td></tr>
+              <tr><td><strong>Digital Access PH</strong></td><td>Philippines 🇵🇭</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>186 hrs input</td><td style="color:#10b981;font-weight:700;">✓ Output Confirmed</td></tr>
+              <tr><td><strong>Green Futures Zambia</strong></td><td>Zambia 🇿🇲</td><td><span class="pillar-tag pillar-planet">Planet</span></td><td>240 hrs input</td><td style="color:#10b981;font-weight:700;">✓ Output Confirmed</td></tr>
+              <tr><td><strong>Community Health NG</strong></td><td>Nigeria 🇳🇬</td><td><span class="pillar-tag pillar-people">People</span><span class="pillar-tag pillar-governance">Governance</span></td><td>158 hrs input</td><td style="color:#f59e0b;font-weight:700;">⏳ Pending Confirmation</td></tr>
+              <tr><td><strong>Ayiti Tech Haiti</strong></td><td>Haiti 🇭🇹</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>94 hrs input</td><td style="color:#10b981;font-weight:700;">✓ Output Confirmed</td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- ═══ SECTION 11: Sample Evidence Object ═══ -->
+        <!-- ═══ SECTION 12: Sample Verified Evidence Records ═══ -->
         <div class="report-section">
-          <h2>Sample Evidence Object</h2>
+          <h2>Sample Verified Evidence Records</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:10px;line-height:1.6;">Records below are illustrative samples of partner-confirmed evidence. Sensitive technical metadata is retained internally and redacted from this management report.</p>
           <div class="evidence-block">
-            <div class="evidence-title">// Synerxus Evidence Object · ISAE 3000 Revised · Blockchain-Anchored</div>
+            <div class="evidence-title">// Synerxus Evidence Record · Assurance-Support Documentation</div>
             <div class="evidence-line"><span class="ev-bracket">{</span></div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"evidence_id"</span>: <span class="ev-val str">"SYN-EV-2024-004821"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"framework"</span>: <span class="ev-val str">"WEF Stakeholder Capitalism Metrics v2.0"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"wef_pillar"</span>: <span class="ev-val str">"People"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"sdg_mapping"</span>: [<span class="ev-val num">4</span>, <span class="ev-val num">8</span>, <span class="ev-val num">10</span>],</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"evidence_record_id"</span>: <span class="ev-val str">"SYN-EV-2024-004821"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"project_name"</span>: <span class="ev-val str">"Digital Literacy Programme — Nairobi"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"output_description"</span>: <span class="ev-val str">"Digital skills training delivered to community learners"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"activity_context"</span>: <span class="ev-val str">"Corporate volunteer engagement — employee-delivered sessions"</span>,</div>
             <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"volunteer_hours"</span>: <span class="ev-val num">48</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"beneficiaries_direct"</span>: <span class="ev-val num">312</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"ngo_verified"</span>: <span class="ev-val bool">true</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"authorized_verifier"</span>: <span class="ev-val str">"Authorized NGO verifier"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"assurance_standard"</span>: <span class="ev-val str">"ISAE 3000 Revised"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"evidence_reference"</span>: <span class="ev-val str">"SYN-EV-004821"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"timestamp_utc"</span>: <span class="ev-val str">"2024-03-14T13:47:00Z"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"gri_disclosure"</span>: <span class="ev-val str">"GRI 413-1"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"sasb_indicator"</span>: <span class="ev-val str">"HC-MS-310a.1"</span>,</div>
-            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"framework_mapping"</span>: <span class="ev-val str">"GRI 403 · SASB SO-ES-110.C · TCFD Principle 7"</span></div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"authorized_partner_confirmation"</span>: <span class="ev-val str">"Hope Foundation · Nairobi, KE — Authorized Verifier"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"verification_status"</span>: <span class="ev-val bool">PARTNER_CONFIRMED</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"verification_timestamp"</span>: <span class="ev-val str">"2024-03-14T13:47:00Z"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"location_level"</span>: <span class="ev-val str">"Country: Kenya (sub-national detail retained internally)"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"framework_alignment"</span>: <span class="ev-val str">"SDG 4 (mapped) · GRI 413-1 · ESRS S3 (evidence support)"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"beneficiary_reach"</span>: <span class="ev-val str">"Partner-reported: 312 beneficiaries (partner methodology)"</span>,</div>
+            <div class="evidence-line">&nbsp;&nbsp;<span class="ev-key">"redaction_note"</span>: <span class="ev-val str">"Device ID, verification routing, and identity metadata redacted"</span></div>
             <div class="evidence-line"><span class="ev-bracket">}</span></div>
           </div>
         </div>
 
-        <!-- ═══ SECTION 12: Framework Alignment Matrix ═══ -->
+        <!-- ═══ SECTION 13: Framework Alignment for Reporting Support ═══ -->
         <div class="report-section">
-          <h2>Framework Alignment Matrix</h2>
-          <p style="font-size:11px;color:#6b7280;margin-bottom:12px;font-style:italic;">Primary framework: WEF Stakeholder Capitalism Metrics. Secondary alignments shown below.</p>
+          <h2>Framework Alignment for Reporting Support</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:12px;line-height:1.6;">The table below documents how Synerxus evidence records map to reporting frameworks. Alignment supports disclosure preparation. It does not constitute compliance determination or formal assurance. Regulatory compliance requires independent qualified assurance provider review.</p>
           <table class="matrix-table">
             <thead>
               <tr>
-                <th style="width:22%">WEF SCM Metric</th>
-                <th style="width:14%">Pillar</th>
-                <th style="width:16%">GRI Standard</th>
-                <th style="width:16%">SASB</th>
-                <th style="width:16%">TCFD</th>
-                <th style="width:16%">SEC / Global</th>
+                <th style="width:14%">Framework / Standard</th>
+                <th style="width:20%">Reporting Topic</th>
+                <th style="width:36%">Evidence Support</th>
+                <th style="width:30%">Limitation</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td class="wef-col">Volunteer Engagement Hours</td><td><span class="pillar-tag pillar-people">People</span></td><td>GRI 413-1</td><td>HC-MS-310a.1</td><td>No direct equiv.</td><td>SEC Item 103</td></tr>
-              <tr><td class="wef-col">Community Investment ($)</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>GRI 201-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>SEC S-K 101</td></tr>
-              <tr><td class="wef-col">GHG Emissions (Scope 1&amp;2)</td><td><span class="pillar-tag pillar-planet">Planet</span></td><td>GRI 305-1/2</td><td>EM-IS-110a.1</td><td>Metrics &amp; Targets</td><td>SEC Climate Rules</td></tr>
-              <tr><td class="wef-col">Board Diversity &amp; Structure</td><td><span class="pillar-tag pillar-governance">Governance</span></td><td>GRI 405-1</td><td>CG-EC-330a.1</td><td>Governance</td><td>SEC S-K 402</td></tr>
-              <tr><td class="wef-col">Employee Training Investment</td><td><span class="pillar-tag pillar-people">People</span></td><td>GRI 404-1</td><td>HC-MS-330a.1</td><td>No direct equiv.</td><td>SEC HCM Disc.</td></tr>
-              <tr><td class="wef-col">Beneficiaries Reached</td><td><span class="pillar-tag pillar-prosperity">Prosperity</span></td><td>GRI 413-1</td><td>No direct equiv.</td><td>No direct equiv.</td><td>SDG 17.17</td></tr>
+              <tr>
+                <td class="wef-col">ESRS S3</td>
+                <td>Affected communities</td>
+                <td>Partner-confirmed community outputs and related evidence records</td>
+                <td style="font-size:10px;color:#92400e;">Does not constitute CSRD compliance determination or formal assurance</td>
+              </tr>
+              <tr>
+                <td class="wef-col">GRI 413</td>
+                <td>Local communities</td>
+                <td>Partner-confirmed local community program outputs</td>
+                <td style="font-size:10px;color:#92400e;">Beneficiary reach remains partner-reported unless separately verified</td>
+              </tr>
+              <tr>
+                <td class="wef-col">GRI 404-1</td>
+                <td>Training &amp; education</td>
+                <td>Volunteer hours classified as skills-based; partner-confirmed delivery evidence</td>
+                <td style="font-size:10px;color:#92400e;">Learning outcomes are not independently assessed</td>
+              </tr>
+              <tr>
+                <td class="wef-col">SASB HC-MS-310a.1</td>
+                <td>Community engagement</td>
+                <td>Volunteer engagement hours with partner-confirmed output records</td>
+                <td style="font-size:10px;color:#92400e;">Industry-specific applicability varies; not a compliance determination</td>
+              </tr>
+              <tr>
+                <td class="wef-col">WEF SCM — People</td>
+                <td>Volunteer engagement</td>
+                <td>Verified volunteer hours; partner-confirmed community outputs</td>
+                <td style="font-size:10px;color:#92400e;">WEF SCM alignment does not constitute formal assurance opinion</td>
+              </tr>
+              <tr>
+                <td class="wef-col">UN SDGs</td>
+                <td>SDG contribution evidence</td>
+                <td>Evidence mapped to SDGs based on documented output classification</td>
+                <td style="font-size:10px;color:#92400e;">Mapping indicates contribution alignment, not independently verified SDG advancement</td>
+              </tr>
+              <tr>
+                <td class="wef-col">ESRS / CSRD</td>
+                <td>CSRD/ESRS Evidence Alignment</td>
+                <td>Structured evidence records aligned to applicable ESRS disclosure topics</td>
+                <td style="font-size:10px;color:#92400e;">CSRD compliance requires independent auditor review. Synerxus provides evidence support only.</td>
+              </tr>
             </tbody>
           </table>
-          <p class="matrix-note">Full crosswalk documentation available upon request: assurance@synerxus.com</p>
+          <p class="matrix-note">Full evidence crosswalk documentation available upon request: assurance@synerxus.com</p>
         </div>
 
-        <!-- ═══ SECTION 13: Impact Radar Chart ═══ -->
+        <!-- ═══ SECTION 14: Negative Impact Screening Summary ═══ -->
         <div class="report-section">
-          <h2>Impact Performance Radar — WEF Pillar Overview</h2>
-          <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center;page-break-inside:avoid;">
-            <div style="display:flex;justify-content:center;">
-              ${buildRadarChart()}
-            </div>
-            <div>
-              <p style="font-size:11px;color:#374151;margin-bottom:14px;line-height:1.6;">Performance scored across the six WEF Stakeholder Capitalism Metric pillars.</p>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                ${["People · Engagement", "Planet · Environmental", "Prosperity · Economic", "Governance · Integrity", "SDG · Coverage", "Verification · Quality"].map((label, i) => {
-                  const scores = [
-                    Math.min(100, activeEmployees > 0 ? Math.round((activeEmployees / 300) * 100) : 72),
-                    65,
-                    Math.min(100, directBeneficiaries > 0 ? Math.round((directBeneficiaries / 8000) * 100) : 58),
-                    90,
-                    Math.min(100, sdgMetricsData.length > 0 ? Math.round((sdgMetricsData.length / 12) * 100) : 67),
-                    95,
-                  ];
-                  const s = scores[i];
-                  const color = s >= 85 ? "#10b981" : s >= 60 ? "#3b82f6" : "#f59e0b";
-                  return `<div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:10px;font-weight:600;color:#374151;min-width:150px;">${label}</span>
-                    <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
-                      <div style="width:${s}%;height:100%;background:${color};border-radius:4px;"></div>
-                    </div>
-                    <span style="font-size:10px;font-weight:800;color:${color};min-width:32px;text-align:right;">${s}%</span>
-                  </div>`;
-                }).join("")}
+          <h2>Negative Impact Screening Summary</h2>
+          <div class="no-break" style="background:#f0fdf4;border:1.5px solid #10b981;border-radius:8px;padding:14px 18px;margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:6px;">Screening Period: ${currentDate}</div>
+            <div style="font-size:11px;color:#374151;line-height:1.6;margin-bottom:8px;">No negative impacts were reported through the partner-administered screening process during this period. This does not rule out unobserved, long-term, or independently unreported impacts.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;">
+              <div style="text-align:center;padding:10px;background:white;border-radius:6px;border:1px solid #d1fae5;">
+                <div style="font-size:18px;font-weight:800;color:#065f46;">0</div>
+                <div style="font-size:9px;color:#6b7280;text-transform:uppercase;margin-top:2px;">Negative impacts reported</div>
               </div>
-              <p style="font-size:9px;color:#9ca3af;margin-top:12px;font-style:italic;">Scores calculated from verified platform data. Illustrative values used where live data is unavailable.</p>
+              <div style="text-align:center;padding:10px;background:white;border-radius:6px;border:1px solid #d1fae5;">
+                <div style="font-size:18px;font-weight:800;color:#065f46;">0</div>
+                <div style="font-size:9px;color:#6b7280;text-transform:uppercase;margin-top:2px;">Issues flagged</div>
+              </div>
+              <div style="text-align:center;padding:10px;background:white;border-radius:6px;border:1px solid #d1fae5;">
+                <div style="font-size:18px;font-weight:800;color:#f59e0b;">Outside scope</div>
+                <div style="font-size:9px;color:#6b7280;text-transform:uppercase;margin-top:2px;">Long-term / indirect impacts</div>
+              </div>
             </div>
+          </div>
+          <div class="no-break" style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:10px;color:#92400e;line-height:1.6;">
+            <strong>Screening limitations:</strong> This screening covers partner-reported activity data within the Synerxus platform. It does not assess unobserved, indirect, or long-term negative impacts. Absence of reported negative impacts does not constitute proof that no negative impacts occurred.
           </div>
         </div>
 
-        <!-- ═══ SECTION 14: Assurance Boundary ═══ -->
+        <!-- ═══ SECTION 15: Contribution Pathway ═══ -->
         <div class="report-section">
-          <h2>Assurance Boundary: Global Verification Scope</h2>
-          <p style="font-size:10px;color:#374151;line-height:1.6;margin-bottom:14px;">This report provides verified outcome data supporting multiple global sustainability frameworks. It does not replace independent assurance per ISAE 3000.</p>
-          <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+          <h2>Contribution Pathway — Evidence Chain</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:12px;line-height:1.6;">This section documents <strong>contribution evidence</strong>: the chain connecting activity, partner-confirmed output, and reported program reach. It does not claim sole causality or causal attribution. Causal attribution would require randomised controlled trials, quasi-experimental evaluation, or other formal evaluation designs.</p>
+          <div class="flow-container" style="margin-bottom:16px;">
+            <div class="flow-box">
+              <div class="flow-icon">📝</div>
+              <div class="flow-label">Volunteer activity recorded</div>
+              <div class="flow-count">${totalHours.toLocaleString()}</div>
+              <div class="flow-sub">hrs input — timesheet-verified</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box green">
+              <div class="flow-icon">✅</div>
+              <div class="flow-label">Authorized partner confirmed output</div>
+              <div class="flow-count">${Math.round(totalHours * 0.12) || 24}</div>
+              <div class="flow-sub">evidence records confirmed</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box purple">
+              <div class="flow-icon">📊</div>
+              <div class="flow-label">Partner-reported reach documented</div>
+              <div class="flow-count">${directBeneficiaries.toLocaleString()}</div>
+              <div class="flow-sub">beneficiaries (partner-reported)</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box gold">
+              <div class="flow-icon">🌍</div>
+              <div class="flow-label">Evidence mapped to SDG</div>
+              <div class="flow-count">${sdgMetricsData.length || 0}</div>
+              <div class="flow-sub">goals — documented output alignment</div>
+            </div>
+          </div>
+          <div class="no-break" style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:10px;color:#92400e;line-height:1.6;">
+            <strong>Contribution vs. Attribution:</strong> Synerxus verifies activity and output evidence. The pathway above documents contribution — that an activity contributed to a confirmed output. It does not establish causal attribution. Proving that this activity alone caused a specific long-term social outcome would require independent evaluation methodology (e.g. RCT, quasi-experimental study, theory of change evaluation).
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 16: Audit-Support Statement ═══ -->
+        <div class="report-section">
+          <h2>Audit-Support Statement</h2>
+          <p style="font-size:10px;color:#374151;line-height:1.6;margin-bottom:14px;">Synerxus turns ESG activity — including volunteer time, partner-delivered outputs, and social value programs — into independently confirmed, audit-ready evidence. This report supports assurance preparation. It does not replace independent assurance per ISAE 3000 or any applicable assurance standard.</p>
+          <div class="no-break" style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
             <div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#f9fafb;text-align:center;">
-              <div style="font-size:10px;font-weight:700;color:#374151;">Independent Assurance — ISAE 3000 REQUIRED</div>
-              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">(Auditor Judgment)</div>
+              <div style="font-size:10px;font-weight:700;color:#374151;">Independent Assurance — ISAE 3000 (or applicable standard) REQUIRED for formal opinions</div>
+              <div style="font-size:9px;color:#9ca3af;margin-top:2px;">(Qualified Assurance Provider Judgment)</div>
             </div>
             <div style="color:#9ca3af;font-size:14px;line-height:1;margin:4px 0;">↓</div>
             <div style="width:88%;padding:10px 16px;border:1.5px solid #0891b2;border-radius:4px;background:#f0fdff;text-align:center;">
-              <div style="font-size:10px;font-weight:700;color:#0a2463;">Synerxus: Management Reporting Verified ✓</div>
-              <div style="font-size:9px;color:#0891b2;margin-top:2px;">(NGO Verification)</div>
+              <div style="font-size:10px;font-weight:700;color:#0a2463;">Synerxus: Management Reporting — Evidence Confirmed ✓</div>
+              <div style="font-size:9px;color:#0891b2;margin-top:2px;">(Authorized partner confirmation · tamper-evident audit trail retained)</div>
             </div>
             <div style="color:#9ca3af;font-size:14px;line-height:1;margin:4px 0;">↓</div>
             <div style="width:76%;padding:10px 16px;border:1.5px solid #0a2463;border-radius:4px;background:#eff6ff;text-align:center;">
-              <div style="font-size:10px;font-weight:700;color:#0a2463;">Self-Reported → Verified → Audit-Ready</div>
+              <div style="font-size:10px;font-weight:700;color:#0a2463;">Activity Recorded → Partner-Confirmed → Audit-Support Evidence Ready</div>
             </div>
           </div>
           <div class="assurance-grid">
             <div class="assurance-panel synerxus">
               <div class="assurance-panel-header syn">✅ What Synerxus Provides</div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>NGO-verified outcomes with structured evidence records</span></div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Structured evidence objects for GRI 413, SASB SO-ES-110</span></div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Stakeholder impact alignment via negative impact screening</span></div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Global framework alignment (SDGs, GRI, SASB, TCFD)</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Partner-confirmed output evidence with structured records</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Framework evidence alignment for GRI, ESRS, SASB, TCFD, SDGs</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Negative impact screening via partner-administered process</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Tamper-evident audit trail retained in Synerxus systems</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Detailed evidence records available to authorised reviewers</span></div>
             </div>
             <div class="assurance-panel auditor">
-              <div class="assurance-panel-header aud">❌ What Requires External Action</div>
-              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Formal assurance opinion (independent auditor required)</span></div>
-              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Causal attribution (requires RCTs)</span></div>
-              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Financial valuation (SROI not calculated)</span></div>
+              <div class="assurance-panel-header aud">◆ What Requires External Action</div>
+              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Formal assurance opinion (independent qualified provider required)</span></div>
+              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Causal attribution (requires RCTs or quasi-experimental evaluation)</span></div>
+              <div class="assurance-item"><span class="assurance-icon">◆</span><span>Independent beneficiary reach verification</span></div>
               <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory compliance conclusions (auditor judgment required)</span></div>
             </div>
           </div>
-          <p style="font-size:9px;color:#6b7280;font-style:italic;margin-top:10px;padding:8px 12px;background:#fffbeb;border-radius:4px;border:1px solid #fde68a;">For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per ISAE 3000 remains required.</p>
+          <p style="font-size:9px;color:#6b7280;font-style:italic;margin-top:10px;padding:8px 12px;background:#fffbeb;border-radius:4px;border:1px solid #fde68a;">Detailed evidence records and supporting metadata are retained in Synerxus and may be made available to authorised reviewers subject to privacy, confidentiality, and client approval. For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per applicable assurance standard remains required.</p>
+        </div>
+
+        <!-- ═══ SECTION 17: Verification Limitations ═══ -->
+        <div class="report-section">
+          <h2>Verification Limitations</h2>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th style="width:40%">Limitation</th>
+                <th style="width:60%">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Downstream impact</td><td>Synerxus verifies activity and output evidence. Long-term downstream impact is not independently proven by Synerxus.</td></tr>
+              <tr><td>Beneficiary reach</td><td>Partner-reported beneficiary reach is not independently verified by Synerxus unless explicitly stated in the record.</td></tr>
+              <tr><td>Framework alignment</td><td>Framework alignment (SDG, ESRS, GRI, SASB, TCFD) does not equal regulatory compliance. Compliance determination requires independent qualified assurance provider review.</td></tr>
+              <tr><td>Assurance conclusions</td><td>Assurance conclusions require an independent qualified assurance provider. Synerxus supports assurance preparation; it does not provide assurance opinions.</td></tr>
+              <tr><td>Negative impact absence</td><td>Absence of reported negative impacts through the screening process does not prove absence of negative impacts. Unobserved or long-term impacts are outside scope.</td></tr>
+              <tr><td>Evidence completeness</td><td>Records without a verification timestamp are classified as Incomplete or Pending, not Verified, and are excluded from Verified tier counts.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ═══ SECTION 18: Methodology Appendix ═══ -->
+        <div class="report-section">
+          <h2>Methodology Appendix</h2>
+          <p style="font-size:11px;color:#374151;margin-bottom:12px;line-height:1.6;">The following definitions apply throughout this Verified Evidence Summary.</p>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th style="width:25%">Term</th>
+                <th style="width:75%">Definition as Used in This Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Activity</strong></td><td>Work performed, including volunteer time contributed by employees or stakeholders. Volunteer time is an input, not an outcome or proof of impact.</td></tr>
+              <tr><td><strong>Output</strong></td><td>What was delivered as a result of the activity, as confirmed by an authorised partner verifier.</td></tr>
+              <tr><td><strong>Outcome support</strong></td><td>Near-term reported result or reach, as documented by the implementing partner according to their methodology.</td></tr>
+              <tr><td><strong>Verified evidence</strong></td><td>A structured evidence record carrying partner confirmation, a verification timestamp, and a verifier role. Records without these fields are classified as Incomplete or Pending.</td></tr>
+              <tr><td><strong>Partner-confirmed output evidence</strong></td><td>Evidence records where the output description has been confirmed by an authorised partner organisation representative.</td></tr>
+              <tr><td><strong>Contribution</strong></td><td>Evidence that an activity contributed to a verified output. Does not claim sole causality.</td></tr>
+              <tr><td><strong>Attribution</strong></td><td>Causal proof that the activity caused a specific outcome. Requires formal evaluation methodology (e.g. RCT, quasi-experimental study).</td></tr>
+              <tr><td><strong>Impact</strong></td><td>Long-term change in people's lives or the environment. Not independently proven by Synerxus.</td></tr>
+              <tr><td><strong>Causal proof</strong></td><td>A formal evaluation result (e.g. RCT or quasi-experimental study) establishing that an activity caused a specific outcome. Not provided by Synerxus.</td></tr>
+              <tr><td><strong>Framework alignment</strong></td><td>Classification of evidence records against reporting framework topics (SDG, ESRS, GRI, SASB, TCFD). Alignment supports disclosure preparation; it is not a compliance determination.</td></tr>
+            </tbody>
+          </table>
+          <div class="no-break" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-top:12px;font-size:10px;color:#1e3a8a;line-height:1.6;">
+            <strong>Redaction Policy:</strong> Public or management-facing reports may redact personal identifiers, precise geolocation, and sensitive technical metadata (including device identifiers, SMS routing, internal verification routing, and fraud detection logic). Full supporting records are retained in Synerxus for authorised review subject to privacy, confidentiality, and client permissions.
+          </div>
         </div>
 
         <!-- ═══ Enhanced Footer ═══ -->
         <div class="report-footer">
+          <div class="no-break" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #3b82f6;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:10px;color:#1e3a8a;line-height:1.6;">
+            <strong>Closing Evidence Boundary Statement:</strong> Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+          </div>
           <div class="footer-top">
             <div class="footer-logo-block">
               <img src="${origin}/synerxus-esg-logo.png" alt="Synerxus" style="height:28px;width:auto;" />
               <div style="font-size:11px;line-height:1.6;color:#6b7280;">
-                <div><span style="color:#D4980C;font-weight:700;">Impacts.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
-                <div>ISAE 3000 Revised · Audit-Supported</div>
+                <div><span style="color:#D4980C;font-weight:700;">Evidence.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
+                <div>Assurance-Support Documentation</div>
               </div>
             </div>
             <div class="footer-ids">
               <div><strong>Report ID:</strong> ${reportId}</div>
-              <div><strong>Framework:</strong> WEF SCM v2.0 · GRI · SASB · TCFD · SEC Climate Rules · UN SDGs</div>
-              <div><strong>Assurance:</strong> ISAE 3000 Revised · Audit-Supported</div>
+              <div><strong>Classification:</strong> Management Reporting — Verified Evidence Records</div>
+              <div><strong>Framework Evidence:</strong> WEF SCM · GRI · SASB · ESRS Evidence Alignment · UN SDGs · TCFD</div>
               <div><strong>Generated:</strong> ${currentDate}</div>
             </div>
           </div>
@@ -1145,18 +1298,17 @@ export function generatePDFContent(
             <span class="footer-fw-tag">WEF SCM</span>
             <span class="footer-fw-tag">GRI</span>
             <span class="footer-fw-tag">SASB</span>
-            <span class="footer-fw-tag">TCFD</span>
-            <span class="footer-fw-tag">SEC Rules</span>
+            <span class="footer-fw-tag">ESRS Evidence Alignment</span>
             <span class="footer-fw-tag">UN SDGs</span>
-            <span class="footer-fw-tag">ISAE 3000</span>
+            <span class="footer-fw-tag">TCFD</span>
+            <span class="footer-fw-tag">Assurance-Support</span>
           </div>
-          <div class="footer-tagline"><span style="color:#D4980C;">Impact,</span> <span style="color:#0A2463;">Verified.</span></div>
-          <div class="footer-generated">Generated on ${currentDate} · ${template.name} · Report ID: ${reportId}</div>
+          <div class="footer-generated">Generated on ${currentDate} · Verified Evidence Summary · Report ID: ${reportId}</div>
           <div style="text-align:center;margin-bottom:8px;">
-            <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorized personnel.</div>
+            <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorised personnel.</div>
           </div>
           <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com | assurance@synerxus.com</div>
-          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
+          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Evidence.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
         </div>
       </body>
     </html>

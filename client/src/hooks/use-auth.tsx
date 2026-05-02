@@ -208,13 +208,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setUser(firebaseUser);
-        // Try to sync with backend to get DB user
-        // Don't pass userType here - just check if user exists
+        // Try to sync with backend to get DB user first, then set user.
+        // Setting user before sync completes causes (user && !dbUser) = true
+        // in the dashboard loading condition, resulting in an infinite spinner
+        // when sync fails (e.g. network error, DB pressure).
         const syncResult = await syncWithBackend(firebaseUser);
         if (syncResult) {
+          setUser(firebaseUser);
           setDbUser(syncResult.user);
         }
+        // If sync fails, leave both user and dbUser as null so the dashboard
+        // falls through to the "Not Authenticated" state instead of hanging.
       } else {
         setUser(null);
         // If a demo session is stored, restore from JWT rather than clearing the user

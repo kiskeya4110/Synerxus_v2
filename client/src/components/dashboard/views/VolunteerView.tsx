@@ -119,7 +119,8 @@ const VolunteerView = memo(function VolunteerView({
     queryKey: ["/api/projects", userId],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/projects?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/projects?userId=${userId}`, { headers, credentials: "include" });
         if (!response.ok) return [];
         return response.json();
       } catch (error) {
@@ -138,7 +139,7 @@ const VolunteerView = memo(function VolunteerView({
     queryFn: async () => {
       try {
         const headers = await getAuthHeaders();
-        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, { headers });
+        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, { headers, credentials: "include" });
         if (!response.ok) return [];
         return response.json();
       } catch {
@@ -186,7 +187,7 @@ const VolunteerView = memo(function VolunteerView({
         hours: log.hours,
         status: log.verificationStatus || "pending",
         createdAt: log.createdAt,
-        outcomeType: log.outcomes,
+        outcomeType: log.outcomeType || log.outcomes,
         outcomeValue: log.outcomeQuantity,
         sdgGoals: log.sdgTags || log.project?.sdgGoals || [],
       }));
@@ -311,7 +312,7 @@ const VolunteerView = memo(function VolunteerView({
                   </div>
                   <div>
                     <p className="text-3xl font-bold text-white">{stats.totalPeopleImpacted}</p>
-                    <p className="text-xs text-indigo-200">Verified Outcomes</p>
+                    <p className="text-xs text-indigo-200">People Reached</p>
                   </div>
                 </div>
               </button>

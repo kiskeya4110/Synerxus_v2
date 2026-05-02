@@ -1,12 +1,12 @@
 interface ContributionChainProps {
-  avgSLA?: number;
+  avgTurnaround?: number;
 }
 
-export default function ContributionChain({ avgSLA = 16 }: ContributionChainProps) {
+export default function ContributionChain({ avgTurnaround = 16 }: ContributionChainProps) {
   const nodes = [
     { label: "Volunteer Activity", verified: false },
-    { label: "NGO Verification ✓", verified: true, sla: `${avgSLA}h Avg SLA` },
-    { label: "Verified Outcome", verified: false },
+    { label: "Partner Confirmation ✓", verified: true, sla: `${avgTurnaround}h avg` },
+    { label: "Verified Evidence", verified: false },
     { label: "Beneficiaries", verified: false },
     { label: "SDG Advanced", verified: false },
   ];
@@ -107,7 +107,7 @@ export default function ContributionChain({ avgSLA = 16 }: ContributionChainProp
           color: "#9CA3AF",
         }}
       >
-        Independent NGO verification is the trust mechanism — not self-reported activity.
+        Authorized partner confirmation is the trust mechanism — not self-reported activity alone.
       </div>
     </div>
   );

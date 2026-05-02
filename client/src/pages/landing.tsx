@@ -25,6 +25,7 @@ import {
   ArrowRight,
   Loader2,
   LogOut,
+  LogIn,
   UserPlus,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
@@ -2301,24 +2302,16 @@ export default function Landing() {
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  size="sm"
-                  onClick={openJoinNetwork}
-                  className="whitespace-nowrap bg-[#D4980C] hover:bg-[#B07F0A] text-[#0A1F44] font-bold text-sm px-4 rounded-xl shadow-sm border border-[#D4980C]/40"
-                  data-testid="button-join-network-nav"
-                >
-                  Join Network
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setPricingPlan("demo")}
-                  className="whitespace-nowrap bg-[#0A1F44] hover:bg-[#0d2a5e] text-white font-semibold text-sm px-4 rounded-xl"
-                  data-testid="button-book-demo-nav"
-                >
-                  Book Demo
-                </Button>
-              </>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate("/login")}
+                className="whitespace-nowrap border-slate-300 text-slate-700 font-semibold text-sm px-4 rounded-xl hover:bg-slate-100"
+                data-testid="button-login-nav"
+              >
+                <LogIn className="h-4 w-4 mr-1.5" />
+                Login
+              </Button>
             )}
           </div>
 
@@ -2383,28 +2376,17 @@ export default function Landing() {
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        openJoinNetwork();
-                      }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-[#D4980C] text-[#0A1F44] font-bold text-sm text-center shadow-sm border border-[#D4980C]/40"
-                      data-testid="button-join-network-nav"
-                    >
-                      Join Network
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setPricingPlan("demo");
-                      }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-[#0A1F44] text-white font-semibold text-sm text-center"
-                      data-testid="button-book-demo-nav"
-                    >
-                      Book Demo
-                    </button>
-                  </>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate("/login");
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-sm text-center flex items-center justify-center gap-2"
+                    data-testid="button-login-nav"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </button>
                 )}
               </div>
             </div>

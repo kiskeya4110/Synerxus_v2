@@ -1184,7 +1184,7 @@ logsRouter.get("/reports/export", authMiddleware, async (req: Request, res: Resp
           hoursToOutcomeRatio: totalOutcomes > 0 ? (totalHours / totalOutcomes).toFixed(2) : null
         },
         sdgBreakdown,
-        auditStatement: `This report contains ${exportData.length} verified impact logs with a total of ${totalHours} volunteer hours. All entries have been verified by authorized NGO staff members with full audit trail recorded.`,
+        auditStatement: `This export contains ${exportData.length} verified impact logs with a total of ${totalHours} volunteer hours. Entries have been confirmed by authorized partner staff and structured for evidence review.`,
         logs: exportData
       });
     } else {
@@ -1471,11 +1471,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
     // Global framework compliance rows — new format with "How This Report Supports" column
     const csrdRows = [
-      { code: 'GRI 413 · SASB SO-ES-110.A', req: 'Community engagement disclosures', how: `Mapped to: ${verified.length} NGO-verified community outcomes with audit trails` },
-      { code: 'GRI 301 · SASB SO-ES-110.B', req: 'Stakeholder impact disclosures', how: `Supported by: ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached, verified by NGO staff` },
-      { code: 'GRI 301 · TCFD Principle 7', req: 'Negative impacts disclosure', how: `Addressed: Screening conducted, ${rejected.length} negative impact${rejected.length !== 1 ? 's' : ''} identified` },
-      { code: 'GRI 403 · SASB SO-ES-110.C', req: 'Workforce development disclosures', how: `Supported by: ${uniqueSkillsCount || uniqueVolunteers} skill categories deployed across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}` },
-      { code: 'GRI 103 · SASB SO-ES-110.D', req: 'Monitoring & verification disclosures', how: `Demonstrated by: ${verificationRate}% verification rate, ${avgVerificationHours > 0 ? avgVerificationHours + 'h' : 'N/A'} average SLA` },
+      { code: 'GRI 413 · ESRS S3 support', req: 'Community-facing evidence where material', how: `Mapped to: ${verified.length} partner-confirmed evidence records` },
+      { code: 'GRI 413 support', req: 'Local community outputs and management context', how: `Supported by: ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached or estimated from partner-confirmed records` },
+      { code: 'Boundary review', req: 'Operational screening and exceptions', how: `Addressed: ${rejected.length} rejected or flagged submission${rejected.length !== 1 ? 's' : ''} recorded` },
+      { code: 'Activity context', req: 'Volunteer and workforce participation evidence', how: `Supported by: ${uniqueSkillsCount || uniqueVolunteers} skill categories across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}` },
+      { code: 'Monitoring support', req: 'Evidence preparation and review workflow', how: `Demonstrated by: ${verificationRate}% confirmation rate, ${avgVerificationHours > 0 ? avgVerificationHours + 'h' : 'N/A'} average turnaround` },
     ];
     const csrdRowsHtml = csrdRows.map((r, i) =>
       `<tr style="border-bottom:0.5px solid #f3f4f6;background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
@@ -1527,18 +1527,13 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       const vMs = a.verifiedAt ? (a.verifiedAt instanceof Date ? a.verifiedAt.getTime() : new Date(a.verifiedAt).getTime()) : null;
       const cMs = a.createdAt ? (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime()) : null;
       const timeToVerifyHours = (vMs && cMs && vMs > cMs) ? Math.round((vMs - cMs) / (1000 * 60 * 60)) : null;
-      const hasSms = !!(a as any).verifierPhone;
-      const verificationMethod = hasSms ? 'SMS verification' : 'App verification';
-      const rawPhone = (a as any).verifierPhone as string | undefined;
-      const deviceDisplay = hasSms
-        ? (rawPhone ? rawPhone.replace(/(\+\d{3})\d+(\d{4})$/, '$1XXXX$2') : 'N/A')
-        : ((a as any).deviceId ? (a as any).deviceId as string : 'N/A');
+      const verificationMethod = 'Authorized partner workflow';
       const geoDisplay = (a as any).geoLatitude && (a as any).geoLongitude
         ? `${((a as any).geoLatitude as number).toFixed(4)}, ${((a as any).geoLongitude as number).toFixed(4)}`
         : '[Redacted]';
       const verifierDisplay = (a as any).verifierName
         ? `${(a as any).verifierName}${(a as any).verifierRole ? ' (' + (a as any).verifierRole + ')' : ''}`
-        : `NGO Program Staff (independent verifier with signing authority)`;
+        : `Authorized partner staff (independent verifier with signing authority)`;
       const skillsDisplay = skills.length > 0 ? skills.join(', ') : 'N/A';
       // Short title derived from outcome text
       const titleWords = text.split(' ').slice(0, 7).join(' ');
@@ -1571,9 +1566,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
             </tbody>
           </table>
           <div style="background:#f9fafb;border-radius:6px;padding:8px 10px;border:0.5px solid #e5e7eb;">
-            <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:5px;letter-spacing:0.2px;">Audit Trail:</div>
+            <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:5px;letter-spacing:0.2px;">Evidence Record:</div>
             <div style="font-size:10px;color:#6b7280;line-height:1.9;">
-              <strong style="color:#374151;">Method:</strong> ${escapeHtml(verificationMethod)} &nbsp;|&nbsp; <strong style="color:#374151;">Device:</strong> ${escapeHtml(deviceDisplay)} &nbsp;|&nbsp; <strong style="color:#374151;">Geolocation:</strong> ${escapeHtml(geoDisplay)} &nbsp;|&nbsp; <strong style="color:#374151;">Timestamp:</strong> ${escapeHtml(verifiedTime)}<br>
+              <strong style="color:#374151;">Method:</strong> ${escapeHtml(verificationMethod)} &nbsp;|&nbsp; <strong style="color:#374151;">Region:</strong> ${escapeHtml(geoDisplay)} &nbsp;|&nbsp; <strong style="color:#374151;">Timestamp:</strong> ${escapeHtml(verifiedTime)}<br>
               <strong style="color:#374151;">Verified by:</strong> ${escapeHtml(verifierDisplay)}
             </div>
           </div>
@@ -1619,7 +1614,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       </tr>`;
     }).join('');
     const negativeDisclosureHtml = `
-      <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.6;">All NGO partners complete mandatory negative impact screening at verification. This systematic process ensures negative impacts are actively identified, not passively overlooked.</div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.6;">Authorized partners can record screening notes during confirmation. This supports operational review but does not replace formal materiality assessment.</div>
       <table style="width:100%;border-collapse:collapse;border:0.5px solid #e5e7eb;border-radius:8px;margin-bottom:12px;page-break-inside:avoid;break-inside:avoid;">
         <thead>
           <tr style="background:#f9fafb;">
@@ -1636,7 +1631,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       <div style="border:0.5px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:6px;">Screening Process</div>
         <div style="font-size:10px;color:#6b7280;line-height:1.8;">
-          <strong style="color:#374151;">Parties Consulted:</strong> NGO Program Director, Community Liaison, Project Coordinator<br>
+          <strong style="color:#374151;">Parties Consulted:</strong> Partner program lead, community liaison, project coordinator<br>
           <strong style="color:#374151;">Screening Method:</strong> Structured questionnaire administered at outcome verification<br>
           <strong style="color:#374151;">Documentation:</strong> All responses logged with timestamp in Synerxus platform
         </div>
@@ -1692,11 +1687,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
             <div style="color:#6b7280;padding:3px 0;">${a.hours ? Math.round(a.hours) + ' hours' : 'N/A'}</div>
             <div style="font-weight:600;color:#374151;padding:3px 0;">Outcome Verified</div>
             <div style="color:#059669;font-weight:500;padding:3px 0;">${text.length > 60 ? text.slice(0, 60) + '\u2026' : text}</div>
-            <div style="font-weight:600;color:#374151;padding:3px 0;">NGO Confirmation</div>
+            <div style="font-weight:600;color:#374151;padding:3px 0;">Partner Confirmation</div>
             <div style="color:#6b7280;padding:3px 0;">${orgName} staff verified completion on ${verifiedDate}</div>
           </div>
           <div style="margin-top:8px;font-size:10px;color:#6b7280;border-top:0.5px solid #f3f4f6;padding-top:6px;">
-            <strong style="color:#374151;">Contribution Chain:</strong> Volunteer delivered expertise \u2192 NGO confirmed outcome \u2192 ${bene ? `Impact reached ${bene} beneficiar${bene !== 1 ? 'ies' : 'y'}` : 'Outcome serving community'}${a.sdgTags && a.sdgTags.length > 0 ? ` \u2192 Advanced SDG ${a.sdgTags[0]}` : ''}
+            <strong style="color:#374151;">Contribution Chain:</strong> Volunteer delivered activity \u2192 partner confirmed output \u2192 ${bene ? `record supports ${bene} beneficiar${bene !== 1 ? 'ies' : 'y'} reached` : 'record supports community output'}${a.sdgTags && a.sdgTags.length > 0 ? ` \u2192 mapped to SDG ${a.sdgTags[0]}` : ''}
           </div>
         </div>
       </div>`;
@@ -1745,7 +1740,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       </div>`;
     }).join('');
 
-    // ─── Visual HTML Snippets (audit-credible graphics — NGO report) ──────────
+    // ─── Visual HTML Snippets (evidence-oriented graphics — partner report) ──────────
 
     // Geographic Heatmap: aggregate verifications per volunteer country
     const _nGeoMap: Record<string, number> = {};
@@ -1767,12 +1762,12 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     ).join('');
     const _nGeoHeatmapHtml =
       '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
-      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Global Verification Density &#x2014; ' + periodDisplay + '</div>' +
+      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;break-after:avoid;page-break-after:avoid;">Global Verification Density &#x2014; ' + periodDisplay + '</div>' +
       '<div style="padding:12px 16px;background:#F9FAFB;">' + (_nGeoEntries.length > 0 ? _nGeoBarRows : '<div style="font-size:10px;color:#6B7280;">No location data available for this period.</div>') + '</div>' +
       '<div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">' +
       '<span>Verification Rate: <strong style="color:#0A2463;">' + verificationRate + '%</strong></span>' +
-      '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
-      '<span style="color:#6B7280;">SMS + PWA Verified</span></div></div>';
+      '<span>Avg. Turnaround: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
+      '<span style="color:#6B7280;">Partner-confirmed workflow</span></div></div>';
 
     // SDG Horizontal Bar Chart — use same totalSdgOutcomes denominator as the table above
     const _nSdgBarEs = sortedSdgs.slice(0, 6).map(([sdg, data]: any) => {
@@ -1795,7 +1790,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       ? '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
         '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">SDG Alignment &#x2014; Verified Outcome Distribution</div>' +
         '<div style="padding:12px 16px;background:#F9FAFB;">' + _nSdgBarRows + '</div>' +
-        '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to verified outcomes only. SDG alignment confirmed by NGO program directors.</div>' +
+        '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to partner-confirmed records only. SDG alignment is mapped for reporting support.</div>' +
         '</div>'
       : '';
 
@@ -1811,12 +1806,12 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="padding:16px 20px;border-right:1px solid #E5E7EB;background:#F9FAFB;">' +
       '<div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">' + Math.round(totalHours).toLocaleString() + ' Verified</div>' +
       '<div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Hours &#x23F1;</div>' +
-      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">' + avgVerificationHours + 'h Avg SLA</div>' +
+      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">' + avgVerificationHours + 'h avg turnaround</div>' +
       '</div>' +
       '<div style="padding:16px 20px;background:#F9FAFB;">' +
       '<div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">' + effectiveBeneficiaries.toLocaleString() + ' Verified</div>' +
       '<div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Beneficiaries</div>' +
-      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">NGO-Tracked</div>' +
+      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">partner-tracked</div>' +
       '</div></div>' +
       '<div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:0.03em;">Management Reporting Verified &#x2014; Supports Global Sustainability Frameworks (ISAE 3000)</div>' +
       '</div>';
@@ -1840,12 +1835,12 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="display:grid;grid-template-columns:1fr 1fr;">' +
       '<div style="border-right:1px solid #E5E7EB;">' +
       '<div style="padding:8px 16px;font-size:10px;font-weight:700;color:#0891B2;background:#F0FDFF;border-bottom:1px solid #E5E7EB;">Included (Verified)</div>' +
-      ['NGO-confirmed outcomes','72h verification window','Validated beneficiary counts','Immutable audit trails'].map((item, i, arr) =>
+      ['Partner-confirmed outputs','Authorized verifier timestamp','Validated beneficiary counts where supplied','Structured evidence records'].map((item, i, arr) =>
         '<div style="padding:7px 16px;font-size:10.5px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + 'display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ' + item + '</div>'
       ).join('') + '</div>' +
       '<div>' +
       '<div style="padding:8px 16px;font-size:10px;font-weight:700;color:#374151;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Excluded (Not Verified)</div>' +
-      ['Self-reported hours','Outcomes &gt;72h post-completion','Projected/estimated numbers','Financial SROI valuation'].map((item, i, arr) =>
+      ['Unconfirmed self-reported hours','Unreviewed outputs','Projected/estimated numbers without partner methodology','Financial SROI valuation'].map((item, i, arr) =>
         '<div style="padding:7px 16px;font-size:10.5px;color:#6B7280;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + 'display:flex;align-items:center;gap:8px;"><span style="color:#9CA3AF;font-weight:700;">&#x2717;</span> ' + item + '</div>'
       ).join('') + '</div></div></div>';
 
@@ -1860,18 +1855,18 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div>' +
       '<div style="border-right:1px solid #E5E7EB;">' +
-      '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Audit Trail</div>' +
-      ['Timestamp','Verifier ID','Geolocation','Device Hash'].map((item, i, arr) =>
+      '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Evidence Record</div>' +
+      ['Timestamp','Authorized verifier','General region','Confirmation method'].map((item, i, arr) =>
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div>' +
       '<div>' +
       '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Regulatory Metadata</div>' +
-      ['SDG Primary/Secondary','Framework Mapping (GRI/SASB/TCFD)','Project ID','Corporate Program'].map((item, i, arr) =>
+      ['SDG Primary/Secondary','Framework support (GRI/SASB/ESRS)','Project ID','Corporate Program'].map((item, i, arr) =>
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div></div>' +
       '<div style="padding:10px 16px;background:#F0FDFF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;">' +
       '<span style="color:#0891B2;font-size:14px;">&#x2193;</span>' +
-      '<span style="font-size:10px;color:#0891B2;font-weight:700;">NGO Verification &#x2713; within 72h</span>' +
+      '<span style="font-size:10px;color:#0891B2;font-weight:700;">Partner confirmation &#x2713;</span>' +
       '<span style="font-size:10px;color:#6B7280;">&#x2192;</span>' +
       '<span style="font-size:10px;color:#374151;font-weight:600;">Immutable Record Locked</span>' +
       '</div></div>';
@@ -1883,7 +1878,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="padding:16px;background:#F9FAFB;display:flex;align-items:center;flex-wrap:wrap;">' +
       [
         { label: 'Volunteer Activity', verified: false, sla: '' },
-        { label: 'NGO Verification &#x2713;', verified: true, sla: avgVerificationHours + 'h Avg SLA' },
+        { label: 'Partner Confirmation &#x2713;', verified: true, sla: avgVerificationHours + 'h avg' },
         { label: 'Verified Outcome', verified: false, sla: '' },
         { label: 'Beneficiaries', verified: false, sla: '' },
         { label: 'SDG Advanced', verified: false, sla: '' },
@@ -1897,7 +1892,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         '</div>'
       ).join('') +
       '</div>' +
-      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Independent NGO verification is the trust mechanism &#x2014; not self-reported activity.</div>' +
+      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Authorized partner confirmation is the trust mechanism &#x2014; not self-reported activity alone.</div>' +
       '</div>';
 
     // Screening Status Matrix
@@ -1909,7 +1904,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         '<div style="padding:6px 12px;font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.04em;' + (i < 3 ? 'border-right:1px solid #E5E7EB;' : '') + '">' + h + '</div>'
       ).join('') + '</div>' +
       [
-        { dim: 'Community Harm', method: 'NGO Program Director' },
+        { dim: 'Community Harm', method: 'Partner program lead' },
         { dim: 'Environmental Effects', method: 'Community Liaison' },
         { dim: 'Resource Displacement', method: 'Project Coordinator' },
         { dim: 'Beneficiary Concerns', method: 'Structured Survey' },
@@ -1925,26 +1920,26 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
     // Verification Timeline
     const _nVerifyTimelineHtml =
-      '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
-      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">' + periodDisplay + ' Verification Timeline &#x2014; SLA Compliance</div>' +
+      '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;">' +
+      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;break-after:avoid;page-break-after:avoid;">' + periodDisplay + ' Confirmation Timeline</div>' +
       '<div style="padding:14px 16px;background:#F9FAFB;">' +
       '<div style="font-size:9px;color:#6B7280;margin-bottom:6px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">90-Day Reporting Window</div>' +
       '<div style="background:#E5E7EB;height:20px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:6px;">' +
       '<div style="width:' + verificationRate + '%;height:100%;background:#0A2463;"></div></div>' +
       '<div style="display:flex;flex-direction:column;gap:4px;">' +
       '<div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0A2463;border-radius:1px;flex-shrink:0;"></div>' +
-      '<span style="font-size:9.5px;color:#374151;font-weight:600;">' + verificationRate + '% verified within 72h SLA</span></div>' +
+      '<span style="font-size:9.5px;color:#374151;font-weight:600;">' + verificationRate + '% partner-confirmed this period</span></div>' +
       '<div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0891B2;border-radius:1px;flex-shrink:0;"></div>' +
-      '<span style="font-size:9.5px;color:#374151;font-weight:600;">100% immutable audit trails maintained</span></div>' +
+      '<span style="font-size:9.5px;color:#374151;font-weight:600;">Structured evidence records maintained</span></div>' +
       '</div></div>' +
-      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps verified against stated SLA. 72h SLA matches boundary definition for defensibility.</div>' +
+      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps support evidence review and assurance preparation.</div>' +
       '</div>';
 
     // Assurance Boundary Diagram
     const _nAssuranceDiagHtml =
-      '<div style="font-family:Inter,sans-serif;margin:20px 0 16px;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
-      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Assurance Boundary: Global Verification Scope</div>' +
-      '<div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides verified outcome data supporting multiple global sustainability frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce auditor evidence-gathering burden by 60&#8211;70% but does not replace independent assurance per ISAE 3000.</div>' +
+      '<div style="font-family:Inter,sans-serif;margin:20px 0 16px;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;">' +
+      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;break-after:avoid;page-break-after:avoid;">Assurance Boundary: Global Verification Scope</div>' +
+      '<div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides structured, partner-confirmed evidence records that can support relevant sustainability reporting workflows (UN SDGs, GRI, SASB and ESRS where applicable). It supports assurance preparation but does not replace independent assurance per ISAE 3000.</div>' +
       '<div style="padding:16px;background:#F9FAFB;">' +
       '<div style="display:flex;flex-direction:column;align-items:center;">' +
       '<div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#F9FAFB;text-align:center;">' +
@@ -1953,7 +1948,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:88%;padding:10px 16px;border:1.5px solid #0891B2;border-radius:4px;background:#F0FDFF;text-align:center;">' +
       '<div style="font-size:10px;font-weight:700;color:#0A2463;">Synerxus: Management Reporting Verified &#x2713;</div>' +
-      '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(NGO Verification)</div></div>' +
+      '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(Authorized partner confirmation)</div></div>' +
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">' +
       '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Verified &#x2192; Audit-Ready</div>' +
@@ -1962,10 +1957,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">' +
       '<div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:8px;">&#x2705; What Synerxus Provides</div>' +
       '<ul style="margin:0;padding:0;list-style:none;">' +
-      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with immutable audit trails</li>' +
-      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence objects for GRI 413, SASB SO-ES-110</li>' +
+      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Partner-confirmed outputs with structured evidence records</li>' +
+      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence records for GRI 413 and ESRS S3 support where applicable</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Stakeholder impact alignment via negative impact screening</li>' +
-      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Global framework alignment (SDGs, GRI, SASB, TCFD)</li>' +
+      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Framework alignment support (SDGs, GRI, SASB, ESRS)</li>' +
       '</ul></div>' +
       '<div style="padding:12px 14px;background:#fef2f2;">' +
       '<div style="font-size:10px;font-weight:700;color:#991b1b;margin-bottom:8px;">&#x274C; What Requires External Action</div>' +
@@ -1973,7 +1968,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Formal assurance opinion (independent auditor required)</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Causal attribution (requires RCTs)</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Financial valuation (SROI not calculated)</li>' +
-      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance guarantee (auditor judgment required)</li>' +
+      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance conclusions (auditor judgment required)</li>' +
       '</ul></div></div>' +
       '<div style="padding:8px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#6b7280;font-style:italic;background:#fffbeb;">For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per ISAE 3000 remains required. Synerxus provides the evidence &#x2014; auditors provide the opinion.</div>' +
       '</div>';
@@ -2077,7 +2072,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
     const _nVisiHtml =
       '<div style="font-family:Inter,sans-serif;margin:14px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
-      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Verified Innovation Scoring Profile</div>' +
+      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;break-after:avoid;page-break-after:avoid;">Verified Innovation Scoring Profile</div>' +
       '<div style="background:#F9FAFB;">' +
       '<div style="padding:8px 16px 0;display:flex;align-items:center;justify-content:space-between;">' +
       `<div style="font-size:10px;color:#374151;font-weight:600;">${escapeHtml(orgName)}</div>` +
@@ -2139,12 +2134,18 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         break-after: avoid;
         page-break-after: avoid;
       }
-      /* Wrap each section block (label + immediate content) together */
-      .sl + *, .sl + * + .cmn, .sl + .cmn + * {
+      /* Two-hop chain: .sl → intro div → content (table/chart) all stay together */
+      .sl + * {
+        break-before: avoid;
+        page-break-before: avoid;
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .sl + * + * {
         break-before: avoid;
         page-break-before: avoid;
       }
-      /* Sub-headings stay with their content */
+      /* Two-hop chain: .sub-heading → intro div → content all stay together */
       .sub-heading {
         break-after: avoid;
         page-break-after: avoid;
@@ -2152,7 +2153,21 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       .sub-heading + * {
         break-before: avoid;
         page-break-before: avoid;
+        break-after: avoid;
+        page-break-after: avoid;
       }
+      .sub-heading + * + * {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
+      /* Tables: allow breaks between rows but never within a row */
+      table { page-break-inside: auto !important; }
+      thead { display: table-header-group !important; }
+      tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+      /* Override overflow:hidden on ALL elements — it blocks break-inside:avoid.
+         Every report visual component uses overflow:hidden on its outer wrapper.
+         In print mode visual clipping is irrelevant; break control matters. */
+      * { overflow: visible !important; }
       /* Section dividers always start fresh */
       .section-divider + * {
         break-before: avoid;
@@ -2163,15 +2178,21 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--txt-p); line-height: 1.5; background: var(--bg-s); padding: 28px; }
     .report-body { background: var(--bg-p); border-radius: var(--r); border: 0.5px solid var(--bd); padding: 32px; max-width: 880px; margin: 0 auto; }
     .sl { display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:20px; break-after:avoid; page-break-after:avoid; }
+    .sl + * { break-before:avoid;page-break-before:avoid;break-after:avoid;page-break-after:avoid; }
+    .sl + * + * { break-before:avoid;page-break-before:avoid; }
     .slb { width:3px;height:16px;background:#0891b2;border-radius:2px;display:inline-block; }
     .slt { font-weight:600;font-size:13px;color:var(--txt-p); }
     .cmn { font-size:10px;color:#374151;background:#fffbeb;border:0.5px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6; break-inside:avoid; page-break-inside:avoid; }
-    table { width:100%;border-collapse:collapse; }
+    table { width:100%;border-collapse:collapse;page-break-inside:auto; }
+    thead { display:table-header-group; }
+    tr { break-inside:avoid;page-break-inside:avoid; }
     th { padding:8px 10px;font-size:10px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e5e7eb;background:#f9fafb; }
     td { vertical-align:top; }
     .section-divider { border-top:1px solid #e5e7eb;margin:22px 0; }
-    .tbl-wrap { border:0.5px solid #e5e7eb;border-radius:var(--r);overflow:hidden;margin-bottom:14px; break-inside:avoid; page-break-inside:avoid; }
+    .tbl-wrap { border:0.5px solid #e5e7eb;border-radius:var(--r);margin-bottom:14px; break-inside:avoid; page-break-inside:avoid; }
     .sub-heading { font-size:11px;font-weight:700;color:#374151;margin-bottom:8px;margin-top:12px; break-after:avoid; page-break-after:avoid; }
+    .sub-heading + * { break-before:avoid;page-break-before:avoid;break-after:avoid;page-break-after:avoid; }
+    .sub-heading + * + * { break-before:avoid;page-break-before:avoid; }
   </style>
 </head>
 <body>
@@ -2180,7 +2201,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- HEADER -->
   <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:14px;break-inside:avoid;page-break-inside:avoid;">
     <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:0.5px;margin-bottom:4px;">&#9888; MANAGEMENT REPORTING VERIFIED — NOT A FORMAL ASSURANCE OPINION</div>
-    <div style="font-size:10px;color:#78350f;line-height:1.6;">This report is classified as <strong>Management Reporting (Verified)</strong>. For formal limited assurance, independent auditor procedures per ISAE 3000 are required. Synerxus reduces evidence-gathering by 60–70% but does not replace auditor judgment.</div>
+    <div style="font-size:10px;color:#78350f;line-height:1.6;">This report is classified as <strong>Management Reporting (Verified)</strong>. Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Formal assurance still requires an independent assurance provider per ISAE 3000.</div>
   </div>
 
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
@@ -2202,7 +2223,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div style="background:#0A2463;border-radius:var(--r);padding:16px 22px;color:#fff;margin-bottom:20px;">
     <div style="font-size:9px;opacity:0.8;letter-spacing:1.2px;margin-bottom:6px;">VERIFIED IMPACT SUMMARY</div>
     <div style="font-size:22px;font-weight:700;margin-bottom:3px;">${orgName}</div>
-    ${org?.description ? `<div style="font-size:11px;opacity:0.85;margin-bottom:8px;">${org.description.slice(0, 120)}${org.description.length > 120 ? '\u2026' : ''}</div>` : '<div style="font-size:11px;opacity:0.85;margin-bottom:8px;">[NGO Partner \u2014 Real Verified Data]</div>'}
+    ${org?.description ? `<div style="font-size:11px;opacity:0.85;margin-bottom:8px;">${org.description.slice(0, 120)}${org.description.length > 120 ? '\u2026' : ''}</div>` : '<div style="font-size:11px;opacity:0.85;margin-bottom:8px;">[Authorized Partner \u2014 Verified Evidence Data]</div>'}
     <div style="font-size:10px;opacity:0.75;">${periodDisplay} \u2022 Report ID: ${reportId}</div>
   </div>
 
@@ -2212,18 +2233,18 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div class="snap-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
     <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#059669;line-height:1;">${verified.length}</div>
-      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Verified Outcomes</div>
-      <div style="font-size:10px;color:#059669;margin-top:6px;">NGO-confirmed</div>
+      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Verified Evidence Records</div>
+      <div style="font-size:10px;color:#059669;margin-top:6px;">partner-confirmed</div>
     </div>
     <div style="background:#ecfeff;border:0.5px solid #a5f3fc;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#0891b2;line-height:1;">${Math.round(totalHours)}</div>
-      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Verified Hours</div>
-      <div style="font-size:10px;color:#0891b2;margin-top:6px;">Not self-reported</div>
+      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Supporting Hours</div>
+      <div style="font-size:10px;color:#0891b2;margin-top:6px;">linked to confirmed outputs</div>
     </div>
     <div style="background:#f5f3ff;border:0.5px solid #ddd6fe;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#7c3aed;line-height:1;">${effectiveBeneficiaries.toLocaleString()}</div>
       <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Beneficiaries Reached</div>
-      <div style="font-size:9px;color:#9ca3af;margin-top:6px;line-height:1.4;">&#8224; NGO partner estimates. Auditors should sample 15\u201330% per ISAE 3000.</div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:6px;line-height:1.4;">&#8224; Partner-provided or method-based estimates unless separately assured.</div>
     </div>
   </div>
 
@@ -2231,26 +2252,26 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <!-- ─── SECTION 2: VERIFICATION BOUNDARY ─────────────────────── -->
   <div class="sl"><span class="slb"></span><span class="slt">Section 2: Verification Boundary</span></div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Defines what data is in scope and explicitly excluded — critical for auditor evidence sampling under ISAE 3000.</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Defines what data is in scope and explicitly excluded for evidence review and assurance preparation.</div>
   ${_nBoundMatrixHtml}
 
   <div class="section-divider"></div>
 
   <!-- ─── SECTION 3: VERIFICATION METHODOLOGY ──────────────────── -->
   <div class="sl"><span class="slb"></span><span class="slt">Section 3: Verification Methodology</span></div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Each verified outcome is structured as a machine-readable evidence object with three data streams captured simultaneously at verification.</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">Each partner-confirmed output is structured as an evidence record with activity context, authorized verifier, timestamp, region, and framework support.</div>
   ${_nEvidArchHtml}
   <div style="font-size:10px;color:#374151;line-height:1.8;padding:10px 14px;border:0.5px solid #e5e7eb;border-radius:var(--r);background:#f9fafb;">
-    <strong style="color:#0A2463;">Three-Step Process:</strong> (1) Volunteer submits outcome + hours via Synerxus platform &nbsp;&#x2192;&nbsp; (2) NGO partner confirms BOTH outcome AND hours — immutable record with verifier identity and timestamp &nbsp;&#x2192;&nbsp; (3) System logs verifier ID, timestamp, device ID/SMS, and geolocation for every verified outcome.
+    <strong style="color:#0A2463;">Evidence Workflow:</strong> (1) Activity captured with supporting context &nbsp;&#x2192;&nbsp; (2) Output documented &nbsp;&#x2192;&nbsp; (3) Authorized partner confirms the output &nbsp;&#x2192;&nbsp; (4) Structured evidence record created &nbsp;&#x2192;&nbsp; (5) Evidence prepared for reporting and assurance workflows.
   </div>
   <div style="font-size:9.5px;color:#6b7280;margin-top:8px;padding:8px 12px;border:0.5px solid #e5e7eb;border-radius:var(--r);background:#f9fafb;line-height:1.6;">
-    <strong style="color:#374151;">Low-Bandwidth Verification:</strong> SMS-based outcome confirmation is fully supported for NGO partners operating in low-connectivity regions (2G networks). Deployed in Sub-Saharan Africa and Southeast Asia (including Zambia and Philippines). Verification integrity is maintained regardless of connectivity level — all confirmation timestamps and verifier identities are captured.
+    <strong style="color:#374151;">Verification Mechanics Boundary:</strong> This report intentionally summarizes confirmation status without exposing device signals, phone workflows, fraud controls, or internal verification logic.
   </div>
 
   <div class="section-divider"></div>
 
   <!-- ─── SECTION 4: SDG ALIGNMENT ─────────────────────────────── -->
-  <div class="sl"><span class="slb"></span><span class="slt">Section 4: SDG Alignment &amp; Impact Attribution</span></div>
+  <div class="sl"><span class="slb"></span><span class="slt">Section 4: SDG Alignment &amp; Outcome Support</span></div>
   <div style="font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.5;">All percentages tied to verified deliverables — not self-assessed claims.</div>
   ${sortedSdgs.length > 0 ? `<div class="tbl-wrap nb">
     <table>
@@ -2270,9 +2291,9 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div class="section-divider"></div>
 
   <!-- ─── SECTION 5: GLOBAL FRAMEWORK MAPPING ─────────────────────────── -->
-  <div class="sl"><span class="slb"></span><span class="slt">Section 5: Global Framework Compliance Mapping</span></div>
+  <div class="sl"><span class="slb"></span><span class="slt">Section 5: Framework Alignment Support</span></div>
   ${_nCsrdBoundHtml}
-  <div class="cmn"><strong>COMPLIANCE LANGUAGE NOTE</strong><br>This section shows how verified data <strong>SUPPORTS</strong> global sustainability reporting requirements (GRI, SASB, TCFD, WEF SCM, UN SDGs). It does not assert full compliance, which requires independent assurance per ISAE 3000.</div>
+  <div class="cmn"><strong>BOUNDARY NOTE</strong><br>This section shows how partner-confirmed evidence can <strong>support</strong> sustainability reporting workflows (GRI, SASB, ESRS and UN SDGs where applicable). It does not assert compliance, materiality, assurance, or causal proof.</div>
   <div class="tbl-wrap nb">
     <table>
       <thead>
@@ -2330,12 +2351,12 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
         <tr style="border-bottom:0.5px solid #f3f4f6;background:#f9fafb;">
           <td style="padding:7px 10px;font-size:10px;color:#374151;font-weight:500;">Verification Rate</td>
           <td style="padding:7px 10px;font-size:10px;font-weight:700;color:${verificationRate >= 80 ? '#059669' : '#d97706'};">${verificationRate}%</td>
-          <td style="padding:7px 10px;font-size:10px;color:#6b7280;">All submitted outcomes verified by NGO</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280;">Confirmed records divided by reviewed submissions</td>
         </tr>
         <tr style="border-bottom:0.5px solid #f3f4f6;">
           <td style="padding:7px 10px;font-size:10px;color:#374151;font-weight:500;">Avg. Time to Verify</td>
           <td style="padding:7px 10px;font-size:10px;font-weight:700;color:#111827;">${avgVerificationHours > 0 ? avgVerificationHours + ' hours' : 'N/A'}</td>
-          <td style="padding:7px 10px;font-size:10px;color:#6b7280;">From submission to NGO confirmation</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280;">From submission to partner confirmation</td>
         </tr>
         <tr>
           <td style="padding:7px 10px;font-size:10px;color:#374151;font-weight:500;background:#f9fafb;">Active Projects</td>
@@ -2349,18 +2370,18 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <div class="section-divider"></div>
 
-  <!-- ─── SECTION 9: AUDIT TRAIL SUMMARY ───────────────────────── -->
-  <div class="sl"><span class="slb"></span><span class="slt">Section 9: Audit Trail Summary</span></div>
+  <!-- ─── SECTION 9: EVIDENCE RECORD SUMMARY ───────────────────────── -->
+  <div class="sl"><span class="slb"></span><span class="slt">Section 9: Evidence Record Summary</span></div>
   <div class="audit-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:12px;">
     <div style="width:38px;height:38px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#059669;flex-shrink:0;">\u2713</div>
     <div style="flex:1;">
-      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">AUDIT TRAIL COMPLETENESS: ${verificationRate}% (${verified.length}/${allActivities.length} outcomes verified within 72h SLA)</div>
-      <div style="font-size:10px;color:#047857;line-height:1.6;">Verified outcomes include: verification timestamp, verifier identity, device ID/SMS number, geolocation, and hours \u2014 all NGO-confirmed with immutable records.${avgVerificationHours > 0 ? ` Average time to verify: ${avgVerificationHours} hours.` : ''}</div>
+      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">EVIDENCE RECORD COMPLETENESS: ${verificationRate}% (${verified.length}/${allActivities.length} reviewed submissions confirmed)</div>
+      <div style="font-size:10px;color:#047857;line-height:1.6;">Verified records include output, supporting activity context, authorized verifier, timestamp, general region, and framework support.${avgVerificationHours > 0 ? ` Average time to confirm: ${avgVerificationHours} hours.` : ''}</div>
       ${allActivities.length - verified.length > 0 ? `<div style="font-size:10px;color:#b45309;margin-top:4px;">Unverified outcomes: ${allActivities.length - verified.length} (${100 - verificationRate}%) \u2014 documented in Exceptions Log.</div>` : ''}
     </div>
   </div>
-  ${top3.length > 0 ? `<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Top Verified Outcomes (with full audit trail)</div>
-  <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">Each outcome includes complete audit trail for auditor sampling.</div>
+  ${top3.length > 0 ? `<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Top Verified Evidence Records</div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">Each record is structured for reviewer sampling and assurance preparation.</div>
   <div style="margin-bottom:14px;">${outcomeCards}</div>` : ''}
   ${_nVerifyTimelineHtml}
 
@@ -2377,7 +2398,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div class="sl"><span class="slb"></span><span class="slt">Section 11: Limitations &amp; Assurance</span></div>
   ${_nAssuranceDiagHtml}
   <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:10px 14px;font-size:10px;color:#92400e;line-height:1.6;">
-    <strong>ASSURANCE LIMITATION:</strong> Synerxus provides verification infrastructure, not assurance opinions. Classification: <strong>Management Reporting (Verified)</strong>. For formal global sustainability assurance, this data must be reviewed by a qualified third-party auditor per ISAE 3000. Synerxus reduces evidence-gathering by 60\u201370% but does not replace auditor judgment.
+    <strong>ASSURANCE LIMITATION:</strong> Synerxus provides structured evidence infrastructure, not assurance opinions. Classification: <strong>Management Reporting (Verified)</strong>. For formal sustainability assurance, this data must be reviewed by a qualified independent assurance provider per ISAE 3000.
   </div>
 
   <div class="section-divider"></div>
@@ -2385,10 +2406,10 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Footer -->
   <div style="padding-top:10px;">
     <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#92400e;margin-bottom:10px;">
-      <strong>Global Sustainability Verification Statement:</strong> This report contains ${verified.length} verified impact records representing ${Math.round(totalHours)} volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. Records have been verified by authorized NGO staff with immutable audit trails maintained to support global sustainability reporting requirements. <strong>This report does not constitute an assurance opinion. Formal filing requires independent limited or reasonable assurance per ISAE 3000 from a qualified auditor.</strong>
+      <strong>Verification Boundary Statement:</strong> This report contains ${verified.length} partner-confirmed evidence records representing ${Math.round(totalHours)} supporting volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. Records support reporting and assurance preparation. <strong>This report does not constitute an assurance opinion, compliance conclusion, or causal impact evaluation.</strong>
     </div>
     <div style="font-size:10px;color:var(--txt-t);margin-bottom:8px;">
-      <div>Generated by Synerxus on behalf of ${orgName}. All data is NGO-verified with complete audit trails available upon request.</div>
+      <div>Generated by Synerxus on behalf of ${orgName}. Confirmed evidence records are available for review upon request.</div>
       <div style="margin-top:2px;">Questions? support@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 Global Sustainability Verification Data (Management Verified) \u2014 Requires independent ISAE 3000 assurance for formal filing</div>
     </div>
     <div style="text-align:center;margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd);font-size:10px;letter-spacing:0.04em;">
@@ -2618,17 +2639,17 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       16: '#00689D', 17: '#19486A'
     };
 
-    // NGO partner rows
+    // Partner organization rows
     const ngoRows = Object.values(ngoStats).sort((a: any, b: any) => b.outcomes - a.outcomes).map((n: any) => `
       <tr style="border-bottom:0.5px solid #e5e7eb;">
         <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${escapeHtml(n.org.name)}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(n.org.location || '—')}</td>
-        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.outcomes}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.activities.length}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${n.beneficiaries}</td>
         <td style="padding:6px 8px;font-size:11px;">
           ${(n.org.sdgGoals || []).slice(0, 3).map((g: number) => `<span style="background:${SDG_COLORS_LOCAL[g] || '#888'};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-right:2px;">SDG ${g}</span>`).join('')}
         </td>
-        <td style="padding:6px 8px;font-size:11px;"><span style="color:#059669;">&#10003; Complete</span></td>
+        <td style="padding:6px 8px;font-size:11px;"><span style="color:#059669;">&#10003; Structured</span></td>
       </tr>`).join('');
 
     // Employee contributor rows
@@ -2667,17 +2688,17 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       return `<tr style="border-bottom:0.5px solid #e5e7eb;">
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(dateStr)}</td>
         <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${escapeHtml(volunteer?.displayName || 'Volunteer')}</td>
-        <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(org?.name || 'NGO')}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(org?.name || 'Partner organization')}</td>
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(outcomeText)}${outcomeEllipsis}</td>
         <td style="padding:5px 8px;font-size:10px;text-align:center;color:#374151;">${a.hours || 0}h</td>
-        <td style="padding:5px 8px;font-size:10px;"><span style="color:#059669;">&#10003; ${a.deviceId ? 'App' : 'Platform'}</span></td>
-        <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.geolocation ? '&#x1F4CD; Located' : '—'}</td>
+        <td style="padding:5px 8px;font-size:10px;"><span style="color:#059669;">&#10003; Partner workflow</span></td>
+        <td style="padding:5px 8px;font-size:10px;color:#374151;">${a.geolocation ? 'Region captured' : '—'}</td>
       </tr>`;
     }).join('');
 
     // ─── Visual HTML Snippets (audit-credible graphics) ──────────────────────
 
-    // Geographic Heatmap: aggregate verified count per NGO location
+    // Geographic Heatmap: aggregate verified count per partner location
     const _geoMap: Record<string, number> = {};
     for (const act of verified) {
       if (!act.verifiedBy) continue;
@@ -2703,8 +2724,8 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="padding:12px 16px;background:#F9FAFB;">' + (_geoEntries.length > 0 ? _geoBarRows : '<div style="font-size:10px;color:#6B7280;">No location data available for this period.</div>') + '</div>' +
       '<div style="padding:7px 16px;border-top:1px solid #E5E7EB;background:#F9FAFB;display:flex;gap:24px;font-size:9px;color:#374151;">' +
       '<span>Verification Rate: <strong style="color:#0A2463;">' + verificationRate + '%</strong></span>' +
-      '<span>Avg. SLA: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
-      '<span style="color:#6B7280;">SMS + PWA Verified</span></div></div>';
+      '<span>Avg. Turnaround: <strong style="color:#0A2463;">' + avgVerificationHours + 'h</strong></span>' +
+      '<span style="color:#6B7280;">Partner-confirmed workflow</span></div></div>';
 
     // SDG Horizontal Bar Chart — denominator = all SDGs (not just top-6 slice)
     const _sdgTotAll = Object.values(sdgMap).reduce((s: number, d: any) => s + d.outcomes, 0);
@@ -2727,7 +2748,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       ? '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
         '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">SDG Alignment &#x2014; Verified Outcome Distribution</div>' +
         '<div style="padding:12px 16px;background:#F9FAFB;">' + _sdgBarRows + '</div>' +
-        '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to verified outcomes only. SDG alignment confirmed by NGO program directors.</div>' +
+        '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">All percentages refer to partner-confirmed records only. SDG alignment is mapped for reporting support.</div>' +
         '</div>'
       : '';
 
@@ -2743,12 +2764,12 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="padding:16px 20px;border-right:1px solid #E5E7EB;background:#F9FAFB;">' +
       '<div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">' + Math.round(totalHours).toLocaleString() + ' Verified</div>' +
       '<div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Hours &#x23F1;</div>' +
-      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">' + avgVerificationHours + 'h Avg SLA</div>' +
+      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">' + avgVerificationHours + 'h avg turnaround</div>' +
       '</div>' +
       '<div style="padding:16px 20px;background:#F9FAFB;">' +
       '<div style="font-size:22px;font-weight:700;color:#0A2463;line-height:1.1;">' + effectiveBeneficiaries.toLocaleString() + ' Verified</div>' +
       '<div style="font-size:11px;color:#374151;margin-top:4px;font-weight:600;">Beneficiaries</div>' +
-      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">NGO-Tracked</div>' +
+      '<div style="font-size:10px;color:#6B7280;margin-top:6px;">partner-tracked</div>' +
       '</div></div>' +
       '<div style="padding:6px 20px;background:#0A2463;font-size:9px;color:#E5E7EB;letter-spacing:0.03em;">Management Reporting Verified &#x2014; Supports Global Sustainability Frameworks (ISAE 3000)</div>' +
       '</div>';
@@ -2774,13 +2795,13 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="display:grid;grid-template-columns:1fr 1fr;">' +
       '<div style="border-right:1px solid #E5E7EB;">' +
       '<div style="padding:8px 16px;font-size:10px;font-weight:700;color:#0891B2;background:#F0FDFF;border-bottom:1px solid #E5E7EB;">Included (Verified)</div>' +
-      ['NGO-confirmed outcomes','72h verification window','Validated beneficiary counts','Immutable audit trails'].map((item, i, arr) =>
+      ['Partner-confirmed outputs','Authorized verifier timestamp','Validated beneficiary counts where supplied','Structured evidence records'].map((item, i, arr) =>
         '<div style="padding:7px 16px;font-size:10.5px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + 'display:flex;align-items:center;gap:8px;"><span style="color:#0891B2;font-weight:700;">&#x2713;</span> ' + item + '</div>'
       ).join('') +
       '</div>' +
       '<div>' +
       '<div style="padding:8px 16px;font-size:10px;font-weight:700;color:#374151;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Excluded (Not Verified)</div>' +
-      ['Self-reported hours','Outcomes &gt;72h post-completion','Projected/estimated numbers','Financial SROI valuation'].map((item, i, arr) =>
+      ['Unconfirmed self-reported hours','Unreviewed outputs','Projected/estimated numbers without partner methodology','Financial SROI valuation'].map((item, i, arr) =>
         '<div style="padding:7px 16px;font-size:10.5px;color:#6B7280;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + 'display:flex;align-items:center;gap:8px;"><span style="color:#9CA3AF;font-weight:700;">&#x2717;</span> ' + item + '</div>'
       ).join('') +
       '</div></div></div></div>';
@@ -2796,18 +2817,18 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div>' +
       '<div style="border-right:1px solid #E5E7EB;">' +
-      '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Audit Trail</div>' +
-      ['Timestamp','Verifier ID','Geolocation','Device Hash'].map((item, i, arr) =>
+      '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Evidence Record</div>' +
+      ['Timestamp','Authorized verifier','General region','Confirmation method'].map((item, i, arr) =>
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div>' +
       '<div>' +
       '<div style="padding:8px 14px;font-size:10px;font-weight:700;color:#0A2463;background:#F9FAFB;border-bottom:1px solid #E5E7EB;">Regulatory Metadata</div>' +
-      ['SDG Primary/Secondary','Framework Mapping (GRI/SASB/TCFD)','Project ID','Corporate Program'].map((item, i, arr) =>
+      ['SDG Primary/Secondary','Framework support (GRI/SASB/ESRS)','Project ID','Corporate Program'].map((item, i, arr) =>
         '<div style="padding:5px 14px;font-size:10px;color:#374151;' + (i < arr.length - 1 ? 'border-bottom:1px solid #F3F4F6;' : '') + '">&#x2022; ' + item + '</div>'
       ).join('') + '</div></div>' +
       '<div style="padding:10px 16px;background:#F0FDFF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;">' +
       '<span style="color:#0891B2;font-size:14px;">&#x2193;</span>' +
-      '<span style="font-size:10px;color:#0891B2;font-weight:700;">NGO Verification &#x2713; within 72h</span>' +
+      '<span style="font-size:10px;color:#0891B2;font-weight:700;">Partner confirmation &#x2713;</span>' +
       '<span style="font-size:10px;color:#6B7280;">&#x2192;</span>' +
       '<span style="font-size:10px;color:#374151;font-weight:600;">Immutable Record Locked</span>' +
       '</div></div>';
@@ -2819,7 +2840,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="padding:16px;background:#F9FAFB;display:flex;align-items:center;flex-wrap:wrap;">' +
       [
         { label: 'Volunteer Activity', verified: false, sla: '' },
-        { label: 'NGO Verification &#x2713;', verified: true, sla: avgVerificationHours + 'h Avg SLA' },
+        { label: 'Partner Confirmation &#x2713;', verified: true, sla: avgVerificationHours + 'h avg' },
         { label: 'Verified Outcome', verified: false, sla: '' },
         { label: 'Beneficiaries', verified: false, sla: '' },
         { label: 'SDG Advanced', verified: false, sla: '' },
@@ -2833,7 +2854,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
         '</div>'
       ).join('') +
       '</div>' +
-      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Independent NGO verification is the trust mechanism &#x2014; not self-reported activity.</div>' +
+      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Authorized partner confirmation is the trust mechanism &#x2014; not self-reported activity alone.</div>' +
       '</div>';
 
     // Screening Status Matrix
@@ -2845,7 +2866,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
         '<div style="padding:6px 12px;font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.04em;' + (i < 3 ? 'border-right:1px solid #E5E7EB;' : '') + '">' + h + '</div>'
       ).join('') + '</div>' +
       [
-        { dim: 'Community Harm', method: 'NGO Program Director' },
+        { dim: 'Community Harm', method: 'Partner program lead' },
         { dim: 'Environmental Effects', method: 'Community Liaison' },
         { dim: 'Resource Displacement', method: 'Project Coordinator' },
         { dim: 'Beneficiary Concerns', method: 'Structured Survey' },
@@ -2862,18 +2883,18 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     // Verification Timeline
     const _verifyTimelineHtml =
       '<div style="font-family:Inter,sans-serif;margin:16px 0;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
-      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">' + periodDisplay + ' Verification Timeline &#x2014; SLA Compliance</div>' +
+      '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">' + periodDisplay + ' Confirmation Timeline</div>' +
       '<div style="padding:14px 16px;background:#F9FAFB;">' +
       '<div style="font-size:9px;color:#6B7280;margin-bottom:6px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">90-Day Reporting Window</div>' +
       '<div style="background:#E5E7EB;height:20px;border-radius:3px;overflow:hidden;border:1px solid #D1D5DB;margin-bottom:6px;">' +
       '<div style="width:' + verificationRate + '%;height:100%;background:#0A2463;"></div></div>' +
       '<div style="display:flex;flex-direction:column;gap:4px;">' +
       '<div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0A2463;border-radius:1px;flex-shrink:0;"></div>' +
-      '<span style="font-size:9.5px;color:#374151;font-weight:600;">' + verificationRate + '% verified within 72h SLA</span></div>' +
+      '<span style="font-size:9.5px;color:#374151;font-weight:600;">' + verificationRate + '% partner-confirmed this period</span></div>' +
       '<div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:8px;background:#0891B2;border-radius:1px;flex-shrink:0;"></div>' +
-      '<span style="font-size:9.5px;color:#374151;font-weight:600;">100% immutable audit trails maintained</span></div>' +
+      '<span style="font-size:9.5px;color:#374151;font-weight:600;">Structured evidence records maintained</span></div>' +
       '</div></div>' +
-      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps verified against stated SLA. 72h SLA matches boundary definition for defensibility.</div>' +
+      '<div style="padding:5px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#9CA3AF;">Timestamps support evidence review and assurance preparation.</div>' +
       '</div>';
 
     // Assurance Boundary Diagram
@@ -2882,7 +2903,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<h3 style="color:#0A2463;font-size:13px;font-weight:700;border-bottom:2px solid #00A896;padding-bottom:4px;margin-bottom:12px;">&#9635; Assurance Boundary: Global Verification Scope</h3>' +
       '<div style="font-family:Inter,sans-serif;border:1px solid #E5E7EB;border-radius:4px;overflow:hidden;">' +
       '<div style="background:#0A2463;padding:8px 16px;font-size:10px;font-weight:700;color:#F9FAFB;letter-spacing:0.05em;text-transform:uppercase;">Assurance Boundary: Global Verification Scope</div>' +
-      '<div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides verified outcome data supporting multiple global sustainability frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce auditor evidence-gathering burden by 60&#8211;70% but does not replace independent assurance per ISAE 3000.</div>' +
+      '<div style="padding:12px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;font-size:10px;color:#374151;line-height:1.6;">This report provides structured, partner-confirmed evidence records that can support relevant sustainability reporting workflows (UN SDGs, GRI, SASB and ESRS where applicable). It supports assurance preparation but does not replace independent assurance per ISAE 3000.</div>' +
       '<div style="padding:16px;background:#F9FAFB;">' +
       '<div style="display:flex;flex-direction:column;align-items:center;">' +
       '<div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#F9FAFB;text-align:center;">' +
@@ -2891,7 +2912,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:88%;padding:10px 16px;border:1.5px solid #0891B2;border-radius:4px;background:#F0FDFF;text-align:center;">' +
       '<div style="font-size:10px;font-weight:700;color:#0A2463;">Synerxus: Management Reporting Verified &#x2713;</div>' +
-      '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(NGO Verification)</div></div>' +
+      '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(Authorized partner confirmation)</div></div>' +
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">' +
       '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Verified &#x2192; Audit-Ready</div>' +
@@ -2900,10 +2921,10 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">' +
       '<div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:8px;">&#x2705; What Synerxus Provides</div>' +
       '<ul style="margin:0;padding:0;list-style:none;">' +
-      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>NGO-verified outcomes with immutable audit trails</li>' +
-      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence objects for GRI 413, SASB SO-ES-110</li>' +
+      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Partner-confirmed outputs with structured evidence records</li>' +
+      '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Structured evidence records for GRI 413 and ESRS S3 support where applicable</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Stakeholder impact alignment via negative impact screening</li>' +
-      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Global framework alignment (SDGs, GRI, SASB, TCFD)</li>' +
+      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#059669;">&#x2022;</span>Framework alignment support (SDGs, GRI, SASB, ESRS)</li>' +
       '</ul></div>' +
       '<div style="padding:12px 14px;background:#fef2f2;">' +
       '<div style="font-size:10px;font-weight:700;color:#991b1b;margin-bottom:8px;">&#x274C; What Requires External Action</div>' +
@@ -2911,7 +2932,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Formal assurance opinion (independent auditor required)</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Causal attribution (requires RCTs)</li>' +
       '<li style="font-size:9.5px;color:#374151;margin-bottom:5px;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Financial valuation (SROI not calculated)</li>' +
-      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance guarantee (auditor judgment required)</li>' +
+      '<li style="font-size:9.5px;color:#374151;padding-left:12px;position:relative;"><span style="position:absolute;left:0;color:#dc2626;">&#x2022;</span>Regulatory compliance conclusions (auditor judgment required)</li>' +
       '</ul></div></div>' +
       '<div style="padding:8px 16px;border-top:1px solid #E5E7EB;font-size:9px;color:#6b7280;font-style:italic;background:#fffbeb;">For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per ISAE 3000 remains required. Synerxus provides the evidence &#x2014; auditors provide the opinion.</div>' +
       '</div></div>';
@@ -2987,7 +3008,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
           </div>
         </div>
         <div style="font-size:18px;font-weight:800;color:var(--navy);">Corporate ESG Impact Report</div>
-        <div style="color:var(--txt-s);font-size:10px;margin-top:2px;">UN SDG-Aligned · NGO-Confirmed Outcomes · SUPPORTS Audit Procedures</div>
+        <div style="color:var(--txt-s);font-size:10px;margin-top:2px;">UN SDG-Aligned · Partner-Confirmed Outputs · Supports Reporting Workflows</div>
       </div>
       <div style="text-align:right;color:var(--txt-s);font-size:10px;">
         <div style="color:var(--navy);font-weight:700;font-size:13px;margin-bottom:3px;">Report ID: ${reportId}</div>
@@ -2998,25 +3019,25 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     </div>
   </div>
 </div>
-${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.length) ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0 0 var(--r) var(--r);padding:8px 20px;margin-bottom:20px;font-size:10px;color:#1e40af;">🔍 Filtered by: ${[filterEmployeeNames?.length ? `Employees: ${filterEmployeeNames.join(', ')}` : '', filterProjectIds?.length ? `Projects (${filterProjectIds.length} selected)` : '', filterNgoNames?.length ? `NGO Partners: ${filterNgoNames.join(', ')}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
+${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.length) ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0 0 var(--r) var(--r);padding:8px 20px;margin-bottom:20px;font-size:10px;color:#1e40af;">🔍 Filtered by: ${[filterEmployeeNames?.length ? `Employees: ${filterEmployeeNames.join(', ')}` : '', filterProjectIds?.length ? `Projects (${filterProjectIds.length} selected)` : '', filterNgoNames?.length ? `Partner Organizations: ${filterNgoNames.join(', ')}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
 
 <!-- TEMPLATE CONTEXT NOTICE -->
 <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;">
   <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:0.5px;margin-bottom:4px;">&#9888; TEMPLATE CONTEXT — DATA LAYER WARNING</div>
-  <div style="font-size:10px;color:#78350f;line-height:1.6;">This is an <strong>illustrative audit-support structure</strong> demonstrating how Synerxus verification architecture SUPPORTS global sustainability reporting requirements. This report is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion. Data shown reflects NGO-confirmed outcomes from the active corporate pilot. Real production data requires direct NGO confirmation. Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70%; it does not replace auditor judgment per ISAE 3000.</div>
+  <div style="font-size:10px;color:#78350f;line-height:1.6;">This report demonstrates how Synerxus structures partner-confirmed evidence for sustainability reporting and assurance preparation. It is classified as <strong>Management Reporting (Verified)</strong> — NOT a formal assurance opinion, compliance conclusion, or causal impact evaluation. Data shown reflects authorized partner-confirmed outputs from the active corporate pilot. Synerxus supports evidence preparation; it does not replace auditor judgment per ISAE 3000.</div>
 </div>
 
 <!-- SECTION 1: EXECUTIVE SNAPSHOT -->
 <div style="margin-bottom:20px;">
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 1: Executive Snapshot</h3>
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">NGO Partners</div><div class="kpi-value">${Object.keys(ngoStats).length}</div><div class="kpi-sub">organizations</div></div>
+    <div class="kpi"><div class="kpi-label">Partner Organizations</div><div class="kpi-value">${Object.keys(ngoStats).length}</div><div class="kpi-sub">authorized verifiers</div></div>
     <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
-    <div class="kpi"><div class="kpi-label">NGO-Confirmed Outcomes</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total units</div></div>
-    <div class="kpi"><div class="kpi-label">Verified Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">NGO-verified (not self-reported)</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'NGO-tracked' : 'from outcomes'}</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; NGO partner estimates, not independently verified. Sample 15&#8211;30% per ISAE 3000.</div></div>
+    <div class="kpi"><div class="kpi-label">Partner-Confirmed Records</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total output units</div></div>
+    <div class="kpi"><div class="kpi-label">Supporting Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">linked to confirmed records</div></div>
+    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'partner-tracked' : 'from output units'}</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Beneficiary figures are partner-provided or method-based estimates unless separately assured.</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
-    <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">NGO-verified</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">supporting context</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">${sortedSdgs.length}</div><div class="kpi-sub">goals impacted</div></div>
   </div>
 
@@ -3028,44 +3049,44 @@ ${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.le
     <table>
       <thead><tr style="background:#f1f5f9;"><th style="color:var(--navy);">Global Requirement</th><th style="color:var(--navy);">Status</th><th style="color:var(--navy);">Evidence</th></tr></thead>
       <tbody>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Workforce development disclosures (GRI 403, SASB SO-ES-110.C)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${uniqueVolunteerIds.size} employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community engagement disclosures (GRI 413, SASB SO-ES-110.A, TCFD Principle 7)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${Object.keys(ngoStats).length} NGO partners, ${verified.length} verified outcomes</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Stakeholder impact disclosures (GRI 301, SASB SO-ES-110.B)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Employee volunteering / workforce participation support</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${uniqueVolunteerIds.size} employees linked to confirmed records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Evidence Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community-facing evidence support (GRI 413 / ESRS S3 where material)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${Object.keys(ngoStats).length} partner organizations, ${verified.length} confirmed records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Evidence Log</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Outcome support / beneficiary estimation</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached or estimated</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Negative impacts disclosed — impact materiality</td><td style="padding:6px 8px;" class="${rejected.length > 0 ? 'badge-warn' : 'badge-ok'}">${rejected.length > 0 ? '&#9888; ' + rejected.length + ' disclosed' : '&#10003; None disclosed this period'}</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
-        <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">Monitoring & verification disclosures (GRI 103, SASB SO-ES-110.D)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${verificationRate}% verification rate, ${avgVerificationHours}h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
+        <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">Monitoring and evidence preparation support</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${verificationRate}% confirmation rate, ${avgVerificationHours}h avg turnaround</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Evidence Trail (Section 5)</td></tr>
       </tbody>
     </table>
   </div>
-  <div class="note">&#128161; <strong>Key Differentiator:</strong> Unlike Benevity/YourCause (self-reported hours only), Synerxus delivers <strong>NGO-verified outcomes AND hours</strong> with immutable audit trails — aligned to WEF SCM, GRI 413-1, SASB, TCFD and UN SDGs across all major global reporting frameworks.</div>
+  <div class="note">&#128161; <strong>Key Differentiator:</strong> Synerxus connects activity data, including volunteer time, to <strong>partner-confirmed outputs</strong> and structured evidence records that can support GRI, SASB, ESRS and UN SDG reporting preparation where applicable.</div>
 </div>
 
 ${_boundMatrixHtml}
 
-<!-- SECTION 2: NGO PARTNERSHIPS -->
+<!-- SECTION 2: PARTNER CONFIRMATION -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: NGO Partnership Impact</h3>
-  ${Object.keys(ngoStats).length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No NGO partners found for this reporting period.</p>' : `
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 2: Partner-Confirmed Outputs</h3>
+  ${Object.keys(ngoStats).length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No partner organizations found for this reporting period.</p>' : `
   <div class="section">
-    <div class="section-header"><h2>Sponsored NGO Partners — Verified Impact</h2></div>
+    <div class="section-header"><h2>Authorized Partner Organizations — Verified Evidence</h2></div>
     <table>
-      <thead><tr><th>NGO Partner</th><th>Location</th><th>Verified Outcomes</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Audit Status</th></tr></thead>
+      <thead><tr><th>Partner Organization</th><th>Location</th><th>Confirmed Records</th><th>Beneficiaries</th><th>SDG Alignment</th><th>Evidence Status</th></tr></thead>
       <tbody>${ngoRows}</tbody>
     </table>
-    <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:6px 10px;border-top:0.5px solid var(--bd);">Program spans multiple regions — active deployments include Sub-Saharan Africa, East Africa, South/Southeast Asia, and Europe. Verification optimized for low-bandwidth environments (SMS-based confirmation supported on 2G networks).</div>
+    <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:6px 10px;border-top:0.5px solid var(--bd);">Program data is organized by authorized partner confirmations and converted into structured evidence records for reporting workflows.</div>
   </div>`}
-  <div class="note">&#128161; <strong>Framework Relevance:</strong> GRI 413-1 and WEF People pillar call for disclosure of community engagement. Community engagement disclosures (GRI 413, SASB SO-ES-110.A, TCFD Principle 7) are globally recognized. This section demonstrates direct engagement with affected communities through NGO-verified outcomes — replacing self-reported claims.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> GRI 413 relates to local communities, and ESRS S3 relates to affected communities when those communities are material. This section organizes partner-confirmed output evidence that can support community-facing reporting workflows.</div>
 </div>
 
 <!-- SECTION 3: EMPLOYEE VOLUNTEERING -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering (GRI 403 · SASB SO-ES-110.C)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 3: Employee Volunteering Activity Context</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
     <div class="section">
       <div class="section-header"><h2>Participation Metrics</h2></div>
       <table>
         <tbody>
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Employees Volunteering</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${uniqueVolunteerIds.size}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; Verified roster</span></td></tr>
-          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Total Verified Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${Math.round(totalHours)}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; NGO-verified</span></td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Supporting Hours</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${Math.round(totalHours)}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);"><span class="badge-ok">&#10003; linked to confirmed outputs</span></td></tr>
           <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;font-weight:600;">Avg Hours per Employee</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${avgHoursPerEmployee}h</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. self-reported avg</td></tr>
           <tr><td style="padding:7px 10px;font-size:11px;font-weight:600;">Beneficiaries per Outcome</td><td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;color:var(--navy);">${beneficiariesPerOutcome > 0 ? beneficiariesPerOutcome : 'N/A'}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">${beneficiariesPerOutcome > 0 ? '<span class="badge-ok">&#10003; Platform-tracked</span>' : 'Add outcomes to activate'}</td></tr>
         </tbody>
@@ -3076,13 +3097,13 @@ ${_boundMatrixHtml}
       <div class="section-header"><h2>Industry Benchmarks</h2></div>
       <table>
         <tbody>
-          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">Verification Rate</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${verificationRate}%</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. N/A (competitors)</td></tr>
-          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;">Verification SLA</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${avgVerificationHours}h avg</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">target: ≤72h</td></tr>
-          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">SDGs Addressed</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${sortedSdgs.length} goals</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. industry median (global dataset)</td></tr>
-          <tr><td style="padding:7px 10px;font-size:11px;">NGO Partners</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${Object.keys(ngoStats).length}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">vs. 8 avg (global programs, 23 countries)</td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">Confirmation Rate</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${verificationRate}%</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">of reviewed submissions</td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:7px 10px;font-size:11px;">Avg Turnaround</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${avgVerificationHours}h avg</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">partner confirmation timing</td></tr>
+          <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:7px 10px;font-size:11px;">SDGs Addressed</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${sortedSdgs.length} goals</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">based on mapped records</td></tr>
+          <tr><td style="padding:7px 10px;font-size:11px;">Partner Organizations</td><td style="padding:7px 10px;font-size:11px;font-weight:700;color:var(--navy);">${Object.keys(ngoStats).length}</td><td style="padding:7px 10px;font-size:10px;color:var(--txt-s);">authorized verifiers</td></tr>
         </tbody>
       </table>
-      <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:0 2px;">&#8224; Benchmark data sourced from 120+ corporate volunteering programs across 23 countries (2024–2025).</div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:4px;padding:0 2px;">Operational indicators are calculated from records in this reporting period.</div>
     </div>
   </div>
 
@@ -3090,17 +3111,17 @@ ${_boundMatrixHtml}
   <div class="section">
     <div class="section-header"><h2>Top Employee Contributors (Verified Outcomes)</h2></div>
     <table>
-      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Verified Outcomes</th><th style="text-align:center;">Hours</th><th>NGO Partners</th><th>Skills Deployed</th></tr></thead>
+      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Confirmed Outputs</th><th style="text-align:center;">Hours</th><th>Partner Organizations</th><th>Skills Deployed</th></tr></thead>
       <tbody>${employeeRows}</tbody>
     </table>
   </div>` : ''}
   ${_geoHeatmapHtml}
-  <div class="note">&#128161; <strong>Framework Relevance:</strong> WEF People pillar and GRI 404-1 call for workforce skills disclosure. Workforce development disclosures (GRI 403, SASB SO-ES-110.C) are globally recognized. This section demonstrates employees gained cross-cultural project management experience through NGO-verified outcomes — not self-assessed surveys.</div>
+  <div class="note">&#128161; <strong>Framework Relevance:</strong> Workforce participation metrics provide activity context. Synerxus links employee activity to partner-confirmed outputs without claiming workforce development certification or causal attribution.</div>
 </div>
 
 <!-- SECTION 4: SDG ALIGNMENT -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 4: SDG Alignment &amp; Impact Attribution</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 4: SDG Alignment &amp; Outcome Support</h3>
   ${sortedSdgs.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No SDG data found for this period.</p>' : `
   <div class="section">
     <div class="section-header"><h2>UN Sustainable Development Goals Contribution</h2></div>
@@ -3112,38 +3133,38 @@ ${_boundMatrixHtml}
   ${_sdgBarHtml}`}
 </div>
 
-<!-- SECTION 5: AUDIT TRAIL -->
+<!-- SECTION 5: EVIDENCE RECORDS -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Outcomes Log (Audit Trail)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Evidence Records</h3>
   ${verified.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No verified outcomes for this period.</p>' : `
   <div class="section">
-    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Immutable Records for Auditor Sampling (showing ${Math.min(10, verified.length)} of ${verified.length})</h2></div>
+    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Structured Records for Reviewer Sampling (showing ${Math.min(10, verified.length)} of ${verified.length})</h2></div>
     <table>
-      <thead><tr><th>Date</th><th>Employee</th><th>NGO Partner</th><th>Outcome Verified</th><th style="text-align:center;">Hours</th><th>Method</th><th>Geolocation</th></tr></thead>
+      <thead><tr><th>Date</th><th>Employee</th><th>Partner Organization</th><th>Output Confirmed</th><th style="text-align:center;">Hours</th><th>Method</th><th>Region</th></tr></thead>
       <tbody>${auditRows}</tbody>
     </table>
   </div>`}
   ${_verifyTimelineHtml}
   <div style="background:#f0f9ff;border:0.5px solid #bae6fd;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#0369a1;margin-top:8px;">
-    &#128269; <strong>Auditor Use Case:</strong> Randomly sample 15–30% of outcomes for direct NGO confirmation. Each record includes verifier identity, timestamp, and contact information for the NGO programme director.
+    &#128269; <strong>Reviewer Use Case:</strong> Sample confirmed records for direct partner follow-up. Each record is structured with output, supporting activity context, authorized verifier, timestamp, region, and framework alignment support.
   </div>
 </div>
 
 <!-- SECTION 6: IMPACT MATERIALITY -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Impact Materiality Assessment (GRI 301 · Stakeholder Impact Disclosures)</h3>
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 6: Impact Boundary Review</h3>
   <div class="section">
-    <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Disclosures — SUPPORTS Global Sustainability Impact Materiality Standards</h2></div>
+    <div class="section-header" style="background:#92400e;"><h2>&#9888; Negative Impact Screening — Operational Review</h2></div>
     ${rejected.length === 0
       ? '<p style="padding:12px;font-size:11px;color:#374151;">&#10003; No negative impacts disclosed for this reporting period.</p>'
-      : `<table><thead><tr><th>Date</th><th>NGO Partner</th><th>Outcome</th><th>Negative Impact</th></tr></thead><tbody>${rejected.slice(0, 5).map((a: any) => {
+      : `<table><thead><tr><th>Date</th><th>Partner Organization</th><th>Output</th><th>Review Note</th></tr></thead><tbody>${rejected.slice(0, 5).map((a: any) => {
           const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
           const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
-          return `<tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:10px;">${escapeHtml(dateStr)}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml(org?.name || 'NGO')}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml((a.outcomeText || a.description || '—').slice(0, 50))}</td><td style="padding:6px 8px;font-size:10px;color:#b45309;">${escapeHtml(a.rejectedReason || 'Not meeting verification standards')}</td></tr>`;
+          return `<tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:10px;">${escapeHtml(dateStr)}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml(org?.name || 'Partner organization')}</td><td style="padding:6px 8px;font-size:10px;">${escapeHtml((a.outcomeText || a.description || '—').slice(0, 50))}</td><td style="padding:6px 8px;font-size:10px;color:#b45309;">${escapeHtml(a.rejectedReason || 'Not meeting verification standards')}</td></tr>`;
         }).join('')}</tbody></table>`}
   </div>
   ${_screeningMatHtml}
-  <div class="warn-note">&#9888; <strong>Framework Guidance:</strong> Stakeholder impact disclosures (GRI 301, SASB SO-ES-110.B) call for disclosure of actual and potential negative impacts on communities. This section covers impact materiality assessment — showing both positive outcomes AND unintended consequences.</div>
+  <div class="warn-note">&#9888; <strong>Boundary Note:</strong> This section records rejected or flagged submissions and operational screening notes. It does not determine formal materiality or replace legal, auditor, or sustainability reporting judgment.</div>
 </div>
 
 <!-- APPENDIX: METHODOLOGY -->
@@ -3151,24 +3172,24 @@ ${_boundMatrixHtml}
   <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Appendix A: Verification Methodology</h3>
   ${_evidArchHtml}
   <div class="section">
-    <div class="section-header"><h2>Three-Step NGO Verification Process</h2></div>
+    <div class="section-header"><h2>Five-Step Evidence Workflow</h2></div>
     <div style="padding:12px;font-size:11px;color:#374151;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
       <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
-        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">1. Employee Submission</div>
-        Logs outcome description + hours claimed through Synerxus platform with optional photo/geolocation evidence.
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">1. Activity Captured</div>
+        Program activity and volunteer time are recorded as supporting context.
       </div>
       <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
-        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">2. NGO Verification</div>
-        Partner confirms BOTH outcome AND hours with single tap → immutable record with verifier identity and timestamp.
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">2. Partner Confirmation</div>
+        An authorized partner confirms the delivered output through a lightweight verification workflow.
       </div>
       <div style="background:var(--teal-lt);border-radius:var(--r);padding:10px;">
-        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">3. Audit Trail Capture</div>
-        System logs verifier identity, timestamp, device ID/SMS number, and geolocation for every verified outcome.
+        <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">3. Evidence Record Created</div>
+        The confirmed output becomes a structured evidence record for reporting and assurance preparation.
       </div>
     </div>
   </div>
   ${_contribChainHtml}
-  <div class="warn-note">&#9888; <strong>Honest Disclaimer:</strong> This verification trail provides raw materials for ESG assurance. Final limited assurance requires auditor procedures per ISAE 3000 (15–30% sampling, direct NGO confirmation). Synerxus is DESIGNED to reduce auditor evidence-gathering by 60–70% but does not replace auditor judgment.</div>
+  <div class="warn-note">&#9888; <strong>Boundary Statement:</strong> Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</div>
 </div>
 
 ${_assuranceDiagHtml}
@@ -3177,7 +3198,7 @@ ${_assuranceDiagHtml}
 <div style="border-top:1px solid var(--bd);padding-top:12px;">
   <div style="font-size:10px;color:var(--txt-s);">
     <div>Report ID: ${reportId} · Generated by Synerxus on behalf of ${corpName}</div>
-    <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · All data NGO-verified with immutable audit trails</div>
+    <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · Confirmed records are structured for evidence review</div>
     <div style="margin-top:2px;">Questions? support@synerxus.com · &copy; ${now.getFullYear()} Synerxus · Global Sustainability Verification Data (Management Verified) &mdash; Requires independent ISAE 3000 assurance for formal filing</div>
   </div>
   <div style="text-align:center;margin-top:12px;padding-top:8px;border-top:0.5px solid var(--bd);font-size:10px;letter-spacing:0.04em;">
@@ -3402,7 +3423,7 @@ function renderTokenPage(title: string, message: string, type: 'success' | 'erro
 <h1 style="font-size:22px;color:#1f2937;margin:0 0 12px;">${title}</h1>
 <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">${message}</p>
 <div style="background:${c.bg};border:1px solid ${c.border}30;border-radius:8px;padding:12px;font-size:13px;color:${c.icon};">
-${type === 'success' ? 'This action has been recorded in the immutable audit trail.' : type === 'rejected' ? 'This action has been recorded. The volunteer will be notified.' : 'Please contact your organization administrator if you need assistance.'}
+${type === 'success' ? 'This action has been recorded in the evidence trail.' : type === 'rejected' ? 'This action has been recorded. The volunteer will be notified.' : 'Please contact your organization administrator if you need assistance.'}
 </div>
 </div>
 </div>

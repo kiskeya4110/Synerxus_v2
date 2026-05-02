@@ -2,7 +2,7 @@ interface VerificationDensityStripProps {
   verifiedOutcomes: number;
   verificationRate: number;
   verifiedHours: number;
-  avgSLA: number;
+  avgTurnaround: number;
   verifiedBeneficiaries: number;
 }
 
@@ -10,7 +10,7 @@ export default function VerificationDensityStrip({
   verifiedOutcomes,
   verificationRate,
   verifiedHours,
-  avgSLA,
+  avgTurnaround,
   verifiedBeneficiaries,
 }: VerificationDensityStripProps) {
   return (
@@ -77,7 +77,7 @@ export default function VerificationDensityStrip({
             Hours ⏱
           </div>
           <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "6px" }}>
-            {avgSLA}h Avg SLA
+            {avgTurnaround}h avg turnaround
           </div>
         </div>
 
@@ -102,7 +102,7 @@ export default function VerificationDensityStrip({
             Beneficiaries
           </div>
           <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "6px" }}>
-            NGO-Tracked
+            partner-tracked
           </div>
         </div>
       </div>

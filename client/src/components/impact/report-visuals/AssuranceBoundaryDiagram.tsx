@@ -10,7 +10,7 @@ export default function AssuranceBoundaryDiagram() {
     },
     {
       label: "Synerxus: Management Reporting Verified ✓",
-      sublabel: "(NGO Verification)",
+      sublabel: "(Authorized partner confirmation)",
       bg: "#F0FDFF",
       border: "#0891B2",
       textColor: "#0A2463",
@@ -27,10 +27,10 @@ export default function AssuranceBoundaryDiagram() {
   ];
 
   const provides = [
-    "NGO-verified outcomes with structured evidence records",
-    "Structured evidence objects for GRI 413, SASB SO-ES-110",
+    "Partner-confirmed outputs with structured evidence records",
+    "Structured evidence records for GRI 413 and ESRS S3 support where applicable",
     "Evidence that can support materiality review workflows",
-    "Global framework alignment (SDGs, GRI, SASB, TCFD)",
+    "Framework alignment support (SDGs, GRI, SASB, ESRS)",
   ];
 
   const requires = [
@@ -76,9 +76,10 @@ export default function AssuranceBoundaryDiagram() {
           lineHeight: 1.6,
         }}
       >
-        This report provides verified outcome data supporting multiple global sustainability
-        frameworks (UN SDGs, GRI, SASB, TCFD, SEC Climate Rules). It is designed to reduce
-        assurance preparation but does not replace independent assurance per ISAE 3000.
+        This report provides structured, partner-confirmed evidence records that can support
+        relevant sustainability reporting workflows (UN SDGs, GRI, SASB and ESRS where
+        applicable). It supports assurance preparation but does not replace independent
+        assurance per ISAE 3000.
       </div>
 
       {/* Layered graph */}

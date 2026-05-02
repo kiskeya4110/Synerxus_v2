@@ -7,7 +7,7 @@ interface GeoLocation {
 interface GeographicHeatmapProps {
   locations?: GeoLocation[];
   verificationRate?: number;
-  avgSLA?: number;
+  avgTurnaround?: number;
 }
 
 const DEFAULT_LOCATIONS: GeoLocation[] = [
@@ -21,7 +21,7 @@ const DEFAULT_LOCATIONS: GeoLocation[] = [
 export default function GeographicHeatmap({
   locations = DEFAULT_LOCATIONS,
   verificationRate = 85,
-  avgSLA = 16,
+  avgTurnaround = 16,
 }: GeographicHeatmapProps) {
   const max = Math.max(...locations.map((l) => l.verifications));
 
@@ -134,7 +134,7 @@ export default function GeographicHeatmap({
           <strong style={{ color: "#0A2463" }}>{verificationRate}%</strong>
         </span>
         <span>
-          Avg. SLA: <strong style={{ color: "#0A2463" }}>{avgSLA}h</strong>
+          Avg. Turnaround: <strong style={{ color: "#0A2463" }}>{avgTurnaround}h</strong>
         </span>
         <span style={{ color: "#6B7280" }}>Partner-confirmed</span>
       </div>

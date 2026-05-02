@@ -67,8 +67,8 @@ export const reportTemplates: ReportTemplate[] = [
   },
   {
     id: "impact-summary",
-    name: "Impact Summary Report",
-    description: "Verified outcomes and beneficiary reach metrics.",
+    name: "Verified Evidence Summary",
+    description: "Partner-confirmed evidence records supporting ESG/CSR reporting and assurance preparation.",
     category: "impact",
     icon: "📊",
     formats: ["PDF"],

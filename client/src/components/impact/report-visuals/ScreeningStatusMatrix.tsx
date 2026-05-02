@@ -1,5 +1,5 @@
 const SCREENING_ROWS = [
-  { dimension: "Community Harm", status: "Pass", affected: 0, method: "NGO Program Director" },
+  { dimension: "Community Harm", status: "Pass", affected: 0, method: "Partner program lead" },
   { dimension: "Environmental Effects", status: "Pass", affected: 0, method: "Community Liaison" },
   { dimension: "Resource Displacement", status: "Pass", affected: 0, method: "Project Coordinator" },
   { dimension: "Beneficiary Concerns", status: "Pass", affected: 0, method: "Structured Survey" },

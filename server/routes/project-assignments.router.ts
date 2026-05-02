@@ -454,11 +454,11 @@ projectAssignmentsRouter.patch("/:id", async (req: Request, res: Response) => {
       const attempted = Object.keys(req.body).filter(k => !ORG_ALLOWED_FIELDS.has(k));
       if (attempted.length > 0) {
         return res.status(400).json({
-          message: `Invalid update fields: ${attempted.join(", ")}. Allowed fields: ${[...ORG_ALLOWED_FIELDS].join(", ")}`
+          message: `Invalid update fields: ${attempted.join(", ")}. Allowed fields: ${Array.from(ORG_ALLOWED_FIELDS).join(", ")}`
         });
       }
       updateData = {};
-      for (const field of ORG_ALLOWED_FIELDS) {
+      for (const field of Array.from(ORG_ALLOWED_FIELDS)) {
         if (req.body[field] !== undefined) updateData[field] = req.body[field];
       }
     } else {

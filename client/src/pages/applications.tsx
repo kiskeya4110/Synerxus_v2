@@ -328,7 +328,7 @@ export default function ApplicationsPage() {
             variant="ghost"
             size="sm"
             className="mb-4"
-            onClick={() => navigate('/organization-dashboard/pwa')}
+            onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard

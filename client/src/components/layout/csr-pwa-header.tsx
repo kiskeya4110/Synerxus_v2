@@ -124,7 +124,7 @@ export default function CSRPWAHeader({
     if (relatedEntityType === 'project' && relatedEntityId) {
       return `/projects/${relatedEntityId}`;
     }
-    return '/corporate/dashboard/pwa';
+    return '/dashboard';
   };
 
   // Handle notification click
@@ -153,7 +153,7 @@ export default function CSRPWAHeader({
   };
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/corporate/dashboard/pwa", bgColor: "bg-emerald-100", textColor: "text-emerald-600" },
+    { icon: Home, label: "Dashboard", path: "/dashboard", bgColor: "bg-emerald-100", textColor: "text-emerald-600" },
     { icon: FileText, label: "Reports", path: "/csr-reports-exports", bgColor: "bg-amber-100", textColor: "text-amber-600" },
     { icon: HelpCircle, label: "Help", path: "/help", bgColor: "bg-stone-100", textColor: "text-stone-600" },
   ];

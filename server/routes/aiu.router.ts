@@ -51,7 +51,7 @@ async function resolveProjectAccess(
   projectId: number,
 ): Promise<{ project: Awaited<ReturnType<typeof storage.getProject>>; allowed: boolean }> {
   const project = await storage.getProject(projectId);
-  if (!project) return { project: null, allowed: false };
+  if (!project) return { project: undefined, allowed: false };
 
   if (await callerIsAdmin(req)) return { project, allowed: true };
 

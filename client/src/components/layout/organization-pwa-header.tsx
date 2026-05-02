@@ -114,12 +114,12 @@ export default function OrganizationPWAHeader({
         if (relatedEntityType === 'project' && relatedEntityId) {
           return `/projects/${relatedEntityId}`;
         }
-        return '/organization-dashboard/pwa';
+        return '/dashboard';
       default:
         if (relatedEntityType === 'project' && relatedEntityId) {
           return `/projects/${relatedEntityId}`;
         }
-        return '/organization-dashboard/pwa';
+        return '/dashboard';
     }
   };
 
@@ -188,7 +188,7 @@ export default function OrganizationPWAHeader({
     {
       title: "MAIN",
       items: [
-        { icon: Home, label: "Verify Hub", desc: "Organization overview", action: () => navigate('/organization-dashboard/pwa') },
+        { icon: Home, label: "Verify Hub", desc: "Organization overview", action: () => navigate('/dashboard') },
         { icon: FolderOpen, label: "Projects", desc: "Manage your projects", action: () => navigate('/projects') },
       ]
     },

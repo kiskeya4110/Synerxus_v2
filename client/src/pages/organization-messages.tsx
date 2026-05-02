@@ -129,7 +129,7 @@ export default function OrganizationMessages() {
                   className={`p-3 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] ${
                     !notif.read ? "bg-blue-50 border-blue-200" : ""
                   }`}
-                  onClick={() => navigate("/organization-dashboard/pwa")}
+                  onClick={() => navigate("/dashboard")}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${

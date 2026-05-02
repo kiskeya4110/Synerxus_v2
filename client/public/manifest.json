@@ -1,7 +1,7 @@
 {
-  "name": "Synerxus — NGO-Verified ESG Impact Reporting",
+  "name": "Synerxus — Verified ESG Evidence",
   "short_name": "Synerxus",
-  "description": "Real-time, NGO-verified outcome verification with immutable audit trails for CSRD, ESRS S3/S4 and UN SDG reporting.",
+  "description": "Verified evidence infrastructure for ESG, CSR, corporate volunteering, and social value reporting workflows.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

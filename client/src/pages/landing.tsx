@@ -8,6 +8,13 @@ import {
   FileCheck,
   BarChart2,
   Clock,
+  ListChecks,
+  LineChart,
+  Handshake,
+  Check,
+  Layers,
+  Monitor,
+  Headset,
   Lock,
   AlertTriangle,
   CheckCircle,
@@ -56,93 +63,61 @@ function shouldRenderHeroSlide(activeIndex: number, slideIndex: number) {
 const PIPELINE_STEPS: {
   label: string;
   sub: string;
-  caption: string;
-  image: string;
   color: string;
   x: number;
   y: number;
   detail: string;
-  schema: { label: string; value: string }[];
+  mobileImage?: string;
 }[] = [
   {
     label: "Activity Captured",
     sub: "Program activity and volunteer time recorded",
-    caption: "Activity captured as evidence input",
-    image: "/1%20-Process%20-%20Activity%20Captured.png",
     color: "#1D4ED8",
     x: 11,
     y: 55,
     detail:
       "ESG program activity is captured with supporting context such as volunteer time, program boundary, and delivery context.",
-    schema: [
-      { label: "Record type", value: "Activity input" },
-      { label: "Captures", value: "Program activity, participant context, supporting hours" },
-      { label: "Evidence role", value: "Level 1 activity reporting" },
-    ],
+    mobileImage: undefined,
   },
   {
     label: "Output Documented",
     sub: "Delivered outputs are structured for review",
-    caption: "Output documented in operational terms",
-    image: "/2%20-%20Process%20-%20Output%20Documented.png",
     color: "#D4980C",
     x: 29,
     y: 55,
     detail:
       "The delivered output is documented in operational language, such as kits distributed, filters installed, workshops delivered, or households reached.",
-    schema: [
-      { label: "Record type", value: "Output record" },
-      { label: "Captures", value: "Delivered output, quantity, program context" },
-      { label: "Evidence role", value: "Level 2 output tracking" },
-    ],
+    mobileImage: undefined,
   },
   {
     label: "Partner Confirmation",
     sub: "Authorized partner confirms the output",
-    caption: "Authorized partner confirms delivery",
-    image: "/3%20-%20Process%20-%20Partner%20Confirmation.png",
     color: "#059669",
     x: 50,
     y: 55,
     detail:
       "An authorized partner confirms the output through a lightweight verification workflow, creating independence from the original submitter.",
-    schema: [
-      { label: "Record type", value: "Confirmation event" },
-      { label: "Captures", value: "Verifier role, confirmation status, review timestamp" },
-      { label: "Evidence role", value: "Independent confirmation" },
-    ],
+    mobileImage: undefined,
   },
   {
     label: "Evidence Record Created",
     sub: "Structured record for reporting workflows",
-    caption: "Verified evidence record created",
-    image: "/4%20-Process%20-%20Evidence%20Record.png",
     color: "#0A1F44",
     x: 71,
     y: 55,
     detail:
       "The confirmed output becomes a structured evidence record with output, activity context, authorized verifier, timestamp, region, and framework alignment support.",
-    schema: [
-      { label: "Record type", value: "Verified evidence record" },
-      { label: "Captures", value: "Output, activity context, partner confirmation, timestamp, region" },
-      { label: "Evidence role", value: "Level 4 verified evidence" },
-    ],
+    mobileImage: undefined,
   },
   {
     label: "Reporting Support",
     sub: "Evidence prepared for assurance review",
-    caption: "Evidence supports reporting and assurance prep",
-    image: "/5%20-%20Process%20-%20Reporting%20Support.png",
     color: "#7C3AED",
     x: 89,
     y: 55,
     detail:
       "ESG teams receive audit-ready evidence that supports reporting and assurance preparation without replacing independent assurance providers.",
-    schema: [
-      { label: "Record type", value: "Evidence pack" },
-      { label: "Captures", value: "Framework alignment support, sample-ready records, reporting context" },
-      { label: "Evidence role", value: "Reporting and assurance preparation" },
-    ],
+    mobileImage: undefined,
   },
 ];
 
@@ -196,6 +171,76 @@ const CUSTODY_STEPS: {
       "Verified outcomes are organized against relevant ESG frameworks. Synerxus supports audit preparation; formal assurance and compliance conclusions remain with independent providers.",
   },
 ];
+
+function ProcessStepIcon({
+  index,
+  color,
+  compact = false,
+}: {
+  index: number;
+  color: string;
+  compact?: boolean;
+}) {
+  const sizeClass = compact ? "h-12 w-12" : "h-16 w-16";
+  const iconClass = compact ? "h-5 w-5" : "h-7 w-7";
+
+  if (index === 0) {
+    return (
+      <span
+        className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100`}
+      >
+        <ListChecks className={`${iconClass} text-blue-700`} />
+        <Clock className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white p-0.5 text-blue-600 shadow-sm" />
+      </span>
+    );
+  }
+
+  if (index === 1) {
+    return (
+      <span
+        className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100`}
+      >
+        <ListChecks className={`${iconClass} text-[#D4980C]`} />
+        <LineChart className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white p-0.5 text-[#D4980C] shadow-sm" />
+      </span>
+    );
+  }
+
+  if (index === 2) {
+    return (
+      <span
+        className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-emerald-50 border border-emerald-100`}
+      >
+        <Handshake className={`${iconClass} text-emerald-700`} />
+        <Check className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-600 p-0.5 text-white shadow-sm" />
+        <Check className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full bg-emerald-500 p-0.5 text-white shadow-sm" />
+      </span>
+    );
+  }
+
+  if (index === 3) {
+    return (
+      <span
+        className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-slate-100 border border-slate-200`}
+      >
+        <Layers className="absolute left-3 top-3 h-7 w-7 text-slate-300" />
+        <span className="relative flex h-10 w-9 items-center justify-center rounded-md bg-white shadow-sm border border-slate-200">
+          <ListChecks className="h-5 w-5 text-slate-700" />
+          <Check className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-blue-600 p-0.5 text-white shadow-sm" />
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-purple-50 border border-purple-100`}
+    >
+      <Monitor className={`${iconClass} text-purple-700`} />
+      <Headset className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white p-0.5 text-purple-600 shadow-sm" />
+    </span>
+  );
+}
 
 function HowItWorksSection({
   activeStep,
@@ -267,14 +312,7 @@ function HowItWorksSection({
                       onClick={() => setActiveStep(isOpen ? null : i)}
                       aria-expanded={isOpen}
                     >
-                      <span className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-                        <img
-                          src={step.image}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      </span>
+                      <ProcessStepIcon index={i} color={step.color} compact />
                       <span className="flex-1 min-w-0">
                         <span className="block font-extrabold text-[#0A1F44] text-sm leading-snug">
                           {step.label}
@@ -309,33 +347,9 @@ function HowItWorksSection({
                           className="h-0.5 rounded-full mb-3 opacity-50"
                           style={{ backgroundColor: step.color }}
                         />
-                        <img
-                          src={step.image}
-                          alt={step.caption}
-                          className="mb-3 aspect-[16/9] w-full rounded-xl border border-slate-200 object-cover"
-                          loading="lazy"
-                        />
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                          {step.caption}
-                        </p>
                         <p className="text-slate-500 text-sm leading-relaxed">
                           {step.detail}
                         </p>
-                        <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden">
-                          {step.schema.map((row) => (
-                            <div
-                              key={row.label}
-                              className="grid grid-cols-[96px_1fr] gap-3 border-b border-slate-200 last:border-b-0 px-3 py-2"
-                            >
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                {row.label}
-                              </span>
-                              <span className="text-xs font-medium text-slate-600">
-                                {row.value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     )}
                   </div>
@@ -410,7 +424,7 @@ function HowItWorksSection({
                     onMouseEnter={() => setActiveStep(i)}
                     onMouseLeave={() => setActiveStep(null)}
                     onClick={() => setActiveStep(isActive ? null : i)}
-                    className={`relative text-left rounded-xl border p-3 min-h-[236px] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/30 ${
+                    className={`relative text-left rounded-xl border p-4 min-h-[150px] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/30 ${
                       isActive
                         ? "bg-blue-50 shadow-md"
                         : "bg-slate-50 hover:bg-white hover:shadow-sm"
@@ -419,13 +433,14 @@ function HowItWorksSection({
                       borderColor: isActive ? step.color : "#e2e8f0",
                     }}
                   >
-                    <span className="block aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 bg-white mb-3">
-                      <img
-                        src={step.image}
-                        alt={step.caption}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
+                    <div className="mb-4">
+                      <ProcessStepIcon index={i} color={step.color} />
+                    </div>
+                    <span className="block text-sm font-extrabold text-[#0A1F44] leading-tight">
+                      {step.label}
+                    </span>
+                    <span className="block mt-2 text-xs text-slate-500 leading-relaxed">
+                      {step.sub}
                     </span>
                     {i < PIPELINE_STEPS.length - 1 && (
                       <ArrowRight className="absolute -right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />

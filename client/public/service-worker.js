@@ -1,8 +1,9 @@
-const CACHE_NAME = 'synerxus-cache-v3';
+const CACHE_NAME = 'synerxus-cache-v4';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/offline.html'
 ];
 
 // Install event - cache essential files
@@ -93,9 +94,11 @@ self.addEventListener('fetch', event => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // For navigation requests, return the cached index.html
+          // For navigation requests, return the cached app shell or offline page
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match('/index.html').then(appShell => {
+              return appShell || caches.match('/offline.html');
+            });
           }
           // Let other requests fail naturally instead of showing offline message
           return new Response('', { status: 408 });

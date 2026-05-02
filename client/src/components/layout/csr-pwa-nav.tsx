@@ -24,7 +24,7 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
 
   // Determine active tab from current location if not provided
   const currentTab = activeTab || (() => {
-    if (location === '/csr-dashboard' || location === '/csr-dashboard/pwa' || location.includes('/corporate/dashboard')) return 'home';
+    if (location === '/dashboard' || location === '/csr-dashboard' || location === '/csr-dashboard/pwa' || location.includes('/corporate/dashboard')) return 'home';
     if (location.includes('/reports') || location === '/csr-reports-exports') return 'reports';
     return 'home';
   })();
@@ -34,7 +34,7 @@ export default function CSRPWANav({ activeTab, userId: propUserId }: CSRPWANavPr
       id: 'home' as const,
       label: 'Home',
       icon: Home,
-      path: '/corporate/dashboard/pwa'
+      path: '/dashboard'
     },
     {
       id: 'reports' as const,

@@ -50,9 +50,9 @@ export default function ProjectDetailPWA() {
       window.history.back();
     } else {
       const dashboardPath = userType === 'organization'
-        ? '/organization-dashboard/pwa'
+        ? '/dashboard'
         : userType === 'corporate-partner' || userType === 'corporate_partner'
-        ? '/csr-dashboard-pwa'
+        ? '/dashboard'
         : '/volunteer-dashboard';
       navigate(dashboardPath);
     }

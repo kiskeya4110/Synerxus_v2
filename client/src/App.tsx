@@ -54,6 +54,7 @@ const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
 // NGO project management (simplified)
 const NgoProjects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
+const ProjectDetailPWA = lazy(() => import("@/pages/project-detail-pwa"));
 const ProjectEdit = lazy(() => import("@/pages/project-edit"));
 
 // ============================================================================
@@ -213,6 +214,7 @@ export default function App() {
           <Route path="/projects">{() => <Redirect to="/dashboard" />}</Route>
           <Route path="/projects/:id/edit" component={ProjectEdit} />
           <Route path="/ngo/projects/:id/edit" component={ProjectEdit} />
+          <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />

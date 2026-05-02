@@ -4123,12 +4123,14 @@ export default function Landing() {
                   >
                     Apply for Pilot
                   </Button>
-                  <button
-                    onClick={() => setPricingPlan("demo")}
+                  <a
+                    href="/Synerxus-Verification-Methodology-v1.1.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-[#0A1F44] text-xs font-medium underline underline-offset-2 hover:text-[#0A8C6A] transition-colors text-center"
                   >
                     View our verification methodology
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>

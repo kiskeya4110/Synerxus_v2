@@ -1473,7 +1473,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     // Global framework compliance rows — new format with "How This Report Supports" column
     const csrdRows = [
       { code: 'GRI 413 · ESRS S3 support', req: 'Community-facing evidence where material', how: `Mapped to: ${verified.length} partner-confirmed evidence records` },
-      { code: 'GRI 413 support', req: 'Local community outputs and management context', how: `Supported by: ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached or estimated from partner-confirmed records` },
+      { code: 'GRI 413 support', req: 'Local community outputs and management context', how: `Supported by: ${effectiveBeneficiaries.toLocaleString()} partner-reported reach or estimated from partner-confirmed records` },
       { code: 'Boundary review', req: 'Operational screening and exceptions', how: `Addressed: ${rejected.length} rejected or flagged submission${rejected.length !== 1 ? 's' : ''} recorded` },
       { code: 'Activity context', req: 'Volunteer and workforce participation evidence', how: `Supported by: ${uniqueSkillsCount || uniqueVolunteers} skill categories across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}` },
       { code: 'Monitoring support', req: 'Evidence preparation and review workflow', how: `Demonstrated by: ${verificationRate}% confirmation rate, ${avgVerificationHours > 0 ? avgVerificationHours + 'h' : 'N/A'} average turnaround` },
@@ -2244,7 +2244,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     </div>
     <div style="background:#f5f3ff;border:0.5px solid #ddd6fe;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#7c3aed;line-height:1;">${effectiveBeneficiaries.toLocaleString()}</div>
-      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Beneficiaries Reached</div>
+      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Partner-Reported Reach</div>
       <div style="font-size:9px;color:#9ca3af;margin-top:6px;line-height:1.4;">&#8224; Partner-provided or method-based estimates unless separately assured.</div>
     </div>
   </div>
@@ -3036,7 +3036,7 @@ ${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.le
     <div class="kpi"><div class="kpi-label">Employees Volunteering</div><div class="kpi-value">${uniqueVolunteerIds.size}</div><div class="kpi-sub">of ${linkedUserIds.length} linked</div></div>
     <div class="kpi"><div class="kpi-label">Partner-Confirmed Records</div><div class="kpi-value">${verified.length}</div><div class="kpi-sub">${totalOutcomes} total output units</div></div>
     <div class="kpi"><div class="kpi-label">Supporting Hours</div><div class="kpi-value">${Math.round(totalHours)}</div><div class="kpi-sub">linked to confirmed records</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'partner-tracked' : 'from output units'}</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Beneficiary figures are partner-provided or method-based estimates unless separately assured.</div></div>
+    <div class="kpi"><div class="kpi-label">Partner-Reported Reach</div><div class="kpi-value">${effectiveBeneficiaries.toLocaleString()}</div><div class="kpi-sub">${totalBeneficiaries > 0 ? 'partner-tracked' : 'from output units'}</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Reach figures are partner-provided or method-based estimates unless separately assured.</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">${verificationRate}%</div><div class="kpi-sub">avg ${avgVerificationHours}h turnaround</div></div>
     <div class="kpi"><div class="kpi-label">Avg Hours/Employee</div><div class="kpi-value">${avgHoursPerEmployee}h</div><div class="kpi-sub">supporting context</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">${sortedSdgs.length}</div><div class="kpi-sub">goals impacted</div></div>
@@ -3052,7 +3052,7 @@ ${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.le
       <tbody>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Employee volunteering / workforce participation support</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${uniqueVolunteerIds.size} employees linked to confirmed records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Evidence Log</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community-facing evidence support (GRI 413 / ESRS S3 where material)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${Object.keys(ngoStats).length} partner organizations, ${verified.length} confirmed records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Evidence Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Outcome support / beneficiary estimation</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${effectiveBeneficiaries.toLocaleString()} beneficiaries reached or estimated</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Outcome support / reach estimation</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${effectiveBeneficiaries.toLocaleString()} partner-reported reach or estimated</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Reach Counts</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Negative impacts disclosed — impact materiality</td><td style="padding:6px 8px;" class="${rejected.length > 0 ? 'badge-warn' : 'badge-ok'}">${rejected.length > 0 ? '&#9888; ' + rejected.length + ' disclosed' : '&#10003; None disclosed this period'}</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
         <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">Monitoring and evidence preparation support</td><td style="padding:6px 8px;" class="badge-ok">&#10003; ${verificationRate}% confirmation rate, ${avgVerificationHours}h avg turnaround</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Evidence Trail (Section 5)</td></tr>
       </tbody>

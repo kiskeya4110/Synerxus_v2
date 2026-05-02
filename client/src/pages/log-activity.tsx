@@ -289,7 +289,7 @@ export default function LogActivity() {
 
       toast({
         title: "Outcome Logged",
-        description: "Your impact has been submitted for NGO verification.",
+        description: "Your activity has been submitted for partner confirmation.",
       });
 
       // Reset form
@@ -562,11 +562,11 @@ export default function LogActivity() {
                 <p className="text-xs text-slate-400">How many hours did you spend on this activity?</p>
               </div>
 
-              {/* 3b. Beneficiaries Reached (optional) */}
+              {/* 3b. Partner-Reported Reach (optional) */}
               <div className="space-y-2">
                 <Label htmlFor="beneficiaries" className="text-slate-700 font-medium flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-slate-500" />
-                  Beneficiaries Reached <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                  Partner-Reported Reach <span className="text-slate-400 text-xs font-normal">(optional)</span>
                 </Label>
                 <Input
                   id="beneficiaries"

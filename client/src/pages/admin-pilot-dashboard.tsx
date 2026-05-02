@@ -260,7 +260,7 @@ function PilotCard({ pilot }: { pilot: CorporatePilot }) {
       {pilot.outcomes > 0 && (
         <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-500 flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 inline-block"></span>
-          Both outcomes + hours NGO-verified (audit-ready)
+          Both outputs + hours partner-confirmed (audit-ready evidence)
         </div>
       )}
     </div>
@@ -373,9 +373,9 @@ export default function AdminPilotDashboard() {
               <div className="text-cyan-100 text-sm font-medium mb-1 tracking-wide uppercase">
                 Make-or-Break Metric
               </div>
-              <div className="text-xl font-bold">NGO verification rate ≥80% within 72 hours</div>
+              <div className="text-xl font-bold">Partner confirmation rate ≥80% within 72 hours</div>
               <div className="text-cyan-100 text-sm mt-2">
-                Outcomes and supporting hours are NGO-verified as audit-ready evidence for ESG reporting
+                Outputs and supporting hours are partner-confirmed as audit-ready evidence for ESG reporting
               </div>
               <div className="flex flex-wrap gap-4 mt-3 text-sm text-cyan-100">
                 <span><span className="font-bold text-white">{stats?.totalActivities ?? 0}</span> total activities</span>
@@ -398,22 +398,22 @@ export default function AdminPilotDashboard() {
               <StatCard
                 icon="✓"
                 value={stats?.totalVerifiedOutcomes ?? 0}
-                label="Verified Outcomes"
-                sublabel="NGO-confirmed"
+                label="Verified Outputs"
+                sublabel="partner-confirmed"
                 color="emerald"
               />
               <StatCard
                 icon="⏱"
                 value={`${stats?.totalVerifiedHours ?? 0}h`}
                 label="Verified Hours"
-                sublabel="NGO-confirmed (from self-reported)"
+                sublabel="partner-confirmed (from self-reported)"
                 color="cyan"
               />
               <StatCard
                 icon="📋"
                 value={stats?.totalPending ?? 0}
                 label="Pending Verification"
-                sublabel="Awaiting NGO confirmation"
+                sublabel="Awaiting partner confirmation"
                 color="violet"
               />
               <StatCard
@@ -476,7 +476,7 @@ export default function AdminPilotDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-800">Live Verifications</h2>
-                  <p className="text-sm text-slate-500">Real-time NGO confirmations</p>
+                  <p className="text-sm text-slate-500">Real-time partner confirmations</p>
                 </div>
                 <span className="flex items-center gap-1 text-xs text-emerald-600 flex-shrink-0">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
@@ -564,7 +564,7 @@ export default function AdminPilotDashboard() {
         <div className="mt-8 text-center text-sm text-slate-400 pb-4">
           <p>Every element either diagnoses <em>why verification is low</em> or proves <em>value to corporate pilots</em>.</p>
           <p className="mt-1 text-xs">
-            Hours are <strong>NGO-verified</strong> alongside outcomes — not self-reported. Both are audit-ready.
+            Hours are <strong>partner-confirmed</strong> alongside outputs — not self-reported. Both are audit-ready evidence.
           </p>
         </div>
       </main>

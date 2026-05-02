@@ -1602,7 +1602,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex items-start gap-2 text-[10px] text-slate-300">
                       <Target className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                       <p>
-                        <span className="font-semibold text-slate-200">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. Impact Points are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
+                        <span className="font-semibold text-slate-200">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. Impact Points are auditable credits showing your verified share of SDG-linked outputs, backed by project data and partner confirmation.
                       </p>
                     </div>
                   </div>

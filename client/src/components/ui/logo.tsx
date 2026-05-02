@@ -83,7 +83,7 @@ export default function Logo({
         <span
           onClick={handleVerifiedClick}
           style={{ cursor: 'pointer', color: '#0A2463' }}
-          title="NGO Verification"
+          title="Partner Confirmation"
         >
           Verified!
         </span>

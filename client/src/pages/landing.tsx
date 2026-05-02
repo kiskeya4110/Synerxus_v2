@@ -993,7 +993,7 @@ function buildSampleReportHtml(): string {
     <div class="kpi"><div class="kpi-label">Participants Linked</div><div class="kpi-value">47</div><div class="kpi-sub">of 120 linked</div></div>
     <div class="kpi"><div class="kpi-label">Partner-Confirmed Outputs</div><div class="kpi-value">134</div><div class="kpi-sub">186 total units</div></div>
     <div class="kpi"><div class="kpi-label">Supporting Hours</div><div class="kpi-value">1,678</div><div class="kpi-sub">linked to confirmed outputs</div></div>
-    <div class="kpi"><div class="kpi-label">Beneficiaries Reached</div><div class="kpi-value">39,290</div><div class="kpi-sub">partner-tracked</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Partner estimates. Sample 15–30% for assurance review.</div></div>
+    <div class="kpi"><div class="kpi-label">Partner-Reported Reach</div><div class="kpi-value">39,290</div><div class="kpi-sub">partner-tracked</div><div style="font-size:8px;color:#9ca3af;margin-top:3px;line-height:1.3;">&#8224; Partner estimates. Sample 15–30% for assurance review.</div></div>
     <div class="kpi"><div class="kpi-label">Verification Rate</div><div class="kpi-value">85%</div><div class="kpi-sub">avg 16h turnaround</div></div>
     <div class="kpi"><div class="kpi-label">Avg Hours / Employee</div><div class="kpi-value">35.7h</div><div class="kpi-sub">linked to confirmed outputs</div></div>
     <div class="kpi"><div class="kpi-label">SDGs Addressed</div><div class="kpi-value">7</div><div class="kpi-sub">goals impacted</div></div>
@@ -1041,7 +1041,7 @@ function buildSampleReportHtml(): string {
       <tbody>
         <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Workforce development requirements (GRI 403, SASB SO-ES-110.C)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 47 employees deployed verified skills</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 3 + Outcome Log</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Community engagement evidence (GRI 413, ESRS S3 where material)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 3 partners, 134 verified records</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Outcome Log</td></tr>
-        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Impact disclosure requirements (GRI 301, SASB SO-ES-110.B)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 39,290 beneficiaries reached</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
+        <tr style="border-bottom:0.5px solid var(--bd);"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Impact disclosure requirements (GRI 301, SASB SO-ES-110.B)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 39,290 partner-reported reach</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 2 + Beneficiary Counts</td></tr>
         <tr style="border-bottom:0.5px solid var(--bd);background:#f9fafb;"><td style="padding:6px 8px;font-size:11px;font-weight:600;">Impact disclosure requirements — Negative impacts</td><td style="padding:6px 8px;" class="badge-ok">&#10003; None disclosed this period</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Section 6</td></tr>
         <tr><td style="padding:6px 8px;font-size:11px;font-weight:600;">Monitoring processes requirements (GRI 103, SASB SO-ES-110.D)</td><td style="padding:6px 8px;" class="badge-ok">&#10003; 85% verification rate, 16h avg SLA</td><td style="padding:6px 8px;font-size:10px;color:var(--txt-s);">Verification Trail (Section 5)</td></tr>
       </tbody>
@@ -2438,10 +2438,9 @@ export default function Landing() {
                 className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed"
                 data-testid="text-hero-description"
               >
-                Synerxus helps organizations convert volunteer time,
-                partner-delivered outputs, and ESG program activity into
-                independently confirmed evidence records that support reporting
-                and assurance preparation.
+                Synerxus turns ESG activity — including volunteer time,
+                partner-delivered outputs, and social value programs — into
+                independently confirmed, audit-ready evidence.
               </p>
 
               <div className="flex flex-wrap gap-2 sm:gap-3 mb-10">
@@ -2498,7 +2497,7 @@ export default function Landing() {
               <div className="grid grid-cols-2 gap-2 mt-1 justify-items-start">
                 {[
                   "Partner-Confirmed Outputs",
-                  "Immutable Audit Trail",
+                  "Tamper-Evident Audit Trail",
                   "Global Framework Support",
                   "SDG-Aligned Impact",
                 ].map((badge) => (
@@ -3223,7 +3222,7 @@ export default function Landing() {
                 },
                 {
                   icon: <Lock className="h-6 w-6 text-[#0A1F44]" />,
-                  title: "Immutable Audit Trails",
+                  title: "Tamper-Evident Audit Trails",
                   desc: "Structured Evidence Objects provide defensible sampling for regulators and auditors.",
                   bg: "bg-slate-100",
                 },
@@ -3652,7 +3651,7 @@ export default function Landing() {
                         ? publicStats!.totalBeneficiaries
                         : null,
                     suffix: "",
-                    label: "Beneficiaries Reached",
+                    label: "Partner-Reported Reach",
                   },
                   {
                     target: publicStats?.verificationRate ?? null,
@@ -4107,7 +4106,7 @@ export default function Landing() {
                     },
                     {
                       icon: <FileCheck className="h-4 w-4 text-[#0A8C6A]" />,
-                      text: "Immutable audit trail from day one",
+                      text: "Tamper-evident audit trail from day one",
                     },
                   ].map(({ icon, text }) => (
                     <div key={text} className="flex items-center gap-3">

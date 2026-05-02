@@ -235,9 +235,15 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
 
     logger.info("[Projects] Project found:", { id: project.id, orgId: project.organizationId });
 
-    // Check if user has permission (must be from the same organization)
-    if (project.organizationId !== user.organizationId) {
-      logger.info("[Projects] Permission denied. User org:", user.organizationId, "Project org:", project.organizationId);
+    // Caller must be an organization user from the owning org, or a platform admin.
+    // organizationId alone is not sufficient — other user types may carry one.
+    const dbUser = await storage.getUser(user.id);
+    const isOwningOrg =
+      user.userType === 'organization' &&
+      user.organizationId != null &&
+      project.organizationId === user.organizationId;
+    if (!isOwningOrg && !dbUser?.isAdmin) {
+      logger.info("[Projects] Permission denied. User:", { id: user.id, type: user.userType, org: user.organizationId }, "Project org:", project.organizationId);
       return res.status(403).json({ message: "You don't have permission to delete this project" });
     }
 
@@ -401,7 +407,7 @@ projectsRouter.get("/:id/metrics", authMiddleware, async (req: Request, res: Res
 });
 
 // PATCH /api/projects/:id - Update project
-projectsRouter.patch("/:id", async (req: Request, res: Response) => {
+projectsRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
     const projectId = parseInt(req.params.id);
@@ -476,7 +482,7 @@ projectsRouter.get("/:id/aiu-settings", authMiddleware, async (req: Request, res
 });
 
 // POST /api/projects/:id/aiu-settings - Create or update AIU settings for a project
-projectsRouter.post("/:id/aiu-settings", async (req: Request, res: Response) => {
+projectsRouter.post("/:id/aiu-settings", authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
     const projectId = parseInt(req.params.id);
@@ -570,7 +576,7 @@ projectsRouter.post("/:id/aiu-settings", async (req: Request, res: Response) => 
 });
 
 // POST /api/projects/:id/verify-aiu - Verify, reject, or adjust AIU for a project
-projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
+projectsRouter.post("/:id/verify-aiu", authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await requireOrgUser(req);
     const projectId = parseInt(req.params.id);

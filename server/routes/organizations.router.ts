@@ -6,6 +6,7 @@ import { cache, CACHE_TTL } from "../cache";
 import { isPreapprovedEmail } from "../config/preapproved-emails";
 import { authMiddleware } from "../middleware/auth";
 import { getPaginationParams, paginateArray } from "../pagination";
+import { randomBytes } from "crypto";
 
 export const organizationsRouter = Router();
 
@@ -215,7 +216,19 @@ organizationsRouter.patch("/:id", authMiddleware, async (req: Request, res: Resp
 // GET /api/organizations/:id/members - List all members of an organization
 organizationsRouter.get("/:id/members", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
+
+    // Caller must belong to this org or be a platform admin
+    const callerUser = await storage.getUser(authUser.id);
+    const callerBelongsToOrg = callerUser?.organizationId === orgId;
+    const callerIsMember = callerBelongsToOrg ? true : !!(await storage.getOrganizationMemberByUserAndOrg(authUser.id, orgId));
+    if (!callerBelongsToOrg && !callerIsMember && !callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const organization = await storage.getOrganization(orgId);
 
     if (!organization) {
@@ -253,8 +266,19 @@ organizationsRouter.get("/:id/members", authMiddleware, async (req: Request, res
 // GET /api/organizations/:id/members/:memberId - Get specific member
 organizationsRouter.get("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
+
+    // Caller must belong to this org or be a platform admin
+    const callerUser = await storage.getUser(authUser.id);
+    const callerBelongsToOrg = callerUser?.organizationId === orgId;
+    const callerIsMember = callerBelongsToOrg ? true : !!(await storage.getOrganizationMemberByUserAndOrg(authUser.id, orgId));
+    if (!callerBelongsToOrg && !callerIsMember && !callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const member = await storage.getOrganizationMember(memberId);
 
@@ -281,7 +305,18 @@ organizationsRouter.get("/:id/members/:memberId", authMiddleware, async (req: Re
 // POST /api/organizations/:id/members - Add a new member to organization
 organizationsRouter.post("/:id/members", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
+
+    // Only org owners or platform admins can directly add members
+    const callerUser = await storage.getUser(authUser.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === orgId;
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Only organization admins can add members" });
+    }
+
     const organization = await storage.getOrganization(orgId);
 
     if (!organization) {
@@ -399,8 +434,8 @@ organizationsRouter.post("/:id/members/invite", authMiddleware, async (req: Requ
     const rolePermissions = defaultPermissions[role as keyof typeof defaultPermissions] || defaultPermissions.member;
     const finalPermissions = { ...rolePermissions, ...(permissions || {}) };
 
-    // Generate invitation token
-    const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    // Generate cryptographically secure invitation token
+    const invitationToken = `inv_${randomBytes(24).toString('hex')}`;
 
     let member = null;
 
@@ -512,8 +547,11 @@ organizationsRouter.post("/:id/members/invite", authMiddleware, async (req: Requ
 });
 
 // POST /api/organizations/:id/members/:memberId/accept - Accept invitation
-organizationsRouter.post("/:id/members/:memberId/accept", async (req: Request, res: Response) => {
+organizationsRouter.post("/:id/members/:memberId/accept", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
 
@@ -521,6 +559,14 @@ organizationsRouter.post("/:id/members/:memberId/accept", async (req: Request, r
 
     if (!member || member.organizationId !== orgId) {
       return res.status(404).json({ message: "Invitation not found" });
+    }
+
+    // Only the invitee themselves (or a platform admin) can accept the invitation
+    if (member.userId !== authUser.id) {
+      const callerUser = await storage.getUser(authUser.id);
+      if (!callerUser?.isAdmin) {
+        return res.status(403).json({ message: "You can only accept your own invitation" });
+      }
     }
 
     if (member.status !== "invited") {
@@ -728,8 +774,21 @@ organizationsRouter.post("/team-invitations/by-token/:token/decline", authMiddle
 // PATCH /api/organizations/:id/members/:memberId - Update member role/permissions
 organizationsRouter.patch("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
+
+    // Caller must be org owner, platform admin, or an org member with canManageMembers
+    const callerUser = await storage.getUser(authUser.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === orgId;
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      const callerMember = await storage.getOrganizationMemberByUserAndOrg(authUser.id, orgId);
+      if (!callerMember || !callerMember.canManageMembers) {
+        return res.status(403).json({ message: "Only organization admins can update members" });
+      }
+    }
 
     const member = await storage.getOrganizationMember(memberId);
 
@@ -751,8 +810,21 @@ organizationsRouter.patch("/:id/members/:memberId", authMiddleware, async (req: 
 // DELETE /api/organizations/:id/members/:memberId - Remove member from organization
 organizationsRouter.delete("/:id/members/:memberId", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const orgId = parseInt(req.params.id);
     const memberId = parseInt(req.params.memberId);
+
+    // Caller must be org owner, platform admin, or org member with canManageMembers
+    const callerUser = await storage.getUser(authUser.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === orgId;
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      const callerMember = await storage.getOrganizationMemberByUserAndOrg(authUser.id, orgId);
+      if (!callerMember || !callerMember.canManageMembers) {
+        return res.status(403).json({ message: "Only organization admins can remove members" });
+      }
+    }
 
     const member = await storage.getOrganizationMember(memberId);
 

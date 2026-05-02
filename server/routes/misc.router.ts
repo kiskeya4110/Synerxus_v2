@@ -286,7 +286,7 @@ miscRouter.get("/rejected-opportunities", authMiddleware, async (req, res) => {
  * Calculate match score between a volunteer and an opportunity
  * GET /opportunities/:id/match-score
  */
-miscRouter.get("/opportunities/:id/match-score", async (req, res) => {
+miscRouter.get("/opportunities/:id/match-score", authMiddleware, async (req, res) => {
   try {
     const opportunityId = parseInt(req.params.id);
     const { volunteerId } = req.query;
@@ -295,7 +295,12 @@ miscRouter.get("/opportunities/:id/match-score", async (req, res) => {
       return res.status(400).json({ message: "volunteerId is required" });
     }
 
-    const matchScore = await storage.getMatchScore(opportunityId, parseInt(volunteerId as string));
+    const volunteerIdNum = parseInt(volunteerId as string);
+    if (isNaN(volunteerIdNum) || volunteerIdNum <= 0) {
+      return res.status(400).json({ message: "Invalid volunteerId" });
+    }
+
+    const matchScore = await storage.getMatchScore(opportunityId, volunteerIdNum);
     res.json(matchScore);
   } catch (err) {
     logger.error("Error calculating match score:", err);
@@ -320,10 +325,11 @@ miscRouter.get("/sdgs", (req, res) => {
  * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
  * GET /tasks/:taskId/recommended-volunteers
  */
-miscRouter.get("/tasks/:taskId/recommended-volunteers", queueMiddleware('heavy'), async (req, res) => {
+miscRouter.get("/tasks/:taskId/recommended-volunteers", authMiddleware, queueMiddleware('heavy'), async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
-    const limit = parseInt(req.query.limit as string || "10");
+    const rawLimit = parseInt(req.query.limit as string || "10");
+    const limit = isNaN(rawLimit) || rawLimit <= 0 ? 10 : Math.min(rawLimit, 100);
     const threshold = parseInt(req.query.threshold as string || "0");
 
     // Get the task
@@ -340,6 +346,14 @@ miscRouter.get("/tasks/:taskId/recommended-volunteers", queueMiddleware('heavy')
     const project = await storage.getProject(task.projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only org admins of this project's org (or platform admins) can get recommendations
+    const callerUser = await storage.getUser(req.user!.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === project.organizationId;
+    const callerIsAdmin = callerUser?.isAdmin === true;
+    if (!callerIsOwner && !callerIsAdmin) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     // Get volunteers connected to this organization through:
@@ -412,16 +426,25 @@ miscRouter.get("/tasks/:taskId/recommended-volunteers", queueMiddleware('heavy')
  * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
  * GET /projects/:projectId/recommended-volunteers
  */
-miscRouter.get("/projects/:projectId/recommended-volunteers", queueMiddleware('heavy'), async (req, res) => {
+miscRouter.get("/projects/:projectId/recommended-volunteers", authMiddleware, queueMiddleware('heavy'), async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
-    const limit = parseInt(req.query.limit as string || "10");
+    const rawLimit = parseInt(req.query.limit as string || "10");
+    const limit = isNaN(rawLimit) || rawLimit <= 0 ? 10 : Math.min(rawLimit, 100);
     const threshold = parseInt(req.query.threshold as string || "0");
 
     // Get the project
     const project = await storage.getProject(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only org admins of this project's org (or platform admins) can get recommendations
+    const callerUser = await storage.getUser(req.user!.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === project.organizationId;
+    const callerIsAdmin = callerUser?.isAdmin === true;
+    if (!callerIsOwner && !callerIsAdmin) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     // Get volunteers connected to this organization through:
@@ -503,6 +526,13 @@ miscRouter.post("/projects/:id/auto-link-sdgs", authMiddleware, async (req, res)
       return res.status(404).json({ message: "Project not found" });
     }
 
+    // Only org owner of this project or platform admin may trigger AI SDG linking
+    const callerUser = await storage.getUser(req.user!.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === project.organizationId;
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     // Check if project already has SDGs
     if (project.sdgGoals && project.sdgGoals.length > 0) {
       return res.json({
@@ -581,6 +611,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
  */
 miscRouter.post("/projects/batch/auto-link-sdgs", authMiddleware, async (req, res) => {
   try {
+    const callerUser = await storage.getUser(req.user!.id);
+    if (!callerUser?.isAdmin) {
+      return res.status(403).json({ message: "Platform admin access required" });
+    }
+
     const projects = await storage.listProjects();
     const results = {
       processed: 0,
@@ -960,7 +995,7 @@ miscRouter.post("/invitations/bulk-import", authMiddleware, async (req, res) => 
  * GET /invitations/pending
  * Query params: organizationId (required)
  */
-miscRouter.get("/invitations/pending", async (req, res) => {
+miscRouter.get("/invitations/pending", authMiddleware, async (req, res) => {
   try {
     const { organizationId } = req.query;
 
@@ -969,6 +1004,13 @@ miscRouter.get("/invitations/pending", async (req, res) => {
     }
 
     const orgId = parseInt(organizationId as string);
+
+    // Caller must belong to this org (as owner) or be a platform admin
+    const callerUser = await storage.getUser(req.user!.id);
+    const callerIsOwner = callerUser?.userType === 'organization' && callerUser?.organizationId === orgId;
+    if (!callerIsOwner && !callerUser?.isAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
     // Get all projects for this organization
     const projects = await storage.listProjectsByOrganization(orgId);

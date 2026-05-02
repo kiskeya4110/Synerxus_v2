@@ -2806,20 +2806,20 @@ export default function Landing() {
           const GAP_LAYERS = [
             {
               id: "Level 5",
-              label: "Audit / Assurance",
-              sub: "Too slow, cost-prohibitive",
+              label: "Causal Proof (RCT)",
+              sub: "Academic-grade — not scalable for enterprise ESG",
               dim: true,
               synerxus: false,
-              status: "Out of reach",
+              status: "Not enterprise-viable",
               statusBg: "bg-slate-100",
               statusText: "text-slate-500",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
               cardIdle: "border-slate-200 bg-slate-50/60 opacity-55",
-              tools: ["Big 4 Auditors", "ISAE 3000 firms", "PwC ESG Assurance"],
+              tools: ["Academic RCTs", "Longitudinal studies", "Control group trials"],
               detail:
-                "Independent assurance exists but costs $100k+ per engagement and takes months to complete — far too slow and expensive for program-level verification.",
+                "Academic-grade causal attribution via Randomised Controlled Trials. Highly rigorous, but prohibitively expensive and not scalable for enterprise ESG reporting.",
             },
             {
               id: "Level 4",

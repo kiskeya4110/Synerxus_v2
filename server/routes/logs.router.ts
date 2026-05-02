@@ -275,11 +275,20 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
       const requestedUserId = parseInt(user_id as string);
 
       // Volunteers can only see their own logs
-      if (authenticatedUser.id !== requestedUserId &&
-          authenticatedUser.userType === 'volunteer') {
-        return res.status(403).json({
-          message: "You can only access your own logs"
-        });
+      if (authenticatedUser.id !== requestedUserId && authenticatedUser.userType === 'volunteer') {
+        return res.status(403).json({ message: "You can only access your own logs" });
+      }
+
+      // Org users can only view logs of volunteers within their own org's projects
+      if (authenticatedUser.userType === 'organization' && authenticatedUser.id !== requestedUserId) {
+        const orgProjects = await storage.listProjectsByOrganization(authenticatedUser.organizationId!);
+        const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+        const requestedUserActivities = await storage.listVolunteerActivitiesByUser(requestedUserId);
+        activities = requestedUserActivities.filter((a: any) => a.projectId && orgProjectIds.has(a.projectId));
+        if (status) {
+          activities = activities.filter((a: any) => a.verificationStatus === status);
+        }
+        return res.json(activities);
       }
 
       activities = await storage.listVolunteerActivitiesByUser(requestedUserId);
@@ -353,7 +362,7 @@ logsRouter.get("/logs", authMiddleware, async (req: Request, res: Response) => {
  * Supports filters: sdg, start_date, end_date, outcome_type, project_id
  * NOTE: Must be defined BEFORE /logs/:id to avoid route collision
  */
-logsRouter.get("/logs/corporate-verified", async (_req: Request, res: Response) => {
+logsRouter.get("/logs/corporate-verified", authMiddleware, async (_req: Request, res: Response) => {
   try {
     const { sdg, start_date, end_date, outcome_type, project_id, corporate_id } = _req.query;
 
@@ -1191,12 +1200,31 @@ logsRouter.get("/audit-trail/:activityId", authMiddleware, async (req: Request, 
       return res.status(400).json({ message: "Invalid activityId" });
     }
     const activity = await storage.getVolunteerActivity(activityId);
-    if (activity && activity.projectId) {
-      const project = await storage.getProject(activity.projectId);
-      if (project && req.user?.userType === 'organization' && project.organizationId !== req.user.organizationId) {
+
+    if (!activity) {
+      return res.status(404).json({ message: "Activity not found" });
+    }
+
+    const user = req.user!;
+
+    if (user.userType === 'volunteer') {
+      // Volunteers may only see audit trail for their own activities
+      if (activity.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else if (user.userType === 'organization') {
+      // Org users may only see audit trail for activities in their org's projects
+      if (activity.projectId) {
+        const project = await storage.getProject(activity.projectId);
+        if (!project || project.organizationId !== user.organizationId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else {
         return res.status(403).json({ message: "Access denied" });
       }
     }
+    // Platform admins (isAdmin) may see any audit trail
+
     const logs = await storage.listVerificationAuditLogs(activityId);
     res.json(logs);
   } catch (err) {
@@ -1215,9 +1243,19 @@ logsRouter.get("/audit-trail/project/:projectId", authMiddleware, async (req: Re
       return res.status(400).json({ message: "Invalid projectId" });
     }
     const project = await storage.getProject(projectId);
-    if (project && req.user?.userType === 'organization' && project.organizationId !== req.user.organizationId) {
-      return res.status(403).json({ message: "Access denied" });
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
+
+    const user = req.user!;
+    // Only the org that owns the project (or platform admins) may access the project audit trail
+    if (user.userType !== 'organization' || project.organizationId !== user.organizationId) {
+      const callerDbUser = await storage.getUser(user.id);
+      if (!callerDbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    }
+
     const logs = await storage.listVerificationAuditLogs(undefined, projectId);
     res.json(logs);
   } catch (err) {

@@ -5,6 +5,7 @@ import { insertInvitationCodeSchema } from "@shared/schema";
 import { randomBytes } from "crypto";
 import { authMiddleware } from "../middleware/auth";
 import { getAuthenticatedUser } from "./utils";
+import { authRateLimiter } from "../middleware/security";
 
 export const invitationCodesRouter = Router();
 
@@ -74,7 +75,7 @@ invitationCodesRouter.post("/", authMiddleware, async (req: Request, res: Respon
 });
 
 // POST /api/invitation-codes/validate - Validate an invitation code (for registration)
-invitationCodesRouter.post("/validate", async (req: Request, res: Response) => {
+invitationCodesRouter.post("/validate", authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { code, email, userType } = req.body;
 
@@ -96,7 +97,7 @@ invitationCodesRouter.post("/validate", async (req: Request, res: Response) => {
 });
 
 // POST /api/invitation-codes/:code/use - Mark an invitation code as used
-invitationCodesRouter.post("/:code/use", async (req: Request, res: Response) => {
+invitationCodesRouter.post("/:code/use", authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
     const { userId } = req.body;
@@ -163,8 +164,8 @@ invitationCodesRouter.put("/settings", authMiddleware, async (req: Request, res:
     const { inviteOnlyMode } = req.body;
 
     const user = await storage.getUser(authUser.id);
-    if (!user || user.userType !== 'organization') {
-      return res.status(403).json({ message: "Only organization admins can change platform settings" });
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: "Only platform admins can change platform settings" });
     }
 
     await storage.setPlatformSetting(

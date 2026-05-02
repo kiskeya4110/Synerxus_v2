@@ -7,7 +7,7 @@ export const smsRouter = Router();
 
 function validateTwilioSignature(req: Request): boolean {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!authToken) return true;
+  if (!authToken) return false;
 
   const signature = req.headers['x-twilio-signature'] as string;
   if (!signature) return false;

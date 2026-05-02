@@ -97,6 +97,13 @@ function RootRedirectRoute() {
   const currentUserId = localStorage.getItem('currentUserId');
 
   useEffect(() => {
+    // No stored session — go to landing right away, no need to wait for Firebase
+    if (!currentUserId) {
+      setLocation('/landing');
+      return;
+    }
+
+    // Has a stored session — wait for auth to resolve before routing
     if (loading) return;
 
     const isAuthenticated = user || currentUserId;

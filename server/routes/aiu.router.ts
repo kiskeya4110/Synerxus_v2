@@ -67,7 +67,10 @@ async function resolveProjectAccess(
 
   if (caller.userType === "volunteer") {
     const assignments = await storage.listProjectAssignmentsByVolunteer(caller.id);
-    const assigned = assignments.some((a) => a.projectId === projectId);
+    const activeStatuses = new Set(["active", "completed"]);
+    const assigned = assignments.some(
+      (a) => a.projectId === projectId && activeStatuses.has(a.status),
+    );
     return { project, allowed: assigned };
   }
 

@@ -2,11 +2,12 @@ import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertApplicationSchema } from "@shared/schema";
-import { handleValidationError } from "./utils";
+import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { calculateMatchScore, calculateMatchScoreAsync } from "../matching-algorithm";
 import { notifyApplicationStatusChange, notifyNewAssignment, notifyNewApplication, sendNewApplicationEmail } from "../notification-service";
 import { aiService } from "../services/ai-service";
 import { getPaginationParams, paginateArray } from "../pagination";
+import { authMiddleware } from "../middleware/auth";
 
 export const applicationsRouter = Router();
 
@@ -17,20 +18,111 @@ export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
 }
 
+/**
+ * Fetch an application and verify the caller has access to it.
+ * - Volunteers may only access their own applications.
+ * - Organization users may only access applications for their own org's opportunities.
+ * - Platform admins (isAdmin = true) may access any application.
+ * Sends the error response and returns null when access is denied.
+ */
+async function getApplicationWithAccess(
+  applicationId: number,
+  req: Request,
+  res: Response
+): Promise<any | null> {
+  const authUser = getAuthenticatedUser(req, res);
+  if (!authUser) return null;
+
+  const application = await storage.getApplication(applicationId);
+  if (!application) {
+    res.status(404).json({ message: "Application not found" });
+    return null;
+  }
+
+  if (authUser.userType === "volunteer") {
+    if (application.volunteerId !== authUser.id) {
+      res.status(403).json({ message: "Access denied: you can only access your own applications" });
+      return null;
+    }
+    return application;
+  }
+
+  if (authUser.userType === "organization") {
+    if (!authUser.organizationId) {
+      res.status(403).json({ message: "Access denied: no organization associated with your account" });
+      return null;
+    }
+    const opportunity = await storage.getOpportunity(application.opportunityId);
+    if (!opportunity || opportunity.organizationId !== authUser.organizationId) {
+      res.status(403).json({ message: "Access denied: this application does not belong to your organization" });
+      return null;
+    }
+    return application;
+  }
+
+  // For other user types, require platform-admin flag
+  const dbUser = await storage.getUser(authUser.id);
+  if (dbUser?.isAdmin) {
+    return application;
+  }
+
+  res.status(403).json({ message: "Access denied" });
+  return null;
+}
+
 // GET /api/applications - List applications
-applicationsRouter.get("/", async (req: Request, res: Response) => {
+applicationsRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const { opportunityId, volunteerId, organizationId } = req.query;
 
-    let applications;
-    if (opportunityId) {
-      applications = await storage.listApplicationsByOpportunity(parseInt(opportunityId as string));
-    } else if (volunteerId) {
-      applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
-    } else if (organizationId) {
-      applications = await storage.listApplicationsByOrganization(parseInt(organizationId as string));
+    let applications: any[];
+
+    if (authUser.userType === "volunteer") {
+      // Volunteers can only see their own applications
+      applications = await storage.listApplicationsByVolunteer(authUser.id);
+      // Allow narrowing by opportunityId if provided
+      if (opportunityId) {
+        const oppId = parseInt(opportunityId as string);
+        if (!isNaN(oppId)) {
+          applications = applications.filter((a: any) => a.opportunityId === oppId);
+        }
+      }
+    } else if (authUser.userType === "organization") {
+      if (!authUser.organizationId) {
+        return res.status(403).json({ message: "Access denied: no organization associated with your account" });
+      }
+      if (opportunityId) {
+        const oppId = parseInt(opportunityId as string);
+        if (isNaN(oppId)) {
+          return res.status(400).json({ message: "opportunityId must be a valid number" });
+        }
+        // Verify the opportunity belongs to the caller's org before scoping
+        const opp = await storage.getOpportunity(oppId);
+        if (!opp || opp.organizationId !== authUser.organizationId) {
+          return res.status(403).json({ message: "Access denied: this opportunity does not belong to your organization" });
+        }
+        applications = await storage.listApplicationsByOpportunity(oppId);
+      } else {
+        applications = await storage.listApplicationsByOrganization(authUser.organizationId);
+      }
     } else {
-      applications = await storage.listApplications();
+      // Platform admins only for all other user types
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      if (opportunityId) {
+        applications = await storage.listApplicationsByOpportunity(parseInt(opportunityId as string));
+      } else if (volunteerId) {
+        applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
+      } else if (organizationId) {
+        applications = await storage.listApplicationsByOrganization(parseInt(organizationId as string));
+      } else {
+        applications = await storage.listApplications();
+      }
     }
 
     // Batch fetch all volunteers and opportunities to avoid N+1 queries
@@ -80,15 +172,17 @@ applicationsRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/applications/my-engagements - Get accepted applications with project context for a volunteer
-applicationsRouter.get("/my-engagements", async (req: Request, res: Response) => {
+applicationsRouter.get("/my-engagements", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { volunteerId } = req.query;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!volunteerId) {
-      return res.status(400).json({ error: "volunteerId required" });
+    // Only volunteers access their own engagements; the ID always comes from the session
+    if (authUser.userType !== "volunteer") {
+      return res.status(403).json({ message: "Access denied: only volunteers can access this endpoint" });
     }
 
-    const volunteerIdNum = parseInt(volunteerId as string);
+    const volunteerIdNum = authUser.id;
     const applications = await storage.listApplicationsByVolunteer(volunteerIdNum);
     const acceptedApps = applications.filter(a => a.status === 'accepted');
 
@@ -186,14 +280,15 @@ applicationsRouter.get("/my-engagements", async (req: Request, res: Response) =>
 });
 
 // GET /api/applications/:id - Get application by ID
-applicationsRouter.get("/:id", async (req: Request, res: Response) => {
+applicationsRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
     const applicationId = parseInt(req.params.id);
-    const application = await storage.getApplication(applicationId);
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
+    if (isNaN(applicationId)) {
+      return res.status(400).json({ message: "Invalid application ID" });
     }
+
+    const application = await getApplicationWithAccess(applicationId, req, res);
+    if (!application) return;
 
     res.json(application);
   } catch (err) {
@@ -202,21 +297,23 @@ applicationsRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/applications - Create new application
-applicationsRouter.post("/", async (req: Request, res: Response) => {
+applicationsRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const validatedData = insertApplicationSchema.parse(req.body);
-    const { opportunityId, volunteerId } = validatedData;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    // Verify the user is a volunteer (organizations and corporations cannot apply)
-    const applicant = await storage.getUser(volunteerId);
-    if (!applicant) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    if (applicant.userType && applicant.userType !== 'volunteer') {
+    // Only volunteers can submit applications
+    if (authUser.userType !== "volunteer") {
       return res.status(403).json({
         message: "Only volunteers can apply for opportunities. Organizations and corporations cannot apply."
       });
     }
+
+    const validatedData = insertApplicationSchema.parse(req.body);
+    const { opportunityId } = validatedData;
+
+    // SECURITY: Always use the authenticated user's ID — never a caller-supplied volunteerId
+    const volunteerId = authUser.id;
 
     const existingApplication = await storage.findApplicationByVolunteerAndOpportunity(
       volunteerId,
@@ -261,6 +358,7 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
     // Create application with direct organization and project links
     const application = await storage.createApplication({
       ...validatedData,
+      volunteerId, // Always the authenticated user's ID
       organizationId: opportunity.organizationId, // Direct link to organization
       projectId: opportunity.projectId || null, // Direct link to project if applicable
       matchScore
@@ -333,9 +431,41 @@ applicationsRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/applications/:id - Update application
-applicationsRouter.patch("/:id", async (req: Request, res: Response) => {
+applicationsRouter.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const applicationId = parseInt(req.params.id);
+    if (isNaN(applicationId)) {
+      return res.status(400).json({ message: "Invalid application ID" });
+    }
+
+    const application = await getApplicationWithAccess(applicationId, req, res);
+    if (!application) return;
+
+    // Tenancy-defining and review fields are immutable via PATCH regardless of caller.
+    // Status changes must go through the dedicated POST /:id/review endpoint.
+    const IMMUTABLE_FIELDS = ["volunteerId", "opportunityId", "organizationId", "projectId", "status", "reviewedBy", "reviewedAt"];
+    for (const field of IMMUTABLE_FIELDS) {
+      if (req.body[field] !== undefined) {
+        return res.status(400).json({
+          message: `Field '${field}' cannot be changed here. Use the /review endpoint to change application status.`
+        });
+      }
+    }
+
+    // Volunteers may only update safe applicant-owned fields
+    if (authUser.userType === "volunteer") {
+      const VOLUNTEER_ALLOWED = new Set(["coverLetter", "message", "notes", "availability"]);
+      const attempted = Object.keys(req.body).filter(k => !VOLUNTEER_ALLOWED.has(k));
+      if (attempted.length > 0) {
+        return res.status(403).json({
+          message: `Volunteers may only update: ${Array.from(VOLUNTEER_ALLOWED).join(", ")}`
+        });
+      }
+    }
+
     const applicationData = req.body;
 
     const updatedApplication = await storage.updateApplication(applicationId, applicationData);
@@ -352,10 +482,22 @@ applicationsRouter.patch("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/applications/:id/review - Accept/Reject application
-applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
+applicationsRouter.post("/:id/review", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    // Only organization users may review applications
+    if (authUser.userType !== "organization") {
+      return res.status(403).json({ message: "Access denied: only organization accounts can review applications" });
+    }
+
+    if (!authUser.organizationId) {
+      return res.status(403).json({ message: "Access denied: no organization associated with your account" });
+    }
+
     const applicationId = parseInt(req.params.id);
-    const { status, notes, reviewerId } = req.body;
+    const { status, notes } = req.body;
 
     if (!status || !["accepted", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Status must be 'accepted' or 'rejected'" });
@@ -371,10 +513,15 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Opportunity not found" });
     }
 
+    // SECURITY: Verify the opportunity belongs to the caller's organization
+    if (opportunity.organizationId !== authUser.organizationId) {
+      return res.status(403).json({ message: "Access denied: this application does not belong to your organization" });
+    }
+
     const updatedApplication = await storage.updateApplication(applicationId, {
       status,
       reviewedAt: new Date(),
-      reviewedBy: reviewerId || null,
+      reviewedBy: authUser.id, // SECURITY: Always derive from session, never from request body
       notes: notes || null
     });
 
@@ -541,14 +688,24 @@ applicationsRouter.post("/:id/review", async (req: Request, res: Response) => {
 });
 
 // GET /api/applications/:id/volunteer-insights - Get AI-powered volunteer insights for review
-applicationsRouter.get("/:id/volunteer-insights", async (req: Request, res: Response) => {
+// Only accessible to organization users reviewing their own opportunity's applications, or admins
+applicationsRouter.get("/:id/volunteer-insights", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const applicationId = parseInt(req.params.id);
-    const application = await storage.getApplication(applicationId);
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
+    if (authUser.userType !== "organization") {
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied: only organization accounts can access volunteer insights" });
+      }
     }
+
+    const applicationId = parseInt(req.params.id);
+
+    // getApplicationWithAccess enforces org ownership
+    const application = await getApplicationWithAccess(applicationId, req, res);
+    if (!application) return;
 
     const opportunity = await storage.getOpportunity(application.opportunityId);
     if (!opportunity) {
@@ -824,15 +981,13 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
 });
 
 // GET /api/applications/:id/match-analysis - Get AI match analysis for an application
-applicationsRouter.get("/:id/match-analysis", async (req: Request, res: Response) => {
+applicationsRouter.get("/:id/match-analysis", authMiddleware, async (req: Request, res: Response) => {
   try {
     const applicationId = parseInt(req.params.id);
 
-    // Get application details
-    const application = await storage.getApplication(applicationId);
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
+    // Verify access before returning any data
+    const application = await getApplicationWithAccess(applicationId, req, res);
+    if (!application) return;
 
     // Get opportunity and volunteer details
     const opportunity = await storage.getOpportunity(application.opportunityId);
@@ -891,15 +1046,24 @@ applicationsRouter.get("/:id/match-analysis", async (req: Request, res: Response
 });
 
 // POST /api/applications/:id/repair-assignment - Fix missing project assignment for accepted application
-// This is useful for volunteers who were accepted before the auto-project-creation fix
-applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Response) => {
+// Restricted to organization users who own the opportunity, or platform admins
+applicationsRouter.post("/:id/repair-assignment", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    if (authUser.userType !== "organization") {
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied: only organization accounts or admins can repair assignments" });
+      }
+    }
+
     const applicationId = parseInt(req.params.id);
 
-    const application = await storage.getApplication(applicationId);
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
+    // getApplicationWithAccess enforces org ownership
+    const application = await getApplicationWithAccess(applicationId, req, res);
+    if (!application) return;
 
     if (application.status !== 'accepted') {
       return res.status(400).json({ message: "Only accepted applications can be repaired" });
@@ -1005,8 +1169,18 @@ applicationsRouter.post("/:id/repair-assignment", async (req: Request, res: Resp
 });
 
 // POST /api/applications/repair-all - Fix all accepted applications missing project assignments
-applicationsRouter.post("/repair-all", async (req: Request, res: Response) => {
+// Restricted to platform admins only
+applicationsRouter.post("/repair-all", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    // Only platform admins may run a bulk repair across all tenants
+    const dbUser = await storage.getUser(authUser.id);
+    if (!dbUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied: platform admin access required" });
+    }
+
     const applications = await storage.listApplications();
     const acceptedApplications = applications.filter(a => a.status === 'accepted');
 

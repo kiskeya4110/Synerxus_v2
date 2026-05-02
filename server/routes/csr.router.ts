@@ -2190,12 +2190,15 @@ csrRouter.post("/csr/ngo-partners/custom", authMiddleware, requireCSRAccess, asy
  * POST /csr/partners
  * Create a new CSR Partner
  */
-csrRouter.post("/csr/partners", async (req: Request, res: Response) => {
+csrRouter.post("/csr/partners", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
 
     const partner = {
-      userId,
+      userId: authUser.id, // SECURITY: Always derive from session
       companyName,
       contactEmail,
       contactPhone,
@@ -2253,8 +2256,11 @@ csrRouter.get("/csr/partners", authMiddleware, async (req: Request, res: Respons
  * GET /csr/partners/list
  * List all CSR Partners for volunteer employer selection
  */
-csrRouter.get("/csr/partners/list", async (req: Request, res: Response) => {
+csrRouter.get("/csr/partners/list", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const allPartners = await storage.listCSRPartners?.() || [];
     res.json(allPartners);
   } catch (err) {
@@ -2267,12 +2273,28 @@ csrRouter.get("/csr/partners/list", async (req: Request, res: Response) => {
  * PATCH /csr/partners/:id
  * Update a CSR Partner
  */
-csrRouter.patch("/csr/partners/:id", async (req: Request, res: Response) => {
+csrRouter.patch("/csr/partners/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const { id } = req.params;
+    const partnerId = parseInt(id);
+
+    // Verify ownership: only the partner's own user (or admin) may update it
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const partner = allPartners.find((p: any) => p.id === partnerId);
+    if (!partner) {
+      return res.status(404).json({ error: "CSR Partner not found" });
+    }
+    const dbUser = await storage.getUser(authUser.id);
+    if (partner.userId !== authUser.id && !dbUser?.isAdmin) {
+      return res.status(403).json({ error: "Access denied: you do not own this partner profile" });
+    }
+
     const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs, vtoTrackingEnabled, logo, logoUrl } = req.body;
 
-    const updated = await storage.updateCSRPartner?.(parseInt(id), {
+    const updated = await storage.updateCSRPartner?.(partnerId, {
       companyName,
       contactEmail,
       contactPhone,
@@ -2298,18 +2320,21 @@ csrRouter.patch("/csr/partners/:id", async (req: Request, res: Response) => {
  * POST /csr/recognize-employee
  * Employee Recognition - Recognize top performers
  */
-csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) => {
+csrRouter.post("/csr/recognize-employee", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { employeeId, badge, message, recognizedBy, rewards } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!employeeId || !badge || !message || !recognizedBy) {
+    const { employeeId, badge, message, rewards } = req.body;
+
+    if (!employeeId || !badge || !message) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Get the user details
     const users = await storage.listUsers?.() || [];
     const employee = users.find((u: any) => u.id === parseInt(employeeId));
-    const recognizer = users.find((u: any) => u.id === parseInt(recognizedBy));
+    const recognizer = users.find((u: any) => u.id === authUser.id);
 
     if (!employee) {
       return res.status(404).json({ error: "Employee not found" });
@@ -2322,7 +2347,7 @@ csrRouter.post("/csr/recognize-employee", async (req: Request, res: Response) =>
       employeeName: employee.displayName || "Unknown Employee",
       badge,
       message,
-      recognizedBy: parseInt(recognizedBy),
+      recognizedBy: authUser.id, // SECURITY: Always derive from session
       recognizerName: recognizer?.displayName || "CSR Admin",
       rewards: rewards || [],
       createdAt: new Date().toISOString(),
@@ -2379,10 +2404,19 @@ csrRouter.post("/volunteer-employers", authMiddleware, requireNgoPartnerQuota(),
  * GET /volunteer-employers/:volunteerId
  * Get volunteer's employer link
  */
-csrRouter.get("/volunteer-employers/:volunteerId", async (req: Request, res: Response) => {
+csrRouter.get("/volunteer-employers/:volunteerId", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { volunteerId } = req.params;
-    const link = await storage.getVolunteerEmployerLink?.(parseInt(volunteerId));
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const requestedId = parseInt(req.params.volunteerId);
+
+    // Volunteers may only view their own employer link
+    if (authUser.userType === 'volunteer' && authUser.id !== requestedId) {
+      return res.status(403).json({ error: "Access denied: you can only view your own employer link" });
+    }
+
+    const link = await storage.getVolunteerEmployerLink?.(requestedId);
     res.json(link || null);
   } catch (err) {
     logger.error("Error fetching employer link:", err);
@@ -2396,12 +2430,22 @@ csrRouter.get("/volunteer-employers/:volunteerId", async (req: Request, res: Res
  * POST /csr/challenges
  * Create a new CSR Challenge
  */
-csrRouter.post("/csr/challenges", async (req: Request, res: Response) => {
+csrRouter.post("/csr/challenges", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { partnerId, title, description, sdgGoal, targetHours, targetParticipants, startDate, endDate, rewardType, rewardValue } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const { title, description, sdgGoal, targetHours, targetParticipants, startDate, endDate, rewardType, rewardValue } = req.body;
+
+    // Resolve the caller's own partner — never trust a client-supplied partnerId
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
 
     const challenge = {
-      partnerId,
+      partnerId: callerPartner.id,
       title,
       description,
       sdgGoal,
@@ -2428,14 +2472,20 @@ csrRouter.post("/csr/challenges", async (req: Request, res: Response) => {
  * GET /csr/challenges
  * List CSR Challenges
  */
-csrRouter.get("/csr/challenges", async (req: Request, res: Response) => {
+csrRouter.get("/csr/challenges", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { partnerId } = req.query;
-    let challenges = await storage.listCSRChallenges?.() || [];
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (partnerId) {
-      challenges = challenges.filter((c: any) => c.partnerId === parseInt(partnerId as string));
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.json([]);
     }
+
+    let challenges = await storage.listCSRChallenges?.() || [];
+    // Scope to the caller's own partner — ignore any client-supplied partnerId
+    challenges = challenges.filter((c: any) => c.partnerId === callerPartner.id);
 
     res.json(challenges);
   } catch (err) {
@@ -2498,14 +2548,22 @@ csrRouter.post("/csr/budget-links", authMiddleware, async (req: Request, res: Re
  * GET /csr/budget-links
  * List Project Budget Links
  */
-csrRouter.get("/csr/budget-links", async (req: Request, res: Response) => {
+csrRouter.get("/csr/budget-links", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { partnerId, projectId } = req.query;
-    let budgetLinks = await storage.listProjectBudgetLinks?.() || [];
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (partnerId) {
-      budgetLinks = budgetLinks.filter((b: any) => b.partnerId === parseInt(partnerId as string));
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.json([]);
     }
+
+    let budgetLinks = await storage.listProjectBudgetLinks?.() || [];
+    // Scope to the caller's own partner
+    budgetLinks = budgetLinks.filter((b: any) => b.partnerId === callerPartner.id);
+
+    const { projectId } = req.query;
     if (projectId) {
       budgetLinks = budgetLinks.filter((b: any) => b.projectId === parseInt(projectId as string));
     }
@@ -2523,13 +2581,22 @@ csrRouter.get("/csr/budget-links", async (req: Request, res: Response) => {
  * POST /csr/verified-outputs
  * Create a Verified Output
  */
-csrRouter.post("/csr/verified-outputs", async (req: Request, res: Response) => {
+csrRouter.post("/csr/verified-outputs", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { projectId, partnerId, outputType, outputValue, evidence } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
+
+    const { projectId, outputType, outputValue, evidence } = req.body;
 
     const output = {
       projectId,
-      partnerId,
+      partnerId: callerPartner.id, // SECURITY: Always derive from session
       outputType,
       outputValue,
       verificationStatus: "pending",
@@ -2537,7 +2604,7 @@ csrRouter.post("/csr/verified-outputs", async (req: Request, res: Response) => {
       auditTrail: [{
         timestamp: new Date(),
         action: "created",
-        userId: 0
+        userId: authUser.id
       }]
     };
 
@@ -2553,16 +2620,24 @@ csrRouter.post("/csr/verified-outputs", async (req: Request, res: Response) => {
  * GET /csr/verified-outputs
  * List Verified Outputs
  */
-csrRouter.get("/csr/verified-outputs", async (req: Request, res: Response) => {
+csrRouter.get("/csr/verified-outputs", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { projectId, partnerId, verificationStatus } = req.query;
-    let outputs = await storage.listVerifiedOutputs?.() || [];
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.json([]);
+    }
+
+    let outputs = await storage.listVerifiedOutputs?.() || [];
+    // Scope to the caller's own partner
+    outputs = outputs.filter((o: any) => o.partnerId === callerPartner.id);
+
+    const { projectId, verificationStatus } = req.query;
     if (projectId) {
       outputs = outputs.filter((o: any) => o.projectId === parseInt(projectId as string));
-    }
-    if (partnerId) {
-      outputs = outputs.filter((o: any) => o.partnerId === parseInt(partnerId as string));
     }
     if (verificationStatus) {
       outputs = outputs.filter((o: any) => o.verificationStatus === verificationStatus);
@@ -2581,21 +2656,22 @@ csrRouter.get("/csr/verified-outputs", async (req: Request, res: Response) => {
  * GET /employee-engagement/summary
  * Get Employee Engagement Summary for CSR Partner
  */
-csrRouter.get("/employee-engagement/summary", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/summary", authMiddleware, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
-    const { userId } = req.query;
-    if (!userId) {
-      return res.status(400).json({ error: "userId required" });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    // SECURITY: Always use the authenticated user's ID — never a caller-supplied userId
+    const resolvedUserId = authUser.id;
 
     // Get CSR Partner for this user - check both corporate admin and employee roles
     const allPartners = await storage.listCSRPartners?.() || [];
-    let userPartner = allPartners.find((p: any) => p.userId === parseInt(userId as string));
+    let userPartner = allPartners.find((p: any) => p.userId === resolvedUserId);
 
     // If not a corporate admin, check if user is an employee linked to a CSR partner
     if (!userPartner) {
       const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const employeeProfile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId as string));
+      const employeeProfile = volunteerProfiles.find((v: any) => v.userId === resolvedUserId);
 
       if (employeeProfile?.employerId) {
         const employerIdNum = typeof employeeProfile.employerId === 'string'
@@ -3165,13 +3241,16 @@ csrRouter.get("/employee-engagement/summary", queueMiddleware('heavy'), async (r
  * POST /employee-engagement/log-hours
  * Log Employee Activity Hours
  */
-csrRouter.post("/employee-engagement/log-hours", async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/log-hours", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { commitmentId, userId, partnerId, hoursLogged, tasksCompleted, skillsApplied, checkinType } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const { commitmentId, partnerId, hoursLogged, tasksCompleted, skillsApplied, checkinType } = req.body;
 
     const validated = insertEmployeeActivityLogSchema.parse({
       commitmentId,
-      userId,
+      userId: authUser.id, // SECURITY: Always derive from session
       partnerId,
       hoursLogged,
       tasksCompleted: tasksCompleted || [],
@@ -3202,17 +3281,27 @@ csrRouter.post("/employee-engagement/log-hours", async (req: Request, res: Respo
  * GET /employee-engagement/commitments
  * Get Employee Commitments
  */
-csrRouter.get("/employee-engagement/commitments", async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/commitments", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, partnerId, status } = req.query;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     let commitments = await storage.listEmployeeCommitments?.() || [];
 
-    if (userId) {
-      commitments = commitments.filter((c: any) => c.userId === parseInt(userId as string));
+    if (authUser.userType === 'volunteer') {
+      // Volunteers see only their own commitments
+      commitments = commitments.filter((c: any) => c.userId === authUser.id);
+    } else {
+      // CSR partner users see their partner's commitments
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+      if (!callerPartner) {
+        return res.json([]);
+      }
+      commitments = commitments.filter((c: any) => c.partnerId === callerPartner.id);
     }
-    if (partnerId) {
-      commitments = commitments.filter((c: any) => c.partnerId === parseInt(partnerId as string));
-    }
+
+    const { status } = req.query;
     if (status) {
       commitments = commitments.filter((c: any) => c.status === status);
     }
@@ -3228,12 +3317,15 @@ csrRouter.get("/employee-engagement/commitments", async (req: Request, res: Resp
  * POST /employee-engagement/commitments
  * Create Employee Commitment
  */
-csrRouter.post("/employee-engagement/commitments", async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/commitments", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, partnerId, organizationId, projectId, hoursCommitted, skillsApplied } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const { partnerId, organizationId, projectId, hoursCommitted, skillsApplied } = req.body;
 
     const validated = insertEmployeeCommitmentSchema.parse({
-      userId,
+      userId: authUser.id, // SECURITY: Always derive from session
       partnerId,
       organizationId,
       projectId,
@@ -3254,13 +3346,23 @@ csrRouter.post("/employee-engagement/commitments", async (req: Request, res: Res
  * POST /employee-engagement/milestones
  * Award Employee Milestone
  */
-csrRouter.post("/employee-engagement/milestones", async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/milestones", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, partnerId, milestoneType, milestoneValue } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    // Only CSR partner accounts may award milestones
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
+
+    const { userId, milestoneType, milestoneValue } = req.body;
 
     const validated = insertEmployeeMilestoneSchema.parse({
       userId,
-      partnerId,
+      partnerId: callerPartner.id, // SECURITY: Always derive from session
       milestoneType,
       milestoneValue,
       earnedDate: new Date()
@@ -3278,14 +3380,22 @@ csrRouter.post("/employee-engagement/milestones", async (req: Request, res: Resp
  * GET /employee-engagement/csr-goals
  * Get CSR Commitment Goals
  */
-csrRouter.get("/employee-engagement/csr-goals", async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/csr-goals", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { partnerId, year } = req.query;
-    let goals = await storage.listCSRCommitmentGoals?.() || [];
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (partnerId) {
-      goals = goals.filter((g: any) => g.partnerId === parseInt(partnerId as string));
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.json([]);
     }
+
+    let goals = await storage.listCSRCommitmentGoals?.() || [];
+    // Scope to the caller's own partner
+    goals = goals.filter((g: any) => g.partnerId === callerPartner.id);
+
+    const { year } = req.query;
     if (year) {
       goals = goals.filter((g: any) => g.year === parseInt(year as string));
     }
@@ -3301,12 +3411,21 @@ csrRouter.get("/employee-engagement/csr-goals", async (req: Request, res: Respon
  * POST /employee-engagement/csr-goals
  * Set CSR Commitment Goals
  */
-csrRouter.post("/employee-engagement/csr-goals", async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/csr-goals", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { partnerId, year, targetEmployeePercent, targetTotalHours, targetSdgs } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const allPartners = await storage.listCSRPartners?.() || [];
+    const callerPartner = allPartners.find((p: any) => p.userId === authUser.id);
+    if (!callerPartner) {
+      return res.status(403).json({ error: "No CSR partner profile found for your account" });
+    }
+
+    const { year, targetEmployeePercent, targetTotalHours, targetSdgs } = req.body;
 
     const validated = insertCSRCommitmentGoalSchema.parse({
-      partnerId,
+      partnerId: callerPartner.id, // SECURITY: Always derive from session
       year,
       targetEmployeePercent,
       targetTotalHours,
@@ -3325,10 +3444,17 @@ csrRouter.post("/employee-engagement/csr-goals", async (req: Request, res: Respo
  * GET /employee-engagement/impact-dashboard/:userId
  * Get Employee Impact Dashboard
  */
-csrRouter.get("/employee-engagement/impact-dashboard/:userId", async (req: Request, res: Response) => {
+csrRouter.get("/employee-engagement/impact-dashboard/:userId", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
-    const uid = parseInt(userId);
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const uid = parseInt(req.params.userId);
+
+    // Volunteers may only view their own dashboard
+    if (authUser.userType === 'volunteer' && authUser.id !== uid) {
+      return res.status(403).json({ error: "Access denied: you can only view your own impact dashboard" });
+    }
 
     const activities = await storage.listEmployeeActivityLogs?.() || [];
     const commitments = await storage.listEmployeeCommitments?.() || [];
@@ -3362,16 +3488,15 @@ csrRouter.get("/employee-engagement/impact-dashboard/:userId", async (req: Reque
  * POST /employee-engagement/send-tips
  * Send engagement tips to inactive employees
  */
-csrRouter.post("/employee-engagement/send-tips", async (req: Request, res: Response) => {
+csrRouter.post("/employee-engagement/send-tips", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId, stage } = req.body;
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
-    }
+    const { stage } = req.body;
 
-    // Get the user's organization
-    const user = await storage.getUser?.(parseInt(userId));
+    // SECURITY: Always use the authenticated user's ID — never a caller-supplied userId
+    const user = await storage.getUser?.(authUser.id);
     if (!user || !user.organizationId) {
       return res.status(404).json({ error: "User or organization not found" });
     }

@@ -2,7 +2,7 @@ import { logger } from "../logger";
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertProjectSchema, updateProjectSchema, projectAiuSettings, opportunities, type Project } from "@shared/schema";
-import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
+import { handleValidationError, requireOrgUser, verifyOwnership, getAuthenticatedUser } from "./utils";
 import { getVisibleProjectIdsForVolunteer } from "../dashboard-service";
 import { db } from "../db";
 import { eq, desc } from "drizzle-orm";
@@ -84,38 +84,32 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/projects - List projects with authorization
-projectsRouter.get("/", async (req: Request, res: Response) => {
+projectsRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId } = req.query;
-
-    if (!organizationId && !userId) {
-      return res.status(401).json({
-        message: "Authentication required: userId must be provided"
-      });
-    }
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
 
     let projects;
-    if (organizationId) {
-      projects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
-    } else if (userId) {
-      const userIdNum = parseInt(userId as string);
-      const user = await storage.getUser(userIdNum);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+    if (authUser.userType === 'organization') {
+      if (!authUser.organizationId) {
+        return res.status(403).json({ message: "No organization associated with your account" });
       }
-
-      if (user.userType === 'organization' && user.organizationId) {
-        projects = await storage.listProjectsByOrganization(user.organizationId);
-      } else if (user.userType === 'volunteer') {
-        const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
-        const allProjects = await storage.listProjects();
-        projects = allProjects.filter(p => visibleProjectIds.has(p.id));
-      } else {
-        return res.status(400).json({ message: "Invalid user type" });
-      }
+      projects = await storage.listProjectsByOrganization(authUser.organizationId);
+    } else if (authUser.userType === 'volunteer') {
+      const visibleProjectIds = await getVisibleProjectIdsForVolunteer(authUser.id, false);
+      const allProjects = await storage.listProjects();
+      projects = allProjects.filter(p => visibleProjectIds.has(p.id));
     } else {
-      return res.status(400).json({ message: "Missing required parameters" });
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      const { organizationId } = req.query;
+      if (organizationId) {
+        projects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
+      } else {
+        projects = await storage.listProjects();
+      }
     }
 
     // Enrich projects with volunteer counts and hours from activities
@@ -145,34 +139,32 @@ projectsRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id - Get project by ID with authorization
-projectsRouter.get("/:id", async (req: Request, res: Response) => {
+projectsRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const projectId = parseInt(req.params.id);
     if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
-    const { userId } = req.query;
 
     const project = await storage.getProject(projectId);
-
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    if (userId) {
-      const userIdNum = parseInt(userId as string);
-      if (isNaN(userIdNum)) return res.status(400).json({ message: "Invalid user ID" });
-      const user = await storage.getUser(userIdNum);
-
-      if (user) {
-        if (user.userType === 'volunteer') {
-          const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
-          if (!visibleProjectIds.has(projectId)) {
-            return res.status(404).json({ message: "Project not found" });
-          }
-        } else if (user.userType === 'organization' && user.organizationId) {
-          if (project.organizationId !== user.organizationId) {
-            return res.status(404).json({ message: "Project not found" });
-          }
-        }
+    if (authUser.userType === 'volunteer') {
+      const visibleProjectIds = await getVisibleProjectIdsForVolunteer(authUser.id, false);
+      if (!visibleProjectIds.has(projectId)) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+    } else if (authUser.userType === 'organization') {
+      if (project.organizationId !== authUser.organizationId) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+    } else {
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
       }
     }
 
@@ -183,17 +175,17 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/projects - Create new project
-projectsRouter.post("/", async (req: Request, res: Response) => {
+projectsRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
     logger.info("[Projects] Creating project, request body:", JSON.stringify(req.body, null, 2));
-    const user = req.user as any;
+    const user = await requireOrgUser(req);
     const projectData = insertProjectSchema.parse(req.body);
     logger.info("[Projects] Parsed project data:", JSON.stringify(projectData, null, 2));
 
-    const effectiveOrgId = (user?.organizationId || (req as any).session?.organizationId || projectData.organizationId);
-    
+    // SECURITY: Always derive organizationId from the authenticated session — never trust the client
+    const effectiveOrgId = user.organizationId;
     if (!effectiveOrgId) {
-      return res.status(401).json({ message: "Authentication required: No organization ID found" });
+      return res.status(403).json({ message: "No organization associated with your account" });
     }
 
     const payload = { ...projectData, organizationId: effectiveOrgId };
@@ -284,14 +276,34 @@ projectsRouter.delete("/:id", authMiddleware, async (req: Request, res: Response
 });
 
 // GET /api/projects/:id/metrics - Get real-time project metrics including engagement
-projectsRouter.get("/:id/metrics", async (req: Request, res: Response) => {
+projectsRouter.get("/:id/metrics", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
     const projectId = parseInt(req.params.id);
     if (isNaN(projectId)) return res.status(400).json({ message: "Invalid project ID" });
 
     const project = await storage.getProject(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only the owning org, assigned volunteers, or platform admins may view metrics
+    if (authUser.userType === 'organization') {
+      if (project.organizationId !== authUser.organizationId) {
+        return res.status(403).json({ message: "Access denied: this project does not belong to your organization" });
+      }
+    } else if (authUser.userType === 'volunteer') {
+      const visibleProjectIds = await getVisibleProjectIdsForVolunteer(authUser.id, false);
+      if (!visibleProjectIds.has(projectId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } else {
+      const dbUser = await storage.getUser(authUser.id);
+      if (!dbUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
     }
 
     // Get all relevant data for this project
@@ -428,8 +440,9 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id/aiu-settings - Get AIU settings for a project
-projectsRouter.get("/:id/aiu-settings", async (req: Request, res: Response) => {
+projectsRouter.get("/:id/aiu-settings", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const user = await requireOrgUser(req);
     const projectId = parseInt(req.params.id);
 
     if (isNaN(projectId)) {
@@ -440,6 +453,8 @@ projectsRouter.get("/:id/aiu-settings", async (req: Request, res: Response) => {
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
+
+    verifyOwnership(user, project);
 
     // Get the most recent AIU settings for this project
     const [settings] = await db
@@ -759,9 +774,16 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
 });
 
 // POST /api/projects/sync-opportunities - Sync all existing projects to opportunities table
-// This is a one-time migration endpoint to ensure all projects are discoverable as opportunities
-projectsRouter.post("/sync-opportunities", async (req: Request, res: Response) => {
+// Restricted to platform admins — this touches every tenant's data
+projectsRouter.post("/sync-opportunities", authMiddleware, async (req: Request, res: Response) => {
   try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+    const dbUser = await storage.getUser(authUser.id);
+    if (!dbUser?.isAdmin) {
+      return res.status(403).json({ message: "Access denied: platform admin access required" });
+    }
+
     const projects = await storage.listProjects();
     let synced = 0;
     let errors = 0;

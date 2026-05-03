@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 import { getSDGColor } from "@/lib/sdg-utils";
 
 interface EnrichedOpportunity {
@@ -40,6 +40,7 @@ export default function DiscoverOpportunities() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
 
   const urlParams = useMemo(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -441,7 +442,7 @@ export default function DiscoverOpportunities() {
         )}
       </main>
 
-      {isMobile && <WebBottomNav activeTab="discover" />}
+      {isPWAMode && <WebBottomNav activeTab="discover" />}
       {!isMobile && <Footer />}
     </div>
   );

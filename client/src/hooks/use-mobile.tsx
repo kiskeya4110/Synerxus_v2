@@ -14,24 +14,17 @@ const MOBILE_BREAKPOINT = 768
  */
 function detectPWAMode(): boolean {
   if (typeof window === "undefined") return false;
-  // If we're inside an iframe (e.g. the Replit workspace preview), treat as web view.
-  // The display-mode: standalone media query can falsely match inside chrome-less iframes.
   let inIframe = false;
   try {
     inIframe = window.self !== window.top;
   } catch {
     inIframe = true;
   }
-  if (inIframe) {
-    // Only honor explicit PWA routes when iframed; ignore display-mode.
-    const path = window.location.pathname;
-    return /(^|\/)pwa(\/|$)/.test(path) || /-pwa(\/|$)/.test(path);
-  }
+  // Iframe contexts (Replit preview, embeds, etc.) are always treated as web view.
+  if (inIframe) return false;
   const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
     || (window.navigator as any).standalone === true;
-  const path = window.location.pathname;
-  const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || /-pwa(\/|$)/.test(path);
-  return standalone || pwaRoute;
+  return standalone;
 }
 
 export function useIsPWAMode() {

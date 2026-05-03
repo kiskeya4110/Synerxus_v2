@@ -1156,11 +1156,9 @@ export default function VolunteerIntake() {
       </Card>
       </div>
 
-      {/* Bottom Navigation */}
-      {isMobile ? (
+      {/* Bottom Navigation — only the PWA installed app gets a fixed bottom nav. */}
+      {isMobile && (
         <VolunteerPWANav userId={userId || undefined} activeTab="more" />
-      ) : (
-        <WebBottomNav activeTab="profile" />
       )}
     </div>
   );

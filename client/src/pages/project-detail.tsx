@@ -22,7 +22,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { useViewportDetection } from "@/hooks/use-mobile";
+import { useViewportDetection, useIsPWAMode } from "@/hooks/use-mobile";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 
 interface Project {
@@ -97,6 +97,7 @@ export default function ProjectDetail() {
   const params = matchNgo ? paramsNgo : paramsBase;
   const [, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const isPWAMode = useIsPWAMode();
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
@@ -1676,7 +1677,7 @@ export default function ProjectDetail() {
       )}
 
       {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+      {isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
 
       {!isMobile && <Footer />}
 

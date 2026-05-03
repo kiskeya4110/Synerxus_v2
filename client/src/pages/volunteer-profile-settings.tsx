@@ -355,11 +355,10 @@ export default function VolunteerProfileSettings() {
       {!isVolunteerMobile && <VolunteerNav />}
 
       <div
-        className={isVolunteerMobile ? "px-4 py-4 max-w-lg mx-auto" : ""}
-        style={
-          !isVolunteerMobile
-            ? { maxWidth: "600px", margin: "0 auto", padding: "24px" }
-            : undefined
+        className={
+          isVolunteerMobile
+            ? "px-4 py-4 max-w-lg mx-auto"
+            : "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         }
       >
         {/* Header */}
@@ -795,11 +794,10 @@ export default function VolunteerProfileSettings() {
         </Card>
       </div>
 
-      {/* Bottom Navigation */}
-      {isVolunteerMobile ? (
+      {/* Bottom Navigation — only the PWA installed app gets a fixed bottom nav.
+          Web view uses the top VolunteerNav + Footer instead. */}
+      {isVolunteerMobile && (
         <VolunteerPWANav userId={userId || undefined} activeTab="more" />
-      ) : (
-        <WebBottomNav activeTab="profile" />
       )}
 
       {!isVolunteerMobile && <Footer />}

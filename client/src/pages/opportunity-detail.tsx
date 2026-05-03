@@ -37,7 +37,7 @@ import ApplicationDialog from "@/components/opportunities/application-dialog";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 
 interface MatchBreakdown {
   skillMatch: number;
@@ -86,6 +86,7 @@ export default function OpportunityDetail() {
   const { id } = useParams();
   const [, navigate] = useLocation();
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
   const opportunityId = parseInt(id!);
   const userId = localStorage.getItem('currentUserId');
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
@@ -747,7 +748,7 @@ export default function OpportunityDetail() {
       />
 
       {/* Mobile Bottom Navigation */}
-      {isMobile && <WebBottomNav activeTab="discover" />}
+      {isPWAMode && <WebBottomNav activeTab="discover" />}
 
       {!isMobile && <Footer />}
     </div>

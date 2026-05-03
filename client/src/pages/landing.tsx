@@ -2432,7 +2432,7 @@ export default function Landing() {
                 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-[#0A1F44] mb-5"
                 data-testid="text-hero-title"
               >
-                Turn ESG Activity Into Audit-Ready Evidence
+                Turn <span className="text-[#D4980C]">ESG Activity</span> Into Audit-Ready <span className="text-[#D4980C]">Evidence</span>
               </h1>
 
               <p

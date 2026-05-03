@@ -2737,19 +2737,19 @@ export default function Landing() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 {
-                  icon: <Building2 className="h-7 w-7 text-[#0A1F44]" />,
+                  icon: <Building2 className="h-7 w-7 text-[#7a5200]" />,
                   segment: "ESG Teams",
                   pain: "Need evidence that can withstand assurance, investor scrutiny, and regulatory review.",
                   quote: '"Reporting claims need reviewable evidence."',
                 },
                 {
-                  icon: <Users className="h-7 w-7 text-[#0A1F44]" />,
+                  icon: <Users className="h-7 w-7 text-[#7a5200]" />,
                   segment: "Corporate Volunteering",
                   pain: "Volunteer hours are useful, but time alone does not confirm outcomes delivered.",
                   quote: '"Time is context, not the endpoint."',
                 },
                 {
-                  icon: <Globe className="h-7 w-7 text-[#0A1F44]" />,
+                  icon: <Globe className="h-7 w-7 text-[#7a5200]" />,
                   segment: "Partners & Cities",
                   pain: "Outputs are often real, but evidence is fragmented across spreadsheets, photos, emails, and reports.",
                   quote: '"Evidence is scattered across systems."',
@@ -2757,12 +2757,12 @@ export default function Landing() {
               ].map((card) => (
                 <div
                   key={card.segment}
-                  className="bg-slate-50 rounded-2xl p-6 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all"
+                  className="bg-gradient-to-br from-[#FFFBF0] to-white rounded-2xl p-6 border border-[#D4980C]/30 hover:border-[#D4980C] hover:shadow-[0_8px_24px_rgba(212,152,12,0.18)] transition-all"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#D4980C]/15 ring-1 ring-[#D4980C]/30 flex items-center justify-center mb-4">
                     {card.icon}
                   </div>
-                  <h3 className="text-lg font-bold text-[#0A1F44] mb-2">
+                  <h3 className="text-lg font-bold text-[#D4980C] mb-2">
                     {card.segment}
                   </h3>
                   <p className="text-slate-600 text-sm mb-3">{card.pain}</p>

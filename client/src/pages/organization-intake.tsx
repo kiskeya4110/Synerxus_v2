@@ -21,7 +21,7 @@ import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsPWAMode } from "@/hooks/use-mobile";
 
 const organizationProfileSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
@@ -120,7 +120,7 @@ export default function OrganizationIntake() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const isMobile = useIsPWAMode();
   const [step, setStep] = useState(1);
   const [customFocusArea, setCustomFocusArea] = useState("");
   const [customVolunteerNeed, setCustomVolunteerNeed] = useState("");

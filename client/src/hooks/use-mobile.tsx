@@ -12,25 +12,35 @@ const MOBILE_BREAKPOINT = 768
  *   - the page is launched in standalone display mode (PWA installed), OR
  *   - the URL path is under /pwa/ (explicit PWA route).
  */
-export function useIsPWAMode() {
-  const [isPWA, setIsPWA] = React.useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
-      || (window.navigator as any).standalone === true;
+function detectPWAMode(): boolean {
+  if (typeof window === "undefined") return false;
+  // If we're inside an iframe (e.g. the Replit workspace preview), treat as web view.
+  // The display-mode: standalone media query can falsely match inside chrome-less iframes.
+  let inIframe = false;
+  try {
+    inIframe = window.self !== window.top;
+  } catch {
+    inIframe = true;
+  }
+  if (inIframe) {
+    // Only honor explicit PWA routes when iframed; ignore display-mode.
     const path = window.location.pathname;
-    const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || path.includes("-pwa");
-    return standalone || pwaRoute;
-  });
+    return /(^|\/)pwa(\/|$)/.test(path) || /-pwa(\/|$)/.test(path);
+  }
+  const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+    || (window.navigator as any).standalone === true;
+  const path = window.location.pathname;
+  const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || /-pwa(\/|$)/.test(path);
+  return standalone || pwaRoute;
+}
+
+export function useIsPWAMode() {
+  const [isPWA, setIsPWA] = React.useState<boolean>(() => detectPWAMode());
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia("(display-mode: standalone)");
-    const update = () => {
-      const standalone = mql.matches || (window.navigator as any).standalone === true;
-      const path = window.location.pathname;
-      const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || path.includes("-pwa");
-      setIsPWA(standalone || pwaRoute);
-    };
+    const update = () => setIsPWA(detectPWAMode());
     mql.addEventListener?.("change", update);
     window.addEventListener("popstate", update);
     return () => {

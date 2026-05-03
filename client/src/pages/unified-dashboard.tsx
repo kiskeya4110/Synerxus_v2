@@ -19,7 +19,7 @@ const CorporateView = lazy(() => import("@/components/dashboard/views/CorporateV
 
 // Hooks
 import { useAuth } from "@/hooks/use-auth";
-import { useViewportDetection } from "@/hooks/use-mobile";
+import { useViewportDetection, useIsPWAMode } from "@/hooks/use-mobile";
 import { LoadingState, ErrorState } from "@/components/ui/empty-state";
 import { getAuthHeaders } from "@/lib/queryClient";
 
@@ -46,6 +46,7 @@ export default function UnifiedDashboard() {
   const { user, dbUser, loading: authLoading, signOut } = useAuth();
   const [location, navigate] = useLocation();
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const isPWAMode = useIsPWAMode();
 
   // Use dbUser from auth sync as authoritative source
   // Only fall back to localStorage when auth is fully resolved and no Firebase user exists (legacy mode)
@@ -300,8 +301,8 @@ export default function UnifiedDashboard() {
         </Suspense>
       )}
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer — hidden in PWA mode (installed app should never show the web footer) */}
+      {!isPWAMode && <Footer />}
     </div>
   );
 }

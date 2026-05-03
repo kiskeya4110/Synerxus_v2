@@ -200,7 +200,8 @@ export default function CorporatePartnerProfileSettings() {
     queryFn: async () => {
       if (!userId) return null;
       try {
-        const response = await fetch(`/api/csr/partners?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/csr/partners?userId=${userId}`, { headers, credentials: "include" });
         const data = await response.json();
         // Cache profile for instant loading
         if (data) {
@@ -348,25 +349,34 @@ export default function CorporatePartnerProfileSettings() {
         onboardingCompleted: true // Mark profile as complete when saved
       };
 
+      const authHeaders = await getAuthHeaders();
       // If profile exists, update it; otherwise create new one
       if (partnerProfile?.id) {
         const response = await fetch(`/api/csr/partners/${partnerProfile.id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...authHeaders, 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(payload)
         });
-        if (!response.ok) throw new Error('Failed to update CSR partner profile');
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Failed to update CSR partner profile: ${response.status} ${errText}`);
+        }
         return response.json();
       } else {
         const response = await fetch('/api/csr/partners', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...authHeaders, 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             userId: currentUser?.id,
             ...payload
           })
         });
-        if (!response.ok) throw new Error('Failed to create CSR partner profile');
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Failed to create CSR partner profile: ${response.status} ${errText}`);
+        }
         return response.json();
       }
     },

@@ -212,7 +212,8 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
     queryKey: ["/api/csr/partners", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const res = await fetch(`/api/csr/partners?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/csr/partners?userId=${userId}`, { headers, credentials: "include" });
       if (!res.ok) return null;
       return res.json();
     },

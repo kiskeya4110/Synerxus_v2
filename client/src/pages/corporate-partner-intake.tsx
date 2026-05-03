@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAuthHeaders } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building2 } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
@@ -138,7 +138,8 @@ export default function CorporatePartnerIntake() {
     queryFn: async () => {
       if (!userId) return null;
       try {
-        const response = await fetch(`/api/csr/partners?userId=${userId}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/csr/partners?userId=${userId}`, { headers, credentials: "include" });
         if (!response.ok) return null;
         const data = await response.json();
         return data || null;
@@ -188,9 +189,11 @@ export default function CorporatePartnerIntake() {
   const createPartnerMutation = useMutation({
     mutationFn: async (data: CorporatePartnerForm) => {
       const userId = localStorage.getItem('currentUserId');
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/csr/partners', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           userId: userId ? parseInt(userId) : undefined,
           ...data,
@@ -198,7 +201,10 @@ export default function CorporatePartnerIntake() {
           logo: logoUrl
         })
       });
-      if (!response.ok) throw new Error('Failed to create CSR partner profile');
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to create CSR partner profile: ${response.status} ${errText}`);
+      }
       return response.json();
     },
     onSuccess: () => {

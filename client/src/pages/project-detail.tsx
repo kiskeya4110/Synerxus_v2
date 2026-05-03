@@ -180,12 +180,17 @@ export default function ProjectDetail() {
     queryFn: async () => {
       const response = await fetch('/api/applications');
       if (!response.ok) return [];
-      return response.json();
+      const json = await response.json();
+      // API returns { data: [...] } envelope; tolerate either shape.
+      if (Array.isArray(json)) return json;
+      if (json && Array.isArray(json.data)) return json.data;
+      return [];
     }
   });
 
   // Check if user has applied for this project
-  const hasApplied = applications.some((app: any) =>
+  const applicationsList = Array.isArray(applications) ? applications : [];
+  const hasApplied = applicationsList.some((app: any) =>
     app.projectId === projectId && app.userId === parseInt(userId || '0')
   );
 

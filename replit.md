@@ -40,7 +40,7 @@ Synerxus is an AI-powered impact data infrastructure platform (PWA) that connect
 ### Technical Stack
 - **Frontend**: React 18, TypeScript, Vite, Wouter, TanStack Query v5, Tailwind CSS, Recharts, Chart.js, React Hook Form, date-fns, DOMPurify, shadcn/ui
 - **Backend**: Node.js, TypeScript, Express.js, WebSockets
-- **Database**: Drizzle ORM with Neon serverless PostgreSQL
+- **Database**: Drizzle ORM with Replit-managed PostgreSQL (Helium). DATABASE_URL is platform-managed — do NOT set it as a manual secret; doing so overrides the platform value and was the root cause of the 2026-05-03 "data loss" incident (data was never lost — manual secret was pointing at empty Neon projects)
 - **Auth**: Firebase Auth (Google OAuth + email/password)
 - **PWA**: Web app manifest, service worker (network-first caching), IndexedDB for offline activity logging
 

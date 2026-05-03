@@ -311,7 +311,7 @@ export default function VolunteerIntakeSimple() {
 
         <Card className="shadow-lg">
           <CardContent className="p-6 md:p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
               {/* Full Name */}
               <div>
@@ -390,7 +390,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* My Employer (Optional) */}
-              <div className="lg:col-span-2">
+              <div className="md:col-span-2">
                 <Label className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
                   My Employer (Optional)
@@ -543,7 +543,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* Skills */}
-              <div className="lg:col-span-2">
+              <div className="md:col-span-2">
                 <Label>Skills * (Select 1-3)</Label>
                 <p className="text-xs text-gray-500 mb-2">{selectedSkills.length}/3 selected</p>
                 <div className="flex flex-wrap gap-2">
@@ -570,7 +570,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* SDG Interests */}
-              <div className="lg:col-span-2">
+              <div className="md:col-span-2">
                 <Label>SDG Interests * (Select 1-3)</Label>
                 <p className="text-xs text-gray-500 mb-2">{selectedSdgs.length}/3 selected</p>
                 <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
@@ -597,7 +597,7 @@ export default function VolunteerIntakeSimple() {
               </div>
 
               {/* Terms */}
-              <div className="flex items-start gap-2 lg:col-span-2">
+              <div className="flex items-start gap-2 md:col-span-2">
                 <Checkbox
                   id="terms"
                   checked={watch("termsAccepted")}
@@ -608,12 +608,12 @@ export default function VolunteerIntakeSimple() {
                   I agree to the <a href="/terms" className="text-indigo-600 underline">Terms of Service</a> and <a href="/privacy" className="text-indigo-600 underline">Privacy Policy</a>
                 </Label>
               </div>
-              {errors.termsAccepted && <p className="text-sm text-red-500 lg:col-span-2">{errors.termsAccepted.message}</p>}
+              {errors.termsAccepted && <p className="text-sm text-red-500 md:col-span-2">{errors.termsAccepted.message}</p>}
 
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full lg:col-span-2"
+                className="w-full md:col-span-2"
                 size="lg"
                 disabled={isLoading}
               >
@@ -628,7 +628,7 @@ export default function VolunteerIntakeSimple() {
               </Button>
 
               {/* Divider */}
-              <div className="relative lg:col-span-2">
+              <div className="relative md:col-span-2">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
                 </div>
@@ -641,7 +641,7 @@ export default function VolunteerIntakeSimple() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full lg:col-span-2"
+                className="w-full md:col-span-2"
                 size="lg"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
@@ -654,7 +654,7 @@ export default function VolunteerIntakeSimple() {
                 Sign up with Google
               </Button>
 
-              <p className="text-center text-sm text-gray-500 lg:col-span-2">
+              <p className="text-center text-sm text-gray-500 md:col-span-2">
                 Already have an account? <a href="/login" className="text-indigo-600 font-medium">Log in</a>
               </p>
             </form>

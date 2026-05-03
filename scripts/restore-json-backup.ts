@@ -13,7 +13,6 @@ const RESTORE_ORDER = [
   "projects",
   "tasks",
   "project_impacts",
-  "applications",
   "matches",
   "project_assignments",
   "calendar_events",
@@ -34,6 +33,12 @@ const BATCH_SIZE = 100;
 
 function quoteIdent(identifier: string) {
   return `"${identifier.replace(/"/g, '""')}"`;
+}
+
+function pgType(column: { data_type: string; udt_name: string }) {
+  if (column.data_type === "ARRAY") return `${quoteIdent(column.udt_name.replace(/^_/, ""))}[]`;
+  if (column.udt_name) return quoteIdent(column.udt_name);
+  return column.data_type;
 }
 
 function parseArgs() {
@@ -210,23 +215,35 @@ async function main() {
 
       const pk = primaryKeys[0];
       const columnMap = new Map(columns.map((column) => [column.column_name, column]));
+      const pkColumn = columnMap.get(pk);
+      if (!pkColumn) continue;
       const updateColumns = columnNames
         .map((columnName) => columnMap.get(columnName))
         .filter((column): column is { column_name: string; data_type: string; udt_name: string } => Boolean(column));
 
       for (const column of updateColumns) {
         let updated = 0;
-        for (const row of rows) {
-          if (!(pk in row) || !(column.column_name in row)) continue;
+        const updateRows = rows.filter((row: Record<string, unknown>) => pk in row && column.column_name in row);
+
+        for (let offset = 0; offset < updateRows.length; offset += BATCH_SIZE) {
+          const batch = updateRows.slice(offset, offset + BATCH_SIZE);
+          const values: unknown[] = [];
+          const rowPlaceholders = batch.map((row: Record<string, unknown>) => {
+            values.push(row[pk], normalizeValue(row[column.column_name], column));
+            return `($${values.length - 1}::${pgType(pkColumn)}, $${values.length}::${pgType(column)})`;
+          });
+
           await client.query(
             `
               UPDATE ${quoteIdent(table)}
-              SET ${quoteIdent(column.column_name)} = $1
-              WHERE ${quoteIdent(pk)} = $2
+              SET ${quoteIdent(column.column_name)} = restored.${quoteIdent(column.column_name)}
+              FROM (VALUES ${rowPlaceholders.join(", ")})
+                AS restored(${quoteIdent(pk)}, ${quoteIdent(column.column_name)})
+              WHERE ${quoteIdent(table)}.${quoteIdent(pk)} = restored.${quoteIdent(pk)}
             `,
-            [normalizeValue(row[column.column_name], column), row[pk]],
+            values,
           );
-          updated++;
+          updated += batch.length;
         }
         console.log(`${table}.${column.column_name}: restored ${updated} links`);
       }

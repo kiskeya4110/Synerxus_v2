@@ -104,7 +104,15 @@ export default function VolunteerProfileSettings() {
   const isMobile = useIsMobile();
   const userType = localStorage.getItem("userType");
   const userId = localStorage.getItem("currentUserId");
-  const isVolunteerMobile = isMobile && userType === "volunteer";
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 640 : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsNarrowViewport(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const isVolunteerMobile = isNarrowViewport && userType === "volunteer";
 
   // Form state
   const [name, setName] = useState("");

@@ -15,9 +15,8 @@ function initializeFirebaseAdmin(): admin.app.App | null {
   // Validate all credentials are present and non-empty
   if (!projectId || !clientEmail || !privateKey) {
     logger.warn(
-      "[FirebaseAdmin] Missing Firebase credentials. Firebase token verification disabled."
+      "[FirebaseAdmin] Missing Firebase credentials. Firebase token verification disabled. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY to enable."
     );
-    logger.debug(`[FirebaseAdmin] Credentials status: projectId=${!!projectId}, clientEmail=${!!clientEmail}, privateKey=${!!privateKey}`);
     return null;
   }
 

@@ -134,7 +134,9 @@ export class SMSVerificationService {
       const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
       if (!twilioSid || !twilioToken || !twilioPhone) {
-        logger.info(`[SMS Verification] Would send SMS to ${verification.ngoContactPhone}: ${message}`);
+        const phone = verification.ngoContactPhone || '';
+        const redactedPhone = phone.length > 4 ? `***${phone.slice(-4)}` : '***';
+        logger.info(`[SMS Verification] Would send SMS to ${redactedPhone} (${message.length} chars)`);
         logger.info('[SMS Verification] Twilio not configured - SMS not sent. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER to enable.');
         verification.smsSentAt = new Date();
         return false;

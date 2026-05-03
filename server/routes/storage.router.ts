@@ -115,8 +115,6 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
     const pathParam = req.query.path as string;
     const authHeader = req.headers.authorization;
 
-    logger.info(`[Storage] Upload attempt - path: ${pathParam}, hasAuth: ${!!authHeader}, hasFile: ${!!req.file}`);
-
     if (!pathParam) {
       logger.warn(`[Storage] Upload rejected: missing path parameter`);
       return res.status(400).json({ message: "path is required" });
@@ -183,7 +181,7 @@ storageRouter.post("/upload", generalRateLimiter, upload.single("file"), handleM
     }
 
     if (!req.user) {
-      logger.warn(`[Storage] Unauthenticated upload attempt for path: ${pathParam}, authHeader: ${authHeader ? 'present' : 'missing'}`);
+      logger.warn(`[Storage] Unauthenticated upload attempt rejected`);
       return res.status(401).json({
         message: "Authentication required for file uploads. Please sign in again.",
         code: "AUTH_REQUIRED"

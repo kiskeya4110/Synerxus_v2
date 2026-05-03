@@ -221,7 +221,6 @@ export default function VolunteerIntakeSimple() {
   });
 
   const onSubmit = (data: VolunteerFormData) => {
-    console.log("[Signup] Form submitted with data:", { ...data, password: "***" });
     submitMutation.mutate(data);
   };
 

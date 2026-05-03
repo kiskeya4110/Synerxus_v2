@@ -149,7 +149,7 @@ export default function WebHeader({ transparent = false, activeTab }: WebHeaderP
                     item.highlight
                       ? 'bg-emerald-50 text-emerald-600'
                       : item.active
-                        ? 'bg-blue-50 text-blue-600'
+                        ? 'bg-[#FFFBF0] text-[#7a5200] border-l-4 border-[#D4980C]'
                         : 'text-stone-700 hover:bg-stone-50'
                   }`}
                 >
@@ -157,14 +157,14 @@ export default function WebHeader({ transparent = false, activeTab }: WebHeaderP
                     item.highlight
                       ? 'bg-emerald-100'
                       : item.active
-                        ? 'bg-blue-100'
+                        ? 'bg-[#D4980C]/15'
                         : 'bg-stone-100'
                   }`}>
                     <item.icon className={`w-5 h-5 ${
                       item.highlight
                         ? 'text-emerald-600'
                         : item.active
-                          ? 'text-blue-600'
+                          ? 'text-[#7a5200]'
                           : 'text-stone-600'
                     }`} />
                   </div>

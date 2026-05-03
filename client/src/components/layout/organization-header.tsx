@@ -255,22 +255,22 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                backgroundColor: currentTab === tab.id ? 'rgba(30, 58, 138, 0.15)' : 'rgba(255,255,255,0.5)',
-                border: currentTab === tab.id ? '1px solid rgba(30, 58, 138, 0.4)' : '1px solid rgba(30, 58, 138, 0.2)',
+                backgroundColor: currentTab === tab.id ? '#D4980C' : 'rgba(255,255,255,0.5)',
+                border: currentTab === tab.id ? '1px solid #D4980C' : '1px solid rgba(30, 58, 138, 0.2)',
                 borderRadius: '8px',
-                color: currentTab === tab.id ? '#1e3a8a' : '#1e40af',
+                color: currentTab === tab.id ? '#ffffff' : '#1e40af',
                 fontSize: '14px',
                 fontWeight: currentTab === tab.id ? '600' : '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
                 textShadow: 'none',
-                boxShadow: currentTab === tab.id ? '0 2px 8px rgba(30, 58, 138, 0.15)' : 'none',
+                boxShadow: currentTab === tab.id ? '0 2px 10px rgba(212, 152, 12, 0.45)' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (currentTab !== tab.id) {
-                  e.currentTarget.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(30, 58, 138, 0.3)';
+                  e.currentTarget.style.backgroundColor = 'rgba(212, 152, 12, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(212, 152, 12, 0.4)';
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
@@ -282,7 +282,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 }
               }}
             >
-              <tab.icon size={16} style={{ color: currentTab === tab.id ? '#1e3a8a' : '#1e40af' }} />
+              <tab.icon size={16} style={{ color: currentTab === tab.id ? '#ffffff' : '#1e40af' }} />
               {tab.label}
             </button>
           ))}

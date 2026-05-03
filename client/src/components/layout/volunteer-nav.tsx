@@ -198,7 +198,7 @@ export default function VolunteerNav() {
                         className={cn(
                           "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-md"
+                            ? "bg-[#D4980C] text-white shadow-md"
                             : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                         )}
                       >
@@ -316,7 +316,7 @@ export default function VolunteerNav() {
                                 className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                   isActive
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-[#FFFBF0] text-[#7a5200] border-l-2 border-[#D4980C]"
                                     : "text-foreground hover:bg-stone-100"
                                 )}
                                 onClick={() => setMenuOpen(false)}

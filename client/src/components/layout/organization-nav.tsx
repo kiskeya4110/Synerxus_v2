@@ -121,7 +121,7 @@ export default function OrganizationNav() {
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
                         isActive
-                          ? "bg-indigo-600 text-white shadow-md"
+                          ? "bg-[#D4980C] text-white shadow-md"
                           : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                       )}
                     >
@@ -219,7 +219,7 @@ export default function OrganizationNav() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                 isActive
-                                  ? "bg-indigo-50 text-indigo-600"
+                                  ? "bg-[#FFFBF0] text-[#7a5200] border-l-2 border-[#D4980C]"
                                   : "text-stone-700 hover:bg-stone-50"
                               )}
                               onClick={() => setMenuOpen(false)}
@@ -243,7 +243,7 @@ export default function OrganizationNav() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                                 isActive
-                                  ? "bg-indigo-50 text-indigo-600"
+                                  ? "bg-[#FFFBF0] text-[#7a5200] border-l-2 border-[#D4980C]"
                                   : "text-stone-700 hover:bg-stone-50"
                               )}
                               onClick={() => setMenuOpen(false)}

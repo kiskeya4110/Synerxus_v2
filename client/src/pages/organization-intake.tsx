@@ -319,55 +319,63 @@ export default function OrganizationIntake() {
   // If profile is already completed, show message and redirect option
   if (existingProfile?.onboardingCompleted) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              Your organization profile has already been set up. You can now access all features or return to the dashboard.
-            </p>
-            <Link href="/organization-dashboard">
-              <Button className="bg-primary">
-                Go to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen pb-24 bg-[#faf9f7]">
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="dashboard" />}
+        <div className={`${isMobile ? 'px-4 py-4' : 'px-4 sm:px-6 lg:px-8 py-8'} max-w-4xl mx-auto`}>
+          <Card className="border-[#D4980C]/30 bg-[#FFFBF0]">
+            <CardHeader>
+              <CardTitle className="text-[#7a5200]">Profile Already Completed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 mb-4">
+                Your organization profile has already been set up. You can now access all features or return to the dashboard.
+              </p>
+              <Link href="/organization-dashboard">
+                <Button className="bg-[#0A1F44] hover:bg-[#0A1F44]/90 text-white">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+        <OrganizationPWANav activeTab="home" />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#faf9f7] dark:from-gray-900 dark:to-gray-800'}`}>
+    <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#faf9f7]' : 'bg-[#faf9f7] dark:from-gray-900 dark:to-gray-800'}`}>
       {/* Header - Mobile PWA or Desktop */}
       {isMobile ? <OrganizationPWAHeader /> : <OrganizationHeader activeTab="dashboard" />}
 
-      <div className={`${isMobile ? 'px-4 py-4' : 'py-8 px-4'}`}>
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className={`font-bold text-gray-900 dark:text-white mb-2 ${isMobile ? 'text-2xl' : 'text-4xl'}`}>
-              Welcome to Synerxus!
+      <div className={`${isMobile ? 'px-4 py-4' : 'px-4 sm:px-6 lg:px-8 py-8'} max-w-4xl mx-auto`}>
+          <div className={`${isMobile ? 'mb-6' : 'text-center mb-8'}`}>
+            <h1 className={`font-bold text-gray-900 dark:text-white mb-2 ${isMobile ? 'text-xl' : 'text-3xl'}`}>
+              Welcome to Synerxus
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">Let's set up your organization profile</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Let's set up your organization profile</p>
           </div>
 
         <div className="mb-8">
           <div className="flex justify-between items-center">
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
               <div key={s} className="flex items-center flex-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  s < step ? "bg-green-500 text-white" : s === step ? "bg-purple-500 text-white" : "bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                <div className={`${isMobile ? 'w-8 h-8 text-sm' : 'w-10 h-10'} rounded-full flex items-center justify-center font-semibold transition-colors ${
+                  s < step
+                    ? "bg-[#D4980C] text-white"
+                    : s === step
+                      ? "bg-[#0A1F44] text-white ring-4 ring-[#D4980C]/30"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                 }`}>
-                  {s < step ? <Check className="w-6 h-6" /> : s}
+                  {s < step ? <Check className={isMobile ? "w-4 h-4" : "w-5 h-5"} /> : s}
                 </div>
                 {s < totalSteps && (
-                  <div className={`flex-1 h-1 mx-2 ${s < step ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`} />
+                  <div className={`flex-1 h-1 mx-2 rounded-full ${s < step ? "bg-[#D4980C]" : "bg-gray-200 dark:bg-gray-700"}`} />
                 )}
               </div>
             ))}
           </div>
+          <p className="text-xs text-slate-500 mt-3 text-center">Step {step} of {totalSteps}</p>
         </div>
 
         <Form {...form}>
@@ -769,11 +777,10 @@ export default function OrganizationIntake() {
             </div>
           </form>
         </Form>
-        </div>
       </div>
 
-      {/* Bottom Navigation for mobile */}
-      {isMobile && <OrganizationPWANav activeTab="home" />}
+      {/* Bottom Navigation — always shown for organizations (consistent across pages). */}
+      <OrganizationPWANav activeTab="home" />
     </div>
   );
 }

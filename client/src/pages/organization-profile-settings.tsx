@@ -28,8 +28,7 @@ import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import OrganizationNav from "@/components/layout/organization-nav";
-import Footer from "@/components/layout/footer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsPWAMode } from "@/hooks/use-mobile";
 import { PrivacyConsentDialog } from "@/components/privacy-consent-dialog";
 
 // SDG options (1-17)
@@ -125,7 +124,7 @@ export default function OrganizationProfileSettings() {
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
-  const isMobile = useIsMobile();
+  const isMobile = useIsPWAMode();
 
   // Invitation code states
   const [newCodeEmail, setNewCodeEmail] = useState("");
@@ -612,74 +611,46 @@ export default function OrganizationProfileSettings() {
 
   // Show loading while user data is loading
   if (userLoading || loadingProfile) {
-    if (isMobile) {
-      return (
-        <div className="min-h-screen bg-[#faf9f7] pb-20">
-          <OrganizationPWAHeader />
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-stone-500">Loading organization profile...</p>
-          </div>
-          <OrganizationPWANav activeTab="settings" />
-        </div>
-      );
-    }
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-stone-500">Loading organization profile...</p>
+      <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#faf9f7]' : 'bg-[#f9fafb]'}`}>
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationNav />}
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-stone-500">Loading organization profile...</p>
+        </div>
+        <OrganizationPWANav activeTab="settings" />
       </div>
     );
   }
 
   // Handle case when no userId is found
   if (!userId) {
-    if (isMobile) {
-      return (
-        <div className="min-h-screen bg-[#faf9f7] pb-20">
-          <OrganizationPWAHeader />
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <Building2 className="h-12 w-12 text-stone-400" />
-            <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
-            <p className="text-stone-600">Please log in to access your organization profile.</p>
-            <Button onClick={() => setLocation("/login")}>Go to Login</Button>
-          </div>
-          <OrganizationPWANav activeTab="settings" />
-        </div>
-      );
-    }
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Building2 className="h-12 w-12 text-stone-400" />
-        <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
-        <p className="text-stone-600">Please log in to access your organization profile.</p>
-        <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+      <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#faf9f7]' : 'bg-[#f9fafb]'}`}>
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationNav />}
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <Building2 className="h-12 w-12 text-stone-400" />
+          <h2 className="text-xl font-semibold text-stone-900">Session Expired</h2>
+          <p className="text-stone-600">Please log in to access your organization profile.</p>
+          <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+        </div>
+        <OrganizationPWANav activeTab="settings" />
       </div>
     );
   }
 
   // Handle errors
   if (userError || profileError) {
-    if (isMobile) {
-      return (
-        <div className="min-h-screen bg-[#faf9f7] pb-20">
-          <OrganizationPWAHeader />
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <Building2 className="h-12 w-12 text-red-500" />
-            <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
-            <p className="text-stone-600">There was an error loading your profile data.</p>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
-          </div>
-          <OrganizationPWANav activeTab="settings" />
-        </div>
-      );
-    }
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Building2 className="h-12 w-12 text-red-500" />
-        <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
-        <p className="text-stone-600">There was an error loading your profile data.</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+      <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#faf9f7]' : 'bg-[#f9fafb]'}`}>
+        {isMobile ? <OrganizationPWAHeader /> : <OrganizationNav />}
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <Building2 className="h-12 w-12 text-red-500" />
+          <h2 className="text-xl font-semibold text-stone-900">Unable to Load Profile</h2>
+          <p className="text-stone-600">There was an error loading your profile data.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+        <OrganizationPWANav activeTab="settings" />
       </div>
     );
   }
@@ -734,16 +705,15 @@ export default function OrganizationProfileSettings() {
         userId={currentUser?.id}
       />
 
-      <div className={`min-h-screen ${isMobile ? 'bg-[#faf9f7] pb-20' : 'bg-[#f9fafb]'}`}>
+      <div className={`min-h-screen pb-24 ${isMobile ? 'bg-[#faf9f7]' : 'bg-[#f9fafb]'}`}>
         {/* Header - Mobile PWA only; desktop uses organization-nav */}
         {isMobile ? <OrganizationPWAHeader /> : <OrganizationNav />}
 
-        {/* Content container matching header width */}
-        <div style={!isMobile ? { maxWidth: '1400px', margin: '0 auto', padding: '0 24px' } : undefined}>
-          <div className={`${isMobile ? 'px-4 py-4 mx-auto' : 'py-8'} max-w-4xl ${!isMobile ? 'mx-auto' : ''}`}>
+        {/* Content container — consistent responsive width across PWA + web */}
+        <div className={`${isMobile ? 'px-4 py-4' : 'px-4 sm:px-6 lg:px-8 py-8'} max-w-4xl mx-auto`}>
           <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-slate-900">Organization Profile Settings</h1>
-          <p className="text-slate-600">
+          <h1 className={`font-bold mb-2 text-slate-900 ${isMobile ? 'text-xl' : 'text-3xl'}`}>Organization Profile Settings</h1>
+          <p className="text-slate-600 text-sm">
             Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
           </p>
           </div>
@@ -1190,13 +1160,10 @@ export default function OrganizationProfileSettings() {
               </div>
             </CardContent>
           </Card>
-          </div>
         </div>
 
-        {/* Bottom Navigation for mobile */}
-        {isMobile && <OrganizationPWANav activeTab="settings" />}
-
-        {!isMobile && <Footer />}
+        {/* Bottom Navigation — always shown for organizations (consistent across pages). */}
+        <OrganizationPWANav activeTab="settings" />
       </div>
     </OrganizationProfileErrorBoundary>
   );

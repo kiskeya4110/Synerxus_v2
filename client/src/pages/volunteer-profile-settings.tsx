@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import VolunteerNav from "@/components/layout/volunteer-nav";
-import WebBottomNav from "@/components/layout/web-bottom-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";

@@ -1690,10 +1690,10 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
+      {/* Mobile Bottom Navigation for Volunteers — always present on volunteer project pages */}
+      {isVolunteer && <WebBottomNav activeTab="projects" />}
 
-      {!isMobile && <Footer />}
+      {!isMobile && !isPWAMode && !isVolunteer && <Footer />}
 
       {/* Delete Task Confirmation Dialog */}
       <DeleteConfirmDialog

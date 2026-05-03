@@ -183,7 +183,8 @@ export default function UnifiedDashboard() {
   }
 
   // Mobile PWA View - Role-specific with shared header and nav
-  if (isMobile === true) {
+  // Always render mobile layout (with bottom nav) when in PWA mode, regardless of viewport size
+  if (isMobile === true || isPWAMode) {
     return (
       <div className="min-h-screen bg-slate-50 pb-20">
         {/* Shared Header - adapts based on userType */}

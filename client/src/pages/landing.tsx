@@ -2551,7 +2551,7 @@ export default function Landing() {
                         style={{ opacity: heroSlide === i ? 1 : 0 }}
                         loading={i === 0 ? "eager" : "lazy"}
                         decoding="async"
-                        fetchPriority={i === 0 ? "high" : "auto"}
+                        {...({ fetchpriority: i === 0 ? "high" : "auto" } as any)}
                       />
                     ) : null,
                   )}

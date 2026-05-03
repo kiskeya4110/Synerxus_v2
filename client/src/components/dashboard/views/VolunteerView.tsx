@@ -412,18 +412,24 @@ const VolunteerView = memo(function VolunteerView({
                     <div className="px-4 pb-4 pt-2 border-t border-stone-100 bg-stone-50">
                       {matchedProjects.length > 0 ? (
                         <div className="space-y-2">
-                          {matchedProjects.map((match: any, index: number) => (
+                          {matchedProjects.map((match: any, index: number) => {
+                            const target = match.projectId
+                              ? `/projects/${match.projectId}`
+                              : match.id
+                                ? `/opportunities/${match.id}`
+                                : '/discover-opportunities';
+                            return (
                             <button
-                              key={match.organization_id || index}
-                              onClick={() => navigate(`/opportunities/${match.organization_id}`)}
+                              key={match.id || match.projectId || match.organization_id || index}
+                              onClick={() => navigate(target)}
                               className="w-full bg-white rounded-lg p-3 border border-stone-200 flex items-center justify-between text-left hover:border-indigo-300 hover:shadow-sm transition-all active:scale-[0.99] cursor-pointer"
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-stone-800 truncate">
-                                  {match.organization_name || 'Organization'}
+                                  {match.title || match.name || match.organizationName || match.organization_name || 'Opportunity'}
                                 </p>
                                 <p className="text-xs text-stone-500">
-                                  {match.cause_area || 'Community Impact'}
+                                  {match.organizationName || match.organization_name || match.cause_area || 'Community Impact'}
                                 </p>
                               </div>
                               <div className="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded-full ml-2">
@@ -433,7 +439,8 @@ const VolunteerView = memo(function VolunteerView({
                                 </span>
                               </div>
                             </button>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-sm text-stone-500 text-center py-2">No matches yet</p>

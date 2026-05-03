@@ -31,13 +31,24 @@ export default function Logo({
   showMotto: _showMotto,
   showIcon: _showIcon,
 }: LogoProps) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const config = SIZES[size];
 
   const handleLogoClick = () => {
     if (onClick) {
       onClick();
-    } else if (clickable) {
+      return;
+    }
+    if (!clickable) return;
+    // If already on the landing page, scroll back to the top (CTA / hero).
+    // Otherwise navigate there.
+    if (location === '/landing' || location === '/') {
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {
+        window.scrollTo(0, 0);
+      }
+    } else {
       navigate('/landing');
     }
   };
@@ -93,14 +104,27 @@ export default function Logo({
 
   return (
     <div
-      className={cn("inline-flex items-center", className)}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-label={clickable ? 'Synerxus — go to landing page' : undefined}
+      onClick={handleLogoClick}
+      onKeyDown={(e) => {
+        if (!clickable) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleLogoClick();
+        }
+      }}
+      data-testid="button-logo"
+      className={cn(
+        "inline-flex items-center select-none rounded-md transition-opacity",
+        clickable && "cursor-pointer hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4980C] focus-visible:ring-offset-2",
+        className,
+      )}
       style={{ gap: `${Math.round(config.height * 0.25)}px` }}
     >
-      {/* Clickable logo image */}
-      <div
-        onClick={handleLogoClick}
-        style={{ cursor: clickable ? 'pointer' : 'default', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-      >
+      {/* Logo image */}
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <img
           src="/synerxus-esg-logo.png"
           alt="Synerxus"
@@ -108,14 +132,8 @@ export default function Logo({
         />
       </div>
 
-      {/* Wordmark with independent "Verified" link */}
-      <div
-        onClick={handleLogoClick}
-        style={{ cursor: clickable ? 'pointer' : 'default' }}
-        data-testid="button-logo"
-      >
-        {wordmark}
-      </div>
+      {/* Wordmark with independent "Verified" link (uses stopPropagation) */}
+      <div>{wordmark}</div>
     </div>
   );
 }

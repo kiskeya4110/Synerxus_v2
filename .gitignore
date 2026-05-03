@@ -13,3 +13,8 @@ uploads/
 .env
 .env.local
 .env.*.local
+
+# Local tool/IDE settings (may contain bash history with credentials)
+.claude/
+.cursor/
+.vscode/settings.json

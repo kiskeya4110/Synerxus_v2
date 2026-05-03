@@ -443,7 +443,7 @@ export const corsOptions = {
     }
 
     // In production, check against whitelist — fail closed if not configured
-    const whitelist = (process.env.CORS_WHITELIST || "").split(",").filter(Boolean);
+    const whitelist = (process.env.CORS_WHITELIST || "").split(",").map(s => s.trim()).filter(Boolean);
 
     if (whitelist.length === 0) {
       logger.error("[CORS] CORS_WHITELIST is not set in production — blocking all cross-origin requests");

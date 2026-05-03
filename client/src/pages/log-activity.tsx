@@ -665,8 +665,8 @@ export default function LogActivity() {
         </Card>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      {isPWAMode && isVolunteer && (
+      {/* Mobile Bottom Navigation — always shown for volunteers */}
+      {isVolunteer && (
         <DashboardMobileNav
           userType="volunteer"
           activeTab="log"

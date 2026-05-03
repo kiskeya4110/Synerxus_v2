@@ -3,10 +3,12 @@ import { Home, Briefcase, FolderKanban, BarChart3, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
+import { useIsPWAMode } from "@/hooks/use-mobile";
 
 export default function VolunteerBottomNav() {
   const [location, setLocation] = useLocation();
   const userId = useCurrentUserId();
+  const isPWAMode = useIsPWAMode();
 
   // Fetch current user to verify volunteer type
   const { data: currentUser } = useQuery<UserType>({
@@ -40,8 +42,9 @@ export default function VolunteerBottomNav() {
     location === route || location.startsWith(route)
   );
 
-  // Only show for volunteers on mobile, and not on standalone routes
-  if (currentUser?.userType !== 'volunteer' || isStandaloneRoute) {
+  // Only show for volunteers in PWA mode (installed app or explicit /pwa route),
+  // and not on standalone routes that bring their own nav.
+  if (currentUser?.userType !== 'volunteer' || isStandaloneRoute || !isPWAMode) {
     return null;
   }
 
@@ -82,7 +85,7 @@ export default function VolunteerBottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 max-w-[428px] mx-auto z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 max-w-[428px] mx-auto z-50 shadow-lg"
       style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid grid-cols-5">

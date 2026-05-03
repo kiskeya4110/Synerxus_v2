@@ -21,19 +21,25 @@ export default function VolunteerBottomNav() {
     enabled: !!userId
   });
 
-  // Routes that have their own complete navigation - don't show VolunteerBottomNav here
+  // Routes that have their own complete bottom navigation — don't double-render here.
   const standaloneRoutes = [
-    '/volunteer-dashboard',
+    // Auth / public
+    '/landing',
+    '/login',
+    '/',
+    // Other user types' dashboards
     '/csr-dashboard',
     '/csr-dashboard-pwa',
     '/organization-dashboard',
+    // Volunteer pages that already render their own PWA bottom nav
+    '/volunteer-dashboard',        // DashboardMobileNav (with tab state)
+    '/log-activity',                // DashboardMobileNav
+    '/volunteer-profile-settings',  // VolunteerPWANav
+    '/volunteer-intake',            // VolunteerPWANav
     '/discover-opportunities/pwa',
     '/discover-opportunities',
-    '/projects/',  // PWA project detail pages
-    '/opportunities/',  // PWA opportunity detail pages
-    '/landing',
-    '/login',
-    '/'
+    '/projects/',                   // PWA project detail pages
+    '/opportunities/',              // PWA opportunity detail pages
   ];
 
   // Check for PWA routes (any route ending in /pwa) or standalone routes

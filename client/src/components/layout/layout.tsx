@@ -100,8 +100,16 @@ export default function Layout({ children }: LayoutProps) {
   );
 
   if (isFullyStandalone) {
-    // Render just the children - these routes have their own complete layout
-    return <>{children}</>;
+    // Render just the children - these routes have their own complete layout.
+    // Still render VolunteerBottomNav so volunteers get a consistent PWA bottom nav
+    // on every page (it self-gates on PWA mode + volunteer + a small skip-list of
+    // pages that already render their own bottom navigation).
+    return (
+      <>
+        {children}
+        <VolunteerBottomNav />
+      </>
+    );
   }
 
   return (

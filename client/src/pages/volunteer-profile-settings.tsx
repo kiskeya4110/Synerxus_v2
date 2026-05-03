@@ -21,7 +21,6 @@ import VolunteerNav from "@/components/layout/volunteer-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
-import Footer from "@/components/layout/footer";
 
 // ============================================================================
 // CONSTANTS - Match intake form exactly
@@ -793,13 +792,10 @@ export default function VolunteerProfileSettings() {
         </Card>
       </div>
 
-      {/* Bottom Navigation — only the PWA installed app gets a fixed bottom nav.
-          Web view uses the top VolunteerNav + Footer instead. */}
-      {isVolunteerMobile && (
+      {/* Bottom Navigation — always shown for volunteers (consistent across pages). */}
+      {userType === "volunteer" && (
         <VolunteerPWANav userId={userId || undefined} activeTab="more" />
       )}
-
-      {!isVolunteerMobile && <Footer />}
     </div>
   );
 }

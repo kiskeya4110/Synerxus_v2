@@ -24,6 +24,8 @@ const RESTORE_ORDER = [
 ];
 const FIRST_PASS_OMIT_COLUMNS: Record<string, string[]> = {
   users: ["organization_id"],
+  volunteer_profiles: ["employer_id"],
+  project_impacts: ["metric_id"],
 };
 const POST_RESTORE_UPDATES: Record<string, string[]> = {
   users: ["organization_id"],
@@ -81,7 +83,15 @@ async function getTableInfo(client: pg.PoolClient, table: string) {
 function normalizeValue(value: unknown, column: { data_type: string; udt_name: string }) {
   if (value === undefined) return null;
   if (value !== null && (column.udt_name === "json" || column.udt_name === "jsonb")) {
-    return typeof value === "string" ? value : JSON.stringify(value);
+    if (typeof value === "string") {
+      try {
+        JSON.parse(value);
+        return value;
+      } catch {
+        return JSON.stringify(value);
+      }
+    }
+    return JSON.stringify(value);
   }
   return value;
 }

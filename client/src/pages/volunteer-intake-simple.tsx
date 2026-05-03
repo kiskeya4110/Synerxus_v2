@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import Logo from "@/components/ui/logo";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Check, Loader2, X } from "lucide-react";
+import { Eye, EyeOff, Check, Loader2, X, Building2, Search, Plus } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { getDashboardRoute } from "@/lib/auth-schemas";
+
+type CSRPartnerListItem = {
+  id: number;
+  companyName: string;
+  industryType: string | null;
+  logoUrl: string | null;
+};
 
 // ============================================================================
 // CONSTANTS - Simplified for MVP
@@ -85,6 +92,24 @@ export default function VolunteerIntakeSimple() {
   const [inviteCodeValid, setInviteCodeValid] = useState<boolean | null>(null);
   const [inviteCodeOrg, setInviteCodeOrg] = useState<string>("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Employer selection / proposal state
+  const [selectedEmployerId, setSelectedEmployerId] = useState<number | null>(null);
+  const [employerSearch, setEmployerSearch] = useState("");
+  const [showProposeForm, setShowProposeForm] = useState(false);
+  const [proposedCompanyName, setProposedCompanyName] = useState("");
+  const [proposedIndustry, setProposedIndustry] = useState("");
+
+  // Public partners list — works without auth so users can pick employer pre-signup
+  const { data: csrPartners = [] } = useQuery<CSRPartnerListItem[]>({
+    queryKey: ["/api/csr/partners/public-list"],
+    queryFn: async () => {
+      const r = await fetch("/api/csr/partners/public-list");
+      if (!r.ok) return [];
+      const d = await r.json();
+      return Array.isArray(d) ? d : [];
+    },
+  });
 
   const form = useForm<VolunteerFormData>({
     resolver: zodResolver(volunteerSchema),
@@ -165,6 +190,35 @@ export default function VolunteerIntakeSimple() {
         const idToken = await firebaseUser.getIdToken();
         const userId = localStorage.getItem("currentUserId");
 
+        // Step 2a: If user proposed a new employer, create it now and use the
+        // returned id as the employerId. If proposal fails, we still save the
+        // profile without an employer link.
+        let employerId: number | null = selectedEmployerId;
+        if (!employerId && showProposeForm && proposedCompanyName.trim()) {
+          try {
+            const proposeRes = await fetch("/api/csr/partners/propose", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`,
+                ...(userId && { "X-User-Id": userId }),
+              },
+              body: JSON.stringify({
+                companyName: proposedCompanyName.trim(),
+                industryType: proposedIndustry.trim() || null,
+              }),
+            });
+            if (proposeRes.ok) {
+              const proposed = await proposeRes.json();
+              if (proposed?.id) employerId = Number(proposed.id);
+            } else {
+              console.warn("[Signup] Propose employer failed:", await proposeRes.text());
+            }
+          } catch (e) {
+            console.warn("[Signup] Propose employer error:", e);
+          }
+        }
+
         const profileResponse = await fetch("/api/intake/volunteer-profile", {
           method: "POST",
           headers: {
@@ -177,6 +231,7 @@ export default function VolunteerIntakeSimple() {
             skills: data.skills,
             preferredSdgs: data.sdgInterests,
             inviteCode: data.inviteCode || null,
+            employerId: employerId ?? undefined,
             onboardingCompleted: true,
           }),
         });
@@ -332,6 +387,159 @@ export default function VolunteerIntakeSimple() {
                   <p className="text-sm text-red-500 mt-1">Invalid invite code</p>
                 )}
                 {errors.inviteCode && <p className="text-sm text-red-500 mt-1">{errors.inviteCode.message}</p>}
+              </div>
+
+              {/* My Employer (Optional) */}
+              <div className="lg:col-span-2">
+                <Label className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  My Employer (Optional)
+                </Label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Link your volunteer hours to your employer's CSR programme so their team can track real-time impact. You can also propose a new employer if yours isn't listed.
+                </p>
+
+                {/* Search */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search companies…"
+                    value={employerSearch}
+                    onChange={(e) => setEmployerSearch(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full pl-8 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+                  />
+                </div>
+
+                {/* Company list */}
+                <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEmployerId(null);
+                      setShowProposeForm(false);
+                    }}
+                    disabled={isLoading}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                      selectedEmployerId === null && !showProposeForm
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">Not linked to an employer</span>
+                    {selectedEmployerId === null && !showProposeForm && (
+                      <Check className="h-3.5 w-3.5 ml-auto" />
+                    )}
+                  </button>
+
+                  {(csrPartners || [])
+                    .filter((p) =>
+                      !employerSearch.trim() ||
+                      p.companyName.toLowerCase().includes(employerSearch.toLowerCase())
+                    )
+                    .map((partner) => (
+                      <button
+                        key={partner.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedEmployerId(partner.id);
+                          setShowProposeForm(false);
+                        }}
+                        disabled={isLoading}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                          selectedEmployerId === partner.id
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {partner.logoUrl ? (
+                          <img src={partner.logoUrl} alt="" className="h-6 w-6 rounded object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="h-6 w-6 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium truncate block">{partner.companyName}</span>
+                          {partner.industryType && (
+                            <span className="text-xs text-gray-400">{partner.industryType}</span>
+                          )}
+                        </div>
+                        {selectedEmployerId === partner.id && (
+                          <Check className="h-3.5 w-3.5 ml-auto flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+
+                  {(csrPartners || []).length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-4">No companies registered yet.</p>
+                  )}
+                </div>
+
+                {/* Propose new employer toggle + inline form */}
+                {!showProposeForm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProposeForm(true);
+                      setSelectedEmployerId(null);
+                    }}
+                    disabled={isLoading}
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Don't see your employer? Propose a new one
+                  </button>
+                ) : (
+                  <div className="mt-2 p-3 rounded-lg border border-indigo-200 bg-indigo-50/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-indigo-700 flex items-center gap-1">
+                        <Plus className="h-3.5 w-3.5" />
+                        Propose a new employer
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProposeForm(false);
+                          setProposedCompanyName("");
+                          setProposedIndustry("");
+                        }}
+                        disabled={isLoading}
+                        className="text-gray-400 hover:text-gray-600"
+                        aria-label="Cancel propose new employer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <Input
+                      placeholder="Company name *"
+                      value={proposedCompanyName}
+                      onChange={(e) => setProposedCompanyName(e.target.value)}
+                      disabled={isLoading}
+                      maxLength={200}
+                      className="text-sm"
+                    />
+                    <Input
+                      placeholder="Industry (optional, e.g. Technology, Finance)"
+                      value={proposedIndustry}
+                      onChange={(e) => setProposedIndustry(e.target.value)}
+                      disabled={isLoading}
+                      maxLength={100}
+                      className="text-sm"
+                    />
+                    <p className="text-[11px] text-gray-500">
+                      We'll save this employer to your profile after sign-up. Their CSR admin can later claim and verify it.
+                    </p>
+                  </div>
+                )}
+
+                {selectedEmployerId !== null && (
+                  <p className="text-xs text-indigo-600 mt-1.5 flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Linked — your verified impact will appear on their CSR dashboard.
+                  </p>
+                )}
               </div>
 
               {/* Skills */}

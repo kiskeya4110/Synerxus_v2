@@ -2339,6 +2339,96 @@ csrRouter.get("/csr/partners/list", authMiddleware, async (req: Request, res: Re
 });
 
 /**
+ * GET /csr/partners/public-list
+ * Unauthenticated minimal CSR partners list, used by the volunteer intake form
+ * so users can pick their employer BEFORE creating their account.
+ * Only exposes companyName, industryType, logoUrl, and id.
+ */
+csrRouter.get("/csr/partners/public-list", async (_req: Request, res: Response) => {
+  try {
+    const allPartners = (await storage.listCSRPartners?.()) || [];
+    const safeList = allPartners.map((p: any) => ({
+      id: p.id,
+      companyName: p.companyName,
+      industryType: p.industryType,
+      logoUrl: p.logoUrl,
+    }));
+    res.json(safeList);
+  } catch (err) {
+    logger.error("Error fetching public CSR partners list:", err);
+    res.status(500).json({ error: "Failed to fetch partners" });
+  }
+});
+
+/**
+ * POST /csr/partners/propose
+ * Authenticated volunteer can propose a new employer (CSR partner) that
+ * isn't yet on the platform. Creates a CSR partner record with the volunteer
+ * as the placeholder owner and rosterSyncStatus = "pending" so admins can
+ * later claim/verify it. If a partner with the same name (case-insensitive)
+ * already exists, returns it instead of creating a duplicate.
+ */
+csrRouter.post("/csr/partners/propose", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthenticatedUser(req, res);
+    if (!authUser) return;
+
+    const { companyName, industryType, contactEmail } = req.body || {};
+    if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
+      return res.status(400).json({ error: "Company name is required" });
+    }
+    const trimmed = companyName.trim();
+    if (trimmed.length > 200) {
+      return res.status(400).json({ error: "Company name is too long" });
+    }
+
+    const allPartners = (await storage.listCSRPartners?.()) || [];
+    const existing = allPartners.find(
+      (p: any) =>
+        typeof p.companyName === "string" &&
+        p.companyName.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      return res.json({
+        id: existing.id,
+        companyName: existing.companyName,
+        industryType: existing.industryType,
+        logoUrl: existing.logoUrl,
+        existing: true,
+      });
+    }
+
+    const dbUser = await storage.getUser(authUser.id);
+    const created = await storage.createCSRPartner?.({
+      userId: authUser.id,
+      companyName: trimmed,
+      contactEmail: contactEmail || dbUser?.email || "pending@synerxus.com",
+      industryType: industryType || null,
+      primarySdgs: [],
+      rosterSyncStatus: "pending",
+      subscriptionTier: "free",
+    } as any);
+
+    logger.info("[CSR] Volunteer proposed new employer", {
+      userId: authUser.id,
+      companyName: trimmed,
+      partnerId: (created as any)?.id,
+    });
+
+    res.json({
+      id: (created as any)?.id,
+      companyName: trimmed,
+      industryType: industryType || null,
+      logoUrl: null,
+      existing: false,
+    });
+  } catch (err) {
+    logger.error("[CSR] Error proposing employer", { error: err });
+    res.status(500).json({ error: "Failed to propose employer" });
+  }
+});
+
+/**
  * PATCH /csr/partners/:id
  * Update a CSR Partner
  */

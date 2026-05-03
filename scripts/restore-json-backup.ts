@@ -22,6 +22,13 @@ const RESTORE_ORDER = [
   "user_badges",
   "volunteer_organization_relationships",
 ];
+const FIRST_PASS_OMIT_COLUMNS: Record<string, string[]> = {
+  users: ["organization_id"],
+};
+const POST_RESTORE_UPDATES: Record<string, string[]> = {
+  users: ["organization_id"],
+};
+const BATCH_SIZE = 100;
 
 function quoteIdent(identifier: string) {
   return `"${identifier.replace(/"/g, '""')}"`;
@@ -133,7 +140,10 @@ async function main() {
       }
 
       const backupColumns = Object.keys(rows[0]);
-      const restoreColumns = columns.filter((column) => backupColumns.includes(column.column_name));
+      const omittedColumns = new Set(FIRST_PASS_OMIT_COLUMNS[table] || []);
+      const restoreColumns = columns.filter(
+        (column) => backupColumns.includes(column.column_name) && !omittedColumns.has(column.column_name),
+      );
 
       if (restoreColumns.length === 0) {
         console.log(`${table}: skipped, no matching columns`);
@@ -155,22 +165,61 @@ async function main() {
         : "DO NOTHING";
 
       let inserted = 0;
-      for (const row of rows) {
-        const values = restoreColumns.map((column) => normalizeValue(row[column.column_name], column));
-        const placeholders = values.map((_, index) => `$${index + 1}`).join(", ");
+      for (let offset = 0; offset < rows.length; offset += BATCH_SIZE) {
+        const batch = rows.slice(offset, offset + BATCH_SIZE);
+        const values: unknown[] = [];
+        const rowPlaceholders = batch.map((row) => {
+          const placeholders = restoreColumns.map((column) => {
+            values.push(normalizeValue(row[column.column_name], column));
+            return `$${values.length}`;
+          });
+          return `(${placeholders.join(", ")})`;
+        });
+
         await client.query(
           `
             INSERT INTO ${quoteIdent(table)} (${columnSql})
-            VALUES (${placeholders})
+            VALUES ${rowPlaceholders.join(", ")}
             ON CONFLICT (${conflictSql}) ${updateSql}
           `,
           values,
         );
-        inserted++;
+        inserted += batch.length;
       }
 
       await resetSequence(client, table, primaryKeys);
       console.log(`${table}: restored ${inserted} rows`);
+    }
+
+    for (const [table, columnNames] of Object.entries(POST_RESTORE_UPDATES)) {
+      const rows = data[table];
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+
+      const { columns, primaryKeys } = await getTableInfo(client, table);
+      if (primaryKeys.length !== 1) continue;
+
+      const pk = primaryKeys[0];
+      const columnMap = new Map(columns.map((column) => [column.column_name, column]));
+      const updateColumns = columnNames
+        .map((columnName) => columnMap.get(columnName))
+        .filter((column): column is { column_name: string; data_type: string; udt_name: string } => Boolean(column));
+
+      for (const column of updateColumns) {
+        let updated = 0;
+        for (const row of rows) {
+          if (!(pk in row) || !(column.column_name in row)) continue;
+          await client.query(
+            `
+              UPDATE ${quoteIdent(table)}
+              SET ${quoteIdent(column.column_name)} = $1
+              WHERE ${quoteIdent(pk)} = $2
+            `,
+            [normalizeValue(row[column.column_name], column), row[pk]],
+          );
+          updated++;
+        }
+        console.log(`${table}.${column.column_name}: restored ${updated} links`);
+      }
     }
 
     if (apply) {

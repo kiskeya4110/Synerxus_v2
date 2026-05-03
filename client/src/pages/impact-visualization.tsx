@@ -10,7 +10,7 @@ import BeforeAfterComparison from "@/components/impact/before-after-comparison";
 import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
-import { useViewportDetection } from "@/hooks/use-mobile";
+import { useViewportDetection, useIsPWAMode } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
 import OrganizationWelcomeBanner from "@/components/layout/organization-welcome-banner";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
@@ -58,6 +58,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const isPWAMode = useIsPWAMode();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
@@ -532,7 +533,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   }
 
   // Mobile volunteer PWA view
-  if (!embedded && isVolunteer && isMobile === true) {
+  if (!embedded && isVolunteer && isPWAMode) {
     return (
       <div className="min-h-screen bg-gray-50">
         <PWAHeader />

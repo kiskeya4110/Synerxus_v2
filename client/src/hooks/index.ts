@@ -38,7 +38,7 @@ export { useToast, toast } from "./use-toast";
 export { useOnboarding } from "./use-onboarding";
 
 // Mobile detection
-export { useIsMobile } from "./use-mobile";
+export { useIsMobile, useIsPWAMode } from "./use-mobile";
 
 // User ID and type
 export { useCurrentUserId } from "./use-current-user-id";

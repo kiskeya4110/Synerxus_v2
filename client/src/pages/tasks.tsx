@@ -17,7 +17,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 
 interface ITask {
   id: number;
@@ -44,6 +44,7 @@ export default function Tasks() {
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
 
   const { data: tasks = [], isLoading } = useQuery<ITask[]>({ 
     queryKey: ["/api/tasks"] 
@@ -346,10 +347,10 @@ export default function Tasks() {
       </div>
 
       {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+      {isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
 
       {/* Footer - Hidden on mobile */}
-      {!isMobile && <Footer />}
+      {!isPWAMode && <Footer />}
     </div>
   );
 }

@@ -21,7 +21,7 @@ import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 import Footer from "@/components/layout/footer";
 
 // ============================================================================
@@ -102,17 +102,11 @@ export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
   const userType = localStorage.getItem("userType");
   const userId = localStorage.getItem("currentUserId");
-  const [isNarrowViewport, setIsNarrowViewport] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 640 : false
-  );
-  useEffect(() => {
-    const onResize = () => setIsNarrowViewport(window.innerWidth < 640);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  const isVolunteerMobile = isNarrowViewport && userType === "volunteer";
+  // Framing follows the actual app version (web vs installed PWA), not viewport width.
+  const isVolunteerMobile = isPWAMode && userType === "volunteer";
 
   // Form state
   const [name, setName] = useState("");

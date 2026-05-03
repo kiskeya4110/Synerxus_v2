@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import OrganizationHeader from "@/components/layout/organization-header";
@@ -171,7 +171,8 @@ export default function Calendar() {
   };
 
   // Check if PWA mobile view for volunteer
-  const isPWAView = isMobile && isVolunteer;
+  const isPWAMode = useIsPWAMode();
+  const isPWAView = isPWAMode && isVolunteer;
 
   return (
     <div className={isPWAView ? "min-h-screen bg-[#FDF8F3]" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>

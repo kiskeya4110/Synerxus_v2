@@ -20,7 +20,7 @@ import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 
 interface AssignmentsProps {
   embedded?: boolean;
@@ -154,6 +154,7 @@ export default function Assignments(props: AssignmentsProps = {}) {
 
   const isVolunteer = userType === 'volunteer';
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
 
   // Handle unauthenticated users - only check after query completes
   if (!userLoading && !currentUser) {
@@ -170,7 +171,7 @@ export default function Assignments(props: AssignmentsProps = {}) {
             </AlertDescription>
           </Alert>
         </div>
-        {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+        {!embedded && isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
       </div>
     );
   }
@@ -185,7 +186,7 @@ export default function Assignments(props: AssignmentsProps = {}) {
             <p className="text-muted-foreground">Loading assignments...</p>
           </div>
         </div>
-        {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+        {!embedded && isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
       </div>
     );
   }
@@ -518,10 +519,10 @@ export default function Assignments(props: AssignmentsProps = {}) {
       </div>
 
       {/* Mobile Bottom Navigation for Volunteers */}
-      {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
+      {!embedded && isVolunteer && isPWAMode && <WebBottomNav activeTab="projects" />}
 
       {/* Footer - Hidden on mobile and when embedded */}
-      {!embedded && !isMobile && <Footer />}
+      {!embedded && !isPWAMode && <Footer />}
     </div>
   );
 }

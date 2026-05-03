@@ -55,7 +55,7 @@ import VolunteerNav from "@/components/layout/volunteer-nav";
 import PWAHeader from "@/components/pwa/pwa-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsPWAMode } from "@/hooks/use-mobile";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -161,7 +161,7 @@ type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
 export default function VolunteerIntake() {
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const isMobile = useIsPWAMode();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");

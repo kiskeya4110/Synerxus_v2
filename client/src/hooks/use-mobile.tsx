@@ -3,6 +3,46 @@ import * as React from "react"
 const MOBILE_BREAKPOINT = 768
 
 /**
+ * Hook to detect if the app is running as an installed PWA (standalone mode),
+ * not just on a narrow viewport. Use this for *framing* decisions
+ * (PWAHeader vs web nav, bottom-nav vs footer) so that the web view in a
+ * browser keeps the web frame regardless of how narrow the window is.
+ *
+ * Returns true when EITHER:
+ *   - the page is launched in standalone display mode (PWA installed), OR
+ *   - the URL path is under /pwa/ (explicit PWA route).
+ */
+export function useIsPWAMode() {
+  const [isPWA, setIsPWA] = React.useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+      || (window.navigator as any).standalone === true;
+    const path = window.location.pathname;
+    const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || path.includes("-pwa");
+    return standalone || pwaRoute;
+  });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(display-mode: standalone)");
+    const update = () => {
+      const standalone = mql.matches || (window.navigator as any).standalone === true;
+      const path = window.location.pathname;
+      const pwaRoute = /(^|\/)pwa(\/|$)/.test(path) || path.includes("-pwa");
+      setIsPWA(standalone || pwaRoute);
+    };
+    mql.addEventListener?.("change", update);
+    window.addEventListener("popstate", update);
+    return () => {
+      mql.removeEventListener?.("change", update);
+      window.removeEventListener("popstate", update);
+    };
+  }, []);
+
+  return isPWA;
+}
+
+/**
  * Hook to detect if the current viewport is mobile-sized.
  * Returns boolean indicating mobile state.
  * During initial detection (SSR/hydration), returns false.

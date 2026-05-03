@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsPWAMode } from "@/hooks/use-mobile";
 import { Target, Clock, Calendar as CalendarIcon, Save, ArrowLeft, Camera, CheckCircle, MapPin, Users } from "lucide-react";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import type { User } from "@shared/schema";
@@ -81,6 +81,7 @@ function KpiTile({
 export default function LogActivity() {
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const isPWAMode = useIsPWAMode();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -441,7 +442,7 @@ export default function LogActivity() {
   const canSubmit = !!selectedProjectId && !!selectedKpi && !!kpiQuantity && parseFloat(kpiQuantity) > 0 && !!hoursWorked && parseFloat(hoursWorked) > 0;
 
   return (
-    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 pb-24' : 'bg-stone-50'}`}>
+    <div className={`min-h-screen ${isPWAMode && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 pb-24' : 'bg-stone-50'}`}>
       <OfflineBanner
         isOnline={isOnline}
         isSyncing={isSyncing}
@@ -452,7 +453,7 @@ export default function LogActivity() {
 
       {isVolunteer && <VolunteerNav />}
 
-      {(!isMobile || !isVolunteer) && (
+      {(!isPWAMode || !isVolunteer) && (
         <div className="max-w-[1280px] mx-auto px-6 pt-6">
           <Button
             variant="ghost"
@@ -465,10 +466,10 @@ export default function LogActivity() {
         </div>
       )}
 
-      <div className={isMobile && isVolunteer ? 'px-4 py-6' : ''} style={!(isMobile && isVolunteer) ? { maxWidth: '600px', margin: '0 auto', padding: '0 24px 24px 24px' } : undefined}>
-        <Card className={isMobile && isVolunteer ? 'bg-white border-emerald-200/60 shadow-lg' : ''}>
+      <div className={isPWAMode && isVolunteer ? 'px-4 py-6' : ''} style={!(isPWAMode && isVolunteer) ? { maxWidth: '600px', margin: '0 auto', padding: '0 24px 24px 24px' } : undefined}>
+        <Card className={isPWAMode && isVolunteer ? 'bg-white border-emerald-200/60 shadow-lg' : ''}>
           <CardHeader className="pb-4">
-            <CardTitle className={`flex items-center gap-2 text-xl ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
+            <CardTitle className={`flex items-center gap-2 text-xl ${isPWAMode && isVolunteer ? 'text-slate-800' : ''}`}>
               <Target className="w-6 h-6 text-emerald-600" />
               Log Outcome
             </CardTitle>
@@ -666,7 +667,7 @@ export default function LogActivity() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      {isMobile && isVolunteer && (
+      {isPWAMode && isVolunteer && (
         <DashboardMobileNav
           userType="volunteer"
           activeTab="log"
@@ -680,7 +681,7 @@ export default function LogActivity() {
         />
       )}
 
-      {!isMobile && <Footer />}
+      {!isPWAMode && <Footer />}
     </div>
   );
 }

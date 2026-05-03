@@ -16,7 +16,7 @@ import PWAHeader from "@/components/pwa/pwa-header";
 import Footer from "@/components/layout/footer";
 import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { CSRLayout } from "@/components/layout/csr-layout";
-import { useViewportDetection } from "@/hooks/use-mobile";
+import { useViewportDetection, useIsPWAMode } from "@/hooks/use-mobile";
 import { getAuthHeaders } from "@/lib/queryClient";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
@@ -30,6 +30,7 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'volunteers'>('all');
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const isPWAMode = useIsPWAMode();
   const userType = localStorage.getItem('userType');
   const isVolunteer = userType === 'volunteer';
   const isCSR = userType === 'corporate-partner' || userType === 'corporate_partner' || userType === 'csr';
@@ -712,13 +713,13 @@ export default function Projects() {
   return (
     <div className="bg-[#f8f9fa] min-h-screen">
       {/* Volunteer Mobile PWA Header */}
-      {isVolunteer && isMobile && <PWAHeader />}
+      {isVolunteer && isPWAMode && <PWAHeader />}
 
       {/* Volunteer Desktop Navigation - only for volunteers */}
-      {isVolunteer && !isMobile && <VolunteerNav />}
+      {isVolunteer && !isPWAMode && <VolunteerNav />}
 
       {isOrganization && <OrganizationNav />}
-      <div className={`h-screen overflow-y-auto ${isVolunteer && isMobile ? 'pt-20 pb-36' : 'pb-36'}`} style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
+      <div className={`h-screen overflow-y-auto ${isVolunteer && isPWAMode ? 'pt-20 pb-36' : 'pb-36'}`} style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
@@ -964,10 +965,10 @@ export default function Projects() {
       </div>
 
       {/* Mobile Bottom Navigation for Volunteers */}
-      {isVolunteer && isMobile && <VolunteerPWANav activeTab="projects" />}
+      {isVolunteer && isPWAMode && <VolunteerPWANav activeTab="projects" />}
 
       {/* Footer - Hidden on mobile */}
-      {!isMobile && <Footer />}
+      {!isPWAMode && <Footer />}
     </div>
   );
 }

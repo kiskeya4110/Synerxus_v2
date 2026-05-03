@@ -87,7 +87,8 @@ export default function OpportunityDetail() {
   const [, navigate] = useLocation();
   const isMobile = useIsMobile();
   const isPWAMode = useIsPWAMode();
-  const opportunityId = parseInt(id!);
+  const parsedId = id ? parseInt(id, 10) : NaN;
+  const opportunityId = Number.isFinite(parsedId) ? parsedId : 0;
   const userId = localStorage.getItem('currentUserId');
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
 

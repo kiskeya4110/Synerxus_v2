@@ -145,6 +145,15 @@ export default function ProjectDetail() {
 
   const { data: users = [] } = useQuery<DBUser[]>({
     queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) return [];
+      const json = await response.json();
+      // API returns { data: [...] } envelope; tolerate either shape.
+      if (Array.isArray(json)) return json;
+      if (json && Array.isArray(json.data)) return json.data;
+      return [];
+    },
   });
 
   // Disabled AIU query (kept as noop to maintain hook count)

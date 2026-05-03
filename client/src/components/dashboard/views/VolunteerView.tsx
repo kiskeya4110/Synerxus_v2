@@ -417,7 +417,7 @@ const VolunteerView = memo(function VolunteerView({
                               ? `/projects/${match.projectId}`
                               : match.id
                                 ? `/opportunities/${match.id}`
-                                : '/discover-opportunities';
+                                : '/discover-opportunities/pwa';
                             return (
                             <button
                               key={match.id || match.projectId || match.organization_id || index}
@@ -446,7 +446,7 @@ const VolunteerView = memo(function VolunteerView({
                         <p className="text-sm text-stone-500 text-center py-2">No matches yet</p>
                       )}
                       <button
-                        onClick={() => navigate('/discover-opportunities')}
+                        onClick={() => navigate('/discover-opportunities/pwa')}
                         className="w-full mt-3 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         Browse All Opportunities →
@@ -901,7 +901,7 @@ const VolunteerView = memo(function VolunteerView({
                   })}
 
                   <button
-                    onClick={() => navigate('/discover-opportunities')}
+                    onClick={() => navigate('/discover-opportunities/pwa')}
                     className="w-full py-3 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white rounded-xl border border-stone-200 shadow-sm"
                   >
                     Browse All Opportunities

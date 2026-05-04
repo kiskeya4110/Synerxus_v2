@@ -84,12 +84,12 @@ export async function getVisibleProjectIdsForVolunteer(
 function calculatePeopleImpacted(impacts: any[], peopleMetricIds: Set<number>): number {
   const peopleImpacts = impacts.filter(i => i.metricId && peopleMetricIds.has(i.metricId));
 
-  // Verified impacts count at 100%
+  // Approved records count at 100%.
   const verifiedSum = peopleImpacts
     .filter(i => i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
     .reduce((sum, i) => sum + (i.value || 0), 0);
 
-  // Pending/self-reported impacts count at 70% (matching RELIABILITY_MULTIPLIERS.pending)
+  // Pending/self-reported records count at 70% (matching RELIABILITY_MULTIPLIERS.pending).
   const pendingSum = peopleImpacts
     .filter(i => i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported' || !i.verificationStatus)
     .reduce((sum, i) => sum + (i.value || 0), 0);
@@ -1199,14 +1199,14 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       );
       const volunteersCount = projectVolunteerIds.size;
 
-      // Calculate AIU earned for this project (from VERIFIED impacts only)
-      // IMPORTANT: Filter to only include the VOLUNTEER'S OWN impacts, not other volunteers' impacts
+      // Calculate AIU earned for this project from approved contribution records.
+      // IMPORTANT: Filter to only include the VOLUNTEER'S OWN records, not other volunteers' records.
       // This prevents volunteers from inheriting impact credit from other contributors
       const volunteerProjectImpacts = allImpacts.filter(i => i.projectId === project.id && i.userId === userId);
       const verifiedImpacts = volunteerProjectImpacts.filter(i =>
         i.verificationStatus === 'verified' || i.verificationStatus === 'approved'
       );
-      // Use verified impacts for AIU calculation; fall back to pending impacts weighted at 70%
+      // Use approved records for AIU calculation; fall back to pending records weighted at 70%.
       const verifiedLivesImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
       const pendingImpacts = volunteerProjectImpacts.filter(i =>
         i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported'

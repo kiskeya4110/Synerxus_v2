@@ -378,7 +378,7 @@ export interface PureImpactAIUResult {
  * Industry basis:
  * - SROI Methodology: Outcome-focused impact measurement
  * - IRIS+ Catalog: Standardized impact metrics
- * - GRI Standards: Verified impact reporting
+ * - GRI Standards: partner-confirmed output reporting
  * - Future of Humanity Institute: Law of Logarithmic Returns
  *
  * @param input - Volunteer impact data

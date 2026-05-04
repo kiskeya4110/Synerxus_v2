@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  PUBLIC_REPORT_REDACTED_TOPICS,
+  PUBLIC_REPORT_REDACTION_NOTE,
+} from "../domains/reporting/report-redaction-policy";
 
 const ROOT = resolve(__dirname, "..", "..");
 
@@ -11,14 +15,6 @@ const REPORT_TEMPLATE_PATH = resolve(
   "logs.router.ts",
 );
 
-const REQUIRED_REDACTED_TOPICS = [
-  "device identifiers",
-  "SMS routing",
-  "telemetry",
-  "fraud control",
-  "proprietary verification mechanics",
-];
-
 describe("public report redaction rules", () => {
   const source = readFileSync(REPORT_TEMPLATE_PATH, "utf8");
 
@@ -27,9 +23,13 @@ describe("public report redaction rules", () => {
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("enumerates every required redacted topic in the note text", () => {
-    const lower = source.toLowerCase();
-    const missing = REQUIRED_REDACTED_TOPICS.filter(
+  it("routes render the centralized redaction policy note", () => {
+    expect(source).toContain("PUBLIC_REPORT_REDACTION_NOTE");
+  });
+
+  it("centralized redaction policy enumerates every required redacted topic", () => {
+    const lower = PUBLIC_REPORT_REDACTION_NOTE.toLowerCase();
+    const missing = PUBLIC_REPORT_REDACTED_TOPICS.filter(
       (topic) => !lower.includes(topic.toLowerCase()),
     );
     expect(missing).toEqual([]);
@@ -45,9 +45,9 @@ describe("public report redaction rules", () => {
   });
 
   it("uses the strict-verification predicate to gate the Verified tier", () => {
-    expect(source).toMatch(/isFullyVerified/);
     expect(source).toMatch(
-      /verificationStatus\s*===\s*['"]approved['"][\s\S]{0,80}verifiedAt[\s\S]{0,80}verifiedBy/,
+      /import\s+\{\s*isFullyVerified\s*\}\s+from\s+["']@shared\/validation["']/,
     );
+    expect(source).not.toMatch(/const\s+isFullyVerified\s*=/);
   });
 });

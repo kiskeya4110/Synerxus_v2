@@ -10,7 +10,12 @@ import { useAuth } from "@/hooks/use-auth";
 // ============================================================================
 
 // Core pages - lazy loaded
-const Landing = lazy(() => import("@/pages/landing"));
+const Landing = lazy(() => import("@/pages/marketing-home"));
+const Platform = lazy(() => import("@/pages/platform"));
+const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
+const UseCases = lazy(() => import("@/pages/use-cases"));
+const Resources = lazy(() => import("@/pages/insights"));
+const Contact = lazy(() => import("@/pages/contact"));
 const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
 const LoginAuth = lazy(() => import("@/pages/auth/login")); // Real Firebase auth login
 const SignupLanding = lazy(() => import("@/pages/auth/signup-landing")); // Role selector for new users
@@ -162,6 +167,19 @@ export default function App() {
           <Route path="/signup" component={SignupLanding} />
           <Route path="/login-demo" component={LoginDemo} />
           <Route path="/landing" component={Landing} />
+          <Route path="/platform" component={Platform} />
+          <Route path="/evidence-ladder" component={EvidenceLadder} />
+          <Route path="/use-cases" component={UseCases} />
+          <Route path="/resources" component={Resources} />
+          <Route path="/request-assessment" component={Contact} />
+          <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>
+          <Route path="/evidence-objects">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/solutions">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/how-it-works">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/frameworks">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/for-partners">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/about">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/insights">{() => <Redirect to="/resources" />}</Route>
 
           {/* ================================================================ */}
           {/* SIGNUP - Single page forms with 4-factor matching data */}

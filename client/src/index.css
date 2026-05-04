@@ -638,6 +638,11 @@ section[id] {
   to { opacity: 1; }
 }
 
+@keyframes heroSlowZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.055); }
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -702,6 +707,20 @@ section[id] {
 
 .animate-scroll {
   animation: scroll 30s linear infinite;
+}
+
+/* Compliance framework marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Floating animation for hero background elements */

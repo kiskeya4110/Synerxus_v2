@@ -323,8 +323,8 @@ export async function updateAiuKpiFromImpacts(projectId: number): Promise<void> 
     const allProjectImpacts = await storage.listProjectImpactsByProject(projectId);
     const projectImpactsList = allProjectImpacts.filter((i: any) => !i.isDuplicated);
 
-    // Calculate total impact value (sum of all verified and pending impacts)
-    // Verified impacts get full credit, pending get 70%
+    // Calculate total impact value from approved and pending records.
+    // Approved records get full credit, pending records get 70%.
     let totalImpactValue = 0;
     for (const impact of projectImpactsList) {
       const value = impact.value || 0;
@@ -362,4 +362,3 @@ export async function updateAiuKpiFromImpacts(projectId: number): Promise<void> 
     // Don't throw - this is a background operation that shouldn't fail the main request
   }
 }
-

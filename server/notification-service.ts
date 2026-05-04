@@ -716,7 +716,7 @@ export async function notifyPendingImpact(
         userId: orgUser.id,
         type: "pending_approval",
         title: "Impact Awaiting Approval",
-        message: `${volunteerName} submitted ${value || 0} ${metricName} for "${usedProjectName}". Review and approve to add this to their verified impact record.`,
+        message: `${volunteerName} submitted ${value || 0} ${metricName} for "${usedProjectName}". Review and approve to add this to their partner-confirmed evidence record.`,
         relatedEntityType: "project_impact",
         relatedEntityId: impactId,
         relatedUserId: volunteerId,

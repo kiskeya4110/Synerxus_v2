@@ -1075,28 +1075,46 @@ miscRouter.get("/invitations/pending", authMiddleware, async (req, res) => {
 // ── Public contact / pricing enquiry (unauthenticated) ───────────────────────
 miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { name, company, email, plan, message } = req.body as {
+    const {
+      name,
+      company,
+      email,
+      plan,
+      message,
+      role,
+      organizationType,
+      primaryNeed,
+      frameworks,
+    } = req.body as {
       name: string;
       company: string;
       email: string;
       plan: string;
       message?: string;
+      role?: string;
+      organizationType?: string;
+      primaryNeed?: string;
+      frameworks?: string;
     };
 
     if (!name || !company || !email || !plan) {
       return res.status(400).json({ error: "name, company, email and plan are required" });
     }
 
-    const subject = `Synerxus ${plan} Plan Enquiry — ${company}`;
+    const subject = `Synerxus ${plan} Enquiry — ${company}`;
     const textBody = [
       `Name: ${name}`,
       `Company: ${company}`,
       `Email: ${email}`,
+      role ? `Role: ${role}` : null,
+      organizationType ? `Organization type: ${organizationType}` : null,
+      primaryNeed ? `Primary need: ${primaryNeed}` : null,
+      frameworks ? `Frameworks in scope: ${frameworks}` : null,
       `Plan: ${plan}`,
       "",
       "Notes:",
       message || "(none)",
-    ].join("\n");
+    ].filter(Boolean).join("\n");
 
     await emailTransporter.sendMail({
       from: EMAIL_FROM,

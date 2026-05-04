@@ -449,62 +449,334 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section id="platform" className="bg-white py-14 md:py-20">
+      {/* Compliance framework marquee */}
+      <div className="border-b border-slate-100 bg-white">
+        <div className="px-4 pt-4 pb-2 md:px-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            Evidence Alignment Support
+          </p>
+        </div>
+        <div className="relative overflow-hidden pb-5">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-white to-transparent" />
+            <div className="flex items-end gap-12 animate-marquee pl-6">
+              {/* Set 1 */}
+              {/* CSRD */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="CSRD – EU flag" role="img">
+                  <circle cx="16" cy="16" r="15" fill="#003399"/>
+                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
+                    const rad = (a - 90) * Math.PI / 180;
+                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
+                  })}
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">CSRD</div>
+                </div>
+              </div>
+              {/* ESRS */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ESRS – EU flag" role="img">
+                  <circle cx="16" cy="16" r="15" fill="#003399"/>
+                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
+                    const rad = (a - 90) * Math.PI / 180;
+                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
+                  })}
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">ESRS</div>
+                </div>
+              </div>
+              {/* GRI */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="GRI – Global Reporting Initiative" role="img">
+                  <circle cx="16" cy="16" r="15" fill="#009A4E"/>
+                  <path d="M16 6 A10 10 0 1 1 6 16 L9.5 16 A6.5 6.5 0 1 0 16 9.5 Z" fill="white"/>
+                  <rect x="6" y="14" width="7" height="3.5" rx="1" fill="white"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">GRI</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#009A4E]">Global Reporting</div>
+                </div>
+              </div>
+              {/* SASB */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="SASB – Sustainability Accounting Standards Board" role="img">
+                  <rect width="32" height="32" rx="6" fill="#1F3C6E"/>
+                  <path d="M10 20.5 C10 18.5 13 17.5 16 17 C19 16.5 22 15.5 22 13 C22 10.5 19.5 9 16 9 C12.5 9 10 10.8 10 13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M22 11.5 C22 13.5 19 14.5 16 15 C13 15.5 10 16.5 10 19 C10 21.5 12.5 23 16 23 C19.5 23 22 21.2 22 19" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">Standards</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#1F3C6E]">SASB</div>
+                </div>
+              </div>
+              {/* ISSB */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ISSB – International Sustainability Standards Board" role="img">
+                  <circle cx="16" cy="16" r="15" fill="#003296"/>
+                  <circle cx="16" cy="16" r="9" fill="none" stroke="white" strokeWidth="1.8"/>
+                  <ellipse cx="16" cy="16" rx="5" ry="9" fill="none" stroke="white" strokeWidth="1.5"/>
+                  <line x1="7" y1="16" x2="25" y2="16" stroke="white" strokeWidth="1.5"/>
+                  <line x1="16" y1="7" x2="16" y2="25" stroke="white" strokeWidth="1.5"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IFRS</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003296]">ISSB</div>
+                </div>
+              </div>
+              {/* TCFD */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="TCFD – Task Force on Climate-related Financial Disclosures" role="img">
+                  <rect width="32" height="32" rx="6" fill="#002147"/>
+                  <path d="M5 22 Q8.5 17 12 22 Q15.5 27 19 22 Q22.5 17 27 22" fill="none" stroke="#78C3E0" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="16" cy="12" r="5" fill="none" stroke="white" strokeWidth="2"/>
+                  <line x1="16" y1="5" x2="16" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="21.2" y1="6.8" x2="19.8" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="10.8" y1="6.8" x2="12.2" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="24" y1="12" x2="22" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="8" y1="12" x2="10" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">FSB</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#002147]">TCFD</div>
+                </div>
+              </div>
+              {/* ISAE 3000 */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ISAE 3000 – International Standard on Assurance Engagements" role="img">
+                  <path d="M16 2 L28 7 L28 18 Q28 27 16 31 Q4 27 4 18 L4 7 Z" fill="#1B365D"/>
+                  <path d="M10 16.5 L14 20.5 L22 12.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IAASB</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#1B365D]">ISAE 3000</div>
+                </div>
+              </div>
+              {/* UN SDGs */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="UN SDGs – United Nations Sustainable Development Goals" role="img">
+                  {[
+                    { color: "#E5243B", d: "M16 16 L16 3 A13 13 0 0 1 25.26 8.26 Z" },
+                    { color: "#DDA63A", d: "M16 16 L25.26 8.26 A13 13 0 0 1 29 16 Z" },
+                    { color: "#4C9F38", d: "M16 16 L29 16 A13 13 0 0 1 25.26 23.74 Z" },
+                    { color: "#C5192D", d: "M16 16 L25.26 23.74 A13 13 0 0 1 16 29 Z" },
+                    { color: "#FF3A21", d: "M16 16 L16 29 A13 13 0 0 1 6.74 23.74 Z" },
+                    { color: "#26BDE2", d: "M16 16 L6.74 23.74 A13 13 0 0 1 3 16 Z" },
+                    { color: "#FCC30B", d: "M16 16 L3 16 A13 13 0 0 1 6.74 8.26 Z" },
+                    { color: "#A21942", d: "M16 16 L6.74 8.26 A13 13 0 0 1 16 3 Z" },
+                  ].map(({ color, d }, i) => (
+                    <path key={i} d={d} fill={color}/>
+                  ))}
+                  <circle cx="16" cy="16" r="5" fill="white"/>
+                  <circle cx="16" cy="16" r="3.5" fill="#009EDB"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">UN</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#009EDB]">SDGs</div>
+                </div>
+              </div>
+              {/* Divider */}
+              <div className="h-6 w-px shrink-0 bg-slate-200" />
+              {/* Set 2 – duplicate for seamless loop */}
+              {/* CSRD */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <circle cx="16" cy="16" r="15" fill="#003399"/>
+                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
+                    const rad = (a - 90) * Math.PI / 180;
+                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
+                  })}
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">CSRD</div>
+                </div>
+              </div>
+              {/* ESRS */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <circle cx="16" cy="16" r="15" fill="#003399"/>
+                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
+                    const rad = (a - 90) * Math.PI / 180;
+                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
+                  })}
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">ESRS</div>
+                </div>
+              </div>
+              {/* GRI */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <circle cx="16" cy="16" r="15" fill="#009A4E"/>
+                  <path d="M16 6 A10 10 0 1 1 6 16 L9.5 16 A6.5 6.5 0 1 0 16 9.5 Z" fill="white"/>
+                  <rect x="6" y="14" width="7" height="3.5" rx="1" fill="white"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">GRI</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#009A4E]">Global Reporting</div>
+                </div>
+              </div>
+              {/* SASB */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <rect width="32" height="32" rx="6" fill="#1F3C6E"/>
+                  <path d="M10 20.5 C10 18.5 13 17.5 16 17 C19 16.5 22 15.5 22 13 C22 10.5 19.5 9 16 9 C12.5 9 10 10.8 10 13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M22 11.5 C22 13.5 19 14.5 16 15 C13 15.5 10 16.5 10 19 C10 21.5 12.5 23 16 23 C19.5 23 22 21.2 22 19" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">Standards</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#1F3C6E]">SASB</div>
+                </div>
+              </div>
+              {/* ISSB */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <circle cx="16" cy="16" r="15" fill="#003296"/>
+                  <circle cx="16" cy="16" r="9" fill="none" stroke="white" strokeWidth="1.8"/>
+                  <ellipse cx="16" cy="16" rx="5" ry="9" fill="none" stroke="white" strokeWidth="1.5"/>
+                  <line x1="7" y1="16" x2="25" y2="16" stroke="white" strokeWidth="1.5"/>
+                  <line x1="16" y1="7" x2="16" y2="25" stroke="white" strokeWidth="1.5"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IFRS</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#003296]">ISSB</div>
+                </div>
+              </div>
+              {/* TCFD */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <rect width="32" height="32" rx="6" fill="#002147"/>
+                  <path d="M5 22 Q8.5 17 12 22 Q15.5 27 19 22 Q22.5 17 27 22" fill="none" stroke="#78C3E0" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="16" cy="12" r="5" fill="none" stroke="white" strokeWidth="2"/>
+                  <line x1="16" y1="5" x2="16" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="21.2" y1="6.8" x2="19.8" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="10.8" y1="6.8" x2="12.2" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="24" y1="12" x2="22" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="8" y1="12" x2="10" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">FSB</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#002147]">TCFD</div>
+                </div>
+              </div>
+              {/* ISAE 3000 */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  <path d="M16 2 L28 7 L28 18 Q28 27 16 31 Q4 27 4 18 L4 7 Z" fill="#1B365D"/>
+                  <path d="M10 16.5 L14 20.5 L22 12.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IAASB</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#1B365D]">ISAE 3000</div>
+                </div>
+              </div>
+              {/* UN SDGs */}
+              <div className="flex items-center gap-2 shrink-0">
+                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                  {[
+                    { color: "#E5243B", d: "M16 16 L16 3 A13 13 0 0 1 25.26 8.26 Z" },
+                    { color: "#DDA63A", d: "M16 16 L25.26 8.26 A13 13 0 0 1 29 16 Z" },
+                    { color: "#4C9F38", d: "M16 16 L29 16 A13 13 0 0 1 25.26 23.74 Z" },
+                    { color: "#C5192D", d: "M16 16 L25.26 23.74 A13 13 0 0 1 16 29 Z" },
+                    { color: "#FF3A21", d: "M16 16 L16 29 A13 13 0 0 1 6.74 23.74 Z" },
+                    { color: "#26BDE2", d: "M16 16 L6.74 23.74 A13 13 0 0 1 3 16 Z" },
+                    { color: "#FCC30B", d: "M16 16 L3 16 A13 13 0 0 1 6.74 8.26 Z" },
+                    { color: "#A21942", d: "M16 16 L6.74 8.26 A13 13 0 0 1 16 3 Z" },
+                  ].map(({ color, d }, i) => (
+                    <path key={i} d={d} fill={color}/>
+                  ))}
+                  <circle cx="16" cy="16" r="5" fill="white"/>
+                  <circle cx="16" cy="16" r="3.5" fill="#009EDB"/>
+                </svg>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">UN</div>
+                  <div className="text-[13px] font-extrabold leading-tight text-[#009EDB]">SDGs</div>
+                </div>
+              </div>
+              <div className="h-6 w-px shrink-0 bg-slate-200" />
+            </div>
+          </div>
+        </div>
+
+      <section id="platform" className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Evidence Object Preview"
             title="Synerxus creates structured Evidence Objects."
             body="A concise claim record that connects the sustainability claim to source evidence, partner confirmation, chain of custody, and reporting context."
           />
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr_360px]">
-            <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 lg:flex-col lg:overflow-visible">
-              {evidencePreviewTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveEvidenceTab(tab)}
-                  aria-pressed={activeEvidenceTab.id === tab.id}
-                  className={`min-w-[140px] rounded-xl border px-4 py-3 text-left transition-all ${
-                    activeEvidenceTab.id === tab.id
-                      ? "border-[#0A1F44] bg-[#0A1F44] shadow-lg"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-[#D4980C]/50"
-                  }`}
-                >
-                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-extrabold ${
-                    activeEvidenceTab.id === tab.id ? "bg-[#D4980C] text-[#0A1F44]" : "bg-[#D4980C]/15 text-[#0A1F44]"
-                  }`}>{tab.step}</span>
-                  <span className={`mt-2 block text-sm font-bold ${activeEvidenceTab.id === tab.id ? "text-[#D4980C]" : ""}`}>{tab.label}</span>
-                </button>
-              ))}
+          <div className="grid gap-6 lg:grid-cols-[220px_1fr] lg:items-start">
+            {/* Left — step nav + context */}
+            <div>
+              <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+                {evidencePreviewTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveEvidenceTab(tab)}
+                    aria-pressed={activeEvidenceTab.id === tab.id}
+                    className={`flex min-w-[130px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all lg:min-w-0 ${
+                      activeEvidenceTab.id === tab.id
+                        ? "border-[#0A1F44] bg-[#0A1F44]"
+                        : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
+                    }`}
+                  >
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-colors ${
+                      activeEvidenceTab.id === tab.id ? "bg-[#D4980C] text-[#0A1F44]" : "bg-slate-200 text-slate-500"
+                    }`}>
+                      {tab.step}
+                    </span>
+                    <span className={`text-sm font-bold transition-colors ${
+                      activeEvidenceTab.id === tab.id ? "text-[#D4980C]" : "text-[#0A1F44]"
+                    }`}>
+                      {tab.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 hidden rounded-xl border border-slate-100 bg-slate-50 p-4 lg:block">
+                <p className="text-sm font-bold text-[#0A1F44]">{activeEvidenceTab.title}</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{activeEvidenceTab.body}</p>
+              </div>
+              <Button asChild className="mt-4 hidden w-full bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a] lg:flex">
+                <Link href="/platform">Explore Platform</Link>
+              </Button>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/10">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+
+            {/* Right — Evidence Object card */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Evidence Object</p>
-                  <h3 className="mt-1 text-xl font-extrabold text-[#0A1F44]">EO-2047</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence Object</p>
+                  <p className="mt-0.5 text-lg font-extrabold text-[#0A1F44]">EO-2047</p>
                 </div>
                 <span className={`rounded-full border px-3 py-1 text-xs font-bold ${activeEvidenceTab.headerStatusStyle}`}>
                   {activeEvidenceTab.headerStatus}
                 </span>
               </div>
-              <div className={`mt-5 grid gap-3 ${activeEvidenceTab.id === "evidence" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
+              <div className={`mt-4 grid gap-2 ${activeEvidenceTab.id === "evidence" ? "grid-cols-1 sm:grid-cols-2" : "sm:grid-cols-2"}`}>
                 {activeEvidenceTab.fields.map((field) => {
                   if (field.type === "file") {
                     return (
-                      <div key={field.label} className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                        <FileCheck2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <div key={field.label} className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                        <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
-                          <p className="mt-0.5 text-xs font-semibold text-emerald-700">{field.value}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
+                          <p className="text-xs font-semibold text-emerald-700">{field.value}</p>
                         </div>
                       </div>
                     );
                   }
                   if (field.type === "status") {
                     return (
-                      <div key={field.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
-                        <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                      <div key={field.label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{field.label}</p>
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
                           <CheckCircle2 className="h-3 w-3" />
                           {field.value}
                         </span>
@@ -513,50 +785,44 @@ export default function MarketingHome() {
                   }
                   if (field.type === "framework") {
                     return (
-                      <div key={field.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
-                        <span className="mt-1.5 inline-block rounded-full bg-[#0A1F44] px-2.5 py-1 text-xs font-bold text-[#D4980C]">
+                      <div key={field.label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{field.label}</p>
+                        <span className="mt-1 inline-block rounded-full bg-[#0A1F44] px-2.5 py-0.5 text-xs font-bold text-[#D4980C]">
                           {field.value}
                         </span>
                       </div>
                     );
                   }
                   return (
-                    <div key={field.label} className="rounded-xl border border-[#D4980C]/40 bg-[#D4980C]/10 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{field.value}</p>
+                    <div key={field.label} className="rounded-lg border border-[#D4980C]/30 bg-[#D4980C]/10 px-3 py-2.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{field.label}</p>
+                      <p className="mt-0.5 text-sm font-semibold text-slate-800">{field.value}</p>
                     </div>
                   );
                 })}
               </div>
-            </div>
-            <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <h3 className="text-xl font-extrabold text-[#0A1F44]">{activeEvidenceTab.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{activeEvidenceTab.body}</p>
-              <div className="mt-6">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#D4980C]">Record progress</p>
-                <ol className="mt-3 space-y-2">
-                  {evidenceProgressSteps.map((step, index) => {
-                    const stepNum = index + 1;
+              <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
+                <div className="flex gap-1.5">
+                  {evidenceProgressSteps.map((step, i) => {
+                    const stepNum = i + 1;
                     const isDone = stepNum < activeEvidenceTab.step;
                     const isCurrent = stepNum === activeEvidenceTab.step;
                     return (
-                      <li key={step} className={`flex items-center gap-2.5 text-sm ${isCurrent ? "font-bold text-[#0A1F44]" : "text-slate-400"}`}>
-                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${
-                          isCurrent ? "bg-[#0A1F44] text-[#D4980C]" : isDone ? "bg-slate-200 text-slate-500" : "border border-slate-300 bg-white text-slate-400"
-                        }`}>
-                          {isDone ? "✓" : stepNum}
-                        </span>
-                        {step}
-                      </li>
+                      <span
+                        key={step}
+                        title={step}
+                        className={`h-1.5 rounded-full transition-all ${
+                          isCurrent ? "w-6 bg-[#D4980C]" : isDone ? "w-4 bg-[#0A1F44]/40" : "w-4 bg-slate-200"
+                        }`}
+                      />
                     );
                   })}
-                </ol>
+                </div>
+                <span className="text-xs text-slate-500">
+                  Step {activeEvidenceTab.step} of {evidenceProgressSteps.length}: {evidenceProgressSteps[activeEvidenceTab.step - 1]}
+                </span>
               </div>
-              <Button asChild className="mt-6 bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
-                <Link href="/platform">Explore Platform</Link>
-              </Button>
-            </aside>
+            </div>
           </div>
         </div>
       </section>
@@ -632,16 +898,16 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <p className="mb-10 text-center text-base font-semibold text-slate-500">
+          <p className="mb-8 text-center text-base font-semibold text-slate-500">
             Frameworks tell you what to disclose. Synerxus helps show what happened.
           </p>
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 md:items-start">
             {/* Left column — Evidence Gap */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">The Evidence Gap</p>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-2">
                 {evidenceGapCards.map((item, index) => (
                   <button
                     key={item.num}
@@ -650,25 +916,25 @@ export default function MarketingHome() {
                     onMouseEnter={() => setActiveGap(index)}
                     onFocus={() => setActiveGap(index)}
                     aria-pressed={activeGap === index}
-                    className={`flex gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                       activeGap === index
                         ? "border-[#0A1F44] bg-[#0A1F44]"
-                        : "border-transparent bg-slate-50 hover:border-slate-200 hover:bg-slate-100"
+                        : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
                     }`}
                   >
-                    <span className={`mt-0.5 shrink-0 text-2xl font-extrabold leading-none transition-colors ${
-                      activeGap === index ? "text-[#D4980C]/40" : "text-slate-200"
+                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
+                      activeGap === index ? "bg-[#D4980C]/20 text-[#D4980C]" : "bg-slate-200 text-slate-500"
                     }`}>
-                      {item.num}
+                      {index + 1}
                     </span>
                     <div>
-                      <h3 className={`text-base font-extrabold transition-colors ${
+                      <p className={`text-sm font-bold transition-colors ${
                         activeGap === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                       }`}>
                         {item.title}
-                      </h3>
-                      <p className={`mt-1 text-sm leading-relaxed transition-colors ${
-                        activeGap === index ? "text-[#D4980C]/70" : "text-slate-600"
+                      </p>
+                      <p className={`mt-0.5 text-xs leading-relaxed transition-colors ${
+                        activeGap === index ? "text-[#D4980C]/70" : "text-slate-500"
                       }`}>
                         {item.body}
                       </p>
@@ -679,16 +945,22 @@ export default function MarketingHome() {
             </div>
 
             {/* Right column — Synerxus Response */}
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Synerxus Response</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Synerxus Response</p>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-2.5 py-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4980C]" />
+                  <span className="text-[11px] font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.badge}</span>
+                </div>
+              </div>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
                 {evidenceGapCards[activeGap].response.subtitle}
               </p>
-              <ul className="mt-5 flex flex-col gap-2">
+              <ul className="mt-4 flex flex-col gap-1.5">
                 {evidenceGapCards[activeGap].response.checklist.map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm text-slate-700">
-                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0A1F44]">
-                      <svg width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true">
+                  <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#0A1F44]">
+                      <svg width="7" height="5" viewBox="0 0 8 6" fill="none" aria-hidden="true">
                         <path d="M1 3l2 2 4-4" stroke="#D4980C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </span>
@@ -696,32 +968,25 @@ export default function MarketingHome() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-3 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D4980C]" />
-                <span className="text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.badge}</span>
-              </div>
-              {/* Mini evidence record card */}
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Evidence record</p>
-                <div className="mt-3 flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs text-slate-500">Claim supported</span>
-                    <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.claim}</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs text-slate-500">Evidence status</span>
-                    <span className="text-right text-xs font-semibold" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
-                      {evidenceGapCards[activeGap].response.card.status}
-                    </span>
-                  </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs text-slate-500">Framework alignment</span>
-                    <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.framework}</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs text-slate-500">Report use</span>
-                    <span className="text-right text-xs font-semibold text-slate-600">{evidenceGapCards[activeGap].response.card.reportUse}</span>
-                  </div>
+              <div className="mt-4 border-t border-slate-200 pt-4 flex flex-col gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence record</p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500">Claim supported</span>
+                  <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.claim}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500">Evidence status</span>
+                  <span className="text-right text-xs font-semibold" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
+                    {evidenceGapCards[activeGap].response.card.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500">Framework alignment</span>
+                  <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.framework}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500">Report use</span>
+                  <span className="text-right text-xs font-semibold text-slate-600">{evidenceGapCards[activeGap].response.card.reportUse}</span>
                 </div>
               </div>
             </div>

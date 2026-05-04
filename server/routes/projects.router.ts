@@ -663,8 +663,8 @@ projectsRouter.post("/:id/verify-aiu", authMiddleware, async (req: Request, res:
       notes
     );
 
-    // **CSR Dashboard Integration**: Update employer engagement when AIU is verified
-    // This ensures verified impact flows to CSR corporate dashboards
+    // **CSR Dashboard Integration**: Update employer engagement when AIU is approved.
+    // This ensures partner-confirmed output data flows to CSR corporate dashboards.
     if (status === 'verified' && projectAIU?.volunteers?.length) {
       try {
         for (const volunteerData of projectAIU.volunteers) {

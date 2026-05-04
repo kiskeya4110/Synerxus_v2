@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   PROHIBITED_CLAIMS,
@@ -8,12 +8,21 @@ import {
 
 const ROOT = resolve(__dirname, "..", "..");
 
-const SCANNED_FILES = [
-  "shared/content/boundary-statements.ts",
-  "shared/content/approved-claims.ts",
-  "shared/content/report-language.ts",
-  "shared/content/framework-language.ts",
-  "shared/content/cta-copy.ts",
+const SCANNED_ROOTS = [
+  "server",
+  "shared",
+];
+
+const EXCLUDED_PATH_PARTS = [
+  "server/__tests__",
+  "shared/content/prohibited-claims.ts",
+];
+
+const ADDITIONAL_RISKY_PHRASES = [
+  "proof of impact",
+  "verified impact",
+  "verified impacts",
+  "beneficiaries verified",
 ];
 
 function safeRead(relPath: string): string | null {
@@ -22,6 +31,29 @@ function safeRead(relPath: string): string | null {
   } catch {
     return null;
   }
+}
+
+function listSourceFiles(relDir: string): string[] {
+  const absDir = resolve(ROOT, relDir);
+  const files: string[] = [];
+
+  for (const entry of readdirSync(absDir)) {
+    const relPath = `${relDir}/${entry}`;
+    if (EXCLUDED_PATH_PARTS.some((part) => relPath.includes(part))) continue;
+
+    const stat = statSync(resolve(ROOT, relPath));
+    if (stat.isDirectory()) {
+      files.push(...listSourceFiles(relPath));
+    } else if (/\.(ts|tsx)$/.test(relPath)) {
+      files.push(relPath);
+    }
+  }
+
+  return files;
+}
+
+function scannedFiles(): string[] {
+  return SCANNED_ROOTS.flatMap(listSourceFiles).sort();
 }
 
 describe("prohibited copy scan", () => {
@@ -87,22 +119,28 @@ describe("prohibited copy scan", () => {
     );
   }
 
-  it("approved canonical content modules contain no unnegated prohibited phrases", () => {
+  it("backend and shared source contain no unnegated prohibited phrases", () => {
     const offenders: string[] = [];
-    for (const rel of SCANNED_FILES) {
+    const scannedPhrases = [
+      ...PROHIBITED_CLAIMS.filter((claim) => !claim.conditional).map(
+        (claim) => claim.phrase,
+      ),
+      ...ADDITIONAL_RISKY_PHRASES,
+    ];
+
+    for (const rel of scannedFiles()) {
       const body = safeRead(rel);
       if (body == null) continue;
       const lower = body.toLowerCase();
-      for (const claim of PROHIBITED_CLAIMS) {
-        if (claim.conditional) continue;
+      for (const phrase of scannedPhrases) {
         let from = 0;
         while (true) {
-          const idx = lower.indexOf(claim.phrase, from);
+          const idx = lower.indexOf(phrase, from);
           if (idx === -1) break;
-          if (!isNegatedContext(body, idx, claim.phrase.length)) {
-            offenders.push(`${rel}:${idx} "${claim.phrase}"`);
+          if (!isNegatedContext(body, idx, phrase.length)) {
+            offenders.push(`${rel}:${idx} "${phrase}"`);
           }
-          from = idx + claim.phrase.length;
+          from = idx + phrase.length;
         }
       }
     }

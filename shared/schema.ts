@@ -167,7 +167,7 @@ export const projects = pgTable("projects", {
   // Organization's paid staff carries (100 - totalVolunteerContribution)% of the impact
   // The volunteerRoles.contributionPercent then divides this total among volunteer roles
   totalVolunteerContribution: integer("total_volunteer_contribution").default(100), // 0-100%, default 100% (all volunteer)
-  // Outcome templates for verified impact logging - [{name: "Trees Planted", unit: "trees"}]
+  // Outcome templates for partner-confirmed output logging - [{name: "Trees Planted", unit: "trees"}]
   outcomeTemplates: jsonb("outcome_templates"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -2042,7 +2042,7 @@ export const valueFlipEvents = pgTable("value_flip_events", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Consent Log — immutable audit trail of every consent action
+// Consent Log - append-only consent history for each consent action
 export const consentLog = pgTable("consent_log", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),

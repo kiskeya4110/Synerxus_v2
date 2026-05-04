@@ -5,6 +5,10 @@ import { insertVolunteerSchema, type VolunteerActivity, type ProjectAssignment }
 import { handleValidationError, getAuthenticatedUser } from "./utils";
 import { findTopVolunteers } from "../matching-algorithm";
 import { authMiddleware, requireDataConsent } from "../middleware/auth";
+import {
+  buildOrganizationVolunteerSummaries,
+  collectOrganizationVolunteerIds,
+} from "../utils/organization-volunteers";
 
 export const volunteersRouter = Router();
 
@@ -303,62 +307,47 @@ volunteersRouter.get("/", authMiddleware, async (req: Request, res: Response) =>
         return res.status(403).json({ message: "You can only view volunteers for your own organization" });
       }
 
-      // Get organization's projects
-      const allProjects = await storage.listProjects();
+      const [allProjects, allAssignments, organizationRelationships, organizationUsers, organizationApplications] = await Promise.all([
+        storage.listProjects(),
+        storage.listProjectAssignments(),
+        storage.listVolunteerRelationshipsByOrganization(orgId),
+        storage.listUsersByOrganization(orgId),
+        storage.listApplicationsByOrganization(orgId),
+      ]);
+
       const orgProjects = allProjects.filter((p: any) => p.organizationId === orgId);
       const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
 
-      if (orgProjectIds.size === 0) {
-        // No projects = no volunteers
-        return res.json([]);
-      }
-
-      // Get all project assignments for org's projects
-      const allAssignments = await storage.listProjectAssignments();
       const orgAssignments = allAssignments.filter((a: any) =>
-        orgProjectIds.has(a.projectId) &&
-        (a.status === 'active' || a.status === 'accepted')
+        orgProjectIds.has(a.projectId)
       );
 
-      // Get unique volunteer IDs from assignments
-      const volunteerIds = new Set(orgAssignments.map((a: any) => a.volunteerId));
+      const orgActivities = await storage.listVolunteerActivitiesByProjectIds(Array.from(orgProjectIds));
+      const scopedOrgActivities = orgActivities.filter((activity: any) =>
+        activity.userId != null &&
+        activity.projectId != null &&
+        activity.verificationStatus !== 'rejected'
+      );
 
-      if (volunteerIds.size === 0) {
+      const volunteerIds = collectOrganizationVolunteerIds({
+        assignments: orgAssignments,
+        relationships: organizationRelationships,
+        applications: organizationApplications,
+        activities: scopedOrgActivities,
+        users: organizationUsers,
+      });
+
+      if (volunteerIds.length === 0) {
         return res.json([]);
       }
 
-      // Get volunteer users using efficient batch query
-      const volunteerIdArray = Array.from(volunteerIds);
-      const users = await storage.getUsersByIds(volunteerIdArray);
-      const volunteers = users.filter((u: any) => u.userType === 'volunteer');
-
-      // Compute projectsCount per volunteer from their assignments
-      const volunteerProjectsMap = new Map<number, Set<number>>();
-      for (const a of orgAssignments) {
-        if (!volunteerProjectsMap.has(a.volunteerId)) volunteerProjectsMap.set(a.volunteerId, new Set());
-        volunteerProjectsMap.get(a.volunteerId)!.add(a.projectId);
-      }
-
-      // Compute totalHours per volunteer from approved + pending activities on org's projects
-      const allActivities = await storage.listVolunteerActivities();
-      const volunteerHoursMap = new Map<number, number>();
-      for (const activity of allActivities) {
-        if (
-          activity.userId != null &&
-          activity.projectId != null &&
-          volunteerIds.has(activity.userId) &&
-          orgProjectIds.has(activity.projectId) &&
-          activity.verificationStatus !== 'rejected'
-        ) {
-          volunteerHoursMap.set(activity.userId, (volunteerHoursMap.get(activity.userId) || 0) + (activity.hours || 0));
-        }
-      }
-
-      const enriched = volunteers.map((u: any) => ({
-        ...u,
-        totalHours: Math.round((volunteerHoursMap.get(u.id) || 0) * 10) / 10,
-        projectsCount: volunteerProjectsMap.get(u.id)?.size || 0,
-      }));
+      const volunteers = (await storage.getUsersByIds(volunteerIds)).filter((u: any) => u.userType === 'volunteer');
+      const enriched = buildOrganizationVolunteerSummaries({
+        volunteers,
+        projects: orgProjects,
+        assignments: orgAssignments,
+        activities: scopedOrgActivities,
+      });
 
       return res.json(enriched);
     }

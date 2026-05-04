@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, FileCheck2, GitBranch, Layers3, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,98 @@ const evidenceProgressSteps = [
   "Partner-confirmed",
   "Disclosure-ready",
 ];
+
+function EuFrameworkMark({ ariaLabel }: { ariaLabel: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className="h-14 w-14 shrink-0" aria-label={ariaLabel} role="img">
+      <circle cx="16" cy="16" r="15" fill="#003399" />
+      {Array.from({ length: 12 }, (_, i) => {
+        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        return (
+          <circle
+            key={i}
+            cx={16 + 9 * Math.cos(angle)}
+            cy={16 + 9 * Math.sin(angle)}
+            r="1.9"
+            fill="#FFCC00"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+const evidenceAlignmentSupportLogos = [
+  { label: "CSRD", tag: "CSRD", render: () => <EuFrameworkMark ariaLabel="CSRD emblem" /> },
+  { label: "ESRS", tag: "ESRS", render: () => <EuFrameworkMark ariaLabel="ESRS emblem" /> },
+  { label: "GRI 413", tag: "GRI 413", render: () => <img src="/logos/gri.svg" alt="GRI 413 logo" className="h-14 w-auto shrink-0 object-contain" /> },
+  { label: "SASB", tag: "SASB", render: () => <img src="/logos/sasb.jpg" alt="SASB logo" className="h-14 w-14 shrink-0 object-contain" /> },
+  { label: "ISSB", tag: "ISSB", render: () => <img src="/logos/issb.svg" alt="ISSB logo" className="h-14 w-14 shrink-0 object-contain" /> },
+  { label: "TCFD", tag: "TCFD", render: () => <img src="/logos/tcfd.svg" alt="TCFD logo" className="h-14 w-auto shrink-0 object-contain" /> },
+  { label: "ISAE 3000", tag: "ISAE 3000", render: () => <img src="/logos/iaasb.svg" alt="ISAE 3000 logo" className="h-14 w-auto shrink-0 object-contain" /> },
+  { label: "UN SDGs", tag: "UN SDGs", render: () => <img src="/logos/un-sdgs.svg" alt="UN SDGs logo" className="h-14 w-auto shrink-0 object-contain" /> },
+] as const;
+
+function EvidenceAlignmentMarquee() {
+  const [items, setItems] = useState(() => [...evidenceAlignmentSupportLogos]);
+  const offsetRef = useRef(0);
+  const itemsRef = useRef(items);
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    let frame = 0;
+    let last = performance.now();
+    const stepWidth = 224;
+    const speed = 32;
+
+    const tick = (now: number) => {
+      const delta = now - last;
+      last = now;
+      offsetRef.current += (delta / 1000) * speed;
+
+      if (offsetRef.current >= stepWidth) {
+        const rotations = Math.floor(offsetRef.current / stepWidth);
+        offsetRef.current -= rotations * stepWidth;
+        let nextItems = itemsRef.current;
+        for (let i = 0; i < rotations; i += 1) {
+          nextItems = [...nextItems.slice(1), nextItems[0]];
+        }
+        itemsRef.current = nextItems;
+        setItems(nextItems);
+      }
+
+      setOffset(offsetRef.current);
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden pb-5">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-white to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-white to-transparent" />
+      <div
+        className="flex w-max min-w-max items-center gap-12 pl-6 pr-6 will-change-transform"
+        style={{ transform: `translateX(-${offset}px)` }}
+      >
+        {items.map((logo) => (
+          <div key={logo.label} className="flex w-44 shrink-0 flex-col items-center justify-center gap-2 sm:w-48">
+            <div className="flex min-h-14 items-center justify-center">{logo.render()}</div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              {logo.tag}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const evidenceGapCards = [
   {
@@ -456,253 +548,8 @@ export default function MarketingHome() {
             Evidence Alignment Support
           </p>
         </div>
-        <div className="relative overflow-hidden pb-5">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-white to-transparent" />
-            <div className="flex items-end gap-12 animate-marquee pl-6">
-              {/* Set 1 */}
-              {/* CSRD */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="CSRD – EU flag" role="img">
-                  <circle cx="16" cy="16" r="15" fill="#003399"/>
-                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
-                    const rad = (a - 90) * Math.PI / 180;
-                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
-                  })}
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">CSRD</div>
-                </div>
-              </div>
-              {/* ESRS */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ESRS – EU flag" role="img">
-                  <circle cx="16" cy="16" r="15" fill="#003399"/>
-                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
-                    const rad = (a - 90) * Math.PI / 180;
-                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
-                  })}
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">ESRS</div>
-                </div>
-              </div>
-              {/* GRI */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="GRI – Global Reporting Initiative" role="img">
-                  <circle cx="16" cy="16" r="15" fill="#009A4E"/>
-                  <path d="M16 6 A10 10 0 1 1 6 16 L9.5 16 A6.5 6.5 0 1 0 16 9.5 Z" fill="white"/>
-                  <rect x="6" y="14" width="7" height="3.5" rx="1" fill="white"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">GRI</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#009A4E]">Global Reporting</div>
-                </div>
-              </div>
-              {/* SASB */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="SASB – Sustainability Accounting Standards Board" role="img">
-                  <rect width="32" height="32" rx="6" fill="#1F3C6E"/>
-                  <path d="M10 20.5 C10 18.5 13 17.5 16 17 C19 16.5 22 15.5 22 13 C22 10.5 19.5 9 16 9 C12.5 9 10 10.8 10 13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M22 11.5 C22 13.5 19 14.5 16 15 C13 15.5 10 16.5 10 19 C10 21.5 12.5 23 16 23 C19.5 23 22 21.2 22 19" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">Standards</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#1F3C6E]">SASB</div>
-                </div>
-              </div>
-              {/* ISSB */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ISSB – International Sustainability Standards Board" role="img">
-                  <circle cx="16" cy="16" r="15" fill="#003296"/>
-                  <circle cx="16" cy="16" r="9" fill="none" stroke="white" strokeWidth="1.8"/>
-                  <ellipse cx="16" cy="16" rx="5" ry="9" fill="none" stroke="white" strokeWidth="1.5"/>
-                  <line x1="7" y1="16" x2="25" y2="16" stroke="white" strokeWidth="1.5"/>
-                  <line x1="16" y1="7" x2="16" y2="25" stroke="white" strokeWidth="1.5"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IFRS</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003296]">ISSB</div>
-                </div>
-              </div>
-              {/* TCFD */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="TCFD – Task Force on Climate-related Financial Disclosures" role="img">
-                  <rect width="32" height="32" rx="6" fill="#002147"/>
-                  <path d="M5 22 Q8.5 17 12 22 Q15.5 27 19 22 Q22.5 17 27 22" fill="none" stroke="#78C3E0" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="16" cy="12" r="5" fill="none" stroke="white" strokeWidth="2"/>
-                  <line x1="16" y1="5" x2="16" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                  <line x1="21.2" y1="6.8" x2="19.8" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="10.8" y1="6.8" x2="12.2" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="24" y1="12" x2="22" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="8" y1="12" x2="10" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">FSB</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#002147]">TCFD</div>
-                </div>
-              </div>
-              {/* ISAE 3000 */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="ISAE 3000 – International Standard on Assurance Engagements" role="img">
-                  <path d="M16 2 L28 7 L28 18 Q28 27 16 31 Q4 27 4 18 L4 7 Z" fill="#1B365D"/>
-                  <path d="M10 16.5 L14 20.5 L22 12.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IAASB</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#1B365D]">ISAE 3000</div>
-                </div>
-              </div>
-              {/* UN SDGs */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-label="UN SDGs – United Nations Sustainable Development Goals" role="img">
-                  {[
-                    { color: "#E5243B", d: "M16 16 L16 3 A13 13 0 0 1 25.26 8.26 Z" },
-                    { color: "#DDA63A", d: "M16 16 L25.26 8.26 A13 13 0 0 1 29 16 Z" },
-                    { color: "#4C9F38", d: "M16 16 L29 16 A13 13 0 0 1 25.26 23.74 Z" },
-                    { color: "#C5192D", d: "M16 16 L25.26 23.74 A13 13 0 0 1 16 29 Z" },
-                    { color: "#FF3A21", d: "M16 16 L16 29 A13 13 0 0 1 6.74 23.74 Z" },
-                    { color: "#26BDE2", d: "M16 16 L6.74 23.74 A13 13 0 0 1 3 16 Z" },
-                    { color: "#FCC30B", d: "M16 16 L3 16 A13 13 0 0 1 6.74 8.26 Z" },
-                    { color: "#A21942", d: "M16 16 L6.74 8.26 A13 13 0 0 1 16 3 Z" },
-                  ].map(({ color, d }, i) => (
-                    <path key={i} d={d} fill={color}/>
-                  ))}
-                  <circle cx="16" cy="16" r="5" fill="white"/>
-                  <circle cx="16" cy="16" r="3.5" fill="#009EDB"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">UN</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#009EDB]">SDGs</div>
-                </div>
-              </div>
-              {/* Divider */}
-              <div className="h-6 w-px shrink-0 bg-slate-200" />
-              {/* Set 2 – duplicate for seamless loop */}
-              {/* CSRD */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <circle cx="16" cy="16" r="15" fill="#003399"/>
-                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
-                    const rad = (a - 90) * Math.PI / 180;
-                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
-                  })}
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">CSRD</div>
-                </div>
-              </div>
-              {/* ESRS */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <circle cx="16" cy="16" r="15" fill="#003399"/>
-                  {[0,30,60,90,120,150,180,210,240,270,300,330].map((a) => {
-                    const rad = (a - 90) * Math.PI / 180;
-                    return <circle key={a} cx={16 + 9 * Math.cos(rad)} cy={16 + 9 * Math.sin(rad)} r="1.9" fill="#FFCC00"/>;
-                  })}
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">EU</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003399]">ESRS</div>
-                </div>
-              </div>
-              {/* GRI */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <circle cx="16" cy="16" r="15" fill="#009A4E"/>
-                  <path d="M16 6 A10 10 0 1 1 6 16 L9.5 16 A6.5 6.5 0 1 0 16 9.5 Z" fill="white"/>
-                  <rect x="6" y="14" width="7" height="3.5" rx="1" fill="white"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">GRI</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#009A4E]">Global Reporting</div>
-                </div>
-              </div>
-              {/* SASB */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <rect width="32" height="32" rx="6" fill="#1F3C6E"/>
-                  <path d="M10 20.5 C10 18.5 13 17.5 16 17 C19 16.5 22 15.5 22 13 C22 10.5 19.5 9 16 9 C12.5 9 10 10.8 10 13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M22 11.5 C22 13.5 19 14.5 16 15 C13 15.5 10 16.5 10 19 C10 21.5 12.5 23 16 23 C19.5 23 22 21.2 22 19" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">Standards</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#1F3C6E]">SASB</div>
-                </div>
-              </div>
-              {/* ISSB */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <circle cx="16" cy="16" r="15" fill="#003296"/>
-                  <circle cx="16" cy="16" r="9" fill="none" stroke="white" strokeWidth="1.8"/>
-                  <ellipse cx="16" cy="16" rx="5" ry="9" fill="none" stroke="white" strokeWidth="1.5"/>
-                  <line x1="7" y1="16" x2="25" y2="16" stroke="white" strokeWidth="1.5"/>
-                  <line x1="16" y1="7" x2="16" y2="25" stroke="white" strokeWidth="1.5"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IFRS</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#003296]">ISSB</div>
-                </div>
-              </div>
-              {/* TCFD */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <rect width="32" height="32" rx="6" fill="#002147"/>
-                  <path d="M5 22 Q8.5 17 12 22 Q15.5 27 19 22 Q22.5 17 27 22" fill="none" stroke="#78C3E0" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="16" cy="12" r="5" fill="none" stroke="white" strokeWidth="2"/>
-                  <line x1="16" y1="5" x2="16" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                  <line x1="21.2" y1="6.8" x2="19.8" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="10.8" y1="6.8" x2="12.2" y2="8.2" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="24" y1="12" x2="22" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="8" y1="12" x2="10" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">FSB</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#002147]">TCFD</div>
-                </div>
-              </div>
-              {/* ISAE 3000 */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  <path d="M16 2 L28 7 L28 18 Q28 27 16 31 Q4 27 4 18 L4 7 Z" fill="#1B365D"/>
-                  <path d="M10 16.5 L14 20.5 L22 12.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">IAASB</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#1B365D]">ISAE 3000</div>
-                </div>
-              </div>
-              {/* UN SDGs */}
-              <div className="flex items-center gap-2 shrink-0">
-                <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-                  {[
-                    { color: "#E5243B", d: "M16 16 L16 3 A13 13 0 0 1 25.26 8.26 Z" },
-                    { color: "#DDA63A", d: "M16 16 L25.26 8.26 A13 13 0 0 1 29 16 Z" },
-                    { color: "#4C9F38", d: "M16 16 L29 16 A13 13 0 0 1 25.26 23.74 Z" },
-                    { color: "#C5192D", d: "M16 16 L25.26 23.74 A13 13 0 0 1 16 29 Z" },
-                    { color: "#FF3A21", d: "M16 16 L16 29 A13 13 0 0 1 6.74 23.74 Z" },
-                    { color: "#26BDE2", d: "M16 16 L6.74 23.74 A13 13 0 0 1 3 16 Z" },
-                    { color: "#FCC30B", d: "M16 16 L3 16 A13 13 0 0 1 6.74 8.26 Z" },
-                    { color: "#A21942", d: "M16 16 L6.74 8.26 A13 13 0 0 1 16 3 Z" },
-                  ].map(({ color, d }, i) => (
-                    <path key={i} d={d} fill={color}/>
-                  ))}
-                  <circle cx="16" cy="16" r="5" fill="white"/>
-                  <circle cx="16" cy="16" r="3.5" fill="#009EDB"/>
-                </svg>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-none">UN</div>
-                  <div className="text-[13px] font-extrabold leading-tight text-[#009EDB]">SDGs</div>
-                </div>
-              </div>
-              <div className="h-6 w-px shrink-0 bg-slate-200" />
-            </div>
-          </div>
-        </div>
-
+        <EvidenceAlignmentMarquee />
+      </div>
       <section id="platform" className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader

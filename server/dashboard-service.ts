@@ -5,6 +5,10 @@ import { User, Opportunity, Project } from "@shared/schema";
 import { isValidSdg, extractSdgsFromProjects } from "./sdg-utils";
 import { cache, cacheKeys, CACHE_TTL, invalidateCache } from "./cache";
 import { calculateVolunteerAIU, calculateOrganizationAIU } from "./aiu-service";
+import {
+  buildOrganizationVolunteerSummaries,
+  collectOrganizationVolunteerIds,
+} from "./utils/organization-volunteers";
 
 // Re-export invalidation helpers for use by routes
 export { invalidateCache };
@@ -432,11 +436,20 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     const organizationOpportunities = await storage.listOpportunitiesByOrganization(organizationId);
     const orgOpportunityIds = organizationOpportunities.map(opp => opp.id);
     const organizationApplications = await storage.listApplicationsByOpportunityIds(orgOpportunityIds);
+    const organizationRelationships = await storage.listVolunteerRelationshipsByOrganization(organizationId);
+    const organizationUsers = await storage.listUsersByOrganization(organizationId);
 
-    // Get volunteers assigned to organization's projects (efficient batch query)
-    const volunteerIds = Array.from(new Set(organizationAssignments.map(pa => pa.volunteerId)));
+    // Get volunteers associated with the organization across assignments, relationships,
+    // applications, activity history, and direct org membership.
+    const volunteerIds = collectOrganizationVolunteerIds({
+      assignments: organizationAssignments,
+      relationships: organizationRelationships,
+      applications: organizationApplications,
+      activities: allOrganizationActivities,
+      users: organizationUsers,
+    });
     const organizationVolunteers = volunteerIds.length > 0
-      ? await storage.getUsersByIds(volunteerIds)
+      ? (await storage.getUsersByIds(volunteerIds)).filter((user) => user.userType === "volunteer")
       : [];
 
     // Get organization profile for selected SDGs (targeted query)
@@ -444,7 +457,7 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     const organizationPrimarySdgs = organizationProfile?.primarySdgs || [];
 
     // Calculate summary metrics
-    // activeVolunteers = all volunteers assigned to organization's projects
+    // activeVolunteers = all volunteers associated with the organization
     const activeVolunteers = organizationVolunteers.length;
 
     const totalHours = organizationActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
@@ -624,27 +637,11 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     });
 
     // Create volunteer summaries with profile info
-    const volunteerSummaries = organizationVolunteers.map(volunteer => {
-      const volunteerActivities = organizationActivities.filter(a => a.userId === volunteer.id);
-      const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-      const activityCount = volunteerActivities.length;
-
-      // Get projects this volunteer is assigned to
-      const assignedProjectIds = organizationAssignments
-        .filter(pa => pa.volunteerId === volunteer.id)
-        .map(pa => pa.projectId);
-      const volunteerProjects = organizationProjects.filter(p => assignedProjectIds.includes(p.id));
-
-      return {
-        id: volunteer.id,
-        name: volunteer.displayName || volunteer.username || 'Unknown Volunteer',
-        email: volunteer.email,
-        avatar: volunteer.avatar || undefined,
-        totalHours,
-        activityCount,
-        projectCount: volunteerProjects.length,
-        projects: volunteerProjects.map(p => p.name),
-      };
+    const volunteerSummaries = buildOrganizationVolunteerSummaries({
+      volunteers: organizationVolunteers,
+      projects: organizationProjects,
+      assignments: organizationAssignments,
+      activities: organizationActivities,
     });
 
     // Create a map of project data for quick lookup

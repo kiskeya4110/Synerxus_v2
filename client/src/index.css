@@ -717,10 +717,7 @@ section[id] {
 
 .animate-marquee {
   animation: marquee 22s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
+  will-change: transform;
 }
 
 /* Floating animation for hero background elements */

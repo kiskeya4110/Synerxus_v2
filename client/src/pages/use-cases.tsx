@@ -113,15 +113,15 @@ export default function UseCasesPage() {
               ))}
             </div>
           </div>
-          <div className="relative lg:justify-self-end">
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-              <img
-                src="/optimized/ESG%20use%20cases%20hero.png"
-                alt="ESG use cases evidence workflow preview"
-                className="block aspect-[4/3] w-full object-cover object-center lg:max-w-[620px]"
-              />
-            </div>
-            <div className="absolute -bottom-5 left-5 right-5 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg md:left-8 md:right-auto md:min-w-64">
+            <div className="relative lg:justify-self-end">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <img
+                  src="/optimized/ESG%20use%20cases%20hero.png"
+                  alt="ESG use cases evidence workflow preview"
+                  className="block aspect-[4/3] w-full object-cover object-center lg:max-w-[620px]"
+                />
+              </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg md:absolute md:-bottom-5 md:left-8 md:right-auto md:mt-0 md:min-w-64">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                 Evidence object coverage
               </p>
@@ -141,7 +141,7 @@ export default function UseCasesPage() {
             body="Select a use case to see the evidence workflow, common source types, and relevant reporting frameworks."
           />
           <div className="grid gap-5 lg:grid-cols-[1fr_400px]">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {allUseCases.map((item, index) => (
                 <button
                   key={item.title}
@@ -150,21 +150,21 @@ export default function UseCasesPage() {
                   onMouseEnter={() => setActiveUseCase(index)}
                   onFocus={() => setActiveUseCase(index)}
                   aria-pressed={activeUseCase === index}
-                  className={`rounded-2xl border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-xl ${
+                  className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-1 hover:shadow-xl sm:p-5 ${
                     activeUseCase === index
                       ? "border-[#0A1F44] bg-[#0A1F44]"
                       : "border-slate-200 bg-white shadow-sm"
                   }`}
                 >
                   <h2
-                    className={`font-extrabold ${
+                    className={`text-sm font-extrabold leading-snug sm:text-base ${
                       activeUseCase === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                     }`}
                   >
                     {item.title}
                   </h2>
                   <p
-                    className={`mt-2 text-sm leading-relaxed ${
+                    className={`mt-2 text-xs leading-relaxed sm:text-sm ${
                       activeUseCase === index ? "text-[#D4980C]" : "text-slate-600"
                     }`}
                   >
@@ -174,11 +174,11 @@ export default function UseCasesPage() {
               ))}
             </div>
 
-            <aside className="sticky top-24 h-fit rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+            <aside className="h-fit rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm lg:sticky lg:top-24 lg:p-5">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
                 Use case detail
               </p>
-              <h3 className="mt-2 text-xl font-extrabold text-[#0A1F44]">
+              <h3 className="mt-2 text-lg font-extrabold text-[#0A1F44] sm:text-xl">
                 {allUseCases[activeUseCase].title}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">

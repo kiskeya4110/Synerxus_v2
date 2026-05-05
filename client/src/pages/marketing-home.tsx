@@ -6,6 +6,7 @@ import Logo from "@/components/ui/logo";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 import { EvidenceAlignmentBanner, SectionHeader } from "@/components/marketing/marketing-sections";
 import { evidenceLadderLevels, insights, primaryUseCases } from "@/components/marketing/marketing-data";
+import { SDG_GOALS } from "@shared/sdg-goals";
 
 const evidencePreviewTabs = [
   {
@@ -250,6 +251,169 @@ const resourceTopics = [
   "Risk & disclosure",
 ];
 
+const sdgEvidenceExamples: Record<number, string> = {
+  1: "Income support, essential services, and community resilience records.",
+  2: "Food distribution, nutrition programs, community gardens, and pantry outputs.",
+  3: "Health screenings, wellness programs, care access, and public health outputs.",
+  4: "Tutoring, mentoring, training, literacy, STEM, and skills-learning outputs.",
+  5: "Women and girls empowerment, protection, access, and participation outputs.",
+  6: "Clean water, sanitation, hygiene, wells, filters, and water-quality outputs.",
+  7: "Solar access, clean-energy installation, efficiency, and off-grid power outputs.",
+  8: "Workforce training, job readiness, entrepreneurship, and livelihood outputs.",
+  9: "Infrastructure, digital access, engineering, research, and innovation outputs.",
+  10: "Inclusion, accessibility, refugee support, equity, and reduced-barrier outputs.",
+  11: "Housing, public spaces, local resilience, transport, and community outputs.",
+  12: "Waste reduction, recycling, responsible sourcing, and circularity outputs.",
+  13: "Climate adaptation, resilience, education, restoration, and emissions-related outputs.",
+  14: "Marine protection, coastal cleanup, fishery, and waterway restoration outputs.",
+  15: "Tree planting, biodiversity, habitat, reforestation, and land restoration outputs.",
+  16: "Rights access, transparency, safety, civic participation, and governance outputs.",
+  17: "Cross-sector partnerships, implementation support, and shared measurement outputs.",
+};
+
+const sdgIconPaths: Record<number, string> = {
+  1: "/sdg-icons/E_SDG_PRINT-01_1762550174893.jpg",
+  2: "/sdg-icons/E_SDG_PRINT-02_1762550174896.jpg",
+  3: "/sdg-icons/E_SDG_PRINT-03_1762550174898.jpg",
+  4: "/sdg-icons/E_SDG_PRINT-04_1762550174899.jpg",
+  5: "/sdg-icons/E_SDG_PRINT-05_1762550174900.jpg",
+  6: "/sdg-icons/E_SDG_PRINT-06_1762550174902.jpg",
+  7: "/sdg-icons/E_SDG_PRINT-07_1762550174903.jpg",
+  8: "/sdg-icons/E_SDG_PRINT-08_1762550174904.jpg",
+  9: "/sdg-icons/E_SDG_PRINT-09_1762550174905.jpg",
+  10: "/sdg-icons/E_SDG_PRINT-10_1762550174906.jpg",
+  11: "/sdg-icons/E_SDG_PRINT-11_1762550174908.jpg",
+  12: "/sdg-icons/E_SDG_PRINT-12_1762550174909.jpg",
+  13: "/sdg-icons/E_SDG_PRINT-13_1762550174910.jpg",
+  14: "/sdg-icons/E_SDG_PRINT-14_1762550174911.jpg",
+  15: "/sdg-icons/E_SDG_PRINT-15_1762550174912.jpg",
+  16: "/sdg-icons/E_SDG_PRINT-16_1762550174914.jpg",
+  17: "/sdg-icons/E_SDG_PRINT-17_1762550174915.jpg",
+};
+
+function SDGMappingPreview() {
+  const [activeSdg, setActiveSdg] = useState(13);
+  const activeGoal = SDG_GOALS[activeSdg];
+
+  return (
+    <section id="sdg-mapping" className="border-y border-slate-100 bg-white py-10 md:py-14">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+            SDG Mapping Example
+          </p>
+          <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#0A1F44] md:text-4xl">
+            Connect partner-confirmed outputs to SDG-aligned reporting context.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-slate-600">
+            Synerxus maps verified evidence records to relevant UN Sustainable
+            Development Goals, while keeping the claim attached to the
+            underlying output, verifier context, location, and reporting export.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[
+              ["Output", "What was delivered"],
+              ["SDG Context", "Which goal it supports"],
+              ["Evidence Record", "Who confirmed it and what supports the claim"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+                <p className="mt-1 text-sm font-extrabold text-[#0A1F44]">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-9 lg:grid-cols-9 lg:gap-2">
+            {Array.from({ length: 17 }, (_, index) => index + 1).map((n) => {
+              const goal = SDG_GOALS[n];
+              const isActive = activeSdg === n;
+
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setActiveSdg(n)}
+                  aria-pressed={isActive}
+                  aria-label={`Show details for SDG ${n}: ${goal.name}`}
+                  className={`relative aspect-square overflow-hidden rounded-md border bg-white transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/40 lg:rounded-lg ${
+                    isActive
+                      ? "scale-[1.08] shadow-md"
+                      : "opacity-85 hover:scale-[1.05] hover:opacity-100 hover:shadow-sm"
+                  }`}
+                  style={{
+                    borderColor: isActive ? goal.color : "#e2e8f0",
+                    boxShadow: isActive ? `0 0 0 2px ${goal.color}33` : undefined,
+                  }}
+                >
+                  <img
+                    src={sdgIconPaths[n]}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            className="mt-5 rounded-2xl border p-5"
+            style={{
+              borderColor: `${activeGoal.color}55`,
+              backgroundColor: `${activeGoal.color}0D`,
+            }}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="rounded-full px-2.5 py-1 text-xs font-extrabold text-white"
+                    style={{ backgroundColor: activeGoal.color }}
+                  >
+                    SDG {activeSdg}
+                  </span>
+                  <h3 className="text-lg font-extrabold text-[#0A1F44]">{activeGoal.name}</h3>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                  Used as framework context for verified outputs related to{" "}
+                  {sdgEvidenceExamples[activeSdg].toLowerCase()}
+                </p>
+                <p className="mt-3 text-sm font-semibold text-[#0A1F44]">
+                  Boundary note:{" "}
+                  <span className="font-medium text-slate-600">
+                    SDG mapping does not constitute UN endorsement,
+                    certification, compliance determination, or causal impact
+                    proof.
+                  </span>
+                </p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {activeGoal.targets.slice(0, 3).map((target) => (
+                    <span
+                      key={target}
+                      className="rounded-full border bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                      style={{ borderColor: `${activeGoal.color}55` }}
+                    >
+                      {target}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            SDGs are one mapping example. Synerxus also supports evidence
+            organization for GRI, SASB, ESRS, ISSB, CSRD, and assurance
+            preparation workflows where applicable.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function MarketingHome() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [heroPaused, setHeroPaused] = useState(false);
@@ -291,9 +455,21 @@ export default function MarketingHome() {
   const useCasePreview = [primaryUseCases[0], primaryUseCases[1], primaryUseCases[2], primaryUseCases[4]];
   const resourcePreview = insights.slice(0, 4);
 
+  useEffect(() => {
+    if (window.location.hash !== "#hero") return;
+
+    const hero = document.getElementById("hero");
+    if (!hero) return;
+
+    window.requestAnimationFrame(() => {
+      hero.scrollIntoView({ behavior: "smooth", block: "start" });
+      hero.focus({ preventScroll: true });
+    });
+  }, []);
+
   return (
     <MarketingLayout>
-      <section id="hero" className="relative overflow-hidden bg-white">
+      <section id="hero" tabIndex={-1} className="relative overflow-hidden bg-white">
         <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-8 md:px-8 lg:min-h-[560px] lg:grid-cols-[minmax(420px,0.52fr)_minmax(0,0.48fr)] lg:items-stretch lg:gap-0 lg:py-14 xl:min-h-[600px]">
           <div
             className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/15 lg:aspect-auto lg:h-full lg:rounded-r-none"
@@ -450,6 +626,7 @@ export default function MarketingHome() {
       </section>
 
       <EvidenceAlignmentBanner />
+
       <section id="platform" className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
@@ -460,25 +637,25 @@ export default function MarketingHome() {
           <div className="grid gap-6 lg:grid-cols-[220px_1fr] lg:items-start">
             {/* Left — step nav + context */}
             <div>
-              <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+              <div className="grid grid-cols-4 gap-1.5 lg:flex lg:flex-col lg:overflow-visible">
                 {evidencePreviewTabs.map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveEvidenceTab(tab)}
                     aria-pressed={activeEvidenceTab.id === tab.id}
-                    className={`flex min-w-[130px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all lg:min-w-0 ${
+                    className={`flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center transition-all lg:flex-row lg:items-center lg:gap-3 lg:px-4 lg:text-left ${
                       activeEvidenceTab.id === tab.id
                         ? "border-[#0A1F44] bg-[#0A1F44]"
                         : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
                     }`}
                   >
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-colors ${
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold transition-colors ${
                       activeEvidenceTab.id === tab.id ? "bg-[#D4980C] text-[#0A1F44]" : "bg-slate-200 text-slate-500"
                     }`}>
                       {tab.step}
                     </span>
-                    <span className={`text-sm font-bold transition-colors ${
+                    <span className={`text-[9px] font-bold leading-tight tracking-tight transition-colors sm:text-[10px] lg:text-sm ${
                       activeEvidenceTab.id === tab.id ? "text-[#D4980C]" : "text-[#0A1F44]"
                     }`}>
                       {tab.label}
@@ -506,7 +683,7 @@ export default function MarketingHome() {
                   {activeEvidenceTab.headerStatus}
                 </span>
               </div>
-              <div className={`mt-4 grid gap-2 ${activeEvidenceTab.id === "evidence" ? "grid-cols-1 sm:grid-cols-2" : "sm:grid-cols-2"}`}>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {activeEvidenceTab.fields.map((field) => {
                   if (field.type === "file") {
                     return (
@@ -523,9 +700,9 @@ export default function MarketingHome() {
                     return (
                       <div key={field.label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{field.label}</p>
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                        <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
                           <CheckCircle2 className="h-3 w-3" />
-                          {field.value}
+                          <span className="min-w-0 break-words">{field.value}</span>
                         </span>
                       </div>
                     );
@@ -534,7 +711,7 @@ export default function MarketingHome() {
                     return (
                       <div key={field.label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{field.label}</p>
-                        <span className="mt-1 inline-block rounded-full bg-[#0A1F44] px-2.5 py-0.5 text-xs font-bold text-[#D4980C]">
+                        <span className="mt-1 inline-block max-w-full rounded-full bg-[#0A1F44] px-2.5 py-0.5 text-xs font-bold text-[#D4980C]">
                           {field.value}
                         </span>
                       </div>
@@ -582,7 +759,7 @@ export default function MarketingHome() {
             body="Tap any level to see what it means and what action to take."
           />
           <div className="relative">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
               {ladderPreviewLevels.map((level) => (
                 <button
                   key={level.level}
@@ -654,7 +831,7 @@ export default function MarketingHome() {
             {/* Left column — Evidence Gap */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">The Evidence Gap</p>
-              <div className="mt-4 flex flex-col gap-2">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-col">
                 {evidenceGapCards.map((item, index) => (
                   <button
                     key={item.num}
@@ -663,7 +840,7 @@ export default function MarketingHome() {
                     onMouseEnter={() => setActiveGap(index)}
                     onFocus={() => setActiveGap(index)}
                     aria-pressed={activeGap === index}
-                    className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                    className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all sm:px-4 ${
                       activeGap === index
                         ? "border-[#0A1F44] bg-[#0A1F44]"
                         : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
@@ -675,12 +852,12 @@ export default function MarketingHome() {
                       {index + 1}
                     </span>
                     <div>
-                      <p className={`text-sm font-bold transition-colors ${
+                      <p className={`text-xs font-bold leading-tight transition-colors sm:text-sm ${
                         activeGap === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                       }`}>
                         {item.title}
                       </p>
-                      <p className={`mt-0.5 text-xs leading-relaxed transition-colors ${
+                      <p className={`mt-0.5 text-[11px] leading-relaxed transition-colors sm:text-xs ${
                         activeGap === index ? "text-[#D4980C]/70" : "text-slate-500"
                       }`}>
                         {item.body}
@@ -692,12 +869,12 @@ export default function MarketingHome() {
             </div>
 
             {/* Right column — Synerxus Response */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Synerxus Response</p>
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-2.5 py-0.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#D4980C]" />
-                  <span className="text-[11px] font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.badge}</span>
+                  <span className="min-w-0 text-[11px] font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.badge}</span>
                 </div>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
@@ -717,23 +894,23 @@ export default function MarketingHome() {
               </ul>
               <div className="mt-4 border-t border-slate-200 pt-4 flex flex-col gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence record</p>
-                <div className="flex items-center justify-between gap-2">
+                <div className="grid grid-cols-2 items-start gap-2">
                   <span className="text-xs text-slate-500">Claim supported</span>
-                  <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.claim}</span>
+                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.claim}</span>
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="grid grid-cols-2 items-start gap-2">
                   <span className="text-xs text-slate-500">Evidence status</span>
-                  <span className="text-right text-xs font-semibold" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
+                  <span className="text-right text-xs font-semibold leading-snug" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
                     {evidenceGapCards[activeGap].response.card.status}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="grid grid-cols-2 items-start gap-2">
                   <span className="text-xs text-slate-500">Framework alignment</span>
-                  <span className="text-right text-xs font-semibold text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.framework}</span>
+                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.framework}</span>
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="grid grid-cols-2 items-start gap-2">
                   <span className="text-xs text-slate-500">Report use</span>
-                  <span className="text-right text-xs font-semibold text-slate-600">{evidenceGapCards[activeGap].response.card.reportUse}</span>
+                  <span className="text-right text-xs font-semibold leading-snug text-slate-600">{evidenceGapCards[activeGap].response.card.reportUse}</span>
                 </div>
               </div>
             </div>
@@ -750,23 +927,23 @@ export default function MarketingHome() {
           />
           <div className="relative">
             <div className="absolute left-[5%] right-[5%] top-5 hidden h-px bg-slate-200 md:block" />
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-4">
               {howSteps.map((step, index) => (
                 <button
                   key={step.title}
                   type="button"
                   onClick={() => setActiveHowStep(index)}
                   aria-pressed={activeHowStep === index}
-                  className="flex flex-col items-center gap-3 text-center"
+                  className="flex min-w-0 flex-col items-center gap-2 text-center"
                 >
-                  <span className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-extrabold transition-all ${
+                  <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-extrabold transition-all sm:h-10 sm:w-10 sm:text-sm ${
                     activeHowStep === index
                       ? "bg-[#0A1F44] text-[#D4980C] shadow-lg"
                       : "border-2 border-slate-200 bg-white text-slate-400 hover:border-[#D4980C]/50 hover:text-[#0A1F44]"
                   }`}>
                     {index + 1}
                   </span>
-                  <span className={`text-xs font-bold leading-snug ${
+                  <span className={`text-[10px] font-bold leading-tight sm:text-xs ${
                     activeHowStep === index ? "text-[#0A1F44]" : "text-slate-500"
                   }`}>
                     {step.title}
@@ -774,7 +951,7 @@ export default function MarketingHome() {
                 </button>
               ))}
             </div>
-            <div className="mt-6 rounded-3xl bg-[#0A1F44] p-6 md:p-8">
+            <div className="mt-6 rounded-3xl bg-[#0A1F44] p-5 md:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
                 Step {activeHowStep + 1} of {howSteps.length}
               </p>
@@ -782,7 +959,7 @@ export default function MarketingHome() {
               <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-300">
                 {howSteps[activeHowStep].body}
               </p>
-              <div className="mt-6 flex gap-1.5">
+              <div className="mt-6 flex flex-wrap gap-1.5">
                 {howSteps.map((_, i) => (
                   <button
                     key={i}
@@ -808,7 +985,7 @@ export default function MarketingHome() {
             {/* Left column — value items */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">The case for evidence</p>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-3">
                 {valueCards.map((item, index) => {
                   const icons = [ShieldCheck, CheckCircle2, GitBranch, Layers3];
                   const Icon = icons[index] ?? FileCheck2;
@@ -820,7 +997,7 @@ export default function MarketingHome() {
                       onMouseEnter={() => setActiveValue(index)}
                       onFocus={() => setActiveValue(index)}
                       aria-pressed={activeValue === index}
-                      className={`flex gap-4 rounded-2xl border p-4 text-left transition-all ${
+                      className={`flex min-w-0 gap-3 rounded-2xl border p-3 text-left transition-all sm:gap-4 sm:p-4 ${
                         activeValue === index
                           ? "border-[#0A1F44] bg-[#0A1F44]"
                           : "border-transparent bg-slate-50 hover:border-slate-200 hover:bg-slate-100"
@@ -832,12 +1009,12 @@ export default function MarketingHome() {
                         <Icon className="h-5 w-5" />
                       </span>
                       <div>
-                        <h3 className={`text-base font-extrabold transition-colors ${
+                        <h3 className={`text-sm font-extrabold transition-colors sm:text-base ${
                           activeValue === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                         }`}>
                           {item.title}
                         </h3>
-                        <p className={`mt-1 text-sm leading-relaxed transition-colors ${
+                        <p className={`mt-1 text-xs leading-relaxed transition-colors sm:text-sm ${
                           activeValue === index ? "text-[#D4980C]/70" : "text-slate-600"
                         }`}>
                           {item.body}
@@ -850,19 +1027,19 @@ export default function MarketingHome() {
             </div>
 
             {/* Right column — detail panel */}
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Value highlight</p>
-              <h3 className="mt-3 text-xl font-extrabold text-[#0A1F44]">
+              <h3 className="mt-3 text-lg font-extrabold text-[#0A1F44] sm:text-xl">
                 {valueCards[activeValue].title}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
                 {valueCards[activeValue].detail}
               </p>
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">What's structured</p>
-                <ul className="mt-3 flex flex-col gap-2">
+                <ul className="mt-3 grid grid-cols-2 gap-2">
                   {valueCards[activeValue].structured.map((line) => (
-                    <li key={line} className="flex items-center gap-2.5 text-sm text-slate-700">
+                    <li key={line} className="flex items-start gap-2.5 text-xs text-slate-700 sm:text-sm">
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0A1F44]">
                         <svg width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true">
                           <path d="M1 3l2 2 4-4" stroke="#D4980C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -907,7 +1084,7 @@ export default function MarketingHome() {
           {/* Content panel */}
           <div className="mt-6 grid gap-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm md:grid-cols-2">
             {/* Left — use case description */}
-            <div className="flex flex-col justify-between p-6 md:p-8">
+            <div className="flex flex-col justify-between p-5 md:p-8">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Use case</p>
                 <h3 className="mt-3 text-xl font-extrabold text-[#0A1F44]">
@@ -923,35 +1100,35 @@ export default function MarketingHome() {
             </div>
 
             {/* Right — evidence preview */}
-            <div className="border-t border-slate-100 bg-slate-50 p-6 md:border-l md:border-t-0 md:p-8">
+            <div className="border-t border-slate-100 bg-slate-50 p-5 md:border-l md:border-t-0 md:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Evidence package</p>
-              <div className="mt-4 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="flex items-start justify-between gap-2 sm:col-span-2">
                   <span className="text-xs text-slate-500">Claim type</span>
-                  <span className="text-right text-xs font-semibold text-[#0A1F44]">
+                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">
                     {useCaseDetail[activeUseCase].claimType}
                   </span>
                 </div>
-                <div className="border-t border-slate-100 pt-3">
+                <div className="rounded-xl border border-slate-100 bg-white p-3 sm:col-span-2">
                   <span className="text-xs text-slate-500">Evidence sources</span>
-                  <ul className="mt-2 flex flex-col gap-1.5">
+                  <ul className="mt-2 grid grid-cols-2 gap-1.5">
                     {useCaseDetail[activeUseCase].evidenceSources.map((src) => (
-                      <li key={src} className="flex items-center gap-2 text-xs text-slate-700">
+                      <li key={src} className="flex items-start gap-2 text-xs text-slate-700">
                         <span className="h-1 w-1 shrink-0 rounded-full bg-[#D4980C]" />
                         {src}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-3">
+                <div className="rounded-xl border border-slate-100 bg-white p-3">
                   <span className="text-xs text-slate-500">Framework alignment</span>
-                  <span className="text-right text-xs font-semibold text-[#0A1F44]">
+                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">
                     {useCaseDetail[activeUseCase].framework}
                   </span>
                 </div>
-                <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-3">
+                <div className="rounded-xl border border-slate-100 bg-white p-3">
                   <span className="text-xs text-slate-500">Evidence status</span>
-                  <span className="text-right text-xs font-semibold text-[#D4980C]">
+                  <span className="text-right text-xs font-semibold leading-snug text-[#D4980C]">
                     {useCaseDetail[activeUseCase].status}
                   </span>
                 </div>
@@ -970,7 +1147,7 @@ export default function MarketingHome() {
             {/* Left column — resource list */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Reading list</p>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-3">
                 {resourcePreview.map((item, index) => (
                   <button
                     key={item.title}
@@ -979,13 +1156,13 @@ export default function MarketingHome() {
                     onMouseEnter={() => setActiveResource(index)}
                     onFocus={() => setActiveResource(index)}
                     aria-pressed={activeResource === index}
-                    className={`flex gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    className={`flex min-w-0 gap-3 rounded-2xl border p-3 text-left transition-all sm:gap-4 sm:p-4 ${
                       activeResource === index
                         ? "border-[#0A1F44] bg-[#0A1F44]"
                         : "border-transparent bg-slate-50 hover:border-slate-200 hover:bg-slate-100"
                     }`}
                   >
-                    <span className={`mt-0.5 shrink-0 text-2xl font-extrabold leading-none transition-colors ${
+                    <span className={`mt-0.5 shrink-0 text-xl font-extrabold leading-none transition-colors sm:text-2xl ${
                       activeResource === index ? "text-[#D4980C]/40" : "text-slate-200"
                     }`}>
                       {String(index + 1).padStart(2, "0")}
@@ -996,7 +1173,7 @@ export default function MarketingHome() {
                       }`}>
                         {resourceTopics[index]}
                       </p>
-                      <h3 className={`mt-0.5 text-sm font-extrabold leading-snug transition-colors ${
+                      <h3 className={`mt-0.5 text-xs font-extrabold leading-snug transition-colors sm:text-sm ${
                         activeResource === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                       }`}>
                         {item.title}
@@ -1008,11 +1185,11 @@ export default function MarketingHome() {
             </div>
 
             {/* Right column — featured article panel */}
-            <div className="flex flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4980C]">
                 {resourceTopics[activeResource]}
               </p>
-              <h3 className="mt-3 text-xl font-extrabold leading-snug text-[#0A1F44]">
+              <h3 className="mt-3 text-lg font-extrabold leading-snug text-[#0A1F44] sm:text-xl">
                 {resourcePreview[activeResource].title}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
@@ -1042,9 +1219,11 @@ export default function MarketingHome() {
         </div>
       </section>
 
+      <SDGMappingPreview />
+
       <section id="request-assessment" className="bg-slate-50 py-14 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-10">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl md:p-10">
             <h2 className="max-w-3xl text-3xl font-extrabold text-[#0A1F44] md:text-5xl">
               Assess the defensibility of your ESG claims.
             </h2>

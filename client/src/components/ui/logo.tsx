@@ -40,16 +40,19 @@ export default function Logo({
       return;
     }
     if (!clickable) return;
-    // If already on the landing page, scroll back to the top (CTA / hero).
-    // Otherwise navigate there.
+    const hero = document.getElementById("hero");
+    const focusHero = () => hero?.focus({ preventScroll: true });
+
     if (location === '/landing' || location === '/') {
       try {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        hero?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        focusHero();
       } catch {
         window.scrollTo(0, 0);
+        focusHero();
       }
     } else {
-      navigate('/landing');
+      navigate('/landing#hero');
     }
   };
 
@@ -75,7 +78,7 @@ export default function Logo({
         }}
       >
         <span style={{ color: '#0A2463' }}>SYNER</span>
-        <span style={{ color: '#D4980C' }}>XUS</span>
+        <span style={{ color: '#8A5A00' }}>XUS</span>
       </span>
       <span
         style={{
@@ -90,7 +93,7 @@ export default function Logo({
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: '#D4980C' }}>Impacts.</span>{' '}
+        <span style={{ color: '#8A5A00' }}>Impacts.</span>{' '}
         <span
           onClick={handleVerifiedClick}
           style={{ cursor: 'pointer', color: '#0A2463' }}

@@ -135,7 +135,7 @@ export default function EvidenceLadderPage() {
             body="The Evidence Ladder gives teams a practical way to decide what should happen next with each ESG claim. Instead of treating every sustainability statement the same, teams can separate claims that are ready for disclosure from claims that still need evidence, confirmation, framework mapping, or risk review."
           />
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             {ladderCards.map((item, index) => (
               <button
                 key={item.title}
@@ -144,7 +144,7 @@ export default function EvidenceLadderPage() {
                 onFocus={() => setActiveCard(index)}
                 onClick={() => setActiveCard(index)}
                 aria-pressed={activeCard === index}
-                className={`rounded-2xl border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-xl ${
+                className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-1 hover:shadow-xl sm:p-5 ${
                   activeCard === index
                     ? "border-[#0A1F44] bg-[#0A1F44]"
                     : "border-slate-200 bg-white shadow-sm"
@@ -183,7 +183,31 @@ export default function EvidenceLadderPage() {
               title="See what each claim level means and what must happen next."
               body="Level 4 is intentionally distinct from Level 5: a Level 4 claim is partner-confirmed and framework-mapped, but it still needs custody, screening, version, owner, and disclosure-readiness review before external use."
             />
-            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+            <div className="grid gap-3 md:hidden">
+              {actionMatrix.map((item) => (
+                <div
+                  key={item.level}
+                  className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${item.rowClass}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-extrabold text-[#0A1F44]">{item.level}</p>
+                    <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${item.riskClass}`}>
+                      {item.risk}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-slate-700">{item.status}</p>
+                  {item.note && <p className="mt-1 text-xs font-bold text-[#7a5200]">{item.note}</p>}
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{item.definition}</p>
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Next action</p>
+                    <p className={`mt-1 text-sm leading-relaxed ${item.critical ? "font-bold text-red-800" : "text-slate-600"}`}>
+                      {item.action}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-xl border border-slate-200 shadow-sm md:block">
               <table className="w-full min-w-[980px] text-left text-sm">
                 <thead className="bg-[#0A1F44] text-[#D4980C]">
                   <tr>

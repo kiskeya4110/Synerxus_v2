@@ -1,6 +1,6 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Facebook, Linkedin, Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 
@@ -21,9 +21,22 @@ const footerLinks = [
   ["Terms", "/terms"],
 ] as const;
 
+const socialLinks = [
+  {
+    label: "Synerxus on LinkedIn",
+    href: "https://linkedin.com/company/synerxus",
+    icon: Linkedin,
+  },
+  {
+    label: "Synerxus on Facebook",
+    href: "https://www.facebook.com/people/Synerxus/61582543747103/",
+    icon: Facebook,
+  },
+] as const;
+
 export function MarketingLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const isLanding = location === "/landing" || location === "/";
 
   const handleLandingSectionClick = (
@@ -53,13 +66,20 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             href="/landing"
             className="shrink-0"
             onClick={(e) => {
+              e.preventDefault();
+              const hero = document.getElementById("hero");
+              const focusHero = () => hero?.focus({ preventScroll: true });
+
               if (isLanding) {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                hero?.scrollIntoView({ behavior: "smooth", block: "start" });
+                focusHero();
+                return;
               }
+
+              navigate("/landing#hero");
             }}
           >
-            <Logo size="sm" />
+            <Logo size="sm" clickable={false} />
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex">
@@ -128,21 +148,21 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <main>{children}</main>
 
       <footer className="border-t border-[#D4980C]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#f7d27a]/55">
-        <div className="mx-auto max-w-7xl px-4 py-5 md:px-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="mx-auto max-w-7xl px-4 py-4 md:px-8 md:py-5">
+          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div className="max-w-md">
               <Logo size="sm" clickable={false} />
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-snug text-slate-600">
                 Structured evidence records for ESG reporting and assurance preparation.
               </p>
             </div>
-            <div className="flex flex-col gap-3 md:items-end">
-              <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex flex-wrap items-center gap-3 md:justify-end">
+              <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {footerLinks.map(([label, href]) => (
                   <Link
                     key={href}
                     href={href}
-                    className="text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+                    className="text-[11px] font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
                   >
                     {label}
                   </Link>
@@ -150,18 +170,33 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               </nav>
               <a
                 href="mailto:hello@synerxus.com"
-                className="text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+                className="text-[11px] font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
               >
                 hello@synerxus.com
               </a>
+              <div className="flex items-center gap-2" aria-label="Synerxus social pages">
+                {socialLinks.map(({ label, href, icon: Icon }) => (
+                  <a
+                    key={href}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    title={label}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#D4980C]/25 bg-white/70 text-[#0A1F44] transition-colors hover:border-[#0A1F44]/30 hover:bg-white"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 border-t border-[#D4980C]/20 pt-3">
+          <div className="mt-3 border-t border-[#D4980C]/20 pt-3">
             <p className="text-xs text-slate-600">
               © 2026 Synerxus. All rights reserved.
             </p>
-            <p className="mt-2 max-w-5xl text-[11px] leading-relaxed text-slate-600">
+            <p className="mt-1.5 max-w-5xl text-[11px] leading-snug text-slate-600">
               {ASSURANCE_FOOTER_NOTE}
             </p>
           </div>

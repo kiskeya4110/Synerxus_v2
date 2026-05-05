@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock3, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,17 @@ interface FeaturedArticle {
   category: string;
   description: string;
   highlights: string[];
+}
+
+interface RecentIssue {
+  issue: string;
+  title: string;
+  url: string;
+}
+
+function getIssueNumber(issue: string) {
+  const match = issue.match(/\d+/);
+  return match ? Number(match[0]) : -1;
 }
 
 const editorialSeries: Series[] = [
@@ -208,7 +219,7 @@ const editorialSeries: Series[] = [
   },
 ];
 
-const recentIssues = [
+const defaultRecentIssues: RecentIssue[] = [
   {
     issue: "Issue 01",
     title: "The Verifiable: Founder Story",
@@ -225,6 +236,17 @@ const recentIssues = [
     url: "https://www.linkedin.com/pulse/impact-becoming-geopolitical-asset-alc%C3%A9nat-honorat-suv3c",
   },
 ];
+
+function isRecentIssue(value: unknown): value is RecentIssue {
+  if (!value || typeof value !== "object") return false;
+  const issue = value as Record<string, unknown>;
+  return (
+    typeof issue.issue === "string" &&
+    typeof issue.title === "string" &&
+    typeof issue.url === "string" &&
+    issue.url.startsWith("https://")
+  );
+}
 
 const practicalTools = [
   {
@@ -1052,8 +1074,54 @@ export default function InsightsPage() {
   const [isSourceRecordArticleOpen, setIsSourceRecordArticleOpen] = useState(false);
   const [isAnatomyArticleOpen, setIsAnatomyArticleOpen] = useState(false);
   const [activeFeaturedIndex, setActiveFeaturedIndex] = useState(0);
+  const [recentIssues, setRecentIssues] = useState<RecentIssue[]>(defaultRecentIssues);
+  const [activeIssueIndex, setActiveIssueIndex] = useState(0);
 
   const activeFeaturedArticle = featuredArticles[activeFeaturedIndex];
+  const sortedRecentIssues = [...recentIssues].sort(
+    (a, b) => getIssueNumber(b.issue) - getIssueNumber(a.issue),
+  );
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    fetch("/verifiable-issues.json", { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Issue feed unavailable");
+        return response.json();
+      })
+      .then((data: unknown) => {
+        const issues = Array.isArray(data) ? data.filter(isRecentIssue) : [];
+        if (isCurrent && issues.length > 0) {
+          setRecentIssues(issues);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setRecentIssues(defaultRecentIssues);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sortedRecentIssues.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setActiveIssueIndex((current) => (current + 1) % sortedRecentIssues.length);
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, [sortedRecentIssues.length]);
+
+  useEffect(() => {
+    if (activeIssueIndex >= sortedRecentIssues.length) {
+      setActiveIssueIndex(0);
+    }
+  }, [activeIssueIndex, sortedRecentIssues.length]);
 
   function openFeaturedArticle() {
     setIsFeaturedArticleOpen(true);
@@ -1138,6 +1206,71 @@ export default function InsightsPage() {
                 Follow on LinkedIn
               </a>
             </Button>
+          </div>
+          <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur md:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+                  Recent Issues
+                </p>
+                <h2 className="mt-1 text-lg font-extrabold text-white">
+                  Latest from The Verifiable
+                </h2>
+              </div>
+              <a
+                href={VERIFIABLE_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-[#D4980C] transition-colors hover:text-[#FFD95A]"
+              >
+                View newsletter
+              </a>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {sortedRecentIssues.map((item, index) => {
+                const active = index === activeIssueIndex;
+                return (
+                  <a
+                    key={item.url}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`group flex min-h-[132px] flex-col rounded-2xl border p-4 transition-all ${
+                      active
+                        ? "border-[#D4980C] bg-[#0A1F44] shadow-lg shadow-black/20"
+                        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                        active
+                          ? "border-[#D4980C]/30 bg-[#D4980C]/15 text-[#D4980C]"
+                          : "border-white/10 bg-white/5 text-white/70"
+                      }`}>
+                        {item.issue}
+                      </span>
+                      <span className={`text-[10px] font-bold uppercase tracking-[0.16em] ${
+                        active ? "text-white/60" : "text-white/35"
+                      }`}>
+                        {index === activeIssueIndex ? "Now" : "Next"}
+                      </span>
+                    </div>
+                    <h3 className={`mt-3 flex-1 text-sm font-extrabold leading-snug ${
+                      active ? "text-white" : "text-white/85"
+                    }`}>
+                      {item.title}
+                    </h3>
+                    <div className={`mt-4 flex items-center gap-1.5 text-xs font-bold ${
+                      active ? "text-[#D4980C]" : "text-white/55"
+                    }`}>
+                      <Linkedin className="h-3.5 w-3.5" />
+                      Open on LinkedIn
+                      <ArrowRight className="ml-auto h-3.5 w-3.5" />
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -1287,23 +1420,23 @@ export default function InsightsPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-8 flex flex-col gap-1 border-l-4 border-[#D4980C] pl-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
-              Recent Issues
+              Archive
             </p>
             <h2 className="text-2xl font-extrabold text-[#0A1F44]">
-              Latest from The Verifiable
+              Previous Verifiable issues
             </h2>
             <p className="text-sm text-slate-500">
               Read the most recent issues on LinkedIn.
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recentIssues.map((item) => (
               <a
                 key={item.url}
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-[#0A1F44]/25 hover:shadow-lg"
+                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-[#0A1F44]/25 hover:shadow-lg sm:p-6"
               >
                 <span className="w-fit rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4980C]">
                   {item.issue}
@@ -1336,7 +1469,7 @@ export default function InsightsPage() {
               <h2 className="mt-1 text-2xl font-extrabold text-[#0A1F44]">{series.title}</h2>
               <p className="mt-1 text-sm text-slate-500">{series.description}</p>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {series.articles.map((article) => (
                 <ArticleCard
                   key={article.title}
@@ -1397,9 +1530,9 @@ export default function InsightsPage() {
       <section className="bg-slate-50 py-14 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-            <div className="grid md:grid-cols-[1fr_280px]">
-              {/* Content */}
-              <div className="flex flex-col justify-between p-8 md:p-12">
+              <div className="grid md:grid-cols-[1fr_280px]">
+                {/* Content */}
+              <div className="flex flex-col justify-between p-6 md:p-12">
                 <div>
                   <div className="flex items-center gap-2">
                     <Linkedin className="h-5 w-5 text-[#0A1F44]" />
@@ -1407,10 +1540,10 @@ export default function InsightsPage() {
                       LinkedIn Newsletter
                     </p>
                   </div>
-                  <h2 className="mt-3 text-3xl font-extrabold text-[#0A1F44] md:text-4xl">
+                  <h2 className="mt-3 text-2xl font-extrabold text-[#0A1F44] md:text-4xl">
                     Follow The Verifiable on LinkedIn
                   </h2>
-                  <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
+                  <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-600 md:text-base">
                     Get practical field notes on evidence-first ESG reporting, claim defensibility,
                     Evidence Objects, partner confirmation, and audit-ready sustainability evidence.
                   </p>
@@ -1418,7 +1551,7 @@ export default function InsightsPage() {
                 <Button
                   asChild
                   size="lg"
-                  className="mt-8 w-fit bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]"
+                  className="mt-8 w-full justify-center bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a] sm:w-fit sm:justify-start"
                 >
                   <a href={LINKEDIN_FOLLOW_URL} target="_blank" rel="noopener noreferrer">
                     <Linkedin className="mr-2 h-4 w-4" />

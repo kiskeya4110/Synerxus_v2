@@ -201,8 +201,8 @@ function ProcessStepIcon({
       <span
         className={`${sizeClass} relative flex shrink-0 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100`}
       >
-        <ListChecks className={`${iconClass} text-[#D4980C]`} />
-        <LineChart className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white p-0.5 text-[#D4980C] shadow-sm" />
+        <ListChecks className={`${iconClass} text-[#8A5A00]`} />
+        <LineChart className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white p-0.5 text-[#8A5A00] shadow-sm" />
       </span>
     );
   }
@@ -1420,7 +1420,7 @@ function PricingContactModal({
           <>
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-[#D4980C]/15 flex items-center justify-center">
-                <ShieldCheck className="h-5 w-5 text-[#D4980C]" />
+                <ShieldCheck className="h-5 w-5 text-[#8A5A00]" />
               </div>
               <div>
                 <h3
@@ -1623,7 +1623,7 @@ function SampleReportModal({ onClose }: { onClose: () => void }) {
           <span className="text-sm font-bold text-[#0A1F44] hidden sm:block">
             <span id="sample-report-title">Sample ESG Evidence Pack</span>
           </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4980C]/10 text-[#D4980C] rounded-full border border-[#D4980C]/20 uppercase tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4980C]/10 text-[#8A5A00] rounded-full border border-[#D4980C]/20 uppercase tracking-wider">
             Sample
           </span>
         </div>
@@ -2062,7 +2062,7 @@ function JoinNetworkModal({
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C] mb-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#8A5A00] mb-1">
               Verification Network
             </p>
             <h2
@@ -2128,6 +2128,160 @@ function JoinNetworkModal({
   );
 }
 
+function SDGMappingSection() {
+  const [activeSdg, setActiveSdg] = useState(13);
+  const goalNumbers = Array.from({ length: 17 }, (_, i) => i + 1);
+  const activeGoal = SDG_GOALS[activeSdg];
+
+  const evidenceExamples: Record<number, string> = {
+    1: "Income support, essential services, and community resilience records.",
+    2: "Food distribution, nutrition programs, community gardens, and pantry outputs.",
+    3: "Health screenings, wellness programs, care access, and public health outputs.",
+    4: "Tutoring, mentoring, training, literacy, STEM, and skills-learning outputs.",
+    5: "Women and girls empowerment, protection, access, and participation outputs.",
+    6: "Clean water, sanitation, hygiene, wells, filters, and water-quality outputs.",
+    7: "Solar access, clean-energy installation, efficiency, and off-grid power outputs.",
+    8: "Workforce training, job readiness, entrepreneurship, and livelihood outputs.",
+    9: "Infrastructure, digital access, engineering, research, and innovation outputs.",
+    10: "Inclusion, accessibility, refugee support, equity, and reduced-barrier outputs.",
+    11: "Housing, public spaces, local resilience, transport, and community outputs.",
+    12: "Waste reduction, recycling, responsible sourcing, and circularity outputs.",
+    13: "Climate adaptation, resilience, education, restoration, and emissions-related outputs.",
+    14: "Marine protection, coastal cleanup, fishery, and waterway restoration outputs.",
+    15: "Tree planting, biodiversity, habitat, reforestation, and land restoration outputs.",
+    16: "Rights access, transparency, safety, civic participation, and governance outputs.",
+    17: "Cross-sector partnerships, implementation support, and shared measurement outputs.",
+  };
+
+  return (
+    <section id="sdg-mapping" className="py-10 md:py-16 bg-white border-y border-slate-100">
+      <div className="max-w-6xl mx-auto px-6 md:px-10">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
+              UN Sustainable Development Goals
+            </span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] leading-tight">
+              Show how verified outcomes fit the global SDG framework.
+            </h2>
+            <p className="text-slate-600 text-sm md:text-base mt-4 leading-relaxed">
+              Synerxus tags partner-confirmed outputs to the relevant UN SDGs,
+              then keeps that alignment attached to the evidence record,
+              verifier context, location, and reporting export.
+            </p>
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                ["Output", "What was delivered"],
+                ["SDG tag", "Which goal it supports"],
+                ["Evidence", "Who confirmed it"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-[#0A1F44]">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 gap-2">
+              {goalNumbers.map((n) => {
+                const goal = SDG_GOALS[n];
+                const isActive = activeSdg === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setActiveSdg(n)}
+                    className={`relative aspect-square overflow-hidden rounded-lg border bg-white transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/40 ${
+                      isActive
+                        ? "scale-[1.04] shadow-lg"
+                        : "opacity-85 hover:scale-[1.03] hover:opacity-100 hover:shadow-md"
+                    }`}
+                    style={{
+                      borderColor: isActive ? goal.color : "#e2e8f0",
+                      boxShadow: isActive ? `0 0 0 2px ${goal.color}33` : undefined,
+                    }}
+                    aria-pressed={isActive}
+                    aria-label={`Show details for SDG ${n}: ${goal.name}`}
+                  >
+                    <img
+                      src={UN_SDG_ICONS[n]}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className="mt-5 rounded-2xl border p-5"
+              style={{
+                borderColor: `${activeGoal.color}55`,
+                backgroundColor: `${activeGoal.color}0D`,
+              }}
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <img
+                  src={UN_SDG_ICONS[activeSdg]}
+                  alt={`SDG ${activeSdg}: ${activeGoal.name}`}
+                  className="h-20 w-20 rounded-xl shadow-sm"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="rounded-full px-2.5 py-1 text-xs font-extrabold text-white"
+                      style={{ backgroundColor: activeGoal.color }}
+                    >
+                      SDG {activeSdg}
+                    </span>
+                    <h3 className="text-lg font-extrabold text-[#0A1F44]">
+                      {activeGoal.name}
+                    </h3>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                    {activeGoal.description}. In Synerxus, this appears as
+                    framework context for verified outcomes, not as a standalone
+                    certification or compliance claim.
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-[#0A1F44]">
+                    Example fit:{" "}
+                    <span className="font-medium text-slate-600">
+                      {evidenceExamples[activeSdg]}
+                    </span>
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {activeGoal.targets.slice(0, 3).map((target) => (
+                      <span
+                        key={target}
+                        className="rounded-full border bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                        style={{ borderColor: `${activeGoal.color}55` }}
+                      >
+                        {target}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Each button previews how a verified record can be mapped for SDG,
+              GRI, SASB, and ESRS support where applicable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
@@ -2137,7 +2291,6 @@ export default function Landing() {
   const [activeGapLayer, setActiveGapLayer] = useState<string | null>(null);
   const [showProcessBrief, setShowProcessBrief] = useState(false);
   const [showAllFaq, setShowAllFaq] = useState(false);
-  const [activeSdg, setActiveSdg] = useState<number | null>(null);
   const [howItWorksStep, setHowItWorksStep] = useState<number | null>(null);
   const [pricingPlan, setPricingPlan] = useState<string | null>(null);
   const [showJoinNetwork, setShowJoinNetwork] = useState(false);
@@ -2432,7 +2585,7 @@ export default function Landing() {
                 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-[#0A1F44] mb-5"
                 data-testid="text-hero-title"
               >
-                Turn <span className="text-[#D4980C]">ESG Activity</span> Into Audit-Ready <span className="text-[#D4980C]">Evidence</span>
+                Turn <span className="text-[#8A5A00]">ESG Activity</span> Into Audit-Ready <span className="text-[#8A5A00]">Evidence</span>
               </h1>
 
               <p
@@ -2659,7 +2812,7 @@ export default function Landing() {
             <div className="max-w-6xl mx-auto px-6 md:px-10">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C] mb-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#8A5A00] mb-2">
                     Verification Network
                   </p>
                   <h2 className="text-2xl md:text-3xl font-extrabold text-[#0A1F44]">
@@ -2762,7 +2915,7 @@ export default function Landing() {
                   <div className="w-12 h-12 rounded-xl bg-[#D4980C]/15 ring-1 ring-[#D4980C]/30 flex items-center justify-center mb-4">
                     {card.icon}
                   </div>
-                  <h3 className="text-lg font-bold text-[#D4980C] mb-2">
+                  <h3 className="text-lg font-bold text-[#8A5A00] mb-2">
                     {card.segment}
                   </h3>
                   <p className="text-slate-600 text-sm mb-3">{card.pain}</p>
@@ -2818,7 +2971,7 @@ export default function Landing() {
               synerxus: true,
               status: "Synerxus core product",
               statusBg: "bg-[#D4980C]/15",
-              statusText: "text-[#D4980C]",
+              statusText: "text-[#8A5A00]",
               badgeBg: "bg-[#D4980C]",
               badgeText: "text-white",
               cardActive:
@@ -2836,7 +2989,7 @@ export default function Landing() {
               synerxus: false,
               status: "Supported where methodology exists",
               statusBg: "bg-[#D4980C]/10",
-              statusText: "text-[#D4980C]",
+              statusText: "text-[#8A5A00]",
               badgeBg: "bg-slate-100",
               badgeText: "text-slate-400",
               cardActive: "border-blue-400 bg-blue-50 shadow-md",
@@ -2911,7 +3064,7 @@ export default function Landing() {
                     </div>
                     <div>
                       <div
-                        className={`font-extrabold text-base leading-tight ${layer.synerxus ? "text-[#D4980C]" : "text-[#0A1F44]"}`}
+                        className={`font-extrabold text-base leading-tight ${layer.synerxus ? "text-[#8A5A00]" : "text-[#0A1F44]"}`}
                       >
                         {layer.label}
                       </div>
@@ -3234,7 +3387,7 @@ export default function Landing() {
                   bg: "bg-emerald-100",
                 },
                 {
-                  icon: <AlertTriangle className="h-6 w-6 text-[#D4980C]" />,
+                  icon: <AlertTriangle className="h-6 w-6 text-[#8A5A00]" />,
                   title: "Assurance Boundary Discipline",
                   desc: "Synerxus supports reporting and assurance preparation without replacing auditors or claiming causal attribution.",
                   bg: "bg-[#D4980C]/10",
@@ -3262,6 +3415,8 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        <SDGMappingSection />
 
         {/* ── Section 4: Workflow ── */}
         <section className="py-10 md:py-20 bg-white">
@@ -3585,7 +3740,7 @@ export default function Landing() {
                   bg: "bg-sky-100",
                 },
                 {
-                  icon: <HardHat className="h-6 w-6 text-[#D4980C]" />,
+                  icon: <HardHat className="h-6 w-6 text-[#8A5A00]" />,
                   audience: "Engineering & Infrastructure Firms",
                   benefit:
                     "Verify local hiring commitments and community impact against project targets.",
@@ -3700,194 +3855,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── SDG Mapping Section ── */}
-        <section className="py-10 md:py-12 bg-white border-t border-slate-100">
-          <div className="max-w-5xl mx-auto px-6 md:px-10">
-            <div className="text-center mb-8">
-              <span className="inline-block px-4 py-1 rounded-full bg-[#0A1F44]/10 text-[#0A1F44] text-xs font-bold uppercase tracking-wider mb-3">
-                UN Sustainable Development Goals
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0A1F44] mb-3">
-                Every Verified Outcome, Mapped to the UN SDGs
-              </h2>
-              <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
-                Synerxus tags each partner-confirmed output to relevant SDGs,
-                creating a traceable chain from ground-level delivery to ESG
-                reporting workflows.
-              </p>
-              <p className="text-slate-400 text-xs mt-2">
-                Click any goal to learn more.
-              </p>
-            </div>
-
-            {/* SDG icons — desktop: two centered rows (9+8), mobile/tablet: 4-col grid */}
-            {(() => {
-              const renderIcon = (n: number) => {
-                const goal = SDG_GOALS[n];
-                const icon = UN_SDG_ICONS[n];
-                const isActive = activeSdg === n;
-                return (
-                  <button
-                    key={n}
-                    onClick={() => setActiveSdg(isActive ? null : n)}
-                    className={`relative rounded-xl overflow-hidden focus:outline-none transition-all duration-150 flex-shrink-0 ${
-                      isActive
-                        ? "scale-105 shadow-xl"
-                        : "hover:scale-105 hover:shadow-md opacity-90 hover:opacity-100"
-                    }`}
-                    style={
-                      isActive
-                        ? {
-                            outline: `3px solid ${goal.color}`,
-                            outlineOffset: "3px",
-                          }
-                        : {}
-                    }
-                    aria-label={`SDG ${n}: ${goal.name}`}
-                  >
-                    <img
-                      src={icon}
-                      alt={`SDG ${n}: ${goal.name}`}
-                      className="w-full h-auto block"
-                      loading="lazy"
-                    />
-                    {isActive && (
-                      <div
-                        className="absolute inset-x-0 bottom-0 h-1"
-                        style={{ backgroundColor: goal.color }}
-                      />
-                    )}
-                  </button>
-                );
-              };
-              return (
-                <>
-                  {/* Desktop: two centered rows */}
-                  <div className="hidden lg:flex flex-col items-center gap-3 mb-6">
-                    <div className="flex gap-3">
-                      {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
-                        <div key={n} className="w-20">
-                          {renderIcon(n)}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-3">
-                      {Array.from({ length: 8 }, (_, i) => i + 10).map((n) => (
-                        <div key={n} className="w-20">
-                          {renderIcon(n)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Mobile / tablet: 4-col then 6-col grid */}
-                  <div className="lg:hidden grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 mb-6">
-                    {Array.from({ length: 17 }, (_, i) => i + 1).map(
-                      renderIcon,
-                    )}
-                  </div>
-                </>
-              );
-            })()}
-
-            {/* Info panel — desktop: inline; mobile: floating overlay */}
-            {activeSdg !== null &&
-              (() => {
-                const goal = SDG_GOALS[activeSdg];
-                const panelContent = (
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={UN_SDG_ICONS[activeSdg]}
-                      alt={`SDG ${activeSdg}`}
-                      className="w-16 h-16 rounded-xl flex-shrink-0 shadow-sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span
-                          className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
-                          style={{ backgroundColor: goal.color }}
-                        >
-                          SDG {activeSdg}
-                        </span>
-                        <h3 className="font-extrabold text-[#0A1F44] text-base">
-                          {goal.name}
-                        </h3>
-                      </div>
-                      <p className="text-slate-600 text-sm leading-relaxed mb-3">
-                        {goal.details}
-                      </p>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          Key Targets
-                        </p>
-                        <ul className="flex flex-wrap gap-1.5">
-                          {goal.targets.map((t) => (
-                            <li
-                              key={t}
-                              className="text-[11px] px-2.5 py-1 rounded-full bg-white border font-medium text-slate-600"
-                              style={{ borderColor: goal.color + "55" }}
-                            >
-                              {t}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setActiveSdg(null)}
-                      className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
-                      aria-label="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-                return (
-                  <>
-                    {/* Desktop: inline panel */}
-                    <div
-                      className="hidden lg:block rounded-2xl border p-5 mb-6 transition-all duration-200"
-                      style={{
-                        borderColor: goal.color + "55",
-                        backgroundColor: goal.color + "0D",
-                      }}
-                    >
-                      {panelContent}
-                    </div>
-
-                    {/* Mobile: floating overlay */}
-                    <div className="lg:hidden">
-                      {/* Backdrop */}
-                      <div
-                        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
-                        onClick={() => setActiveSdg(null)}
-                      />
-                      {/* Floating card */}
-                      <div className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm">
-                        <div
-                          className="rounded-2xl border bg-white shadow-2xl overflow-hidden"
-                          style={{ borderColor: goal.color + "55" }}
-                        >
-                          {/* Coloured top bar */}
-                          <div
-                            className="h-1 w-full"
-                            style={{ backgroundColor: goal.color }}
-                          />
-                          <div className="p-5">{panelContent}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-
-            <p className="text-center text-xs text-slate-400">
-              Every Synerxus-verified record carries an SDG tag and structured
-              framework context for GRI, SASB, and ESRS support where
-              applicable.
-            </p>
-          </div>
-        </section>
-
         {/* ── Section 8: Case Studies ── */}
         <section className="py-10 md:py-16 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
@@ -3920,7 +3887,7 @@ export default function Landing() {
                   title: "Solar Village Initiative",
                   tag: "Energy Access",
                   desc: "Energy access outcomes confirmed with full audit trails, mapped to SDG 7, WEF Planet pillar and GRI 302 — audit-ready globally.",
-                  tagColor: "bg-[#D4980C]/10 text-[#D4980C]",
+                  tagColor: "bg-[#D4980C]/10 text-[#8A5A00]",
                   sdgs: [
                     { n: 7, color: "#FCC30B", name: "Clean Energy" },
                     { n: 1, color: "#E5243B", name: "No Poverty" },

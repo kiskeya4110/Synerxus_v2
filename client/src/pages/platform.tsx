@@ -174,18 +174,18 @@ export default function PlatformPage() {
               <Link href="/request-assessment">Request Assessment</Link>
             </Button>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
-            <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl sm:p-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
                 ["Claim", "Capture the sustainability statement"],
                 ["Evidence", "Attach source records and confirmation"],
                 ["Review", "Package it for disclosure support"],
               ].map(([title, body]) => (
-                <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+                <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#FFD95A] sm:text-xs sm:tracking-[0.18em]">
                     {title}
                   </p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">{body}</p>
+                  <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-700 sm:text-sm sm:leading-6">{body}</p>
                 </div>
               ))}
             </div>
@@ -208,7 +208,7 @@ export default function PlatformPage() {
             </p>
           </div>
           <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
               {evidenceObjectLayers.map((layer, index) => (
                 <button
                   key={layer.title}
@@ -217,7 +217,7 @@ export default function PlatformPage() {
                   onFocus={() => setActiveObjectLayer(index)}
                   onClick={() => setActiveObjectLayer(index)}
                   aria-pressed={activeObjectLayer === index}
-                  className={`rounded-2xl border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-xl ${
+                  className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-1 hover:shadow-xl sm:p-5 ${
                     activeObjectLayer === index
                       ? "border-[#0A1F44] bg-slate-50 shadow-md"
                       : "border-slate-200 bg-white"
@@ -226,15 +226,15 @@ export default function PlatformPage() {
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
                     Layer {index + 1}
                   </p>
-                  <h2 className="mt-3 font-extrabold text-[#0A1F44]">{layer.title}</h2>
+                  <h2 className="mt-3 text-sm font-extrabold leading-snug text-[#0A1F44] sm:text-base">{layer.title}</h2>
                 </button>
               ))}
             </div>
-            <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+            <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-5">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
                 Layer definition
               </p>
-              <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
+              <h3 className="mt-2 text-xl font-extrabold text-[#0A1F44] sm:text-2xl">
                 {evidenceObjectLayers[activeObjectLayer].title}
               </h3>
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
@@ -262,7 +262,7 @@ export default function PlatformPage() {
                 lets the product language do the work.
               </p>
             </div>
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {[
                 {
                   icon: CheckCircle2,
@@ -282,14 +282,14 @@ export default function PlatformPage() {
               ].map(({ icon: Icon, title, body }) => (
                 <div
                   key={title}
-                  className="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:gap-4 sm:p-5"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-white">
-                    <Icon className="h-5 w-5" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-white sm:h-11 sm:w-11">
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-[#0A1F44]">{title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+                    <h3 className="text-sm font-extrabold text-[#0A1F44] sm:text-base">{title}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{body}</p>
                   </div>
                 </div>
               ))}
@@ -308,14 +308,14 @@ export default function PlatformPage() {
               One platform, multiple controls.
             </h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {capabilities.map((item) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
               >
-                <h3 className="font-extrabold text-[#0A1F44]">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{item.body}</p>
+                <h3 className="text-sm font-extrabold text-[#0A1F44] sm:text-base">{item.title}</h3>
+                <p className="mt-3 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.body}</p>
               </div>
             ))}
           </div>
@@ -415,7 +415,7 @@ export default function PlatformPage() {
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
                 The evidence gap
               </p>
-              <div className="mt-4 flex flex-col gap-2">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-col">
                 {platformGapCards.map((item, index) => (
                   <button
                     key={item.number}
@@ -424,7 +424,7 @@ export default function PlatformPage() {
                     onMouseEnter={() => setActiveGap(index)}
                     onFocus={() => setActiveGap(index)}
                     aria-pressed={activeGap === index}
-                    className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 text-left transition-all ${
+                    className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3.5 text-left transition-all sm:px-4 ${
                       activeGap === index
                         ? "border-[#0A1F44] bg-[#0A1F44]"
                         : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
@@ -436,12 +436,12 @@ export default function PlatformPage() {
                       {index + 1}
                     </span>
                     <div>
-                      <p className={`text-sm font-bold transition-colors ${
+                      <p className={`text-xs font-bold leading-tight transition-colors sm:text-sm ${
                         activeGap === index ? "text-[#D4980C]" : "text-[#0A1F44]"
                       }`}>
                         {item.title}
                       </p>
-                      <p className={`mt-0.5 text-xs leading-relaxed transition-colors ${
+                      <p className={`mt-0.5 text-[11px] leading-relaxed transition-colors sm:text-xs ${
                         activeGap === index ? "text-[#D4980C]/70" : "text-slate-500"
                       }`}>
                         {item.body}
@@ -451,7 +451,7 @@ export default function PlatformPage() {
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-[#0A1F44] p-5 md:p-6">
+            <div className="rounded-xl border border-slate-200 bg-[#0A1F44] p-4 md:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
@@ -466,13 +466,13 @@ export default function PlatformPage() {
                 </span>
               </div>
 
-              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-2 gap-2">
                 {platformGapCards[activeGap].response.features.map((item) => (
                   <div
                     key={item}
                     className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5"
                   >
-                    <p className="text-sm font-semibold text-white">{item}</p>
+                    <p className="text-xs font-semibold leading-snug text-white sm:text-sm">{item}</p>
                   </div>
                 ))}
               </div>

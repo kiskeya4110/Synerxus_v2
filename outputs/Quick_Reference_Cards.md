@@ -71,7 +71,7 @@
 │                                                                             │
 │   🆘 NEED HELP?                                                              │
 │   ─────────────                                                             │
-│   support@synerxus.com | help.synerxus.com | In-app chat                   │
+│   hello@synerxus.com | help.synerxus.com | In-app chat                   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -154,7 +154,7 @@
 │                                                                             │
 │   🆘 NEED HELP?                                                              │
 │   ─────────────                                                             │
-│   org-support@synerxus.com | help.synerxus.com/organizations               │
+│   hello@synerxus.com | help.synerxus.com/organizations               │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -279,7 +279,7 @@
 
 | Issue | Contact |
 |-------|---------|
-| **Technical Problems** | support@synerxus.com |
+| **Technical Problems** | hello@synerxus.com |
 | **Account Access** | accounts@synerxus.com |
 | **Billing/Payments** | billing@synerxus.com |
 | **Security Concerns** | security@synerxus.com |

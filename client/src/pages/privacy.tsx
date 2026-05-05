@@ -99,8 +99,8 @@ export default function Privacy() {
               <h2 className="text-xl font-semibold mb-3">9. Contact Us</h2>
               <p>
                 If you have questions about this Privacy Policy, please contact us at{" "}
-                <a href="mailto:support@synerxus.com" className="text-primary-600 hover:underline">
-                  support@synerxus.com
+                <a href="mailto:hello@synerxus.com" className="text-primary-600 hover:underline">
+                  hello@synerxus.com
                 </a>
               </p>
             </section>

@@ -295,8 +295,8 @@ outputs/
 
 | User Type | Contact |
 |-----------|---------|
-| Volunteers | support@synerxus.com |
-| Organizations | org-support@synerxus.com |
+| Volunteers | hello@synerxus.com |
+| Organizations | hello@synerxus.com |
 | Corporations | enterprise@synerxus.com |
 
 ### Feedback on Documentation

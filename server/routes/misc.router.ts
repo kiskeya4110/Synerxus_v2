@@ -1085,6 +1085,9 @@ miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Resp
       organizationType,
       primaryNeed,
       frameworks,
+      evidenceMaturity,
+      claimVolume,
+      timeline,
     } = req.body as {
       name: string;
       company: string;
@@ -1095,6 +1098,9 @@ miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Resp
       organizationType?: string;
       primaryNeed?: string;
       frameworks?: string;
+      evidenceMaturity?: string;
+      claimVolume?: string;
+      timeline?: string;
     };
 
     if (!name || !company || !email || !plan) {
@@ -1110,6 +1116,9 @@ miscRouter.post("/contact", sensitiveRateLimiter, async (req: Request, res: Resp
       organizationType ? `Organization type: ${organizationType}` : null,
       primaryNeed ? `Primary need: ${primaryNeed}` : null,
       frameworks ? `Frameworks in scope: ${frameworks}` : null,
+      evidenceMaturity ? `Current evidence maturity: ${evidenceMaturity}` : null,
+      claimVolume ? `Claims to review: ${claimVolume}` : null,
+      timeline ? `Timeline: ${timeline}` : null,
       `Plan: ${plan}`,
       "",
       "Notes:",

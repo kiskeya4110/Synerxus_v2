@@ -496,7 +496,7 @@ Example: $3.2M social value / $1M investment = 3.2x SROI
 
 **Can't find a term?**
 
-Contact support@synerxus.com
+Contact hello@synerxus.com
 
 ---
 

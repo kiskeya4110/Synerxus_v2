@@ -1,9 +1,7 @@
 import { Link } from "wouter";
-import { Linkedin, Facebook, Mail, ExternalLink } from "lucide-react";
-import { SiX } from "react-icons/si";
+import { Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Logo from "@/components/ui/logo";
-import { Divider } from "@/components/ui/section";
 
 // Global registry to track footer instances and prevent duplicates
 const footerRegistry = {
@@ -12,26 +10,15 @@ const footerRegistry = {
 };
 
 const FOOTER_LINKS = {
-  support: [{ href: "/help", label: "Help Center" }],
-  legal: [
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
+  primary: [
+    { href: "/help", label: "Help" },
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
   ],
-};
+} as const;
 
-const SOCIAL_LINKS = [
-  { href: "https://x.com/synerxus", label: "X (Twitter)", icon: SiX },
-  {
-    href: "https://www.linkedin.com/company/synerxus",
-    label: "LinkedIn",
-    icon: Linkedin,
-  },
-  {
-    href: "https://www.facebook.com/861509087040686",
-    label: "Facebook",
-    icon: Facebook,
-  },
-];
+const ASSURANCE_FOOTER_NOTE =
+  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
 
 export default function Footer() {
   const instanceId = useRef<string>(`footer-${++footerRegistry.counter}`);
@@ -59,106 +46,48 @@ export default function Footer() {
 
   return (
     <footer
-      className="bg-secondary border-t border-border mt-auto"
+      className="mt-auto border-t border-[#D4980C]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#f7d27a]/55"
       data-footer-id={instanceId.current}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-6">
-        {/* 4-column grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-5">
-
-          {/* Column 1: Brand */}
-          <div className="col-span-2 md:col-span-1 space-y-3">
+      <div className="mx-auto max-w-7xl px-6 py-5 md:px-10">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-md space-y-2">
             <Logo size="sm" variant="full" clickable={false} />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Partner-Confirmed, Audit-Ready Evidence for Global ESG Reporting
+            <p className="text-xs leading-relaxed text-slate-600">
+              Structured evidence records for ESG reporting and assurance preparation.
             </p>
-            <div className="flex gap-2">
-              {SOCIAL_LINKS.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-md bg-stone-100 text-muted-foreground hover:text-primary hover:bg-indigo-50 transition-colors"
-                    aria-label={link.label}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                  </a>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Column 2: Support */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Support</h4>
-            <ul className="space-y-2">
-              {FOOTER_LINKS.support.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 3: Contact */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Contact</h4>
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="mailto:hello@synerxus.com"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          <div className="flex flex-col gap-3 md:items-end">
+            <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-4 gap-y-2">
+              {FOOTER_LINKS.primary.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
                 >
-                  <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                  hello@synerxus.com
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://synerxus.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                  synerxus.com
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 4: Legal */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Legal</h4>
-            <ul className="space-y-2">
-              {FOOTER_LINKS.legal.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
-                  </Link>
-                </li>
+                </Link>
               ))}
-            </ul>
+            </nav>
+            <a
+              href="mailto:hello@synerxus.com"
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+            >
+              <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+              hello@synerxus.com
+            </a>
           </div>
-
         </div>
 
-        <Divider />
-
-        {/* Copyright bar */}
-        <div className="pt-4 flex flex-col md:flex-row justify-between items-center gap-2">
-          <p className="text-xs text-muted-foreground">
+        <div className="mt-4 border-t border-[#D4980C]/20 pt-3">
+          <p className="text-xs text-slate-600">
             © {currentYear}{" "}
             <span style={{ color: "#0A2463", fontWeight: 700 }}>SYNER</span>
             <span style={{ color: "#D4980C", fontWeight: 700 }}>XUS</span>. All rights reserved.
           </p>
-          <p className="text-xs text-muted-foreground">
-            Partner-confirmed, audit-ready evidence for a transparent world
+          <p className="mt-2 max-w-5xl text-[11px] leading-relaxed text-slate-600">
+            {ASSURANCE_FOOTER_NOTE}
           </p>
         </div>
       </div>

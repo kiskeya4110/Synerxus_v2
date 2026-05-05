@@ -609,7 +609,7 @@ A: AIUs (Attributable Impact Units) are verified impact credits. They appear on 
 
 ## Need Help?
 
-- 📧 **Email:** support@synerxus.com
+- 📧 **Email:** hello@synerxus.com
 - 💬 **In-App Chat:** Click the help icon in the bottom-right corner
 - 📚 **Help Center:** help.synerxus.com
 - 🐦 **Twitter:** @synerxus

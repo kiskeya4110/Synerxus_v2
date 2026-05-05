@@ -34,25 +34,32 @@ const ladderCards = [
 const actionMatrix = [
   {
     level: "Level 5",
-    status: "Audit-Ready Evidence Object",
+    status: "Disclosure-Ready Evidence Object",
+    definition:
+      "Source evidence, partner confirmation, framework mapping, chain of custody, version history, negative impact screening, and disclosure-readiness review are complete.",
     risk: "Lowest",
     riskClass: "border-green-200 bg-green-50 text-green-800",
     rowClass: "bg-green-50/40",
     action:
-      "Use in reports, investor updates, board materials, stakeholder disclosures, or assurance preparation.",
+      "Use in management reports, investor updates, board materials, stakeholder disclosures, or assurance preparation with applicable boundary language.",
   },
   {
     level: "Level 4",
     status: "Framework-Mapped",
+    definition:
+      "Partner-confirmed evidence has been cross-walked to frameworks, SDGs, disclosure categories, scorecards, or stakeholder reporting needs. It shows alignment support, not final readiness.",
     risk: "Low",
     riskClass: "border-[#D4980C]/30 bg-[#D4980C]/10 text-[#7a5200]",
-    rowClass: "",
+    rowClass: "bg-[#D4980C]/10 ring-1 ring-inset ring-[#D4980C]/35",
     action:
-      "Complete chain-of-custody review, negative impact screening, and disclosure-readiness approval.",
+      "Before external use, complete chain-of-custody review, negative impact screening, version review, owner approval, and disclosure-readiness signoff.",
+    note: "Level 4 is the bridge between partner confirmation and disclosure readiness.",
   },
   {
     level: "Level 3",
     status: "Partner-Confirmed",
+    definition:
+      "An authorized partner, NGO, supplier, implementation team, or reviewer has confirmed that the evidence supports the claim.",
     risk: "Lower",
     riskClass: "border-emerald-200 bg-emerald-50 text-emerald-800",
     rowClass: "",
@@ -62,6 +69,8 @@ const actionMatrix = [
   {
     level: "Level 2",
     status: "Source Evidence Attached",
+    definition:
+      "The claim has source files, records, certificates, exports, photos, or project documentation attached, but no external confirmation yet.",
     risk: "Moderate",
     riskClass: "border-amber-200 bg-amber-50 text-amber-800",
     rowClass: "",
@@ -71,6 +80,8 @@ const actionMatrix = [
   {
     level: "Level 1",
     status: "Internal Assertion",
+    definition:
+      "The claim is documented internally but depends primarily on internal narrative, self-reported activity, or incomplete support.",
     risk: "High",
     riskClass: "border-orange-200 bg-orange-50 text-orange-800",
     rowClass: "",
@@ -80,6 +91,8 @@ const actionMatrix = [
   {
     level: "Level 0",
     status: "Unsupported Claim",
+    definition:
+      "A sustainability claim exists, but no source evidence has been attached or structured into an Evidence Object.",
     risk: "Critical",
     riskClass: "border-red-200 bg-red-50 text-red-800",
     rowClass: "bg-red-50/50",
@@ -167,16 +180,18 @@ export default function EvidenceLadderPage() {
           <div className="mt-14">
             <SectionHeader
               eyebrow="Evidence Ladder Action Matrix"
-              title="See the next best action for each claim level."
+              title="See what each claim level means and what must happen next."
+              body="Level 4 is intentionally distinct from Level 5: a Level 4 claim is partner-confirmed and framework-mapped, but it still needs custody, screening, version, owner, and disclosure-readiness review before external use."
             />
-            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+              <table className="w-full min-w-[980px] text-left text-sm">
                 <thead className="bg-[#0A1F44] text-[#D4980C]">
                   <tr>
                     <th className="px-4 py-3 font-bold">Level</th>
                     <th className="px-4 py-3 font-bold">Claim status</th>
+                    <th className="px-4 py-3 font-bold">Definition</th>
                     <th className="px-4 py-3 font-bold">Disclosure risk</th>
-                    <th className="px-4 py-3 font-bold">Next action</th>
+                    <th className="px-4 py-3 font-bold">Required next action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -189,7 +204,15 @@ export default function EvidenceLadderPage() {
                         {item.level}
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-700">
-                        {item.status}
+                        <div>{item.status}</div>
+                        {item.note && (
+                          <div className="mt-1 text-xs font-bold text-[#7a5200]">
+                            {item.note}
+                          </div>
+                        )}
+                      </td>
+                      <td className="max-w-md px-4 py-3 leading-relaxed text-slate-600">
+                        {item.definition}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -209,6 +232,32 @@ export default function EvidenceLadderPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="mt-5 rounded-2xl border border-[#D4980C]/30 bg-[#D4980C]/10 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7a5200]">
+                Level 4 clarity
+              </p>
+              <h3 className="mt-2 text-lg font-extrabold text-[#0A1F44]">
+                Level 4 means framework-mapped, not disclosure-ready.
+              </h3>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-sm font-bold text-[#0A1F44]">Level 4 includes</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
+                    <li>Source evidence attached</li>
+                    <li>Authorized partner confirmation completed</li>
+                    <li>Framework, SDG, disclosure, or scorecard mapping completed</li>
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-sm font-bold text-[#0A1F44]">Before Level 5</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
+                    <li>Chain-of-custody and version history reviewed</li>
+                    <li>Negative impact screening completed</li>
+                    <li>Disclosure owner signs off on readiness and boundary language</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

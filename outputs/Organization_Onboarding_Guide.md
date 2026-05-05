@@ -793,7 +793,7 @@ All reports support flexible date ranges:
 
 ## Getting Help
 
-- 📧 **Support:** org-support@synerxus.com
+- 📧 **Support:** hello@synerxus.com
 - 💬 **Live Chat:** Available 9am-6pm EST
 - 📚 **Help Center:** help.synerxus.com/organizations
 - 📞 **Phone:** For enterprise accounts

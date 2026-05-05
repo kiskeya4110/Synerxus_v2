@@ -77,10 +77,10 @@ export const evidenceLadderLevels = [
     level: "Level 4",
     title: "Framework-Mapped",
     meaning:
-      "The confirmed claim is aligned with ESG frameworks, SDGs, disclosure categories, or stakeholder reporting requirements.",
+      "The partner-confirmed claim has been mapped to relevant ESG frameworks, SDGs, disclosure categories, or stakeholder reporting needs. Level 4 shows reporting alignment support; it is not final disclosure readiness.",
     risk: "Low",
     action:
-      "Complete chain-of-custody review and negative impact screening.",
+      "Complete chain-of-custody review, negative impact screening, version review, and disclosure-readiness approval before using externally.",
   },
   {
     level: "Level 5",

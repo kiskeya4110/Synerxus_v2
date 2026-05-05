@@ -64,6 +64,63 @@ export function BoundaryNotice() {
   );
 }
 
+const evidenceAlignmentFrameworks = [
+  "CSRD",
+  "ESRS",
+  "GRI 413",
+  "SASB Standards",
+  "ISSB",
+  "TCFD",
+  "ISAE 3000",
+  "UN SDGs",
+] as const;
+
+export function EvidenceAlignmentBanner() {
+  return (
+    <section
+      aria-labelledby="evidence-alignment-heading"
+      className="border-y border-slate-100 bg-slate-50/70 px-4 py-8 md:px-8"
+    >
+      <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm md:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+            Evidence Alignment Support
+          </p>
+          <h2
+            id="evidence-alignment-heading"
+            className="mt-3 text-xl font-extrabold tracking-tight text-[#0A1F44] md:text-2xl"
+          >
+            Evidence alignment support for major ESG and assurance frameworks
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Synerxus helps organize partner-confirmed evidence records for reporting and assurance preparation.
+          </p>
+        </div>
+
+        <ul
+          aria-label="Supported evidence alignment frameworks"
+          className="mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-2.5 md:gap-3"
+        >
+          {evidenceAlignmentFrameworks.map((framework) => (
+            <li key={framework}>
+              <span
+                aria-label={`${framework} evidence alignment support`}
+                className="inline-flex min-h-10 items-center rounded-full border border-[#D4980C]/25 bg-[#D4980C]/10 px-4 py-2 text-sm font-bold text-[#0A1F44] shadow-sm"
+              >
+                {framework}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mx-auto mt-5 max-w-3xl text-center text-xs font-medium leading-relaxed text-slate-500">
+          Framework alignment does not constitute certification, formal assurance, endorsement, or regulatory compliance determination.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 const evidenceLayers = [
   {
     id: "claim",
@@ -370,7 +427,7 @@ export function EvidenceLadderSection() {
         <SectionHeader
           eyebrow="Evidence Ladder"
           title="The Evidence Ladder shows how defensible each ESG claim is."
-          body="The Evidence Ladder helps teams understand whether a claim is unsupported, internally asserted, source-backed, partner-confirmed, framework-mapped, or audit-ready."
+          body="The Evidence Ladder helps teams understand whether a claim is unsupported, internally asserted, source-backed, partner-confirmed, framework-mapped, or ready for disclosure review."
         />
 
         <div className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-start">

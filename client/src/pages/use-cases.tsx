@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { Link } from "wouter";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 import { AssessmentCta, SectionHeader } from "@/components/marketing/marketing-sections";
+import { Button } from "@/components/ui/button";
 
 const allUseCases = [
   {
@@ -74,22 +77,63 @@ export default function UseCasesPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-slate-50 py-14 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
-            Use Cases
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-            Use Synerxus wherever ESG claims need evidence.
-          </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-            From annual ESG reporting to greenwashing risk reduction, partner confirmation,
-            and supplier evidence — Synerxus structures proof across every claim type.
-          </p>
+      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 py-14 md:py-20">
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-white" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.95fr]">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center rounded-full border border-[#D4980C]/30 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#0A1F44] shadow-sm">
+              Use Cases
+            </div>
+            <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl lg:text-6xl">
+              Use Synerxus wherever ESG claims need evidence.
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-600 md:text-xl">
+              From annual ESG reporting to greenwashing risk reduction, partner confirmation,
+              and supplier evidence — Synerxus structures proof across every claim type.
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
+                <Link href="/request-assessment">Request Assessment</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-[#0A1F44] text-[#0A1F44] hover:bg-[#0A1F44] hover:text-[#D4980C]">
+                <a href="#use-case-explorer">
+                  Explore Use Cases <ArrowRight className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+            <div className="mt-7 flex flex-wrap gap-2.5">
+              {["8 evidence workflows", "Partner-confirmed records", "Framework-mapped claims"].map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-[#D4980C]" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="relative lg:justify-self-end">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+              <img
+                src="/optimized/ESG%20use%20cases%20hero.png"
+                alt="ESG use cases evidence workflow preview"
+                className="block aspect-[4/3] w-full object-cover object-center lg:max-w-[620px]"
+              />
+            </div>
+            <div className="absolute -bottom-5 left-5 right-5 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg md:left-8 md:right-auto md:min-w-64">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Evidence object coverage
+              </p>
+              <p className="mt-1 text-sm font-bold text-[#0A1F44]">
+                Claims, source records, confirmation, custody, and framework mapping.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section id="use-case-explorer" className="bg-white py-14 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Evidence use cases"

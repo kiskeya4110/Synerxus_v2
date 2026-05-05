@@ -25,6 +25,22 @@ const primaryNeeds = [
   "Other",
 ];
 
+const evidenceMaturityOptions = [
+  "Mostly narrative claims",
+  "Source records attached",
+  "Partner-confirmed records",
+  "Framework-mapped evidence",
+  "Disclosure-review ready",
+  "Not sure",
+];
+
+const timelineOptions = [
+  "This month",
+  "This quarter",
+  "Next reporting cycle",
+  "Exploratory",
+];
+
 export default function ContactPage() {
   const [form, setForm] = useState({
     name: "",
@@ -34,6 +50,9 @@ export default function ContactPage() {
     organizationType: "Company",
     primaryNeed: "Regulatory readiness assessment",
     frameworks: "",
+    evidenceMaturity: "Not sure",
+    claimVolume: "",
+    timeline: "This quarter",
     message: "",
   });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -60,6 +79,9 @@ export default function ContactPage() {
           organizationType: form.organizationType,
           primaryNeed: form.primaryNeed,
           frameworks: form.frameworks,
+          evidenceMaturity: form.evidenceMaturity,
+          claimVolume: form.claimVolume,
+          timeline: form.timeline,
           plan: "Regulatory Readiness Assessment",
           message: form.message,
         }),
@@ -148,12 +170,46 @@ export default function ContactPage() {
                 placeholder="CSRD / ESRS, GRI, SASB / ISSB, SDGs..."
               />
 
+              <div className="grid gap-4 md:grid-cols-3">
+                <label className="grid gap-2 text-sm font-bold text-slate-700">
+                  Current evidence maturity
+                  <select
+                    value={form.evidenceMaturity}
+                    onChange={(event) => update("evidenceMaturity", event.target.value)}
+                    className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900"
+                  >
+                    {evidenceMaturityOptions.map((item) => (
+                      <option key={item}>{item}</option>
+                    ))}
+                  </select>
+                </label>
+                <Field
+                  label="Claims to review"
+                  value={form.claimVolume}
+                  onChange={(value) => update("claimVolume", value)}
+                  placeholder="e.g. 10-25"
+                />
+                <label className="grid gap-2 text-sm font-bold text-slate-700">
+                  Timeline
+                  <select
+                    value={form.timeline}
+                    onChange={(event) => update("timeline", event.target.value)}
+                    className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900"
+                  >
+                    {timelineOptions.map((item) => (
+                      <option key={item}>{item}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
               <label className="grid gap-2 text-sm font-bold text-slate-700">
-                Message
+                Highest-risk claim or workflow
                 <textarea
                   value={form.message}
                   onChange={(event) => update("message", event.target.value)}
                   rows={5}
+                  placeholder="Example: annual ESG report claims, supplier program evidence, community benefit outputs, investor deck claims..."
                   className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900"
                 />
               </label>

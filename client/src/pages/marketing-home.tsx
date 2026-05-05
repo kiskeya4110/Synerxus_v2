@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, FileCheck2, GitBranch, Layers3, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
-import { SectionHeader } from "@/components/marketing/marketing-sections";
+import { EvidenceAlignmentBanner, SectionHeader } from "@/components/marketing/marketing-sections";
 import { evidenceLadderLevels, insights, primaryUseCases } from "@/components/marketing/marketing-data";
 
 const evidencePreviewTabs = [
@@ -111,98 +111,6 @@ const evidenceProgressSteps = [
   "Partner-confirmed",
   "Disclosure-ready",
 ];
-
-function EuFrameworkMark({ ariaLabel }: { ariaLabel: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className="h-14 w-14 shrink-0" aria-label={ariaLabel} role="img">
-      <circle cx="16" cy="16" r="15" fill="#003399" />
-      {Array.from({ length: 12 }, (_, i) => {
-        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        return (
-          <circle
-            key={i}
-            cx={16 + 9 * Math.cos(angle)}
-            cy={16 + 9 * Math.sin(angle)}
-            r="1.9"
-            fill="#FFCC00"
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-const evidenceAlignmentSupportLogos = [
-  { label: "CSRD", tag: "CSRD", render: () => <EuFrameworkMark ariaLabel="CSRD emblem" /> },
-  { label: "ESRS", tag: "ESRS", render: () => <EuFrameworkMark ariaLabel="ESRS emblem" /> },
-  { label: "GRI 413", tag: "GRI 413", render: () => <img src="/logos/gri.svg" alt="GRI 413 logo" className="h-14 w-auto shrink-0 object-contain" /> },
-  { label: "SASB", tag: "SASB", render: () => <img src="/logos/sasb.jpg" alt="SASB logo" className="h-14 w-14 shrink-0 object-contain" /> },
-  { label: "ISSB", tag: "ISSB", render: () => <img src="/logos/issb.svg" alt="ISSB logo" className="h-14 w-14 shrink-0 object-contain" /> },
-  { label: "TCFD", tag: "TCFD", render: () => <img src="/logos/tcfd.svg" alt="TCFD logo" className="h-14 w-auto shrink-0 object-contain" /> },
-  { label: "ISAE 3000", tag: "ISAE 3000", render: () => <img src="/logos/iaasb.svg" alt="ISAE 3000 logo" className="h-14 w-auto shrink-0 object-contain" /> },
-  { label: "UN SDGs", tag: "UN SDGs", render: () => <img src="/logos/un-sdgs.svg" alt="UN SDGs logo" className="h-14 w-auto shrink-0 object-contain" /> },
-] as const;
-
-function EvidenceAlignmentMarquee() {
-  const [items, setItems] = useState(() => [...evidenceAlignmentSupportLogos]);
-  const offsetRef = useRef(0);
-  const itemsRef = useRef(items);
-  const [offset, setOffset] = useState(0);
-
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  useEffect(() => {
-    let frame = 0;
-    let last = performance.now();
-    const stepWidth = 224;
-    const speed = 32;
-
-    const tick = (now: number) => {
-      const delta = now - last;
-      last = now;
-      offsetRef.current += (delta / 1000) * speed;
-
-      if (offsetRef.current >= stepWidth) {
-        const rotations = Math.floor(offsetRef.current / stepWidth);
-        offsetRef.current -= rotations * stepWidth;
-        let nextItems = itemsRef.current;
-        for (let i = 0; i < rotations; i += 1) {
-          nextItems = [...nextItems.slice(1), nextItems[0]];
-        }
-        itemsRef.current = nextItems;
-        setItems(nextItems);
-      }
-
-      setOffset(offsetRef.current);
-      frame = window.requestAnimationFrame(tick);
-    };
-
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  return (
-    <div className="relative overflow-hidden pb-5">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-white to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-white to-transparent" />
-      <div
-        className="flex w-max min-w-max items-center gap-12 pl-6 pr-6 will-change-transform"
-        style={{ transform: `translateX(-${offset}px)` }}
-      >
-        {items.map((logo) => (
-          <div key={logo.label} className="flex w-44 shrink-0 flex-col items-center justify-center gap-2 sm:w-48">
-            <div className="flex min-h-14 items-center justify-center">{logo.render()}</div>
-            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
-              {logo.tag}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const evidenceGapCards = [
   {
@@ -322,7 +230,7 @@ const useCaseDetail = [
     status: "Source-attached",
   },
   {
-    claimType: "Supplier sustainability compliance",
+    claimType: "Supplier sustainability review",
     evidenceSources: ["Vendor self-assessments", "Field inspection records", "Certifications"],
     framework: "GRI 308 / ESRS S2",
     status: "Partner-confirmed",
@@ -541,15 +449,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      {/* Compliance framework marquee */}
-      <div className="border-b border-slate-100 bg-white">
-        <div className="px-4 pt-4 pb-2 md:px-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-            Evidence Alignment Support
-          </p>
-        </div>
-        <EvidenceAlignmentMarquee />
-      </div>
+      <EvidenceAlignmentBanner />
       <section id="platform" className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader

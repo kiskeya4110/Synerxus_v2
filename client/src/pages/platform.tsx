@@ -168,7 +168,7 @@ export default function PlatformPage() {
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
               Synerxus helps organizations turn sustainability claims into structured,
-              partner-confirmed, audit-ready Evidence Objects.
+              partner-confirmed Evidence Objects for reporting and assurance preparation.
             </p>
             <Button asChild className="mt-7 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
               <Link href="/request-assessment">Request Assessment</Link>

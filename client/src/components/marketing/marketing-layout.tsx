@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
-import { ASSURANCE_BOUNDARY } from "./marketing-data";
 
 const navItems = [
   { label: "Platform", href: "/platform" },
@@ -12,27 +11,15 @@ const navItems = [
   { label: "Resources", href: "/resources" },
 ];
 
-const footerGroups = [
-  {
-    title: "Explore",
-    links: [
-      ["Platform", "/platform"],
-      ["Evidence Ladder", "/evidence-ladder"],
-      ["Use Cases", "/use-cases"],
-      ["Resources", "/resources"],
-    ],
-  },
-  {
-    title: "Get Started / Legal",
-    links: [
-      ["Request Assessment", "/request-assessment"],
-      ["View Sample Evidence Object", "/platform"],
-      ["Contact", "/request-assessment"],
-      ["Privacy Policy", "/privacy"],
-      ["Terms of Use", "/terms"],
-    ],
-  },
-];
+const ASSURANCE_FOOTER_NOTE =
+  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
+
+const footerLinks = [
+  ["Platform", "/platform"],
+  ["Use Cases", "/use-cases"],
+  ["Privacy", "/privacy"],
+  ["Terms", "/terms"],
+] as const;
 
 export function MarketingLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -140,45 +127,42 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
       <main>{children}</main>
 
-      <footer className="border-t border-slate-800 bg-slate-950 text-slate-200">
-        <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-          <div className="grid gap-5 md:grid-cols-[1.4fr_1fr_1fr]">
-            <div>
+      <footer className="border-t border-[#D4980C]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#f7d27a]/55">
+        <div className="mx-auto max-w-7xl px-4 py-5 md:px-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-md">
               <Logo size="sm" clickable={false} />
-              <p className="mt-2 text-xs font-bold text-[#FFD95A]">
-                Impacts. Verified.
-              </p>
-              <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-300">
-                ESG claims are only as strong as the evidence behind them.
+              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                Structured evidence records for ESG reporting and assurance preparation.
               </p>
             </div>
-            {footerGroups.map((group) => (
-              <div key={group.title}>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#FFD95A]">
-                  {group.title}
-                </h3>
-                <ul className="mt-2 space-y-1">
-                  {group.links.map(([label, href]) => (
-                    <li key={`${group.title}-${label}`}>
-                      <Link
-                        href={href}
-                        className="text-xs text-slate-300 transition-colors hover:text-white"
-                      >
-                        {label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <div className="flex flex-col gap-3 md:items-end">
+              <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-4 gap-y-2">
+                {footerLinks.map(([label, href]) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+              <a
+                href="mailto:hello@synerxus.com"
+                className="text-xs font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+              >
+                hello@synerxus.com
+              </a>
+            </div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-2 border-t border-white/10 pt-3 md:flex-row md:items-start md:justify-between">
-            <p className="max-w-4xl text-xs leading-relaxed text-slate-400">
-              {ASSURANCE_BOUNDARY}
-            </p>
-            <p className="shrink-0 text-xs text-slate-500">
+          <div className="mt-4 border-t border-[#D4980C]/20 pt-3">
+            <p className="text-xs text-slate-600">
               © 2026 Synerxus. All rights reserved.
+            </p>
+            <p className="mt-2 max-w-5xl text-[11px] leading-relaxed text-slate-600">
+              {ASSURANCE_FOOTER_NOTE}
             </p>
           </div>
         </div>

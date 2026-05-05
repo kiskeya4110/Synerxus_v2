@@ -90,7 +90,7 @@ async function getProPublicaSuggestions(query: string, state?: string): Promise<
   if (state) params.set("state[id]", state.toUpperCase());
 
   const response = await fetch(`https://projects.propublica.org/nonprofits/api/v2/search.json?${params.toString()}`, {
-    headers: { "User-Agent": "Synerxus NGO partner search (support@synerxus.com)" },
+    headers: { "User-Agent": "Synerxus NGO partner search (hello@synerxus.com)" },
   });
 
   if (!response.ok) {
@@ -124,7 +124,7 @@ async function getWikidataSuggestions(query: string): Promise<NgoPartnerSuggesti
   });
 
   const response = await fetch(`https://www.wikidata.org/w/api.php?${params.toString()}`, {
-    headers: { "User-Agent": "Synerxus NGO partner search (support@synerxus.com)" },
+    headers: { "User-Agent": "Synerxus NGO partner search (hello@synerxus.com)" },
   });
 
   if (!response.ok) {

@@ -323,7 +323,7 @@ export function generateOrgPDFContent(
             This report contains confidential information. Distribution is restricted to authorized personnel.
           </div>
           <div class="footer-copyright">
-            © ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com
+            © ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com
           </div>
           <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
         </div>
@@ -1119,7 +1119,7 @@ export function generatePDFContent(
               </tr>
             </tbody>
           </table>
-          <p class="matrix-note">Full evidence crosswalk documentation available upon request: assurance@synerxus.com</p>
+          <p class="matrix-note">Full evidence crosswalk documentation available upon request: hello@synerxus.com</p>
         </div>
 
         <!-- ═══ SECTION 14: Negative Impact Screening Summary ═══ -->
@@ -1308,7 +1308,7 @@ export function generatePDFContent(
           <div style="text-align:center;margin-bottom:8px;">
             <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorised personnel.</div>
           </div>
-          <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | support@synerxus.com | assurance@synerxus.com</div>
+          <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com</div>
           <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Evidence.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
         </div>
       </body>

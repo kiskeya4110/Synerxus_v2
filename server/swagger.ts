@@ -29,7 +29,7 @@ const swaggerDefinition = {
     `,
     contact: {
       name: "Synerxus Support",
-      email: "support@synerxus.com",
+      email: "hello@synerxus.com",
     },
     license: {
       name: "Proprietary",

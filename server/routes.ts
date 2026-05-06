@@ -4364,7 +4364,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       // Count verified and pending activities for KPI display
-      const verifiedCount = organizationActivities.filter(a => a.verificationStatus === 'approved' || a.verificationStatus === 'verified').length;
+      const verifiedActivities = organizationActivities.filter(a => a.verificationStatus === 'approved' || a.verificationStatus === 'verified');
+      const verifiedCount = verifiedActivities.length;
+      const verifiedHours = verifiedActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+      const verifiedOutputs = verifiedActivities.length;
       const pendingCount = organizationActivities.filter(a => a.verificationStatus === 'pending' || a.verificationStatus === 'self_reported' || !a.verificationStatus).length;
 
       res.json({
@@ -4373,6 +4376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completedProjects,
           totalProjects: organizationProjects.length,
           totalHours,
+          verifiedHours,
+          verifiedOutputs,
           sdgsAddressed: uniqueSDGs.size,
           aiuEarned,
           livesTouched: totalPeopleImpacted,
@@ -4454,6 +4459,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...organizationActivities.filter((a: any) => a.projectId === p.id && a.userId != null).map((a: any) => a.userId),
           ]);
 
+          // Per-project verified/pending/incomplete/rejected counts and hours
+          const projActivities = organizationActivities.filter((a: any) => a.projectId === p.id);
+          const projVerified = projActivities.filter((a: any) => a.verificationStatus === 'approved' || a.verificationStatus === 'verified');
+          const projVerifiedHours = projVerified.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const projVerifiedOutputs = projVerified.length;
+          const projPending = projActivities.filter((a: any) => a.verificationStatus === 'pending' || a.verificationStatus === 'self_reported' || !a.verificationStatus).length;
+          const projIncomplete = projActivities.filter((a: any) => a.verificationStatus === 'incomplete').length;
+          const projRejected = projActivities.filter((a: any) => a.verificationStatus === 'rejected').length;
+
+          // Last activity: most recent date across activities, project updatedAt
+          const activityDates = projActivities.map((a: any) => a.date || a.createdAt).filter(Boolean).map((d: any) => new Date(d).getTime());
+          const projUpdated = (p as any).updatedAt ? new Date((p as any).updatedAt).getTime() : 0;
+          const allDates = [...activityDates, projUpdated].filter(t => t > 0);
+          const lastActivityMs = allDates.length > 0 ? Math.max(...allDates) : null;
+          const lastActivity = lastActivityMs ? new Date(lastActivityMs).toISOString() : null;
+
           return {
             id: p.id,
             name: p.name,
@@ -4462,6 +4483,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sdgGoals: p.sdgGoals || [],
             location: p.location,
             totalHours: projectHours,
+            verifiedHours: projVerifiedHours,
+            verifiedOutputs: projVerifiedOutputs,
+            pendingVerification: projPending,
+            incompleteRecords: projIncomplete,
+            rejectedRecords: projRejected,
+            lastActivity,
             volunteerCount: projVolunteerIds.size,
             livesTouched: projectLivesTouched,
           };

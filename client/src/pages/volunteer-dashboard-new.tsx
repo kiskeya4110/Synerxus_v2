@@ -517,7 +517,7 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
         loading={logMutation.isPending}
       >
         <Plus className="h-5 w-5 mr-2" />
-        Log Impact
+        Submit Activity
       </Button>
     </form>
   );
@@ -541,7 +541,7 @@ function ImpactScoreCard({ score, trend, hoursLogged, projectsActive, onViewDeta
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-              Your Impact Score
+              Verified Contribution Summary
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-5xl font-bold text-foreground tabular-nums">
@@ -617,7 +617,7 @@ function RecentLogs({ logs, isLoading }: RecentLogsProps) {
     return (
       <EmptyState
         title="No activity yet"
-        description="Log your first impact to get started"
+        description="Submit your first activity to get started"
         size="sm"
       />
     );
@@ -693,7 +693,7 @@ function ActiveProjects({ projects, isLoading }: ActiveProjectsProps) {
     return (
       <EmptyState
         title="No active projects"
-        description="Select verified projects where your work can become traceable impact data"
+        description="Join a project to start submitting verified activity records"
         action={{ label: "View Projects", onClick: () => {} }}
         size="sm"
       />
@@ -872,16 +872,16 @@ export default function VolunteerDashboardNew() {
   const stats = useMemo(() => {
     const data = dashboardData || {};
     return {
-      impactScore: 0, // AIU removed - using calculated metrics instead
       hoursLogged: data.totalHours || data.verifiedHours || 0,
       verifiedHours: data.verifiedHours || 0,
+      verifiedActivities: data.verifiedCount || recentLogs.filter((l: any) => l.status === "verified" || l.status === "approved").length,
       projectsActive: data.activeProjects || projects.filter((p: any) => p.status === "active" || p.status === "in progress").length || 0,
       totalProjects: data.totalProjects || projects.length || 0,
       completedTasks: data.completedTasks || 0,
       totalTasks: data.totalTasks || 0,
       skillsCount: data.skillsCount || data.volunteerProfile?.skills?.length || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
-      totalPeopleImpacted: data.totalPeopleImpacted || 0,
+      peopleReached: data.totalPeopleImpacted || 0,
       pendingVerifications: recentLogs.filter((l: any) => l.status === "pending").length,
     };
   }, [dashboardData, projects, recentLogs]);
@@ -982,7 +982,7 @@ export default function VolunteerDashboardNew() {
                 {[
                   { icon: BarChart3, label: "Impact Wallet", action: () => { setMenuOpen(false); setMobileTab('wallet'); } },
                   { icon: Target, label: "My Projects", action: () => { setMenuOpen(false); setMobileTab('projects'); } },
-                  { icon: Plus, label: "Log Impact", action: () => { setMenuOpen(false); setShowLogModal(true); } },
+                  { icon: Plus, label: "Log Activity", action: () => { setMenuOpen(false); setShowLogModal(true); } },
                   { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/my-work'); } },
                   { icon: FileText, label: "Log Activity", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/log-activity'); } },
                   { icon: Settings, label: "Profile Settings", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/volunteer-profile-settings'); } },
@@ -1044,29 +1044,33 @@ export default function VolunteerDashboardNew() {
               {/* Welcome Section */}
               <div className="text-center">
                 <h1 className="text-base font-bold text-stone-800 leading-tight">
-                  Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}!
+                  Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}
                 </h1>
-                <p className="text-stone-600 text-xs">Your impact journey continues</p>
+                <p className="text-stone-600 text-xs">Your verified contribution record</p>
               </div>
 
               {/* Quick Stats Summary */}
-              <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-3 shadow-lg">
+              <div className="bg-gradient-to-br from-emerald-700 to-teal-800 rounded-2xl p-3 shadow-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-white font-semibold">Impact Summary</h2>
-                  <span className="text-xs text-indigo-200 bg-indigo-500/30 px-2 py-0.5 rounded-full">This Month</span>
+                  <h2 className="text-white font-semibold text-sm">Activity Summary</h2>
+                  {stats.pendingVerifications > 0 && (
+                    <span className="text-xs text-amber-200 bg-amber-500/30 px-2 py-0.5 rounded-full">
+                      {stats.pendingVerifications} pending
+                    </span>
+                  )}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-white">{stats.hoursLogged}</p>
-                    <p className="text-xs text-indigo-200">Hours</p>
+                    <p className="text-2xl font-bold text-white">{stats.verifiedHours || stats.hoursLogged}</p>
+                    <p className="text-xs text-emerald-200">Verified Hrs</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">{stats.totalProjects}</p>
-                    <p className="text-xs text-indigo-200">Projects</p>
+                    <p className="text-xs text-emerald-200">Projects</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-white">{stats.totalPeopleImpacted}</p>
-                    <p className="text-xs text-indigo-200">People Helped</p>
+                    <p className="text-2xl font-bold text-white">{stats.sdgsAddressed}</p>
+                    <p className="text-xs text-emerald-200">SDGs</p>
                   </div>
                 </div>
               </div>
@@ -1082,7 +1086,8 @@ export default function VolunteerDashboardNew() {
                     <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
                       <Plus className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <span className="text-sm font-medium text-stone-800">Log Impact</span>
+                    <span className="text-sm font-medium text-stone-800">Log Activity</span>
+                    <span className="text-[10px] text-stone-500">Submit hours and output</span>
                   </button>
                   <button
                     onClick={() => navigate('/discover-opportunities')}
@@ -1092,6 +1097,7 @@ export default function VolunteerDashboardNew() {
                       <Search className="w-4 h-4 text-blue-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">Find Projects</span>
+                    <span className="text-[10px] text-stone-500">Browse matched opportunities</span>
                   </button>
                   <button
                     onClick={() => setMobileTab('wallet')}
@@ -1100,7 +1106,8 @@ export default function VolunteerDashboardNew() {
                     <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                       <BarChart3 className="w-4 h-4 text-amber-600" />
                     </div>
-                    <span className="text-sm font-medium text-stone-800">View Wallet</span>
+                    <span className="text-sm font-medium text-stone-800">Impact Wallet</span>
+                    <span className="text-[10px] text-stone-500">View contribution history</span>
                   </button>
                   <button
                     onClick={() => navigate('/volunteer-profile-settings')}
@@ -1110,6 +1117,7 @@ export default function VolunteerDashboardNew() {
                       <User className="w-4 h-4 text-purple-600" />
                     </div>
                     <span className="text-sm font-medium text-stone-800">My Profile</span>
+                    <span className="text-[10px] text-stone-500">Skills and availability</span>
                   </button>
                 </div>
               </div>
@@ -1186,14 +1194,14 @@ export default function VolunteerDashboardNew() {
                   <p className="text-xs text-stone-500 mt-0.5">{stats.verifiedHours} verified</p>
                 </div>
 
-                {/* People Impacted */}
+                {/* People Reached */}
                 <div className="bg-white rounded-xl p-3 border border-stone-200 shadow-sm">
                   <div className="flex items-center gap-1.5 mb-1">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-stone-500 uppercase">People</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">Reached</span>
                   </div>
-                  <p className="text-2xl font-bold text-stone-800">{stats.totalPeopleImpacted}</p>
-                  <p className="text-xs text-stone-500 mt-0.5">people impacted</p>
+                  <p className="text-2xl font-bold text-stone-800">{stats.peopleReached}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">partner-reported reach</p>
                 </div>
 
                 {/* SDGs Addressed */}
@@ -1228,6 +1236,11 @@ export default function VolunteerDashboardNew() {
                   </div>
                 </div>
               )}
+
+              {/* Wallet Description */}
+              <p className="text-[11px] text-stone-500 text-center px-2 leading-snug">
+                Your Impact Wallet shows your verified volunteer activity, contribution history, and SDG reporting context. It does not establish causal impact.
+              </p>
 
               {/* Recent Logs */}
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
@@ -1285,7 +1298,7 @@ export default function VolunteerDashboardNew() {
                       className="w-full px-4 py-5 text-center hover:bg-stone-50 transition-colors"
                     >
                       <p className="text-sm text-stone-500">No activity yet</p>
-                      <p className="text-xs text-indigo-600 mt-1">Tap to log your first impact →</p>
+                      <p className="text-xs text-indigo-600 mt-1">Tap to submit your first activity →</p>
                     </button>
                   )}
                 </div>
@@ -1512,10 +1525,11 @@ export default function VolunteerDashboardNew() {
               <span className="text-[10px] font-semibold">Home</span>
             </button>
 
-            {/* Log Impact */}
+            {/* Log Activity */}
             <button
               onClick={() => setShowLogModal(true)}
               className="flex flex-col items-center justify-center py-2 px-1 w-full min-w-0 rounded-xl text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+              aria-label="Log Activity"
             >
               <span data-pwa-nav-icon className="w-8 h-7 flex items-center justify-center"><Plus className="w-5 h-5" /></span>
               <span className="text-[10px] font-semibold">Log</span>
@@ -1532,13 +1546,13 @@ export default function VolunteerDashboardNew() {
           </div>
         </nav>
 
-        {/* Log Impact Modal */}
+        {/* Log Activity Modal */}
         <Dialog open={showLogModal} onOpenChange={setShowLogModal}>
           <DialogContent className="max-w-lg top-[3%] translate-y-0 max-h-[calc(100dvh-6rem)]">
             <DialogHeader>
-              <DialogTitle>Log Impact</DialogTitle>
+              <DialogTitle>Log Activity</DialogTitle>
               <DialogDescription>
-                Record your hours and outcomes.
+                Record your hours and output details for partner verification.
               </DialogDescription>
             </DialogHeader>
             <ImpactLogForm
@@ -1562,44 +1576,44 @@ export default function VolunteerDashboardNew() {
         {/* Page Header */}
         <PageHeader
           title={`Welcome back, ${activeUser.displayName?.split(" ")[0] || "Volunteer"}`}
-          description="Track your impact, log your hours, and make a difference."
+          description="Log activity, track verification status, and view your verified contribution record."
           actions={
             <Button variant="accent" size="lg" onClick={() => setShowLogModal(true)}>
               <Plus className="h-5 w-5 mr-2" />
-              Log Impact
+              Log Activity
             </Button>
           }
         />
 
-        {/* Quick Stats Row */}
+        {/* Primary KPI Row */}
         <Grid columns={4} gap="default">
           <MetricCard
-            label="SDGs Addressed"
-            value={stats.sdgsAddressed}
-            subtitle={`${stats.skillsCount} skills applied`}
-            accentColor="primary"
-            icon={<Globe className="h-5 w-5 text-primary" />}
-          />
-          <MetricCard
-            label="Hours Logged"
-            value={stats.hoursLogged}
-            subtitle={`${stats.verifiedHours} verified`}
-            accentColor="accent"
-            icon={<Clock className="h-5 w-5 text-accent" />}
-          />
-          <MetricCard
-            label="People Impacted"
-            value={stats.totalPeopleImpacted}
-            subtitle={`${stats.totalProjects} projects`}
+            label="Verified Hours"
+            value={stats.verifiedHours || stats.hoursLogged}
+            subtitle={stats.pendingVerifications > 0 ? `${stats.pendingVerifications} pending review` : "partner-confirmed"}
             accentColor="success"
-            icon={<Target className="h-5 w-5 text-success" />}
+            icon={<Clock className="h-5 w-5 text-success" />}
           />
           <MetricCard
-            label="Active Projects"
-            value={stats.projectsActive}
-            subtitle={`${stats.sdgsAddressed} SDGs addressed`}
+            label="Verified Activities"
+            value={stats.verifiedActivities}
+            subtitle={stats.pendingVerifications > 0 ? `${stats.pendingVerifications} pending` : "evidence records"}
+            accentColor="primary"
+            icon={<CheckCircle2 className="h-5 w-5 text-primary" />}
+          />
+          <MetricCard
+            label="Projects Supported"
+            value={stats.totalProjects}
+            subtitle={`${stats.projectsActive} active`}
+            accentColor="accent"
+            icon={<Target className="h-5 w-5 text-accent" />}
+          />
+          <MetricCard
+            label="SDGs Mapped"
+            value={stats.sdgsAddressed}
+            subtitle="reporting context"
             accentColor="cyan"
-            icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
+            icon={<Globe className="h-5 w-5 text-[#22D3EE]" />}
           />
         </Grid>
 
@@ -1608,34 +1622,36 @@ export default function VolunteerDashboardNew() {
           {/* Left Column - Impact Score & Streak */}
           <div className="space-y-6">
             <ImpactScoreCard
-              score={stats.totalPeopleImpacted}
-              trend={15}
-              hoursLogged={stats.hoursLogged}
+              score={stats.verifiedActivities}
+              hoursLogged={stats.verifiedHours || stats.hoursLogged}
               projectsActive={stats.projectsActive}
             />
             <Card variant="metric" className="border-l-accent">
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  Volunteer Summary
+                  Contribution Summary
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Skills Applied</span>
-                    <span className="text-sm font-semibold">{stats.skillsCount}</span>
+                    <span className="text-sm text-muted-foreground">Verified Activities</span>
+                    <span className="text-sm font-semibold text-emerald-700">{stats.verifiedActivities}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">SDGs Addressed</span>
+                    <span className="text-sm text-muted-foreground">Pending Review</span>
+                    <span className={`text-sm font-semibold ${stats.pendingVerifications > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{stats.pendingVerifications}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">SDGs Mapped</span>
                     <span className="text-sm font-semibold">{stats.sdgsAddressed}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Tasks Completed</span>
-                    <span className="text-sm font-semibold">{stats.completedTasks}/{stats.totalTasks}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Pending Reviews</span>
-                    <span className="text-sm font-semibold">{stats.pendingVerifications}</span>
+                    <span className="text-sm text-muted-foreground">People Reached</span>
+                    <span className="text-sm font-semibold text-muted-foreground">{stats.peopleReached} <span className="text-[10px] font-normal">(partner-reported)</span></span>
                   </div>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-4 leading-snug border-t border-border pt-3">
+                  Your wallet shows verified activity and reporting context. It does not establish causal impact.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -1686,8 +1702,8 @@ export default function VolunteerDashboardNew() {
           </Grid>
         </Section>
 
-        {/* SDG Impact Section */}
-        <Section title="Your SDG Impact">
+        {/* SDG Framework Context Section */}
+        <Section title="SDG Framework Context" description="Reporting context — not certification or causal attribution.">
           <Card variant="glass">
             <CardContent className="p-6">
               <div className="flex flex-wrap gap-3">
@@ -1713,13 +1729,13 @@ export default function VolunteerDashboardNew() {
       {/* Footer */}
       <Footer />
 
-      {/* Log Impact Modal */}
+      {/* Log Activity Modal */}
       <Dialog open={showLogModal} onOpenChange={setShowLogModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Log Your Impact</DialogTitle>
+            <DialogTitle>Log Activity</DialogTitle>
             <DialogDescription>
-              Record your volunteer hours and the impact you made.
+              Record your volunteer hours and output details for partner verification.
             </DialogDescription>
           </DialogHeader>
           <ImpactLogForm

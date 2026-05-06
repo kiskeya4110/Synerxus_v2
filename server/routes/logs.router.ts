@@ -1003,6 +1003,78 @@ logsRouter.patch("/logs/:id/reject", authMiddleware, async (req: Request, res: R
 });
 
 /**
+ * PATCH /logs/:id/mark-incomplete - Mark a record as incomplete (missing required evidence fields)
+ * Separate status from rejected: incomplete records are repairable, rejected records are not.
+ */
+logsRouter.patch("/logs/:id/mark-incomplete", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const logId = parseInt(req.params.id);
+    const { reason } = req.body;
+    const reviewerId = req.user?.id;
+
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only NGO staff can mark logs as incomplete" });
+    }
+
+    const activity = await storage.getVolunteerActivity(logId);
+    if (!activity) {
+      return res.status(404).json({ message: "Impact log not found" });
+    }
+
+    if (activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot update logs for other organizations" });
+      }
+    }
+
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to update logs" });
+      }
+    }
+
+    const incompleteReason = reason?.trim() || "Marked incomplete — missing required evidence fields";
+
+    const auditEntry: InsertVerificationAuditLog = {
+      activityId: logId,
+      projectId: activity.projectId || undefined,
+      organizationId: req.user?.organizationId || undefined,
+      action: 'incomplete',
+      previousStatus: activity.verificationStatus || 'pending',
+      newStatus: 'incomplete',
+      performedBy: reviewerId!,
+      performedByRole: req.user?.userType || 'organization',
+      volunteerId: activity.userId,
+      ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+      userAgent: req.headers['user-agent'] || undefined,
+      reason: incompleteReason,
+    };
+
+    const updatedActivity = await withTransaction(async (tx) => {
+      const [updated] = await tx.update(volunteerActivitiesTable)
+        .set({ verificationStatus: 'incomplete', rejectedReason: incompleteReason, verifiedBy: reviewerId, verifiedAt: new Date() } as any)
+        .where(eq(volunteerActivitiesTable.id, logId))
+        .returning();
+      await tx.insert(verificationAuditLogTable).values(auditEntry);
+      return updated;
+    });
+
+    storage.markNotificationsReadByEntity("volunteer_activity", logId).catch(err => {
+      logger.error("Failed to mark notifications as read:", err);
+    });
+
+    broadcastUpdate("log_incomplete", updatedActivity);
+    res.json(updatedActivity);
+  } catch (err) {
+    logger.error("Error marking impact log as incomplete:", err);
+    res.status(500).json({ message: "Failed to mark impact log as incomplete" });
+  }
+});
+
+/**
  * GET /logs/:id/suggested-sdgs - Get auto-suggested SDG tags for a log (Phase 5)
  * Used by the NGO Edit modal to show suggestions
  */

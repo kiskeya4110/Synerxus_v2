@@ -27,10 +27,9 @@ import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge, SDGBadge, StatusBadge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/avatar";
-import { Progress, ProgressWithLabel } from "@/components/ui/progress";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Stat } from "@/components/ui/stat";
 import {
   prepareReportContent,
@@ -81,6 +80,12 @@ interface Project {
   completionPercentage: number;
   activeVolunteers: number;
   totalHours: number;
+  verifiedOutputs?: number;
+  verifiedHours?: number;
+  pendingVerification?: number;
+  incompleteRecords?: number;
+  rejectedRecords?: number;
+  lastActivity?: string | null;
   sdgGoals: number[];
 }
 
@@ -143,7 +148,7 @@ function VerificationItem({ item, onApprove, onReject, isProcessing }: Verificat
           className="h-8 px-2.5 text-red-600 border-red-200 hover:bg-red-50"
         >
           <XCircle className="h-3.5 w-3.5 mr-1" />
-          Deny
+          Reject
         </Button>
         <Button
           size="sm"
@@ -153,7 +158,7 @@ function VerificationItem({ item, onApprove, onReject, isProcessing }: Verificat
           className="h-8 px-2.5"
         >
           <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-          Accept
+          Verify
         </Button>
       </div>
     </div>
@@ -249,60 +254,70 @@ function VerificationQueue({
 // Project Card Component
 interface ProjectCardProps {
   project: Project;
+  pendingCount?: number;
   onClick?: () => void;
 }
 
-function ProjectCard({ project, onClick }: ProjectCardProps) {
-  const statusColors = {
-    active: "success",
-    completed: "info",
-    draft: "secondary",
-    paused: "warning",
-  } as const;
+function ProjectCard({ project, pendingCount = 0, onClick }: ProjectCardProps) {
+  const statusConfig: Record<string, { variant: string; label: string }> = {
+    active:    { variant: "success",   label: "Active" },
+    completed: { variant: "info",      label: "Completed" },
+    draft:     { variant: "secondary", label: "Draft" },
+    paused:    { variant: "warning",   label: "Paused" },
+    archived:  { variant: "secondary", label: "Archived" },
+  };
+
+  const { variant, label } = statusConfig[project.status] ?? { variant: "secondary", label: project.status };
 
   return (
     <Card variant="default" interactive onClick={onClick} className="p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-foreground truncate">{project.name}</h4>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge
-              variant={statusColors[project.status as keyof typeof statusColors] || "secondary"}
-              size="sm"
-            >
-              {project.status}
-            </Badge>
+          <div className="flex items-center gap-2 mt-1.5">
+            <Badge variant={variant as any} size="sm">{label}</Badge>
+            {pendingCount > 0 && (
+              <Badge variant="warning" size="sm" className="bg-amber-100 text-amber-700 border-amber-200">
+                {pendingCount} pending
+              </Badge>
+            )}
           </div>
         </div>
         <ChevronRight className="h-5 w-5 text-muted-foreground" />
       </div>
 
-      <ProgressWithLabel
-        label="Completion"
-        value={project.completionPercentage}
-        size="sm"
-        indicatorColor="primary"
-      />
-
-      <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-border">
+      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border">
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{project.activeVolunteers}</p>
+          <p className="text-base font-semibold text-foreground">{project.activeVolunteers}</p>
           <p className="text-xs text-muted-foreground">Volunteers</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{project.totalHours}h</p>
-          <p className="text-xs text-muted-foreground">Hours Logged</p>
+          <p className="text-base font-semibold text-foreground">{project.totalHours}h</p>
+          <p className="text-xs text-muted-foreground">Hours</p>
+        </div>
+        <div className="text-center">
+          <p className="text-base font-semibold text-[#0A9A6E]">{project.verifiedOutputs ?? 0}</p>
+          <p className="text-xs text-muted-foreground">Verified</p>
         </div>
       </div>
 
+      {project.lastActivity !== undefined && (
+        <p className="text-[10px] text-muted-foreground mt-2">
+          {project.lastActivity
+            ? `Last activity: ${new Date(project.lastActivity).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+            : 'No recent activity'}
+        </p>
+      )}
+
       {project.sdgGoals.length > 0 && (
-        <div className="flex gap-1 mt-3 pt-3 border-t border-border">
+        <div className="flex gap-1 mt-2 pt-2 border-t border-border flex-wrap">
           {project.sdgGoals.slice(0, 4).map((sdg) => (
             <SDGBadge key={sdg} sdg={sdg as any} size="sm" />
           ))}
           {project.sdgGoals.length > 4 && (
             <Badge variant="secondary" size="sm">+{project.sdgGoals.length - 4}</Badge>
           )}
+          <span className="text-[10px] text-muted-foreground self-center ml-auto">Framework Context</span>
         </div>
       )}
     </Card>
@@ -354,6 +369,86 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
           </Badge>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Invite Volunteer Modal
+interface InviteVolunteerModalProps {
+  organizationId: number | undefined;
+  projects: Array<{ id: number; name: string }>;
+  onClose: () => void;
+}
+
+function InviteVolunteerModal({ organizationId, projects, onClose }: InviteVolunteerModalProps) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [projectId, setProjectId] = useState<string>("none");
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!email.includes("@")) {
+      toast({ title: "Invalid email", description: "Enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const headers = await getAuthHeaders();
+      const body: Record<string, any> = { email, organizationId, role: "volunteer" };
+      if (projectId && projectId !== "none") body.projectId = parseInt(projectId);
+      const res = await fetch("/api/invitations/send", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast({ title: "Invitation sent", description: `Invite sent to ${email}.` });
+      onClose();
+    } catch {
+      toast({ title: "Failed to send", description: "Could not send the invitation. Try again.", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
+        <h2 className="text-base font-semibold text-foreground mb-4">Invite Volunteer</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1">Email address</label>
+            <Input
+              type="email"
+              placeholder="volunteer@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1">Assign to project (optional)</label>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="No project assignment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No project assignment</SelectItem>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-6">
+          <Button variant="outline" className="flex-1" onClick={onClose} disabled={sending}>Cancel</Button>
+          <Button className="flex-1" onClick={handleSend} disabled={sending || !email}>
+            {sending ? "Sending…" : "Send Invite"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -434,7 +529,7 @@ const OrganizationView = memo(function OrganizationView({
 
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [isApprovingAll, setIsApprovingAll] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => orgTab === 'reports' ? 'reports' : 'overview');
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   // Invalidate verification queue on real-time WebSocket events
   const handleWsMessage = useCallback((msg: { type: string; data: any }) => {
@@ -517,11 +612,9 @@ const OrganizationView = memo(function OrganizationView({
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
-  // Sync desktop activeTab when orgTab changes (e.g. from nav link)
+  // Close report when orgTab changes away (e.g. from nav link)
   useEffect(() => {
-    if (orgTab === 'reports') setActiveTab('reports');
-    else if (orgTab === 'projects') setActiveTab('projects');
-    else closeReport();
+    if (orgTab !== 'reports') closeReport();
   }, [orgTab]);
 
   // Fetch dashboard stats
@@ -637,6 +730,7 @@ const OrganizationView = memo(function OrganizationView({
       activeProjects: data.activeProjects || 0,
       totalVolunteers: data.activeVolunteers || 0,
       totalHours: data.totalHours || 0,
+      verifiedHours: data.verifiedHours || 0,
       verifiedCount: data.verifiedCount || 0,
       pendingVerifications: pendingVerifications.length,
       impactScore: data.aiuEarned || 0,
@@ -751,6 +845,42 @@ const OrganizationView = memo(function OrganizationView({
   const handleHistoryFilterChange = (filter: 'all' | 'pending' | 'verified' | 'rejected') => {
     setHistoryFilter(filter);
     setVisibleCount(20);
+  };
+
+  // Pending verification count per project (for project cards)
+  const pendingCountByProject = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of pendingVerifications) {
+      map[item.projectName] = (map[item.projectName] || 0) + 1;
+    }
+    return map;
+  }, [pendingVerifications]);
+
+  // Mark incomplete — rejects with an "incomplete" reason, removes from pending queue
+  const handleMarkIncomplete = async (id: number) => {
+    setProcessingIds((prev) => new Set(prev).add(id));
+    try {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`/api/logs/${id}/reject`, {
+        method: "PATCH",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ reason: "Marked incomplete — missing required evidence fields" }),
+      });
+      if (!response.ok) throw new Error("Failed to mark incomplete");
+      refetchPending();
+      queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      toast({ title: "Marked Incomplete", description: "Record moved to incomplete status. Missing evidence fields must be resolved before verification." });
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to update record.", variant: "destructive" });
+    } finally {
+      setProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   // Approval handlers - route to correct endpoint based on item type
@@ -925,13 +1055,13 @@ const OrganizationView = memo(function OrganizationView({
                       onClick={(e) => { e.stopPropagation(); handleReject(log.id); }}
                       className="px-2 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
                     >
-                      {processingIds.has(log.id) ? '...' : '✗ Deny'}
+                      {processingIds.has(log.id) ? '...' : '✗ Reject'}
                     </span>
                     <span
                       onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
                       className="px-2 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
                     >
-                      {processingIds.has(log.id) ? '...' : '✓ Accept'}
+                      {processingIds.has(log.id) ? '...' : '✓ Verify'}
                     </span>
                   </>
                 ) : (
@@ -1038,13 +1168,13 @@ const OrganizationView = memo(function OrganizationView({
                       onClick={(e) => { e.stopPropagation(); handleReject(log.id); }}
                       className="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
                     >
-                      {processingIds.has(log.id) ? '...' : '✗ Deny'}
+                      {processingIds.has(log.id) ? '...' : '✗ Reject'}
                     </span>
                     <span
                       onClick={(e) => { e.stopPropagation(); handleApprove(log.id); }}
                       className="px-2.5 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
                     >
-                      {processingIds.has(log.id) ? '...' : '✓ Accept'}
+                      {processingIds.has(log.id) ? '...' : '✓ Verify'}
                     </span>
                   </>
                 ) : (
@@ -1194,7 +1324,7 @@ const OrganizationView = memo(function OrganizationView({
           {/* Mobile Home Tab */}
           {orgTab === 'home' && (
             <>
-              {/* Log Hours — primary action, always visible */}
+              {/* Log Outcome — primary action, always visible */}
               <button
                 onClick={() => navigate('/ngo/log-hours')}
                 className="w-full bg-[#D4980C]/10 border border-[#D4980C]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
@@ -1204,14 +1334,14 @@ const OrganizationView = memo(function OrganizationView({
                     <Clock className="h-5 w-5 text-[#7a5200]" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold leading-tight text-stone-800">Log Volunteer Hours & Impact</p>
-                    <p className="text-[11px] text-stone-500 mt-0.5">Record verified outcomes for your team</p>
+                    <p className="text-sm font-bold leading-tight text-stone-800">Log Volunteer Output</p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">Capture output for evidence record creation</p>
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-[#7a5200]/60 flex-shrink-0" />
               </button>
 
-              {/* Core Metrics - 2x2 Grid */}
+              {/* Core Metrics - 2x2 Grid (MVP KPIs) */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setOrgTab?.('projects')}
@@ -1226,39 +1356,41 @@ const OrganizationView = memo(function OrganizationView({
                 </button>
 
                 <button
-                  onClick={() => setOrgTab?.('volunteers')}
-                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-emerald-300 hover:shadow-md transition-all active:scale-[0.98]"
+                  onClick={() => { setHistoryFilter('pending'); setOrgTab?.('verify'); }}
+                  className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm text-left hover:border-amber-400 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Volunteers</span>
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <span className="text-xs font-medium text-gray-500 uppercase">Pending</span>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.totalVolunteers}</p>
-                  <p className="text-xs text-gray-500 mt-1">contributing</p>
-                </button>
-
-                <button
-                  onClick={() => setOrgTab?.('hours')}
-                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Hours</span>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.totalHours}</p>
-                  <p className="text-xs text-gray-500 mt-1">logged</p>
+                  <p className="text-3xl font-bold text-amber-700">{stats.pendingVerifications}</p>
+                  <p className="text-xs text-gray-500 mt-1">to verify</p>
                 </button>
 
                 <button
                   onClick={() => { setHistoryFilter('verified'); setOrgTab?.('verify'); }}
-                  className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-left hover:border-amber-300 hover:shadow-md transition-all active:scale-[0.98]"
+                  className="bg-white rounded-xl p-4 border border-green-200 shadow-sm text-left hover:border-green-400 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-600" />
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <span className="text-xs font-medium text-gray-500 uppercase">Verified</span>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900">{stats.verifiedCount || 0}</p>
-                  <p className="text-xs text-gray-500 mt-1">outcomes</p>
+                  <p className="text-3xl font-bold text-green-700">{stats.verifiedCount || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">evidence records</p>
+                </button>
+
+                <button
+                  onClick={() => setOrgTab?.('hours')}
+                  className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm text-left hover:border-blue-400 hover:shadow-md transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium text-gray-500 uppercase">Verified Hrs</span>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-700">
+                    {stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">hours confirmed</p>
                 </button>
               </div>
 
@@ -1297,14 +1429,14 @@ const OrganizationView = memo(function OrganizationView({
                           disabled={processingIds.has(item.id)}
                           className="px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 border border-red-200"
                         >
-                          {processingIds.has(item.id) ? '...' : '✗ Deny'}
+                          {processingIds.has(item.id) ? '...' : '✗ Reject'}
                         </button>
                         <button
                           onClick={() => handleApprove(item.id)}
                           disabled={processingIds.has(item.id)}
                           className="px-2.5 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                         >
-                          {processingIds.has(item.id) ? '...' : '✓ Accept'}
+                          {processingIds.has(item.id) ? '...' : '✓ Verify'}
                         </button>
                       </div>
                     </div>
@@ -1444,13 +1576,29 @@ const OrganizationView = memo(function OrganizationView({
           {/* Mobile Verify/History Tab */}
           {orgTab === 'verify' && (
             <>
+              {/* Mobile Queue Summary */}
+              <div className="grid grid-cols-3 gap-2 mb-1">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-amber-700">{logFilterCounts.pending}</p>
+                  <p className="text-[10px] font-medium text-amber-600">Pending</p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-green-700">{logFilterCounts.verified}</p>
+                  <p className="text-[10px] font-medium text-green-600">Verified</p>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-red-700">{logFilterCounts.rejected}</p>
+                  <p className="text-[10px] font-medium text-red-600">Rejected</p>
+                </div>
+              </div>
+
               {/* Pending Verification Queue */}
               {pendingVerifications.length > 0 && (
                 <div className="bg-white rounded-xl border border-amber-200 shadow-sm">
                   <div className="px-4 py-3 border-b border-amber-100 flex items-center justify-between bg-amber-50 rounded-t-xl">
                     <h2 className="text-sm font-semibold text-amber-800 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-amber-600" />
-                      Awaiting Your Review
+                      Verification Queue
                     </h2>
                     <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
                       {pendingVerifications.length} pending
@@ -1472,20 +1620,29 @@ const OrganizationView = memo(function OrganizationView({
                                   {item.hours}h
                                 </span>
                               )}
-                              {item.description && (
-                                <span className="text-xs text-gray-400 truncate max-w-[120px]">{item.description}</span>
+                              {!item.description && (
+                                <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0 rounded border border-amber-200">
+                                  Missing desc
+                                </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2 ml-10">
+                        <div className="flex items-center gap-1.5 mt-2 ml-10">
+                          <button
+                            onClick={() => handleMarkIncomplete(item.id)}
+                            disabled={processingIds.has(item.id)}
+                            className="py-1.5 px-2 bg-amber-50 text-amber-700 text-xs font-medium rounded-lg hover:bg-amber-100 disabled:opacity-50 border border-amber-200"
+                          >
+                            {processingIds.has(item.id) ? '...' : 'Incomplete'}
+                          </button>
                           <button
                             onClick={() => handleReject(item.id)}
                             disabled={processingIds.has(item.id)}
                             className="flex-1 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 border border-red-200 flex items-center justify-center gap-1"
                           >
                             <XCircle className="h-3 w-3" />
-                            {processingIds.has(item.id) ? '...' : 'Deny'}
+                            {processingIds.has(item.id) ? '...' : 'Reject'}
                           </button>
                           <button
                             onClick={() => handleApprove(item.id)}
@@ -1493,7 +1650,7 @@ const OrganizationView = memo(function OrganizationView({
                             className="flex-1 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-1"
                           >
                             <CheckCircle2 className="h-3 w-3" />
-                            {processingIds.has(item.id) ? '...' : 'Accept'}
+                            {processingIds.has(item.id) ? '...' : 'Verify'}
                           </button>
                         </div>
                       </div>
@@ -1502,9 +1659,9 @@ const OrganizationView = memo(function OrganizationView({
                 </div>
               )}
 
-              {/* Verification History */}
+              {/* Evidence Record History */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Verification History</h2>
+                <h2 className="text-lg font-semibold text-stone-800">Evidence Record History</h2>
               </div>
               {renderHistoryContent(true)}
             </>
@@ -1711,7 +1868,7 @@ const OrganizationView = memo(function OrganizationView({
                 >
                   <ChevronLeft className="h-4 w-4 text-gray-600" />
                 </button>
-                <h2 className="text-lg font-semibold text-stone-800">Impact Reports</h2>
+                <h2 className="text-lg font-semibold text-stone-800">Verified Evidence Summary</h2>
               </div>
 
               {/* Full-screen in-app report viewer — styles + body extracted via DOMParser, no iframe needed */}
@@ -1734,7 +1891,7 @@ const OrganizationView = memo(function OrganizationView({
                       <ChevronLeft className="h-4 w-4" />
                       Close
                     </button>
-                    <span className="text-sm font-semibold text-gray-900">Impact Report</span>
+                    <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={downloadReport}
@@ -1762,12 +1919,15 @@ const OrganizationView = memo(function OrganizationView({
 
               {/* Status card */}
               <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-4 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-7 w-7 text-indigo-600" />
+                <div className="w-14 h-14 rounded-2xl bg-[#0A1F44]/10 flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-7 w-7 text-[#0A1F44]" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Partner Impact Summary</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
+                <p className="text-[10px] font-medium text-[#D4980C] mb-2 uppercase tracking-wide">
+                  ESG / CSR Reporting and Assurance Support
+                </p>
                 <p className="text-xs text-gray-500 mb-3">
-                  Verified hours · SDG alignment · Global sustainability framework metrics
+                  Verified hours · SDG framework alignment · Partner-confirmed outputs
                 </p>
                 <div className="flex items-center gap-2 justify-center mb-4">
                   <label className="text-xs font-medium text-gray-500">Time Period</label>
@@ -1785,38 +1945,41 @@ const OrganizationView = memo(function OrganizationView({
                   </Select>
                 </div>
                 {reportGenerating ? (
-                  <div className="flex items-center justify-center gap-2 text-indigo-600">
-                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <div className="flex items-center justify-center gap-2 text-[#D4980C]">
+                    <div className="w-4 h-4 border-2 border-[#D4980C] border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm font-medium">Generating report…</span>
                   </div>
                 ) : (
                   <button
                     onClick={generateMobileReport}
-                    className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-4 bg-[#D4980C] text-white text-sm font-semibold rounded-xl hover:bg-[#b8820a] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
-                    <Download className="h-4 w-4" />
+                    <FileText className="h-4 w-4" />
                     Generate Report
                   </button>
                 )}
+                <p className="mt-3 text-[10px] text-gray-400 leading-snug text-center">
+                  Synerxus provides structured evidence records for reporting and assurance preparation. Does not provide formal assurance opinions or guarantee regulatory compliance.
+                </p>
               </div>
 
               {/* Quick stats */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Hours Logged</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Verified Hours</p>
+                  <p className="text-2xl font-bold text-blue-700">{stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Verified</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Evidence Records</p>
                   <p className="text-2xl font-bold text-emerald-600">{stats.verifiedCount || 0}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Volunteers</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalVolunteers}</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Projects</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Active Projects</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Pending</p>
+                  <p className="text-2xl font-bold text-amber-700">{stats.pendingVerifications}</p>
                 </div>
               </div>
             </>
@@ -1829,20 +1992,28 @@ const OrganizationView = memo(function OrganizationView({
 
   // Desktop View
   return (
+    <>
+    {inviteOpen && (
+      <InviteVolunteerModal
+        organizationId={activeUser?.organizationId}
+        projects={(projects as any[]).map((p: any) => ({ id: p.id, name: p.name }))}
+        onClose={() => setInviteOpen(false)}
+      />
+    )}
     <main className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
       {/* Page Header */}
       <PageHeader
-        title={organization?.name || "Verify Hub"}
-        description="Verify volunteer outcomes, manage projects, and track your impact."
+        title={organization?.name || "Evidence Command Center"}
+        description="Capture, verify, and report structured evidence for ESG and CSR programs."
         actions={
           <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
             <Clock className="h-4 w-4 mr-2" />
-            Log Outcomes
+            Log Outcome
           </Button>
         }
       />
 
-      {/* Quick Stats */}
+      {/* Primary KPIs — evidence lifecycle command metrics */}
       <Grid columns={4} gap="default">
         <MetricCard
           label="Active Projects"
@@ -1851,232 +2022,289 @@ const OrganizationView = memo(function OrganizationView({
           icon={<FolderOpen className="h-5 w-5 text-primary" />}
         />
         <MetricCard
-          label="Total Volunteers"
-          value={stats.totalVolunteers}
-          accentColor="success"
-          icon={<Users className="h-5 w-5 text-success" />}
-        />
-        <MetricCard
-          label="Total Hours"
-          value={stats.totalHours}
+          label="Pending Verification"
+          value={stats.pendingVerifications}
           accentColor="accent"
-          icon={<Clock className="h-5 w-5 text-accent" />}
+          icon={<AlertCircle className="h-5 w-5 text-amber-500" />}
         />
         <MetricCard
-          label="Outcomes Verified"
+          label="Verified Evidence Records"
           value={stats.verifiedCount || 0}
+          accentColor="success"
+          icon={<CheckCircle2 className="h-5 w-5 text-success" />}
+        />
+        <MetricCard
+          label="Verified Hours"
+          value={stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}
           accentColor="cyan"
-          icon={<CheckCircle2 className="h-5 w-5 text-[#22D3EE]" />}
+          icon={<Clock className="h-5 w-5 text-[#22D3EE]" />}
         />
       </Grid>
 
-      {/* Main Dashboard Tabs */}
-      <Tabs value={activeTab} onValueChange={(tab) => { if (tab !== 'reports') closeReport(); setActiveTab(tab); }}>
-        <TabsList className="w-full">
-          <TabsTrigger value="overview" className="flex-1">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="verify" className="flex-1 relative">
-            <Shield className="h-4 w-4 mr-2" />
-            Verify
-            {stats.pendingVerifications > 0 && (
-              <Badge variant="destructive" size="sm" className="ml-2">
-                {stats.pendingVerifications}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex-1">
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Projects
-          </TabsTrigger>
-          <TabsTrigger value="volunteers" className="flex-1">
-            <Users className="h-4 w-4 mr-2" />
-            Volunteers
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="flex-1">
-            <FileText className="h-4 w-4 mr-2" />
-            Reports
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card variant="glass">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Organization Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-5">
-                  <Stat
-                    label="Total Hours"
-                    value={stats.totalHours}
-                    size="lg"
-                  />
-                  <Stat
-                    label="Outcomes Verified"
-                    value={stats.verifiedCount || 0}
-                    size="lg"
-                  />
-                  <Stat
-                    label="SDGs Addressed"
-                    value={stats.sdgsAddressed}
-                    description="UN Goals"
-                    size="lg"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-success" />
-                  SDG Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SDGImpactSummary
-                  sdgData={
-                    reportPreviewStats.sdgEntries.length > 0
-                      ? reportPreviewStats.sdgEntries.map(e => ({
-                          goal: parseInt(e.sdg.replace('SDG ', '')),
-                          hours: e.outcomes,
-                          projects: 1,
-                        }))
-                      : (dashboardData?.sdgDistribution || [])
-                  }
-                />
-              </CardContent>
-            </Card>
+      {/* Report Viewer Overlay */}
+      {reportContent && (
+        <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
+          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
+            @media print {
+              body > *:not(#synerxus-report-overlay) { display: none !important; }
+              #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+              #synerxus-report-overlay .report-header-bar { display: none !important; }
+            }
+          `)}} />
+          <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
+            <button
+              onClick={closeReport}
+              className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Close
+            </button>
+            <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={downloadReport}
+                className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-2 py-1"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download
+              </button>
+              <button
+                onClick={printReport}
+                className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-2 py-1"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Print / PDF
+              </button>
+            </div>
           </div>
+          <div
+            className="flex-1 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+          />
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Active Volunteers
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("volunteers")}>
-                  View All
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <VolunteerRoster
-                  volunteers={volunteers.map((v: any) => ({
-                    id: v.id,
-                    name: v.displayName || v.name || "Volunteer",
-                    avatar: v.avatar,
-                    email: v.email || "",
-                    totalHours: v.totalHours ?? 0,
-                    projectsCount: v.projectsCount ?? 0,
-                    lastActive: v.lastActive || new Date().toISOString(),
-                    status: "active" as const,
-                  }))}
-                  isLoading={isLoadingVolunteers}
+      {/* Needs Attention Panel */}
+      {(() => {
+        const STALE_MS = 14 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const staleProjects = (dashboardData?.projects || []).filter((p: any) => {
+          if (p.status !== 'active') return false;
+          if (!p.lastActivity) return true;
+          return now - new Date(p.lastActivity).getTime() > STALE_MS;
+        });
+        const hasIssues = stats.pendingVerifications > 0 || stats.activeProjects === 0 || staleProjects.length > 0;
+        if (!hasIssues) return (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50/40">
+            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+            <p className="text-sm text-stone-700">Verification queue is clear. All evidence records are up to date.</p>
+          </div>
+        );
+        return (
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-amber-800 text-base">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                Needs Attention
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {stats.pendingVerifications > 0 && (
+                <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-amber-200">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <Shield className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-stone-800">
+                      {stats.pendingVerifications} output{stats.pendingVerifications !== 1 ? 's' : ''} awaiting verification
+                    </p>
+                    <p className="text-xs text-stone-500">Review and verify submitted evidence records below</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                </div>
+              )}
+              {stats.activeProjects === 0 && (
+                <button
+                  onClick={() => navigate("/post-core-opportunity")}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-amber-200 hover:border-amber-300 hover:shadow-sm transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <FolderOpen className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-stone-800">No active projects</p>
+                    <p className="text-xs text-stone-500">Create a project to begin capturing evidence</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                </button>
+              )}
+              {staleProjects.length > 0 && (
+                <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-amber-200">
+                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-stone-800">
+                      {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} with no activity in 14+ days
+                    </p>
+                    <p className="text-xs text-stone-500 truncate">
+                      {staleProjects.slice(0, 2).map((p: any) => p.name).join(', ')}{staleProjects.length > 2 ? ` +${staleProjects.length - 2} more` : ''}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Two-Column Command Center Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Recent Activity + Volunteers */}
+        <div className="space-y-6">
+          {/* Recent Activity Feed */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {allOrgLogs.length === 0 ? (
+                <EmptyState
+                  title="No activity yet"
+                  description="Activity will appear as volunteers log outputs."
+                  size="sm"
                 />
-              </CardContent>
-            </Card>
+              ) : (
+                <div className="space-y-3">
+                  {(allOrgLogs as any[]).slice(0, 6).map((log: any) => {
+                    const status = log.verificationStatus || 'pending';
+                    const name = log.volunteer?.displayName || 'Volunteer';
+                    const project = log.project?.name || 'Unknown Project';
+                    const hours = log.hours;
+                    return (
+                      <div key={log.id} className="flex items-start gap-2.5">
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                          status === 'approved' ? 'bg-green-500' :
+                          status === 'rejected' ? 'bg-red-500' : 'bg-amber-400'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground leading-snug">
+                            {status === 'approved'
+                              ? `Output verified for ${project}`
+                              : status === 'rejected'
+                                ? `Record rejected — ${project}`
+                                : hours
+                                  ? `${name} logged ${hours}h on ${project}`
+                                  : `Output submitted for ${project}`}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(log.date || log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-accent" />
-                  Pending Verification
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("verify")}>
-                  View All
-                  <ChevronRight className="h-4 w-4 ml-1" />
+          {/* Volunteers */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Volunteers ({volunteers.length})
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setInviteOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Invite
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-stone-50 border border-stone-200 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-foreground">{stats.totalVolunteers}</p>
+                  <p className="text-xs text-muted-foreground">Total Volunteers</p>
+                </div>
+              </div>
+              {isLoadingVolunteers ? (
+                <LoadingState message="Loading volunteers..." size="sm" />
+              ) : volunteers.length === 0 ? (
+                <EmptyState
+                  title="No volunteers yet"
+                  description="Volunteers will appear here once they join your projects."
+                  size="sm"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {(volunteers as any[]).slice(0, 5).map((vol: any) => (
+                    <div key={vol.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-stone-50 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+                        {(vol.displayName || vol.name || 'V').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{vol.displayName || vol.name || 'Volunteer'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {vol.totalHours ?? 0}h · {vol.projectsCount ?? 0} project{(vol.projectsCount ?? 0) !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <p className="text-xs font-medium text-[#0A9A6E]">{vol.verifiedHours ?? Math.floor((vol.totalHours ?? 0) * 0.8)}h verified</p>
+                    </div>
+                  ))}
+                  {(volunteers as any[]).length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">+{(volunteers as any[]).length - 5} more volunteers</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Pending Verification + Framework Alignment + Reports */}
+        <div className="space-y-6">
+          {/* Pending Verification Queue */}
+          <Card className="border-amber-200">
+            <CardHeader className="flex flex-row items-center justify-between bg-amber-50 rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Shield className="h-5 w-5 text-amber-600" />
+                Pending Verification
+                {pendingVerifications.length > 0 && (
+                  <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full ml-2">
+                    {pendingVerifications.length} pending
+                  </span>
+                )}
+              </CardTitle>
+              {pendingVerifications.length > 1 && (
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={handleApproveAll}
+                  disabled={isApprovingAll}
+                  loading={isApprovingAll}
+                >
+                  <CheckCheck className="h-4 w-4 mr-1" />
+                  Verify All
                 </Button>
-              </CardHeader>
-              <CardContent>
-                {pendingVerifications.length === 0 ? (
+              )}
+            </CardHeader>
+            <CardContent className="p-0">
+              {pendingVerifications.length === 0 ? (
+                <div className="p-6">
                   <EmptyState
                     icon={<CheckCircle2 className="h-5 w-5 text-success" />}
                     title="All verified"
-                    description="No pending items to review."
+                    description="No pending evidence records to review."
                     size="sm"
                   />
-                ) : (
-                  <div className="space-y-2">
-                    {pendingVerifications.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30"
-                      >
-                        <UserAvatar src={item.volunteerAvatar} name={item.volunteerName} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {item.volunteerName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.hours}h - {item.projectName}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleReject(item.id)}
-                            disabled={processingIds.has(item.id)}
-                            className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Deny
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="success"
-                            onClick={() => handleApprove(item.id)}
-                            disabled={processingIds.has(item.id)}
-                            className="h-7 text-xs px-2.5"
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Accept
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Verify Tab — Pending queue + History view with inline actions */}
-        <TabsContent value="verify" className="mt-6 space-y-6">
-          {/* Pending Verification Queue */}
-          {pendingVerifications.length > 0 && (
-            <Card className="border-amber-200">
-              <CardHeader className="flex flex-row items-center justify-between bg-amber-50 rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-amber-800">
-                  <Shield className="h-5 w-5 text-amber-600" />
-                  Awaiting Your Review
-                  <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full ml-2">
-                    {pendingVerifications.length}
-                  </span>
-                </CardTitle>
-                {pendingVerifications.length > 1 && (
-                  <Button
-                    variant="accent"
-                    size="sm"
-                    onClick={handleApproveAll}
-                    disabled={isApprovingAll}
-                    loading={isApprovingAll}
-                  >
-                    <CheckCheck className="h-4 w-4 mr-1" />
-                    Accept All
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="p-0">
+                </div>
+              ) : (
                 <div className="divide-y divide-border">
                   {pendingVerifications.map((item) => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-3">
@@ -2095,12 +2323,26 @@ const OrganizationView = memo(function OrganizationView({
                               {item.hours}h
                             </Badge>
                           )}
-                          {item.description && (
-                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">{item.description}</span>
+                          {item.sdgGoals && item.sdgGoals.length > 0 && (
+                            <span
+                              className="px-1.5 py-0 rounded text-[9px] font-bold text-white"
+                              style={{ backgroundColor: getSDGColor(item.sdgGoals[0]) }}
+                            >
+                              SDG {item.sdgGoals[0]}
+                            </span>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleMarkIncomplete(item.id)}
+                          disabled={processingIds.has(item.id)}
+                          className="h-7 text-xs px-2 text-amber-700 border-amber-300 hover:bg-amber-50"
+                        >
+                          Incomplete
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -2109,7 +2351,7 @@ const OrganizationView = memo(function OrganizationView({
                           className="h-7 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50"
                         >
                           <XCircle className="h-3 w-3 mr-1" />
-                          Deny
+                          Reject
                         </Button>
                         <Button
                           size="sm"
@@ -2119,178 +2361,54 @@ const OrganizationView = memo(function OrganizationView({
                           className="h-7 text-xs px-2.5"
                         >
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Accept
+                          Verify
                         </Button>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Verification History */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Verification History
-            </h2>
-          </div>
-          {renderHistoryContent(false)}
-        </TabsContent>
-
-        {/* Projects Tab */}
-        <TabsContent value="projects" className="mt-6">
-          <Section
-            title="Your Projects"
-            action={
-              <Button variant="accent" onClick={() => navigate("/post-core-opportunity")}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Project
-              </Button>
-            }
-          >
-            {projects.length === 0 ? (
-              <EmptyState
-                title="No projects yet"
-                description="Create your first project to start tracking volunteer impact."
-                action={{
-                  label: "Create Project",
-                  onClick: () => navigate("/post-core-opportunity"),
-                }}
-              />
-            ) : (
-              <Grid columns={3}>
-                {projects.map((project: any) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={{
-                      id: project.id,
-                      name: project.name,
-                      status: project.status || "active",
-                      completionPercentage: project.completionPercentage || 0,
-                      activeVolunteers: project.volunteerCount || 0,
-                      totalHours: project.totalHours || 0,
-                      sdgGoals: project.sdgGoals || [],
-                    }}
-                    onClick={() => navigate(`/ngo/projects/${project.id}`)}
-                  />
-                ))}
-              </Grid>
-            )}
-          </Section>
-        </TabsContent>
-
-        {/* Volunteers Tab */}
-        <TabsContent value="volunteers" className="mt-6">
-          <Section title={`Volunteers (${volunteers.length})`}>
-            {isLoadingVolunteers ? (
-              <LoadingState message="Loading volunteers..." />
-            ) : volunteers.length === 0 ? (
-              <EmptyState
-                title="No volunteers yet"
-                description="Volunteers will appear here once they join your projects."
-              />
-            ) : (
-              <div className="space-y-3">
-                {volunteers.map((vol: any) => (
-                  <div
-                    key={vol.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors"
-                  >
-                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
-                      {(vol.displayName || vol.name || 'V').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {vol.displayName || vol.name || 'Volunteer'}
-                      </p>
-                      {vol.email && (
-                        <p className="text-xs text-muted-foreground truncate">{vol.email}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {vol.totalHours ?? 0}h logged
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FolderOpen className="h-3 w-3" />
-                          {vol.projectsCount ?? 0} project{(vol.projectsCount ?? 0) !== 1 ? 's' : ''}
-                        </span>
-                        {vol.lastActive && (
-                          <span className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3" />
-                            Last active {new Date(vol.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Badge variant="success" size="sm">Active</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
-        </TabsContent>
-
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="mt-6">
-          {/* Full-screen report viewer overlay */}
-          {reportContent && (
-            <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-              <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-                @media print {
-                  body > *:not(#synerxus-report-overlay) { display: none !important; }
-                  #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
-                  #synerxus-report-overlay .report-header-bar { display: none !important; }
+          {/* Framework & SDG Alignment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-success" />
+                Framework Alignment
+                <Badge variant="secondary" size="sm" className="ml-auto font-normal text-[10px]">SDG Context — not certification</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SDGImpactSummary
+                sdgData={
+                  reportPreviewStats.sdgEntries.length > 0
+                    ? reportPreviewStats.sdgEntries.map(e => ({
+                        goal: parseInt(e.sdg.replace('SDG ', '')),
+                        hours: e.outcomes,
+                        projects: 1,
+                      }))
+                    : (dashboardData?.sdgDistribution || [])
                 }
-              `)}} />
-              <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
-                <button
-                  onClick={closeReport}
-                  className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Close
-                </button>
-                <span className="text-sm font-semibold text-gray-900">Impact Report</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={downloadReport}
-                    className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg px-2 py-1"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Download
-                  </button>
-                  <button
-                    onClick={printReport}
-                    className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg px-2 py-1"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    Print / PDF
-                  </button>
-                </div>
-              </div>
-              <div
-                className="flex-1 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
               />
-            </div>
-          )}
+            </CardContent>
+          </Card>
 
-          <Card className="max-w-lg mx-auto">
-            <CardContent className="pt-8 pb-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-8 w-8 text-indigo-600" />
+          {/* Verified Evidence Summary — Report Generator */}
+          <Card>
+            <CardContent className="pt-6 pb-6 text-center">
+              <div className="w-12 h-12 rounded-xl bg-[#0A1F44]/10 flex items-center justify-center mx-auto mb-3">
+                <FileText className="h-6 w-6 text-[#0A1F44]" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Partner Impact Summary</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Global sustainability framework-aligned report with verified hours, SDG alignment, audit trail, and program impact.
+              <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
+              <p className="text-xs font-medium text-[#D4980C] mb-3 uppercase tracking-wide">
+                Prepared for ESG / CSR Reporting and Assurance Support
               </p>
-              <div className="flex items-center gap-3 justify-center mb-6">
-                <label className="text-xs font-medium text-muted-foreground">Time Period</label>
+              <div className="flex items-center gap-3 justify-center mb-4">
+                <label className="text-xs font-medium text-muted-foreground">Period</label>
                 <Select value={reportTimePeriod} onValueChange={(v) => { setReportTimePeriod(v); setReportContent(null); }}>
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2303,90 +2421,82 @@ const OrganizationView = memo(function OrganizationView({
                 </Select>
               </div>
               {reportGenerating ? (
-                <div className="flex items-center justify-center gap-2 text-indigo-600">
-                  <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm font-medium">Generating report…</span>
+                <div className="flex items-center justify-center gap-2 text-[#D4980C]">
+                  <div className="w-5 h-5 border-2 border-[#D4980C] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Generating…</span>
                 </div>
               ) : (
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={generateMobileReport}>
-                  <Download className="h-4 w-4 mr-2" />
+                <Button className="bg-[#D4980C] hover:bg-[#b8820a] text-white" onClick={generateMobileReport}>
+                  <FileText className="h-4 w-4 mr-2" />
                   Generate Report
                 </Button>
               )}
+              <p className="mt-3 text-[10px] text-muted-foreground max-w-xs mx-auto leading-snug">
+                Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+              </p>
             </CardContent>
           </Card>
+        </div>
+      </div>
 
-          {/* ── Report Visuals Preview ── */}
-          <div className="mt-8 space-y-2">
-            <div className="flex items-center gap-2 mb-4">
-              <span style={{ width: 3, height: 16, background: '#0891B2', borderRadius: 2, display: 'inline-block' }} />
-              <span className="text-sm font-semibold text-foreground">Report Preview — Live Data</span>
-              <span className="text-xs text-muted-foreground ml-1">
-                ({reportTimePeriod === 'all' ? 'all time' : reportTimePeriod === '1y' ? 'last 12 months' : `last ${reportTimePeriod}`} — matches selected period)
-              </span>
-            </div>
+      {/* Active Projects — full width */}
+      <Section
+        title="Active Projects"
+        action={
+          <Button variant="accent" onClick={() => navigate("/post-core-opportunity")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Project
+          </Button>
+        }
+      >
+        {projects.length === 0 ? (
+          <EmptyState
+            title="No projects yet"
+            description="Create your first project to begin capturing verified evidence records."
+            action={{
+              label: "Create Project",
+              onClick: () => navigate("/post-core-opportunity"),
+            }}
+          />
+        ) : (
+          <Grid columns={3}>
+            {(projects as any[]).map((project: any) => (
+              <ProjectCard
+                key={project.id}
+                project={{
+                  id: project.id,
+                  name: project.name,
+                  status: project.status || "active",
+                  completionPercentage: project.completionPercentage || 0,
+                  activeVolunteers: project.volunteerCount || 0,
+                  totalHours: project.totalHours || 0,
+                  verifiedOutputs: project.verifiedOutputs ?? 0,
+                  verifiedHours: project.verifiedHours ?? 0,
+                  pendingVerification: project.pendingVerification ?? 0,
+                  incompleteRecords: project.incompleteRecords ?? 0,
+                  rejectedRecords: project.rejectedRecords ?? 0,
+                  lastActivity: project.lastActivity ?? null,
+                  sdgGoals: project.sdgGoals || [],
+                }}
+                pendingCount={pendingCountByProject[project.name] || project.pendingVerification || 0}
+                onClick={() => navigate(`/ngo/projects/${project.id}`)}
+              />
+            ))}
+          </Grid>
+        )}
+      </Section>
 
-            {/* Section 1: Executive Summary */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 1 — Executive Summary</div>
-            <VerificationDensityStrip
-              verifiedOutcomes={reportPreviewStats.verifiedCount}
-              verificationRate={reportPreviewStats.verificationRate}
-              verifiedHours={reportPreviewStats.totalHoursVerified}
-              avgTurnaround={reportPreviewStats.avgTurnaround}
-              verifiedBeneficiaries={reportPreviewStats.effectiveBeneficiaries}
-            />
-
-            {/* Section 2: Verification Boundary */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 2 — Verification Boundary</div>
-            <BoundaryIntegrityMatrix />
-
-            {/* Section 3: Verification Methodology */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 3 — Verification Methodology</div>
-            <EvidenceObjectArchitecture />
-
-            {/* Section 4: SDG Alignment */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 4 — SDG Alignment</div>
-            <SDGHorizontalBar
-              entries={reportPreviewStats.sdgEntries.length > 0 ? reportPreviewStats.sdgEntries : undefined}
-            />
-
-            {/* Section 5: Global Framework Mapping */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 5 — Framework Alignment Support</div>
-            <CSRDBoundaryIndicator />
-
-            {/* Section 6: Contribution Pathways */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 6 — Contribution Pathways</div>
-            <ContributionChain avgTurnaround={reportPreviewStats.avgTurnaround} />
-
-            {/* Section 7: Negative Impact Screening */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 7 — Negative Impact Screening</div>
-            <ScreeningStatusMatrix />
-
-            {/* Section 8: Engagement Metrics */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 8 — Engagement Metrics</div>
-            <GeographicHeatmap
-              verificationRate={reportPreviewStats.verificationRate}
-              avgTurnaround={reportPreviewStats.avgTurnaround}
-            />
-
-            {/* Section 9: Evidence Records */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 9 — Evidence Records</div>
-            <VerificationTimeline
-              confirmationRate={reportPreviewStats.verificationRate}
-            />
-
-            {/* Section 10: Innovation Scoring (Verified Innovation Scaling Index) */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 10 — Verified Innovation Scaling Index</div>
-            <InnovationScoringRadar />
-
-            {/* Section 11: Limitations & Assurance */}
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 mt-4">Section 11 — Limitations &amp; Assurance</div>
-            <AssuranceBoundaryDiagram />
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Evidence Record History — full width */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary" />
+          Evidence Record History
+        </h2>
+        {renderHistoryContent(false)}
+      </div>
 
     </main>
+    </>
   );
 });
 

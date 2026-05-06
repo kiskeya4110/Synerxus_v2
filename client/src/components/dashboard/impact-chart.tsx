@@ -52,9 +52,9 @@ export default function ImpactChart({
   const labels = useMemo(
     () => ({
       hours: userType === "volunteer" ? "Your Hours" : "Volunteer Hours",
-      impact: userType === "volunteer" ? "People You Impacted" : "People Impacted",
-      aiu: userType === "volunteer" ? "Your Impact Score" : "Organization Impact Score",
-      score: userType === "volunteer" ? "Impact Score" : "Impact Score",
+      impact: userType === "volunteer" ? "People Reached" : "People Reached",
+      aiu: userType === "volunteer" ? "Activity Score" : "Organization Activity Score",
+      score: userType === "volunteer" ? "Activity Score" : "Activity Score",
     }),
     [userType],
   );

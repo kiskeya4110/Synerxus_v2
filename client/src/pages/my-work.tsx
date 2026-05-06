@@ -149,10 +149,12 @@ export default function MyWork() {
                   ? "bg-emerald-100 text-emerald-700"
                   : status === "rejected"
                     ? "bg-red-100 text-red-700"
-                    : "bg-amber-100 text-amber-700"
+                    : status === "incomplete"
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-amber-100 text-amber-700"
               }`}
             >
-              {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : "⏳ Pending"}
+              {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
             </span>
           </div>
 
@@ -212,10 +214,12 @@ export default function MyWork() {
                 ? "bg-emerald-100 text-emerald-700"
                 : status === "rejected"
                   ? "bg-red-100 text-red-700"
-                  : "bg-amber-100 text-amber-700"
+                  : status === "incomplete"
+                    ? "bg-orange-100 text-orange-700"
+                    : "bg-amber-100 text-amber-700"
             }`}
           >
-            {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : "⏳ Pending"}
+            {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
           </span>
         </div>
 
@@ -257,20 +261,20 @@ export default function MyWork() {
       <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
       <p className="text-sm font-medium text-gray-900 mb-1">
         {filter === "all"
-          ? "No impact logged yet."
-          : `No ${filter} logs found.`}
+          ? "No activity logged yet."
+          : `No ${filter} records found.`}
       </p>
       {filter === "all" && (
         <>
           <p className="text-xs text-gray-500 mb-4">
-            Start by logging your first outcome!
+            Submit your first activity to start building your verified contribution record.
           </p>
           <button
             onClick={() => navigate("/log-activity")}
             className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
           >
             <Plus className="h-4 w-4 inline mr-1" />
-            Log Impact
+            Log Activity
           </button>
         </>
       )}

@@ -11,7 +11,7 @@ import {
   AlertCircle,
   ArrowRight,
   Wallet,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -41,11 +41,17 @@ interface ImpactLogHistoryProps {
 const statusConfig = {
   pending: {
     icon: Clock,
-    label: "Pending",
+    label: "Pending Review",
     color: "bg-amber-100 text-amber-700 border-amber-200",
     iconColor: "text-amber-500"
   },
   approved: {
+    icon: CheckCircle,
+    label: "Verified",
+    color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    iconColor: "text-emerald-500"
+  },
+  verified: {
     icon: CheckCircle,
     label: "Verified",
     color: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -56,6 +62,12 @@ const statusConfig = {
     label: "Rejected",
     color: "bg-red-100 text-red-700 border-red-200",
     iconColor: "text-red-500"
+  },
+  incomplete: {
+    icon: AlertCircle,
+    label: "Needs Update",
+    color: "bg-orange-100 text-orange-700 border-orange-200",
+    iconColor: "text-orange-500"
   }
 };
 
@@ -120,7 +132,7 @@ export default function ImpactLogHistory({
             </CardTitle>
             <Link href="/log-activity">
               <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">
-                Log Hours
+                Log Activity
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
@@ -150,10 +162,10 @@ export default function ImpactLogHistory({
         {logs.length === 0 ? (
           <div className="text-center py-6 text-slate-500">
             <TrendingUp className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-            <p className="text-sm">No impact logs yet</p>
+            <p className="text-sm">No activity logs yet</p>
             <Link href="/log-activity">
               <Button variant="link" className="text-emerald-600 mt-2">
-                Log your first hours
+                Log your first activity
               </Button>
             </Link>
           </div>

@@ -1780,7 +1780,7 @@ function EvidenceObjectSection() {
   return (
     <section
       id="verification-stack"
-      className="py-12 md:py-16 bg-slate-950 text-white"
+      className="py-6 md:py-8 bg-slate-950 text-white"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
         <div className="max-w-3xl mb-8 md:mb-10">
@@ -2154,7 +2154,7 @@ function SDGMappingSection() {
   };
 
   return (
-    <section id="sdg-mapping" className="py-10 md:py-16 bg-white border-y border-slate-100">
+    <section id="sdg-mapping" className="py-5 md:py-8 bg-white border-y border-slate-100">
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
@@ -2808,7 +2808,7 @@ export default function Landing() {
         </div>
 
         {!isLoggedIn && (
-          <section className="bg-white border-b border-slate-100 py-8 md:py-10">
+          <section className="bg-white border-b border-slate-100 py-4 md:py-5">
             <div className="max-w-6xl mx-auto px-6 md:px-10">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
@@ -3140,7 +3140,7 @@ export default function Landing() {
 
           return (
             <>
-              <section className="py-10 md:py-14 bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
+              <section className="py-5 md:py-7 bg-gradient-to-br from-white via-blue-50/40 to-slate-50">
                 <div className="max-w-6xl mx-auto px-6 md:px-10">
                   {/* Section header */}
                   <div className="text-center mb-7">
@@ -3354,7 +3354,7 @@ export default function Landing() {
         })()}
 
         {/* ── Section 3: Solution ── */}
-        <section className="py-10 md:py-16 bg-blue-50">
+        <section className="py-5 md:py-8 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
@@ -3419,7 +3419,7 @@ export default function Landing() {
         <SDGMappingSection />
 
         {/* ── Section 4: Workflow ── */}
-        <section className="py-10 md:py-20 bg-white">
+        <section className="py-5 md:py-10 bg-white">
           <div className="max-w-5xl mx-auto px-6 md:px-10">
             <div className="text-center mb-10 md:mb-14">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
@@ -3699,7 +3699,7 @@ export default function Landing() {
         </section>
 
         {/* ── Section 5: Audience ── */}
-        <section id="for-teams" className="py-10 md:py-16 bg-blue-50">
+        <section id="for-teams" className="py-5 md:py-8 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">
@@ -3781,7 +3781,7 @@ export default function Landing() {
         {/* ── Section 7: Impact Metrics ── */}
         <section
           id="impact-metrics"
-          className="py-10 md:py-14 bg-[#0A1F44] border-t border-blue-800"
+          className="py-5 md:py-7 bg-[#0A1F44] border-t border-blue-800"
         >
           <div className="max-w-6xl mx-auto px-6 md:px-10 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-8">
@@ -3856,7 +3856,7 @@ export default function Landing() {
         </section>
 
         {/* ── Section 8: Case Studies ── */}
-        <section className="py-10 md:py-16 bg-blue-50">
+        <section className="py-5 md:py-8 bg-blue-50">
           <div className="max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0A1F44] mb-4">

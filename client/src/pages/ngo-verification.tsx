@@ -553,7 +553,7 @@ export default function NgoVerification() {
 
   const downloadReport = async () => {
     try {
-      const response = await fetch("/api/reports/ngo-impact-summary", {
+      const response = await fetch("/api/reports/verified-evidence-summary", {
         headers: await getAuthHeaders()
       });
       if (!response.ok) throw new Error("Failed to generate report");
@@ -561,11 +561,11 @@ export default function NgoVerification() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "ngo-impact-report.html";
+      a.download = "verified-evidence-summary.html";
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast({ title: "Download failed", description: "Could not generate the impact report.", variant: "destructive" });
+      toast({ title: "Download failed", description: "Could not generate the Verified Evidence Summary.", variant: "destructive" });
     }
   };
 
@@ -587,7 +587,7 @@ export default function NgoVerification() {
             </div>
             <Button variant="outline" size="sm" onClick={downloadReport} className="text-xs gap-1.5">
               <Download className="w-3.5 h-3.5" />
-              Impact Report
+              Verified Evidence Summary
             </Button>
           </div>
 
@@ -810,7 +810,7 @@ export default function NgoVerification() {
               </div>
               <Button variant="outline" size="sm" onClick={downloadReport}>
                 <Download className="w-4 h-4 mr-2" />
-                Impact Report
+                Verified Evidence Summary
               </Button>
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />

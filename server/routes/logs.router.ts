@@ -17,6 +17,7 @@ import {
   REPORT_SECTION,
   REPORT_SECTION_LABELS,
 } from "../domains/reporting";
+import { buildVerifiedEvidenceSummaryReport } from "../domains/reporting/verified-evidence-summary-report";
 import { and, eq, gte, inArray } from "drizzle-orm";
 import { db, withTransaction } from "../db";
 import { logger } from "../logger";
@@ -43,6 +44,8 @@ import { impactTextVerificationService } from "../services/impact-text-verificat
 // Read logo once at module load time, embed as base64 data URI for print reliability
 function loadLogoDataUri(): string {
   const candidates = [
+    path.resolve(import.meta.dirname, "../../dist/public/synerxus-esg-logo.png"),
+    path.resolve(import.meta.dirname, "../../client/public/synerxus-esg-logo.png"),
     path.resolve(import.meta.dirname, "../../dist/public/2026 - Synerxus ESG Logo.png"),
     path.resolve(import.meta.dirname, "../../public/2026 - Synerxus ESG Logo.png"),
   ];
@@ -52,7 +55,7 @@ function loadLogoDataUri(): string {
       return `data:image/png;base64,${buf.toString("base64")}`;
     } catch { /* try next */ }
   }
-  return "/2026 - Synerxus ESG Logo.png"; // fallback to URL if file not found
+  return "/synerxus-esg-logo.png"; // fallback to URL if file not found
 }
 const LOGO_DATA_URI = loadLogoDataUri();
 
@@ -1357,6 +1360,209 @@ const SDG_NAMES: Record<number, string> = {
   13: 'Climate Action', 14: 'Life Below Water', 15: 'Life on Land',
   16: 'Peace, Justice & Strong Institutions', 17: 'Partnerships for the Goals'
 };
+
+function getReportSince(timePeriod?: string): Date | undefined {
+  if (!timePeriod || timePeriod === "all") return undefined;
+  const nowMs = Date.now();
+  switch (timePeriod) {
+    case "7d": return new Date(nowMs - 7 * 24 * 60 * 60 * 1000);
+    case "30d": return new Date(nowMs - 30 * 24 * 60 * 60 * 1000);
+    case "90d": return new Date(nowMs - 90 * 24 * 60 * 60 * 1000);
+    case "1y": return new Date(nowMs - 365 * 24 * 60 * 60 * 1000);
+    default: return undefined;
+  }
+}
+
+function getPeriodDisplay(timePeriod: string | undefined, now = new Date()): string {
+  const endLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const periodDisplayMap: Record<string, string> = {
+    "7d": `Last 7 Days (through ${endLabel})`,
+    "30d": `Last 30 Days (through ${endLabel})`,
+    "90d": `Last 90 Days (through ${endLabel})`,
+    "1y": `Last 12 Months (through ${endLabel})`,
+  };
+  if (timePeriod && periodDisplayMap[timePeriod]) return periodDisplayMap[timePeriod];
+  const qNum = Math.ceil((now.getMonth() + 1) / 3);
+  return `Q${qNum} ${now.getFullYear()} (through ${endLabel})`;
+}
+
+function getReportId(prefix: string, orgName: string, now = new Date()): string {
+  const initials = orgName.split(" ").map((word) => word[0] || "").join("").slice(0, 4).toUpperCase() || "ORG";
+  const mmdd = now.toISOString().slice(5, 10).replace("-", "");
+  return `${prefix}-${now.getFullYear()}-${mmdd}-${initials}`;
+}
+
+async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode: "organization" | "corporate") {
+  const timePeriod = req.query.timePeriod as string | undefined;
+  const reportSince = getReportSince(timePeriod);
+  const now = new Date();
+
+  if (mode === "organization") {
+    if (req.user?.userType !== "organization") {
+      return res.status(403).json({ message: "Only organization users can generate impact summaries" });
+    }
+
+    const organizationId = req.user.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ message: "No organization associated with this user" });
+    }
+
+    const org = await storage.getOrganization(organizationId);
+    const projects = await storage.listProjectsByOrganization(organizationId);
+    const projectIds = projects.map((project) => project.id);
+    let activities: any[] = [];
+
+    if (projectIds.length > 0) {
+      const projectFilter = inArray(volunteerActivitiesTable.projectId, projectIds);
+      const rows = reportSince
+        ? await db.select().from(volunteerActivitiesTable).where(and(projectFilter, gte(volunteerActivitiesTable.date, reportSince)))
+        : await db.select().from(volunteerActivitiesTable).where(projectFilter);
+      activities = rows as any[];
+    }
+
+    const filteredProjectIds = new Set(activities.map((activity: any) => activity.projectId).filter(Boolean));
+    const filteredProjects = projects.filter((project) => filteredProjectIds.has(project.id));
+    const orgName = org?.name || "Organization";
+    const html = buildVerifiedEvidenceSummaryReport({
+      organizationName: orgName,
+      reportId: getReportId("VES", orgName, now),
+      periodDisplay: getPeriodDisplay(timePeriod, now),
+      generatedDate: now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      scopeSummary: `${filteredProjects.length} project${filteredProjects.length === 1 ? "" : "s"} with activity in the selected reporting period`,
+      reportStatus: "Ready for Review",
+      activities,
+      projects: filteredProjects,
+      partnerNames: [orgName],
+      logoDataUri: LOGO_DATA_URI,
+    });
+
+    res.setHeader("Content-Type", "text/html");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", `inline; filename="verified-evidence-summary-${now.toISOString().split("T")[0]}.html"`);
+    return res.send(html);
+  }
+
+  if (req.user?.userType !== "corporate-partner") {
+    return res.status(403).json({ message: "Only corporate users can generate ESG reports" });
+  }
+
+  const allPartners = await storage.listCSRPartners?.() || [];
+  const partner = allPartners.find((p: any) => p.userId === req.user?.id);
+  const allProfiles = await storage.listVolunteerProfiles?.() || [];
+  let linkedUserIds: number[] = [];
+
+  if (partner) {
+    const directLinked = allProfiles
+      .filter((profile: any) => profile.employerId && parseInt(String(profile.employerId), 10) === partner.id)
+      .map((profile: any) => profile.userId as number);
+    const explicitLinks = await (storage as any).listVolunteerEmployerLinksByPartnerId?.(partner.id) || [];
+    const explicitLinked = allProfiles
+      .filter((profile: any) => explicitLinks.some((link: any) => link.volunteerId === profile.id))
+      .map((profile: any) => profile.userId as number);
+    linkedUserIds = Array.from(new Set([...directLinked, ...explicitLinked]));
+  }
+
+  let activities: any[] = [];
+  if (linkedUserIds.length > 0) {
+    const userFilter = inArray(volunteerActivitiesTable.userId, linkedUserIds);
+    const rows = reportSince
+      ? await db.select().from(volunteerActivitiesTable).where(and(userFilter, gte(volunteerActivitiesTable.date, reportSince)))
+      : await db.select().from(volunteerActivitiesTable).where(userFilter);
+    activities = rows as any[];
+  }
+
+  const filterEmployeeNamesRaw = req.query.employeeNames as string | undefined;
+  const filterProjectIdsRaw = req.query.projectIds as string | undefined;
+  const filterNgoNamesRaw = req.query.ngoNames as string | undefined;
+  const filterEmployeeNames = filterEmployeeNamesRaw ? filterEmployeeNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
+  const filterProjectIds = filterProjectIdsRaw ? filterProjectIdsRaw.split(",").map(Number).filter(Boolean) : null;
+  const filterNgoNames = filterNgoNamesRaw ? filterNgoNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
+  if (filterProjectIds) {
+    activities = activities.filter((activity: any) => activity.projectId && filterProjectIds.includes(activity.projectId));
+  }
+
+  const volunteerUsers = linkedUserIds.length > 0 ? await storage.getUsersByIds(linkedUserIds) : [];
+  const volunteerUserMap = new Map(volunteerUsers.map((user: any) => [user.id, user]));
+  if (filterEmployeeNames) {
+    activities = activities.filter((activity: any) => {
+      const volunteerUser = volunteerUserMap.get(activity.userId);
+      const employeeName = volunteerUser?.displayName || volunteerUser?.email || "";
+      return filterEmployeeNames.some((name) => employeeName.toLowerCase().includes(name.toLowerCase()));
+    });
+  }
+
+  const verifierIds = Array.from(new Set(activities.map((activity: any) => activity.verifiedBy).filter(Boolean))) as number[];
+  const verifierUsers = verifierIds.length > 0 ? await storage.getUsersByIds(verifierIds) : [];
+  const verifierOrgIds = Array.from(new Set(verifierUsers.map((user: any) => user.organizationId).filter(Boolean))) as number[];
+  const verifierOrgMap = new Map<number, any>();
+  for (const orgId of verifierOrgIds) {
+    const org = await storage.getOrganization(orgId);
+    if (org) verifierOrgMap.set(orgId, org);
+  }
+  const verifierToOrgMap = new Map(verifierUsers.map((user: any) => [user.id, verifierOrgMap.get(user.organizationId)]));
+
+  if (filterNgoNames) {
+    activities = activities.filter((activity: any) => {
+      const verifierOrg = activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy) : null;
+      return verifierOrg && filterNgoNames.some((name) => (verifierOrg.name || "").toLowerCase().includes(name.toLowerCase()));
+    });
+  }
+
+  const filteredProjectIds = Array.from(new Set(activities.map((activity: any) => activity.projectId).filter(Boolean))) as number[];
+  const filteredProjects = filteredProjectIds.length > 0 ? await storage.getProjectsByIds(filteredProjectIds) : [];
+  const partnerNames = Array.from(new Set(
+    activities
+      .map((activity: any) => (activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy)?.name : null))
+      .filter(Boolean),
+  )) as string[];
+  const filteredVolunteerIds = Array.from(new Set(activities.map((activity: any) => activity.userId).filter(Boolean)));
+  const corpName = partner?.companyName || "Corporation";
+  const html = buildVerifiedEvidenceSummaryReport({
+    organizationName: corpName,
+    reportId: getReportId("VES", corpName, now),
+    periodDisplay: getPeriodDisplay(timePeriod, now),
+    generatedDate: now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+    scopeSummary: `${partnerNames.length} partner organization${partnerNames.length === 1 ? "" : "s"}, ${filteredProjects.length} project${filteredProjects.length === 1 ? "" : "s"}, and ${filteredVolunteerIds.length} employee volunteer${filteredVolunteerIds.length === 1 ? "" : "s"} in the selected reporting scope`,
+    reportStatus: "Ready for Review",
+    activities,
+    projects: filteredProjects,
+    partnerNames,
+    logoDataUri: LOGO_DATA_URI,
+  });
+
+  res.setHeader("Content-Type", "text/html");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Disposition", `inline; filename="verified-evidence-summary-${now.toISOString().split("T")[0]}.html"`);
+  return res.send(html);
+}
+
+logsRouter.get("/reports/ngo-impact-summary-legacy", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    return await sendVerifiedEvidenceSummaryHtml(req, res, "organization");
+  } catch (err) {
+    logger.error("Error generating Verified Evidence Summary:", err);
+    res.status(500).json({ message: "Failed to generate Verified Evidence Summary report" });
+  }
+});
+
+logsRouter.get("/reports/corporate-esg-summary-legacy", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    return await sendVerifiedEvidenceSummaryHtml(req, res, "corporate");
+  } catch (err) {
+    logger.error("Error generating corporate Verified Evidence Summary:", err);
+    res.status(500).json({ message: "Failed to generate Verified Evidence Summary report" });
+  }
+});
+
+logsRouter.get("/reports/verified-evidence-summary", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const mode = req.user?.userType === "corporate-partner" ? "corporate" : "organization";
+    return await sendVerifiedEvidenceSummaryHtml(req, res, mode);
+  } catch (err) {
+    logger.error("Error generating Verified Evidence Summary:", err);
+    res.status(500).json({ message: "Failed to generate Verified Evidence Summary report" });
+  }
+});
 
 logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Request, res: Response) => {
   try {

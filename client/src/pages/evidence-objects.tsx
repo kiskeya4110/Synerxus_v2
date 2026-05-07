@@ -21,7 +21,7 @@ const anatomy = [
 export default function EvidenceObjectsPage() {
   return (
     <MarketingLayout>
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 md:grid-cols-[1fr_0.85fr] md:items-center md:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
@@ -48,7 +48,7 @@ export default function EvidenceObjectsPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             title="What is an Evidence Object?"
@@ -68,7 +68,7 @@ export default function EvidenceObjectsPage() {
         <EvidenceObjectExplorer />
       </div>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader title="Why Evidence Objects matter" />
           <div className="grid gap-4 md:grid-cols-3">

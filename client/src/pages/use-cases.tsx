@@ -77,7 +77,7 @@ export default function UseCasesPage() {
 
   return (
     <MarketingLayout>
-      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 py-14 md:py-20">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 py-7 md:py-10">
         <div className="absolute inset-x-0 bottom-0 h-24 bg-white" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.95fr]">
           <div className="max-w-3xl">
@@ -113,15 +113,15 @@ export default function UseCasesPage() {
               ))}
             </div>
           </div>
-            <div className="relative lg:justify-self-end">
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                <img
-                  src="/optimized/ESG%20use%20cases%20hero.png"
-                  alt="ESG use cases evidence workflow preview"
-                  className="block aspect-[4/3] w-full object-cover object-center lg:max-w-[620px]"
-                />
-              </div>
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg md:absolute md:-bottom-5 md:left-8 md:right-auto md:mt-0 md:min-w-64">
+          <div className="lg:justify-self-end">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+              <img
+                src="/optimized/ESG%20use%20cases%20hero.png"
+                alt="ESG use cases evidence workflow preview"
+                className="block aspect-[4/3] w-full object-cover object-center lg:max-w-[620px]"
+              />
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:min-w-64">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                 Evidence object coverage
               </p>
@@ -133,7 +133,7 @@ export default function UseCasesPage() {
         </div>
       </section>
 
-      <section id="use-case-explorer" className="bg-white py-14 md:py-20">
+      <section id="use-case-explorer" className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Evidence use cases"

@@ -31,11 +31,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stat } from "@/components/ui/stat";
-import {
-  prepareReportContent,
-  sanitizeReportBody,
-  sanitizeReportStyles,
-} from "@/lib/report-sanitizer";
+import { prepareReportContent } from "@/lib/report-sanitizer";
 import { EmptyState, LoadingState } from "@/components/ui/empty-state";
 import { Section, PageHeader, Grid } from "@/components/ui/section";
 import { useToast } from "@/hooks/use-toast";
@@ -558,7 +554,7 @@ const OrganizationView = memo(function OrganizationView({
 
   // Mobile reports state
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
+  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string; sourceHtml: string } | null>(null);
   const [reportTimePeriod, setReportTimePeriod] = useState("all");
 
   const toggleLogDetail = (logId: number) => {
@@ -575,7 +571,7 @@ const OrganizationView = memo(function OrganizationView({
       const headers = await getAuthHeaders();
       const params = new URLSearchParams();
       if (reportTimePeriod !== 'all') params.set('timePeriod', reportTimePeriod);
-      const url = `/api/reports/ngo-impact-summary${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `/api/reports/verified-evidence-summary${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const rawHtml = await response.text();
@@ -592,7 +588,7 @@ const OrganizationView = memo(function OrganizationView({
     if (!reportContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(reportContent.rawHtml);
+      printWindow.document.write(reportContent.sourceHtml);
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
@@ -601,11 +597,11 @@ const OrganizationView = memo(function OrganizationView({
 
   const downloadReport = () => {
     if (!reportContent) return;
-    const blob = new Blob([reportContent.rawHtml], { type: 'text/html' });
+    const blob = new Blob([reportContent.sourceHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `impact-report-${new Date().toISOString().split('T')[0]}.html`;
+    a.download = `verified-evidence-summary-${new Date().toISOString().split('T')[0]}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1871,17 +1867,9 @@ const OrganizationView = memo(function OrganizationView({
                 <h2 className="text-lg font-semibold text-stone-800">Verified Evidence Summary</h2>
               </div>
 
-              {/* Full-screen in-app report viewer — styles + body extracted via DOMParser, no iframe needed */}
+              {/* Full-screen in-app report viewer */}
               {reportContent && (
                 <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-                  {/* Inject report styles */}
-                  <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-                    @media print {
-                      body > *:not(#synerxus-report-overlay) { display: none !important; }
-                      #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
-                      #synerxus-report-overlay .report-header-bar { display: none !important; }
-                    }
-                  `)}} />
                   {/* Header bar */}
                   <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
                     <button
@@ -1909,10 +1897,12 @@ const OrganizationView = memo(function OrganizationView({
                       </button>
                     </div>
                   </div>
-                  {/* Report body rendered inline */}
-                  <div
-                    className="flex-1 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+                  <iframe
+                    srcDoc={reportContent.sourceHtml}
+                    className="flex-1 w-full"
+                    style={{ border: "none", display: "block" }}
+                    title="Verified Evidence Summary"
+                    sandbox="allow-same-origin"
                   />
                 </div>
               )}
@@ -1956,11 +1946,11 @@ const OrganizationView = memo(function OrganizationView({
                   >
                     <FileText className="h-4 w-4" />
                     Generate Report
-                  </button>
-                )}
-                <p className="mt-3 text-[10px] text-gray-400 leading-snug text-center">
-                  Synerxus provides structured evidence records for reporting and assurance preparation. Does not provide formal assurance opinions or guarantee regulatory compliance.
-                </p>
+                </button>
+              )}
+              <p className="mt-3 text-[10px] text-gray-400 leading-snug text-center">
+                  Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+              </p>
               </div>
 
               {/* Quick stats */}
@@ -2044,13 +2034,6 @@ const OrganizationView = memo(function OrganizationView({
       {/* Report Viewer Overlay */}
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-            @media print {
-              body > *:not(#synerxus-report-overlay) { display: none !important; }
-              #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
-              #synerxus-report-overlay .report-header-bar { display: none !important; }
-            }
-          `)}} />
           <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
             <button
               onClick={closeReport}
@@ -2077,9 +2060,12 @@ const OrganizationView = memo(function OrganizationView({
               </button>
             </div>
           </div>
-          <div
-            className="flex-1 overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+          <iframe
+            srcDoc={reportContent.sourceHtml}
+            className="flex-1 w-full"
+            style={{ border: "none", display: "block" }}
+            title="Verified Evidence Summary"
+            sandbox="allow-same-origin"
           />
         </div>
       )}
@@ -2401,7 +2387,7 @@ const OrganizationView = memo(function OrganizationView({
               <div className="w-12 h-12 rounded-xl bg-[#0A1F44]/10 flex items-center justify-center mx-auto mb-3">
                 <FileText className="h-6 w-6 text-[#0A1F44]" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
               <p className="text-xs font-medium text-[#D4980C] mb-3 uppercase tracking-wide">
                 Prepared for ESG / CSR Reporting and Assurance Support
               </p>

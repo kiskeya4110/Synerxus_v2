@@ -8,7 +8,7 @@ export interface ReportTemplate {
   id: string;
   name: string;
   description: string;
-  category: "compliance" | "executive" | "engagement" | "impact" | "financial";
+  category: "compliance" | "executive" | "engagement" | "impact" | "evidence" | "financial";
   icon: string;
   formats: string[];
   lastGenerated?: string;
@@ -66,10 +66,10 @@ export const reportTemplates: ReportTemplate[] = [
     frequency: "monthly",
   },
   {
-    id: "impact-summary",
+    id: "verified-evidence-summary",
     name: "Verified Evidence Summary",
     description: "Partner-confirmed evidence records supporting ESG/CSR reporting and assurance preparation.",
-    category: "impact",
+    category: "evidence",
     icon: "📊",
     formats: ["PDF"],
     frequency: "quarterly",
@@ -118,6 +118,7 @@ export const reportCategories = [
   { id: "executive", label: "Executive", icon: "📊" },
   { id: "engagement", label: "Engagement", icon: "👥" },
   { id: "impact", label: "Impact", icon: "🌍" },
+  { id: "evidence", label: "Evidence", icon: "🧾" },
   { id: "compliance", label: "Compliance", icon: "✅" },
   { id: "financial", label: "Financial", icon: "💰" },
 ];

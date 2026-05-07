@@ -652,12 +652,12 @@ export default function OrganizationDashboardNew() {
     return parts.map(p => p.charAt(0).toUpperCase() + ".").join("");
   };
 
-  // Generate Synerxus-branded NGO impact summary report from server
+  // Generate Synerxus-branded Verified Evidence Summary report from server
   const generateSynerxusReport = async () => {
     setIsSynerxusLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/reports/ngo-impact-summary`, { headers, credentials: "include" });
+      const response = await fetch(`/api/reports/verified-evidence-summary`, { headers, credentials: "include" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
       const { styles, body } = prepareReportContent(html);
@@ -1440,7 +1440,7 @@ export default function OrganizationDashboardNew() {
           `)}} />
           {/* Toolbar */}
           <div className="report-toolbar flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0">
-            <span className="text-sm font-semibold text-stone-800">Impact Report Preview</span>
+            <span className="text-sm font-semibold text-stone-800">Verified Evidence Summary Preview</span>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"

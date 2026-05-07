@@ -296,7 +296,7 @@ function SDGMappingPreview() {
   const activeGoal = SDG_GOALS[activeSdg];
 
   return (
-    <section id="sdg-mapping" className="border-y border-slate-100 bg-white py-10 md:py-14">
+    <section id="sdg-mapping" className="border-y border-slate-100 bg-white py-5 md:py-7">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
@@ -470,7 +470,7 @@ export default function MarketingHome() {
   return (
     <MarketingLayout>
       <section id="hero" tabIndex={-1} className="relative overflow-hidden bg-white">
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-8 md:px-8 lg:min-h-[560px] lg:grid-cols-[minmax(420px,0.52fr)_minmax(0,0.48fr)] lg:items-stretch lg:gap-0 lg:py-14 xl:min-h-[600px]">
+        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-4 md:px-8 lg:min-h-[560px] lg:grid-cols-[minmax(420px,0.52fr)_minmax(0,0.48fr)] lg:items-stretch lg:gap-0 lg:py-7 xl:min-h-[600px]">
           <div
             className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/15 lg:aspect-auto lg:h-full lg:rounded-r-none"
             onMouseEnter={() => setHeroPaused(true)}
@@ -627,7 +627,7 @@ export default function MarketingHome() {
 
       <EvidenceAlignmentBanner />
 
-      <section id="platform" className="bg-white py-12 md:py-16">
+      <section id="platform" className="bg-white py-6 md:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Evidence Object Preview"
@@ -751,7 +751,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section id="evidence-ladder" className="bg-slate-50 py-14 md:py-20">
+      <section id="evidence-ladder" className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Evidence Ladder Preview"
@@ -822,7 +822,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section className="bg-white py-12 md:py-16">
+      <section className="bg-white py-6 md:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-8 text-center text-base font-semibold text-slate-500">
             Frameworks tell you what to disclose. Synerxus helps show what happened.
@@ -918,7 +918,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="How Synerxus Works"
@@ -978,7 +978,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-10 text-center text-base font-semibold text-slate-500">Why it matters</p>
           <div className="grid gap-8 md:grid-cols-2">
@@ -1055,7 +1055,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section id="use-cases" className="bg-slate-50 py-14 md:py-20">
+      <section id="use-cases" className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Use cases</p>
           <p className="mb-8 text-center text-2xl font-extrabold text-[#0A1F44] md:text-3xl">Built for ESG claims that need proof.</p>
@@ -1138,7 +1138,7 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section id="resources" className="bg-white py-14 md:py-20">
+      <section id="resources" className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-10 text-center text-base font-semibold text-slate-500">
             Resources for evidence-first ESG reporting
@@ -1221,7 +1221,7 @@ export default function MarketingHome() {
 
       <SDGMappingPreview />
 
-      <section id="request-assessment" className="bg-slate-50 py-14 md:py-20">
+      <section id="request-assessment" className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl md:p-10">
             <h2 className="max-w-3xl text-3xl font-extrabold text-[#0A1F44] md:text-5xl">

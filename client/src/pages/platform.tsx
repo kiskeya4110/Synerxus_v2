@@ -158,7 +158,7 @@ export default function PlatformPage() {
   return (
     <MarketingLayout>
       <section className="bg-slate-50">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 md:px-8 md:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-7 md:px-8 md:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
               Platform
@@ -193,9 +193,9 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-8 max-w-3xl">
+          <div className="mb-4 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
               What is an Evidence Object?
             </p>
@@ -247,7 +247,7 @@ export default function PlatformPage() {
 
       <EvidenceObjectExplorer />
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <div>
@@ -298,9 +298,9 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-8 max-w-3xl">
+          <div className="mb-4 max-w-3xl">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
                 Product capabilities
               </p>
@@ -322,7 +322,7 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[0.9fr_1.1fr] md:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
@@ -396,9 +396,9 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-8 max-w-3xl">
+          <div className="mb-4 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
               Framework Cross-Walking
             </p>

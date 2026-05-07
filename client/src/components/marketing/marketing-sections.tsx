@@ -38,9 +38,9 @@ export function SectionHeader({
   dark?: boolean;
 }) {
   return (
-    <div className="mb-8 max-w-3xl">
+    <div className="mb-4 max-w-3xl">
       {eyebrow && (
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
           {eyebrow}
         </p>
       )}
@@ -48,7 +48,7 @@ export function SectionHeader({
         {title}
       </h2>
       {body && (
-        <p className={`mt-4 text-base leading-relaxed ${dark ? "text-[#D4980C]" : "text-slate-600"}`}>
+        <p className={`mt-2 text-base leading-relaxed ${dark ? "text-[#D4980C]" : "text-slate-600"}`}>
           {body}
         </p>
       )}
@@ -287,7 +287,7 @@ export function EvidenceObjectExplorer() {
   const ActiveIcon = activeLayer.icon;
 
   return (
-    <section id="evidence-object-explorer" className="relative overflow-hidden bg-white py-14 md:py-20">
+    <section id="evidence-object-explorer" className="relative overflow-hidden bg-white py-7 md:py-10">
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-50 to-white" />
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeader
@@ -422,7 +422,7 @@ export function EvidenceLadderSection() {
     evidenceLadderLevels[4];
 
   return (
-    <section className="overflow-hidden bg-slate-50 py-14 md:py-20">
+    <section className="overflow-hidden bg-slate-50 py-7 md:py-10">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeader
           eyebrow="Evidence Ladder"
@@ -535,7 +535,7 @@ export function EvidenceLadderSection() {
 
 export function AssessmentCta() {
   return (
-    <section className="bg-slate-50 py-14 md:py-20">
+    <section className="bg-slate-50 py-7 md:py-10">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_auto] md:items-center md:px-8">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
@@ -621,7 +621,7 @@ export function HomeSections() {
       <EvidenceObjectExplorer />
       <EvidenceLadderSection />
 
-      <section className="overflow-hidden bg-white py-14 md:py-20">
+      <section className="overflow-hidden bg-white py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center md:px-8">
           <div>
             <SectionHeader
@@ -661,7 +661,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Chain of Custody"
@@ -713,7 +713,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 md:grid-cols-2 md:px-8">
           <div>
             <SectionHeader
@@ -795,7 +795,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Framework Cross-Walking"
@@ -856,7 +856,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Negative Impact Screening"
@@ -966,7 +966,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader title="Built for ESG claims that need proof." />
           <div className="grid gap-4 md:grid-cols-3">
@@ -993,7 +993,7 @@ export function HomeSections() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Verification Partner Network"
@@ -1020,7 +1020,7 @@ export function HomeSections() {
 
       <AssessmentCta />
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader title="Insights on evidence-first ESG reporting" />
           <div className="grid gap-4 md:grid-cols-4">

@@ -272,7 +272,7 @@ export default function CsrReportsMobile({
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">📊</div>
-                  <div className="text-slate-800 text-[10px] font-semibold">Impact Data</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Evidence Data</div>
                 </button>
               </div>
             </div>

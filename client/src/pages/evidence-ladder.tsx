@@ -106,7 +106,7 @@ export default function EvidenceLadderPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
             Evidence Ladder
@@ -127,7 +127,7 @@ export default function EvidenceLadderPage() {
 
       <EvidenceLadderSection />
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="How teams use the Evidence Ladder"

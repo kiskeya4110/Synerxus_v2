@@ -1,8 +1,9 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Facebook, Linkedin, Menu, X } from "lucide-react";
+import { Facebook, Linkedin, LayoutDashboard, Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { label: "Platform", href: "/platform" },
@@ -38,6 +39,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location, navigate] = useLocation();
   const isLanding = location === "/landing" || location === "/";
+  const { dbUser, loading: authLoading } = useAuth();
+  const isLoggedIn = !authLoading && !!dbUser;
 
   const handleLandingSectionClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -59,8 +62,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7faff_0%,#ffffff_22%,#eef5ff_100%)] text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
           <Link
             href="/landing"
@@ -103,12 +106,23 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <Link href="/login" className="rounded-md px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:text-[#0A1F44]">
-              Sign In
-            </Link>
-            <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
-              <Link href="/request-assessment">Request Assessment</Link>
-            </Button>
+            {isLoggedIn ? (
+              <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Link href="/login" className="rounded-md px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:text-[#0A1F44]">
+                  Sign In
+                </Link>
+                <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                  <Link href="/request-assessment">Request Assessment</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -134,12 +148,23 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   {item.label}
                 </Link>
               ))}
-              <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                Sign In
-              </Link>
-              <Button asChild className="mt-1 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
-                <Link href="/request-assessment">Request Assessment</Link>
-              </Button>
+              {isLoggedIn ? (
+                <Button asChild className="mt-1 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                  <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setMobileOpen(false)}>
+                    Sign In
+                  </Link>
+                  <Button asChild className="mt-1 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                    <Link href="/request-assessment" onClick={() => setMobileOpen(false)}>Request Assessment</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -147,7 +172,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
       <main>{children}</main>
 
-      <footer className="border-t border-[#D4980C]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#f7d27a]/55">
+      <footer className="border-t border-[#D4980C]/20 bg-gradient-to-r from-[#e7f0ff] via-[#dbe8ff] to-[#cfdfff]">
         <div className="mx-auto max-w-7xl px-4 py-4 md:px-8 md:py-5">
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div className="max-w-md">
@@ -183,7 +208,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                     rel="noopener noreferrer"
                     aria-label={label}
                     title={label}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#D4980C]/25 bg-white/70 text-[#0A1F44] transition-colors hover:border-[#0A1F44]/30 hover:bg-white"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#D4980C]/25 bg-white/80 text-[#0A1F44] transition-colors hover:border-[#0A1F44]/30 hover:bg-white"
                   >
                     <Icon className="h-3.5 w-3.5" />
                   </a>

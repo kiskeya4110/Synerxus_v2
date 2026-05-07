@@ -1,5 +1,8 @@
 import DOMPurify from "dompurify";
 
+const APPROVED_LOGO_HTML =
+  '<img src="/synerxus-esg-logo.png" alt="Synerxus" class="brand-logo" />';
+
 const REPORT_ATTRS = [
   "style",
   "class",
@@ -30,12 +33,25 @@ const REPORT_ATTRS = [
   "points",
   "transform",
   "opacity",
+  "src",
+  "alt",
+  "width",
+  "height",
+  "loading",
 ];
 
 export interface SanitizedReportContent {
   rawHtml: string;
   styles: string;
   body: string;
+  sourceHtml: string;
+}
+
+function normalizeLegacySynerxusBranding(html: string): string {
+  return html.replace(
+    /<span class="brand-mark">S<\/span>\s*<span><strong>SYNER<\/strong><em>XUS<\/em><\/span>/gi,
+    APPROVED_LOGO_HTML,
+  );
 }
 
 export function sanitizeReportStyles(styles: string): string {
@@ -50,23 +66,23 @@ export function sanitizeReportStyles(styles: string): string {
 }
 
 export function sanitizeReportBody(body: string): string {
-  return DOMPurify.sanitize(body, {
+  return normalizeLegacySynerxusBranding(DOMPurify.sanitize(body, {
     ADD_ATTR: REPORT_ATTRS,
     ADD_TAGS: ["svg", "path", "circle", "rect", "line", "polyline", "polygon", "text"],
     FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "button"],
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "srcdoc"],
     FORCE_BODY: true,
-  });
+  }));
 }
 
 export function sanitizeReportHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
+  return normalizeLegacySynerxusBranding(DOMPurify.sanitize(html, {
     ADD_TAGS: ["style", "meta", "svg", "path", "circle", "rect", "line", "polyline", "polygon", "text"],
     ADD_ATTR: REPORT_ATTRS,
     FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "button"],
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "srcdoc"],
     FORCE_BODY: true,
-  });
+  }));
 }
 
 export function prepareReportContent(rawHtml: string): SanitizedReportContent {
@@ -80,5 +96,6 @@ export function prepareReportContent(rawHtml: string): SanitizedReportContent {
     rawHtml: sanitizeReportHtml(rawHtml),
     styles: sanitizeReportStyles(styles),
     body: sanitizeReportBody(parsedDoc.body.innerHTML),
+    sourceHtml: rawHtml,
   };
 }

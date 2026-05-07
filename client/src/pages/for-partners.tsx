@@ -78,7 +78,7 @@ export default function ForPartnersPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
             For Partners
@@ -97,7 +97,7 @@ export default function ForPartnersPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start md:px-8">
           <div>
             <SectionHeader
@@ -214,7 +214,7 @@ export default function ForPartnersPage() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-14 md:py-20">
+      <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Partner types"
@@ -234,7 +234,7 @@ export default function ForPartnersPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 md:py-20">
+      <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Partner value"

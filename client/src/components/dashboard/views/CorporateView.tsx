@@ -12,11 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
-import {
-  prepareReportContent,
-  sanitizeReportBody,
-  sanitizeReportStyles,
-} from "@/lib/report-sanitizer";
+import { prepareReportContent } from "@/lib/report-sanitizer";
 
 // ── Corporate tab configuration ───────────────────────────────────────────────
 // To add a new tab: append one entry here + add a matching conditional block.
@@ -80,7 +76,7 @@ const CorporateView = memo(function CorporateView({
 
   // Report state
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string } | null>(null);
+  const [reportContent, setReportContent] = useState<{ rawHtml: string; styles: string; body: string; sourceHtml: string } | null>(null);
   const [reportTimePeriod, setReportTimePeriod] = useState("all");
 
   // ESG report entity filter state
@@ -237,7 +233,7 @@ const CorporateView = memo(function CorporateView({
       if (selectedEmployeeNames.length) params.set('employeeNames', selectedEmployeeNames.join('|||'));
       if (selectedProjectIds.length) params.set('projectIds', selectedProjectIds.join(','));
       if (selectedNgoNames.length) params.set('ngoNames', selectedNgoNames.join('|||'));
-      const url = `/api/reports/corporate-esg-summary?${params.toString()}`;
+      const url = `/api/reports/verified-evidence-summary?${params.toString()}`;
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const rawHtml = await response.text();
@@ -256,7 +252,7 @@ const CorporateView = memo(function CorporateView({
     if (!reportContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(reportContent.rawHtml);
+      printWindow.document.write(reportContent.sourceHtml);
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
@@ -265,11 +261,11 @@ const CorporateView = memo(function CorporateView({
 
   const downloadReport = () => {
     if (!reportContent) return;
-    const blob = new Blob([reportContent.rawHtml], { type: 'text/html' });
+    const blob = new Blob([reportContent.sourceHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `corporate-esg-report-${new Date().toISOString().split('T')[0]}.html`;
+      a.download = `verified-evidence-summary-${new Date().toISOString().split('T')[0]}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -284,13 +280,6 @@ const CorporateView = memo(function CorporateView({
         {/* Report overlay */}
         {reportContent && (
           <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-            <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-              @media print {
-                body > *:not(#synerxus-report-overlay) { display: none !important; }
-                #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
-                #synerxus-report-overlay .report-header-bar { display: none !important; }
-              }
-            `)}} />
             <div className="report-header-bar flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
               <button
                 onClick={closeReport}
@@ -299,7 +288,7 @@ const CorporateView = memo(function CorporateView({
                 <ChevronLeft className="h-4 w-4" />
                 Close
               </button>
-              <span className="text-sm font-semibold text-gray-900">ESG Report</span>
+              <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={downloadReport}
@@ -317,9 +306,12 @@ const CorporateView = memo(function CorporateView({
                 </button>
               </div>
             </div>
-            <div
-              className="flex-1 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+            <iframe
+              srcDoc={reportContent.sourceHtml}
+              className="flex-1 w-full"
+              style={{ border: "none", display: "block" }}
+              title="Verified Evidence Summary"
+              sandbox="allow-same-origin"
             />
           </div>
         )}
@@ -331,8 +323,8 @@ const CorporateView = memo(function CorporateView({
               <FileText className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Corporate ESG Report</h3>
-              <p className="text-xs text-gray-500">Global sustainability framework-aligned impact summary</p>
+              <h3 className="text-sm font-semibold text-gray-900">Verified Evidence Summary</h3>
+              <p className="text-xs text-gray-500">Prepared for ESG / CSR Reporting and Assurance Support</p>
             </div>
           </div>
           <div className="flex items-center gap-2 mb-3">
@@ -641,13 +633,6 @@ const CorporateView = memo(function CorporateView({
       {/* Report overlay */}
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[300] bg-white flex flex-col">
-          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-            @media print {
-              body > *:not(#synerxus-report-overlay) { display: none !important; }
-              #synerxus-report-overlay { position: static !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
-              #synerxus-report-overlay .report-header-bar { display: none !important; }
-            }
-          `)}} />
           <div className="report-header-bar flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0 print:hidden">
             <button
               onClick={closeReport}
@@ -674,9 +659,12 @@ const CorporateView = memo(function CorporateView({
               </button>
             </div>
           </div>
-          <div
-            className="flex-1 overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+          <iframe
+            srcDoc={reportContent.sourceHtml}
+            className="flex-1 w-full"
+            style={{ border: "none", display: "block" }}
+            title="Corporate ESG Report"
+            sandbox="allow-same-origin"
           />
         </div>
       )}
@@ -685,7 +673,7 @@ const CorporateView = memo(function CorporateView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">ESG Console</h1>
-          <p className="text-slate-600 mt-1">View verified impact outcomes from your partner organizations</p>
+          <p className="text-slate-600 mt-1">View verified evidence records from your partner organizations</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -1171,7 +1159,7 @@ const CorporateView = memo(function CorporateView({
           {reportContent && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-slate-50">
-                <span className="text-sm font-semibold text-slate-800">Report Preview</span>
+              <span className="text-sm font-semibold text-slate-800">Verified Evidence Summary Preview</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={downloadReport}
@@ -1189,10 +1177,12 @@ const CorporateView = memo(function CorporateView({
                   </button>
                 </div>
               </div>
-              <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles) }} />
-              <div
-                className="p-6 max-h-[70vh] overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+              <iframe
+                srcDoc={reportContent.sourceHtml}
+                className="w-full"
+                style={{ border: "none", display: "block", height: "70vh" }}
+                title="Verified Evidence Summary Preview"
+                sandbox="allow-same-origin"
               />
             </div>
           )}
@@ -1201,7 +1191,7 @@ const CorporateView = memo(function CorporateView({
             <div className="text-center py-16 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">Select a reporting period and click Generate Report</p>
-              <p className="text-xs mt-1">Report includes SDG alignment, project breakdown, and global sustainability framework metrics</p>
+              <p className="text-xs mt-1">Report includes verified evidence records, partner-reported reach, and framework alignment context</p>
             </div>
           )}
         </div>

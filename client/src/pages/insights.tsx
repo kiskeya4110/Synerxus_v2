@@ -936,7 +936,7 @@ function ArticleCard({
     return (
       <button
         type="button"
-        className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#0A1F44]/25 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#D4980C] focus:ring-offset-2"
+        className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#0A1F44]/25 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#D4980C] focus:ring-offset-2"
         onClick={onOpenArticle}
       >
         <div className="flex flex-wrap gap-1.5">
@@ -947,7 +947,7 @@ function ArticleCard({
             {article.type}
           </span>
         </div>
-        <h3 className="mt-4 flex-1 font-extrabold leading-snug text-[#0A1F44]">
+        <h3 className="mt-4 font-extrabold leading-snug text-[#0A1F44]">
           {article.title}
         </h3>
         <div className="mt-4 flex w-full items-center justify-between border-t border-slate-100 pt-3">
@@ -1559,13 +1559,25 @@ export default function InsightsPage() {
                   </a>
                 </Button>
               </div>
-              {/* Newsletter preview image */}
-              <div className="hidden md:block">
-                <img
-                  src="/verifiable-preview.svg"
-                  alt="The Verifiable newsletter preview"
-                  className="h-full w-full object-cover"
-                />
+              {/* Newsletter accent panel */}
+              <div className="hidden flex-col items-center justify-center gap-4 bg-[#0A1F44] p-8 md:flex">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D4980C]/15">
+                  <Linkedin className="h-7 w-7 text-[#D4980C]" />
+                </div>
+                <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+                  The Verifiable
+                </p>
+                <p className="text-center text-sm font-semibold leading-relaxed text-white/80">
+                  Evidence-first ESG reporting, published on LinkedIn.
+                </p>
+                <div className="mt-2 flex flex-col gap-2 text-xs text-white/50">
+                  {sortedRecentIssues.slice(0, 3).map((item) => (
+                    <span key={item.url} className="flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-[#D4980C]" />
+                      {item.issue}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -25,7 +25,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:python": "cd python_backend && source .venv/bin/activate && pytest test_main.py -v",
+    "test:python": "cd python_backend && if [ -x .venv/bin/pytest ]; then .venv/bin/pytest test_main.py -v; else pytest test_main.py -v; fi",
     "test:load": "npx autocannon -c 1000 -d 20 http://localhost:5000/api/users",
     "backup": "tsx scripts/backup-database.ts",
     "backup:json": "BACKUP_FORMAT=json tsx scripts/backup-database.ts",

@@ -495,13 +495,13 @@ export default function CSRReportsExports() {
                     const im = reportData?.impactMetrics || {};
                     const hdr = ["Metric","Value"];
                     const rows = [["Direct Beneficiaries", String(im.directBeneficiaries || 0)], ["Indirect Beneficiaries", String(im.indirectBeneficiaries || 0)], ["Estimated Lives Touched", String(im.estimatedLivesTouched || 0)], ["Impact Per Hour", String(im.impactPerHour || 0)]];
-                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "impact_data.csv", "text/csv");
-                    toast({ title: "Downloaded", description: "Impact data exported." });
+                    downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "evidence_data.csv", "text/csv");
+                    toast({ title: "Downloaded", description: "Evidence data exported." });
                   }}
                   className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
                 >
                   <div className="text-sm mb-0.5">📊</div>
-                  <div className="text-slate-800 text-[10px] font-semibold">Impact Data</div>
+                  <div className="text-slate-800 text-[10px] font-semibold">Evidence Data</div>
                 </button>
               </div>
             </div>

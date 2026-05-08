@@ -641,7 +641,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     :root{--navy:#0A1F44;--navy2:#0A2463;--gold:#D4980C;--green:#059669;--amber:#D97706;--red:#DC2626;--ink:#111827;--muted:#64748B;--line:#E5E7EB;--soft:#F8FAFC;--page-pad:.55in;}
     *{box-sizing:border-box}
     body{margin:0;background:#E5E7EB;color:var(--ink);font-family:Inter,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-page{width:8.5in;min-height:11in;margin:18px auto;background:#fff;border:1px solid #dbe1ea;display:flex;flex-direction:column;page-break-after:always;position:relative;overflow:hidden}
+    .report-page{width:8.5in;height:11in;margin:18px auto;background:#fff;border:1px solid #dbe1ea;display:flex;flex-direction:column;page-break-after:always;position:relative;overflow:hidden}
     .page-header{position:relative;height:.95in;padding:.32in var(--page-pad) 0;display:flex;align-items:flex-start;justify-content:space-between}
     .brand-lockup{display:flex;align-items:center;gap:10px}
     .brand-logo{height:46px;width:auto;display:block}
@@ -652,7 +652,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     .brand-tag{font-size:10px;color:var(--gold);font-weight:600;margin-top:3px;letter-spacing:.01em}
     .brand-tag span{color:var(--gold)}
     .corner-ornament{position:absolute;top:0;right:0;width:1.65in;height:1.05in;display:block}
-    .page-body{flex:1;padding:.10in var(--page-pad) .35in}
+    .page-body{flex:1;padding:.10in var(--page-pad) .35in;overflow:hidden}
     .page-footer{height:.45in;display:flex;align-items:center;justify-content:space-between;padding:0 var(--page-pad);color:#94A3B8;font-size:9px;letter-spacing:.05em;border-top:1px solid #EEF2F7}
     .page-num{color:#475569;font-weight:700;letter-spacing:.04em}
     h1{margin:0;color:var(--navy);font-size:46px;font-weight:900;letter-spacing:-.01em;line-height:1.05}
@@ -707,11 +707,12 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     .metric-value{font-size:36px;color:var(--navy);font-weight:900;line-height:1;margin-top:8px}
     .metric-note{font-size:9.5px;color:#64748B;margin-top:4px}
     .metric-row-6{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:6px}
-    .metric-row-6 .metric-card{padding:14px 8px}
-    .metric-row-6 .metric-icon-circle{width:36px;height:36px}
+    .metric-row-6 .metric-card{padding:14px 8px;gap:0}
+    .metric-row-6 .metric-card-top{height:90px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;overflow:hidden}
+    .metric-row-6 .metric-icon-circle{width:36px;height:36px;flex-shrink:0}
     .metric-row-6 .metric-icon-circle svg{width:18px;height:18px}
-    .metric-row-6 .metric-label{font-size:10px;line-height:1.2;min-height:44px}
-    .metric-row-6 .metric-value{font-size:28px}
+    .metric-row-6 .metric-label{font-size:10px;line-height:1.2;flex-shrink:0}
+    .metric-row-6 .metric-value{font-size:28px;margin-top:8px}
     .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
     .tier-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}
     .tier-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -775,7 +776,8 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     .evidence-records-table{border-radius:14px;border:1px solid var(--line);overflow:hidden}
     .evidence-records-table table{width:100%;border-collapse:collapse;font-size:9px}
     .evidence-records-table th{background:var(--navy);color:#fff;padding:10px 6px;font-size:9px;font-weight:800;text-align:center;line-height:1.2}
-    .evidence-records-table td{padding:11px 6px;font-size:9.5px;color:#334155;border-top:1px solid #EEF2F7;text-align:center;vertical-align:middle;line-height:1.4}
+    .evidence-records-table td{padding:8px 6px;font-size:9.5px;color:#334155;border-top:1px solid #EEF2F7;text-align:center;vertical-align:middle;line-height:1.3;max-height:32px;overflow:hidden}
+    .evidence-records-table td:nth-child(3){text-align:left;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .evidence-records-table td strong{color:var(--navy);font-weight:800}
     .row-badge{display:inline-flex;align-items:center;gap:4px;background:#D1FAE5;color:var(--green);border-radius:999px;padding:4px 8px;font-size:9px;font-weight:800}
     .row-badge svg{width:11px;height:11px}
@@ -885,7 +887,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     .check-box{width:14px;height:14px;border:1.5px solid #94A3B8;border-radius:3px;background:#fff;display:inline-block;flex-shrink:0}
     .ack-box{border:1px solid #CBD5E1;border-radius:8px;padding:10px;background:#fff;font-size:10px;color:#475569;line-height:1.4;margin-top:6px}
     .cta{height:42px;border-radius:8px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:13px;margin-top:8px}
-    @media print{body{background:#fff}.report-page{margin:0;border:0;width:8.5in;min-height:11in}@page{size:letter;margin:0}}
+    @media print{body{background:#fff}.report-page{margin:0;border:0;width:8.5in;height:11in;overflow:hidden}@page{size:letter;margin:0}}
   </style>
 </head>
 <body>
@@ -949,12 +951,12 @@ PAGES_PLACEHOLDER
   <div class="gold-divider"></div>
 
   <div class="metric-row-6">
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Verified Evidence Records</div><div class="metric-value">${number(verified.length)}</div></div>
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Verified Hours</div><div class="metric-value">${number(verifiedHours)}</div></div>
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.award}</span><div class="metric-label">Verification Rate</div><div class="metric-value">${eligible > 0 ? verificationRate : "N/A"}${eligible > 0 ? "%" : ""}</div></div>
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.target}</span><div class="metric-label">Average Verification Time</div><div class="metric-value">${escapeHtml(avgVerificationTime)}</div></div>
-    <div class="metric-card"><span class="metric-icon-circle amber">${ICON.alert}</span><div class="metric-label">Incomplete Records</div><div class="metric-value">${number(incomplete.length)}</div></div>
-    <div class="metric-card"><span class="metric-icon-circle red">${ICON.x}</span><div class="metric-label">Rejected Records</div><div class="metric-value">${number(rejected.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Verified Evidence Records</div></div><div class="metric-value">${number(verified.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Verified Hours</div></div><div class="metric-value">${number(verifiedHours)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.award}</span><div class="metric-label">Verification Rate</div></div><div class="metric-value">${eligible > 0 ? verificationRate : "N/A"}${eligible > 0 ? "%" : ""}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.target}</span><div class="metric-label">Average Verification Time</div></div><div class="metric-value">${escapeHtml(avgVerificationTime)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle amber">${ICON.alert}</span><div class="metric-label">Incomplete Records</div></div><div class="metric-value">${number(incomplete.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle red">${ICON.x}</span><div class="metric-label">Rejected Records</div></div><div class="metric-value">${number(rejected.length)}</div></div>
   </div>
 
   <div class="section-title" style="margin-top:18px">Evidence Confidence Tiers</div>

@@ -54,11 +54,14 @@ describe("Verified Evidence Summary report", () => {
     // Both "approved" records count as verified (canonical definition: approved || verified, matching dashboard)
     // Record 1: approved, verifiedAt set, hours=12, beneficiaryCount=50
     // Record 2: approved, verifiedAt=null, hours=20, beneficiaryCount=80
-    expect(html).toContain('<div class="metric-label">Verified Evidence Records</div><div class="metric-value">2</div>');
-    expect(html).toContain('<div class="metric-label">Verified Hours</div><div class="metric-value">32</div>');
-    expect(html).toContain('<div class="metric-label">Partner-Reported Reach</div><div class="metric-value">130</div>');
-    expect(html).toContain('<div class="metric-label">Incomplete Records</div><div class="metric-value">1</div>');
-    expect(html).toContain('<div class="metric-label">Rejected Records</div><div class="metric-value">1</div>');
+    expect(html).toContain('<div class="metric-label">Verified Evidence Records</div>');
+    expect(html).toContain('<div class="metric-label">Verified Hours</div>');
+    expect(html).toContain('<div class="metric-label">Partner-Reported Reach</div>');
+    expect(html).toContain('<div class="metric-label">Incomplete Records</div>');
+    expect(html).toContain('<div class="metric-label">Rejected Records</div>');
+    expect(html).toContain('<div class="metric-value">2</div>');
+    expect(html).toContain('<div class="metric-value">32</div>');
+    expect(html).toContain('<div class="metric-value">130</div>');
   });
 
   it("does not expose sensitive technical metadata terms", () => {

@@ -703,7 +703,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     .metric-row-6 .metric-card{padding:14px 8px}
     .metric-row-6 .metric-icon-circle{width:36px;height:36px}
     .metric-row-6 .metric-icon-circle svg{width:18px;height:18px}
-    .metric-row-6 .metric-label{font-size:10px;line-height:1.2}
+    .metric-row-6 .metric-label{font-size:10px;line-height:1.2;min-height:44px}
     .metric-row-6 .metric-value{font-size:28px}
     .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
     .tier-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}

@@ -220,7 +220,7 @@ function renderCornerOrnament(): string {
   </svg>`;
 }
 
-function page(pageNumber: number, body: string, logoDataUri?: string): string {
+function page(pageNumber: number, totalPages: number, body: string, logoDataUri?: string): string {
   return `<section class="report-page">
     <header class="page-header">
       ${renderBrandLockup(logoDataUri)}
@@ -229,7 +229,7 @@ function page(pageNumber: number, body: string, logoDataUri?: string): string {
     <main class="page-body">${body}</main>
     <footer class="page-footer">
       <span>CONFIDENTIAL &amp; PROPRIETARY &nbsp;|&nbsp; &copy; 2026 Synerxus. All rights reserved.</span>
-      <span class="page-num">${pageNumber} of 8</span>
+      <span class="page-num">${pageNumber} of ${totalPages}</span>
     </footer>
   </section>`;
 }
@@ -438,9 +438,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     </div>`;
   })();
 
-  const recordsHtml = verified.length > 0
-    ? `<div class="table-wrap evidence-records-table"><table>
-        <thead><tr>
+  const EVIDENCE_TABLE_HEAD = `<thead><tr>
           <th>Record ID</th>
           <th>Project</th>
           <th>Output Description</th>
@@ -449,17 +447,18 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
           <th>Verified</th>
           <th>Location</th>
           <th>SDG / Framework</th>
-        </tr></thead>
-        <tbody>${verified.map((record, index) => {
-          const sdgNums = resolveActivitySdgs(record, projectMap);
-          const sdgChips = sdgNums.length > 0
-            ? sdgNums.slice(0, 3).map((n) => `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:3px;background:${SDG_COLORS[n] || "#888"};color:#fff;font-size:8px;font-weight:700;margin-right:2px">${n}</span>`).join("")
-            : "<span style='color:#94A3B8;font-size:9px'>Unmapped</span>";
-          const projName = record.projectName
-            || projectMap.get(record.projectId)?.name
-            || filteredProjectNames[0]
-            || "Community program";
-          return `<tr>
+        </tr></thead>`;
+
+  const evidenceRowArr: string[] = verified.map((record, index) => {
+    const sdgNums = resolveActivitySdgs(record, projectMap);
+    const sdgChips = sdgNums.length > 0
+      ? sdgNums.slice(0, 3).map((n) => `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:3px;background:${SDG_COLORS[n] || "#888"};color:#fff;font-size:8px;font-weight:700;margin-right:2px">${n}</span>`).join("")
+      : "<span style='color:#94A3B8;font-size:9px'>Unmapped</span>";
+    const projName = record.projectName
+      || projectMap.get(record.projectId)?.name
+      || filteredProjectNames[0]
+      || "Community program";
+    return `<tr>
             <td><strong>EVR-${String(index + 1).padStart(4, "0")}</strong></td>
             <td>${escapeHtml(projName)}</td>
             <td>${escapeHtml(getOutputText(record))}</td>
@@ -469,10 +468,18 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
             <td>${escapeHtml(record.region || record.location || (record.geolocation ? "Region captured" : "—"))}</td>
             <td>${sdgChips}</td>
           </tr>`;
-        }).join("")}
-        </tbody>
-      </table></div>${hoursBarChart}`
-    : `<div class="card soft"><p>No Verified Evidence Records are available for this reporting period. Pending, incomplete, rejected, and unverified records are excluded from verified totals.</p></div>`;
+  });
+
+  const EVIDENCE_ROWS_PER_PAGE = 15;
+  const evidenceChunks: string[][] = evidenceRowArr.length > 0
+    ? (() => {
+        const chunks: string[][] = [];
+        for (let i = 0; i < evidenceRowArr.length; i += EVIDENCE_ROWS_PER_PAGE) {
+          chunks.push(evidenceRowArr.slice(i, i + EVIDENCE_ROWS_PER_PAGE));
+        }
+        return chunks;
+      })()
+    : [[]];
 
   // SDG record counts (used by strip + examples)
   const sdgRecordCounts: Record<number, { count: number; hours: number; examples: any[] }> = {};
@@ -883,7 +890,16 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
 </head>
 <body>
 
-${page(1, `
+PAGES_PLACEHOLDER
+</body>
+</html>`;
+
+  // ─── Build page bodies dynamically ──────────────────────────────────────────
+
+  const pageBodies: string[] = [];
+
+  // Page 1 — Cover
+  pageBodies.push(`
   <h1>Verified Evidence Summary</h1>
   <div class="subtitle">Prepared for ESG / CSR Reporting and Assurance Support</div>
   <div class="gold-divider"></div>
@@ -924,9 +940,10 @@ ${page(1, `
       <p>${escapeHtml(BOUNDARY_STATEMENT)}</p>
     </div>
   </div>
-`, input.logoDataUri)}
+`);
 
-${page(2, `
+  // Page 2 — Executive Evidence Snapshot
+  pageBodies.push(`
   <h2>Executive Evidence Snapshot</h2>
   <div class="subtitle">Verified, Partner-Reported, and Derived / Mapped data kept separate.</div>
   <div class="gold-divider"></div>
@@ -1037,9 +1054,10 @@ ${page(2, `
       </div>
     </div>
   </div>
-`, input.logoDataUri)}
+`);
 
-${page(3, `
+  // Page 3 — Evidence Quality Scorecard
+  pageBodies.push(`
   <h2>Evidence Quality Scorecard</h2>
   <div class="subtitle">Data Completeness, Confirmation, and Traceability</div>
   <div class="gold-divider"></div>
@@ -1105,24 +1123,46 @@ ${page(3, `
       <p>Only records within the reporting period and with verified status are included in verified totals. Incomplete and rejected records are excluded.</p>
     </div>
   </div>
-`, input.logoDataUri)}
+`);
 
-${page(4, `
+  // Evidence Record pages — one HTML page per chunk of 15 rows
+  if (evidenceRowArr.length === 0) {
+    pageBodies.push(`
   <h2>Verified Evidence Records</h2>
-  <div class="subtitle">${number(verified.length)} verified record${verified.length !== 1 ? "s" : ""} included in this reporting package.</div>
+  <div class="subtitle">No verified records in this reporting period.</div>
   <div class="gold-divider"></div>
-
-  ${recordsHtml}
-
-  <div class="card boundary" style="margin-top:14px">
+  <div class="card soft"><p>No Verified Evidence Records are available for this reporting period. Pending, incomplete, rejected, and unverified records are excluded from verified totals.</p></div>
+`);
+  } else {
+    evidenceChunks.forEach((chunk, ci) => {
+      const isFirst = ci === 0;
+      const isLast = ci === evidenceChunks.length - 1;
+      const continuedLabel = evidenceChunks.length > 1 ? ` (${ci + 1} of ${evidenceChunks.length})` : "";
+      pageBodies.push(`
+  <h2>Verified Evidence Records${isFirst ? "" : " (continued)"}</h2>
+  <div class="subtitle">${isFirst
+    ? `${number(verified.length)} verified record${verified.length !== 1 ? "s" : ""} included in this reporting package${evidenceChunks.length > 1 ? ` — page ${ci + 1} of ${evidenceChunks.length}` : ""}.`
+    : `Continued${continuedLabel} — ${number(verified.length)} total verified records.`
+  }</div>
+  ${isFirst ? '<div class="gold-divider"></div>' : ""}
+  <div class="table-wrap evidence-records-table"><table>
+    ${EVIDENCE_TABLE_HEAD}
+    <tbody>${chunk.join("")}</tbody>
+  </table></div>
+  ${isLast ? hoursBarChart : ""}
+  ${isLast ? `<div class="card boundary" style="margin-top:14px">
     <div class="info-row">
       <span class="info-icon">${ICON.info}</span>
       <p>Sensitive technical metadata is retained internally and redacted from this management report. Records marked "Unmapped" in SDG / Framework Alignment have been flagged in the Evidence Quality Scorecard.</p>
     </div>
-  </div>
-`, input.logoDataUri)}
+  </div>` : ""}
+`);
+    });
+  }
 
-${page(5, `
+
+  // Partner-Reported Reach & Framework Alignment — always its own page
+  pageBodies.push(`
   <h2>Partner-Reported Reach &amp; Framework Alignment</h2>
   <div class="subtitle">Separate community reach from verified outputs and connect records to reporting frameworks.</div>
   <div class="gold-divider"></div>
@@ -1161,9 +1201,10 @@ ${page(5, `
       </div>
     </div>
   </div>
-`, input.logoDataUri)}
+`);
 
-${page(6, `
+  // SDG Mapping Context & Contribution Pathways
+  pageBodies.push(`
   <h2>SDG Mapping Context &amp; Contribution Pathways</h2>
   <div class="subtitle">How partner-confirmed outputs connect to SDG-aligned reporting context.</div>
   <div class="gold-divider"></div>
@@ -1187,7 +1228,6 @@ ${page(6, `
     ${sdgExamplesHtml}
   </div>
 
-
   <div class="section-title"><span class="num-step">4</span>Negative Impact Screening Summary</div>
   <table class="neg-impact-table">
     <thead><tr><th>Item</th><th>Summary</th></tr></thead>
@@ -1197,9 +1237,10 @@ ${page(6, `
       <tr><td>Limitation Note</td><td>No negative impacts were reported through the partner-administered process during the period. This does not rule out unobserved or independently unreported impacts.</td></tr>
     </tbody>
   </table>
-`, input.logoDataUri)}
+`);
 
-${page(7, `
+  // Methodology, Definitions, and Report Boundaries
+  pageBodies.push(`
   <h2>Methodology, Definitions, and Report Boundaries</h2>
   <div class="subtitle">How evidence records are captured, confirmed, and used in reporting support.</div>
   <div class="gold-divider"></div>
@@ -1243,9 +1284,10 @@ ${page(7, `
     <li>Partner-reported reach is not independently verified by Synerxus unless explicitly stated.</li>
     <li>SDG and framework alignment does not imply certification or endorsement.</li>
   </ul>
-`, input.logoDataUri)}
+`);
 
-${page(8, `
+  // Evidence Readiness Assessment
+  pageBodies.push(`
   <h2>Evidence Readiness Assessment</h2>
   <div class="subtitle">Use Cases &amp; Setup Form</div>
   <div class="gold-divider"></div>
@@ -1300,9 +1342,13 @@ ${page(8, `
       <div class="cta">Request Evidence Assessment ${ICON.arrow}</div>
     </div>
   </div>
-`, input.logoDataUri)}
+`);
 
-</body>
-</html>`;
-  return html;
+  // ─── Render all pages with dynamic total ────────────────────────────────────
+  const totalPages = pageBodies.length;
+  const pagesHtml = pageBodies
+    .map((body, i) => page(i + 1, totalPages, body, input.logoDataUri))
+    .join("\n");
+
+  return html.replace("PAGES_PLACEHOLDER", pagesHtml);
 }

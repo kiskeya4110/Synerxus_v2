@@ -64,59 +64,172 @@ export function BoundaryNotice() {
   );
 }
 
-const evidenceAlignmentFrameworks = [
-  "CSRD",
-  "ESRS",
-  "GRI 413",
-  "SASB Standards",
-  "ISSB",
-  "TCFD",
-  "ISAE 3000",
-  "UN SDGs",
-] as const;
+const FRAMEWORK_LOGOS = [
+  {
+    abbr: "CSRD",
+    sub: "EU Directive",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <circle cx="18" cy="18" r="18" fill="#003399" />
+        {/* 8 gold dots in a ring — simplified EU stars */}
+        {[0,1,2,3,4,5,6,7].map((i) => {
+          const a = (i * 45 - 90) * (Math.PI / 180);
+          return <circle key={i} cx={+(18 + 10 * Math.cos(a)).toFixed(2)} cy={+(18 + 10 * Math.sin(a)).toFixed(2)} r="2" fill="#FFD700" />;
+        })}
+      </svg>
+    ),
+  },
+  {
+    abbr: "ESRS",
+    sub: "EU Standards",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <circle cx="18" cy="18" r="18" fill="#003399" />
+        {[0,1,2,3,4,5,6,7].map((i) => {
+          const a = (i * 45 - 90) * (Math.PI / 180);
+          return <circle key={i} cx={+(18 + 10 * Math.cos(a)).toFixed(2)} cy={+(18 + 10 * Math.sin(a)).toFixed(2)} r="2" fill="#FFD700" />;
+        })}
+        <text x="18" y="22" fontSize="8" fontWeight="800" fill="#FFD700" textAnchor="middle" fontFamily="system-ui,sans-serif">E</text>
+      </svg>
+    ),
+  },
+  {
+    abbr: "GRI 413",
+    sub: "Global Reporting Initiative",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <circle cx="18" cy="18" r="18" fill="#ffffff" />
+        {/* GRI-style concentric arcs */}
+        <path d="M18 4 A14 14 0 0 1 32 18" stroke="#F36F21" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M18 8 A10 10 0 0 1 28 18" stroke="#009A44" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M18 12 A6 6 0 0 1 24 18" stroke="#F36F21" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <circle cx="18" cy="18" r="3" fill="#003366" />
+      </svg>
+    ),
+  },
+  {
+    abbr: "SASB",
+    sub: "SASB Standards",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <rect width="36" height="36" rx="6" fill="#005780" />
+        {/* Diamond shape */}
+        <path d="M18 8 L28 18 L18 28 L8 18 Z" fill="none" stroke="#7DD4F0" strokeWidth="2" />
+        <text x="18" y="22" fontSize="9" fontWeight="900" fill="#ffffff" textAnchor="middle" fontFamily="system-ui,sans-serif">S</text>
+      </svg>
+    ),
+  },
+  {
+    abbr: "ISSB",
+    sub: "IFRS Foundation",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <rect width="36" height="36" rx="6" fill="#003466" />
+        {/* IFRS-style blue accent bar */}
+        <rect x="0" y="28" width="36" height="8" rx="0" fill="#41B6E6" />
+        <rect x="0" y="32" width="36" height="4" rx="0" fill="#41B6E6" />
+        <text x="18" y="22" fontSize="10" fontWeight="900" fill="#ffffff" textAnchor="middle" fontFamily="system-ui,sans-serif">ISSB</text>
+      </svg>
+    ),
+  },
+  {
+    abbr: "TCFD",
+    sub: "Climate Disclosures",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <rect width="36" height="36" rx="6" fill="#00687D" />
+        {/* Wave path representing climate */}
+        <path d="M4 22 Q9 16 14 22 Q19 28 24 22 Q29 16 32 22" stroke="#7DD4F0" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <text x="18" y="16" fontSize="9" fontWeight="900" fill="#ffffff" textAnchor="middle" fontFamily="system-ui,sans-serif">TCFD</text>
+      </svg>
+    ),
+  },
+  {
+    abbr: "ISAE 3000",
+    sub: "Assurance Engagements",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <rect width="36" height="36" rx="6" fill="#1B3A6B" />
+        {/* Shield outline */}
+        <path d="M18 6 L28 10 L28 20 Q28 28 18 32 Q8 28 8 20 L8 10 Z" fill="none" stroke="#7BA4DB" strokeWidth="1.8" />
+        {/* Checkmark */}
+        <path d="M13 18 L16.5 22 L23 14" stroke="#7BA4DB" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    abbr: "UN SDGs",
+    sub: "Sustainable Dev. Goals",
+    icon: (
+      <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <circle cx="18" cy="18" r="18" fill="#009EDB" />
+        {/* Simplified SDG wheel — 6 colored segments */}
+        {[
+          "#E5243B","#DDA63A","#4C9F38","#C5192D","#FF3A21","#26BDE2",
+        ].map((c, i) => {
+          const startAngle = (i * 60 - 90) * (Math.PI / 180);
+          const endAngle   = ((i + 1) * 60 - 90) * (Math.PI / 180);
+          const x1 = +(18 + 14 * Math.cos(startAngle)).toFixed(2);
+          const y1 = +(18 + 14 * Math.sin(startAngle)).toFixed(2);
+          const x2 = +(18 + 14 * Math.cos(endAngle)).toFixed(2);
+          const y2 = +(18 + 14 * Math.sin(endAngle)).toFixed(2);
+          return <path key={i} d={`M18 18 L${x1} ${y1} A14 14 0 0 1 ${x2} ${y2} Z`} fill={c} />;
+        })}
+        <circle cx="18" cy="18" r="7" fill="#009EDB" />
+        <text x="18" y="21" fontSize="6" fontWeight="900" fill="#ffffff" textAnchor="middle" fontFamily="system-ui,sans-serif">SDGs</text>
+      </svg>
+    ),
+  },
+];
 
 export function EvidenceAlignmentBanner() {
   return (
     <section
       aria-labelledby="evidence-alignment-heading"
-      className="border-y border-slate-100 bg-slate-50/70 px-4 py-8 md:px-8"
+      className="border-y border-slate-100 bg-white py-7"
     >
-      <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm md:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D4980C]">
-            Evidence Alignment Support
-          </p>
-          <h2
-            id="evidence-alignment-heading"
-            className="mt-3 text-xl font-extrabold tracking-tight text-[#0A1F44] md:text-2xl"
-          >
-            Evidence alignment support for major ESG and assurance frameworks
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-            Synerxus helps organize partner-confirmed evidence records for reporting and assurance preparation.
-          </p>
-        </div>
+      <div className="mb-5 text-center">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+          Evidence Alignment Support
+        </p>
+        <h2
+          id="evidence-alignment-heading"
+          className="mt-2 text-xl font-extrabold tracking-tight text-[#0A1F44] md:text-2xl"
+        >
+          Evidence alignment support for major ESG and assurance frameworks
+        </h2>
+      </div>
 
+      {/* Scrolling marquee — 3 copies for seamless -33.33% loop */}
+      <div className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
         <ul
           aria-label="Supported evidence alignment frameworks"
-          className="mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-2.5 md:gap-3"
+          className="flex animate-scroll items-center gap-5"
+          style={{ width: "max-content" }}
         >
-          {evidenceAlignmentFrameworks.map((framework) => (
-            <li key={framework}>
-              <span
-                aria-label={`${framework} evidence alignment support`}
-                className="inline-flex min-h-10 items-center rounded-full border border-[#D4980C]/25 bg-[#D4980C]/10 px-4 py-2 text-sm font-bold text-[#0A1F44] shadow-sm"
+          {[0, 1, 2].flatMap((copy) =>
+            FRAMEWORK_LOGOS.map((fw) => (
+              <li
+                key={`${copy}-${fw.abbr}`}
+                aria-label={`${fw.abbr} — ${fw.sub}`}
+                className="flex h-16 shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-sm"
               >
-                {framework}
-              </span>
-            </li>
-          ))}
+                {fw.icon}
+                <div>
+                  <p className="text-sm font-extrabold leading-none text-[#0A1F44]">{fw.abbr}</p>
+                  <p className="mt-1 text-[10px] leading-none text-slate-400">{fw.sub}</p>
+                </div>
+              </li>
+            ))
+          )}
         </ul>
-
-        <p className="mx-auto mt-5 max-w-3xl text-center text-xs font-medium leading-relaxed text-slate-500">
-          Framework alignment does not constitute certification, formal assurance, endorsement, or regulatory compliance determination.
-        </p>
       </div>
+
+      <p className="mx-auto mt-5 max-w-3xl px-4 text-center text-[11px] font-medium leading-relaxed text-slate-400">
+        Framework alignment does not constitute certification, formal assurance, endorsement, or regulatory compliance determination.
+      </p>
     </section>
   );
 }
@@ -289,7 +402,7 @@ export function EvidenceObjectExplorer() {
   return (
     <section id="evidence-object-explorer" className="relative overflow-hidden bg-white py-7 md:py-10">
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-50 to-white" />
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeader
           eyebrow="Evidence Object Explorer"
           title="Every ESG claim needs an Evidence Object."

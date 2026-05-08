@@ -107,21 +107,84 @@ export default function EvidenceLadderPage() {
   return (
     <MarketingLayout>
       <section className="bg-slate-50 py-7 md:py-10">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
-            Evidence Ladder
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-            A maturity model for ESG claim defensibility.
-          </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-            The Evidence Ladder helps organizations evaluate the strength of
-            each ESG claim based on evidence quality, partner confirmation,
-            chain of custody, framework mapping, and disclosure readiness.
-          </p>
-          <Button asChild className="mt-7 bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
-            <Link href="/request-assessment">Request Assessment</Link>
-          </Button>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+              Evidence Ladder
+            </p>
+            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
+              A maturity model for ESG claim defensibility.
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-600">
+              The Evidence Ladder helps organizations evaluate the strength of
+              each ESG claim based on evidence quality, partner confirmation,
+              chain of custody, framework mapping, and disclosure readiness.
+            </p>
+            <Button asChild className="mt-7 bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
+              <Link href="/request-assessment">Request Assessment</Link>
+            </Button>
+          </div>
+
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-[#0A1F44]/20 p-6 shadow-xl">
+            <div className="pointer-events-none absolute -bottom-8 -right-8 h-48 w-48 rounded-full bg-[#0A1F44]/10 blur-3xl" />
+
+            <div className="relative flex justify-center">
+              <div className="flex items-center justify-center rounded-2xl bg-[#0A1F44]/8 p-4 ring-1 ring-[#0A1F44]/10">
+                <img src="/synerxus-esg-logo.png" alt="Synerxus" className="h-16 w-auto" />
+              </div>
+            </div>
+
+            <p className="relative mb-4 mt-5 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#0A1F44]/60">
+              Evidence Ladder · 6 Levels
+            </p>
+
+            <div className="relative flex items-end justify-between gap-2" style={{ height: "112px" }}>
+              {[
+                { n: 0, color: "#dc2626", h: 19 },
+                { n: 1, color: "#ea580c", h: 38 },
+                { n: 2, color: "#d97706", h: 56 },
+                { n: 3, color: "#059669", h: 75 },
+                { n: 4, color: "#D4980C", h: 94 },
+                { n: 5, color: "#16a34a", h: 112 },
+              ].map(({ n, color, h }) => (
+                <div key={n} className="flex flex-1 flex-col items-center">
+                  <div
+                    style={{
+                      height: `${h}px`,
+                      backgroundColor: color,
+                      borderRadius: "4px 4px 2px 2px",
+                      opacity: 0.82,
+                      width: "100%",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="relative mt-2 flex justify-between">
+              {[0, 1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className="flex-1 text-center">
+                  <span className="text-xs font-extrabold text-[#0A1F44]/60">{n}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="relative mt-0.5 grid grid-cols-6 text-center">
+              {["Unsupported", "Asserted", "Source", "Confirmed", "Mapped", "Ready"].map((label) => (
+                <p key={label} className="text-[8px] font-semibold leading-tight text-[#0A1F44]/35">
+                  {label}
+                </p>
+              ))}
+            </div>
+
+            <div className="relative mt-4 rounded-xl bg-[#0A1F44]/5 p-3 ring-1 ring-[#0A1F44]/10">
+              <div className="h-2 w-full rounded-full bg-gradient-to-r from-[#dc2626] via-[#d97706] to-[#16a34a]" />
+              <div className="mt-2 flex justify-between">
+                <span className="text-[10px] font-bold text-red-600">Critical</span>
+                <span className="text-[10px] font-bold text-green-700">Disclosure-Ready</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

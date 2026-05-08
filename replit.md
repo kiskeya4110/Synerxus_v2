@@ -5,7 +5,7 @@
 - **Replit deployment URL**: https://synerxus-esg.replit.app
 - **Health check**: `GET /api/health` returns 200
 - **CORS whitelist** (shared env `CORS_WHITELIST`): `https://synerxus.com`, `https://www.synerxus.com`, `https://synerxus-esg.replit.app`
-- **Last published**: 2026-05-03 (post-refactor passes 1–7 + verification audit)
+- **Last published**: 2026-05-08
 
 ## Overview
 Synerxus is an AI-powered impact data infrastructure platform (PWA) that connects volunteers, NGOs, and corporations for ESG/SDG reporting. The core MVP flow is: volunteers log verified outcomes → NGOs verify within 72h → corporates access audit-ready data for CSRD-compliant ESG reporting. The platform vision is "Intelligent connections for sustainable development worldwide," with an outcome-first approach replacing self-reported hours and estimates.
@@ -30,7 +30,7 @@ Synerxus is an AI-powered impact data infrastructure platform (PWA) that connect
 - Three distinct dashboard experiences: Volunteer, Organization (dark green), Corporate/CSR
 - Opportunity displays: 2-column layout for AI analysis + SDG alignment
 - Mobile PWA detail views: hero images, match score badges, "Why this is a good match" sections, SDG circles, task counts, time commitments, teal-to-blue gradient headers
-- Report print CSS: `@page { margin: 15mm 15mm 12mm }` across all 4 generators; `break-inside: avoid` on `tr/td/th` only (NOT on `table {}`)
+- Report print CSS: `@page { margin: 15mm 15mm 12mm }` on client-side generators; `break-inside: avoid` on `tr/td/th` only (NOT on `table {}`)
 
 ### Three User Roles
 1. **Volunteer** — logs outcomes, applies to opportunities, tracks assignments
@@ -49,11 +49,11 @@ Synerxus is an AI-powered impact data infrastructure platform (PWA) that connect
 - **Multi-tenant security**: Data scoping enforced per organization/user
 - **Verification audit trail**: `verification_audit_log` table — every approve/reject records IP, user agent, evidence snapshot (CSRD compliance)
 - **Single-tap NGO verification**: Time-limited tokens (`verification_tokens` table) — one-click verify/reject via email link, no login required
-- **SMS verification fallback**: Twilio sends verification requests after 4h timeout; Y/N reply support
 - **Immutable audit trail**: All verification actions are append-only
 - **Performance**: O(1) lookup maps replace O(n) array scans in dashboard aggregation
 - **Account deletion**: Full cascade across all related tables
 - **Email**: Mock SMTP transporter (configurable for SendGrid, Mailgun, nodemailer); weekly digest scheduler (disabled in dev)
+- **Error tracking**: Sentry integration via `server/services/error-tracking.ts` — disabled when `SENTRY_DSN` is not set
 
 ### Plan Feature Gating (`shared/plan-features.ts`)
 Single source of truth for subscription tier features. Five tiers:
@@ -82,13 +82,24 @@ Single source of truth for subscription tier features. Five tiers:
 - `esgReportExport`: checked inside `generateReport()` in `csr-reports-exports.tsx` (blocks PDF print for Free tier)
 - `csvExport`: `<PlanGate>` wraps all Quick Data Export sections (org PWA, CSR mobile, CSR desktop)
 
-### Report Generators (4 total, all in `csr-reports-exports.tsx` + `logs.router.ts`)
-1. **Corporate ESG Summary** — `generatePDFContent()` — for CSR corporate users
-2. **Organization Impact Report** — `generateOrgPDFContent()` — for NGO org users
-3. **Corporate ESG via backend** — `GET /api/reports/corporate-esg-summary` in `logs.router.ts`
-4. **NGO Impact Summary PDF** — `GET /api/reports/ngo-impact-summary` in `logs.router.ts`
+### Report System
 
-All four use: navy `#0A2463` "SYNER" + gold `#D4980C` "XUS" footer branding, `@page { margin: 15mm 15mm 12mm }`, row-level table break rules only.
+#### Verified Evidence Summary (VES) — Primary Report
+- **Builder**: `server/domains/reporting/verified-evidence-summary-report.ts` — `buildVerifiedEvidenceSummaryReport()`
+- **Route (org)**: `GET /api/reports/verified-evidence-summary` (auth required, org context) in `logs.router.ts`
+- **Route (CSR)**: `GET /api/reports/verified-evidence-summary` with corporate context also handled in `logs.router.ts`
+- **Format**: server-rendered HTML, `Content-Disposition: inline`, opened in new browser tab
+- **Page structure**: Dynamic — cover + exec snapshot + quality scorecard + N evidence pages (15 rows/page) + partner reach + SDG contributions + methodology + assessment boundary. Minimum ~8 pages, expands automatically with data volume.
+- **KPI computation**: `server/domains/reporting/report-metrics.service.ts` — `computeReportMetrics()` — single source of truth. Canonical rule: `verificationStatus === 'approved'` = Verified (matches dashboard counts). `isFullyVerified()` applies only to strict evidence chain checks for the quality scorecard.
+- **Metrics exposed**: Verified Evidence Records, Verified Hours, Verification Rate, Average Verification Time, Incomplete Records, Rejected Records, Partner-Reported Reach, Projects/Programs Included, Record Verification Status (pipeline health bar: verified/pending/incomplete/rejected), Evidence Quality Scorecard, SDG Contribution Examples (top 3 SDGs with mini evidence tables)
+
+#### Other Report Generators
+1. **Corporate ESG Summary** (client-side) — `generatePDFContent()` in `csr-reports-exports.tsx`
+2. **Organization Impact Report** (client-side) — `generateOrgPDFContent()` in `csr-reports-exports.tsx`
+3. **NGO Impact Summary** (server-side) — `GET /api/reports/ngo-impact-summary` in `logs.router.ts`
+4. **Corporate ESG Summary** (server-side) — `GET /api/reports/corporate-esg-summary` in `logs.router.ts`
+
+All client-side generators use: navy `#0A2463` "SYNER" + gold `#D4980C` "XUS" footer branding, `@page { margin: 15mm 15mm 12mm }`, row-level table break rules only.
 
 ### CSV Exports (Quick Data Export section)
 All four buttons generate actual `.csv` files from live `reportData`:
@@ -105,8 +116,9 @@ Server-side CSV endpoint: `GET /api/csr/impact-reporting/export/csv` (enforces `
 - `GET /api/csr/partners/list` — returns all partners (used by volunteers for employer selection)
 - `GET /api/csr/impact-reporting` — full reporting data (engagementMetrics, impactMetrics, financialMetrics, sdgMetrics, projectMetrics)
 - `GET /api/csr/impact-reporting/export/csv` — server-side CSV export (plan-gated)
-- `GET /api/reports/corporate-esg-summary` — HTML ESG report (logs.router.ts)
+- `GET /api/reports/verified-evidence-summary` — Verified Evidence Summary HTML report (logs.router.ts)
 - `GET /api/reports/ngo-impact-summary` — NGO branded PDF report (logs.router.ts)
+- `GET /api/reports/corporate-esg-summary` — Corporate ESG HTML report (logs.router.ts)
 - `POST /api/users/firebase-sync` — syncs Firebase user to Postgres on login
 - `GET /api/users/me` — authenticated current user
 - `GET /api/public-stats` — must be registered BEFORE `app.use(router)` mounts in routes.ts
@@ -124,27 +136,41 @@ In `server/routes.ts`: `app.get("/api/public-stats", ...)` MUST be registered be
 - **AI Insights Modal**: Organization-level AI-generated program insights
 - **Volunteer Performance Modal**: Per-volunteer metrics for org admins
 - **Onboarding Guide**: Step-by-step flow for new users by role
-- **Email Digests**: Weekly personalized digest (disabled in dev)
 - **Offline Mode**: IndexedDB + service worker; activity log syncs on reconnect
 
 ### Test Accounts
 - **Al Honorat** (volunteer): `alhonorat@gmail.com`, Firebase userId=55
-- **Green Future Alliance** (NGO org): `contact@gfa.org`, Firebase userId=54, orgId=14
-- **Build Smart** (corporate): `csr@buildsmart.com`, userId=58
+- **Green Future Alliance** (NGO org): `contact@gfa.org`, Firebase userId=54, orgId=11
+- **Build Smart** (corporate): `csr@buildsmart.com`, CSR partner ID=4
+
+### Test Data Scripts
+- **Seed**: `ALLOW_TEST_SEED=true npx tsx scripts/seed-gfa-buildsmart-test-data.ts`
+  - Creates 30 test volunteers, 180 activities (135 approved / 22 pending / 14 incomplete / 9 rejected)
+  - Batch marker: `volunteer_activities.device_id = 'gfa-buildsmart-jan-may-2026-test-seed'`
+  - GFA org ID = 11, BuildSmart CSR partner ID = 4, GFA verifier user ID = 52
+  - Projects: Solar Installation (21), Hackathon (22), Clean Wells (23)
+- **Cleanup**: `ALLOW_TEST_SEED=true npx tsx scripts/cleanup-gfa-buildsmart-test-data.ts`
+  - Removes all records by batch marker and email pattern `%+gfa-test@buildsmart.example`
 
 ## File Map (Key Files)
 | File | Purpose |
 |---|---|
 | `client/src/pages/landing.tsx` | Public landing page, pricing section, FAQ |
-| `client/src/pages/csr-reports-exports.tsx` | All 4 report generators + CSV export UI |
+| `client/src/pages/csr-reports-exports.tsx` | Client-side report generators + CSV export UI |
 | `client/src/pages/unified-dashboard.tsx` | Role-based dashboard entry point |
 | `client/src/components/plan-gate.tsx` | `<PlanGate>` upgrade overlay component |
 | `client/src/hooks/use-plan-features.ts` | `usePlanFeatures()` hook — reads subscription tier |
 | `shared/plan-features.ts` | Tier definitions + `getPlanFeatures()` |
 | `shared/schema.ts` | Drizzle schema — all tables and insert types |
+| `shared/constants.ts` | Evidence status values, confidence tiers, report section labels |
+| `shared/validation/index.ts` | `isFullyVerified()` — strict evidence chain check |
 | `server/routes/csr.router.ts` | All `/api/csr/*` endpoints |
-| `server/routes/logs.router.ts` | Activity logs + ESG/NGO report generation |
+| `server/routes/logs.router.ts` | Activity logs, verification flows, all report routes |
 | `server/routes.ts` | Central router mount — public-stats route order matters |
+| `server/domains/reporting/verified-evidence-summary-report.ts` | VES report HTML builder (`buildVerifiedEvidenceSummaryReport`) |
+| `server/domains/reporting/report-metrics.service.ts` | `computeReportMetrics()` — canonical KPI computation |
+| `scripts/seed-gfa-buildsmart-test-data.ts` | Seeds GFA+BuildSmart test volunteers and activities |
+| `scripts/cleanup-gfa-buildsmart-test-data.ts` | Removes all seeded test data by batch marker |
 | `client/index.html` | PWA meta tags, manifest link |
 
 ## External Dependencies
@@ -153,7 +179,4 @@ In `server/routes.ts`: `app.get("/api/public-stats", ...)` MUST be registered be
 - **UI**: Radix UI, shadcn/ui, Recharts, Chart.js, Tailwind CSS, lucide-react
 - **Build**: TypeScript, Vite, ESBuild
 - **Email**: Mock SMTP (configurable: SendGrid, Mailgun, nodemailer)
-- **SMS**: Twilio (NGO verification fallback)
-- **Location**: Google Maps API (geolocation-based opportunity matching)
-- **Integrations**: Zapier (CRM: Salesforce, HubSpot)
-- **Security**: DOMPurify (HTML sanitization before print window write), Sentry (error tracking)
+- **Error tracking**: Sentry (`@sentry/node`) — requires `SENTRY_DSN` env var to activate

@@ -53,6 +53,8 @@ Current backend domain folders:
 
 Important reporting modules:
 
+- `server/domains/reporting/verified-evidence-summary-report.ts`: Verified Evidence Summary HTML builder (`buildVerifiedEvidenceSummaryReport`). Produces a dynamic multi-page HTML report (8+ pages) from pre-computed metrics. Page count expands automatically — 15 evidence rows per page.
+- `server/domains/reporting/report-metrics.service.ts`: canonical KPI computation (`computeReportMetrics`). Single source of truth for verified counts, hours, verification rate, quality score, and readiness status. Rule: `verificationStatus === 'approved'` = Verified — matches dashboard. `isFullyVerified()` applies only to strict evidence chain checks (quality scorecard).
 - `server/domains/reporting/report-redaction-policy.ts`: centralized public-report redaction note and redacted topic list.
 - `server/domains/reporting/report-html-escape.ts`: HTML escaping helper for generated backend report HTML.
 - `server/domains/reporting/index.ts`: reporting-domain export surface.
@@ -96,6 +98,7 @@ Public-facing report text must not claim that Synerxus replaces independent assu
 
 Key maintainability and safety tests:
 
+- `server/__tests__/verified-evidence-summary-report.test.ts`: VES report structure, metric isolation, logo rendering, project count accuracy, redaction assertions.
 - `server/__tests__/evidence-status.test.ts`
 - `server/__tests__/confidence-tier-classification.test.ts`
 - `server/__tests__/incomplete-cannot-be-verified.test.ts`

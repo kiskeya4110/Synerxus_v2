@@ -126,7 +126,7 @@ export default function ImpactStorytelling({
       });
 
       // Construct the generated story with current report date
-      const story = `Impact Report - ${formattedReportDate}\n\n${storyIntro}we've made ${toneAdjective} progress in ${focusPhrase} through the ${project.name} project in ${project.location}.\n\n
+      const story = `Evidence Summary - ${formattedReportDate}\n\n${storyIntro}we've made ${toneAdjective} progress in ${focusPhrase} through the ${project.name} project in ${project.location}.\n\n
 Since ${formattedProjectStart} (${getTimeFrame(project.date)}), we've achieved significant impact: ${metrics}.\n\n
 As of ${formattedReportDate}, ${getImpactStatement(project.metrics, focus).toLowerCase()}.\n\n
 ${getCallToAction(audience, tone)}

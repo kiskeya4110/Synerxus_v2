@@ -1386,7 +1386,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-white text-lg font-semibold flex items-center gap-2">
                     <Globe className="w-5 h-5 text-blue-400" />
-                    SDG Impact Report
+                    SDG Evidence Summary
                   </h2>
                   <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full font-semibold border border-blue-500/30">
                     UN Aligned
@@ -2261,7 +2261,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3"
               >
                 <Globe className="w-4 h-4 mr-2" />
-                View Full SDG Impact Report
+                View Full SDG Evidence Summary
               </Button>
 
               {/* Discover Opportunities Section */}
@@ -2670,7 +2670,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                     <div className="flex items-center gap-4 mb-3 pb-3 border-b border-slate-600">
                       <div className="text-center">
                         <div className="text-lg font-bold text-emerald-600">{Math.round(filteredSdgDistribution.reduce((sum, s) => sum + s.value, 0))}</div>
-                        <div className="text-[10px] text-slate-500">Total Hours</div>
+                        <div className="text-[10px] text-slate-500">Verified Hours</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-blue-600">{filteredSdgDistribution.reduce((sum, s) => sum + s.projectCount, 0)}</div>
@@ -2828,7 +2828,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3"
             >
               <FileText className="w-4 h-4 mr-2" />
-              View Full Impact Report
+              View Full Evidence Summary
             </Button>
             </div>
           </div>
@@ -3607,7 +3607,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
           <div className="bg-slate-900 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95 border border-slate-700">
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-white text-lg font-semibold">
-                {showKpiModal === 'hours' && 'Total Hours Logged'}
+                {showKpiModal === 'hours' && 'Verified Hours'}
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
                 {showKpiModal === 'sdgs' && 'SDG Contributions'}
@@ -3716,7 +3716,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                         <span className="text-green-600 font-semibold">{kpis.projectsCompleted}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Total Hours:</span>
+                        <span>Verified Hours:</span>
                         <span className="text-blue-600 font-semibold">{kpis.totalHours}</span>
                       </div>
                     </div>
@@ -4246,7 +4246,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <span className="text-green-600 font-semibold">{kpis.projectsCompleted}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Total Hours:</span>
+                      <span className="text-slate-400">Verified Hours:</span>
                       <span className="text-blue-600 font-semibold">{Math.round(kpis.totalHours)}</span>
                     </div>
                   </div>

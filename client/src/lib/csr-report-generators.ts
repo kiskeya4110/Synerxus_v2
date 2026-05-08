@@ -426,7 +426,7 @@ export function generateCSVContent(
   rows.push(["", "", "", ""]);
 
   if (data) {
-    rows.push(["Total Hours", String(data.engagementMetrics?.totalHours || 0), "YTD", "Active"]);
+    rows.push(["Verified Hours", String(data.engagementMetrics?.totalHours || 0), "YTD", "Active"]);
     rows.push(["Active Employees", String(data.engagementMetrics?.activeEmployees || 0), "Current", "Active"]);
     rows.push(["Participation Rate", `${data.engagementMetrics?.participationRate || 0}%`, "Current", "Active"]);
     rows.push(["Direct Beneficiaries", String(data.impactMetrics?.directBeneficiaries || 0), "YTD", "Active"]);

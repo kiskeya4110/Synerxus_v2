@@ -49,7 +49,7 @@ export const reportTemplates: ReportTemplate[] = [
   },
   {
     id: "sdg-impact",
-    name: "SDG Impact Report",
+    name: "SDG Evidence Summary",
     description: "Progress tracking against UN Sustainable Development Goals.",
     category: "impact",
     icon: "🌍",

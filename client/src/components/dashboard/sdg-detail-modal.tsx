@@ -185,7 +185,7 @@ export default function SDGDetailModal({
                     <Clock className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-blue-600 font-medium">Total Hours</p>
+                    <p className="text-xs text-blue-600 font-medium">Verified Hours</p>
                     <p className="text-lg font-bold text-blue-700">{formatDecimal(metrics.totalHours)}</p>
                   </div>
                 </CardContent>
@@ -446,6 +446,9 @@ export default function SDGDetailModal({
             )}
           </TabsContent>
         </Tabs>
+        <p className="mt-4 text-[11px] text-slate-400">
+          Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+        </p>
       </DialogContent>
     </Dialog>
   );

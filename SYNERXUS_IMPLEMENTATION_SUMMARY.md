@@ -1,4 +1,4 @@
-# Synerxus CSR Platform - Implementation Summary
+# Synerxus Verified Evidence Platform - Implementation Summary
 
 ## 🎯 Project Completion Status: ✅ 100%
 
@@ -110,11 +110,11 @@ npm run dev
 - Data flow: DB → Drizzle ORM → Dashboard Service → API → React Query → UI
 
 **Dashboard Elements Connected**:
-- ✅ KPIs → `totalHours`, `activeEmployees`, `projectsCompleted`, `sdgScoreDelta`
-- ✅ SDG Alignment → `sdgMetrics[]` with hours, volunteers, projects
+- ✅ KPIs → `verifiedHours`, `activeProjects`, `pendingVerification`, `evidenceReadinessScore`
+- ✅ SDG / Framework Alignment → `sdgMetrics[]` with hours, participants, projects (derived/mapped tier)
 - ✅ Geographic Impact → `projectLocations[]` with lat/lng markers
-- ✅ Employee Funnel → Funnel data with 5 stages
-- ✅ Admin Actions → `pendingActions[]` with reviews, insights, flagged
+- ✅ Participation Funnel → Funnel data with 5 stages
+- ✅ Pending Verification Actions → `pendingActions[]` with verification queue, incomplete records, flagged items
 
 ---
 

@@ -408,7 +408,7 @@ export default function Overview() {
                 <span style={{ fontSize: '32px', fontWeight: '700' }}>{metrics.totalHours.toLocaleString()}</span>
                 <div>
                   <span style={{ fontSize: '24px', fontWeight: '700' }}>{metrics.volunteersEngaged}</span>
-                  <p style={{ fontSize: '11px' }}>Employees Engaged</p>
+                  <p style={{ fontSize: '11px' }}>Participants</p>
                 </div>
               </div>
               <p style={{ fontSize: '10px', marginTop: '8px', opacity: 0.8 }}>Tap to view details →</p>
@@ -823,7 +823,7 @@ export default function Overview() {
               <div className="p-2 bg-green-100 rounded-lg">
                 <Clock size={20} className="text-green-600" />
               </div>
-              <span className="text-sm font-medium text-gray-700">Total Hours</span>
+              <span className="text-sm font-medium text-gray-700">Verified Hours</span>
             </div>
             <p className="text-4xl font-bold text-green-600 mb-1">{(metrics.totalHours || 0).toLocaleString()}</p>
             <p className="text-xs text-gray-600">Volunteer hours logged</p>

@@ -78,7 +78,7 @@ const navSections = [
   {
     title: "ANALYTICS & REPORTS",
     items: [
-      { id: "impact", label: "Impact Report", icon: BarChart3, href: "/impact-report-generator", description: "Generate impact reports" },
+      { id: "impact", label: "Evidence Summary", icon: BarChart3, href: "/impact-report-generator", description: "Generate Verified Evidence Summaries" },
       { id: "geographic", label: "Geographic Impact", icon: Building2, href: "/csr-dashboard?tab=geographic", description: "Map view of activities" },
     ]
   },
@@ -1095,7 +1095,7 @@ export function CSRLayout({ children, title, subtitle, activeNav = "dashboard", 
                   Dashboard
                 </button>
                 <button onClick={() => navigate("/impact-report-generator")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
-                  Impact Report
+                  Evidence Summary
                 </button>
                 <button onClick={() => navigate("/project-portfolio")} style={{ background: "none", border: "none", color: "#1e293b", fontSize: "12px", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   Projects

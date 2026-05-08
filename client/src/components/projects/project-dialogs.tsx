@@ -648,7 +648,7 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
                   name="projectTotalHours"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Total Hours</FormLabel>
+                      <FormLabel>Project Hours</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -1063,7 +1063,7 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
                   name="totalHoursLogged"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Hours Logged</FormLabel>
+                      <FormLabel>Hours Logged</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

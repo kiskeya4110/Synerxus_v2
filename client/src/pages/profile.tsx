@@ -462,7 +462,7 @@ export default function Profile() {
             <Link href="/calendar">
               <Card className="cursor-pointer hover:border-primary/50 transition-colors" data-testid="card-total-hours">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+                  <CardTitle className="text-sm font-medium">Verified Hours</CardTitle>
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>

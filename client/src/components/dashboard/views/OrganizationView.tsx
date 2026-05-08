@@ -1791,7 +1791,7 @@ const OrganizationView = memo(function OrganizationView({
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
-                    <p className="text-xs text-gray-500">Total Hours Logged</p>
+                    <p className="text-xs text-gray-500">Verified Hours</p>
                   </div>
                 </div>
               </div>

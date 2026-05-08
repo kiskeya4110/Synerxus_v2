@@ -603,7 +603,7 @@ export default function DashboardHeader({
                         {effectivePendingCount} item{effectivePendingCount !== 1 ? 's' : ''} awaiting verification
                       </p>
                       <p className="text-amber-600 text-xs mt-0.5">
-                        Tap to review pending hours and impact reports
+                        Tap to review pending hours and evidence summaries
                       </p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-amber-400 flex-shrink-0 mt-1" />

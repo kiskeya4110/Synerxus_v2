@@ -32,7 +32,7 @@ export default function Privacy() {
                 <li>Provide and improve our services</li>
                 <li>Match volunteers with opportunities</li>
                 <li>Facilitate communication between users</li>
-                <li>Generate impact reports and analytics</li>
+                <li>Generate evidence summaries and analytics</li>
                 <li>Send notifications about opportunities and updates</li>
               </ul>
             </section>

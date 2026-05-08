@@ -100,7 +100,7 @@ const faqData: FAQItem[] = [
     category: "SDG Goals",
     question: "How is my impact aligned to SDGs?",
     answer:
-      "When projects are created, they're mapped to relevant SDGs. Your volunteer hours and contributions are automatically tracked against these goals for comprehensive impact reporting.",
+      "When projects are created, they're mapped to relevant SDGs. Your volunteer hours and contributions are automatically tracked against these goals for evidence-based framework reporting.",
   },
 ];
 

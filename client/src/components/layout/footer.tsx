@@ -89,6 +89,9 @@ export default function Footer() {
           <p className="mt-1.5 max-w-5xl text-[11px] leading-snug text-slate-600">
             {ASSURANCE_FOOTER_NOTE}
           </p>
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-600">
+            Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+          </p>
         </div>
       </div>
     </footer>

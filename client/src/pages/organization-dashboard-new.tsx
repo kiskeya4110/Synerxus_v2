@@ -1032,7 +1032,7 @@ export default function OrganizationDashboardNew() {
                       size="lg"
                     />
                     <Stat
-                      label="Total Hours"
+                      label="Logged Hours"
                       value={stats.totalHours}
                       suffix="hrs"
                       size="lg"
@@ -1266,7 +1266,7 @@ export default function OrganizationDashboardNew() {
                       variant="outline"
                       onClick={() => {
                         const rows = [
-                          ["Project", "Status", "Total Hours", "Verified Hours", "Volunteers", "People Impacted", "Completion %"],
+                          ["Project", "Status", "Logged Hours", "Verified Hours", "Volunteers", "Partner-Reported Reach", "Completion %"],
                           ...(reportData.projects || []).map((p: any) => [
                             p.name, p.status, p.totalHours, p.verifiedHours, p.volunteerCount, p.peopleImpacted, p.completionPercentage
                           ]),
@@ -1301,7 +1301,7 @@ export default function OrganizationDashboardNew() {
             {reportData && (
               <>
                 <Grid columns={4}>
-                  <MetricCard label="Total Hours" value={reportData.summary?.totalHours || 0} />
+                  <MetricCard label="Logged Hours" value={reportData.summary?.totalHours || 0} />
                   <MetricCard label="Verified Hours" value={reportData.summary?.verifiedHours || 0} />
                   <MetricCard label="Volunteers" value={reportData.summary?.totalVolunteers || 0} />
                   <MetricCard label="People Impacted" value={reportData.summary?.peopleImpacted || 0} />

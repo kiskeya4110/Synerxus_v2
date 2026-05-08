@@ -5895,7 +5895,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         
 
 
-        const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. 
+        const systemPrompt = `You are an expert evidence summary writer for organizations reporting on ESG, CSR, and social value programs. Create structured, evidence-ready Verified Evidence Summaries that are well-organized, data-driven, and clearly distinguish verified records from partner-reported reach and derived framework alignment.
 
 MANDATORY RULES - NON-NEGOTIABLE:
 - EACH METRIC APPEARS EXACTLY ONCE - NO EXCEPTIONS
@@ -5903,8 +5903,9 @@ MANDATORY RULES - NON-NEGOTIABLE:
 - SUM all similar metrics into a single total (not separate line items)
 - Example: DO NOT say "Students Educated: 35" then "Students Educated: 35" again
 - Example DO: "Students Educated: 70" (if there were two instances of 35)
-- Treat ALL beneficiary-type metrics as ONE "Total People Impacted" figure
-- Format as a professional, compelling narrative`;
+- Treat ALL beneficiary-type metrics as ONE "Partner-Reported Reach" figure and label it as partner-reported, not verified
+- Do not use the phrases "proves impact", "proof of impact", "guaranteed compliance", or "formal assurance"
+- Format as a professional, structured evidence summary`;
 
         // Extract aggregated totals from metrics
         const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
@@ -5912,7 +5913,7 @@ MANDATORY RULES - NON-NEGOTIABLE:
         const projectCount = metrics?.activeProjects || 0;
         const beneficiaryTotal = metrics?.totalBeneficiariesReached || 0;
 
-        const userPrompt = `Generate a professional Synerxus Impact Report with ZERO metric duplication:
+        const userPrompt = `Generate a professional Synerxus Verified Evidence Summary with ZERO metric duplication:
 
 ORGANIZATION: ${organizationName}
 PROJECT: ${projectTitle}
@@ -5923,9 +5924,9 @@ MASTER METRICS (these are the ONLY numbers to reference, each once):
 - Volunteers: ${volunteerCount}
 - Hours: ${totalHours}
 - Projects: ${projectCount}
-- Total People Impacted: ${beneficiaryTotal}
+- Partner-Reported Reach: ${beneficiaryTotal} (label as partner-reported, not verified)
 
-IMPACT STORY (already deduplicated):
+EVIDENCE NARRATIVE (already deduplicated):
 ${cleanStories}
 
 CSR/ESG: ${csrAlignment}
@@ -5935,12 +5936,12 @@ Target: ${targetAudience} | Tone: ${tone} | Focus: ${impactFocus}
 REPORT FORMAT:
 1. Header (Organization, Date)
 2. Executive Summary (use the master metrics ONCE each)
-3. Key Achievements (reference master metrics, no duplication)
-4. Impact Story (from deduplicated story above)
-5. CSR/ESG Alignment
+3. Verified Evidence (reference verified hours and records, no duplication)
+4. Evidence Narrative (from deduplicated narrative above)
+5. Framework Alignment (SDG/ESG — labeled as derived mapping, not compliance certification)
 6. Next Steps
 
-CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY appear once in the entire report. If similar metrics exist, combine them into totals.`;
+CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY appear once in the entire report. If similar metrics exist, combine them into totals. Partner-reported reach must be clearly labeled as partner-reported, not verified.`;
 
         const reportContent = await aiService.chat(
           [
@@ -5967,7 +5968,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       }
     } catch (err) {
       logger.error("Error generating impact report:", err);
-      res.status(500).json({ message: "Failed to generate impact report" });
+      res.status(500).json({ message: "Failed to generate evidence summary" });
     }
   });
 
@@ -7837,11 +7838,11 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // Generate CSV
       const rows = [
-        ["CSR Impact Report - " + userPartner.companyName],
+        ["Verified Evidence Summary - " + userPartner.companyName],
         ["Report Period:", impactData.reportPeriod],
         [""],
         ["ENGAGEMENT METRICS"],
-        ["Total Hours", impactData.engagementMetrics.totalHours],
+        ["Verified Hours", impactData.engagementMetrics.totalHours],
         ["Active Employees", impactData.engagementMetrics.activeEmployees],
         ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
         ["Participation Rate", impactData.engagementMetrics.participationRate + "%"],
@@ -7886,7 +7887,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.get("/api/csr/impact-reporting/export/pdf", async (req, res) => {
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-      const reportTitle = (req.query.title as string) || "CSR Impact Report";
+      const reportTitle = (req.query.title as string) || "Verified Evidence Summary";
       const reportTimeline = (req.query.timeline as string) || "Annual";
       if (!userId) return res.status(400).json({ error: "User ID required" });
 

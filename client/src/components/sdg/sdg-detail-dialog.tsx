@@ -79,8 +79,8 @@ export function SDGDetailDialog({ sdgId, open, onOpenChange }: SDGDetailDialogPr
 
           {/* Learn More */}
           <div className="pt-4 border-t">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full gap-2"
               onClick={() => window.open(`https://sdgs.un.org/goals/goal${sdgData.id}`, '_blank')}
               data-testid="button-learn-more-sdg"
@@ -89,6 +89,9 @@ export function SDGDetailDialog({ sdgId, open, onOpenChange }: SDGDetailDialogPr
               Learn More on UN Website
             </Button>
           </div>
+          <p className="pt-4 text-[11px] text-muted-foreground">
+            Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

@@ -209,7 +209,7 @@ function QuickStats({
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{totalHours.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">Total Hours</p>
+            <p className="text-[10px] text-muted-foreground">Verified Hours</p>
           </div>
         </div>
       </Card>
@@ -535,7 +535,7 @@ function SlideOutMenu({
   if (!isOpen) return null;
 
   const menuItems = [
-    { icon: BarChart3, label: "Impact Report", path: "/organization-impact-report" },
+    { icon: BarChart3, label: "Evidence Summary", path: "/organization-impact-report" },
     { icon: Settings, label: "Settings", path: "/organization-profile-settings" },
     { icon: Plus, label: "New Project", path: "/post-core-opportunity" },
     { icon: Globe, label: "Overview", path: "/overview" },
@@ -1036,7 +1036,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
 
             <div className="space-y-2">
               {[
-                { icon: BarChart3, label: "Impact Report", path: "/organization-impact-report", color: "text-primary" },
+                { icon: BarChart3, label: "Evidence Summary", path: "/organization-impact-report", color: "text-primary" },
                 { icon: TrendingUp, label: "Analytics", path: "/overview", color: "text-success" },
                 { icon: Plus, label: "Create Project", path: "/post-core-opportunity", color: "text-accent" },
                 { icon: Settings, label: "Settings", path: "/organization-profile-settings", color: "text-muted-foreground" },

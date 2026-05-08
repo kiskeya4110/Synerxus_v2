@@ -408,6 +408,9 @@ function SDGMappingPreview() {
             organization for GRI, SASB, ESRS, ISSB, CSRD, and assurance
             preparation workflows where applicable.
           </p>
+          <p className="mt-1.5 text-[11px] text-slate-400">
+            Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+          </p>
         </div>
       </div>
     </section>
@@ -590,7 +593,11 @@ export default function MarketingHome() {
                 SYNERXUS · ESG EVIDENCE INFRASTRUCTURE
               </p>
               <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-                The ESG Evidence Layer for Defensible Disclosures.
+                The{" "}
+                <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: "#D4980C" }}>
+                  ESG Evidence Layer
+                </span>{" "}
+                for Defensible Disclosures.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
                 Transform sustainability claims into structured Evidence Objects

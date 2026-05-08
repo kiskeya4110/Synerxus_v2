@@ -1448,7 +1448,7 @@ csrRouter.get("/csr/notifications", authMiddleware, requireCSRAccess, async (req
         createdAt: now.toISOString(),
         isRead: false,
         link: '/csr-impact-reporting',
-        actionLabel: 'View Impact Report',
+        actionLabel: 'View Evidence Summary',
       });
     }
 
@@ -1810,11 +1810,11 @@ csrRouter.get("/csr/impact-reporting/export/csv", authMiddleware, requireCSRAcce
 
     // Generate CSV
     const rows = [
-      ["CSR Impact Report - " + userPartner.companyName],
+      ["Verified Evidence Summary - " + userPartner.companyName],
       ["Report Period:", impactData?.reportPeriod || "N/A"],
       [""],
       ["ENGAGEMENT METRICS"],
-      ["Total Hours", engagement.totalHours ?? "N/A"],
+      ["Verified Hours", engagement.totalHours ?? "N/A"],
       ["Active Employees", engagement.activeEmployees ?? "N/A"],
       ["Avg Hours/Employee", engagement.avgHoursPerEmployee ?? "N/A"],
       ["Participation Rate", (engagement.participationRate ?? 0) + "%"],
@@ -1864,7 +1864,7 @@ csrRouter.get("/csr/impact-reporting/export/pdf", authMiddleware, requireCSRAcce
     const authUser = getAuthenticatedUser(req, res);
     if (!authUser) return;
     const userId = authUser.id;
-    const reportTitle = (req.query.title as string) || "CSR Impact Report";
+    const reportTitle = (req.query.title as string) || "Verified Evidence Summary";
     const reportTimeline = (req.query.timeline as string) || "Annual";
 
     const partners = await storage.listCSRPartners?.() || [];

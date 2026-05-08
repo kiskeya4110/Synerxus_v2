@@ -96,7 +96,7 @@ export default function CsrReportsMobile({
             <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
               <TrendingUp className="h-5 w-5 text-blue-600 mx-auto mb-1" />
               <p className="text-lg font-bold">{orgDashboardData?.totalHours || 0}</p>
-              <p className="text-[10px] text-gray-500">Total Hours</p>
+              <p className="text-[10px] text-gray-500">Verified Hours</p>
             </div>
             <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
               <Users className="h-5 w-5 text-green-600 mx-auto mb-1" />
@@ -277,6 +277,9 @@ export default function CsrReportsMobile({
               </div>
             </div>
           </PlanGate>
+          <p className="mt-3 text-[10px] text-slate-400">
+            Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+          </p>
         </div>
       </OrganizationPWALayout>
     );
@@ -456,6 +459,9 @@ export default function CsrReportsMobile({
             </div>
           </div>
         </PlanGate>
+        <p className="mt-3 text-[10px] text-slate-400 px-1">
+          Sustainable Development Goals (SDGs) are a registered trademark of the United Nations.
+        </p>
       </main>
 
       <CSRMobileNav activeTab="reports" />

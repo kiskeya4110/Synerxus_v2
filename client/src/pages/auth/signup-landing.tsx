@@ -21,7 +21,7 @@ const ROLE_OPTIONS = [
   {
     id: "organization",
     title: "NGO Partner",
-    description: "Verify project outcomes and generate audit-ready impact reports.",
+    description: "Verify project outcomes and generate Verified Evidence Summaries.",
     icon: Globe,
     href: "/signup/organization",
     free: true,
@@ -35,7 +35,7 @@ const ROLE_OPTIONS = [
   {
     id: "corporate",
     title: "Corporate Partner",
-    description: "Deploy verified ESG programs, get audit-ready impact evidence, and meet global sustainability reporting requirements.",
+    description: "Deploy verified ESG programs, generate Verified Evidence Summaries, and support sustainability reporting requirements.",
     icon: Building2,
     href: "/signup/corporate",
     free: false,

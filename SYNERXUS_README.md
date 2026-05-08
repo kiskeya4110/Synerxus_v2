@@ -1,26 +1,158 @@
-# Synerxus CSR Platform
+# Synerxus Verified Evidence Platform
 
-> A comprehensive full-stack Corporate Social Responsibility platform connecting dashboards, volunteers, organizations, and impact metrics with real-time data flow, AI matchmaking, and OCR-powered data ingestion.
+Synerxus is verified evidence infrastructure for ESG, CSR, corporate volunteering, community investment, and social value programs.
 
-## 🌟 Features
+The platform helps organizations move from activity tracking to evidence-ready reporting by connecting activity capture, output documentation, authorized partner confirmation, Verified Evidence Records, and Verified Evidence Summaries.
 
-### Core Functionality
-- **Real-time Dashboard**: Live KPI updates with 30-second polling intervals
-- **SDG Tracking**: Comprehensive Sustainable Development Goals alignment and progress
-- **Geographic Impact Map**: Interactive visualization of global project locations
-- **Employee Engagement Funnel**: Track volunteer participation from registration to active contribution
-- **AI Matchmaking**: Intelligent volunteer-organization matching with explainable algorithms
-- **OCR Image Ingestion**: Upload dashboard screenshots for automatic data extraction
-- **Manual Review UI**: Verify and edit OCR-extracted data before saving
+Synerxus supports reporting and assurance preparation. It does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
 
-### Technical Highlights
-- **Dual Backend Architecture**: Node.js/Express + Python FastAPI
-- **Real-time Updates**: React Query with optimistic updates and cache invalidation
-- **Responsive Design**: Mobile-first UI with Radix UI components
-- **Type Safety**: Full TypeScript coverage with Zod validation
-- **Database**: PostgreSQL with Drizzle ORM
-- **Charts & Maps**: Recharts + Leaflet for data visualization
-- **Authentication**: Session-based auth with Passport.js
+---
+
+## Core Product Workflow
+
+```
+Activity captured
+    → Output documented
+    → Authorized partner confirmation
+    → Verified Evidence Record
+    → Verified Evidence Summary
+```
+
+---
+
+## Features
+
+### Evidence Infrastructure (Primary)
+
+- **Activity and output capture**: Log volunteer activities, project outputs, and organizational contributions
+- **Authorized partner verification**: Partner-confirmed sign-off on submitted outputs and hours
+- **Verified Evidence Records**: Structured records that meet eligibility criteria for verified reporting totals
+- **Evidence status workflow**: Pending → Verified / Incomplete / Rejected / Archived
+- **Evidence confidence tiers**: Verified, Partner-Reported, Derived/Mapped
+- **Verified Evidence Summary reports**: Primary enterprise-facing report separating verified records, partner-reported reach, and framework alignment
+- **Evidence Quality Scorecard**: Aggregate measure of evidence completeness, verification rate, and data quality
+- **Report readiness checks**: Identify gaps before generating a Verified Evidence Summary
+- **Framework and SDG alignment**: Classification and mapping to SDG, GRI, ESRS, SASB, ISSB, ISAE 3000, and internal frameworks
+
+### Supporting Capabilities
+
+- **Matching and project recommendation support**: AI-assisted volunteer-to-project matching (not a primary product category)
+- **Optional data ingestion support**: OCR-assisted import of existing data from screenshots or documents (not a primary product category)
+- **Geographic project map**: Visual overview of project locations
+- **Employee engagement funnel**: Participation pipeline tracking
+- **Advanced dashboards**: Real-time KPI monitoring and reporting views
+
+---
+
+## Evidence Model
+
+Synerxus structures reportable activity into Verified Evidence Records.
+
+Each Verified Evidence Record may include:
+
+| Field | Description |
+|---|---|
+| Evidence Record ID | Unique identifier for the record |
+| Organization | Reporting organization |
+| Project | Associated CSR or social value project |
+| Volunteer / Contributor | Individual or team responsible for the activity |
+| Activity date | Date the activity occurred |
+| Output description | What was done or delivered |
+| Verified hours | Hours confirmed through the verification workflow |
+| Authorized verifier | Partner or supervisor who confirmed the record |
+| Verification status | Current status (see Evidence Status below) |
+| Verification timestamp | Date and time verification was completed |
+| Partner-reported reach | Beneficiary or community counts submitted by the partner (labeled separately) |
+| SDG / framework alignment | Mapped SDG goals and reporting framework tags |
+| Confidence tier | Verified, Partner-Reported, or Derived/Mapped |
+| Redaction note | If any field has been redacted for privacy or legal reasons |
+
+---
+
+## Evidence Status
+
+| Status | Meaning |
+|---|---|
+| **Pending Verification** | Submitted but not yet reviewed by an authorized verifier |
+| **Verified** | Completed required confirmation and eligible for reporting |
+| **Incomplete** | Missing required information and not eligible for verified totals |
+| **Rejected** | Reviewed and not accepted |
+| **Archived** | Retained but not active |
+
+**Rule**: Only verified records are included in verified totals. Pending, incomplete, and rejected records are disclosed but excluded from verified evidence totals.
+
+---
+
+## Evidence Confidence Tiers
+
+**Verified**
+Partner-confirmed outputs and verified hours.
+
+**Partner-Reported**
+Reach, community counts, and beneficiary estimates submitted by partners. Labeled separately from verified totals and not aggregated as verified data.
+
+**Derived / Mapped**
+SDG, GRI, ESRS, SASB, ISSB, ISAE 3000, and internal framework alignment generated from classification and mapping rules. Not independently verified.
+
+---
+
+## Boundary Statement
+
+Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+
+### Prohibited Language
+
+The following terms must not appear in product descriptions, reports, or customer-facing materials generated by this platform:
+
+- proves impact
+- proof of impact
+- guaranteed compliance
+- auditor-approved
+- certified CSRD compliant
+- formal assurance
+- causal proof
+- verified beneficiaries *(unless independently verified by a third party)*
+- immutable audit trail *(unless technically implemented and documented)*
+
+---
+
+## Dashboard Metrics
+
+The primary dashboard metrics align with the evidence model:
+
+| Metric | Description |
+|---|---|
+| Active Projects | Projects currently in progress |
+| Pending Verification | Records awaiting partner confirmation |
+| Verified Evidence Records | Total records that have passed verification |
+| Verified Hours | Sum of hours across all verified records |
+| Partner-Reported Reach | Beneficiary or community counts (labeled, not aggregated into verified totals) |
+| Evidence Readiness Score | Composite measure of completeness, verification rate, and report readiness |
+
+---
+
+## Verified Evidence Summary
+
+The Verified Evidence Summary is the primary enterprise-facing report. It separates:
+
+- Verified records (confirmed by authorized partners)
+- Partner-reported reach (disclosed separately)
+- Derived/mapped framework alignment (SDG, GRI, ESRS, etc.)
+
+Verified Evidence Summary PDF export is available for enterprise reporting and assurance preparation workflows.
+
+---
+
+## Dashboard and Report Consistency Requirement
+
+Dashboard and Verified Evidence Summary metrics must come from the same canonical metrics service.
+
+For the same organization and filters:
+- Verified evidence records must match
+- Verified hours must match
+- Pending, incomplete, and rejected counts must match
+- Partner-reported reach must remain separately labeled
+- SDG/framework mappings must match
 
 ---
 
@@ -30,7 +162,7 @@
 - Node.js 18+ and npm
 - Python 3.11+
 - PostgreSQL (or use Replit DB)
-- Tesseract OCR (auto-installed by startup script)
+- Tesseract OCR (auto-installed by startup script, required only for optional OCR ingestion)
 
 ### One-Command Startup
 
@@ -39,22 +171,20 @@
 ```
 
 This single script will:
-1. ✅ Install Python and Node.js dependencies if missing
-2. ✅ Install Tesseract OCR if not found
-3. ✅ Start Python FastAPI backend (port 8001)
-4. ✅ Start Node.js/Express + Vite frontend (port 5000)
-5. ✅ Run health checks and display status
-6. ✅ Stream logs from both backends
+1. Install Python and Node.js dependencies if missing
+2. Install Tesseract OCR if not found
+3. Start Python FastAPI backend (port 8001)
+4. Start Node.js/Express + Vite frontend (port 5000)
+5. Run health checks and display status
+6. Stream logs from both backends
 
 ### Manual Startup
-
-If you prefer to run services separately:
 
 ```bash
 # Terminal 1: Python FastAPI backend
 cd python_backend
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8001
 
@@ -65,235 +195,99 @@ npm run dev
 
 ---
 
-## 📊 Dashboard Features
+## Data Model
 
-### KPI Cards (Real-time)
-- **Total Hours**: Aggregate volunteer hours across all projects
-- **Employees Engaged**: Active volunteer count
-- **Projects Completed**: Successfully finished initiatives
-- **SDG Score Delta**: Change in impact score over time
+### Evidence-Focused Entities
 
-### SDG Alignment Panel
-- Visual breakdown of all 17 SDGs
-- Hours contributed per goal
-- Number of volunteers per SDG
-- Projects aligned to each goal
-- Interactive drill-down to employee details
+- **evidence_records**: Core Verified Evidence Records (activity, output, verified hours, confidence tier, status)
+- **verification_events**: Log of verification actions (who verified, when, status change)
+- **partner_confirmations**: Partner sign-off records linked to evidence records
+- **partner_reported_reach**: Partner-submitted beneficiary and community counts (disclosed separately)
+- **evidence_metrics**: Metric definitions (unit, category, SDG, framework mapping)
+- **framework_mappings**: SDG, GRI, ESRS, SASB, ISSB, ISAE 3000 alignment rules
+- **report_exports**: Verified Evidence Summary export history
 
-### Geographic Impact Map
-- Global project locations with markers
-- Hover tooltips showing:
-  - Active projects
-  - Completed projects
-  - Sponsored initiatives
-  - Volunteer count
-  - Total hours
+### Supporting Tables
 
-### Employee Engagement Funnel
-- 5-stage conversion tracking:
-  1. Registered
-  2. Onboarded
-  3. First Activity
-  4. Active (30 days)
-  5. Champions (5+ projects)
-- Click any stage to see employee details
-
-### Pending Admin Actions
-- Reviews requiring approval
-- AI-generated insights
-- Flagged content
-- Sortable and filterable table
-
----
-
-## 🤖 AI Matchmaking
-
-### Algorithm Explanation Modal
-
-Access via dashboard link to view:
-- **Algorithm**: Multi-Factor Weighted Scoring
-- **Weighting Breakdown**:
-  - Skills Match: 30%
-  - SDG Alignment: 25%
-  - Location Proximity: 20%
-  - Availability Overlap: 15%
-  - Interest Similarity: 10%
-- **Live Example Calculation**: See how a real match score is computed
-- **Transparency**: Full visibility into scoring logic
-
-### Simulate Matches
-
-```bash
-# API Example
-POST /api/volunteers/1/simulate-match?top_n=5
-
-# Response: Top 5 organization matches with scores and reasoning
-[
-  {
-    "organization_id": 1,
-    "organization_name": "Education For All",
-    "match_score": 0.85,
-    "reason": "Strong SDG alignment, excellent skills match",
-    "sdg_alignment": [4, 10]
-  },
-  ...
-]
-```
-
----
-
-## 🖼️ Image Ingestion (OCR)
-
-### Upload Dashboard Screenshots
-
-1. Click "Upload Screenshot" in dashboard
-2. Select PNG/JPG image of existing dashboard
-3. OCR extracts:
-   - Total Hours
-   - Employees Engaged
-   - Projects Completed
-   - SDG Score
-   - Active SDGs
-4. **Manual Review UI**:
-   - Shows confidence scores per field
-   - Edit any values before saving
-   - View raw OCR text
-   - Accept or reject extraction
-
-### Technical Details
-- **Engine**: Tesseract OCR 4.0+
-- **Pattern Matching**: Regex-based KPI extraction
-- **Confidence Scoring**: Field-level accuracy (0-1)
-- **Threshold**: <70% confidence triggers manual review
-- **Formats**: PNG, JPG, JPEG, BMP
-
-### API Example
-
-```bash
-curl -X POST http://localhost:8001/api/images/ingest \
-  -F "file=@dashboard_screenshot.png"
-
-# Response includes:
-# - mapped_fields: Extracted KPIs
-# - confidence: Overall accuracy (0-1)
-# - extracted_text: Raw OCR output
-# - metadata: Filename, timestamp, review flag
-```
-
----
-
-## 🗄️ Data Model
-
-### Core Tables
 - **users**: Volunteers and organization admins
 - **organizations**: NGOs and corporate partners
-- **projects**: CSR initiatives with SDG mapping
+- **projects**: CSR and social value initiatives with framework mapping
 - **tasks**: Granular work items
-- **volunteer_activities**: Hours logged per project
-- **project_impacts**: Measured outcomes (people helped, trees planted, etc.)
-- **impact_metrics**: Metric definitions (unit, category, SDG)
-- **matchable_organizations**: Profiles for AI matching
-- **volunteers**: Extended profiles for matching
+- **volunteer_activities**: Hours logged per project (source data for evidence records)
+- **project_impacts**: Measured outputs per project
+- **matchable_organizations**: Profiles for matching and recommendation support
+- **volunteers**: Extended profiles for matching support
 
 ### Sample Seed Data
-
-Run the included seed script to populate realistic test data:
 
 ```bash
 npx tsx dummy/seed-data.ts
 ```
 
-**Includes**:
-- 6 users (3 volunteers, 3 org admins)
-- 3 organizations (WaterAid, Educate Global, Health Access)
-- 4 projects across multiple SDGs
-- 5 tasks with varied status
-- 21 volunteer activities (7 months of history)
-- 21 project impacts (monthly metrics)
-- 5 calendar events
-
-**Test Credentials** (requires Firebase setup):
-- `sarah@volunteers.com`
-- `michael@volunteers.com`
-- `emma@volunteers.com`
-- `admin@wateraid.org`
-- `admin@educate.org`
-- `admin@healthaccess.org`
+Includes 6 users, 3 organizations, 4 projects, 21 volunteer activities, and calendar events.
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Node.js Backend (Port 5000)
 
-#### CSR Dashboard
-- `GET /api/csr/dashboard?userId={id}` - Full dashboard data
-- `GET /api/csr/engagement-funnel?userId={id}` - Funnel metrics
-- `GET /api/csr/pending-actions?userId={id}` - Admin actions
-- `GET /api/csr/engagement-funnel-stage?userId={id}&stage={n}` - Drill-down
+#### Evidence and Reporting
+- `GET /api/csr/dashboard?userId={id}` — Dashboard metrics (evidence-aligned)
+- `GET /api/csr/engagement-funnel?userId={id}` — Participation funnel
+- `GET /api/csr/pending-actions?userId={id}` — Pending verification actions
 
-#### Projects & Organizations
-- `GET /api/projects` - All projects
-- `GET /api/organizations` - All organizations
-- `GET /api/volunteers` - All volunteers
-- `POST /api/projects` - Create project
-- `PUT /api/projects/:id` - Update project
+#### Projects and Organizations
+- `GET /api/projects` — All projects
+- `GET /api/organizations` — All organizations
+- `GET /api/volunteers` — All volunteers
+- `POST /api/projects` — Create project
+- `PUT /api/projects/:id` — Update project
 
-#### Matching & AI (proxied to Python backend)
-- `POST /api/volunteers/:id/simulate-match?top_n=3` - Get top matches
-- `GET /api/ai/explain` - Algorithm explanation
+#### Matching and Recommendations (proxied to Python backend)
+- `POST /api/volunteers/:id/simulate-match?top_n=3` — Top project/organization matches
+- `GET /api/ai/explain` — Algorithm explanation
 
 ### Python Backend (Port 8001)
 
-#### Image Ingestion
-- `POST /api/images/ingest` - Upload screenshot for OCR
-  - **Input**: `multipart/form-data` with `file` field
-  - **Output**: `{ mapped_fields, confidence, extracted_text, metadata }`
+#### Optional Data Ingestion
+- `POST /api/images/ingest` — Upload screenshot for OCR-assisted import
+  - Input: `multipart/form-data` with `file` field
+  - Output: `{ mapped_fields, confidence, extracted_text, metadata }`
 
-#### AI Services
-- `GET /api/ai/explain` - Detailed algorithm description
-- `POST /api/volunteers/{id}/simulate-match?top_n=3` - Mock matching
+#### Matching Support
+- `GET /api/ai/explain` — Algorithm description
+- `POST /api/volunteers/{id}/simulate-match?top_n=3` — Matching simulation
 
-#### Alias Endpoints (Spec-compliant)
-- `GET /api/kpis` - Aggregated KPI object
-- `GET /api/geo-impact` - Geographic project data
-- `GET /api/employees/funnel` - Funnel metrics
-- `GET /api/admin/actions` - Pending admin tasks
-
-#### Health & Docs
-- `GET /health` - Service health check
-- `GET /docs` - Interactive Swagger UI
+#### Health and Docs
+- `GET /health` — Service health check
+- `GET /docs` — Interactive Swagger UI
 
 ---
 
-## 🧪 Testing
+## Acceptance Criteria
 
-### Python Backend Tests
+### Evidence Platform Requirements
 
-```bash
-cd python_backend
-source .venv/bin/activate
-pytest test_main.py -v
+- Evidence records follow the defined status workflow (Pending → Verified / Incomplete / Rejected / Archived)
+- Only verified records are included in verified totals
+- Partner-reported reach is labeled separately and not aggregated into verified evidence totals
+- Dashboard and Verified Evidence Summary draw from the same canonical metrics service
+- Confidence tier is stored and displayed on every evidence record
+- Framework and SDG mapping is generated by classification rules and labeled as Derived/Mapped
+- Boundary statement appears in all generated reports and summaries
 
-# Expected output:
-# ✅ 15+ tests covering:
-#    - Health checks
-#    - AI explanation
-#    - Volunteer matching
-#    - OCR image ingestion
-#    - Alias endpoints
-#    - Data validation
-```
+### Technical Requirements
 
-### Frontend Component Tests
-
-```bash
-npm test  # If configured
-```
+- KPI cards and dashboards use evidence-aligned metrics
+- React Query `refetchInterval: 30000` (30s polling)
+- Loading skeletons and error states present
+- Optional OCR ingestion available with manual review workflow
+- Matching and recommendation support available for volunteer-project assignment
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Tech Stack
 
@@ -317,7 +311,7 @@ npm test  # If configured
 **Python Backend**
 - FastAPI
 - Pydantic (validation)
-- Pytesseract (OCR)
+- Pytesseract (OCR — optional ingestion only)
 - Pillow (image processing)
 - Uvicorn (ASGI server)
 
@@ -325,132 +319,51 @@ npm test  # If configured
 - PostgreSQL (production)
 - ReplitDB (fallback)
 
-**DevOps**
-- ESLint + Prettier
-- Pytest (Python tests)
-- Concurrent startup script
-- Docker-ready (add Dockerfile as needed)
-
 ### Data Flow
 
 ```
-User Dashboard
+Activity / Output Submission
     ↓
-React Query (30s polling)
+Evidence Record Created (Pending)
     ↓
-Express Backend (/api/csr/*)
+Partner Confirmation
     ↓
-Drizzle ORM → PostgreSQL
+Verification Event Logged → Status → Verified / Rejected / Incomplete
     ↓
-Real-time data returned to UI
-
-Image Upload
+Canonical Metrics Service
     ↓
-Python FastAPI (/api/images/ingest)
-    ↓
-Tesseract OCR
-    ↓
-Pattern Matching → Mapped Fields
-    ↓
-Manual Review UI → Accept/Reject
-    ↓
-Save to PostgreSQL via Express
+Dashboard + Verified Evidence Summary (same source)
 ```
 
 ---
 
-## 📁 Project Structure
+## Technical Debt
 
+`server/routes.ts` is large and should be gradually split into domain routers and services for evidence, verification, reporting, organizations, volunteers, and projects.
+
+---
+
+## Testing
+
+### Python Backend Tests
+
+```bash
+cd python_backend
+source .venv/bin/activate
+pytest test_main.py -v
 ```
-.
-├── client/                    # Frontend React app
-│   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   │   ├── ai-explanation-modal.tsx
-│   │   │   ├── image-ingestion-modal.tsx
-│   │   │   └── ui/          # Radix UI wrappers
-│   │   ├── pages/           # Route components
-│   │   │   ├── csr-dashboard.tsx  # Main CSR dashboard
-│   │   │   ├── volunteer-dashboard.tsx
-│   │   │   └── organization-dashboard.tsx
-│   │   ├── hooks/           # Custom React hooks
-│   │   └── lib/             # Utilities
-│   └── index.html
-│
-├── server/                   # Node.js backend
-│   ├── routes.ts            # Express routes (7600+ lines)
-│   ├── dashboard-service.ts # KPI aggregation logic
-│   ├── matching-algorithm.ts# AI scoring implementation
-│   ├── storage.ts           # Database abstraction
-│   └── db.ts                # Drizzle config
-│
-├── python_backend/          # Python FastAPI backend
-│   ├── main.py             # FastAPI app with OCR
-│   ├── test_main.py        # Pytest suite
-│   └── requirements.txt    # Python dependencies
-│
-├── shared/                  # Shared TypeScript code
-│   ├── schema.ts           # Database schema
-│   └── sdg-goals.ts        # SDG utilities
-│
-├── dummy/
-│   └── seed-data.ts        # Comprehensive seed script
-│
-├── start-synerxus.sh       # Concurrent startup script
-├── package.json            # Node.js config
-└── SYNERXUS_README.md      # This file
+
+### Frontend Component Tests
+
+```bash
+npm test
 ```
 
 ---
 
-## 🎯 Acceptance Criteria
-
-All requirements met:
-
-### ✅ Dashboard Elements Connected to Real Data
-- KPI cards fetch from `/api/csr/dashboard`
-- SDG panel uses `sdgMetrics` array
-- Map loads `projectLocations` with lat/lng
-- Funnel uses `/api/csr/engagement-funnel`
-- Admin actions from `/api/csr/pending-actions`
-
-### ✅ Real-time Updates
-- React Query `refetchInterval: 30000` (30s)
-- `staleTime: 10000` for cache invalidation
-- Loading skeletons during fetch
-- Error states with retry logic
-
-### ✅ Image Ingestion
-- OCR endpoint: `POST /api/images/ingest`
-- Returns `mapped_fields` with confidence scores
-- Manual review UI with editable fields
-- Accept/Reject workflow
-
-### ✅ Testable Mock AI Matchmaking
-- `POST /api/volunteers/:id/simulate-match`
-- Returns top N organizations
-- Includes match scores and reasoning
-- Algorithm explanation modal
-
-### ✅ Tests
-- 15+ Python backend tests (pytest)
-- Covers all major endpoints
-- OCR validation tests
-- Health check tests
-
-### ✅ README & Startup
-- Comprehensive documentation
-- Single command: `./start-synerxus.sh`
-- Health checks included
-- Log streaming
-
----
-
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
-
-Create a `.env` file:
 
 ```bash
 # Database
@@ -469,11 +382,11 @@ FIREBASE_PROJECT_ID="your-project"
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Python backend won't start
 ```bash
-# Ensure Tesseract is installed
+# Ensure Tesseract is installed (required only for optional OCR ingestion)
 tesseract --version
 
 # On Ubuntu/Debian:
@@ -485,68 +398,34 @@ brew install tesseract
 
 ### Database connection issues
 ```bash
-# Check PostgreSQL is running
 psql --version
-
-# Run migrations
 npm run db:push
 ```
 
-### OCR returns low confidence
-- Use high-resolution screenshots (min 1200px wide)
-- Ensure good contrast (dark text on light background)
-- Avoid rotated or skewed images
-- Check Tesseract language data is installed
+---
+
+## Roadmap
+
+- [ ] Canonical report metrics service
+- [ ] Verified Evidence Summary PDF export
+- [ ] Evidence Readiness Score
+- [ ] Claim-to-Evidence Mapping
+- [ ] Reviewer / Assurance Preparation View
+- [ ] Partner Verification Health
+- [ ] Organization framework configuration
+- [ ] Report readiness checks
+- [ ] Role-based access control
+- [ ] Optional integrations and OCR ingestion
 
 ---
 
-## 📈 Performance
+## License
 
-- **Initial Load**: <2s (with cache)
-- **Dashboard Refresh**: <500ms
-- **OCR Processing**: 2-5s (depends on image size)
-- **AI Matching**: <100ms (mock data)
-- **Real-time Polling**: Every 30s with minimal overhead
+MIT License — see LICENSE file for details.
 
 ---
 
-## 🛣️ Roadmap
+## Support
 
-Future enhancements:
-- [ ] WebSocket support for live updates
-- [ ] PDF export of impact reports
-- [ ] Advanced filtering on all tables
-- [ ] Mobile app (React Native)
-- [ ] Multilingual support
-- [ ] Enhanced OCR with deep learning
-- [ ] Production AI model training
-- [ ] Role-based access control (RBAC)
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
-
----
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
----
-
-## 👥 Support
-
-For issues or questions:
-- 📧 Email: support@synerxus.org
-- 🐛 GitHub Issues: [Create Issue](https://github.com/your-org/synerxus/issues)
-- 📚 Docs: [Full Documentation](https://docs.synerxus.org)
-
----
-
-**Built with ❤️ for a better world through corporate social responsibility**
+- Email: support@synerxus.org
+- GitHub Issues: [Create Issue](https://github.com/your-org/synerxus/issues)

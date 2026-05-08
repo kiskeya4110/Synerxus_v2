@@ -1238,7 +1238,7 @@ export default function ProjectDetail() {
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-center">
                     <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
                     <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{Math.round(totalHours)}</div>
-                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Total Hours</div>
+                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Verified Hours</div>
                   </div>
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 text-center">
                     <Zap className="h-5 w-5 text-purple-600 mx-auto mb-1" />
@@ -1434,7 +1434,7 @@ export default function ProjectDetail() {
                 <>
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl text-center">
                     <div className="text-4xl font-bold text-green-600">{totalHours}</div>
-                    <div className="text-sm text-green-600/80">Total Hours Logged</div>
+                    <div className="text-sm text-green-600/80">Hours Logged</div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-center">
@@ -1644,7 +1644,7 @@ export default function ProjectDetail() {
                   <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-blue-600">{Math.round(totalHours)}</div>
-                      <div className="text-xs text-blue-600/80">Total Hours</div>
+                      <div className="text-xs text-blue-600/80">Verified Hours</div>
                     </div>
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-green-600">

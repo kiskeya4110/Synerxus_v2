@@ -658,8 +658,8 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
       <OrganizationPWALayout>
         <div className="p-4">
           <div className="mb-4">
-            <h1 className="text-xl font-bold mb-1">Impact Report</h1>
-            <p className="text-sm text-gray-600">Visualize your volunteer impact</p>
+            <h1 className="text-xl font-bold mb-1">Evidence Summary</h1>
+            <p className="text-sm text-gray-600">Visualize your evidence records</p>
           </div>
 
           {/* Stats Cards - Mobile (4 columns in 1 row) */}

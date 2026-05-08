@@ -265,10 +265,33 @@ export default function CSRReportsExports() {
     setIsGenerating(template.id);
 
     try {
-      // Simulate report generation
+      // Verified Evidence Summary always uses the authoritative server-side generator
+      if (
+        template.id === "verified-evidence-summary" ||
+        template.id === "impact-summary" ||
+        template.name === "Verified Evidence Summary"
+      ) {
+        const headers = await getAuthHeaders();
+        const response = await fetch("/api/reports/verified-evidence-summary", {
+          headers,
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
+        const html = await response.text();
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.onload = () => printWindow.print();
+        }
+        toast({ title: "Report Generated", description: `${template.name} has been generated from live data.` });
+        return;
+      }
+
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // PDF generation only for MVP
       const htmlContent = isOrganization
         ? generateOrgPDFContent(template, activeFilterLabel, {
             orgName: currentUser?.name || currentUser?.displayName || "Organization",

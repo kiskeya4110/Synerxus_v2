@@ -657,7 +657,15 @@ export default function OrganizationDashboardNew() {
     setIsSynerxusLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/reports/verified-evidence-summary`, { headers, credentials: "include" });
+      const params = new URLSearchParams();
+      if (reportStartDate && reportEndDate) {
+        params.set("startDate", reportStartDate);
+        params.set("endDate", reportEndDate);
+      } else if (reportTimePeriod && reportTimePeriod !== "all") {
+        params.set("timePeriod", reportTimePeriod);
+      }
+      const url = `/api/reports/verified-evidence-summary${params.toString() ? "?" + params.toString() : ""}`;
+      const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
       const { styles, body } = prepareReportContent(html);

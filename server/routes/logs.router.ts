@@ -18,7 +18,8 @@ import {
   REPORT_SECTION_LABELS,
 } from "../domains/reporting";
 import { buildVerifiedEvidenceSummaryReport } from "../domains/reporting/verified-evidence-summary-report";
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { computeReportMetrics } from "../domains/reporting/report-metrics.service";
+import { and, eq, gte, lte, inArray } from "drizzle-orm";
 import { db, withTransaction } from "../db";
 import { logger } from "../logger";
 import { authMiddleware, requireDataConsent } from "../middleware/auth";
@@ -1376,14 +1377,15 @@ function getReportSince(timePeriod?: string): Date | undefined {
 function getPeriodDisplay(timePeriod: string | undefined, now = new Date()): string {
   const endLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const periodDisplayMap: Record<string, string> = {
+    "all": "All Time",
     "7d": `Last 7 Days (through ${endLabel})`,
     "30d": `Last 30 Days (through ${endLabel})`,
     "90d": `Last 90 Days (through ${endLabel})`,
     "1y": `Last 12 Months (through ${endLabel})`,
   };
   if (timePeriod && periodDisplayMap[timePeriod]) return periodDisplayMap[timePeriod];
-  const qNum = Math.ceil((now.getMonth() + 1) / 3);
-  return `Q${qNum} ${now.getFullYear()} (through ${endLabel})`;
+  // Default: show "All Time" when no period specified, not a Q label
+  return "All Time";
 }
 
 function getReportId(prefix: string, orgName: string, now = new Date()): string {
@@ -1394,8 +1396,29 @@ function getReportId(prefix: string, orgName: string, now = new Date()): string 
 
 async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode: "organization" | "corporate") {
   const timePeriod = req.query.timePeriod as string | undefined;
-  const reportSince = getReportSince(timePeriod);
+  const startDateParam = req.query.startDate as string | undefined;
+  const endDateParam = req.query.endDate as string | undefined;
   const now = new Date();
+
+  // Determine DB-level date bounds: custom range takes priority over timePeriod
+  let reportSince: Date | undefined;
+  let reportUntil: Date | undefined;
+  if (startDateParam && endDateParam) {
+    reportSince = new Date(startDateParam);
+    reportUntil = new Date(endDateParam + "T23:59:59");
+  } else {
+    reportSince = getReportSince(timePeriod);
+  }
+
+  // Build human-readable period label for the report cover
+  function buildPeriodDisplay(): string {
+    if (startDateParam && endDateParam) {
+      const s = new Date(startDateParam).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const e = new Date(endDateParam).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      return `${s} – ${e}`;
+    }
+    return getPeriodDisplay(timePeriod, now);
+  }
 
   if (mode === "organization") {
     if (req.user?.userType !== "organization") {
@@ -1414,8 +1437,12 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
 
     if (projectIds.length > 0) {
       const projectFilter = inArray(volunteerActivitiesTable.projectId, projectIds);
-      const rows = reportSince
-        ? await db.select().from(volunteerActivitiesTable).where(and(projectFilter, gte(volunteerActivitiesTable.date, reportSince)))
+      const dateClauses = [
+        ...(reportSince ? [gte(volunteerActivitiesTable.date, reportSince)] : []),
+        ...(reportUntil ? [lte(volunteerActivitiesTable.date, reportUntil)] : []),
+      ];
+      const rows = dateClauses.length > 0
+        ? await db.select().from(volunteerActivitiesTable).where(and(projectFilter, ...dateClauses))
         : await db.select().from(volunteerActivitiesTable).where(projectFilter);
       activities = rows as any[];
     }
@@ -1423,16 +1450,72 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
     const filteredProjectIds = new Set(activities.map((activity: any) => activity.projectId).filter(Boolean));
     const filteredProjects = projects.filter((project) => filteredProjectIds.has(project.id));
     const orgName = org?.name || "Organization";
+
+    // ── Enrich: partner org names from verifier users ────────────────────────
+    const verifierIds = Array.from(new Set(
+      activities.map((a: any) => a.verifiedBy).filter(Boolean)
+    )) as number[];
+    const verifierUsers = verifierIds.length > 0 ? await storage.getUsersByIds(verifierIds) : [];
+    const verifierOrgIds = Array.from(new Set(
+      verifierUsers.map((u: any) => u.organizationId).filter(Boolean)
+    )) as number[];
+    const verifierOrgMap = new Map<number, any>();
+    await Promise.all(verifierOrgIds.map(async (oid: number) => {
+      const vo = await storage.getOrganization(oid);
+      if (vo) verifierOrgMap.set(oid, vo);
+    }));
+    const verifierToOrgMap = new Map(verifierUsers.map((u: any) => [u.id, verifierOrgMap.get(u.organizationId)]));
+    const partnerOrgNames: string[] = Array.from(new Set(
+      activities
+        .map((a: any) => a.verifiedBy ? (verifierToOrgMap.get(a.verifiedBy)?.name || null) : null)
+        .filter(Boolean)
+    ));
+
+    // ── Enrich: volunteer countries for communities-served ───────────────────
+    const volunteerUserIds = Array.from(new Set(
+      activities.map((a: any) => a.userId).filter(Boolean)
+    )) as number[];
+    const volunteerUsers = volunteerUserIds.length > 0 ? await storage.getUsersByIds(volunteerUserIds) : [];
+    const volunteerCountries: string[] = Array.from(new Set(
+      volunteerUsers.map((u: any) => u.country).filter(Boolean)
+    ));
+    // Also include location/region from activities themselves
+    const activityRegions: string[] = Array.from(new Set(
+      activities
+        .filter((a: any) => a.verificationStatus === "approved" || a.verificationStatus === "verified")
+        .map((a: any) => a.region || a.location).filter(Boolean)
+    ));
+    const countriesOrRegions = Array.from(new Set([...volunteerCountries, ...activityRegions]));
+
+    // ── Enrich: org profile SDGs ─────────────────────────────────────────────
+    const orgProfile = org?.id ? await (storage as any).getOrganizationProfileByOrgId?.(org.id) : null;
+    const orgPrimarySdgs: number[] = Array.isArray(orgProfile?.primarySdgs) ? orgProfile.primarySdgs : [];
+
+    // ── Compute all report metrics via canonical service ─────────────────────
+    const reportMetrics = computeReportMetrics(org?.id ?? 0, {
+      activities,
+      projects: filteredProjects,
+      partnerNames: partnerOrgNames.length > 0 ? partnerOrgNames : [orgName],
+      countriesOrRegions,
+      sdgsIncluded: orgPrimarySdgs.length > 0 ? orgPrimarySdgs : undefined,
+      startDate: reportSince ?? null,
+      endDate: reportUntil ?? null,
+    });
+
     const html = buildVerifiedEvidenceSummaryReport({
       organizationName: orgName,
       reportId: getReportId("VES", orgName, now),
-      periodDisplay: getPeriodDisplay(timePeriod, now),
+      periodDisplay: buildPeriodDisplay(),
       generatedDate: now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      dataCutoffDate: reportMetrics.dataCutoffDate,
       scopeSummary: `${filteredProjects.length} project${filteredProjects.length === 1 ? "" : "s"} with activity in the selected reporting period`,
-      reportStatus: "Ready for Review",
+      reportStatus: reportMetrics.reportReadinessStatus,
       activities,
       projects: filteredProjects,
-      partnerNames: [orgName],
+      partnerNames: reportMetrics.partnerNames,
+      countriesOrRegions: reportMetrics.countries,
+      communitiesServed: reportMetrics.communitiesServed || undefined,
+      sdgsIncluded: reportMetrics.sdgsFromRecords.length > 0 ? reportMetrics.sdgsFromRecords : undefined,
       logoDataUri: LOGO_DATA_URI,
     });
 
@@ -1465,8 +1548,12 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
   let activities: any[] = [];
   if (linkedUserIds.length > 0) {
     const userFilter = inArray(volunteerActivitiesTable.userId, linkedUserIds);
-    const rows = reportSince
-      ? await db.select().from(volunteerActivitiesTable).where(and(userFilter, gte(volunteerActivitiesTable.date, reportSince)))
+    const dateClauses = [
+      ...(reportSince ? [gte(volunteerActivitiesTable.date, reportSince)] : []),
+      ...(reportUntil ? [lte(volunteerActivitiesTable.date, reportUntil)] : []),
+    ];
+    const rows = dateClauses.length > 0
+      ? await db.select().from(volunteerActivitiesTable).where(and(userFilter, ...dateClauses))
       : await db.select().from(volunteerActivitiesTable).where(userFilter);
     activities = rows as any[];
   }
@@ -1517,16 +1604,44 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
   )) as string[];
   const filteredVolunteerIds = Array.from(new Set(activities.map((activity: any) => activity.userId).filter(Boolean)));
   const corpName = partner?.companyName || "Corporation";
+
+  // ── Enrich: volunteer countries for communities-served (corporate) ────────
+  const corpVolunteerUsers = filteredVolunteerIds.length > 0 ? await storage.getUsersByIds(filteredVolunteerIds as number[]) : [];
+  const corpVolunteerCountries: string[] = Array.from(new Set(
+    corpVolunteerUsers.map((u: any) => u.country).filter(Boolean)
+  ));
+  const corpActivityRegions: string[] = Array.from(new Set(
+    activities
+      .filter((a: any) => a.verificationStatus === "approved" || a.verificationStatus === "verified")
+      .map((a: any) => a.region || a.location).filter(Boolean)
+  ));
+  const corpCountriesOrRegions = Array.from(new Set([...corpVolunteerCountries, ...corpActivityRegions]));
+
+  // ── Compute all report metrics via canonical service ─────────────────────
+  const corpMetrics = computeReportMetrics(partner?.id ?? 0, {
+    activities,
+    projects: filteredProjects,
+    partnerNames: partnerNames.length > 0 ? partnerNames : [corpName],
+    countriesOrRegions: corpCountriesOrRegions,
+    frameworksIncluded: Array.isArray(partner?.esgFrameworks) ? partner.esgFrameworks : [],
+    startDate: reportSince ?? null,
+    endDate: reportUntil ?? null,
+  });
+
   const html = buildVerifiedEvidenceSummaryReport({
     organizationName: corpName,
     reportId: getReportId("VES", corpName, now),
-    periodDisplay: getPeriodDisplay(timePeriod, now),
+    periodDisplay: buildPeriodDisplay(),
     generatedDate: now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+    dataCutoffDate: corpMetrics.dataCutoffDate,
     scopeSummary: `${partnerNames.length} partner organization${partnerNames.length === 1 ? "" : "s"}, ${filteredProjects.length} project${filteredProjects.length === 1 ? "" : "s"}, and ${filteredVolunteerIds.length} employee volunteer${filteredVolunteerIds.length === 1 ? "" : "s"} in the selected reporting scope`,
-    reportStatus: "Ready for Review",
+    reportStatus: corpMetrics.reportReadinessStatus,
     activities,
     projects: filteredProjects,
-    partnerNames,
+    partnerNames: corpMetrics.partnerNames,
+    countriesOrRegions: corpMetrics.countries,
+    communitiesServed: corpMetrics.communitiesServed || undefined,
+    frameworksIncluded: corpMetrics.filtersApplied.frameworksIncluded,
     logoDataUri: LOGO_DATA_URI,
   });
 

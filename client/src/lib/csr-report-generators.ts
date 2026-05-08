@@ -464,44 +464,6 @@ export function generateOrgPDFContent(
     currentDate,
   } = ctx;
 
-  if (template.id === "verified-evidence-summary" || template.id === "impact-summary" || template.name === "Verified Evidence Summary") {
-    const records: VerifiedSummaryRecord[] = (sdgMetrics || []).slice(0, 3).map((sdg: any, index: number) => ({
-      id: `VER-${String(index + 1).padStart(4, "0")}`,
-      project: orgName,
-      output: `SDG ${sdg.goal || index + 1} alignment`,
-      context: "Organization dashboard summary record",
-      hours: `${Math.round(sdg.hours || 0)} hours`,
-      verifier: "Authorized partner",
-      date: currentDate,
-      status: "Verified",
-      region: "Management report scope",
-      alignment: `SDG ${sdg.goal || index + 1} / framework mapping`,
-      redaction: "Sensitive technical metadata is retained internally and redacted from this management report.",
-    }));
-
-    return buildVerifiedEvidenceSummaryPdf({
-      preparedFor: orgName,
-      reportId: `VES-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-      periodLabel: filterLabel || "Current reporting period",
-      generatedDate: currentDate,
-      dataCutoffDate: "December 15, 2025",
-      reportStatus: "Ready for Review",
-      scopeSummary: `${activeProjects} project${activeProjects === 1 ? "" : "s"} in scope`,
-      verifiedRecords: records.length || Math.max(1, Math.round(totalHours / 100) || 1),
-      verifiedHours: totalHours,
-      partnerReportedReach: activeVolunteers,
-      verificationRate: 100,
-      averageVerificationTime: "4 hours",
-      incompleteRecords: 0,
-      rejectedRecords: 0,
-      projectsIncluded: ["Organization programs"],
-      partnersIncluded: ["Authorized partners"],
-      regionsIncluded: ["Organization scope"],
-      records,
-      roleLabel: "Organization",
-    });
-  }
-
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   return `
@@ -767,48 +729,6 @@ export function generatePDFContent(
   companyName: string,
   currentDate: string
 ): string {
-  if (template.id === "verified-evidence-summary" || template.id === "impact-summary" || template.name === "Verified Evidence Summary") {
-    const logs = Array.isArray(data?.logs) ? data.logs : [];
-    const verifiedCount = Number(data?.summary?.totalVerifiedOutcomes || logs.length || 0);
-    const verifiedHours = Number(data?.engagementMetrics?.totalHours || data?.summary?.totalVerifiedOutcomes || 0);
-    const partnerReportedReach = Number(data?.impactMetrics?.directBeneficiaries || 0);
-    const records: VerifiedSummaryRecord[] = logs.slice(0, 3).map((log: any, index: number) => ({
-      id: `VER-${String(index + 1).padStart(4, "0")}`,
-      project: log.projectName || "Project",
-      output: log.outcomeText || log.description || "Partner-confirmed output",
-      context: log.outcomeType || "Confirmed activity",
-      hours: `${log.hours || 0} hours`,
-      verifier: log.verifierName || "Authorized partner",
-      date: log.verifiedAt ? new Date(log.verifiedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : currentDate,
-      status: "Verified",
-      region: log.region || log.location || "Management report scope",
-      alignment: (log.sdgTags || []).length ? `SDG ${(log.sdgTags || [])[0]} / framework mapping` : "Framework alignment",
-      redaction: "Sensitive technical metadata is retained internally and redacted from this management report.",
-    }));
-
-    return buildVerifiedEvidenceSummaryPdf({
-      preparedFor: companyName,
-      reportId: `VES-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-      periodLabel: filterLabel || "Current reporting period",
-      generatedDate: currentDate,
-      dataCutoffDate: "December 15, 2025",
-      reportStatus: "Ready for Review",
-      scopeSummary: filterLabel ? `Filtered report view: ${filterLabel}` : "Corporate ESG evidence scope",
-      verifiedRecords: verifiedCount,
-      verifiedHours,
-      partnerReportedReach,
-      verificationRate: verifiedCount > 0 ? 100 : 0,
-      averageVerificationTime: "4 hours",
-      incompleteRecords: Number(data?.summary?.incompleteRecords || 0),
-      rejectedRecords: Number(data?.summary?.rejectedRecords || 0),
-      projectsIncluded: records.length ? records.map((r) => r.project) : ["Corporate programs"],
-      partnersIncluded: records.length ? records.map((r) => r.verifier) : ["Authorized partners"],
-      regionsIncluded: records.length ? records.map((r) => r.region) : ["Corporate scope"],
-      records,
-      roleLabel: "Corporate",
-    });
-  }
-
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const reportId = `SYN-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
   const totalHours = data?.engagementMetrics?.totalHours || 0;

@@ -221,14 +221,14 @@ const editorialSeries: Series[] = [
 
 const defaultRecentIssues: RecentIssue[] = [
   {
-    issue: "Issue 01",
-    title: "The Verifiable: Founder Story",
-    url: "https://www.linkedin.com/pulse/verifiable-founder-story-alc%C3%A9nat-honorat-o27kc",
+    issue: "Issue 05",
+    title: "Nature Claims Without Context: Who Pays the Price?",
+    url: "https://www.linkedin.com/pulse/nature-claims-without-context-who-pays-price-alc%C3%A9nat-honorat-ppurc",
   },
   {
-    issue: "Issue 02",
-    title: "Major Sustainability News This Week: Let's Apply the Lens",
-    url: "https://www.linkedin.com/pulse/major-sustainability-news-week-lets-apply-lens-alc%C3%A9nat-honorat-cfoyc",
+    issue: "Issue 04",
+    title: "California's Climate Rules: Ambitious Deadlines",
+    url: "https://www.linkedin.com/pulse/issue-4-californias-climate-rules-ambitious-deadlines-alc%C3%A9nat-honorat-slqfc",
   },
   {
     issue: "Issue 03",

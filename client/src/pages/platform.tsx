@@ -157,10 +157,10 @@ export default function PlatformPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-slate-50">
+      <section className="bg-transparent">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-7 md:px-8 md:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Platform
             </p>
             <h1 className="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
@@ -182,7 +182,7 @@ export default function PlatformPage() {
                 ["Review", "Package it for disclosure support"],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#FFD95A] sm:text-xs sm:tracking-[0.18em]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A5A00] sm:text-xs sm:tracking-[0.18em]">
                     {title}
                   </p>
                   <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-700 sm:text-sm sm:leading-6">{body}</p>
@@ -196,7 +196,7 @@ export default function PlatformPage() {
       <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-4 max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               What is an Evidence Object?
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
@@ -223,7 +223,7 @@ export default function PlatformPage() {
                       : "border-slate-200 bg-white"
                   }`}
                 >
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                     Layer {index + 1}
                   </p>
                   <h2 className="mt-3 text-sm font-extrabold leading-snug text-[#0A1F44] sm:text-base">{layer.title}</h2>
@@ -231,7 +231,7 @@ export default function PlatformPage() {
               ))}
             </div>
             <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                 Layer definition
               </p>
               <h3 className="mt-2 text-xl font-extrabold text-[#0A1F44] sm:text-2xl">
@@ -251,7 +251,7 @@ export default function PlatformPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                 Why it matters
               </p>
               <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
@@ -301,7 +301,7 @@ export default function PlatformPage() {
       <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-4 max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                 Product capabilities
               </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
@@ -325,7 +325,7 @@ export default function PlatformPage() {
       <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[0.9fr_1.1fr] md:px-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Partner Confirmation
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
@@ -368,7 +368,7 @@ export default function PlatformPage() {
             </div>
           </div>
           <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Review Request · Step {activePartnerStep + 1}
             </p>
             <h3 className="mt-3 text-2xl font-extrabold text-[#0A1F44]">
@@ -399,7 +399,7 @@ export default function PlatformPage() {
       <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-4 max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Framework Cross-Walking
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
@@ -412,7 +412,7 @@ export default function PlatformPage() {
           </div>
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                 The evidence gap
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-col">

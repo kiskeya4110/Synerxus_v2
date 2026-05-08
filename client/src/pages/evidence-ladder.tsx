@@ -106,10 +106,10 @@ export default function EvidenceLadderPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-slate-50 py-7 md:py-10">
+      <section className="py-7 md:py-10">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Evidence Ladder
             </p>
             <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">

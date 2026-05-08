@@ -40,7 +40,7 @@ export function SectionHeader({
   return (
     <div className="mb-4 max-w-3xl">
       {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
           {eyebrow}
         </p>
       )}
@@ -189,7 +189,7 @@ export function EvidenceAlignmentBanner() {
       className="border-y border-slate-100 bg-white py-7"
     >
       <div className="mb-5 text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
           Evidence Alignment Support
         </p>
         <h2
@@ -494,7 +494,7 @@ export function EvidenceObjectExplorer() {
 
               <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0A1F44]">
-                  <Clock3 className="h-4 w-4 text-[#D4980C]" />
+                  <Clock3 className="h-4 w-4 text-[#8A5A00]" />
                   Chain-of-custody activity
                 </div>
                 <div className="mt-4 grid gap-3">
@@ -596,7 +596,7 @@ export function EvidenceLadderSection() {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/10 lg:sticky lg:top-24 lg:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Active level
             </p>
             <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
@@ -651,7 +651,7 @@ export function AssessmentCta() {
     <section className="bg-slate-50 py-7 md:py-10">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_auto] md:items-center md:px-8">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
             Regulatory Readiness Assessment
           </p>
           <h2 className="mt-3 text-3xl font-extrabold text-[#0A1F44] md:text-4xl">
@@ -675,7 +675,7 @@ export function AssessmentCta() {
               "Disclosure-readiness summary",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-[#D4980C]" />
+                <CheckCircle2 className="h-4 w-4 text-[#8A5A00]" />
                 {item}
               </li>
             ))}
@@ -764,7 +764,7 @@ export function HomeSections() {
                   } ${index === 4 ? "sm:col-span-2" : ""
                   }`}
                 >
-                  <AlertTriangle className="h-5 w-5 text-[#D4980C]" />
+                  <AlertTriangle className="h-5 w-5 text-[#8A5A00]" />
                   <h3 className={`mt-3 font-bold ${activeGap === index ? "text-[#D4980C]" : "text-[#0A1F44]"}`}>{title}</h3>
                   <p className={`mt-2 text-sm leading-relaxed ${activeGap === index ? "text-[#D4980C]" : "text-slate-600"}`}>{body}</p>
                 </button>
@@ -899,7 +899,7 @@ export function HomeSections() {
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {["Clear review scope", "Less back-and-forth", "Structured confirmation record", "Better corporate-partner trust"].map((item) => (
-                <div key={item} className="rounded-lg border border-[#D4980C]/20 bg-[#D4980C]/10 p-3 text-sm font-semibold text-[#D4980C]">
+                <div key={item} className="rounded-lg border border-[#D4980C]/20 bg-[#D4980C]/10 p-3 text-sm font-semibold text-[#8A5A00]">
                   {item}
                 </div>
               ))}
@@ -934,7 +934,7 @@ export function HomeSections() {
               ))}
             </div>
             <div className="rounded-3xl border border-[#D4980C]/30 bg-white p-5 text-center shadow-2xl">
-              <Sparkles className="mx-auto h-7 w-7 text-[#D4980C]" />
+              <Sparkles className="mx-auto h-7 w-7 text-[#8A5A00]" />
               <p className="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Evidence Object
               </p>
@@ -1023,7 +1023,7 @@ export function HomeSections() {
                     "Does the evidence support the full claim or only part of it?",
                   ][activeScreening]}
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-[#D4980C]">
+                <p className="mt-3 text-sm leading-relaxed text-[#8A5A00]">
                   Governance check recorded before the Evidence Object advances
                   to disclosure-readiness review.
                 </p>
@@ -1031,7 +1031,7 @@ export function HomeSections() {
               <div className="mt-4 grid gap-3">
                 {screeningStatuses.map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-3 text-sm font-semibold text-slate-700">
-                    <ListChecks className="h-4 w-4 text-[#D4980C]" />
+                    <ListChecks className="h-4 w-4 text-[#8A5A00]" />
                     {item}
                   </div>
                 ))}
@@ -1116,7 +1116,7 @@ export function HomeSections() {
           <div className="grid gap-4 md:grid-cols-3">
             {["NGOs", "Suppliers", "Implementation / Verification Partners"].map((item) => (
               <div key={item} className="rounded-xl border border-slate-200 bg-white p-5">
-                <Network className="h-6 w-6 text-[#D4980C]" />
+                <Network className="h-6 w-6 text-[#8A5A00]" />
                 <h3 className="mt-4 font-extrabold text-[#0A1F44]">{item}</h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Structured confirmation workflows with clear review scope and

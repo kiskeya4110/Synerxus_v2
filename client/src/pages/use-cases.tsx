@@ -77,7 +77,7 @@ export default function UseCasesPage() {
 
   return (
     <MarketingLayout>
-      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 py-7 md:py-10">
+      <section className="relative overflow-hidden border-b border-slate-200 py-7 md:py-10">
         <div className="absolute inset-x-0 bottom-0 h-24 bg-white" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.95fr]">
           <div className="max-w-3xl">
@@ -107,7 +107,7 @@ export default function UseCasesPage() {
                   key={item}
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-[#D4980C]" />
+                  <CheckCircle2 className="h-4 w-4 text-[#8A5A00]" />
                   {item}
                 </span>
               ))}
@@ -175,7 +175,7 @@ export default function UseCasesPage() {
             </div>
 
             <aside className="h-fit rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm lg:sticky lg:top-24 lg:p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
                 Use case detail
               </p>
               <h3 className="mt-2 text-lg font-extrabold text-[#0A1F44] sm:text-xl">

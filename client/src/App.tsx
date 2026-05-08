@@ -32,10 +32,6 @@ const CorporateIntakeSimple = lazy(() => import("@/pages/corporate-intake-simple
 // ============================================================================
 // VOLUNTEER VIEW - Impact Wallet (Mobile-First)
 // ============================================================================
-const VolunteerDashboard = lazy(() => import("@/pages/volunteer-dashboard-new"));
-// /volunteer/projects → AI-matched recommendations (MAX 3 projects shown, no browsing)
-// /volunteer/log/:projectId → Log form: hours +/- buttons, outcome selector, photo upload
-// /volunteer/history → List of submitted logs with status badges
 const MyWork = lazy(() => import("@/pages/my-work"));
 const LogActivity = lazy(() => import("@/pages/log-activity"));
 
@@ -52,7 +48,6 @@ const Opportunities = lazy(() => import("@/pages/opportunities"));
 // NGO VIEW - Project Pipeline + Verification Queue (Desktop/Tablet)
 // ============================================================================
 const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard-new"));
-const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa-new"));
 const NgoVerification = lazy(() => import("@/pages/ngo-verification"));
 const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
@@ -65,8 +60,6 @@ const ProjectEdit = lazy(() => import("@/pages/project-edit"));
 // ============================================================================
 // CORPORATE VIEW - ESG Dashboard (Desktop)
 // ============================================================================
-const CSRDashboard = lazy(() => import("@/pages/csr-dashboard-new"));
-const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
 const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
 
 // Profile Settings

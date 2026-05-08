@@ -62,7 +62,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7faff_0%,#ffffff_22%,#eef5ff_100%)] text-slate-900">
+    <div className="min-h-screen bg-[linear-gradient(to_bottom_left,#b3d9e6_0%,#f8fbfc_100%)] text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
           <Link

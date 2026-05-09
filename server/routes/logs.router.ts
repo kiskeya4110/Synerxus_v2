@@ -1570,27 +1570,20 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
     activities = rows as any[];
   }
 
-  const filterEmployeeNamesRaw = req.query.employeeNames as string | undefined;
+  const filterEmployeeIds = parseOptionalIdList(req.query.employeeIds);
   const filterProjectIdsRaw = req.query.projectIds as string | undefined;
   const filterNgoNamesRaw = req.query.ngoNames as string | undefined;
   const filterOrgIds = parseOptionalIdList(req.query.orgIds ?? req.query.orgId);
-  const filterEmployeeNames = filterEmployeeNamesRaw ? filterEmployeeNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
   const filterProjectIds = filterProjectIdsRaw ? filterProjectIdsRaw.split(",").map(Number).filter(Boolean) : null;
   const filterNgoNames = filterNgoNamesRaw ? filterNgoNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
   if (filterProjectIds) {
     activities = activities.filter((activity: any) => activity.projectId && filterProjectIds.includes(activity.projectId));
   }
-
-  const volunteerUsers = linkedUserIds.length > 0 ? await storage.getUsersByIds(linkedUserIds) : [];
-  const volunteerUserMap = new Map(volunteerUsers.map((user: any) => [user.id, user]));
-  if (filterEmployeeNames) {
-    activities = activities.filter((activity: any) => {
-      const volunteerUser = volunteerUserMap.get(activity.userId);
-      const employeeName = volunteerUser?.displayName || volunteerUser?.email || "";
-      return filterEmployeeNames.some((name) => employeeName.toLowerCase().includes(name.toLowerCase()));
-    });
+  if (filterEmployeeIds) {
+    activities = activities.filter((activity: any) => activity.userId && filterEmployeeIds.includes(activity.userId));
   }
 
+  const volunteerUsers = linkedUserIds.length > 0 ? await storage.getUsersByIds(linkedUserIds) : [];
   const verifierIds = Array.from(new Set(activities.map((activity: any) => activity.verifiedBy).filter(Boolean))) as number[];
   const verifierUsers = verifierIds.length > 0 ? await storage.getUsersByIds(verifierIds) : [];
   const verifierOrgIds = Array.from(new Set(verifierUsers.map((user: any) => user.organizationId).filter(Boolean))) as number[];
@@ -2944,10 +2937,9 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     }
 
     // Entity filters
-    const filterEmployeeNamesRaw = req.query.employeeNames as string | undefined;
+    const filterEmployeeIds = parseOptionalIdList(req.query.employeeIds);
     const filterProjectIdsRaw = req.query.projectIds as string | undefined;
     const filterNgoNamesRaw = req.query.ngoNames as string | undefined;
-    const filterEmployeeNames = filterEmployeeNamesRaw ? filterEmployeeNamesRaw.split('|||').map(s => s.trim()).filter(Boolean) : null;
     const filterProjectIds = filterProjectIdsRaw ? filterProjectIdsRaw.split(',').map(Number).filter(Boolean) : null;
     const filterNgoNames = filterNgoNamesRaw ? filterNgoNamesRaw.split('|||').map(s => s.trim()).filter(Boolean) : null;
 
@@ -2979,6 +2971,9 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     if (filterProjectIds) {
       allActivities = allActivities.filter((a: any) => a.projectId && filterProjectIds.includes(a.projectId));
     }
+    if (filterEmployeeIds) {
+      allActivities = allActivities.filter((a: any) => a.userId && filterEmployeeIds.includes(a.userId));
+    }
 
     let verified = allActivities.filter((a: any) => a.verificationStatus === 'approved');
     const rejected = allActivities.filter((a: any) => a.verificationStatus === 'rejected');
@@ -3007,15 +3002,6 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     }
     const ngoOrgMap = new Map(ngoOrgs.map((o: any) => [o.id, o]));
     const verifierToOrgMap = new Map(verifierUsers.map((u: any) => [u.id, ngoOrgMap.get(u.organizationId)]));
-
-    // Apply employee name filter (needs userMap to resolve names)
-    if (filterEmployeeNames) {
-      verified = verified.filter((a: any) => {
-        const u = userMap.get(a.userId);
-        const name = u?.displayName || u?.email || '';
-        return filterEmployeeNames.some(fn => name.toLowerCase().includes(fn.toLowerCase()));
-      });
-    }
 
     // Apply NGO name filter (needs verifierToOrgMap)
     if (filterNgoNames) {
@@ -3151,7 +3137,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     // Employee contributor rows
     const employeeRows = topVolunteers.map((v: any, i: number) => `
       <tr style="border-bottom:0.5px solid #e5e7eb;${i % 2 === 1 ? 'background:#f9fafb;' : ''}">
-        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">${escapeHtml(v.name)}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;">Contributor ${i + 1}</td>
         <td style="padding:6px 8px;font-size:11px;color:#374151;">${escapeHtml(v.dept)}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;font-weight:700;color:#0A2463;">${v.outcomes}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${Math.round(v.hours)}h</td>
@@ -3176,14 +3162,13 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 
     // Audit trail rows (top 10) — only fully verified records appear under "Verified Evidence Records".
     const auditRows = strictlyVerified.slice(0, 10).map((a: any) => {
-      const volunteer = userMap.get(a.userId);
       const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
       const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
       const outcomeText = (a.editedOutcomeText || a.outcomeText || a.description || '—').slice(0, 60);
       const outcomeEllipsis = (a.editedOutcomeText || a.outcomeText || '')?.length > 60 ? '…' : '';
       return `<tr style="border-bottom:0.5px solid #e5e7eb;">
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(dateStr)}</td>
-        <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">${escapeHtml(volunteer?.displayName || 'Volunteer')}</td>
+        <td style="padding:5px 8px;font-size:10px;font-weight:500;color:#111827;">Redacted</td>
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(org?.name || 'Partner organization')}</td>
         <td style="padding:5px 8px;font-size:10px;color:#374151;">${escapeHtml(outcomeText)}${outcomeEllipsis}</td>
         <td style="padding:5px 8px;font-size:10px;text-align:center;color:#374151;">${a.hours || 0}h</td>
@@ -3491,7 +3476,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
 <div class="page">
 
 <!-- REPORT HEADER -->
-<div style="border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:${(filterEmployeeNames && filterEmployeeNames.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
+<div style="border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:${(filterEmployeeIds && filterEmployeeIds.length) || (filterProjectIds && filterProjectIds.length) || (filterNgoNames && filterNgoNames.length) ? '8px' : '20px'};">
   <div style="background:var(--navy);height:5px;"></div>
   <div style="background:#fff;padding:16px 20px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -3515,7 +3500,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
     </div>
   </div>
 </div>
-${(filterEmployeeNames?.length || filterProjectIds?.length || filterNgoNames?.length) ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0 0 var(--r) var(--r);padding:8px 20px;margin-bottom:20px;font-size:10px;color:#1e40af;">🔍 Filtered by: ${[filterEmployeeNames?.length ? `Employees: ${filterEmployeeNames.join(', ')}` : '', filterProjectIds?.length ? `Projects (${filterProjectIds.length} selected)` : '', filterNgoNames?.length ? `Partner Organizations: ${filterNgoNames.join(', ')}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
+${(filterEmployeeIds?.length || filterProjectIds?.length || filterNgoNames?.length) ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0 0 var(--r) var(--r);padding:8px 20px;margin-bottom:20px;font-size:10px;color:#1e40af;">🔍 Filtered by: ${[filterEmployeeIds?.length ? `Employees (${filterEmployeeIds.length} selected)` : '', filterProjectIds?.length ? `Projects (${filterProjectIds.length} selected)` : '', filterNgoNames?.length ? `Partner Organizations: ${filterNgoNames.join(', ')}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
 
 <!-- TEMPLATE CONTEXT NOTICE -->
 <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid;">
@@ -3624,9 +3609,9 @@ ${_boundMatrixHtml}
 
   ${topVolunteers.length > 0 ? `
   <div class="section">
-    <div class="section-header"><h2>Top Employee Contributors (Verified Outcomes)</h2></div>
+    <div class="section-header"><h2>Top Contributor Groups (Verified Outcomes)</h2></div>
     <table>
-      <thead><tr><th>Employee</th><th>Dept.</th><th style="text-align:center;">Confirmed Outputs</th><th style="text-align:center;">Hours</th><th>Partner Organizations</th><th>Skills Deployed</th></tr></thead>
+      <thead><tr><th>Contributor</th><th>Dept.</th><th style="text-align:center;">Confirmed Outputs</th><th style="text-align:center;">Hours</th><th>Partner Organizations</th><th>Skills Deployed</th></tr></thead>
       <tbody>${employeeRows}</tbody>
     </table>
   </div>` : ''}
@@ -3655,7 +3640,7 @@ ${_boundMatrixHtml}
   <div class="section">
     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Structured Records for Reviewer Sampling (showing ${Math.min(10, strictlyVerified.length)} of ${strictlyVerified.length})</h2></div>
     <table>
-      <thead><tr><th>Date</th><th>Employee</th><th>Partner Organization</th><th>Output Confirmed</th><th style="text-align:center;">Hours</th><th>Method</th><th>Region</th></tr></thead>
+      <thead><tr><th>Date</th><th>Contributor</th><th>Partner Organization</th><th>Output Confirmed</th><th style="text-align:center;">Hours</th><th>Method</th><th>Region</th></tr></thead>
       <tbody>${auditRows}</tbody>
     </table>
   </div>`}

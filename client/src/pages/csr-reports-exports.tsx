@@ -216,8 +216,7 @@ export default function CSRReportsExports() {
   // Build a "Filtered by" label for the PDF header
   const filterLabelParts: string[] = [];
   if (selectedEmployeeIds.length) {
-    const names = employeeOptions.filter(e => selectedEmployeeIds.includes(e.id)).map(e => e.name);
-    if (names.length) filterLabelParts.push(`Employees: ${names.join(', ')}`);
+    filterLabelParts.push(`Employees: ${selectedEmployeeIds.length} selected`);
   }
   if (selectedProjectIds.length) {
     const names = projectOptions.filter(p => selectedProjectIds.includes(p.id)).map(p => p.name);
@@ -256,10 +255,7 @@ export default function CSRReportsExports() {
       ) {
         const headers = await getAuthHeaders();
         const params = new URLSearchParams();
-        if (selectedEmployeeIds.length) {
-          const names = employeeOptions.filter(e => selectedEmployeeIds.includes(e.id)).map(e => e.name);
-          if (names.length) params.set("employeeNames", names.join("|||"));
-        }
+        if (selectedEmployeeIds.length) params.set("employeeIds", selectedEmployeeIds.join(","));
         if (selectedProjectIds.length) params.set("projectIds", selectedProjectIds.join(","));
         if (selectedOrgIds.length) params.set("orgIds", selectedOrgIds.join(","));
 

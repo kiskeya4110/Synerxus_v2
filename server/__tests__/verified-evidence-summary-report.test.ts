@@ -90,6 +90,6 @@ describe("Verified Evidence Summary report", () => {
     expect(html).toContain('<div class="info-label">Prepared for</div><div class="info-value">Acme Foundation</div>');
     expect(html).not.toContain('<span class="scope-label">Reporting Entity</span>');
     expect(html).not.toContain('<span class="scope-label">Organization</span><span class="scope-val">Acme Foundation</span>');
-    expect(html).toContain('<span class="scope-label">Organizations</span><span class="scope-val">Green Future Alliance, Eastside Community Works</span>');
+    expect(html).toContain('<span class="scope-label">Organizations</span><span class="scope-val">Green Future Alliance<br>Eastside Community Works</span>');
   });
 });

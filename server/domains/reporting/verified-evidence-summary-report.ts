@@ -332,6 +332,9 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
   const partnerNames = unique(
     input.partnerNames || verified.map((a) => a.verifierName || a.partnerName || "").filter(Boolean),
   );
+  const organizationScopeValue = partnerNames.length > 0
+    ? partnerNames.join(", ")
+    : "No partner organizations in selected scope";
   const countries = unique(
     (input.countriesOrRegions || []).concat(
       verified.map((a) => a.region || a.location || a.geolocation).filter(Boolean),
@@ -918,7 +921,7 @@ PAGES_PLACEHOLDER
       <div class="scope-head">${ICON.target}<strong>Scope Summary</strong></div>
       <div class="scope-desc">This report includes verified evidence records collected and processed for the reporting period and data cutoff date.</div>
       <div class="scope-divider"></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Organization</span><span class="scope-val">${escapeHtml(input.organizationName)}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Organizations</span><span class="scope-val">${escapeHtml(organizationScopeValue)}</span></div>
       <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Program Scope</span><span class="scope-val">${escapeHtml(filteredProjectNames.slice(0, 3).join(", ") || "All programs")}</span></div>
       <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Geographic Scope</span><span class="scope-val">${escapeHtml(countries.length ? countries.slice(0, 3).join(", ") : "Global")}</span></div>
       <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Frameworks</span><span class="scope-val">${escapeHtml(frameworksDisplay.length > 0 ? frameworksDisplay.slice(0, 3).join(", ") : "No frameworks selected")}</span></div>

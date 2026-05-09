@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { formatDecimal } from "@/lib/format-utils";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthHeaders } from "@/lib/queryClient";
-import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import {
   downloadFile,
   generateCSVContent,
@@ -64,31 +64,14 @@ import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 import { usePlanFeatures } from "@/hooks/use-plan-features";
 import { PlanGate } from "@/components/plan-gate";
 
-// Lazy load heavy chart components for better initial load
-const LazyLineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
-const LazyBarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
-const LazyPieChart = lazy(() => import("recharts").then(m => ({ default: m.PieChart })));
-
-// Regular imports for lighter chart parts
-import {
-  Line,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Pie,
-  Cell
-} from "recharts";
+const BudgetCharts = lazy(() => import("@/components/csr/budget-charts"));
 
 // Loading fallback for charts
-const ChartSkeleton = memo(({ height = "h-[200px]" }: { height?: string }) => (
+const ChartSkeleton = ({ height = "h-[200px]" }: { height?: string }) => (
   <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
     <div className="text-slate-400 text-sm">Loading chart...</div>
   </div>
-));
-ChartSkeleton.displayName = "ChartSkeleton";
+);
 
 
 export default function CSRReportsExports() {
@@ -242,7 +225,7 @@ export default function CSRReportsExports() {
   }
   if (selectedOrgIds.length) {
     const names = orgOptions.filter(o => selectedOrgIds.includes(o.id)).map(o => o.name);
-    if (names.length) filterLabelParts.push(`NGO Partners: ${names.join(', ')}`);
+    if (names.length) filterLabelParts.push(`NGO Partner: ${names.join(', ')}`);
   }
   const activeFilterLabel = filterLabelParts.length ? `Filtered by: ${filterLabelParts.join(' | ')}` : '';
 
@@ -272,7 +255,15 @@ export default function CSRReportsExports() {
         template.name === "Verified Evidence Summary"
       ) {
         const headers = await getAuthHeaders();
-        const response = await fetch("/api/reports/verified-evidence-summary", {
+        const params = new URLSearchParams();
+        if (selectedEmployeeIds.length) {
+          const names = employeeOptions.filter(e => selectedEmployeeIds.includes(e.id)).map(e => e.name);
+          if (names.length) params.set("employeeNames", names.join("|||"));
+        }
+        if (selectedProjectIds.length) params.set("projectIds", selectedProjectIds.join(","));
+        if (selectedOrgIds.length) params.set("orgIds", selectedOrgIds.join(","));
+
+        const response = await fetch(`/api/reports/verified-evidence-summary${params.toString() ? `?${params.toString()}` : ""}`, {
           headers,
           credentials: "include",
           cache: "no-store",
@@ -879,68 +870,12 @@ export default function CSRReportsExports() {
           {/* Budget Overview Tab */}
           {activeTab === "budget" && (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }}>
-                {/* Spending Trend Chart */}
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
-                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Budget vs Actual Spending</h3>
-                  <Suspense fallback={<ChartSkeleton height="h-[300px]" />}>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LazyBarChart data={monthlySpendingData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
-                        <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={(v) => `$${v/1000}K`} />
-                        <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} formatter={(value: number) => `$${value.toLocaleString()}`} />
-                        <Bar dataKey="budget" fill="#e5e7eb" name="Budget" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="actual" fill="#3b82f6" name="Actual" radius={[4, 4, 0, 0]} />
-                      </LazyBarChart>
-                    </ResponsiveContainer>
-                  </Suspense>
-                  <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <div style={{ width: "12px", height: "12px", backgroundColor: "#e5e7eb", borderRadius: "2px" }} />
-                      <span style={{ fontSize: "12px", color: "#6b7280" }}>Budget</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />
-                      <span style={{ fontSize: "12px", color: "#6b7280" }}>Actual</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Breakdown Pie Chart */}
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
-                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Spending by Category</h3>
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LazyPieChart>
-                        <Pie
-                          data={expenseCategoriesData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={70}
-                          innerRadius={40}
-                        >
-                          {expenseCategoriesData.map((entry, index) => (
-                            <Cell key={index} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                      </LazyPieChart>
-                    </ResponsiveContainer>
-                  </Suspense>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
-                    {expenseCategoriesData.map((cat) => (
-                      <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{ width: "10px", height: "10px", backgroundColor: cat.color, borderRadius: "2px" }} />
-                        <span style={{ flex: 1, fontSize: "12px", color: "#374151" }}>{cat.name}</span>
-                        <span style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>${Math.round(cat.value / 1000)}K</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <Suspense fallback={<ChartSkeleton height="h-[300px]" />}>
+                <BudgetCharts
+                  monthlySpendingData={monthlySpendingData}
+                  expenseCategoriesData={expenseCategoriesData}
+                />
+              </Suspense>
 
               {/* Budget Alerts */}
               <div style={{ backgroundColor: "#fef3c7", border: "2px solid #f59e0b", borderRadius: "12px", padding: "20px" }}>
@@ -1047,13 +982,15 @@ export default function CSRReportsExports() {
               )}
             </div>
 
-            {/* NGO Partners dropdown — always visible */}
+            {/* NGO Partners dropdown — all or single partner */}
             <div style={{ position: "relative" }}>
               <button
                 onClick={() => setFilterOpenPanel(filterOpenPanel === 'orgs' ? null : 'orgs')}
                 style={{ padding: "8px 14px", backgroundColor: selectedOrgIds.length ? "#fef3c7" : "white", color: selectedOrgIds.length ? "#92400e" : "#374151", border: `1px solid ${selectedOrgIds.length ? "#f59e0b" : "#e5e7eb"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}
               >
-                🌍 NGO Partners {selectedOrgIds.length > 0 ? `(${selectedOrgIds.length})` : ''}
+                🌍 {selectedOrgIds.length > 0
+                  ? (orgOptions.find(org => org.id === selectedOrgIds[0])?.name || "NGO Partner")
+                  : "All NGO Partners"}
                 <span style={{ fontSize: "10px" }}>▼</span>
               </button>
               {filterOpenPanel === 'orgs' && (
@@ -1063,15 +1000,26 @@ export default function CSRReportsExports() {
                 >
                   {orgOptions.length === 0 ? (
                     <div style={{ padding: "12px", fontSize: "13px", color: "#9ca3af", textAlign: "center" }}>No NGO partner data yet</div>
-                  ) : orgOptions.map(org => (
-                    <label key={org.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
-                    >
-                      <input type="checkbox" checked={selectedOrgIds.includes(org.id)} onChange={(e) => { if (e.target.checked) setSelectedOrgIds(prev => [...prev, org.id]); else setSelectedOrgIds(prev => prev.filter(id => id !== org.id)); }} style={{ accentColor: "#f59e0b" }} />
-                      {org.name}
-                    </label>
-                  ))}
+                  ) : (
+                    <>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                      >
+                        <input type="radio" name="csr-org-filter" checked={selectedOrgIds.length === 0} onChange={() => setSelectedOrgIds([])} style={{ accentColor: "#f59e0b" }} />
+                        All NGO Partners
+                      </label>
+                      {orgOptions.map(org => (
+                        <label key={org.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", cursor: "pointer", borderRadius: "6px", fontSize: "13px", color: "#374151" }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                        >
+                          <input type="radio" name="csr-org-filter" checked={selectedOrgIds.length === 1 && selectedOrgIds[0] === org.id} onChange={() => setSelectedOrgIds([org.id])} style={{ accentColor: "#f59e0b" }} />
+                          {org.name}
+                        </label>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>

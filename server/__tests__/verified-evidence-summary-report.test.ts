@@ -30,6 +30,7 @@ function renderReport() {
       { ...verifiedRecord, verificationStatus: "incomplete", hours: 50, beneficiaryCount: 110 },
     ],
     projects: [{ id: 1, name: "Clean Water Program" }, { id: 2, name: "Unused Project" }],
+    partnerNames: ["Green Future Alliance", "Eastside Community Works"],
     logoDataUri: "data:image/png;base64,abc123",
   });
 }
@@ -81,5 +82,14 @@ describe("Verified Evidence Summary report", () => {
     expect(html).toContain('<div class="metric-label">Projects Included</div><div class="metric-value">1</div>');
     expect(html).toContain('<div class="metric-label">Programs Included</div><div class="metric-value">1</div>');
     expect(html).not.toContain("Unused Project");
+  });
+
+  it("separates the reporting entity from included partner organizations", () => {
+    const html = renderReport();
+
+    expect(html).toContain('<div class="info-label">Prepared for</div><div class="info-value">Acme Foundation</div>');
+    expect(html).not.toContain('<span class="scope-label">Reporting Entity</span>');
+    expect(html).not.toContain('<span class="scope-label">Organization</span><span class="scope-val">Acme Foundation</span>');
+    expect(html).toContain('<span class="scope-label">Organizations</span><span class="scope-val">Green Future Alliance, Eastside Community Works</span>');
   });
 });

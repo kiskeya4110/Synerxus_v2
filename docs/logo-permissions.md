@@ -17,7 +17,7 @@ Current implementation: text-only framework pills are used. No third-party ESG, 
 
 ## Requirements For Future Logo Use
 
-Approved logo files, if any are later licensed or otherwise permitted, must be stored in `/public/framework-logos/`.
+Approved logo files, if any are later licensed or otherwise permitted, must be stored in `client/public/framework-logos/`.
 
 Before adding any framework logo or wordmark to the product UI, document:
 

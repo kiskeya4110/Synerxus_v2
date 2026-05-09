@@ -38,7 +38,6 @@ const LogActivity = lazy(() => import("@/pages/log-activity"));
 // ============================================================================
 // OPPORTUNITIES - Discover & detail views
 // ============================================================================
-const DiscoverOpportunities = lazy(() => import("@/pages/discover-opportunities"));
 const DiscoverOpportunitiesPWA = lazy(() => import("@/pages/discover-opportunities-pwa"));
 const OpportunityDetail = lazy(() => import("@/pages/opportunity-detail"));
 const OpportunityDetailPWA = lazy(() => import("@/pages/opportunity-detail-pwa"));
@@ -47,12 +46,8 @@ const Opportunities = lazy(() => import("@/pages/opportunities"));
 // ============================================================================
 // NGO VIEW - Project Pipeline + Verification Queue (Desktop/Tablet)
 // ============================================================================
-const OrganizationDashboard = lazy(() => import("@/pages/organization-dashboard-new"));
-const NgoVerification = lazy(() => import("@/pages/ngo-verification"));
 const LogVolunteerHours = lazy(() => import("@/pages/log-volunteer-hours"));
 const PostCoreOpportunity = lazy(() => import("@/pages/post-core-opportunity"));
-// NGO project management (simplified)
-const NgoProjects = lazy(() => import("@/pages/projects"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
 const ProjectDetailPWA = lazy(() => import("@/pages/project-detail-pwa"));
 const ProjectEdit = lazy(() => import("@/pages/project-edit"));

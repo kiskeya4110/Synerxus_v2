@@ -2,13 +2,12 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Brain, Target, TrendingUp, Users, Clock, Plus, Search,
   Sparkles, CheckCircle2, ArrowRight, BarChart3, Lightbulb,
   Award, DollarSign, AlertTriangle, Zap
 } from "lucide-react";
-import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
+import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 
 interface PotentialImpact {

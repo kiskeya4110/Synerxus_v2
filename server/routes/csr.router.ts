@@ -64,6 +64,20 @@ function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+function parseOptionalIdList(value: unknown): number[] | null {
+  if (value === null || value === undefined || value === "" || value === "all") return null;
+
+  const rawValue = Array.isArray(value) ? value.join(",") : String(value);
+  if (rawValue.trim().toLowerCase() === "all") return null;
+
+  const ids = rawValue
+    .split(",")
+    .map((id) => Number(id.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  return ids.length > 0 ? ids : null;
+}
+
 function normalizeSuggestionName(value: string | null | undefined): string {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
@@ -1567,12 +1581,9 @@ csrRouter.get("/csr/impact-reporting", authMiddleware, requireCSRAccess, queueMi
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
     // Parse optional entity filters
-    const employeeIdsParam = req.query.employeeIds as string | undefined;
-    const projectIdsParam = req.query.projectIds as string | undefined;
-    const orgIdsParam = req.query.orgIds as string | undefined;
-    const filterEmployeeIds = employeeIdsParam ? employeeIdsParam.split(',').map(Number).filter(Boolean) : null;
-    const filterProjectIds = projectIdsParam ? projectIdsParam.split(',').map(Number).filter(Boolean) : null;
-    const filterOrgIds = orgIdsParam ? orgIdsParam.split(',').map(Number).filter(Boolean) : null;
+    const filterEmployeeIds = parseOptionalIdList(req.query.employeeIds);
+    const filterProjectIds = parseOptionalIdList(req.query.projectIds);
+    const filterOrgIds = parseOptionalIdList(req.query.orgIds ?? req.query.orgId);
 
     const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];

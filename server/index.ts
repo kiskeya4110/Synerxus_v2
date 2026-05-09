@@ -19,15 +19,13 @@ import {
   trackConnection,
   getActiveConnectionCount
 } from "./port-management";
-import { ensurePortAvailable, forceKillPortAsync } from "./port-manager";
 import { updateSystemHealth } from "./circuit-breaker";
 import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 import { stopBackgroundRefresh } from "./cache-warmer";
-import { securityHeaders, sanitizeInput, cleanupSecurity, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware, requestTimeout } from "./middleware/security";
+import { securityHeaders, sanitizeInput, corsMiddleware, csrfTokenMiddleware, csrfValidationMiddleware, requestTimeout } from "./middleware/security";
 import { closeRedis } from "./redis";
-import { spawn } from "child_process";
 import { initErrorTracking, captureException, flushErrors } from "./services/error-tracking";
 import { initializeEnv } from "./utils/env";
 import { setupSwagger } from "./swagger";
@@ -78,50 +76,6 @@ async function checkDatabaseSchema() {
 
   return missingColumns.length === 0;
 }
-
-// Data fix: Ensure organization users have proper display names
-async function fixOrganizationDisplayNames() {
-  try {
-    const users = await storage.listUsers();
-    const organizations = await storage.listOrganizations();
-
-    // Create a map of organization ID to name
-    const orgNameMap = new Map<number, string>();
-    for (const org of organizations) {
-      if (org.id && org.name) {
-        orgNameMap.set(org.id, org.name);
-      }
-    }
-
-    // Find organization users with potentially incorrect displayNames
-    for (const user of users) {
-      if (user.userType === 'organization' && user.organizationId) {
-        const orgName = orgNameMap.get(user.organizationId);
-        if (orgName) {
-          // Check if displayName looks like it was derived from email (common patterns)
-          const emailPrefix = user.email?.split('@')[0]?.toLowerCase();
-          const currentName = user.displayName?.toLowerCase();
-
-          // Update if displayName matches email prefix or is generic
-          if (currentName === emailPrefix ||
-              currentName === 'admin' ||
-              currentName === 'contact' ||
-              currentName?.includes('admin') ||
-              !user.displayName) {
-            await storage.updateUser(user.id, { displayName: orgName });
-            logger.info(`[DataFix] Updated displayName for user ${user.id} (${user.email}) to "${orgName}"`);
-          }
-        }
-      }
-    }
-    logger.info('[DataFix] Organization display names check complete');
-  } catch (err) {
-    logger.error('[DataFix] Error fixing organization display names:', err);
-  }
-}
-
-// Server PID for debugging
-const serverPid = process.pid;
 
 // Initialize environment validation early
 initializeEnv();
@@ -595,23 +549,6 @@ app.use((req, res, next) => {
   const attemptBind = (attempt: number): void => {
     logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/${maxRetries})`);
     
-    // Sat1325upgrade: Force kill port before binding to ensure clean start
-    if (attempt === 1) {
-      try {
-        const safePort = Math.floor(Number(port));
-        if (safePort > 0 && safePort <= 65535) {
-          const fuser = spawn('fuser', ['-k', `${safePort}/tcp`]);
-          fuser.on('error', () => logger.debug(`[Server] fuser not available on port ${safePort}`));
-          fuser.on('close', (code) => {
-            if (code !== 0) logger.debug(`[Server] No lingering processes on port ${safePort}`);
-            else logger.info(`[Server] Cleaned up lingering processes on port ${safePort}`);
-          });
-        }
-      } catch (e) {
-        // Ignore errors
-      }
-    }
-
     const onError = (err: any) => {
       server.removeListener('listening', onListening);
 

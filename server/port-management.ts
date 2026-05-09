@@ -1,6 +1,5 @@
 import { Server } from "http";
 import * as fs from "fs";
-import { spawnSync } from "child_process";
 import { logger } from "./logger";
 
 /**
@@ -91,13 +90,6 @@ function performPreStartupCleanup(port: number): boolean {
           logger.info(`[PortManager] Removing stale lock (PID: ${lockPid}, age: ${Math.round(lockAge/1000)}s)`);
           try { fs.unlinkSync(LOCK_FILE_PATH); } catch (e) {}
           
-          // Attempt to clean up stale socket
-          try {
-            const safePort = Math.floor(Number(port));
-            if (safePort > 0 && safePort <= 65535) {
-              try { spawnSync('fuser', ['-k', `${safePort}/tcp`], { timeout: 2000 }); } catch (e) {}
-            }
-          } catch (e) {}
         }
       }
     } catch (error) {

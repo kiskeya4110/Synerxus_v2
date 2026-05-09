@@ -2,8 +2,14 @@ node_modules
 dist
 .DS_Store
 server/public
+/public/
 vite.config.ts.*
 *.tar.gz
+.cache/
+.local/
+uploads_backup/
+**/__pycache__/
+*.py[cod]
 
 # Test coverage artifacts (auto-generated)
 coverage/

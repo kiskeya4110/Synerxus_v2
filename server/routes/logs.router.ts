@@ -47,8 +47,6 @@ function loadLogoDataUri(): string {
   const candidates = [
     path.resolve(import.meta.dirname, "../../dist/public/synerxus-esg-logo.png"),
     path.resolve(import.meta.dirname, "../../client/public/synerxus-esg-logo.png"),
-    path.resolve(import.meta.dirname, "../../dist/public/2026 - Synerxus ESG Logo.png"),
-    path.resolve(import.meta.dirname, "../../public/2026 - Synerxus ESG Logo.png"),
   ];
   for (const p of candidates) {
     try {
@@ -61,6 +59,20 @@ function loadLogoDataUri(): string {
 const LOGO_DATA_URI = loadLogoDataUri();
 
 export const logsRouter = Router();
+
+function parseOptionalIdList(value: unknown): number[] | null {
+  if (value === null || value === undefined || value === "" || value === "all") return null;
+
+  const rawValue = Array.isArray(value) ? value.join(",") : String(value);
+  if (rawValue.trim().toLowerCase() === "all") return null;
+
+  const ids = rawValue
+    .split(",")
+    .map((id) => Number(id.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  return ids.length > 0 ? ids : null;
+}
 
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -1561,6 +1573,7 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
   const filterEmployeeNamesRaw = req.query.employeeNames as string | undefined;
   const filterProjectIdsRaw = req.query.projectIds as string | undefined;
   const filterNgoNamesRaw = req.query.ngoNames as string | undefined;
+  const filterOrgIds = parseOptionalIdList(req.query.orgIds ?? req.query.orgId);
   const filterEmployeeNames = filterEmployeeNamesRaw ? filterEmployeeNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
   const filterProjectIds = filterProjectIdsRaw ? filterProjectIdsRaw.split(",").map(Number).filter(Boolean) : null;
   const filterNgoNames = filterNgoNamesRaw ? filterNgoNamesRaw.split("|||").map((value) => value.trim()).filter(Boolean) : null;
@@ -1588,19 +1601,42 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
   }
   const verifierToOrgMap = new Map(verifierUsers.map((user: any) => [user.id, verifierOrgMap.get(user.organizationId)]));
 
+  const activityProjectIds = Array.from(new Set(activities.map((activity: any) => activity.projectId).filter(Boolean))) as number[];
+  const activityProjects = activityProjectIds.length > 0 ? await storage.getProjectsByIds(activityProjectIds) : [];
+  const projectOrgIds = Array.from(new Set(activityProjects.map((project: any) => project.organizationId).filter(Boolean))) as number[];
+  const projectOrgMap = new Map<number, any>();
+  for (const orgId of projectOrgIds) {
+    const org = await storage.getOrganization(orgId);
+    if (org) projectOrgMap.set(orgId, org);
+  }
+  const projectToOrgMap = new Map(activityProjects.map((project: any) => [project.id, project.organizationId ? projectOrgMap.get(project.organizationId) : null]));
+
+  if (filterOrgIds) {
+    activities = activities.filter((activity: any) => {
+      const projectOrg = activity.projectId ? projectToOrgMap.get(activity.projectId) : null;
+      return projectOrg && filterOrgIds.includes(projectOrg.id);
+    });
+  }
+
   if (filterNgoNames) {
     activities = activities.filter((activity: any) => {
+      const projectOrg = activity.projectId ? projectToOrgMap.get(activity.projectId) : null;
       const verifierOrg = activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy) : null;
-      return verifierOrg && filterNgoNames.some((name) => (verifierOrg.name || "").toLowerCase().includes(name.toLowerCase()));
+      const orgName = projectOrg?.name || verifierOrg?.name || "";
+      return filterNgoNames.some((name) => orgName.toLowerCase().includes(name.toLowerCase()));
     });
   }
 
   const filteredProjectIds = Array.from(new Set(activities.map((activity: any) => activity.projectId).filter(Boolean))) as number[];
   const filteredProjects = filteredProjectIds.length > 0 ? await storage.getProjectsByIds(filteredProjectIds) : [];
+  const filteredProjectOrgIds = Array.from(new Set(filteredProjects.map((project: any) => project.organizationId).filter(Boolean))) as number[];
+  const filteredProjectOrgs: any[] = [];
+  for (const orgId of filteredProjectOrgIds) {
+    const org = await storage.getOrganization(orgId);
+    if (org) filteredProjectOrgs.push(org);
+  }
   const partnerNames = Array.from(new Set(
-    activities
-      .map((activity: any) => (activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy)?.name : null))
-      .filter(Boolean),
+    filteredProjectOrgs.map((org: any) => org.name).filter(Boolean),
   )) as string[];
   const filteredVolunteerIds = Array.from(new Set(activities.map((activity: any) => activity.userId).filter(Boolean)));
   const corpName = partner?.companyName || "Corporation";

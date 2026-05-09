@@ -99,6 +99,9 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
   const partnerPct = Math.min(Math.round((context.incompleteRecords / classifiedTotal) * 100), 100 - verifiedPct);
   const derivedPct = 100 - verifiedPct - partnerPct;
   const qualityScore = Math.min(96, Math.max(72, context.verificationRate));
+  const organizationScopeValue = context.partnersIncluded.length > 0
+    ? context.partnersIncluded.join(", ")
+    : "No partner organizations in selected scope";
 
   const recordsTable = context.records.length
     ? `<div style="overflow:auto"><table style="font-size:9px">
@@ -175,7 +178,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
       <div class="card">
         <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px">Scope Summary</div>
         <p style="font-size:9.5px;color:#64748B;margin-bottom:10px">This report includes verified evidence records collected and processed for the reporting period and data cutoff date.</p>
-        <div class="scope-item"><span class="scope-icon">&#127970;</span><div><div class="scope-label">Organization</div><div class="scope-val">${escapeHtml(context.preparedFor)}</div></div></div>
+        <div class="scope-item"><span class="scope-icon">&#127970;</span><div><div class="scope-label">Organizations</div><div class="scope-val">${escapeHtml(organizationScopeValue)}</div></div></div>
         <div class="scope-item"><span class="scope-icon">&#128203;</span><div><div class="scope-label">Program Scope</div><div class="scope-val">${escapeHtml(context.scopeSummary)}</div></div></div>
         <div class="scope-item"><span class="scope-icon">&#127758;</span><div><div class="scope-label">Geographic Scope</div><div class="scope-val">${escapeHtml(context.regionsIncluded.slice(0,3).join(", ") || "Global")}</div></div></div>
         <div class="scope-item"><span class="scope-icon">&#127942;</span><div><div class="scope-label">Frameworks</div><div class="scope-val">CSRD / ESRS, GRI 413, UN SDGs</div></div></div>

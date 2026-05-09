@@ -45,5 +45,5 @@ jobs:
         run: pip install -r python_backend/requirements.txt
 
       - name: Run Python tests
-        working-directory: /home/runner/workspace/python_backend
+        working-directory: python_backend
         run: pytest test_main.py -v

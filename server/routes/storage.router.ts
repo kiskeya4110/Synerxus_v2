@@ -302,14 +302,18 @@ storageRouter.delete("/upload", async (req: Request, res: Response) => {
     // Security: Validate the file belongs to the user/org
     // Files are stored with user/org identifiers in path
     // Format: profiles/profile-u{userId}-{timestamp}-{random}.jpg or profile-o{orgId}-{timestamp}-{random}.jpg
-    const pathLower = sanitizedPath.toLowerCase();
+    // Use exact segment matching (split on path separators and dashes) to prevent substring attacks
+    // e.g. userId=1 must not match a file belonging to userId=10
+    const pathSegments = sanitizedPath.split(/[\/\-]/);
+    const uid = String(req.user.id);
+    const oid = req.user.organizationId ? String(req.user.organizationId) : null;
     const isOwnFile =
-      pathLower.includes(`-u${req.user.id}-`) ||  // User ID format: -u123-
-      pathLower.includes(`-${req.user.id}-`) ||   // Legacy format: -123-
-      pathLower.includes(`/${req.user.id}-`) ||   // Path-based format: /123-
-      (req.user.organizationId && (
-        pathLower.includes(`-o${req.user.organizationId}-`) ||  // Org ID format: -o456-
-        pathLower.includes(`org-${req.user.organizationId}`)     // Legacy org format
+      pathSegments.includes(`u${uid}`) ||       // User ID format: -u123-
+      (pathSegments.includes(uid) &&             // Legacy format: exact segment match only
+        (sanitizedPath.includes(`-${uid}-`) || sanitizedPath.includes(`/${uid}-`))) ||
+      (oid !== null && (
+        pathSegments.includes(`o${oid}`) ||      // Org ID format: -o456-
+        (pathSegments.includes('org') && pathSegments.includes(oid)) // Legacy org format
       ));
 
     if (!isOwnFile) {

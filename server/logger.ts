@@ -49,7 +49,9 @@ class Logger {
   }
 
   info(message: string, ...args: any[]): void {
-    const line = buildLogEntry('info', message, args);
+    const safeMsg = sanitizePii(message);
+    const safeArgs = sanitizeArgs(args);
+    const line = buildLogEntry('info', safeMsg, safeArgs);
     this.writeToFile(line);
     if (isDevelopment) {
       console.log(line);
@@ -57,7 +59,9 @@ class Logger {
   }
 
   warn(message: string, ...args: any[]): void {
-    const line = buildLogEntry('warn', message, args);
+    const safeMsg = sanitizePii(message);
+    const safeArgs = sanitizeArgs(args);
+    const line = buildLogEntry('warn', safeMsg, safeArgs);
     this.writeToFile(line);
     console.warn(line);
   }
@@ -71,7 +75,9 @@ class Logger {
   }
 
   debug(message: string, ...args: any[]): void {
-    const line = buildLogEntry('debug', message, args);
+    const safeMsg = sanitizePii(message);
+    const safeArgs = sanitizeArgs(args);
+    const line = buildLogEntry('debug', safeMsg, safeArgs);
     this.writeToFile(line);
     if (isDevelopment) {
       console.debug(line);

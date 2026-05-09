@@ -40,7 +40,7 @@ export const csrEngagementRouter = Router();
  * POST /employee-engagement/log-hours
  * Log employee volunteer hours
  */
-csrEngagementRouter.post("/employee-engagement/log-hours", async (req: Request, res: Response) => {
+csrEngagementRouter.post("/employee-engagement/log-hours", authMiddleware, async (req: Request, res: Response) => {
   try {
     const data = insertEmployeeActivityLogSchema.parse(req.body);
     const log = await storage.createEmployeeActivityLog?.(data);

@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { extractUserId, getAuthenticatedUser } from "./utils";
 import { authMiddleware } from "../middleware/auth";
+import { sensitiveRateLimiter } from "../middleware/security";
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "../email-digest-service";
 import { aiService } from "../services/ai-service";
 import { queueMiddleware } from "../request-queue";
@@ -556,7 +557,7 @@ CRITICAL REMINDERS:
       logger.error("OpenAI API Error:", openaiErr.message || openaiErr);
       return res.status(503).json({
         message: "OpenAI service unavailable. Check API key configuration.",
-        error: openaiErr.message
+        error: "AI processing failed. Please try again."
       });
     }
   } catch (err) {
@@ -602,7 +603,7 @@ adminRouter.post("/email-digest/send", queueMiddleware('heavy'), async (req: Req
  * Send weekly digests to all users
  * Only organization managers can use this endpoint
  */
-adminRouter.post("/email-digest/send-all", queueMiddleware('heavy'), async (req: Request, res: Response) => {
+adminRouter.post("/email-digest/send-all", sensitiveRateLimiter, queueMiddleware('heavy'), async (req: Request, res: Response) => {
   try {
     const userId = await extractUserId(req);
     if (!userId) {

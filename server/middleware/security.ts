@@ -331,7 +331,7 @@ export function securityHeaders(
     // wss: is locked to the app's own origin; set APP_ORIGIN in production for the exact domain
     ...(process.env.APP_ORIGIN
       ? [`connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss://${new URL(process.env.APP_ORIGIN).host}`]
-      : ["connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss:"]),
+      : ["connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com"]),
     // Prevent clickjacking via frames
     "frame-ancestors 'none'",
     // Restrict form submissions to same origin

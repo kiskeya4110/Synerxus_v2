@@ -32,6 +32,7 @@ import { setupSwagger } from "./swagger";
 import { storage } from "./storage";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
+import { authMiddleware } from "./middleware/auth";
 
 const SENSITIVE_RESPONSE_PATHS = [
   "/api/users/firebase-sync",
@@ -286,9 +287,25 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Health check endpoint for load balancers and monitoring
-// sat1325upgrade: Added circuit breaker, queue stats, and memory monitoring
+// Health check endpoint for load balancers and monitoring (minimal - no internal details)
 app.get('/health', (req, res) => {
+  const systemHealthy = isSystemHealthy();
+  const overloaded = isOverloaded();
+  const memorySummary = getMemorySummary();
+  const memoryHealthy = memorySummary.isHealthy;
+  const statusCode = systemHealthy && !overloaded && memoryHealthy ? 200 : 503;
+  res.status(statusCode).json({
+    status: systemHealthy && !overloaded && memoryHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Detailed health metrics — requires admin authentication
+app.get('/api/admin/health', authMiddleware, async (req, res) => {
+  const user = await storage.getUser(req.user!.id);
+  if (!user?.isAdmin) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
   const poolStats = getPoolStats();
   const cacheStats = cache.getStats();
   const circuitBreakerStats = getCircuitBreakerStats();
@@ -299,10 +316,7 @@ app.get('/health', (req, res) => {
   const memoryHealthy = memorySummary.isHealthy;
   const serverState = getServerState();
   const activeConnections = getActiveConnectionCount();
-
-  // Return 503 if system is unhealthy (for load balancer health checks)
   const statusCode = systemHealthy && !overloaded && memoryHealthy ? 200 : 503;
-
   res.status(statusCode).json({
     status: systemHealthy && !overloaded && memoryHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
@@ -521,7 +535,10 @@ app.use((req, res, next) => {
 
     // Only send response if headers haven't been sent yet
     if (!res.headersSent) {
-      res.status(status).json({ message });
+      const clientMessage = process.env.NODE_ENV === 'production'
+        ? "An internal error occurred"
+        : message;
+      res.status(status).json({ message: clientMessage });
     }
   });
 

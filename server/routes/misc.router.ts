@@ -757,6 +757,16 @@ miscRouter.post("/notifications/:id/read", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Invalid notification ID" });
     }
 
+    const existing = await storage.getNotification(notificationId);
+
+    if (!existing) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    if (existing.userId !== authUser.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const notification = await storage.markNotificationRead(notificationId);
 
     if (!notification) {
@@ -809,8 +819,7 @@ miscRouter.post("/images/ingest", async (req, res) => {
     // This would need proper multipart handling in production
     // For now, return error with instructions
     res.status(501).json({
-      error: "Image ingestion requires direct access to Python backend at port 8001",
-      endpoint: `${PYTHON_BACKEND_URL}/api/images/ingest`,
+      error: "Image ingestion is not available through this endpoint",
       method: "POST",
       contentType: "multipart/form-data"
     });

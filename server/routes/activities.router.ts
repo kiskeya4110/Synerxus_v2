@@ -85,6 +85,23 @@ activitiesRouter.get("/volunteer-activities", optionalAuthMiddleware, async (req
         });
       }
 
+      // For organization users, verify the requested userId belongs to their organization
+      if (authenticatedUser.userType === 'organization' && authenticatedUser.id !== requestedUserId) {
+        if (!authenticatedUser.organizationId) {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "No organization associated with your account"
+          });
+        }
+        const membership = await storage.getOrganizationMemberByUserAndOrg(requestedUserId, authenticatedUser.organizationId);
+        if (!membership) {
+          return res.status(403).json({
+            error: "FORBIDDEN",
+            message: "The requested user does not belong to your organization"
+          });
+        }
+      }
+
       activities = await storage.listVolunteerActivitiesByUser(requestedUserId);
     } else if (projectId) {
       const projectIdNum = parseInt(projectId as string);

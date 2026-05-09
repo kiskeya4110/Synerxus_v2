@@ -640,13 +640,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User consent for data processing
-  app.post("/api/user/consent", async (req, res) => {
+  app.post("/api/user/consent", authMiddleware, async (req, res) => {
     try {
-      const { userId, dataConsent } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
+      const { dataConsent } = req.body;
+      const userId = req.user!.id;
 
       const user = await storage.getUser(userId);
       if (!user) {
@@ -821,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/organizations", async (req, res) => {
+  app.post("/api/organizations", authMiddleware, async (req, res) => {
     try {
       const orgData = insertOrganizationSchema.parse(req.body);
       const organization = await storage.createOrganization(orgData);
@@ -834,7 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/organizations/:id", async (req, res) => {
+  app.patch("/api/organizations/:id", authMiddleware, async (req, res) => {
     try {
       const orgId = parseInt(req.params.id);
       const orgData = insertOrganizationSchema.partial().parse(req.body);
@@ -1213,7 +1210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Recalculate completion percentages for all projects (admin utility)
   // This ensures all stored completion values use the correct hours + milestones formula
-  app.post("/api/projects/recalculate-completion", async (req, res) => {
+  app.post("/api/projects/recalculate-completion", authMiddleware, async (req, res) => {
     try {
       const { projectId } = req.body;
 
@@ -2036,7 +2033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/impact-metrics", async (req, res) => {
+  app.post("/api/impact-metrics", authMiddleware, async (req, res) => {
     try {
       const metricData = insertImpactMetricSchema.parse(req.body);
       const metric = await storage.createImpactMetric(metricData);
@@ -2049,7 +2046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/impact-metrics/:id", async (req, res) => {
+  app.patch("/api/impact-metrics/:id", authMiddleware, async (req, res) => {
     try {
       const metricId = parseInt(req.params.id);
       const metricData = insertImpactMetricSchema.partial().parse(req.body);
@@ -2104,7 +2101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/project-impacts", async (req, res) => {
+  app.post("/api/project-impacts", authMiddleware, async (req, res) => {
     try {
       const impactData = insertProjectImpactSchema.parse(req.body);
       
@@ -2160,7 +2157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/project-impacts/:id", async (req, res) => {
+  app.patch("/api/project-impacts/:id", authMiddleware, async (req, res) => {
     try {
       const impactId = parseInt(req.params.id);
       const impactData = insertProjectImpactSchema.partial().parse(req.body);
@@ -2205,7 +2202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/calendar-events", async (req, res) => {
+  app.post("/api/calendar-events", authMiddleware, async (req, res) => {
     try {
       const eventData = insertCalendarEventSchema.parse(req.body);
       const event = await storage.createCalendarEvent(eventData);
@@ -2218,7 +2215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/calendar-events/:id", async (req, res) => {
+  app.patch("/api/calendar-events/:id", authMiddleware, async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);
       const eventData = insertCalendarEventSchema.partial().parse(req.body);
@@ -2236,7 +2233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/calendar-events/:id", async (req, res) => {
+  app.delete("/api/calendar-events/:id", authMiddleware, async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);
       const deleted = await storage.deleteCalendarEvent(eventId);
@@ -2254,19 +2251,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // === Message Routes ===
-  app.get("/api/messages", async (req, res) => {
+  app.get("/api/messages", authMiddleware, async (req, res) => {
     try {
-      const userIdParam = req.query.userId as string;
-      
-      if (!userIdParam) {
-        return res.status(400).json({ message: "userId query parameter is required" });
-      }
-      
-      const userId = parseInt(userIdParam);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "userId must be a valid number" });
-      }
-      
+      const userId = req.user!.id;
+
       const sentMessages = await storage.listMessagesBySender(userId);
       const receivedMessages = await storage.listMessagesByReceiver(userId);
       
@@ -2281,20 +2269,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/messages/conversation/:userId", async (req, res) => {
+  app.get("/api/messages/conversation/:userId", authMiddleware, async (req, res) => {
     try {
       const otherUserId = parseInt(req.params.userId);
-      const currentUserIdParam = req.query.currentUserId as string;
-      
-      if (!currentUserIdParam) {
-        return res.status(400).json({ message: "currentUserId query parameter is required" });
+      const currentUserId = req.user!.id;
+
+      if (isNaN(otherUserId)) {
+        return res.status(400).json({ message: "User ID must be a valid number" });
       }
-      
-      const currentUserId = parseInt(currentUserIdParam);
-      if (isNaN(currentUserId) || isNaN(otherUserId)) {
-        return res.status(400).json({ message: "User IDs must be valid numbers" });
-      }
-      
+
       const conversation = await storage.listConversation(currentUserId, otherUserId);
       res.json(conversation);
     } catch (err) {
@@ -2303,7 +2286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/messages", async (req, res) => {
+  app.post("/api/messages", authMiddleware, async (req, res) => {
     try {
       const messageData = insertOrgMessageSchema.parse(req.body);
       const message = await storage.createMessage(messageData);
@@ -2328,15 +2311,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/messages/:id/read", async (req, res) => {
+  app.patch("/api/messages/:id/read", authMiddleware, async (req, res) => {
     try {
       const messageId = parseInt(req.params.id);
-      const updatedMessage = await storage.markMessageAsRead(messageId);
-      
-      if (!updatedMessage) {
+      const message = await storage.getMessage(messageId);
+
+      if (!message) {
         return res.status(404).json({ message: "Message not found" });
       }
-      
+
+      if (message.receiverId !== req.user!.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedMessage = await storage.markMessageAsRead(messageId);
       broadcastUpdate("message_read", updatedMessage);
       res.json(updatedMessage);
     } catch (err) {
@@ -8770,8 +8758,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // This would need proper multipart handling in production
       // For now, return error with instructions
       res.status(501).json({
-        error: "Image ingestion requires direct access to Python backend at port 8001",
-        endpoint: `${PYTHON_BACKEND_URL}/api/images/ingest`,
+        error: "Image ingestion is not available through this endpoint",
         method: "POST",
         contentType: "multipart/form-data"
       });
@@ -9042,7 +9029,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   // ==================== ADMIN DASHBOARD ROUTES ====================
 
   // GET /api/admin/stats/enhanced - Get enhanced platform statistics with trends
-  app.get("/api/admin/stats/enhanced", async (req, res) => {
+  app.get("/api/admin/stats/enhanced", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -9224,7 +9214,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/stats - Get platform-wide statistics
-  app.get("/api/admin/stats", async (req, res) => {
+  app.get("/api/admin/stats", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const [
         userCount,
@@ -9274,7 +9267,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/users - Get all users with pagination
-  app.get("/api/admin/users", async (req, res) => {
+  app.get("/api/admin/users", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 50;
@@ -9338,7 +9334,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/activity - Get recent activity logs
-  app.get("/api/admin/activity", async (req, res) => {
+  app.get("/api/admin/activity", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const limit = parseInt(req.query.limit as string) || 100;
 
@@ -9389,7 +9388,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/organizations - Get all organizations with stats
-  app.get("/api/admin/organizations", async (req, res) => {
+  app.get("/api/admin/organizations", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const allOrgs = await db.select({
         id: organizations.id,
@@ -9432,7 +9434,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/system - Get system health info
-  app.get("/api/admin/system", async (req, res) => {
+  app.get("/api/admin/system", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       const memUsage = process.memoryUsage();
       const uptime = process.uptime();
@@ -9466,7 +9471,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   });
 
   // GET /api/admin/locations - Get organization and project locations for map
-  app.get("/api/admin/locations", async (req, res) => {
+  app.get("/api/admin/locations", authMiddleware, async (req, res) => {
+    if (!req.user || !(await storage.getUser(req.user.id))?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     try {
       // Fetch organizations and projects with location data
       const allOrganizations = await storage.listOrganizations();

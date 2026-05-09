@@ -220,10 +220,7 @@ export function computeReportMetrics(
     ...verified.map((a) => a.region || a.location || a.geolocation).filter(Boolean),
   ]);
 
-  const partnerNames = unique([
-    ...(input.partnerNames ?? []),
-    ...verified.map((a) => a.verifierName || a.partnerName).filter(Boolean),
-  ]);
+  const partnerNames = unique(input.partnerNames ?? []);
 
   // SDGs: prefer activity sdgTags, fall back to project sdgGoals
   const sdgsFromRecords: number[] = unique(

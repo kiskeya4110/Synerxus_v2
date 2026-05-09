@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2, FileCheck2, GitBranch, Layers3, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileCheck2, GitBranch, Layers3, Paperclip, ShieldCheck, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
@@ -171,22 +171,27 @@ const howSteps = [
   {
     title: "Create the claim",
     body: "Define the exact ESG claim, reporting period, owner, location, and scope before evidence is attached.",
+    Icon: FileCheck2,
   },
   {
     title: "Attach source evidence",
     body: "Connect the claim to files, logs, certificates, reports, photos, exports, and partner documentation.",
+    Icon: Paperclip,
   },
   {
     title: "Invite partner confirmation",
     body: "Send a focused review request so partners can confirm, comment, request clarification, or flag an issue.",
+    Icon: UserCheck,
   },
   {
     title: "Map to frameworks",
     body: "Cross-walk one Evidence Object to reporting frameworks, SDGs, investor summaries, and internal scorecards.",
+    Icon: GitBranch,
   },
   {
     title: "Preserve disclosure-ready record",
     body: "Retain chain-of-custody history, reviewer actions, version history, and disclosure-readiness status.",
+    Icon: ShieldCheck,
   },
 ];
 
@@ -959,26 +964,22 @@ export default function MarketingHome() {
               ))}
             </div>
             <div className="mt-6 rounded-3xl bg-[#0A1F44] p-5 md:p-8">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
-                Step {activeHowStep + 1} of {howSteps.length}
-              </p>
-              <h3 className="mt-2 text-2xl font-extrabold text-white">{howSteps[activeHowStep].title}</h3>
-              <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-300">
-                {howSteps[activeHowStep].body}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-1.5">
-                {howSteps.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setActiveHowStep(i)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === activeHowStep
-                        ? "w-6 bg-[#D4980C]"
-                        : "w-1.5 bg-[#D4980C]/30 hover:bg-[#D4980C]/60"
-                    }`}
-                  />
-                ))}
+              <div key={activeHowStep} className="flex animate-in fade-in items-center justify-between gap-6 duration-300">
+                <div className="flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
+                    Step {activeHowStep + 1} of {howSteps.length}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-extrabold text-white">{howSteps[activeHowStep].title}</h3>
+                  <p className="mt-3 text-base leading-relaxed text-slate-300">
+                    {howSteps[activeHowStep].body}
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center justify-center md:flex">
+                  {(() => {
+                    const Icon = howSteps[activeHowStep].Icon;
+                    return <Icon className="h-[4.9rem] w-[4.9rem] text-[#D4980C]" strokeWidth={1.5} />;
+                  })()}
+                </div>
               </div>
             </div>
           </div>
@@ -1230,16 +1231,38 @@ export default function MarketingHome() {
 
       <section id="request-assessment" className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl md:p-10">
-            <h2 className="max-w-3xl text-3xl font-extrabold text-[#0A1F44] md:text-5xl">
-              Assess the defensibility of your ESG claims.
-            </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
-              Start with a focused review of your highest-risk or highest-visibility sustainability claims.
-            </p>
-            <Button asChild size="lg" className="mt-7 bg-[#D4980C] text-[#0A1F44] hover:bg-[#B07F0A]">
-              <Link href="/request-assessment">Request Assessment</Link>
-            </Button>
+          <div className="rounded-3xl bg-[#0A1F44] p-7 md:p-12">
+            <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">Free assessment</p>
+                <h2 className="mt-3 text-3xl font-extrabold text-white md:text-4xl">
+                  Assess the defensibility of your ESG claims.
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-slate-300">
+                  Start with a focused review of your highest-risk or highest-visibility sustainability claims.
+                </p>
+                <Button asChild size="lg" className="mt-7 bg-[#D4980C] text-[#0A1F44] hover:bg-[#B07F0A]">
+                  <Link href="/request-assessment">Request Assessment</Link>
+                </Button>
+                <p className="mt-3 text-xs text-slate-400">No commitment required.</p>
+              </div>
+              <div className="shrink-0 rounded-2xl bg-white/5 p-6">
+                <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[#D4980C]">What we review</p>
+                <ul className="space-y-3">
+                  {[
+                    "Claim-by-claim risk exposure",
+                    "Evidence gaps and documentation coverage",
+                    "Framework alignment (GRI, CSRD, SDGs)",
+                    "Disclosure-readiness by claim type",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3 text-sm text-slate-200">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#D4980C]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </section>

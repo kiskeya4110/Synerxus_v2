@@ -329,9 +329,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
   );
   const projectsIncluded = filteredProjectIds.length;
   const volunteerCount = unique(verified.map((a) => a.userId)).length;
-  const partnerNames = unique(
-    input.partnerNames || verified.map((a) => a.verifierName || a.partnerName || "").filter(Boolean),
-  );
+  const partnerNames = unique(input.partnerNames ?? []);
   const organizationScopeValue = partnerNames.length > 0
     ? partnerNames.map((name) => escapeHtml(name)).join("<br>")
     : "No partner organizations in selected scope";

@@ -295,8 +295,13 @@ export function securityHeaders(
   res: Response,
   next: NextFunction
 ): void {
-  // Prevent clickjacking
-  res.setHeader("X-Frame-Options", "DENY");
+  const isDev = process.env.NODE_ENV !== "production";
+
+  // Prevent clickjacking in production. Development previews often render inside
+  // hosted iframe shells, so X-Frame-Options would block local preview panes.
+  if (!isDev) {
+    res.setHeader("X-Frame-Options", "DENY");
+  }
 
   // Prevent MIME type sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -312,8 +317,6 @@ export function securityHeaders(
   // Content Security Policy - Strengthened to reduce XSS attack surface
   // Note: 'unsafe-inline' for styles is kept for React's CSS-in-JS compatibility
   // In development, 'unsafe-inline' and 'unsafe-eval' are needed for Vite HMR
-  const isDev = process.env.NODE_ENV !== "production";
-  
   const cspDirectives = [
     "default-src 'self'",
     // Scripts: In dev, allow inline scripts for Vite HMR; in prod, only trusted sources
@@ -329,11 +332,14 @@ export function securityHeaders(
     // API connections: Self plus specific trusted external services only
     // Restricting to known hosts prevents data exfiltration via XSS
     // wss: is locked to the app's own origin; set APP_ORIGIN in production for the exact domain
-    ...(process.env.APP_ORIGIN
-      ? [`connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss://${new URL(process.env.APP_ORIGIN).host}`]
-      : ["connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com"]),
-    // Prevent clickjacking via frames
-    "frame-ancestors 'none'",
+    ...(isDev
+      ? ["connect-src 'self' ws: wss: http: https: data: blob:"]
+      : process.env.APP_ORIGIN
+        ? [`connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com wss://${new URL(process.env.APP_ORIGIN).host}`]
+        : ["connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com"]),
+    // Prevent clickjacking via frames in production. Development omits this
+    // directive because hosted preview panes use generated iframe origins.
+    ...(isDev ? [] : ["frame-ancestors 'none'"]),
     // Restrict form submissions to same origin
     "form-action 'self'",
     // Restrict base URI to prevent base tag hijacking

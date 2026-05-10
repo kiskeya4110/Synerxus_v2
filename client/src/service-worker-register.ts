@@ -54,6 +54,23 @@ export function registerServiceWorker() {
     });
   } else {
     console.log('Service Worker not registered (development mode or not supported)');
+
+    // A previously registered production service worker can keep controlling a
+    // development preview and serve stale cached assets, which presents as a
+    // blank page. Clear it explicitly in dev only.
+    if ('serviceWorker' in navigator && import.meta.env.DEV) {
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .then(() => {
+          if ('caches' in window) {
+            return caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
+          }
+          return [];
+        })
+        .catch((error) => {
+          console.warn('Development service worker cleanup failed:', error);
+        });
+    }
   }
 }
 

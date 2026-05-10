@@ -1,6 +1,5 @@
-import { Route, Router, Switch, useLocation, Redirect } from "wouter";
+import { Route, Router, Switch, Redirect } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
-import { useAuth } from "@/hooks/use-auth";
 
 // ============================================================================
 // SYNERXUS MVP - VERIFIED IMPACT DATA PIPELINE
@@ -14,6 +13,7 @@ const Landing = lazy(() => import("@/pages/marketing-home"));
 const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
+const ValidationFramework = lazy(() => import("@/pages/validation-framework"));
 const Resources = lazy(() => import("@/pages/insights"));
 const Contact = lazy(() => import("@/pages/contact"));
 const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
@@ -82,58 +82,6 @@ const PageLoader = () => (
 );
 
 // ============================================================================
-// Root Redirect - Route all authenticated users to unified /dashboard
-// ============================================================================
-function RootRedirectRoute() {
-  const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
-  const currentUserId = localStorage.getItem('currentUserId');
-
-  useEffect(() => {
-    // No stored session — go to landing right away, no need to wait for Firebase
-    if (!currentUserId) {
-      setLocation('/landing');
-      return;
-    }
-
-    // Has a stored session — wait for auth to resolve before routing
-    if (loading) return;
-
-    const isAuthenticated = user || currentUserId;
-
-    if (isAuthenticated) {
-      const userId = localStorage.getItem('currentUserId');
-      const userType = localStorage.getItem('userType');
-      const profileComplete = localStorage.getItem('profileComplete') === 'true';
-
-      if (!userId) {
-        setLocation('/landing');
-        return;
-      }
-
-      // Route to unified dashboard (role detection happens there)
-      if (profileComplete) {
-        setLocation('/dashboard');
-        return;
-      }
-
-      // New user - route to signup based on type
-      if (userType === 'corporate-partner') {
-        setLocation('/signup/corporate');
-      } else if (userType === 'organization') {
-        setLocation('/signup/organization');
-      } else {
-        setLocation('/signup/volunteer');
-      }
-    } else {
-      setLocation('/landing');
-    }
-  }, [user, loading, setLocation, currentUserId]);
-
-  return null;
-}
-
-// ============================================================================
 // Main App Component - Light Theme
 // ============================================================================
 export default function App() {
@@ -147,8 +95,8 @@ export default function App() {
     <Suspense fallback={<PageLoader />}>
       <Router>
         <Switch>
-          {/* Root redirect */}
-          <Route path="/" component={RootRedirectRoute} />
+          {/* Public preview root */}
+          <Route path="/" component={Platform} />
 
           {/* Auth */}
           <Route path="/login" component={LoginAuth} />
@@ -158,6 +106,7 @@ export default function App() {
           <Route path="/platform" component={Platform} />
           <Route path="/evidence-ladder" component={EvidenceLadder} />
           <Route path="/use-cases" component={UseCases} />
+          <Route path="/validation-framework" component={ValidationFramework} />
           <Route path="/resources" component={Resources} />
           <Route path="/request-assessment" component={Contact} />
           <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>

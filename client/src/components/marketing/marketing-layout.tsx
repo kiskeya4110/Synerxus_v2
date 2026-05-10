@@ -9,6 +9,7 @@ const navItems = [
   { label: "Platform", href: "/platform" },
   { label: "Evidence Ladder", href: "/evidence-ladder" },
   { label: "Use Cases", href: "/use-cases" },
+  { label: "Validation", href: "/validation-framework" },
   { label: "Resources", href: "/resources" },
 ];
 
@@ -18,6 +19,7 @@ const ASSURANCE_FOOTER_NOTE =
 const footerLinks = [
   ["Platform", "/platform"],
   ["Use Cases", "/use-cases"],
+  ["Validation", "/validation-framework"],
   ["Privacy", "/privacy"],
   ["Terms", "/terms"],
 ] as const;

@@ -1,191 +1,234 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCheck,
+  DatabaseZap,
+  FileCheck2,
+  Fingerprint,
+  FolderSearch,
+  ListChecks,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
-import {
-  AssessmentCta,
-  EvidenceObjectExplorer,
-} from "@/components/marketing/marketing-sections";
+import { AssessmentCta, BoundaryNotice } from "@/components/marketing/marketing-sections";
 
-const capabilities = [
+const moduleCards = [
   {
-    title: "Evidence Objects",
-    body: "Structured claim records that connect the claim, source evidence, owner, reviewer, risk screening, framework mapping, and disclosure-readiness status.",
+    title: "Claim Register",
+    eyebrow: "Define what will be reported",
+    icon: ListChecks,
+    body: "A central workspace for the exact social-impact or ESG claim, owner, program, reporting period, evidence requirement, and review status.",
+    fields: [
+      "Claim ID",
+      "Claim owner",
+      "Program",
+      "Reporting period",
+      "Claim type",
+      "Evidence requirement",
+      "Framework mapping",
+      "Review status",
+    ],
   },
   {
-    title: "Chain of custody",
-    body: "Timestamped review history showing who submitted evidence, who reviewed it, who confirmed it, what changed, and which version was used.",
+    title: "Evidence Packet Builder",
+    eyebrow: "Connect records to claims",
+    icon: FileCheck2,
+    body: "Transforms partner records, activity metadata, and source artifacts into structured evidence packets tied to a specific claim.",
+    fields: [
+      "Evidence ID",
+      "Linked claim",
+      "Partner / verifier",
+      "Activity date",
+      "Verification date",
+      "Source artifact",
+      "Location / site",
+      "Confidence tier",
+      "Exception status",
+      "Hash / integrity reference",
+    ],
   },
   {
-    title: "Partner confirmation",
-    body: "Focused confirmation workflows for NGOs, suppliers, contractors, implementation partners, community organizations, and field teams.",
+    title: "Verifier Registry",
+    eyebrow: "Control who can confirm",
+    icon: UsersRound,
+    body: "Maintains the authority basis for people and organizations allowed to confirm activity records or source-supported claims.",
+    fields: [
+      "Verifier role",
+      "Organization",
+      "Authority basis",
+      "Verification method",
+      "Conflict-of-interest flag",
+      "Confirmation history",
+    ],
   },
   {
-    title: "Framework cross-walking",
-    body: "One Evidence Object can support multiple reporting pathways across ESG frameworks, SDGs, investor materials, and internal scorecards.",
+    title: "Source Artifact Index",
+    eyebrow: "Organize supporting documents",
+    icon: FolderSearch,
+    body: "Indexes the documents and source files that reporting, legal, and assurance-preparation teams need to review.",
+    fields: [
+      "Attendance logs",
+      "Inspection forms",
+      "Photos",
+      "Partner reports",
+      "Surveys",
+      "CRM exports",
+      "Signed handovers",
+      "Water quality tests",
+      "Training records",
+    ],
   },
   {
-    title: "Negative impact screening",
-    body: "Governance checks for unresolved concerns, conflicting documentation, stakeholder objections, adverse impacts, or overclaimed outcomes.",
+    title: "Evidence Quality & Exceptions",
+    eyebrow: "Separate clean records from risk",
+    icon: AlertTriangle,
+    body: "Surfaces complete, pending, incomplete, rejected, late, duplicate, and partner-reported-only records before claims move into reporting materials.",
+    fields: [
+      "Complete",
+      "Pending",
+      "Incomplete",
+      "Rejected",
+      "Late",
+      "Duplicate",
+      "Partner-reported only",
+      "Needs source support",
+    ],
   },
   {
-    title: "Reporting outputs",
-    body: "Structured summaries for ESG reports, investor updates, board materials, stakeholder disclosures, and assurance preparation.",
+    title: "Reporting Pack Generator",
+    eyebrow: "Package review outputs",
+    icon: ClipboardCheck,
+    body: "Generates summaries and exports that help internal teams prepare reporting files without overstating what the evidence can support.",
+    fields: [
+      "Management summary",
+      "Evidence summary",
+      "Assurance-preparation pack",
+      "Claim-to-evidence export",
+      "Framework mapping register",
+      "Exception log",
+    ],
   },
 ];
 
-const evidenceObjectLayers = [
-  {
-    title: "Claim layer",
-    body: "Defines the exact claim, scope, owner, reporting period, ESG category, and location.",
-  },
-  {
-    title: "Evidence layer",
-    body: "Connects the claim to source files, records, certificates, exports, photos, and partner reports.",
-  },
-  {
-    title: "Confirmation layer",
-    body: "Captures partner reviewer identity, confirmation status, notes, clarification requests, and flags.",
-  },
-  {
-    title: "Chain-of-custody layer",
-    body: "Preserves who submitted, reviewed, confirmed, changed, and used each version of the record.",
-  },
-  {
-    title: "Negative impact screening layer",
-    body: "Checks unresolved concerns, stakeholder objections, conflicting documentation, and overclaimed outcomes.",
-  },
-  {
-    title: "Framework mapping layer",
-    body: "Cross-walks a confirmed Evidence Object to reporting frameworks, SDGs, scorecards, and stakeholder needs.",
-  },
-  {
-    title: "Disclosure-readiness layer",
-    body: "Shows whether the Evidence Object is ready for disclosure review and what next action is required.",
-  },
+const evidenceFlow = [
+  "Claim registered",
+  "Evidence requirement set",
+  "Partner confirmation requested",
+  "Source artifact attached",
+  "Quality status assigned",
+  "Review pack generated",
 ];
 
-const partnerWorkflow = [
-  {
-    title: "Receive request",
-    body: "Partner receives a focused review request tied to one Evidence Object.",
-    status: "Request delivered",
-    action: "Open claim review",
-  },
-  {
-    title: "Review claim",
-    body: "Partner sees the exact claim, reporting period, location, and claimed outcome.",
-    status: "Scope visible",
-    action: "Review claim scope",
-  },
-  {
-    title: "Inspect evidence",
-    body: "Partner reviews attached logs, certificates, reports, photos, and project records.",
-    status: "5 files attached",
-    action: "Inspect evidence package",
-  },
-  {
-    title: "Confirm, comment, or flag",
-    body: "Partner confirms accuracy, requests clarification, adds context, or flags an issue.",
-    status: "Action required",
-    action: "Confirm | Clarify | Flag",
-  },
-  {
-    title: "Preserve response",
-    body: "Partner response becomes part of the Evidence Object chain of custody.",
-    status: "Custody updated",
-    action: "Preserve confirmation",
-  },
+const confidenceTiers = [
+  { tier: "0", label: "Self-Reported", note: "Submitted but not confirmed" },
+  { tier: "1", label: "Partner-Confirmed", note: "Confirmed by an authorized partner or verifier" },
+  { tier: "2", label: "Source-Supported", note: "Confirmation includes retained source artifacts" },
+  { tier: "3", label: "Review-Ready", note: "Prepared for internal, legal, or advisor review" },
 ];
 
-const platformGapCards = [
-  {
-    number: "01",
-    title: "Fragmented evidence",
-    body: "Source records are scattered across tools, teams, partners, and inboxes.",
-    response: {
-      subtitle: "Synerxus packages the source record around the exact claim being reviewed, so teams know what evidence supports what statement.",
-      features: ["Source record", "File attachments", "Document links", "Team ownership", "Submission date", "Storage audit trail"],
-      record: {
-        claim: "Water access program delivery",
-        status: "Source-attached",
-        statusColor: "#93C5FD",
-        framework: "SDG 6 / GRI 303",
-        reportUse: "Internal review",
-      },
-    },
-  },
-  {
-    number: "02",
-    title: "Weak confirmation",
-    body: "Partner activity is rarely connected to the exact claim being reported.",
-    response: {
-      subtitle: "Focused review requests let partners confirm, clarify, or flag claims without being pulled into a full reporting platform.",
-      features: ["Partner invitation", "Claim summary", "Confirmation response", "Clarification thread", "Flag record", "Review timestamp"],
-      record: {
-        claim: "Supplier training delivery",
-        status: "Partner-confirmed",
-        statusColor: "#FCD34D",
-        framework: "GRI 414 / ESRS S1",
-        reportUse: "Assurance preparation support",
-      },
-    },
-  },
-  {
-    number: "03",
-    title: "Disclosure risk",
-    body: "Claims without reviewable evidence create reputational and regulatory exposure.",
-    response: {
-      subtitle: "Evidence Ladder status shows whether a claim is source-backed, partner-confirmed, framework-mapped, or ready for review.",
-      features: ["Evidence Ladder status", "Source record", "Partner confirmation", "Framework alignment", "Disclosure readiness", "Review history"],
-      record: {
-        claim: "Community program output",
-        status: "Partner-confirmed",
-        statusColor: "#FCD34D",
-        framework: "SDG 6 / GRI 413 / ESRS S3",
-        reportUse: "Assurance preparation support",
-      },
-    },
-  },
+const recordRows = [
+  ["Claim ID", "CLM-2026-041"],
+  ["Program", "Solar Village Initiative"],
+  ["Reporting period", "Q2 2026"],
+  ["Claim type", "Output / activity"],
+  ["Evidence requirement", "Partner confirmation + training record"],
+  ["Review status", "Ready for reporting review"],
+];
+
+const reviewOutputs = [
+  { title: "Claim-to-evidence traceability", icon: Fingerprint },
+  { title: "Tamper-evident integrity reference", icon: DatabaseZap },
+  { title: "Partner-confirmed evidence status", icon: ShieldCheck },
+  { title: "Exception log for unresolved issues", icon: AlertTriangle },
+];
+
+const sdgEvidenceCategories = [
+  "Partner-confirmed activity and output records",
+  "Partner-reported reach and community figures",
+  "Derived SDG and framework mappings",
+];
+
+const sdgMappingPanel = [
+  ["Primary SDG", "SDG 7: Affordable and Clean Energy"],
+  ["Relevant SDG target", "7.b: Expand infrastructure and upgrade technology"],
+  ["Mapping rationale", "Training activity supports clean-energy maintenance capacity"],
+  ["Evidence basis", "Partner confirmation + training log + maintenance checklist"],
+  ["Mapping confidence", "Medium"],
+  ["Evidence tier supporting the activity", "Tier 2: Source-supported"],
+  ["Boundary note", "Thematic alignment only / no causal attribution"],
 ];
 
 export default function PlatformPage() {
-  const [activeObjectLayer, setActiveObjectLayer] = useState(0);
-  const [activePartnerStep, setActivePartnerStep] = useState(0);
-  const [activeGap, setActiveGap] = useState(0);
+  const [activeModule, setActiveModule] = useState(0);
+  const ActiveIcon = moduleCards[activeModule].icon;
 
   return (
     <MarketingLayout>
       <section className="bg-transparent">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-7 md:px-8 md:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-7 md:px-8 md:py-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Platform
             </p>
             <h1 className="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-              ESG evidence infrastructure for defensible disclosures.
+              The evidence layer behind defensible social-impact claims.
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-              Synerxus helps organizations turn sustainability claims into structured,
-              partner-confirmed Evidence Objects for reporting and assurance preparation.
+              Synerxus turns fragmented program records into structured,
+              partner-confirmed evidence packets your reporting, legal, and assurance
+              teams can actually review.
             </p>
-            <Button asChild className="mt-7 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
-              <Link href="/request-assessment">Request Assessment</Link>
-            </Button>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                <Link href="/request-assessment">Request Evidence Assessment</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-[#0A1F44]/20 text-[#0A1F44] hover:bg-white">
+                <a href="#platform-modules">Explore Modules</a>
+              </Button>
+            </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl sm:p-6">
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              {[
-                ["Claim", "Capture the sustainability statement"],
-                ["Evidence", "Attach source records and confirmation"],
-                ["Review", "Package it for disclosure support"],
-              ].map(([title, body]) => (
-                <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A5A00] sm:text-xs sm:tracking-[0.18em]">
-                    {title}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:p-5">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
+                    Evidence Packet
                   </p>
-                  <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-700 sm:text-sm sm:leading-6">{body}</p>
+                  <h2 className="mt-1 text-lg font-extrabold text-[#0A1F44]">
+                    EVR-2026-0001
+                  </h2>
+                </div>
+                <span className="rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-3 py-1 text-xs font-bold text-[#8A5A00]">
+                  Source-Supported
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-2">
+                {recordRows.map(([label, value]) => (
+                  <div key={label} className="grid grid-cols-[130px_1fr] gap-3 rounded-lg bg-white px-3 py-2 text-sm">
+                    <span className="font-bold text-slate-400">{label}</span>
+                    <span className="font-semibold text-slate-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {confidenceTiers.map((tier) => (
+                <div key={tier.tier} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#0A1F44] text-xs font-extrabold text-[#FFD95A]">
+                      {tier.tier}
+                    </span>
+                    <p className="text-sm font-extrabold text-[#0A1F44]">{tier.label}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-500">{tier.note}</p>
                 </div>
               ))}
             </div>
@@ -195,200 +238,180 @@ export default function PlatformPage() {
 
       <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-4 max-w-3xl">
+          <BoundaryNotice />
+        </div>
+      </section>
+
+      <section id="platform-modules" className="bg-slate-50 py-7 md:py-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="mb-5 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              What is an Evidence Object?
+              Platform Modules
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              A structured record behind each ESG claim.
+              Each module keeps the claim connected to its evidence trail.
             </h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
-              Each layer is selectable. Use hover, focus, or tap to see how the record supports
-              defensible disclosure review.
+              The platform is designed around claim-level evidence, partner confirmation,
+              source artifacts, exception handling, and reporting support.
             </p>
           </div>
-          <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
-              {evidenceObjectLayers.map((layer, index) => (
-                <button
-                  key={layer.title}
-                  type="button"
-                  onMouseEnter={() => setActiveObjectLayer(index)}
-                  onFocus={() => setActiveObjectLayer(index)}
-                  onClick={() => setActiveObjectLayer(index)}
-                  aria-pressed={activeObjectLayer === index}
-                  className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-1 hover:shadow-xl sm:p-5 ${
-                    activeObjectLayer === index
-                      ? "border-[#0A1F44] bg-slate-50 shadow-md"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                    Layer {index + 1}
-                  </p>
-                  <h2 className="mt-3 text-sm font-extrabold leading-snug text-[#0A1F44] sm:text-base">{layer.title}</h2>
-                </button>
-              ))}
+
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {moduleCards.map((module, index) => {
+                const Icon = module.icon;
+                const selected = activeModule === index;
+                return (
+                  <button
+                    key={module.title}
+                    type="button"
+                    onClick={() => setActiveModule(index)}
+                    onMouseEnter={() => setActiveModule(index)}
+                    onFocus={() => setActiveModule(index)}
+                    aria-pressed={selected}
+                    className={`flex gap-3 rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                      selected
+                        ? "border-[#0A1F44] bg-[#0A1F44] text-white"
+                        : "border-slate-200 bg-white text-slate-700"
+                    }`}
+                  >
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                      selected ? "bg-white/10 text-[#FFD95A]" : "bg-[#D4980C]/15 text-[#0A1F44]"
+                    }`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className={`block text-sm font-extrabold ${selected ? "text-white" : "text-[#0A1F44]"}`}>
+                        {module.title}
+                      </span>
+                      <span className={`mt-1 block text-xs font-semibold uppercase tracking-[0.12em] ${
+                        selected ? "text-[#FFD95A]" : "text-[#8A5A00]"
+                      }`}>
+                        {module.eyebrow}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                Layer definition
+
+            <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
+                    Active Module
+                  </p>
+                  <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
+                    {moduleCards[activeModule].title}
+                  </h3>
+                </div>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-[#FFD95A]">
+                  <ActiveIcon className="h-5 w-5" />
+                </span>
+              </div>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">
+                {moduleCards[activeModule].body}
               </p>
-              <h3 className="mt-2 text-xl font-extrabold text-[#0A1F44] sm:text-2xl">
-                {evidenceObjectLayers[activeObjectLayer].title}
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-slate-600">
-                {evidenceObjectLayers[activeObjectLayer].body}
-              </p>
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                {moduleCards[activeModule].fields.map((field) => (
+                  <div key={field} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0A1F44]" />
+                    <span className="text-sm font-semibold text-slate-700">{field}</span>
+                  </div>
+                ))}
+              </div>
             </aside>
           </div>
         </div>
       </section>
 
-      <EvidenceObjectExplorer />
-
       <section className="bg-white py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                Why it matters
-              </p>
-              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-                Evidence Objects make review easier because they carry the record with the claim.
-              </h2>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
-                Instead of another row of cards, this section keeps the reading flow continuous and
-                lets the product language do the work.
-              </p>
-            </div>
-            <div className="grid gap-3">
-              {[
-                {
-                  icon: CheckCircle2,
-                  title: "Reviewable by advisors",
-                  body: "Advisors get one structured record instead of scattered files and narrative fragments.",
-                },
-                {
-                  icon: ShieldCheck,
-                  title: "Cleaner partner trust",
-                  body: "Partners confirm the exact claim and evidence package, reducing ambiguous impact statements.",
-                },
-                {
-                  icon: Sparkles,
-                  title: "Less duplicate evidence collection",
-                  body: "One confirmed Evidence Object can support multiple internal and external reporting pathways.",
-                },
-              ].map(({ icon: Icon, title, body }) => (
-                <div
-                  key={title}
-                  className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:gap-4 sm:p-5"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-white sm:h-11 sm:w-11">
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-extrabold text-[#0A1F44] sm:text-base">{title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-7 md:py-10">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-4 max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                Product capabilities
-              </p>
+          <div className="mb-5 max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
+              Claim To Evidence Workflow
+            </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              One platform, multiple controls.
+              How a claim becomes a reviewable evidence packet.
             </h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {capabilities.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
-              >
-                <h3 className="text-sm font-extrabold text-[#0A1F44] sm:text-base">{item.title}</h3>
-                <p className="mt-3 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.body}</p>
+          <div className="grid gap-3 md:grid-cols-6">
+            {evidenceFlow.map((step, index) => (
+              <div key={step} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0A1F44] text-xs font-extrabold text-[#FFD95A]">
+                  {index + 1}
+                </span>
+                <p className="mt-3 text-sm font-extrabold leading-snug text-[#0A1F44]">{step}</p>
+                {index < evidenceFlow.length - 1 && (
+                  <ArrowRight className="absolute -right-3 top-7 hidden h-5 w-5 text-[#D4980C] md:block" />
+                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
+
+
       <section className="bg-slate-50 py-7 md:py-10">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[0.9fr_1.1fr] md:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              Partner Confirmation
+              SDG-Aligned, Evidence-Backed Reporting
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              Partner confirmation without reporting burden.
+              Keep SDG storytelling connected to evidence boundaries.
             </h2>
-            <p className="mt-3 max-w-xl text-base leading-relaxed text-slate-600">
-              Each step updates the review request so partners understand exactly what action is
-              being taken.
+            <p className="mt-3 text-base leading-relaxed text-slate-600">
+              Many corporate social-impact, city, NGO, and development programs organize their
+              work around the UN Sustainable Development Goals.
             </p>
-            <div className="grid gap-3">
-              {partnerWorkflow.map((step, index) => (
-                <button
-                  key={step.title}
-                  type="button"
-                  onClick={() => setActivePartnerStep(index)}
-                  onMouseEnter={() => setActivePartnerStep(index)}
-                  onFocus={() => setActivePartnerStep(index)}
-                  aria-pressed={activePartnerStep === index}
-                  className={`flex gap-3 rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                    activePartnerStep === index
-                      ? "border-[#0A1F44] bg-[#0A1F44] text-white"
-                      : "border-slate-200 bg-white text-slate-700"
-                  }`}
-                >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold ${
-                    activePartnerStep === index ? "bg-white/10 text-white" : "bg-[#D4980C]/15 text-[#0A1F44]"
-                  }`}>
-                    {index + 1}
-                  </span>
-                  <span>
-                    <span className={`block font-extrabold ${activePartnerStep === index ? "text-white" : "text-[#0A1F44]"}`}>
-                      {step.title}
-                    </span>
-                    <span className={`mt-1 block text-sm ${activePartnerStep === index ? "text-white/80" : "text-slate-600"}`}>
-                      {step.body}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              Review Request · Step {activePartnerStep + 1}
-            </p>
-            <h3 className="mt-3 text-2xl font-extrabold text-[#0A1F44]">
-              {partnerWorkflow[activePartnerStep].title}
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              {partnerWorkflow[activePartnerStep].body}
+            <p className="mt-3 text-base leading-relaxed text-slate-600">
+              Synerxus helps teams connect SDG-aligned activities to structured evidence records,
+              while keeping three categories clearly separate.
             </p>
             <div className="mt-5 grid gap-3">
-              {[
-                ["Claim", "240 residents completed solar workforce training"],
-                ["Evidence", "5 files attached"],
-                ["Status", partnerWorkflow[activePartnerStep].status],
-                ["Action", partnerWorkflow[activePartnerStep].action],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              {sdgEvidenceCategories.map((item, index) => (
+                <div key={item} className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0A1F44] text-xs font-extrabold text-[#FFD95A]">
+                    {index + 1}
+                  </span>
+                  <p className="text-sm font-extrabold leading-relaxed text-[#0A1F44]">{item}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-base leading-relaxed text-slate-600">
+              This prevents SDG storytelling from becoming unsupported impact claims.
+            </p>
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-relaxed text-amber-950">
+              Synerxus does not certify SDG impact or establish causal contribution. It provides
+              the evidence structure needed to make SDG-aligned reporting more traceable,
+              reviewable, and defensible.
+            </div>
+          </div>
+
+          <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
+                  SDG Mapping Panel
+                </p>
+                <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
+                  Solar Village Initiative
+                </h3>
+              </div>
+              <span className="rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-3 py-1 text-xs font-bold text-[#8A5A00]">
+                Mapping confidence: Medium
+              </span>
+            </div>
+            <div className="mt-5 grid gap-2">
+              {sdgMappingPanel.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                     {label}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+                  <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-800">{value}</p>
                 </div>
               ))}
             </div>
@@ -396,113 +419,28 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="bg-white py-7 md:py-10">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-4 max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              Framework Cross-Walking
+      <section className="bg-[#0A1F44] py-7 md:py-10">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
+              Review Outputs
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              Frameworks tell you what to disclose. Synerxus helps show what happened.
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+              Built for reporting support, internal review, and assurance preparation.
             </h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600">
-              The section below turns a repetitive framework grid into a clearer evidence-flow
-              narrative: what breaks down, and how Synerxus organizes the response.
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-white/75">
+              Synerxus helps teams separate confirmed records, source-supported records,
+              exceptions, mapped data, and evidence limitations before claims are reused in
+              reports, board materials, or advisor reviews.
             </p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                The evidence gap
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-col">
-                {platformGapCards.map((item, index) => (
-                  <button
-                    key={item.number}
-                    type="button"
-                    onClick={() => setActiveGap(index)}
-                    onMouseEnter={() => setActiveGap(index)}
-                    onFocus={() => setActiveGap(index)}
-                    aria-pressed={activeGap === index}
-                    className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3.5 text-left transition-all sm:px-4 ${
-                      activeGap === index
-                        ? "border-[#0A1F44] bg-[#0A1F44]"
-                        : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
-                    }`}
-                  >
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                      activeGap === index ? "bg-[#D4980C]/20 text-[#D4980C]" : "bg-slate-200 text-slate-500"
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className={`text-xs font-bold leading-tight transition-colors sm:text-sm ${
-                        activeGap === index ? "text-[#D4980C]" : "text-[#0A1F44]"
-                      }`}>
-                        {item.title}
-                      </p>
-                      <p className={`mt-0.5 text-[11px] leading-relaxed transition-colors sm:text-xs ${
-                        activeGap === index ? "text-[#D4980C]/70" : "text-slate-500"
-                      }`}>
-                        {item.body}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {reviewOutputs.map(({ title, icon: Icon }) => (
+              <div key={title} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <Icon className="h-5 w-5 text-[#FFD95A]" />
+                <p className="mt-3 text-sm font-extrabold text-white">{title}</p>
               </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-[#0A1F44] p-4 md:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#FFD95A]">
-                    Synerxus response
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/80">
-                    {platformGapCards[activeGap].response.subtitle}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-white/90">
-                  Structured for reporting
-                </span>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                {platformGapCards[activeGap].response.features.map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5"
-                  >
-                    <p className="text-xs font-semibold leading-snug text-white sm:text-sm">{item}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 border-t border-white/10 pt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#FFD95A]">
-                  Evidence record
-                </p>
-                <div className="mt-3 flex flex-col gap-2 text-sm">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-white/65">Claim supported</span>
-                    <span className="text-right font-semibold text-white">{platformGapCards[activeGap].response.record.claim}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-white/65">Evidence status</span>
-                    <span className="text-right font-semibold" style={{ color: platformGapCards[activeGap].response.record.statusColor }}>
-                      {platformGapCards[activeGap].response.record.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-white/65">Framework alignment</span>
-                    <span className="text-right font-semibold text-white">{platformGapCards[activeGap].response.record.framework}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-white/65">Report use</span>
-                    <span className="text-right font-semibold text-white/80">{platformGapCards[activeGap].response.record.reportUse}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

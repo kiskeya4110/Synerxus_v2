@@ -6,6 +6,7 @@ import MarketingHome from "@/pages/marketing-home";
 import Platform from "@/pages/platform";
 import EvidenceLadder from "@/pages/evidence-ladder";
 import UseCasesPage from "@/pages/use-cases";
+import ValidationFramework from "@/pages/validation-framework";
 import Insights from "@/pages/insights";
 import Terms from "@/pages/terms";
 
@@ -35,7 +36,7 @@ const publicPages = [
     name: "platform",
     path: "/platform",
     Component: Platform,
-    expectedText: "ESG evidence infrastructure for defensible disclosures.",
+    expectedText: "The evidence layer behind defensible social-impact claims.",
   },
   {
     name: "evidence ladder",
@@ -48,6 +49,12 @@ const publicPages = [
     path: "/use-cases",
     Component: UseCasesPage,
     expectedText: "Use Synerxus wherever ESG claims need evidence.",
+  },
+  {
+    name: "validation framework",
+    path: "/validation-framework",
+    Component: ValidationFramework,
+    expectedText: "Synerxus continues only if the evidence workflow proves itself.",
   },
   {
     name: "resources",

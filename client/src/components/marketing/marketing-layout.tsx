@@ -65,25 +65,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-[linear-gradient(to_bottom_left,#b3d9e6_0%,#f8fbfc_100%)] text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
-          <Link
-            href="/landing"
-            className="shrink-0"
-            onClick={(e) => {
-              e.preventDefault();
-              const hero = document.getElementById("hero");
-              const focusHero = () => hero?.focus({ preventScroll: true });
-
-              if (isLanding) {
-                hero?.scrollIntoView({ behavior: "smooth", block: "start" });
-                focusHero();
-                return;
-              }
-
-              navigate("/landing#hero");
-            }}
-          >
-            <Logo size="sm" clickable={false} />
-          </Link>
+          <Logo size="sm" className="shrink-0" />
 
           <nav className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => {

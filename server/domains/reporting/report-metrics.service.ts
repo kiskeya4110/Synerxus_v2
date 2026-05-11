@@ -116,6 +116,19 @@ function getReach(a: any): number {
   return Number(a.beneficiaryCount ?? a.editedOutcomeQuantity ?? a.outcomeQuantity ?? 0);
 }
 
+function getLocationText(value: any): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "object") {
+    if (typeof value.location === "string") return value.location.trim() || null;
+    if (typeof value.name === "string") return value.name.trim() || null;
+    if (typeof value.lat === "number" && typeof value.lng === "number") {
+      return `${value.lat.toFixed(4)},${value.lng.toFixed(4)}`;
+    }
+  }
+  return null;
+}
+
 function isVerified(a: any): boolean {
   // Canonical: matches dashboard verifiedCount definition
   return a.verificationStatus === "approved" || a.verificationStatus === "verified";
@@ -225,8 +238,17 @@ export function computeReportMetrics(
 
   const countries = unique([
     ...(input.countriesOrRegions ?? []),
-    ...verified.map((a) => a.region || a.location || a.geolocation).filter(Boolean),
+    ...verified
+      .map((a) => a.region || a.location || getLocationText(a.geolocation))
+      .filter(Boolean),
+    ...includedProjects.map((p: any) => p.location).filter(Boolean),
   ]);
+  const communitiesServed =
+    countries.length > 0
+      ? countries.length
+      : partnerReportedReach > 0 || verified.length > 0
+        ? Math.max(includedProjectIds.length, 1)
+        : 0;
 
   const partnerNames = unique(input.partnerNames ?? []);
 
@@ -408,7 +430,7 @@ export function computeReportMetrics(
     eligibleCompletionRate,
     averageVerificationTime,
     partnerReportedReach,
-    communitiesServed: countries.length,
+    communitiesServed,
     programsIncluded: includedProjectIds.length,
     sdgsMapped: sdgsIncluded.length,
     frameworksMapped: frameworksIncluded.length,

@@ -599,7 +599,7 @@ export const projectBudgetLinks = pgTable("project_budget_links", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Verified Outputs - Audit-ready outcomes with verification status
+// Verified Outputs - reviewable outcomes with verification status
 export const verifiedOutputs = pgTable("verified_outputs", {
   id: serial("id").primaryKey(),
   activityId: integer("activity_id").references(() => volunteerActivities.id),

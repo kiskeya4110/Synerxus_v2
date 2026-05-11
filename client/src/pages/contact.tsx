@@ -3,30 +3,130 @@ import { MarketingLayout } from "@/components/marketing/marketing-layout";
 import { Button } from "@/components/ui/button";
 
 const BOUNDARY_STATEMENT =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
+  "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, independently verify all partner-reported reach figures, or establish causal attribution.";
 
 const useCases = [
-  ["Corporate Volunteering", "Track employee volunteering hours and evidence records."],
-  ["Community Investment", "Capture and report on community programs and outputs."],
-  ["NGO / Partner Verification", "Confirm partner activity and output records with appropriate source support."],
-  ["Assurance Preparation", "Organize evidence for third-party assurance and audit preparation."],
-  ["SDG / Framework Mapping", "Map outputs to global goals and reporting frameworks."],
+  ["Corporate Volunteering", "Connect volunteer activity records to partner confirmation and reviewable evidence."],
+  ["Community Investment", "Organize community-program activity, partner outputs, and source documentation for reporting support."],
+  ["NGO / Partner Confirmation", "Confirm partner activity and output records and identify what source support exists."],
+  ["Assurance Preparation", "Organize evidence records, source references, exceptions, and limitations for internal review or assurance preparation."],
+  ["SDG / Framework Mapping", "Map activity records to SDGs, frameworks, or internal categories without treating mapping as proof of impact."],
 ] as const;
 
 const checkboxes = {
-  programType: ["Employee Volunteering", "Community Investment", "Grantmaking", "Capacity Building", "Other"],
+  claimNeed: [
+    "Volunteer hours",
+    "Community investment activity",
+    "Partner-delivered outputs",
+    "Beneficiary / reach figures",
+    "Training or capacity-building activity",
+    "Infrastructure / installation completion",
+    "Grant-funded activity",
+    "SDG-aligned activity",
+    "Internal ESG / CSR reporting",
+    "Other",
+  ],
+  programType: [
+    "Employee Volunteering",
+    "Community Investment",
+    "Grantmaking",
+    "Capacity Building",
+    "NGO Partnership",
+    "Supplier / Community Program",
+    "City or Coalition Program",
+    "Other",
+  ],
   evidenceProblem: [
     "Data is scattered across systems",
-    "Hard to confirm partner activity and output records",
-    "Lack of reviewable source documentation",
-    "Inconsistent reporting",
+    "Hard to confirm partner activity and outputs",
+    "Missing source documentation",
+    "Partner-reported figures are mixed with confirmed records",
+    "SDG / framework mapping lacks evidence support",
+    "Inconsistent reporting across partners or programs",
     "Time-consuming to prepare reports",
     "Other",
   ],
-  evidenceSources: ["Spreadsheets", "Surveys / Forms", "Partner Reports", "CRM / PM Tools", "Financial Systems", "Photos / Documents", "Other"],
-  frameworks: ["CSRD / ESRS", "GRI 413", "ISAE 3000", "UN SDGs", "SASB / ISSB", "Internal Reporting", "Other"],
-  verificationScope: ["Projects", "Partners / NGOs", "Volunteers", "Countries / Locations"],
-  reportOutput: ["Evidence Summary", "Board Summary", "Assurance Preparation Package"],
+  evidenceSources: [
+    "Spreadsheets",
+    "Surveys / forms",
+    "Partner reports",
+    "CRM / PM tools",
+    "Photos / documents",
+    "Attendance logs",
+    "Inspection records",
+    "Training logs",
+    "Financial systems",
+    "Other",
+  ],
+  confirmationWorkflow: [
+    "Corporate team",
+    "NGO / implementation partner",
+    "Program manager",
+    "Volunteer / employee",
+    "Third-party evaluator",
+    "No formal confirmation process",
+    "Not sure",
+    "Other",
+  ],
+  reportingContext: [
+    "Internal ESG / CSR reporting",
+    "Board or executive reporting",
+    "Grant / funder reporting",
+    "Public sustainability report",
+    "Assurance preparation",
+    "Legal / compliance review",
+    "Other",
+  ],
+  mappingInterests: [
+    "UN SDGs",
+    "GRI 413",
+    "ESRS S3",
+    "SASB / ISSB",
+    "Internal reporting categories",
+    "Other",
+  ],
+  verificationScope: ["Projects", "Partners / NGOs", "Volunteers", "Countries / locations"],
+  reportOutput: [
+    "Evidence Summary",
+    "Board Summary",
+    "Assurance Preparation Package",
+    "Claim-to-Evidence Export",
+    "Source Artifact Index",
+    "Exception Summary",
+  ],
+  timingDrivers: [
+    "Reporting deadline",
+    "Board meeting",
+    "Assurance preparation",
+    "Grant / funder deadline",
+    "Program launch",
+    "Internal review",
+    "Other",
+  ],
+} as const;
+
+const singleChoiceOptions = {
+  confirmationNeed: [
+    "Partner confirmation",
+    "Internal review",
+    "Independent review",
+    "Source-document review",
+    "Not sure",
+  ],
+  approximateRecords: [
+    "Fewer than 50",
+    "50-250",
+    "250-1,000",
+    "1,000+",
+    "Not sure",
+  ],
+  approximatePartners: [
+    "1",
+    "2-5",
+    "6-20",
+    "20+",
+    "Not sure",
+  ],
 } as const;
 
 export default function ContactPage() {
@@ -37,17 +137,25 @@ export default function ContactPage() {
     region: "",
     contactName: "",
     workEmail: "",
-    timing: "",
+    claimStatement: "",
+    confirmationNeed: "",
+    approximateRecords: "",
+    approximatePartners: "",
+    targetDate: "",
     comments: "",
     acknowledgement: false,
   });
   const [selected, setSelected] = useState<Record<keyof typeof checkboxes, string[]>>({
+    claimNeed: [],
     programType: [],
     evidenceProblem: [],
     evidenceSources: [],
-    frameworks: [],
+    confirmationWorkflow: [],
+    reportingContext: [],
+    mappingInterests: [],
     verificationScope: [],
     reportOutput: [],
+    timingDrivers: [],
   });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [error, setError] = useState("");
@@ -82,19 +190,29 @@ export default function ContactPage() {
           role: form.sector,
           organizationType: form.sector,
           primaryNeed: "Evidence Readiness Assessment",
-          frameworks: selected.frameworks.join(", "),
+          frameworks: selected.mappingInterests.join(", "),
           evidenceMaturity: selected.evidenceSources.join(", "),
           claimVolume: selected.reportOutput.join(", "),
-          timeline: form.timing,
+          timeline: [selected.timingDrivers.join(", "), form.targetDate].filter(Boolean).join(" | "),
           plan: "Evidence Readiness Assessment",
           message: [
             `Website: ${form.website}`,
             `Region: ${form.region}`,
+            `Claim / Reporting Need: ${selected.claimNeed.join(", ")}`,
+            `Example Claim or Reporting Statement: ${form.claimStatement}`,
             `Program Type: ${selected.programType.join(", ")}`,
             `Evidence Problem: ${selected.evidenceProblem.join(", ")}`,
             `Current Evidence Sources: ${selected.evidenceSources.join(", ")}`,
+            `Confirmation Workflow: ${selected.confirmationWorkflow.join(", ")}`,
+            `Confirmation / Review Needed: ${form.confirmationNeed}`,
+            `Reporting Context: ${selected.reportingContext.join(", ")}`,
+            `Mapping Interests: ${selected.mappingInterests.join(", ")}`,
             `Evidence Scope: ${selected.verificationScope.join(", ")}`,
+            `Approximate Activity or Evidence Records: ${form.approximateRecords}`,
+            `Approximate Partners or Locations: ${form.approximatePartners}`,
             `Report Output Needed: ${selected.reportOutput.join(", ")}`,
+            `Timing Driver: ${selected.timingDrivers.join(", ")}`,
+            `Target Date: ${form.targetDate}`,
             `Comments: ${form.comments}`,
             `Boundary acknowledgement: ${form.acknowledgement ? "Accepted" : "Not accepted"}`,
           ].join("\n"),
@@ -118,13 +236,19 @@ export default function ContactPage() {
       <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
-            Evidence Readiness Assessment
+            EVIDENCE READINESS ASSESSMENT
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
             Evidence Readiness Assessment
           </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
+          <p className="mt-5 max-w-3xl text-lg font-semibold leading-relaxed text-slate-700">
             Use Cases &amp; Setup Form
+          </p>
+          <p className="mt-3 max-w-4xl text-base leading-relaxed text-slate-600">
+            This assessment helps Synerxus understand what claims you need to
+            support, where the evidence currently lives, who can confirm it,
+            what remains unverified, and what type of report or review package
+            you need.
           </p>
         </div>
       </section>
@@ -144,7 +268,9 @@ export default function ContactPage() {
               ))}
             </div>
             <p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
-              This assessment helps Synerxus understand your current records, evidence gaps, reporting needs, and review boundaries.
+              This assessment helps Synerxus identify your claim types,
+              evidence gaps, confirmation needs, source documentation, reporting
+              context, and review boundaries.
             </p>
           </aside>
 
@@ -172,16 +298,97 @@ export default function ContactPage() {
               </div>
               </FormSection>
 
+              <CheckboxGroup
+                title="Claim / Reporting Need"
+                helperText="What type of claim or reporting statement are you trying to support with evidence?"
+                group="claimNeed"
+                values={selected.claimNeed}
+                onToggle={toggle}
+              >
+                <Field
+                  label="Example claim or reporting statement"
+                  value={form.claimStatement}
+                  placeholder={"Example: \"Our partners delivered solar maintenance training to community members during Q2.\""}
+                  onChange={(value) => update("claimStatement", value)}
+                />
+              </CheckboxGroup>
+
               <CheckboxGroup title="Program Type" group="programType" values={selected.programType} onToggle={toggle} />
               <CheckboxGroup title="Evidence Problem" group="evidenceProblem" values={selected.evidenceProblem} onToggle={toggle} />
-              <CheckboxGroup title="Current Evidence Sources" group="evidenceSources" values={selected.evidenceSources} onToggle={toggle} />
-              <CheckboxGroup title="Frameworks of Interest" group="frameworks" values={selected.frameworks} onToggle={toggle} />
-              <CheckboxGroup title="Evidence Scope" group="verificationScope" values={selected.verificationScope} onToggle={toggle} />
-              <CheckboxGroup title="Report Output Needed" group="reportOutput" values={selected.reportOutput} onToggle={toggle} />
+              <CheckboxGroup
+                title="Current Evidence Sources"
+                helperText="Select where supporting records, partner submissions, or source artifacts currently live."
+                group="evidenceSources"
+                values={selected.evidenceSources}
+                onToggle={toggle}
+              />
+              <CheckboxGroup
+                title="Confirmation Workflow"
+                helperText="Who currently confirms or reviews activity and output records?"
+                group="confirmationWorkflow"
+                values={selected.confirmationWorkflow}
+                onToggle={toggle}
+              >
+                <ChoiceGroup
+                  title="What type of confirmation or review do you need?"
+                  name="confirmationNeed"
+                  options={singleChoiceOptions.confirmationNeed}
+                  value={form.confirmationNeed}
+                  onChange={(value) => update("confirmationNeed", value)}
+                />
+              </CheckboxGroup>
+              <FormSection
+                title="Mapping / Reporting Context"
+                helperText="SDG and framework mapping supports reporting context. It does not certify impact, prove causal contribution, or determine compliance."
+              >
+                <CheckboxOptions
+                  title="Reporting Context"
+                  group="reportingContext"
+                  values={selected.reportingContext}
+                  onToggle={toggle}
+                />
+                <CheckboxOptions
+                  title="Mapping Interests"
+                  group="mappingInterests"
+                  values={selected.mappingInterests}
+                  onToggle={toggle}
+                />
+              </FormSection>
+              <CheckboxGroup title="Evidence Scope" group="verificationScope" values={selected.verificationScope} onToggle={toggle}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ChoiceGroup
+                    title="Approximate number of activity or evidence records"
+                    name="approximateRecords"
+                    options={singleChoiceOptions.approximateRecords}
+                    value={form.approximateRecords}
+                    onChange={(value) => update("approximateRecords", value)}
+                  />
+                  <ChoiceGroup
+                    title="Approximate number of partners or locations"
+                    name="approximatePartners"
+                    options={singleChoiceOptions.approximatePartners}
+                    value={form.approximatePartners}
+                    onChange={(value) => update("approximatePartners", value)}
+                  />
+                </div>
+              </CheckboxGroup>
+              <CheckboxGroup
+                title="Report Output Needed"
+                helperText="Select the outputs you need for reporting, internal review, or assurance preparation."
+                group="reportOutput"
+                values={selected.reportOutput}
+                onToggle={toggle}
+              />
 
               <FormSection title="Timing">
+                <CheckboxOptions
+                  title="What is driving the timing?"
+                  group="timingDrivers"
+                  values={selected.timingDrivers}
+                  onToggle={toggle}
+                />
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="When do you need this solution?" value={form.timing} onChange={(value) => update("timing", value)} />
+                  <Field label="Target date" type="date" value={form.targetDate} onChange={(value) => update("targetDate", value)} />
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
                     Comments
                     <textarea
@@ -216,7 +423,7 @@ export default function ContactPage() {
                 loading={status === "loading"}
                 className="bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]"
               >
-                Request Evidence Assessment
+                Request Evidence Readiness Assessment
               </Button>
             </form>
           )}
@@ -227,28 +434,46 @@ export default function ContactPage() {
   );
 }
 
-function FormSection({ title, children }: { title: string; children: ReactNode }) {
+function FormSection({
+  title,
+  helperText,
+  children,
+}: {
+  title: string;
+  helperText?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h2 className="text-sm font-extrabold text-[#0A1F44]">{title}</h2>
+      <div>
+        <h2 className="text-sm font-extrabold text-[#0A1F44]">{title}</h2>
+        {helperText ? (
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">{helperText}</p>
+        ) : null}
+      </div>
       {children}
     </section>
   );
 }
 
-function CheckboxGroup({
+function CheckboxOptions({
   title,
   group,
   values,
   onToggle,
 }: {
-  title: string;
+  title?: string;
   group: keyof typeof checkboxes;
   values: string[];
   onToggle: (group: keyof typeof checkboxes, value: string) => void;
 }) {
   return (
-    <FormSection title={title}>
+    <div className="grid gap-2">
+      {title ? (
+        <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+          {title}
+        </h3>
+      ) : null}
       <div className="grid gap-2 md:grid-cols-2">
         {checkboxes[group].map((item) => (
           <label key={item} className="flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -262,7 +487,64 @@ function CheckboxGroup({
           </label>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CheckboxGroup({
+  title,
+  helperText,
+  group,
+  values,
+  onToggle,
+  children,
+}: {
+  title: string;
+  helperText?: string;
+  group: keyof typeof checkboxes;
+  values: string[];
+  onToggle: (group: keyof typeof checkboxes, value: string) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <FormSection title={title} helperText={helperText}>
+      <CheckboxOptions group={group} values={values} onToggle={onToggle} />
+      {children ? <div className="mt-2 grid gap-3">{children}</div> : null}
     </FormSection>
+  );
+}
+
+function ChoiceGroup({
+  title,
+  name,
+  options,
+  value,
+  onChange,
+}: {
+  title: string;
+  name: string;
+  options: readonly string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <fieldset className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3">
+      <legend className="px-1 text-sm font-bold text-slate-700">{title}</legend>
+      <div className="grid gap-2">
+        {options.map((item) => (
+          <label key={item} className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="radio"
+              name={name}
+              checked={value === item}
+              onChange={() => onChange(item)}
+              className="h-4 w-4 border-slate-300"
+            />
+            {item}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 

@@ -20,11 +20,31 @@ const moduleCards = [
     eyebrow: "Connect claims to records",
     icon: ListChecks,
     body: "Define the claim, attach activity records, connect source artifacts, and preserve the evidence trail behind each reportable statement.",
+    detailTitle: "Claim-to-Evidence Trail",
+    detailBody:
+      "This workspace starts with the exact claim and keeps every supporting record tied to that statement. Reviewers can see the claim scope, evidence requirement, owner, record links, source-support status, and limitations before anything moves into a report.",
     fields: [
       "Claim register",
-      "Evidence packet",
+      "Evidence package",
       "Source artifacts",
       "Record metadata",
+    ],
+    statusRows: [
+      ["Claim", "Defined with owner, period, program, and claim type"],
+      ["Evidence need", "Minimum support required before report inclusion"],
+      ["Source status", "Tracked as available, missing, or not configured"],
+      ["Boundary", "Shows what the evidence supports and what it does not prove"],
+    ],
+    reviewItems: [
+      "Claim statement and reporting period",
+      "Linked activity and output records",
+      "Source-support status and references where available",
+      "Limitations retained beside the claim",
+    ],
+    outputPreview: [
+      ["Report section", "Claim-to-evidence traceability"],
+      ["Reviewer question", "What evidence supports this claim?"],
+      ["Excluded from claim", "Unconfirmed records and contextual figures"],
     ],
   },
   {
@@ -32,11 +52,31 @@ const moduleCards = [
     eyebrow: "Separate evidence strength",
     icon: ShieldCheck,
     body: "Track partner confirmation, verification status, confidence tier, exception flags, and source-support status without treating every record as equal.",
+    detailTitle: "Confirmation and Status Model",
+    detailBody:
+      "This workspace keeps partner-confirmed records, source-supported records, pending records, rejected records, and partner-reported figures separate. It prevents dashboards and exports from blending stronger evidence with incomplete or contextual records.",
     fields: [
       "Partner confirmation",
-      "Status reconciliation",
+      "Status model",
       "Exception log",
       "Confidence tiers",
+    ],
+    statusRows: [
+      ["Partner-confirmed", "Completed the configured confirmation workflow"],
+      ["Source-supported", "Confirmed record with attached or referenced source material"],
+      ["Pending / incomplete", "Excluded until required context is present"],
+      ["Rejected", "Retained as an exception, not counted in confirmed totals"],
+    ],
+    reviewItems: [
+      "Who confirmed the record",
+      "Whether source support exists",
+      "Which records are excluded from totals",
+      "Which exceptions still need review",
+    ],
+    outputPreview: [
+      ["Report section", "Evidence status and exceptions"],
+      ["Reviewer question", "Which records are confirmed, unsupported, or excluded?"],
+      ["Excluded from totals", "Pending, incomplete, rejected, and contextual figures"],
     ],
   },
   {
@@ -44,11 +84,31 @@ const moduleCards = [
     eyebrow: "Classify without overclaiming",
     icon: ClipboardCheck,
     body: "Map records to SDGs, frameworks, or internal categories while keeping partner-reported figures and derived mappings separate from confirmed evidence totals.",
+    detailTitle: "Mapping and Reporting Context",
+    detailBody:
+      "This workspace applies SDG, framework, and internal-category mapping as classification context. Mapping helps reporting teams organize records, but it does not certify impact, prove causal contribution, determine compliance, or create formal assurance.",
     fields: [
       "SDG mapping",
       "Framework mapping",
       "Report summaries",
-      "Assurance-preparation export",
+      "Assurance preparation package",
+    ],
+    statusRows: [
+      ["SDG mapping", "Thematic context attached to activity records"],
+      ["Framework mapping", "Reporting context where a formal framework is selected"],
+      ["Partner-reported reach", "Shown separately from partner-confirmed evidence totals"],
+      ["Limitations", "Mapping boundaries retained in report output"],
+    ],
+    reviewItems: [
+      "Mapping basis and rationale",
+      "Evidence tier behind each mapped record",
+      "Non-additive SDG counts and hours",
+      "Boundary language for reporting use",
+    ],
+    outputPreview: [
+      ["Report section", "SDG-aligned activity mapping"],
+      ["Reviewer question", "Is this mapping evidence, context, or both?"],
+      ["Excluded from proof", "SDG contribution, compliance, and long-term impact claims"],
     ],
   },
 ];
@@ -158,7 +218,7 @@ const sdgEvidenceCategories = [
     panel: [
       ["Record context", "Confirmed records, verifier role, confirmation date, and inclusion status."],
       ["Visible evidence", "Record ID, activity description, activity date, hours, verification status, verifier role, confirmation method, confirmation date."],
-      ["Not shown as", "Independent assurance, certified impact, causal contribution, or regulatory compliance."],
+      ["Not shown as", "Assurance opinion, impact validation, causal contribution, or regulatory compliance."],
       ["Inclusion rule", "Only records with completed confirmation status are included. Pending, incomplete, rejected, partner-reported-only, and mapped-only records are excluded."],
     ],
   },
@@ -169,7 +229,7 @@ const sdgEvidenceCategories = [
     panel: [
       ["Record context", "Partner-reported figures, related activity records, source status, and independent-check status."],
       ["Visible evidence", "Reported reach, reporting partner, related activity record, source status, reporting date, and limitation note."],
-      ["Not included in", "Partner-confirmed evidence totals, source-supported totals, or independently verified impact totals."],
+      ["Not included in", "Partner-confirmed evidence totals or source-supported totals."],
       ["Treatment", "Partner-reported figures may provide context, but they must remain separate from confirmed activity records unless a separate verification process is completed."],
     ],
   },
@@ -194,11 +254,35 @@ const sdgEvidenceCategories = [
   },
 ];
 
+const platformImagePanels = {
+  report: {
+    src: "/optimized/hero-construction.webp",
+    alt: "Field team reviewing infrastructure documentation for a partner-confirmed evidence record",
+    label: "Field-to-report context",
+    cards: [
+      ["Activity", "Infrastructure work documented"],
+      ["Evidence basis", "Field record + reviewer notes"],
+      ["Report use", "Internal review package"],
+    ],
+  },
+  mapping: {
+    src: "/optimized/hero-evidence-3-960.webp",
+    alt: "Professional review room with dashboard-style evidence mapping panels",
+    label: "Mapping context",
+    cards: [
+      ["Confirmed record", "Kept separate from reach"],
+      ["SDG tag", "Classification context"],
+      ["Boundary", "Not impact certification"],
+    ],
+  },
+};
+
 export default function PlatformPage() {
   const [activeModule, setActiveModule] = useState(0);
   const [activeEvidenceStep, setActiveEvidenceStep] = useState(0);
   const [activeSdgCategory, setActiveSdgCategory] = useState(0);
-  const ActiveIcon = moduleCards[activeModule].icon;
+  const activeModuleData = moduleCards[activeModule];
+  const ActiveIcon = activeModuleData.icon;
   const activeEvidence = evidenceFlow[activeEvidenceStep];
   const activeSdg = sdgEvidenceCategories[activeSdgCategory];
 
@@ -296,7 +380,7 @@ export default function PlatformPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="grid gap-3">
+            <div className="grid gap-3" role="tablist" aria-label="Platform workspace modules">
               {moduleCards.map((module, index) => {
                 const Icon = module.icon;
                 const selected = activeModule === index;
@@ -305,10 +389,12 @@ export default function PlatformPage() {
                     key={module.title}
                     type="button"
                     onClick={() => setActiveModule(index)}
-                    onMouseEnter={() => setActiveModule(index)}
                     onFocus={() => setActiveModule(index)}
                     aria-pressed={selected}
-                    className={`flex gap-3 rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                    role="tab"
+                    aria-selected={selected}
+                    aria-controls="workspace-detail-panel"
+                    className={`flex gap-3 rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1F44]/40 ${
                       selected
                         ? "border-[#0A1F44] bg-[#0A1F44] text-white"
                         : "border-slate-200 bg-white text-slate-700"
@@ -344,14 +430,19 @@ export default function PlatformPage() {
               })}
             </div>
 
-            <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <aside
+              id="workspace-detail-panel"
+              role="tabpanel"
+              aria-label={activeModuleData.title}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                    ACTIVE WORKSPACE
+                    ACTIVE WORKSPACE · {activeModuleData.eyebrow}
                   </p>
                   <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
-                    Claim-to-Evidence Trail
+                    {activeModuleData.detailTitle}
                   </h3>
                 </div>
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-[#FFD95A]">
@@ -359,12 +450,67 @@ export default function PlatformPage() {
                 </span>
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">
-                A claim should not leave the platform without a visible evidence
-                trail. Synerxus links each claim to the activity records, partner
-                confirmation, source support, confidence tier, exceptions, and
-                mapping context behind it.
+                {activeModuleData.detailBody}
               </p>
-              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A5A00]">
+                    What Reviewers See
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {activeModuleData.statusRows.map(([label, value]) => (
+                      <div key={label} className="rounded-lg bg-white px-3 py-2.5">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          {label}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold leading-snug text-slate-800">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[#D4980C]/30 bg-[#D4980C]/10 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A5A00]">
+                    Review Checklist
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {activeModuleData.reviewItems.map((item) => (
+                      <div key={item} className="flex items-start gap-2 rounded-lg bg-white/70 px-3 py-2.5">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A1F44]" />
+                        <span className="text-sm font-semibold leading-snug text-slate-700">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A5A00]">
+                    Output Preview
+                  </p>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+                    {activeModule + 1} of {moduleCards.length}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {activeModuleData.outputPreview.map(([label, value]) => (
+                    <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        {label}
+                      </p>
+                      <p className="mt-1 text-sm font-extrabold leading-snug text-[#0A1F44]">
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {workspaceTrailFields.map((field) => (
                   <div key={field} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0A1F44]" />
@@ -395,6 +541,27 @@ export default function PlatformPage() {
               confirmation status, and limitations.
             </p>
           </div>
+          <figure className="relative mb-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
+            <img
+              src={platformImagePanels.report.src}
+              alt={platformImagePanels.report.alt}
+              className="h-72 w-full object-cover md:h-80 lg:h-[360px]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/78 via-transparent to-transparent" aria-hidden="true" />
+            <figcaption className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
+              {platformImagePanels.report.label}
+            </figcaption>
+            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
+              {platformImagePanels.report.cards.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/20 bg-white/90 px-3 py-2 backdrop-blur">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-[11px] font-extrabold leading-tight text-[#0A1F44]">{value}</p>
+                </div>
+              ))}
+            </div>
+          </figure>
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {evidenceFlow.map((step, index) => (
@@ -573,6 +740,27 @@ export default function PlatformPage() {
               </div>
             ) : null}
           </aside>
+          <figure className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm lg:col-span-2">
+            <img
+              src={platformImagePanels.mapping.src}
+              alt={platformImagePanels.mapping.alt}
+              className="h-72 w-full object-cover md:h-80 lg:h-[360px]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/75 via-[#061A36]/15 to-transparent" aria-hidden="true" />
+            <figcaption className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
+              {platformImagePanels.mapping.label}
+            </figcaption>
+            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
+              {platformImagePanels.mapping.cards.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/20 bg-white/90 px-3 py-2 backdrop-blur">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-[11px] font-extrabold leading-tight text-[#0A1F44]">{value}</p>
+                </div>
+              ))}
+            </div>
+          </figure>
         </div>
       </section>
 

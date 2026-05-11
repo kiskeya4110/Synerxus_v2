@@ -522,6 +522,7 @@ const OrganizationView = memo(function OrganizationView({
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const organizationId = activeUser?.organizationId ?? organization?.id ?? (activeUser?.userType === "organization" ? Number(userId) : undefined);
 
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [isApprovingAll, setIsApprovingAll] = useState(false);
@@ -541,7 +542,7 @@ const OrganizationView = memo(function OrganizationView({
     if (isActivityOrImpactEvent) {
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
     }
   }, [queryClient]);
   useWebSocket({ onMessage: handleWsMessage });
@@ -615,34 +616,34 @@ const OrganizationView = memo(function OrganizationView({
 
   // Fetch dashboard stats
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["/api/organization/dashboard", userId, activeUser?.organizationId],
+    queryKey: ["/api/organization", userId, organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/organization/dashboard?userId=${userId}`,
+        `/api/organization?refresh=true`,
         { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load dashboard");
       return response.json();
     },
-    enabled: !!userId && !!activeUser?.organizationId,
+    enabled: !!userId,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
   });
 
   // Fetch pending verifications
   const { data: pendingData, isLoading: isLoadingPending, refetch: refetchPending } = useQuery({
-    queryKey: ["/api/pending-approvals", activeUser?.organizationId],
+    queryKey: ["/api/pending-approvals", organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/pending-approvals?organizationId=${activeUser.organizationId}`,
+        `/api/pending-approvals?organizationId=${organizationId}`,
         { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load pending approvals");
       return response.json();
     },
-    enabled: !!activeUser?.organizationId,
+    enabled: !!organizationId,
     staleTime: 15_000,
     gcTime: 2 * 60_000,
     refetchOnWindowFocus: true,
@@ -651,34 +652,34 @@ const OrganizationView = memo(function OrganizationView({
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
-    queryKey: ["/api/projects", activeUser?.organizationId],
+    queryKey: ["/api/projects", organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/projects?organizationId=${activeUser.organizationId}`,
+        `/api/projects?organizationId=${organizationId}`,
         { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to load projects");
       return response.json();
     },
-    enabled: !!activeUser?.organizationId,
+    enabled: !!organizationId,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   });
 
   // Fetch volunteers
   const { data: volunteers = [], isLoading: isLoadingVolunteers } = useQuery({
-    queryKey: ["/api/volunteers", activeUser?.organizationId],
+    queryKey: ["/api/volunteers", organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const response = await fetch(
-        `/api/volunteers?organizationId=${activeUser.organizationId}`,
+        `/api/volunteers?organizationId=${organizationId}`,
         { headers, credentials: "include" }
       );
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!activeUser?.organizationId,
+    enabled: !!organizationId,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   });
@@ -736,17 +737,17 @@ const OrganizationView = memo(function OrganizationView({
 
   // Fetch ALL logs for history/verification view
   const { data: allOrgLogs = [], isLoading: isLoadingAllLogs } = useQuery({
-    queryKey: ["/api/logs/org-all", activeUser?.organizationId],
+    queryKey: ["/api/logs/org-all", organizationId],
     queryFn: async () => {
       const headers = await getAuthHeaders();
-      const response = await fetch(`/api/logs?ngo_id=${activeUser.organizationId}`, {
+      const response = await fetch(`/api/logs?ngo_id=${organizationId}`, {
         headers, credentials: "include"
       });
       if (!response.ok) return [];
       const logs = await response.json();
       return Array.isArray(logs) ? logs : [];
     },
-    enabled: !!activeUser?.organizationId,
+    enabled: !!organizationId,
     staleTime: 15_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: true,
@@ -910,7 +911,7 @@ const OrganizationView = memo(function OrganizationView({
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({ title: "Verified!", description: isImpact ? "Impact approved successfully." : "Activity verified successfully." });
@@ -940,7 +941,7 @@ const OrganizationView = memo(function OrganizationView({
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({ title: "Rejected", description: "Impact log has been rejected." });
     } catch (err) {
@@ -983,7 +984,7 @@ const OrganizationView = memo(function OrganizationView({
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/logs/org-all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
@@ -1985,7 +1986,7 @@ const OrganizationView = memo(function OrganizationView({
     <>
     {inviteOpen && (
       <InviteVolunteerModal
-        organizationId={activeUser?.organizationId}
+        organizationId={organizationId}
         projects={(projects as any[]).map((p: any) => ({ id: p.id, name: p.name }))}
         onClose={() => setInviteOpen(false)}
       />

@@ -1,5 +1,5 @@
 export const ASSURANCE_BOUNDARY =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
+  "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, independently verify all partner-reported reach figures, or establish causal attribution.";
 
 export const evidenceObjectFields = [
   "Claim ID",
@@ -21,7 +21,7 @@ export const evidenceObjectFields = [
   "Framework mappings",
   "SDG alignment",
   "Risk notes",
-  "Disclosure-readiness status",
+  "Report review status",
   "Evidence Ladder level",
 ];
 
@@ -36,7 +36,7 @@ export const sampleEvidenceObject = {
   framework: "GRI social impact indicators, SDG 7, SDG 8",
   screening: "No unresolved partner concerns flagged",
   ladder: "Level 4 - Framework-Mapped",
-  disclosure: "Review-ready",
+  disclosure: "Reviewable",
 };
 
 export const evidenceLadderLevels = [
@@ -77,16 +77,16 @@ export const evidenceLadderLevels = [
     level: "Level 4",
     title: "Framework-Mapped",
     meaning:
-      "The partner-confirmed claim has been mapped to relevant ESG frameworks, SDGs, disclosure categories, or stakeholder reporting needs. Level 4 shows reporting alignment support; it is not final disclosure readiness.",
+      "The partner-confirmed claim has been mapped to relevant ESG frameworks, SDGs, reporting categories, or stakeholder reporting needs. Level 4 shows reporting alignment support; it is not a readiness determination.",
     risk: "Low",
     action:
-      "Complete chain-of-custody review, negative impact screening, version review, and disclosure-readiness approval before using externally.",
+      "Complete chain-of-custody review, negative impact screening, version review, and management approval before using externally.",
   },
   {
     level: "Level 5",
     title: "Review-Ready Evidence Packet",
     meaning:
-      "The claim includes source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, version history, and disclosure-readiness status.",
+      "The claim includes source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, version history, and report review status.",
     risk: "Lowest",
     action:
       "Use in ESG reports, investor updates, board materials, stakeholder disclosures, or assurance preparation.",
@@ -140,7 +140,7 @@ export const insights = [
   },
   {
     title: "The Evidence Ladder: A maturity model for claim defensibility",
-    body: "How to evaluate whether ESG claims are unsupported, internally asserted, partner-confirmed, or disclosure-ready.",
+    body: "How to evaluate whether ESG claims are unsupported, internally asserted, partner-confirmed, or reviewable for reporting preparation.",
   },
   {
     title: "Why partner confirmation matters in ESG reporting",
@@ -163,7 +163,7 @@ export const dedicatedInsights = [
     body: "How focused external review can improve claim confidence before publication.",
   },
   {
-    title: "What review-ready ESG evidence actually means",
+    title: "What reviewable ESG evidence actually means",
     body: "A practical view of source files, confirmations, custody history, and disclosure status.",
   },
   {

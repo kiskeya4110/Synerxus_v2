@@ -177,7 +177,7 @@ export default function NgoVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Log Verified",
@@ -222,7 +222,7 @@ export default function NgoVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organization/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Log Rejected",

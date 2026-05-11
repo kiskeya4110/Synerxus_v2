@@ -108,22 +108,29 @@ describe("public marketing pages", () => {
     expect(html).not.toContain("LinkedIn Newsletter");
   });
 
-  it("keeps the required platform modules visible", () => {
+  it("keeps the streamlined platform workspace visible", () => {
     const html = renderPublicPage("/platform", Platform);
 
     [
-      "Claim Register",
-      "Evidence Packet Detail View",
-      "Source Artifact Index",
-      "Partner Confirmation Workflow",
-      "Status Reconciliation",
-      "Exception Log",
-      "Confidence Tiers",
-      "SDG / Framework Mapping",
-      "Report Generator",
-      "Assurance-Preparation Export",
+      "PLATFORM WORKSPACE",
+      "Keep every claim connected to its evidence trail.",
+      "Claim-to-Evidence Workspace",
+      "Confirmation and Evidence Quality",
+      "Mapping and Reporting Support",
+      "Claim-to-Evidence Trail",
+      "Every output is organized around one question",
     ].forEach((label) => {
       expect(html).toContain(label);
+    });
+
+    [
+      "Evidence Packet Detail View",
+      "Partner Confirmation Workflow",
+      "Source Artifact Index",
+      "Status Reconciliation",
+      "Assurance-Preparation Export",
+    ].forEach((label) => {
+      expect(html).not.toContain(label);
     });
   });
 

@@ -34,7 +34,7 @@ export const PROHIBITED_CLAIMS: readonly ProhibitedClaim[] = Object.freeze([
   {
     phrase: "proves impact",
     reason:
-      "Causal proof of impact requires controlled study designs Synerxus does not perform. Synerxus produces evidence of activity and partner-confirmed outputs.",
+      "Causal proof of impact requires controlled study designs Synerxus does not perform. Synerxus structures evidence records for activity and partner-confirmed outputs.",
     alternative: "documents partner-confirmed outputs that support impact reporting",
   },
   {
@@ -60,6 +60,30 @@ export const PROHIBITED_CLAIMS: readonly ProhibitedClaim[] = Object.freeze([
     reason:
       "Synerxus is not approved or endorsed by any specific auditor or audit body. Auditors evaluate evidence on a per-engagement basis.",
     alternative: "structured for auditor review",
+  },
+  {
+    phrase: "audit-ready",
+    reason:
+      "Synerxus organizes evidence for review and assurance preparation, but does not determine audit readiness.",
+    alternative: "structured for internal review or assurance preparation",
+  },
+  {
+    phrase: "disclosure-ready",
+    reason:
+      "Disclosure readiness depends on management, legal, assurance, and reporting judgments outside Synerxus.",
+    alternative: "reviewable for reporting preparation",
+  },
+  {
+    phrase: "independently confirmed",
+    reason:
+      "Partner confirmation is not necessarily independent verification. Independence depends on the verifier relationship and review scope.",
+    alternative: "partner-confirmed",
+  },
+  {
+    phrase: "compliance support",
+    reason:
+      "The phrase can imply regulatory compliance assistance or determination. Synerxus organizes evidence for reporting and assurance preparation.",
+    alternative: "reporting support",
   },
   {
     phrase: "fully compliant",
@@ -90,8 +114,8 @@ export const PROHIBITED_CLAIMS: readonly ProhibitedClaim[] = Object.freeze([
   {
     phrase: "impact proof",
     reason:
-      "Synerxus does not produce proof of impact. It produces independently confirmed evidence of activity and partner-delivered outputs.",
-    alternative: "verified evidence of activity and partner-delivered outputs",
+      "Synerxus does not produce proof of impact. It structures evidence records for activity and partner-delivered outputs.",
+    alternative: "partner-confirmed records of activity and partner-delivered outputs",
   },
 ]);
 

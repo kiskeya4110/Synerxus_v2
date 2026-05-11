@@ -643,14 +643,18 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
 
   // Fetch dashboard metrics
   const { data: dashboardData, refetch: refetchDashboard } = useQuery({
-    queryKey: ["/api/organization/dashboard", userId, organizationId],
+    queryKey: ["/api/organization", userId, organizationId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/organization?refresh=true`, {
+        headers,
+        credentials: "include",
+      });
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!userId && !!organizationId,
+    enabled: !!userId,
   });
 
   // Fetch pending verifications

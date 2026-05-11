@@ -11,6 +11,7 @@ import { SDG_GOALS } from "@shared/sdg-goals";
 import { useViewportDetection } from "@/hooks/use-mobile";
 import AIInsightsModal from "@/components/organization/AIInsightsModal";
 import type { User } from "@shared/schema";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
 import sdg2 from "@assets/E_SDG_PRINT-02_1762550174896.jpg";
@@ -55,10 +56,14 @@ export default function Overview() {
   });
 
   const { data: dashboardData } = useQuery<any>({
-    queryKey: ["/api/organization/dashboard", userId],
+    queryKey: ["/api/organization", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/organization?refresh=true`, {
+        headers,
+        credentials: "include",
+      });
       return response.ok ? response.json() : null;
     },
     enabled: !!userId

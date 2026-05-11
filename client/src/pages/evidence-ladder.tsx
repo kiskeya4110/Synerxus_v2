@@ -101,6 +101,17 @@ const actionMatrix = [
   },
 ];
 
+const ladderEvidenceImage = {
+  src: "/optimized/hero-data-presentation.webp",
+  alt: "Professional review workspace with evidence records and reporting dashboards",
+  caption: "Evidence review context",
+  overlays: [
+    ["Claim status", "Source support tracked"],
+    ["Review path", "Confirm, map, preserve"],
+    ["Boundary", "Readiness score, not assurance"],
+  ],
+};
+
 export default function EvidenceLadderPage() {
   const [activeCard, setActiveCard] = useState(0);
 
@@ -185,6 +196,32 @@ export default function EvidenceLadderPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-white pb-7 md:pb-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <figure className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
+            <img
+              src={ladderEvidenceImage.src}
+              alt={ladderEvidenceImage.alt}
+              className="h-72 w-full object-cover md:h-80 lg:h-[360px]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/78 via-[#061A36]/10 to-transparent" aria-hidden="true" />
+            <figcaption className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
+              {ladderEvidenceImage.caption}
+            </figcaption>
+            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
+              {ladderEvidenceImage.overlays.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/20 bg-white/90 px-3 py-2 backdrop-blur">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-[11px] font-extrabold leading-tight text-[#0A1F44]">{value}</p>
+                </div>
+              ))}
+            </div>
+          </figure>
         </div>
       </section>
 

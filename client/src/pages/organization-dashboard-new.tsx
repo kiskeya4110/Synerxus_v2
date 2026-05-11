@@ -26,11 +26,7 @@ import {
   FileText,
 } from "lucide-react";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
-import {
-  prepareReportContent,
-  sanitizeReportBody,
-  sanitizeReportStyles,
-} from "@/lib/report-sanitizer";
+import { prepareReportContent } from "@/lib/report-sanitizer";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "@/components/ui/card";
@@ -467,7 +463,7 @@ export default function OrganizationDashboardNew() {
   const [reportTimePeriod, setReportTimePeriod] = useState("30d");
   const [reportStartDate, setReportStartDate] = useState("");
   const [reportEndDate, setReportEndDate] = useState("");
-  const [reportContent, setReportContent] = useState<{styles: string, body: string} | null>(null);
+  const [reportContent, setReportContent] = useState<{ sourceHtml: string } | null>(null);
   const [isSynerxusLoading, setIsSynerxusLoading] = useState(false);
 
   // Redirect non-organizations
@@ -668,8 +664,8 @@ export default function OrganizationDashboardNew() {
       const response = await fetch(url, { headers, credentials: "include", cache: "no-store" });
       if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
       const html = await response.text();
-      const { styles, body } = prepareReportContent(html);
-      setReportContent({ styles, body });
+      const { sourceHtml } = prepareReportContent(html);
+      setReportContent({ sourceHtml });
     } catch (err) {
       console.error("Synerxus report generation failed:", err);
       toast({ title: "Report failed", description: String(err), variant: "destructive" });
@@ -1438,14 +1434,6 @@ export default function OrganizationDashboardNew() {
       {/* Inline Report Viewer — renders report HTML directly in the page, no iframe needed */}
       {reportContent && (
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[9999] flex flex-col bg-white">
-          {/* Inject report styles into head scope */}
-          <style dangerouslySetInnerHTML={{ __html: sanitizeReportStyles(reportContent.styles + `
-            @media print {
-              body > *:not(#synerxus-report-overlay) { display: none !important; }
-              #synerxus-report-overlay { position: static !important; }
-              #synerxus-report-overlay .report-toolbar { display: none !important; }
-            }
-          `)}} />
           {/* Toolbar */}
           <div className="report-toolbar flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0">
             <span className="text-sm font-semibold text-stone-800">Verified Evidence Summary Preview</span>
@@ -1454,7 +1442,14 @@ export default function OrganizationDashboardNew() {
                 size="sm"
                 variant="default"
                 className="bg-amber-600 hover:bg-amber-700 text-white"
-                onClick={() => window.print()}
+                onClick={() => {
+                  const printWindow = window.open("", "_blank");
+                  if (!printWindow) return;
+                  printWindow.document.write(reportContent.sourceHtml);
+                  printWindow.document.close();
+                  printWindow.focus();
+                  printWindow.print();
+                }}
               >
                 <FileText className="h-4 w-4 mr-1" />
                 Print / Save as PDF
@@ -1464,10 +1459,12 @@ export default function OrganizationDashboardNew() {
               </Button>
             </div>
           </div>
-          {/* Report body rendered inline */}
-          <div
-            className="flex-1 overflow-auto"
-            dangerouslySetInnerHTML={{ __html: sanitizeReportBody(reportContent.body) }}
+          <iframe
+            srcDoc={reportContent.sourceHtml}
+            className="flex-1 w-full"
+            style={{ border: "none", display: "block" }}
+            title="Verified Evidence Summary Preview"
+            sandbox="allow-same-origin"
           />
         </div>
       )}

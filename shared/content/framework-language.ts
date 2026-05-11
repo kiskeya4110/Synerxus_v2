@@ -53,7 +53,7 @@ export const FRAMEWORK_LANGUAGE: Readonly<Record<string, FrameworkLanguage>> = O
     description:
       "The standard used by independent auditors when issuing assurance opinions over non-financial information.",
     boundary:
-      "Synerxus produces structured, independently confirmed evidence that supports ISAE 3000 assurance preparation. Formal assurance opinions are issued by independent qualified providers.",
+      "Synerxus structures evidence records for ISAE 3000 assurance preparation. Formal assurance opinions are issued by independent qualified providers.",
   },
   GRI: {
     key: "GRI",

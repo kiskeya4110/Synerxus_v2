@@ -42,11 +42,15 @@ export default function Logo({
     if (!clickable) return;
     const hero = document.getElementById("hero");
     const focusHero = () => hero?.focus({ preventScroll: true });
+    const scrollHero = () => hero?.scrollIntoView({ behavior: "smooth", block: "start" });
 
     if (location === '/landing' || location === '/') {
       try {
-        hero?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        focusHero();
+        window.history.replaceState(null, "", "/landing#hero");
+        scrollHero();
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => focusHero());
+        });
       } catch {
         window.scrollTo(0, 0);
         focusHero();

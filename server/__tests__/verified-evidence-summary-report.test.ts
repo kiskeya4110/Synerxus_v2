@@ -39,7 +39,7 @@ describe("Verified Evidence Summary report", () => {
   it("renders the required sample report structure and boundary acknowledgement", () => {
     const html = renderReport();
 
-    expect(html.match(/class="report-page"/g)).toHaveLength(11);
+    expect(html.match(/class="report-page"/g)).toHaveLength(12);
     expect(html).toContain("<title>Verified Evidence Summary</title>");
     expect(html).toContain("Demonstration Report for ESG / CSR Reporting and Assurance Preparation");
     expect(html).toContain("Sample Data Notice");
@@ -67,7 +67,7 @@ describe("Verified Evidence Summary report", () => {
       "<h2>Claim-to-Evidence Traceability</h2>",
       "<h2>Evidence Quality and Confidence Scores</h2>",
       "<h2>Exceptions and Exclusions</h2>",
-      "<h2>Partner-Reported Reach &amp; Framework Alignment</h2>",
+      "<h2>Partner-Reported Reach and Mapping Context</h2>",
       "<h2>SDG-Aligned Activity Mapping &amp; Contribution Context</h2>",
       "<h2>Methodology, Definitions, and Report Boundaries</h2>",
       "<h2>Evidence Register Appendix</h2>",
@@ -78,15 +78,15 @@ describe("Verified Evidence Summary report", () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
-  it("keeps verified totals separate from partner-reported, pending, rejected, and incomplete records", () => {
+  it("keeps partner-confirmed totals separate from partner-reported, pending, rejected, and incomplete records", () => {
     const html = renderReport();
 
-    // Both "approved" records count as verified (canonical definition: approved || verified, matching dashboard)
+    // Both "approved" records count as partner-confirmed (canonical definition: approved || verified, matching dashboard)
     // Record 1: approved, verifiedAt set, hours=12, beneficiaryCount=50
     // Record 2: approved, verifiedAt=null, hours=20, beneficiaryCount=80
-    expect(html).toContain('<div class="metric-label">Partner-Confirmed Records</div>');
-    expect(html).toContain('<div class="metric-label">Verified Workflow Hours</div>');
-    expect(html).toContain('<div class="metric-label">Sample Partner-Reported Reach</div>');
+    expect(html).toContain('<div class="metric-label">Partner-confirmed records</div>');
+    expect(html).toContain('<div class="metric-label">Hours in partner-confirmed records</div>');
+    expect(html).toContain('<div class="metric-label">Sample partner-reported reach</div>');
     expect(html).toContain('<div class="metric-label">Pending / Incomplete</div>');
     expect(html).toContain('<div class="metric-label">Rejected Records</div>');
     expect(html).toContain('<div class="metric-value">2</div>');

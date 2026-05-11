@@ -18,7 +18,7 @@ import { PRODUCT_LABELS } from "./approved-claims";
  * Synerxus output from a formal assurance opinion under ISAE 3000.
  */
 export const REPORT_CLASSIFICATION_LINE =
-  `${PRODUCT_LABELS.VERIFIED_EVIDENCE_SUMMARY} — Management Reporting (Verified). ` +
+  `${PRODUCT_LABELS.VERIFIED_EVIDENCE_SUMMARY} — Management Reporting Sample. ` +
   "This report is not a formal assurance opinion under ISAE 3000.";
 
 /**
@@ -49,7 +49,7 @@ export const REPORT_METHODOLOGY_PARAGRAPH =
   `Volunteer time is recorded as an input. ` +
   `${PRODUCT_LABELS.PARTNER_CONFIRMED_OUTPUT} records carry partner attestation and a verification timestamp. ` +
   `${PRODUCT_LABELS.PARTNER_REPORTED_REACH} reflects beneficiary reach as reported by the partner organisation and is not independently verified unless explicitly noted. ` +
-  `${PRODUCT_LABELS.DERIVED_MAPPED_ALIGNMENT} shows how verified records map to disclosure frameworks and is alignment support, not compliance certification.`;
+  `${PRODUCT_LABELS.DERIVED_MAPPED_ALIGNMENT} shows how partner-confirmed records map to reporting frameworks and is classification support, not compliance certification.`;
 
 /**
  * Short caption shown next to verified records in the UI and in report tables.

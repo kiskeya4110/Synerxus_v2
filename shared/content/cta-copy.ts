@@ -12,7 +12,7 @@ export const HERO_HEADLINE = SYNERXUS_POSITIONING;
 
 /** Sub-headline shown beneath the hero on the landing page. */
 export const HERO_SUBHEADLINE =
-  "Capture volunteer time and partner-delivered outputs, confirm them with the partner, and produce structured evidence ready for your next ESG / CSR report.";
+  "Capture volunteer time and partner-delivered outputs, confirm them with the partner, and produce structured evidence records for ESG / CSR reporting preparation.";
 
 /** Primary CTA buttons used across marketing surfaces. */
 export const CTA_BUTTONS = {
@@ -21,7 +21,7 @@ export const CTA_BUTTONS = {
   SEE_SAMPLE_REPORT: "See a sample report",
   TALK_TO_SALES: "Talk to sales",
   VIEW_PRICING: "View pricing",
-  EXPORT_REPORT: "Export verified evidence summary",
+  EXPORT_REPORT: "Export evidence summary",
   ADD_PROJECT: "Add a project",
   INVITE_PARTNER: "Invite a partner organisation",
   CONFIRM_OUTPUT: "Confirm partner-delivered output",
@@ -43,7 +43,7 @@ export const SECTION_HEADLINES = {
 /** In-product empty-state messages. */
 export const EMPTY_STATE_COPY = {
   NO_VERIFIED_EVIDENCE:
-    "No verified evidence records yet. Confirm a partner-delivered output to add the first record.",
+    "No partner-confirmed evidence records yet. Confirm a partner-delivered output to add the first record.",
   NO_PROJECTS:
     "No projects yet. Add a project to start capturing volunteer time and partner-delivered outputs.",
   NO_PARTNERS:

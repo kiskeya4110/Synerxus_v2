@@ -1497,7 +1497,10 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
         .filter((a: any) => a.verificationStatus === "approved" || a.verificationStatus === "verified")
         .map((a: any) => a.region || a.location).filter(Boolean)
     ));
-    const countriesOrRegions = Array.from(new Set([...volunteerCountries, ...activityRegions]));
+    const projectLocations: string[] = Array.from(new Set(
+      filteredProjects.map((project: any) => project.location).filter(Boolean)
+    ));
+    const countriesOrRegions = Array.from(new Set([...volunteerCountries, ...activityRegions, ...projectLocations]));
 
     // ── Enrich: org profile SDGs ─────────────────────────────────────────────
     const orgProfile = org?.id ? await (storage as any).getOrganizationProfileByOrgId?.(org.id) : null;
@@ -1644,7 +1647,10 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
       .filter((a: any) => a.verificationStatus === "approved" || a.verificationStatus === "verified")
       .map((a: any) => a.region || a.location).filter(Boolean)
   ));
-  const corpCountriesOrRegions = Array.from(new Set([...corpVolunteerCountries, ...corpActivityRegions]));
+  const corpProjectLocations: string[] = Array.from(new Set(
+    filteredProjects.map((project: any) => project.location).filter(Boolean)
+  ));
+  const corpCountriesOrRegions = Array.from(new Set([...corpVolunteerCountries, ...corpActivityRegions, ...corpProjectLocations]));
 
   // ── Compute all report metrics via canonical service ─────────────────────
   const corpMetrics = computeReportMetrics(partner?.id ?? 0, {
@@ -2384,7 +2390,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(Authorized partner confirmation)</div></div>' +
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">' +
-      '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Verified &#x2192; Audit-Ready</div>' +
+      '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Partner-Confirmed &#x2192; Reviewable</div>' +
       '</div></div></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #E5E7EB;">' +
       '<div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">' +
@@ -2634,7 +2640,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- HEADER -->
   <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:14px;break-inside:avoid;page-break-inside:avoid;">
     <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:0.5px;margin-bottom:4px;">&#9888; MANAGEMENT REPORTING VERIFIED — NOT A FORMAL ASSURANCE OPINION</div>
-    <div style="font-size:10px;color:#78350f;line-height:1.6;">This report is classified as <strong>Management Reporting (Verified)</strong>. Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. Formal assurance still requires an independent assurance provider per ISAE 3000.</div>
+    <div style="font-size:10px;color:#78350f;line-height:1.6;">This report is classified as <strong>Management Reporting</strong>. Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Formal assurance still requires an independent assurance provider per ISAE 3000.</div>
   </div>
 
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
@@ -2671,7 +2677,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <div class="snap-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
     <div style="background:#ecfdf5;border:0.5px solid #a7f3d0;border-radius:var(--r);padding:14px 16px;text-align:center;">
       <div style="font-size:32px;font-weight:700;color:#059669;line-height:1;">${strictlyVerified.length}</div>
-      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Verified Evidence Records</div>
+      <div style="font-size:12px;color:#374151;margin-top:5px;font-weight:500;">Partner-Confirmed Records</div>
       <div style="font-size:10px;color:#059669;margin-top:6px;">partner-confirmed &middot; full evidence chain</div>
     </div>
     <div style="background:#ecfeff;border:0.5px solid #a5f3fc;border-radius:var(--r);padding:14px 16px;text-align:center;">
@@ -2704,7 +2710,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
       <tbody>
         <tr style="border-bottom:0.5px solid #f3f4f6;">
           <td style="padding:8px 10px;font-size:10px;font-weight:600;color:#065f46;background:#ecfdf5;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#059669;margin-right:6px;"></span>${CONFIDENCE_TIER_LABELS[CONFIDENCE_TIER.VERIFIED]}</td>
-          <td style="padding:8px 10px;font-size:10px;color:#374151;line-height:1.5;">Output independently confirmed by an authorized partner with verification timestamp, verification date, and partner confirmation all present. Strict-gating applied.</td>
+          <td style="padding:8px 10px;font-size:10px;color:#374151;line-height:1.5;">Output partner-confirmed by an authorized reviewer with verification timestamp, verification date, and partner confirmation all present. Strict-gating applied.</td>
           <td style="padding:8px 10px;font-size:11px;font-weight:700;color:#059669;text-align:center;">${strictlyVerified.length}</td>
           <td style="padding:8px 10px;font-size:11px;font-weight:700;color:#059669;text-align:center;">${tierPct(strictlyVerified.length)}%</td>
         </tr>
@@ -2768,19 +2774,19 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
 
   <div class="section-divider"></div>
 
-  <!-- ─── SECTION 5: SAMPLE VERIFIED EVIDENCE RECORDS ─────────── -->
-  <div class="sl"><span class="slb"></span><span class="slt">Section 5: Sample Verified Evidence Records</span></div>
+  <!-- ─── SECTION 5: SAMPLE PARTNER-CONFIRMED RECORDS ─────────── -->
+  <div class="sl"><span class="slb"></span><span class="slt">Section 5: Sample Partner-Confirmed Records</span></div>
   <div class="audit-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:12px;">
     <div style="width:38px;height:38px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#059669;flex-shrink:0;">\u2713</div>
     <div style="flex:1;">
-      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">VERIFIED EVIDENCE RECORDS: ${strictlyVerified.length} of ${allActivities.length} reviewed submissions (${tierPct(strictlyVerified.length)}%)</div>
+      <div style="font-weight:700;font-size:12px;color:#065f46;letter-spacing:0.3px;margin-bottom:3px;">PARTNER-CONFIRMED RECORDS: ${strictlyVerified.length} of ${allActivities.length} reviewed submissions (${tierPct(strictlyVerified.length)}%)</div>
       <div style="font-size:10px;color:#047857;line-height:1.6;">Records labelled &ldquo;Verified&rdquo; include partner-confirmed output, supporting activity context, authorized verifier, verification timestamp, verification date, general region, and framework alignment.${avgVerificationHours > 0 ? ` Average time to confirm: ${avgVerificationHours} hours.` : ''}</div>
       ${(partnerReported.length + derivedMapped.length) > 0 ? `<div style="font-size:10px;color:#b45309;margin-top:4px;">Records not shown as &ldquo;${CONFIDENCE_TIER_LABELS[CONFIDENCE_TIER.VERIFIED]}&rdquo;: ${partnerReported.length} ${CONFIDENCE_TIER_LABELS[CONFIDENCE_TIER.PARTNER_REPORTED]} &middot; ${derivedMapped.length} ${CONFIDENCE_TIER_LABELS[CONFIDENCE_TIER.DERIVED_MAPPED]} &mdash; classified in Section 2.</div>` : ''}
     </div>
   </div>
-  ${top3.length > 0 ? `<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Sample Verified Evidence Records</div>
+  ${top3.length > 0 ? `<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;">Sample Partner-Confirmed Records</div>
   <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">Each record is structured for reviewer sampling and assurance preparation.</div>
-  <div style="margin-bottom:14px;">${outcomeCards}</div>` : '<div style="font-size:11px;color:#6b7280;padding:10px 0;">No fully verified records available for sampling this period.</div>'}
+  <div style="margin-bottom:14px;">${outcomeCards}</div>` : '<div style="font-size:11px;color:#6b7280;padding:10px 0;">No partner-confirmed records available for sampling this period.</div>'}
   ${_nVerifyTimelineHtml}
 
   <div class="section-divider"></div>
@@ -2819,7 +2825,7 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
     <table>
       <thead><tr><th style="width:200px;">Term</th><th>Definition</th></tr></thead>
       <tbody>
-        <tr style="border-bottom:0.5px solid #f3f4f6;"><td style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;background:#f9fafb;">Verified</td><td style="padding:7px 10px;font-size:10px;color:#374151;line-height:1.5;">Output independently confirmed by an authorized partner with verification timestamp, verification date, and partner confirmation all present.</td></tr>
+        <tr style="border-bottom:0.5px solid #f3f4f6;"><td style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;background:#f9fafb;">Verified</td><td style="padding:7px 10px;font-size:10px;color:#374151;line-height:1.5;">Output partner-confirmed by an authorized reviewer with verification timestamp, verification date, and partner confirmation all present.</td></tr>
         <tr style="border-bottom:0.5px solid #f3f4f6;"><td style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;background:#f9fafb;">Partner-confirmed output</td><td style="padding:7px 10px;font-size:10px;color:#374151;line-height:1.5;">A program output that an authorized partner has confirmed was delivered. Distinct from &ldquo;impact proven.&rdquo;</td></tr>
         <tr style="border-bottom:0.5px solid #f3f4f6;"><td style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;background:#f9fafb;">Partner-Reported Reach</td><td style="padding:7px 10px;font-size:10px;color:#374151;line-height:1.5;">Reach figures provided by an authorized partner or estimated using a documented method. Not independently assured unless separately stated.</td></tr>
         <tr style="border-bottom:0.5px solid #f3f4f6;"><td style="padding:7px 10px;font-size:10px;font-weight:600;color:#374151;background:#f9fafb;">Contribution evidence</td><td style="padding:7px 10px;font-size:10px;color:#374151;line-height:1.5;">The structured evidence chain showing how an activity supported a partner-confirmed output. Distinct from causal attribution.</td></tr>
@@ -2885,11 +2891,11 @@ logsRouter.get("/reports/ngo-impact-summary", authMiddleware, async (req: Reques
   <!-- Footer -->
   <div style="padding-top:10px;">
     <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:var(--r);padding:8px 12px;font-size:10px;color:#92400e;margin-bottom:10px;">
-      <strong>Assurance Boundary Statement:</strong> This Verified Evidence Summary contains ${strictlyVerified.length} fully verified evidence records, ${partnerReported.length} partner-reported records, and ${derivedMapped.length} derived/mapped submissions, representing ${Math.round(totalHours)} supporting volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. Records support reporting and assurance preparation. <strong>This report does not constitute an assurance opinion, framework compliance conclusion, or causal attribution evaluation.</strong>
+      <strong>Assurance Boundary Statement:</strong> This Verified Evidence Summary contains ${strictlyVerified.length} partner-confirmed records, ${partnerReported.length} partner-reported records, and ${derivedMapped.length} derived/mapped submissions, representing ${Math.round(totalHours)} supporting volunteer hours across ${projectStats.length} project${projectStats.length !== 1 ? 's' : ''}. Records support reporting and assurance preparation. <strong>This report does not constitute an assurance opinion, framework compliance conclusion, or causal attribution evaluation.</strong>
     </div>
     <div style="font-size:10px;color:var(--txt-t);margin-bottom:8px;">
       <div>Generated by Synerxus on behalf of ${orgName}. Confirmed evidence records are available for review upon request.</div>
-      <div style="margin-top:2px;">Questions? hello@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 Global Sustainability Verification Data (Management Verified) \u2014 Requires independent ISAE 3000 assurance for formal filing</div>
+      <div style="margin-top:2px;">Questions? hello@synerxus.com \u2022 \u00a9 ${now.getFullYear()} Synerxus \u2022 Structured Evidence Records (Management Report) \u2014 Requires independent ISAE 3000 assurance for formal filing</div>
     </div>
     <div style="text-align:center;margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd);font-size:10px;letter-spacing:0.04em;">
       Powered by <span style="font-weight:700;color:#0A2463;">SYNER</span><span style="font-weight:700;color:#D4980C;">XUS</span> &nbsp;&bull;&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span>
@@ -3160,7 +3166,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       </tr>`;
     }).join('');
 
-    // Audit trail rows (top 10) — only fully verified records appear under "Verified Evidence Records".
+    // Audit trail rows (top 10) — only partner-confirmed records appear under "Partner-Confirmed Records".
     const auditRows = strictlyVerified.slice(0, 10).map((a: any) => {
       const org = a.verifiedBy ? verifierToOrgMap.get(a.verifiedBy) : null;
       const dateStr = a.date instanceof Date ? a.date.toISOString().split('T')[0] : String(a.date).split('T')[0];
@@ -3396,7 +3402,7 @@ logsRouter.get("/reports/corporate-esg-summary", authMiddleware, async (req: Req
       '<div style="font-size:9px;color:#0891B2;margin-top:2px;">(Authorized partner confirmation)</div></div>' +
       '<div style="color:#9CA3AF;font-size:14px;line-height:1;margin:4px 0;">&#x2193;</div>' +
       '<div style="width:76%;padding:10px 16px;border:1.5px solid #0A2463;border-radius:4px;background:#EFF6FF;text-align:center;">' +
-      '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Verified &#x2192; Audit-Ready</div>' +
+      '<div style="font-size:10px;font-weight:700;color:#0A2463;">Self-Reported &#x2192; Partner-Confirmed &#x2192; Reviewable</div>' +
       '</div></div></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #E5E7EB;">' +
       '<div style="padding:12px 14px;border-right:1px solid #E5E7EB;background:#f0fdf4;">' +
@@ -3635,8 +3641,8 @@ ${_boundMatrixHtml}
 
 <!-- SECTION 5: EVIDENCE RECORDS -->
 <div style="margin-bottom:20px;">
-  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Verified Evidence Records</h3>
-  ${strictlyVerified.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No fully verified records for this period.</p>' : `
+  <h3 style="color:var(--navy);font-size:13px;font-weight:700;border-bottom:2px solid var(--teal);padding-bottom:4px;margin-bottom:12px;">&#9635; Section 5: Partner-Confirmed Records</h3>
+  ${strictlyVerified.length === 0 ? '<p style="color:var(--txt-s);font-size:11px;padding:12px;">No partner-confirmed records for this period.</p>' : `
   <div class="section">
     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;"><h2>Structured Records for Reviewer Sampling (showing ${Math.min(10, strictlyVerified.length)} of ${strictlyVerified.length})</h2></div>
     <table>
@@ -3699,7 +3705,7 @@ ${_assuranceDiagHtml}
   <div style="font-size:10px;color:var(--txt-s);">
     <div>Report ID: ${reportId} · Generated by Synerxus on behalf of ${corpName}</div>
     <div style="margin-top:2px;">Reporting Period: ${periodDisplay} · Confirmed records are structured for evidence review</div>
-    <div style="margin-top:2px;">Questions? hello@synerxus.com · &copy; ${now.getFullYear()} Synerxus · Global Sustainability Verification Data (Management Verified) &mdash; Requires independent ISAE 3000 assurance for formal filing</div>
+    <div style="margin-top:2px;">Questions? hello@synerxus.com · &copy; ${now.getFullYear()} Synerxus · Structured Evidence Records (Management Report) &mdash; Requires independent ISAE 3000 assurance for formal filing</div>
   </div>
   <div style="text-align:center;margin-top:12px;padding-top:8px;border-top:0.5px solid var(--bd);font-size:10px;letter-spacing:0.04em;">
     Powered by <span style="font-weight:700;color:#0A2463;">SYNER</span><span style="font-weight:700;color:#D4980C;">XUS</span> &nbsp;&bull;&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span>

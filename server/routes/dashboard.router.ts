@@ -50,7 +50,7 @@ function safeNumber(value: any, defaultValue: number = 0): number {
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
-// GET /api/organization/dashboard - Organization-specific dashboard
+// GET /api/organization - Organization-specific dashboard
 // Returns comprehensive dashboard data for organizations including:
 // - Key metrics (projects, hours, SDGs, people impacted, volunteers)
 // - SDG distribution

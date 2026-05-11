@@ -44,11 +44,11 @@ export function SectionHeader({
           {eyebrow}
         </p>
       )}
-      <h2 className={`text-2xl font-extrabold tracking-tight md:text-4xl ${dark ? "text-[#D4980C]" : "text-[#0A1F44]"}`}>
+      <h2 className={`text-2xl font-extrabold tracking-tight sm:text-3xl md:text-4xl ${dark ? "text-[#D4980C]" : "text-[#0A1F44]"}`}>
         {title}
       </h2>
       {body && (
-        <p className={`mt-2 text-base leading-relaxed ${dark ? "text-[#D4980C]" : "text-slate-600"}`}>
+        <p className={`mt-2 text-sm leading-relaxed sm:text-base ${dark ? "text-[#D4980C]" : "text-slate-600"}`}>
           {body}
         </p>
       )}
@@ -60,6 +60,9 @@ export function BoundaryNotice() {
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
       <strong>Boundary statement:</strong> {ASSURANCE_BOUNDARY}
+      <span className="mt-2 block">
+        Synerxus is an evidence infrastructure layer that helps reporting teams organize, confirm, classify, and package evidence behind claims. It is not an ESG reporting platform, assurance provider, SDG certifier, impact evaluator, volunteer marketplace, or compliance engine.
+      </span>
     </div>
   );
 }
@@ -214,7 +217,7 @@ export function EvidenceAlignmentBanner() {
               <li
                 key={`${copy}-${fw.abbr}`}
                 aria-label={`${fw.abbr} — ${fw.sub}`}
-                className="flex h-16 shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-sm"
+                className="flex h-14 shrink-0 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 shadow-sm sm:h-16 sm:gap-3 sm:rounded-xl sm:px-4"
               >
                 {fw.icon}
                 <div>
@@ -330,16 +333,16 @@ const evidenceLayers = [
   },
   {
     id: "readiness",
-    label: "Disclosure Readiness Layer",
+    label: "Report Review Layer",
     icon: ShieldCheck,
     summary:
-      "Shows whether the claim is review-ready and what remains before audit-readiness review.",
+      "Shows whether the claim is structurally reviewable and what remains before reporting or assurance-preparation review.",
     fields: [
       ["Evidence Ladder Level", "4"],
-      ["Disclosure Status", "Review-ready"],
-      ["Recommended Next Step", "Complete audit-readiness review"],
+      ["Report Review Status", "Structurally reviewable"],
+      ["Recommended Next Step", "Complete management review"],
     ],
-    focus: ["Evidence Ladder Level", "Disclosure Status", "Recommended Next Step"],
+    focus: ["Evidence Ladder Level", "Report Review Status", "Recommended Next Step"],
     status: "Review-ready",
   },
 ];
@@ -361,7 +364,7 @@ export function EvidenceObjectMockup({ compact = false }: { compact?: boolean })
     ["Evidence Ladder Level", "4 / Framework-Mapped"],
     ["Reviewer", "Workforce implementation partner"],
     ["Chain of Custody", "Active"],
-    ["Disclosure Status", "Review-ready"],
+    ["Report Review Status", "Structurally reviewable"],
   ];
 
   return (
@@ -406,12 +409,12 @@ export function EvidenceObjectExplorer() {
         <SectionHeader
           eyebrow="Evidence Object Explorer"
           title="Every ESG claim needs an Evidence Object."
-          body="An Evidence Object is the structured record behind a sustainability claim. It connects the claim to source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, and disclosure-readiness status."
+          body="An Evidence Object is the structured record behind a sustainability claim. It connects the claim to source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, and report review status."
         />
 
         <div className="relative grid gap-6 lg:grid-cols-[300px_1fr]">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-col">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:rounded-2xl">
+            <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:flex-col">
               {evidenceLayers.map((layer) => {
                 const Icon = layer.icon;
                 const active = layer.id === activeLayer.id;
@@ -421,7 +424,7 @@ export function EvidenceObjectExplorer() {
                     type="button"
                     onClick={() => setActiveLayerId(layer.id)}
                     aria-pressed={active}
-                    className={`group flex min-w-0 w-full items-center gap-2 rounded-xl border px-2 py-3 text-left text-xs font-bold transition-all duration-300 sm:px-3 sm:text-sm ${
+                    className={`group flex min-w-0 w-full items-center gap-2 rounded-lg border px-2 py-2.5 text-left text-xs font-bold transition-all duration-300 sm:rounded-xl sm:px-3 sm:py-3 sm:text-sm ${
                       active
                         ? "border-[#0A1F44] bg-[#0A1F44] text-[#D4980C] shadow-lg shadow-slate-900/15"
                         : "border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-[#D4980C]/50 hover:shadow-md"
@@ -441,14 +444,14 @@ export function EvidenceObjectExplorer() {
             </div>
           </div>
 
-          <div className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10 md:p-6">
+          <div className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 md:rounded-3xl md:p-6 md:shadow-2xl">
             <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[#D4980C]/10 blur-2xl" />
-            <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div className="relative flex flex-col items-start gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Evidence Object
                 </p>
-                <h3 className="mt-1 text-xl font-extrabold text-[#0A1F44]">
+                <h3 className="mt-1 text-lg font-extrabold text-[#0A1F44] sm:text-xl">
                   EO-2047 · Workforce Training Claim
                 </h3>
               </div>
@@ -460,14 +463,14 @@ export function EvidenceObjectExplorer() {
             <div className="relative mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
               <div>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0A1F44] text-[#D4980C]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0A1F44] text-[#D4980C] sm:h-12 sm:w-12 sm:rounded-xl">
                     <ActiveIcon className="h-5 w-5" />
                   </span>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Selected layer
                     </p>
-                    <h3 className="text-xl font-extrabold text-[#0A1F44]">
+                    <h3 className="text-lg font-extrabold text-[#0A1F44] sm:text-xl">
                       {activeLayer.label}
                     </h3>
                   </div>
@@ -475,11 +478,11 @@ export function EvidenceObjectExplorer() {
                 <p className="mt-4 text-sm leading-relaxed text-slate-600">
                   {activeLayer.summary}
                 </p>
-                <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="mt-5 grid gap-2 sm:grid-cols-2 sm:gap-3">
                   {activeLayer.fields.map(([label, value]) => (
                     <div
                       key={label}
-                      className="rounded-xl border border-[#D4980C]/35 bg-[#D4980C]/10 px-3 py-3"
+                      className="rounded-lg border border-[#D4980C]/35 bg-[#D4980C]/10 px-3 py-3 sm:rounded-xl"
                     >
                       <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                         {label}
@@ -518,7 +521,7 @@ export function EvidenceObjectExplorer() {
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 shadow-sm">
           <p className="text-sm font-semibold leading-relaxed text-slate-700">
             Synerxus produces the structured evidence records ESG teams,
-            advisors, and auditors need to review but cannot reliably generate
+            reporting teams, reviewers, and assurance providers need to review but cannot reliably generate
             from scattered files, screenshots, and spreadsheets.
           </p>
         </div>
@@ -544,9 +547,9 @@ export function EvidenceLadderSection() {
         />
 
         <div className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-start">
-          <div className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-xl md:p-6">
+          <div className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-xl md:rounded-3xl md:p-6">
             <div className="absolute bottom-8 left-10 top-8 hidden w-px bg-gradient-to-b from-red-300 via-[#D4980C] to-emerald-400 md:block" />
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
               {descendingLevels.map((item) => {
                 const levelNumber = item.level.replace("Level ", "");
                 const activeLevel = activeLevelKey === item.level;
@@ -557,7 +560,7 @@ export function EvidenceLadderSection() {
                     type="button"
                     onClick={() => setActiveLevelKey(item.level)}
                     aria-pressed={activeLevel}
-                    className={`relative grid gap-3 rounded-2xl border p-4 text-left transition-all duration-300 md:grid-cols-[64px_1fr_auto] md:items-center ${
+                    className={`relative grid gap-2 rounded-xl border p-3 text-left transition-all duration-300 sm:gap-3 sm:rounded-2xl sm:p-4 md:grid-cols-[64px_1fr_auto] md:items-center ${
                       activeLevel
                         ? "scale-[1.01] border-[#0A1F44] bg-[#0A1F44] text-[#D4980C] shadow-xl"
                         : "border-slate-200 bg-slate-50 hover:-translate-y-0.5 hover:border-[#D4980C]/50 hover:bg-white hover:shadow-md"
@@ -576,7 +579,7 @@ export function EvidenceLadderSection() {
                       <span className="block text-xs font-bold uppercase tracking-wider opacity-70">
                         {item.level}
                       </span>
-                      <span className={`mt-1 block text-lg font-extrabold ${activeLevel ? "text-[#D4980C]" : "text-[#0A1F44]"}`}>
+                      <span className={`mt-1 block text-base font-extrabold sm:text-lg ${activeLevel ? "text-[#D4980C]" : "text-[#0A1F44]"}`}>
                         {item.title}
                       </span>
                     </span>
@@ -595,11 +598,11 @@ export function EvidenceLadderSection() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/10 lg:sticky lg:top-24 lg:p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10 md:rounded-3xl lg:sticky lg:top-24 lg:p-6 lg:shadow-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
               Active level
             </p>
-            <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
+            <h3 className="mt-2 text-xl font-extrabold text-[#0A1F44] sm:text-2xl">
               {active.level} - {active.title}
             </h3>
             {active.level === "Level 4" && (
@@ -609,7 +612,7 @@ export function EvidenceLadderSection() {
             )}
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Disclosure Risk
+                Review Risk
               </p>
               <p className="mt-1 text-lg font-extrabold text-slate-900">
                 {active.risk}
@@ -650,18 +653,18 @@ export function AssessmentCta() {
   return (
     <section className="bg-slate-50 py-7 md:py-10">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_auto] md:items-center md:px-8">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6 md:rounded-3xl md:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
             Evidence Assessment
           </p>
-          <h2 className="mt-3 text-3xl font-extrabold text-[#0A1F44] md:text-4xl">
+          <h2 className="mt-3 text-2xl font-extrabold text-[#0A1F44] sm:text-3xl md:text-4xl">
             Assess the defensibility of your ESG claims.
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-600">
             Start with a focused assessment of your highest-risk or
             highest-visibility ESG claims. Synerxus helps identify which claims
             are unsupported, which need partner confirmation, and which can
-            become disclosure-ready Evidence Objects.
+            become reviewable evidence packets for reporting preparation.
           </p>
           <ul className="mt-5 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
             {[
@@ -713,7 +716,7 @@ export function HomeSections() {
 
   const chainSteps = [
     ["Submit", "Evidence owner creates or updates the claim record and attaches source documentation.", "Captured"],
-    ["Review", "Internal reviewers assess completeness, risk, and disclosure readiness.", "In review"],
+    ["Review", "Internal reviewers assess completeness, risk, and report-use boundaries.", "In review"],
     ["Confirm", "External partners, NGOs, suppliers, or implementation teams confirm, comment, or flag the claim.", "Partner-confirmed"],
     ["Screen", "Reviewers check unresolved concerns, conflicting documents, and possible overclaiming.", "No issues flagged"],
     ["Map", "The confirmed claim is mapped to frameworks, SDGs, and internal reporting categories.", "Framework-mapped"],
@@ -726,7 +729,7 @@ export function HomeSections() {
     "Partial support only",
     "Conflicting evidence identified",
     "Negative impact review required",
-    "Not disclosure-ready",
+    "Not ready for reporting use",
   ];
 
   return (
@@ -781,7 +784,7 @@ export function HomeSections() {
             title="Preserve the chain of custody behind every ESG claim."
             body="Synerxus records who submitted evidence, who reviewed it, who confirmed it, what changed, when it changed, and which version was used for disclosure."
           />
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl md:p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xl md:rounded-3xl md:p-6">
             <div className="grid gap-3 lg:grid-cols-6">
               {chainSteps.map(([title, body, status], index) => {
                 const active = activeCustodyStep === index;
@@ -861,7 +864,7 @@ export function HomeSections() {
               ))}
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-950 p-5 text-[#D4980C] shadow-2xl">
+          <div className="rounded-2xl border border-slate-200 bg-slate-950 p-5 text-[#D4980C] shadow-xl md:rounded-3xl md:shadow-2xl">
             <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
                 Review Request · Step {activePartnerStep + 1}
@@ -913,7 +916,7 @@ export function HomeSections() {
           <SectionHeader
             eyebrow="Framework Cross-Walking"
             title="One Evidence Object. Multiple reporting pathways."
-            body="A single verified Evidence Object can support multiple disclosure needs, helping teams reduce duplicate evidence collection and strengthen consistency across ESG reporting."
+            body="A single partner-confirmed Evidence Object can support multiple reporting needs, helping teams reduce duplicate evidence collection and strengthen consistency across ESG reporting."
           />
           <div className="grid gap-6 lg:grid-cols-[1fr_260px_1fr] lg:items-center">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -933,7 +936,7 @@ export function HomeSections() {
                 </button>
               ))}
             </div>
-            <div className="rounded-3xl border border-[#D4980C]/30 bg-white p-5 text-center shadow-2xl">
+              <div className="rounded-2xl border border-[#D4980C]/30 bg-white p-5 text-center shadow-xl md:rounded-3xl md:shadow-2xl">
               <Sparkles className="mx-auto h-7 w-7 text-[#8A5A00]" />
               <p className="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Evidence Object
@@ -973,11 +976,11 @@ export function HomeSections() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Negative Impact Screening"
-            title="Prevent selective ESG claims from becoming disclosure-ready."
+            title="Prevent selective ESG claims from moving into reports without evidence limits."
             body="Credible ESG evidence should not only confirm positive outcomes. It should also identify unresolved concerns, adverse impacts, conflicting documentation, or stakeholder disputes."
           />
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-xl">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-xl md:rounded-3xl">
               <h3 className="font-extrabold text-[#0A1F44]">Screening prompts</h3>
               <div className="mt-4 grid gap-3">
                 {[
@@ -1007,7 +1010,7 @@ export function HomeSections() {
                 ))}
               </div>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl md:rounded-3xl">
               <h3 className="font-extrabold text-[#0A1F44]">Outcome statuses</h3>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-4 text-[#D4980C]">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1025,7 +1028,7 @@ export function HomeSections() {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-[#8A5A00]">
                   Governance check recorded before the Evidence Object advances
-                  to disclosure-readiness review.
+                  to reporting-readiness review.
                 </p>
               </div>
               <div className="mt-4 grid gap-3">

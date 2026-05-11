@@ -499,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/volunteers", volunteersRouter); // Handles /volunteers/*, /matchable-organizations, /matches
   app.use("/api/project-assignments", projectAssignmentsRouter);
   app.use("/api/matchmaker", matchmakerRouter);
-  app.use("/api", dashboardRouter); // Handles /dashboard and /organization/dashboard
+  app.use("/api", dashboardRouter); // Handles /dashboard and authenticated /organization dashboard data
   app.use("/api", profileRouter); // Handles /profile and /intake
   // Phase 7 routers: mounted at /api level with full paths in router definitions
   app.use("/api", csrRouter); // Handles /csr/*, /employee-engagement/*, /volunteer-employers

@@ -72,6 +72,7 @@ function escapeHtml(value: unknown): string {
 function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const logoSrc = `${origin}/synerxus-esg-logo.png`;
+  const totalPages = 9;
 
   const page = (title: string, body: string, index: number) => `
     <section class="report-page">
@@ -84,7 +85,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
       <main class="page-body">${body}</main>
       <footer class="page-footer">
         <span>Confidential &amp; Proprietary | &copy; 2026 Synerxus. All rights reserved.</span>
-        <span>${index} of 8</span>
+        <span>${index} of ${totalPages}</span>
       </footer>
     </section>`;
 
@@ -160,6 +161,8 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
     table{width:100%;border-collapse:collapse;font-size:10px} th{background:#F1F5F9;color:var(--navy);text-align:left;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap} td{border-top:1px solid var(--line);padding:7px 10px;color:#334155;vertical-align:top}
     .form-shell{display:grid;grid-template-columns:.9fr 1.1fr;gap:14px}.use-card{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}.use-card strong{display:block;color:var(--navy);font-size:11px}.use-card p{font-size:9.5px;margin:3px 0 0}
     .form-section{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}.form-section h3{font-size:11px;margin-bottom:8px}.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.fake-input{height:27px;border:1px solid #CBD5E1;border-radius:6px;background:#F8FAFC;padding:7px;font-size:9px;color:#64748B}.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px}.check{display:flex;align-items:center;gap:6px;font-size:9.5px;color:#334155}.check span{width:11px;height:11px;border:1px solid #94A3B8;border-radius:3px;background:#fff;display:inline-block}.ack{border:1px solid #F6D58B;background:#FFFBEB;border-radius:8px;padding:9px;font-size:9px;color:#78350F}.cta{height:32px;border-radius:7px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:10px}
+    .assessment-page .assessment-intro{font-size:10px;line-height:1.4;margin-bottom:8px}.assessment-page .form-shell{grid-template-columns:.78fr 1.22fr;gap:10px}.assessment-page .use-card{padding:7px;margin-bottom:5px}.assessment-page .use-card strong{font-size:9.4px}.assessment-page .use-card p{font-size:8.4px;line-height:1.25}.assessment-page .form-section{padding:8px;margin-bottom:6px}.assessment-page .form-section h3{font-size:10.2px;margin-bottom:5px}.assessment-page .form-helper{font-size:8.2px;line-height:1.3;color:#64748B;margin:-2px 0 5px}.assessment-page .input-grid{gap:5px}.assessment-page .input-label{font-size:8.5px;font-weight:800;color:var(--navy);margin-bottom:2px}.assessment-page .fake-input{height:22px;padding:5px;font-size:8.2px}.assessment-page .fake-input.tall{height:30px}.assessment-page .checks{grid-template-columns:repeat(3,1fr);gap:4px}.assessment-page .check{align-items:flex-start;gap:4px;font-size:8.4px;line-height:1.2}.assessment-page .check span{width:10px;height:10px;margin-top:1px}.assessment-page .compact-sections{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}.assessment-page .wide-section{grid-column:1 / -1}.assessment-page .ack{font-size:8.6px;line-height:1.3}.assessment-page .cta{height:34px;font-size:11px;margin-top:6px;background:var(--gold)}
+    .assessment-page.two-page .assessment-intro{font-size:8.8px;line-height:1.28;margin-bottom:5px}.assessment-page.two-page .form-shell{gap:8px}.assessment-page.two-page .use-card{padding:5px;margin-bottom:3px}.assessment-page.two-page .use-card strong{font-size:8.4px}.assessment-page.two-page .use-card p{font-size:7.3px;line-height:1.16}.assessment-page.two-page .left-col .card.boundary{padding:5px!important;margin-top:4px!important}.assessment-page.two-page .left-col .card.boundary p{font-size:7.2px!important;line-height:1.16!important}.assessment-page.two-page .form-section{padding:5px;margin-bottom:4px}.assessment-page.two-page .form-section h3{font-size:8.8px;margin-bottom:3px}.assessment-page.two-page .form-helper{font-size:7.2px;line-height:1.18;margin:-1px 0 3px}.assessment-page.two-page .input-label{font-size:7.3px;margin-bottom:1px}.assessment-page.two-page .fake-input{height:17px;padding:3px;font-size:7px}.assessment-page.two-page .fake-input.tall{height:22px}.assessment-page.two-page .checks{grid-template-columns:repeat(4,1fr);gap:2px 4px}.assessment-page.two-page .check{font-size:7.1px;line-height:1.08;gap:3px}.assessment-page.two-page .check span{width:8px;height:8px}.assessment-page.two-page .compact-sections{gap:5px}.assessment-page.two-page .stack-two{display:grid;grid-template-columns:1fr 1fr;gap:5px}.assessment-page.two-page .stack-wide{grid-column:1 / -1}.assessment-page.two-page .ack{font-size:7.1px;line-height:1.18;padding:5px}.assessment-page.two-page .cta{height:25px;font-size:9px}
     @media print{body{background:#fff}.report-page{margin:0;border:0;width:8.5in;min-height:11in}@page{size:letter;margin:0}}
   </style>
 </head>
@@ -384,33 +387,52 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
     </div>
   `, 7)}
   ${page("Evidence Readiness Assessment", `
+    <div class="assessment-page two-page">
     <h2>Evidence Readiness Assessment</h2><p>Use Cases &amp; Setup Form</p>
+    <p class="assessment-intro">This assessment helps Synerxus understand what claims you need to support, where the evidence currently lives, who can confirm it, what remains unverified, and what type of report or review package you need.</p>
     <div class="form-shell">
       <div>
         <h3>Configure Your Evidence Workflow</h3>
         <div class="grid">
           ${["Corporate Volunteering","Community Investment","NGO / Partner Verification","Assurance Preparation","SDG / Framework Mapping"].map((title, idx) => `
             <div class="use-card">
-              <strong>${title}</strong>
-              <p>${["Track employee volunteering hours and evidence records.","Capture and report on community programs and outputs.","Verify partner capacity, activities, and output data.","Organize evidence for third-party assurance and audit preparation.","Map outputs to global goals and reporting frameworks."][idx]}</p>
+              <strong>${escapeHtml(title === "NGO / Partner Verification" ? "NGO / Partner Confirmation" : title)}</strong>
+              <p>${["Volunteer activity records with partner confirmation.","Program activity, outputs, and source support.","Partner-confirmed activity and output records.","Evidence records, references, and limitations.","Activity records mapped without impact proof."][idx]}</p>
             </div>`).join("")}
         </div>
-        <div class="card soft" style="margin-top:10px"><p><strong>&#9432;</strong> This assessment helps us recommend the right configuration, data model, and evidence workflows for your organization.</p></div>
+        <div class="card soft" style="margin-top:10px"><p><strong>&#9432;</strong> Select the claim types, evidence gaps, confirmation needs, source documentation, reporting context, and review boundaries that apply.</p></div>
       </div>
       <div class="grid" style="gap:8px">
         <div class="form-section"><h3>1. Organization Profile</h3><div class="input-grid">${["Organization Name *","Website","Sector","Region *","Contact Name","Work Email *"].map((f) => `<div class="fake-input">${escapeHtml(f)}</div>`).join("")}</div></div>
-        <div class="form-section"><h3>2. Program Type</h3><div class="checks">${["Employee Volunteering","Community Investment","Grantmaking","Capacity Building","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>3. Evidence Problem</h3><div class="checks">${["Data is scattered across systems","Hard to verify partner impact","Lack of audit-ready documentation","Inconsistent reporting","Time-consuming to prepare reports","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>4. Current Evidence Sources</h3><div class="checks">${["Spreadsheets","Surveys / Forms","Partner Reports","CRM / PM Tools","Financial Systems","Photos / Documents","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>5. Frameworks of Interest</h3><div class="checks">${["CSRD / ESRS","GRI 413","ISAE 3000","UN SDGs","SASB / ISSB","Internal Reporting","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>6. Verification Scope</h3><div class="checks">${["Projects","Partners / NGOs","Volunteers","Countries / Locations"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>7. Report Output Needed</h3><div class="checks">${["Verified Evidence Summary","Board Summary","Assurance Preparation Package"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
-        <div class="form-section"><h3>8. Timing</h3><div class="input-grid"><div class="fake-input">When do you need this solution?</div><div class="fake-input">Comments</div></div></div>
-        <div class="ack"><label class="check"><span></span>I acknowledge that Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</label></div>
-        <div class="cta">Request Evidence Assessment &#8594;</div>
+        <div class="form-section"><h3>2. Claim / Reporting Need</h3><div class="form-helper">What type of claim or reporting statement are you trying to support with evidence?</div><div class="checks">${["Volunteer hours","Community investment activity","Partner-delivered outputs","Beneficiary / reach figures","Training or capacity-building activity","Infrastructure / installation completion","Grant-funded activity","SDG-aligned activity","Internal ESG / CSR reporting","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div style="margin-top:6px"><div class="input-label">Example claim or reporting statement</div><div class="fake-input tall">Example: Our partners delivered solar maintenance training to community members during Q2.</div></div></div>
       </div>
     </div>
+    </div>
   `, 8)}
+  ${page("Evidence Readiness Assessment", `
+    <div class="assessment-page two-page">
+    <h2>Evidence Readiness Assessment</h2><p>Workflow, Mapping, Scope &amp; Boundary</p>
+    <p class="assessment-intro">Use this page to identify program type, evidence gaps, source records, confirmation workflow, reporting context, evidence scope, requested outputs, timing, and boundary acknowledgment.</p>
+    <div class="compact-sections">
+        <div class="stack-two">
+          <div class="form-section"><h3>3. Program Type</h3><div class="checks">${["Employee Volunteering","Community Investment","Grantmaking","Capacity Building","NGO Partnership","Supplier / Community Program","City or Coalition Program","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
+          <div class="form-section"><h3>4. Evidence Problem</h3><div class="checks">${["Data is scattered across systems","Hard to confirm partner activity and outputs","Missing source documentation","Partner-reported figures are mixed with confirmed records","SDG / framework mapping lacks evidence support","Inconsistent reporting across partners or programs","Time-consuming to prepare reports","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
+        </div>
+        <div class="form-section stack-wide"><h3>5. Current Evidence Sources</h3><div class="checks">${["Spreadsheets","Surveys / forms","Partner reports","CRM / PM tools","Photos / documents","Attendance logs","Inspection records","Training logs","Financial systems","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
+        <div class="form-section stack-wide"><h3>6. Confirmation Workflow</h3><div class="form-helper">Who currently confirms or reviews activity and output records?</div><div class="checks">${["Corporate team","NGO / implementation partner","Program manager","Volunteer / employee","Third-party evaluator","No formal confirmation process","Not sure","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div style="margin-top:4px"><div class="input-label">What type of confirmation or review do you need?</div><div class="checks">${["Partner confirmation","Internal review","Independent review","Source-document review","Not sure"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div></div>
+        <div class="form-section stack-wide"><h3>7. Mapping / Reporting Context</h3><div class="form-helper">SDG and framework mapping supports reporting context. It does not certify impact, prove causal contribution, or determine compliance.</div><div class="input-label">Reporting Context</div><div class="checks">${["Internal ESG / CSR reporting","Board or executive reporting","Grant / funder reporting","Public sustainability report","Assurance preparation","Legal / compliance review","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div class="input-label" style="margin-top:4px">Mapping Interests</div><div class="checks">${["UN SDGs","GRI 413","ESRS S3","SASB / ISSB","Internal reporting categories","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
+        <div class="stack-two">
+          <div class="form-section"><h3>8. Evidence Scope</h3><div class="checks">${["Projects","Partners / NGOs","Volunteers","Countries / locations"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div class="input-label" style="margin-top:4px">Approximate records</div><div class="checks">${["Fewer than 50","50-250","250-1,000","1,000+","Not sure"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div class="input-label" style="margin-top:4px">Approximate partners or locations</div><div class="checks">${["1","2-5","6-20","20+","Not sure"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div></div>
+          <div class="form-section"><h3>9. Report Output Needed</h3><div class="checks">${["Evidence Summary","Board Summary","Assurance Preparation Package","Claim-to-Evidence Export","Source Artifact Index","Exception Summary"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div style="margin-top:4px" class="input-label">10. Timing</div><div class="checks">${["Reporting deadline","Board meeting","Assurance preparation","Grant / funder deadline","Program launch","Internal review","Other"].map((item) => `<label class="check"><span></span>${escapeHtml(item)}</label>`).join("")}</div><div class="input-grid" style="margin-top:4px"><div class="fake-input">Target date</div><div class="fake-input">Comments</div></div></div>
+        </div>
+        <div class="form-section stack-wide">
+          <h3>11. Boundary Acknowledgment</h3>
+          <div class="ack"><label class="check"><span></span>I acknowledge that Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</label></div>
+          <div class="cta">Request Evidence Readiness Assessment &#8594;</div>
+        </div>
+    </div>
+    </div>
+  `, 9)}
 </body>
 </html>`;
 }

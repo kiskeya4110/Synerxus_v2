@@ -334,7 +334,7 @@ export const REPORT_SECTION_LABELS: Record<ReportSection, string> = {
   [REPORT_SECTION.EVIDENCE_CONFIDENCE_TIERS]: 'Section 2: Evidence Confidence Tiers',
   [REPORT_SECTION.EVIDENCE_QUALITY_SCORECARD]: 'Section 3: Evidence Quality Scorecard',
   [REPORT_SECTION.FRAMEWORK_ALIGNMENT]: 'Section 4: Framework Alignment for Reporting Support',
-  [REPORT_SECTION.SAMPLE_VERIFIED_EVIDENCE_RECORDS]: 'Section 5: Sample Verified Evidence Records',
+  [REPORT_SECTION.SAMPLE_VERIFIED_EVIDENCE_RECORDS]: 'Section 5: Sample Partner-Confirmed Records',
   [REPORT_SECTION.NEGATIVE_IMPACT_SCREENING_SUMMARY]: 'Section 6: Negative Impact Screening Summary',
   [REPORT_SECTION.CONTRIBUTION_PATHWAY]: 'Section 7: Contribution Pathway',
   [REPORT_SECTION.METHODOLOGY_AND_DEFINITIONS]: 'Section 8: Methodology & Definitions',

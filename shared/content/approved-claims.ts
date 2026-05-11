@@ -12,7 +12,7 @@
  * report cover pages.
  */
 export const SYNERXUS_POSITIONING =
-  "Synerxus turns ESG activity — including volunteer time, partner-delivered outputs, and social value programs — into independently confirmed, audit-ready evidence.";
+  "Synerxus provides claim-level evidence infrastructure for ESG, CSR, community-investment, volunteering, NGO, and social-impact reporting preparation.";
 
 /**
  * Approved product labels. These are the canonical names for evidence and
@@ -26,7 +26,7 @@ export const PRODUCT_LABELS = {
   PARTNER_CONFIRMED_OUTPUT: "Partner-Confirmed Output",
   PARTNER_REPORTED_REACH: "Partner-Reported Reach",
   DERIVED_MAPPED_ALIGNMENT: "Derived / Mapped Alignment",
-  VERIFIED_EVIDENCE_RECORD: "Verified Evidence Record",
+  VERIFIED_EVIDENCE_RECORD: "Partner-Confirmed Workflow Record",
 } as const;
 
 export type ProductLabel = (typeof PRODUCT_LABELS)[keyof typeof PRODUCT_LABELS];

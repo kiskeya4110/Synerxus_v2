@@ -72,6 +72,17 @@ const allUseCases = [
   },
 ];
 
+const useCaseEvidenceImage = {
+  src: "/optimized/hero-construction-tutorial.webp",
+  alt: "Field coordinator documenting infrastructure activity for an evidence workflow",
+  caption: "Field evidence workflow",
+  overlays: [
+    ["Evidence begins", "Activity record captured"],
+    ["Confirmation path", "Partner review requested"],
+    ["Report use", "Internal review package"],
+  ],
+};
+
 export default function UseCasesPage() {
   const [activeUseCase, setActiveUseCase] = useState(0);
 
@@ -140,6 +151,27 @@ export default function UseCasesPage() {
             title="Eight scenarios where Evidence Objects matter."
             body="Select a use case to see the evidence workflow, common source types, and relevant reporting frameworks."
           />
+          <figure className="relative mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
+            <img
+              src={useCaseEvidenceImage.src}
+              alt={useCaseEvidenceImage.alt}
+              className="h-72 w-full object-cover md:h-80 lg:h-[360px]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/78 via-[#061A36]/10 to-transparent" aria-hidden="true" />
+            <figcaption className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
+              {useCaseEvidenceImage.caption}
+            </figcaption>
+            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
+              {useCaseEvidenceImage.overlays.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/20 bg-white/90 px-3 py-2 backdrop-blur">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-[11px] font-extrabold leading-tight text-[#0A1F44]">{value}</p>
+                </div>
+              ))}
+            </div>
+          </figure>
           <div className="grid gap-5 lg:grid-cols-[1fr_400px]">
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {allUseCases.map((item, index) => (

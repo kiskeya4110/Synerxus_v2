@@ -223,11 +223,22 @@ const howSteps = [
   },
 ];
 
+const workflowEvidenceImage = {
+  src: "/optimized/hero-construction-tutorial.webp",
+  alt: "Field team documenting community infrastructure activity for evidence review",
+  caption: "Field activity record",
+  overlays: [
+    ["Record ID", "EVR-2026-0041"],
+    ["Source status", "Checklist + field photo"],
+    ["Confirmation", "Partner review requested"],
+  ],
+};
+
 const valueCards = [
   {
     title: "Defensible claims",
     body: "Move from unsupported ESG language to evidence-backed claim records.",
-    detail: "Each claim carries source documentation, owner context, review status, and disclosure-readiness signals.",
+    detail: "Each claim carries source documentation, owner context, review status, and report-use boundaries.",
     structured: ["Source documentation", "Owner context", "Review status", "Report-use boundaries"],
   },
   {
@@ -239,8 +250,8 @@ const valueCards = [
   {
     title: "Chain-of-custody records",
     body: "Preserve who submitted, reviewed, confirmed, and changed the record.",
-    detail: "Teams can trace which version was used in reporting and what changed before disclosure review.",
-    structured: ["Submission history", "Reviewer actions", "Version tracking", "Disclosure version log"],
+    detail: "Teams can trace which version was used in reporting and what changed before management review.",
+    structured: ["Submission history", "Reviewer actions", "Version tracking", "Report version log"],
   },
   {
     title: "Framework-ready evidence",
@@ -339,7 +350,7 @@ function SDGMappingPreview() {
             Connect partner-confirmed outputs to SDG-aligned reporting context.
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            Synerxus maps verified evidence records to relevant UN Sustainable
+            Synerxus maps partner-confirmed evidence records to relevant UN Sustainable
             Development Goals, while keeping the claim attached to the
             underlying output, verifier context, location, and reporting export.
           </p>
@@ -499,16 +510,18 @@ export default function MarketingHome() {
 
     window.requestAnimationFrame(() => {
       hero.scrollIntoView({ behavior: "smooth", block: "start" });
-      hero.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => {
+        hero.focus({ preventScroll: true });
+      });
     });
   }, []);
 
   return (
     <MarketingLayout>
-      <section id="hero" tabIndex={-1} className="relative overflow-hidden bg-white">
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-4 md:px-8 lg:min-h-[560px] lg:grid-cols-[minmax(420px,0.52fr)_minmax(0,0.48fr)] lg:items-stretch lg:gap-0 lg:py-7 xl:min-h-[600px]">
+      <section id="hero" tabIndex={-1} className="relative overflow-hidden bg-white outline-none focus-visible:ring-2 focus-visible:ring-[#D4980C]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+        <div className="relative mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:gap-6 md:px-8 lg:min-h-[560px] lg:grid-cols-[minmax(420px,0.52fr)_minmax(0,0.48fr)] lg:items-stretch lg:gap-0 lg:py-7 xl:min-h-[600px]">
           <div
-            className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/15 lg:aspect-auto lg:h-full lg:rounded-r-none"
+            className="relative aspect-[16/11] overflow-hidden rounded-xl bg-slate-100 shadow-lg shadow-slate-900/10 sm:aspect-[4/3] sm:rounded-2xl sm:shadow-2xl sm:shadow-slate-900/15 lg:aspect-auto lg:h-full lg:rounded-r-none"
             onMouseEnter={() => setHeroPaused(true)}
             onMouseLeave={() => setHeroPaused(false)}
           >
@@ -543,8 +556,8 @@ export default function MarketingHome() {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-[#061A36]/20 via-transparent to-[#D4980C]/10" aria-hidden="true" />
             <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-40 bg-gradient-to-r from-transparent via-white/25 to-white lg:block" aria-hidden="true" />
 
-            <div className="absolute inset-x-4 bottom-12 z-20 flex justify-center md:bottom-14">
-              <div className="flex max-w-[92%] flex-wrap justify-center gap-2">
+            <div className="absolute inset-x-3 bottom-8 z-20 flex justify-center sm:inset-x-4 sm:bottom-12 md:bottom-14">
+              <div className="flex max-w-full flex-wrap justify-center gap-1.5 sm:max-w-[92%] sm:gap-2">
                 {heroStatusChips.map((chip) => {
                   const isActive = activeSlide === chip.slideIndex;
 
@@ -558,7 +571,7 @@ export default function MarketingHome() {
                       onBlur={() => setHeroPaused(false)}
                       onMouseEnter={() => setHeroPaused(true)}
                       onMouseLeave={() => setHeroPaused(false)}
-                      className={`rounded-full border px-3 py-1.5 text-[11px] font-bold shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4980C]/60 sm:text-xs ${
+                      className={`rounded-full border px-2 py-1 text-[10px] font-bold leading-tight shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4980C]/60 sm:px-3 sm:py-1.5 sm:text-xs ${
                         isActive
                           ? "border-[#0A1F44] bg-[#0A1F44] text-[#D4980C]"
                           : "border-slate-200 bg-white/85 text-[#0A1F44] hover:border-[#D4980C]/70 hover:bg-[#FFFBF0]"
@@ -571,7 +584,7 @@ export default function MarketingHome() {
               </div>
             </div>
 
-            <div className="absolute bottom-6 left-5 flex gap-1 md:left-10">
+            <div className="absolute bottom-4 left-4 flex gap-1 sm:bottom-6 sm:left-5 md:left-10">
               {heroSlides.map((_, i) => (
                 <button
                   key={i}
@@ -586,7 +599,7 @@ export default function MarketingHome() {
             </div>
           </div>
 
-          <div className="relative flex min-w-0 items-center overflow-hidden rounded-2xl bg-white lg:rounded-l-none lg:pl-12">
+          <div className="relative flex min-w-0 items-center overflow-hidden rounded-xl bg-white sm:rounded-2xl lg:rounded-l-none lg:pl-12">
             {heroSlides.map((slide, i) => {
               const isActive = i === activeSlide;
 
@@ -621,23 +634,23 @@ export default function MarketingHome() {
               }}
               aria-hidden="true"
             />
-            <div className="relative max-w-2xl animate-[fadeIn_700ms_ease-out] py-8 lg:py-12">
+            <div className="relative max-w-2xl animate-[fadeIn_700ms_ease-out] py-4 sm:py-8 lg:py-12">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D4980C]">
                 SYNERXUS · ESG EVIDENCE INFRASTRUCTURE
               </p>
-              <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
+              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0A1F44] sm:text-4xl md:mt-4 md:text-5xl">
                 Claim-level evidence for{" "}
                 <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: "#D4980C" }}>
                   defensible
                 </span>{" "}
                 ESG and social-impact reporting.
               </h1>
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:mt-5 sm:text-lg">
                 Synerxus turns each claim into a structured evidence record:
                 what evidence supports it, who confirmed it, what remains
                 unverified, and what the claim does not prove.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-3 sm:mt-7 sm:flex-row">
                 <Button asChild size="lg" className="bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
                   <Link href="/request-assessment">Request Assessment</Link>
                 </Button>
@@ -647,10 +660,10 @@ export default function MarketingHome() {
                   </Link>
                 </Button>
               </div>
-              <p className="mt-5 text-sm font-semibold text-[#0A1F44]">
+              <p className="mt-4 text-sm font-semibold text-[#0A1F44] sm:mt-5">
                 No ESG or social-impact claim should be reported without knowing the evidence behind it.
               </p>
-              <div className="mt-4 rounded-lg bg-slate-50/80 px-3 py-2 text-xs leading-relaxed text-slate-500">
+              <div className="mt-4 rounded-lg bg-slate-50/80 px-3 py-2 text-xs leading-relaxed text-slate-500 sm:block">
                 <strong className="font-semibold text-slate-600">
                   Assurance boundary:
                 </strong>{" "}
@@ -676,14 +689,14 @@ export default function MarketingHome() {
           <div className="grid gap-6 lg:grid-cols-[220px_1fr] lg:items-start">
             {/* Left — step nav + context */}
             <div>
-              <div className="grid grid-cols-4 gap-1.5 lg:flex lg:flex-col lg:overflow-visible">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:flex lg:flex-col lg:overflow-visible">
                 {evidencePreviewTabs.map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveEvidenceTab(tab)}
                     aria-pressed={activeEvidenceTab.id === tab.id}
-                    className={`flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center transition-all lg:flex-row lg:items-center lg:gap-3 lg:px-4 lg:text-left ${
+                    className={`flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all lg:flex-row lg:items-center lg:gap-3 lg:px-4 lg:text-left ${
                       activeEvidenceTab.id === tab.id
                         ? "border-[#0A1F44] bg-[#0A1F44]"
                         : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
@@ -694,7 +707,7 @@ export default function MarketingHome() {
                     }`}>
                       {tab.step}
                     </span>
-                    <span className={`text-[9px] font-bold leading-tight tracking-tight transition-colors sm:text-[10px] lg:text-sm ${
+                  <span className={`text-[10px] font-bold leading-tight tracking-tight transition-colors lg:text-sm ${
                       activeEvidenceTab.id === tab.id ? "text-[#D4980C]" : "text-[#0A1F44]"
                     }`}>
                       {tab.label}
@@ -712,8 +725,8 @@ export default function MarketingHome() {
             </div>
 
             {/* Right — Evidence Object card */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence Object</p>
                   <p className="mt-0.5 text-lg font-extrabold text-[#0A1F44]">EO-2047</p>
@@ -764,7 +777,7 @@ export default function MarketingHome() {
                   );
                 })}
               </div>
-              <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
+              <div className="mt-4 flex flex-col items-start gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:gap-3">
                 <div className="flex gap-1.5">
                   {evidenceProgressSteps.map((step, i) => {
                     const stepNum = i + 1;
@@ -798,14 +811,14 @@ export default function MarketingHome() {
             body="Tap any level to see what it means and what action to take."
           />
           <div className="relative">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
               {ladderPreviewLevels.map((level) => (
                 <button
                   key={level.level}
                   type="button"
                   onClick={() => setActiveLevelKey((prev) => (prev === level.level ? "" : level.level))}
                   aria-pressed={activeLevelKey === level.level}
-                  className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`rounded-xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md sm:rounded-2xl sm:p-4 ${
                     activeLevelKey === level.level
                       ? "border-[#0A1F44] bg-[#0A1F44] shadow-xl"
                       : "border-slate-200 bg-white text-slate-700 hover:border-[#D4980C]/50"
@@ -825,7 +838,7 @@ export default function MarketingHome() {
                   onClick={() => setActiveLevelKey("")}
                   aria-hidden="true"
                 />
-                <div className="relative z-10 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+                <div className="relative z-10 max-h-[calc(100dvh-7rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">{ladderLevel.level}</p>
@@ -870,7 +883,7 @@ export default function MarketingHome() {
             {/* Left column — Evidence Gap */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">The Evidence Gap</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-col">
+              <div className="mt-4 grid gap-2 sm:flex sm:flex-col">
                 {evidenceGapCards.map((item, index) => (
                   <button
                     key={item.num}
@@ -909,7 +922,7 @@ export default function MarketingHome() {
 
             {/* Right column — Synerxus Response */}
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Synerxus Response</p>
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4980C]/30 bg-[#D4980C]/10 px-2.5 py-0.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#D4980C]" />
@@ -933,23 +946,23 @@ export default function MarketingHome() {
               </ul>
               <div className="mt-4 border-t border-slate-200 pt-4 flex flex-col gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence record</p>
-                <div className="grid grid-cols-2 items-start gap-2">
+                <div className="grid gap-1 sm:grid-cols-2 sm:items-start sm:gap-2">
                   <span className="text-xs text-slate-500">Claim supported</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.claim}</span>
+                  <span className="text-xs font-semibold leading-snug text-[#0A1F44] sm:text-right">{evidenceGapCards[activeGap].response.card.claim}</span>
                 </div>
-                <div className="grid grid-cols-2 items-start gap-2">
+                <div className="grid gap-1 sm:grid-cols-2 sm:items-start sm:gap-2">
                   <span className="text-xs text-slate-500">Evidence status</span>
-                  <span className="text-right text-xs font-semibold leading-snug" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
+                  <span className="text-xs font-semibold leading-snug sm:text-right" style={{ color: evidenceGapCards[activeGap].response.card.statusColor }}>
                     {evidenceGapCards[activeGap].response.card.status}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 items-start gap-2">
+                <div className="grid gap-1 sm:grid-cols-2 sm:items-start sm:gap-2">
                   <span className="text-xs text-slate-500">Framework alignment</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">{evidenceGapCards[activeGap].response.card.framework}</span>
+                  <span className="text-xs font-semibold leading-snug text-[#0A1F44] sm:text-right">{evidenceGapCards[activeGap].response.card.framework}</span>
                 </div>
-                <div className="grid grid-cols-2 items-start gap-2">
+                <div className="grid gap-1 sm:grid-cols-2 sm:items-start sm:gap-2">
                   <span className="text-xs text-slate-500">Report use</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-slate-600">{evidenceGapCards[activeGap].response.card.reportUse}</span>
+                  <span className="text-xs font-semibold leading-snug text-slate-600 sm:text-right">{evidenceGapCards[activeGap].response.card.reportUse}</span>
                 </div>
               </div>
             </div>
@@ -964,9 +977,30 @@ export default function MarketingHome() {
             title="Create claim. Attach evidence. Confirm. Map. Preserve."
             body="Select any step to see how the evidence workflow keeps the claim connected to support, confirmation, classification, and limitations."
           />
+          <figure className="relative mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
+            <img
+              src={workflowEvidenceImage.src}
+              alt={workflowEvidenceImage.alt}
+              className="h-64 w-full object-cover md:h-80 lg:h-[360px]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/80 via-[#061A36]/15 to-transparent" aria-hidden="true" />
+            <figcaption className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
+              {workflowEvidenceImage.caption}
+            </figcaption>
+            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
+              {workflowEvidenceImage.overlays.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/15 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-xs font-extrabold text-[#0A1F44]">{value}</p>
+                </div>
+              ))}
+            </div>
+          </figure>
           <div className="relative">
             <div className="absolute left-[5%] right-[5%] top-5 hidden h-px bg-slate-200 md:block" />
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2 md:gap-4">
               {howSteps.map((step, index) => (
                 <button
                   key={step.title}
@@ -982,7 +1016,7 @@ export default function MarketingHome() {
                   }`}>
                     {index + 1}
                   </span>
-                  <span className={`text-[10px] font-bold leading-tight sm:text-xs ${
+                  <span className={`text-xs font-bold leading-tight ${
                     activeHowStep === index ? "text-[#0A1F44]" : "text-slate-500"
                   }`}>
                     {step.title}
@@ -990,22 +1024,24 @@ export default function MarketingHome() {
                 </button>
               ))}
             </div>
-            <div className="mt-6 rounded-3xl bg-[#0A1F44] p-5 md:p-8">
-              <div key={activeHowStep} className="flex animate-in fade-in items-center justify-between gap-6 duration-300">
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
-                    Step {activeHowStep + 1} of {howSteps.length}
-                  </p>
-                  <h3 className="mt-2 text-2xl font-extrabold text-white">{howSteps[activeHowStep].title}</h3>
-                  <p className="mt-3 text-base leading-relaxed text-slate-300">
-                    {howSteps[activeHowStep].body}
-                  </p>
-                </div>
-                <div className="hidden shrink-0 items-center justify-center md:flex">
-                  {(() => {
-                    const Icon = howSteps[activeHowStep].Icon;
-                    return <Icon className="h-[4.9rem] w-[4.9rem] text-[#D4980C]" strokeWidth={1.5} />;
-                  })()}
+            <div className="mt-6 rounded-2xl bg-[#0A1F44] p-5 md:rounded-3xl md:p-8">
+              <div key={activeHowStep} className="animate-in fade-in duration-300">
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">
+                      Step {activeHowStep + 1} of {howSteps.length}
+                    </p>
+                    <h3 className="mt-2 text-2xl font-extrabold text-white">{howSteps[activeHowStep].title}</h3>
+                    <p className="mt-3 text-base leading-relaxed text-slate-300">
+                      {howSteps[activeHowStep].body}
+                    </p>
+                  </div>
+                  <div className="hidden shrink-0 items-center justify-center md:flex">
+                    {(() => {
+                      const Icon = howSteps[activeHowStep].Icon;
+                      return <Icon className="h-[4.9rem] w-[4.9rem] text-[#D4980C]" strokeWidth={1.5} />;
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1020,7 +1056,7 @@ export default function MarketingHome() {
             title="Separate evidence records from reach figures and mappings."
             body="Synerxus keeps each evidence category visible so reporting teams do not treat self-reported activity, partner-reported reach, source artifacts, and SDG mapping as the same thing."
           />
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {evidenceCategoryCards.map((category) => (
               <div key={category.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="text-sm font-extrabold text-[#0A1F44]">{category.title}</h3>
@@ -1041,7 +1077,7 @@ export default function MarketingHome() {
             {/* Left column — value items */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">The case for evidence</p>
-              <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-3">
+              <div className="mt-6 grid gap-2 sm:flex sm:flex-col sm:gap-3">
                 {valueCards.map((item, index) => {
                   const icons = [ShieldCheck, CheckCircle2, GitBranch, Layers3];
                   const Icon = icons[index] ?? FileCheck2;
@@ -1093,7 +1129,7 @@ export default function MarketingHome() {
               </p>
               <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">What's structured</p>
-                <ul className="mt-3 grid grid-cols-2 gap-2">
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                   {valueCards[activeValue].structured.map((line) => (
                     <li key={line} className="flex items-start gap-2.5 text-xs text-slate-700 sm:text-sm">
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0A1F44]">
@@ -1117,7 +1153,7 @@ export default function MarketingHome() {
           <p className="mb-8 text-center text-2xl font-extrabold text-[#0A1F44] md:text-3xl">Built for ESG claims that need proof.</p>
 
           {/* Tab strip */}
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-center">
             {useCasePreview.map((item, index) => (
               <button
                 key={item.title}
@@ -1126,7 +1162,7 @@ export default function MarketingHome() {
                 onMouseEnter={() => setActiveUseCase(index)}
                 onFocus={() => setActiveUseCase(index)}
                 aria-pressed={activeUseCase === index}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-all sm:rounded-full sm:px-4 ${
                   activeUseCase === index
                     ? "border-[#0A1F44] bg-[#0A1F44] text-[#D4980C]"
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-[#0A1F44]"
@@ -1150,7 +1186,7 @@ export default function MarketingHome() {
                   {useCasePreview[activeUseCase].body}
                 </p>
               </div>
-              <Button asChild className="mt-8 w-fit bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
+              <Button asChild className="mt-8 w-full bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a] sm:w-fit">
                 <Link href="/use-cases">Explore Use Cases</Link>
               </Button>
             </div>
@@ -1159,15 +1195,15 @@ export default function MarketingHome() {
             <div className="border-t border-slate-100 bg-slate-50 p-5 md:border-l md:border-t-0 md:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Evidence package</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="flex items-start justify-between gap-2 sm:col-span-2">
+                <div className="grid gap-1 sm:col-span-2 sm:flex sm:items-start sm:justify-between sm:gap-2">
                   <span className="text-xs text-slate-500">Claim type</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">
+                  <span className="text-xs font-semibold leading-snug text-[#0A1F44] sm:text-right">
                     {useCaseDetail[activeUseCase].claimType}
                   </span>
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-white p-3 sm:col-span-2">
                   <span className="text-xs text-slate-500">Evidence sources</span>
-                  <ul className="mt-2 grid grid-cols-2 gap-1.5">
+                  <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
                     {useCaseDetail[activeUseCase].evidenceSources.map((src) => (
                       <li key={src} className="flex items-start gap-2 text-xs text-slate-700">
                         <span className="h-1 w-1 shrink-0 rounded-full bg-[#D4980C]" />
@@ -1178,13 +1214,13 @@ export default function MarketingHome() {
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-white p-3">
                   <span className="text-xs text-slate-500">Framework alignment</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-[#0A1F44]">
+                  <span className="mt-1 block text-xs font-semibold leading-snug text-[#0A1F44]">
                     {useCaseDetail[activeUseCase].framework}
                   </span>
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-white p-3">
                   <span className="text-xs text-slate-500">Evidence status</span>
-                  <span className="text-right text-xs font-semibold leading-snug text-[#D4980C]">
+                  <span className="mt-1 block text-xs font-semibold leading-snug text-[#D4980C]">
                     {useCaseDetail[activeUseCase].status}
                   </span>
                 </div>
@@ -1203,7 +1239,7 @@ export default function MarketingHome() {
             {/* Left column — resource list */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4980C]">Reading list</p>
-              <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-3">
+              <div className="mt-6 grid gap-2 sm:flex sm:flex-col sm:gap-3">
                 {resourcePreview.map((item, index) => (
                   <button
                     key={item.title}
@@ -1266,7 +1302,7 @@ export default function MarketingHome() {
                     />
                   ))}
                 </div>
-                <Button asChild className="w-fit bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
+                <Button asChild className="w-full bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a] sm:w-fit">
                   <Link href="/resources">View all resources</Link>
                 </Button>
               </div>
@@ -1279,11 +1315,11 @@ export default function MarketingHome() {
 
       <section id="request-assessment" className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-3xl bg-[#0A1F44] p-7 md:p-12">
+          <div className="rounded-2xl bg-[#0A1F44] p-5 sm:p-7 md:rounded-3xl md:p-12">
             <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
               <div className="max-w-xl">
                 <p className="text-xs font-bold uppercase tracking-wider text-[#D4980C]">Free assessment</p>
-                <h2 className="mt-3 text-3xl font-extrabold text-white md:text-4xl">
+                <h2 className="mt-3 text-2xl font-extrabold text-white sm:text-3xl md:text-4xl">
                   Assess the defensibility of your ESG claims.
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-slate-300">
@@ -1294,7 +1330,7 @@ export default function MarketingHome() {
                 </Button>
                 <p className="mt-3 text-xs text-slate-400">No commitment required.</p>
               </div>
-              <div className="shrink-0 rounded-2xl bg-white/5 p-6">
+              <div className="w-full shrink-0 rounded-2xl bg-white/5 p-5 sm:p-6 md:w-auto">
                 <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[#D4980C]">What we review</p>
                 <ul className="space-y-3">
                   {[
